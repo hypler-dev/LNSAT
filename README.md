@@ -4,6 +4,16 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](docs/PROJECT_STATUS.md)
 
+```text
+ _      _   _  ____    _  _____
+| |    | \ | |/ ___|  / \|_   _|
+| |    |  \| |\___ \ / _ \ | |
+| |___ | |\  | ___) / ___ \| |
+|_____||_| \_||____/_/   \_\_|
+
+       INTENT -> AUTHORITY -> EVIDENCE
+```
+
 **Execution authorization and evidence for consequential agent actions.**
 
 LNSAT is an open-source authority layer for AI agents. It sits between agents
