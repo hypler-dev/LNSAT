@@ -11,6 +11,19 @@ Repository is public pre-release source. Fresh-history cutover evidence is
 recorded in `docs/PUBLIC_READINESS.md`. Public visibility does not imply a
 supported release.
 
+## Roles
+
+- **Contributors** propose issues, code, tests, documentation, and reviews. A
+  contribution does not grant merge, release, deployment, or runtime authority.
+- **Maintainers** are listed in [MAINTAINERS.md](MAINTAINERS.md). They triage
+  public work, review changes, apply repository policy, and protect release and
+  security boundaries.
+- **Reviewers** provide evidence for a specific change. Review does not create an
+  ongoing maintainer role or independently authorize publication or deployment.
+
+Role changes require a public pull request updating the owning governance file,
+with rationale and review. Contribution count alone does not create a role.
+
 ## Decision Process
 
 Architectural and security-sensitive changes should use:
@@ -23,6 +36,31 @@ Architectural and security-sensitive changes should use:
 
 Accepted product topology and upstream/downstream ownership are defined by
 [ADR-0003](docs/architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
+
+Routine changes are decided through reviewable pull requests after required
+checks pass. Architectural, contract, compatibility, and security-boundary
+changes require their owning ADR, RFC, or public contract evidence plus the
+extra review named below. Maintainers record acceptance, requested changes, or
+rejection on the public issue, pull request, or decision record.
+
+Silence, a passing check, repository visibility, or an unmerged proposal does
+not establish acceptance. If evidence or required review is incomplete, the
+decision remains pending. Release publication, deployment, secrets, live
+infrastructure, and runtime authority always require their separately documented
+authorization and cannot be inferred from a source merge.
+
+## Conflicts And Escalation
+
+Anyone reviewing or deciding a change should disclose a material personal,
+financial, authorship, or security-review conflict and avoid being its sole
+reviewer when a conflict-free maintainer is available. Contributors may ask for
+another reviewer and should state the technical or process concern on the owning
+issue or pull request without disclosing private security details.
+
+Unresolved disagreements should document competing options, evidence, and
+remaining risk. If no conflict-free maintainer or required evidence is
+available, the change remains pending rather than gaining implied approval. No
+response-time or appeal-outcome promise exists during pre-release development.
 
 ## Maintainer Duties
 

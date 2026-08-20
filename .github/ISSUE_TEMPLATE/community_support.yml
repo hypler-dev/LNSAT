@@ -1,0 +1,54 @@
+name: Community support
+description: Ask about source evaluation or report a documentation, build, or compatibility gap
+title: "[Community] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form creates a public GitHub issue. LNSAT is pre-release source with best-effort community support. Do not include secrets, credentials, customer data, private topology, or vulnerability details. Report suspected vulnerabilities through GitHub private vulnerability reporting instead.
+
+        For conduct help, request private maintainer contact only. Do not include names, screenshots, incident details, or other sensitive information.
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: Request type
+      options:
+        - Source-evaluation question
+        - Documentation gap
+        - Build or test problem
+        - Compatibility report
+        - Private conduct-contact request (no incident details)
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the question or gap and what outcome would help. For conduct help, write only a neutral request for private contact; include no names, screenshots, incident details, or sensitive information.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Source revision
+      description: Commit SHA or branch name, when applicable.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, architecture, Node.js, npm, and Rust versions when relevant.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Commands and public-safe evidence
+      description: Include commands, expected result, actual result, and minimal public-safe output when applicable.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Public-data confirmation
+      options:
+        - label: I removed secrets, credentials, customer data, private topology, and vulnerability details.
+          required: true
+        - label: This request does not need private vulnerability reporting.
+          required: true

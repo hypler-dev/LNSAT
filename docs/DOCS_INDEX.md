@@ -8,16 +8,26 @@ subsystem or proposal.
 
 ## New Contributors
 
-1. [Project status](PROJECT_STATUS.md) — implemented, experimental, planned, and
+1. [README](../README.md) — project purpose, source-evaluation quick start, and
+   current limitations.
+2. [Project status](PROJECT_STATUS.md) — implemented, experimental, planned, and
    unsupported scope.
-2. [Claims and maturity vocabulary](CLAIMS_AND_MATURITY.md) — meaning of
+3. [Claims and maturity vocabulary](CLAIMS_AND_MATURITY.md) — meaning of
    implemented, experimental, planned, public-source, and supported claims.
-3. [Architecture and developer guide](architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
+4. [Architecture and developer guide](architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
    — mental model, repository ownership, and safe change workflow.
-4. [Local development](LOCAL_DEVELOPMENT.md) — prerequisites, commands, focused
+5. [Local development](LOCAL_DEVELOPMENT.md) — prerequisites, commands, focused
    tests, and troubleshooting.
-5. [Contributing](../CONTRIBUTING.md) — pull-request, DCO, security, and review
-   requirements.
+6. [Contributing](../CONTRIBUTING.md) — first-contribution, pull-request, DCO,
+   security, and review requirements.
+
+## Community
+
+- [Support](../SUPPORT.md) — public issue scope and pre-release support limits.
+- [Governance](../GOVERNANCE.md) — roles, decisions, review, and conflicts.
+- [Code of Conduct](../CODE_OF_CONDUCT.md) — participation and reporting rules.
+- [Security policy](../SECURITY.md) — private vulnerability reporting and tested
+  security scope.
 
 ## Core Architecture
 
