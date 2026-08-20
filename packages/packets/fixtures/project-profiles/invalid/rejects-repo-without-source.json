@@ -1,0 +1,39 @@
+{
+  "project_id": "lnsat",
+  "display_name": "LNSAT Example Project",
+  "owner": "Jeff",
+  "status": "draft",
+  "source_refs": ["doc:docs/onboarding/PROJECT_ONBOARDING.md"],
+  "repos": [
+    {
+      "id": "lnsat-main",
+      "default_branch": "main"
+    }
+  ],
+  "docs": {
+    "entrypoints": ["AGENTS.md", "docs/ROADMAP.md"]
+  },
+  "runtimes": {
+    "languages": ["TypeScript"],
+    "package_managers": ["npm"],
+    "build_commands": ["npm run build"],
+    "test_commands": ["npm run check"]
+  },
+  "resources": {
+    "services": [],
+    "databases": [],
+    "queues": [],
+    "object_storage": [],
+    "models": [],
+    "domains": ["lnsat.example.invalid"]
+  },
+  "secrets": {
+    "refs_only": []
+  },
+  "policies": {
+    "default_role": "observer",
+    "allowed_capabilities": ["context.read"],
+    "blocked_capabilities": ["secret.read.never"],
+    "approval_required_for": ["deploy.request"]
+  }
+}

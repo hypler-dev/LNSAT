@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-identity-creation-request-v1.schema.json",
+  "title": "LNSAT Gateway Identity Creation Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["identity_ref", "display_name", "role", "password"],
+  "properties": {
+    "identity_ref": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 256,
+      "pattern": "^identity:human:[^\\s\\u0000-\\u001F\\u007F]{1,240}$"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!\\s)(?!.*\\s$)[^\\u0000-\\u001F\\u007F]+$"
+    },
+    "role": {
+      "enum": ["operator", "auditor"]
+    },
+    "password": {
+      "type": "string",
+      "minLength": 15,
+      "maxLength": 128,
+      "pattern": "^[^\\u0000]*$"
+    }
+  }
+}

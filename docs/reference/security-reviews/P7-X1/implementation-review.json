@@ -1,0 +1,95 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "P7-X1-independent-implementation-review-29de8242",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["P7-X1"],
+  "base_revision": "015a93d6448871a41934457a453af71c8102f2f0",
+  "reviewed_revision": "29de82424b97ede36b96fa87d82f0b545be16d7f",
+  "reviewed_tree_oid": "4cbee52a5924961d08b022363742c73b69fb6c1f",
+  "diff_sha256": "sha256:59f30b53aaf01a518537694768e1b3f9f15567d936ad59efc28777a271d1b381",
+  "protected_files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "sha256:28897ff4c3a9ed701dcc710e59f57fce7e4033512f291190ba2f89bd4b72e17d"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "sha256": "sha256:fe6a448bbd03a582f6ca3e343e1f2a50819b3a1ab36cffdf36e35ca572106f11"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:035aedebd910a94355107a69029274dbe90089bf6b824ecd2d9b7e84774bc8a8"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:523f8b4c5cdf356f228168d93b2cc7fed42303be5ce735d9ee58e8296381bb09"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:e9e569c13f98e61778da5dc7fbce382b403791adfe6b8b4ae5d8645c37371e89"
+    },
+    {
+      "path": "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
+      "sha256": "sha256:6cc4718588a662ba1ee046384bc4168b8bb6bc22a9cde6eeebb68741dd3a30fb"
+    },
+    {
+      "path": "docs/architecture/PHASE_7_LOCAL_V1_CONFORMANCE_FREEZE.md",
+      "sha256": "sha256:61b2624fcd571a40a9caacd2fff244c6759ec93d7ef770f5a47d0f0f69972493"
+    },
+    {
+      "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+      "sha256": "sha256:e754a92e334586c65f38a080884c03549689731af6bfadbae7803694bff4a491"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "sha256": "sha256:ee55192ec4726401d620eb3d6f23dedc5b33587969b28114774e30c4c8a68388"
+    },
+    {
+      "path": "fixtures/contracts/phase7-local-v1-conformance-v1.json",
+      "sha256": "sha256:81452f68a052d41aa49239f0451864a33434b3ab0077c249571ea80e24f5707f"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:21d0574ee7aa18361bec7294e00ec69e3bceb042752856e781b529713baf2e48"
+    },
+    {
+      "path": "scripts/check-phase7-local-conformance.mjs",
+      "sha256": "sha256:9d769f9fd200c4584b545baa0ace882839caa8e83c3b3331d000416f663cc56c"
+    },
+    {
+      "path": "scripts/check-phase7-local-conformance.test.mjs",
+      "sha256": "sha256:e7da6b1fbdff4dde55cba71c27fab7fa54eb7e293b89ef4733cc36dcad6f0705"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.mjs",
+      "sha256": "sha256:72768458e92db8f36ff30dde2344183a1ffc864375a8e8a3664ebe1e49ef2184"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.test.mjs",
+      "sha256": "sha256:ac971e7ddf29bdce1250c2e94f4669a3ec10ab5c0c8b25ca620788d14159d2d3"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.mjs",
+      "sha256": "sha256:9b749fd01cf8a22928743938aff4731b6100c83d34eba17ffbaf072bce6c6b22"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.test.mjs",
+      "sha256": "sha256:35ab7c17d9e02dba955b6b2f07f307587a4de3b9e496582d78944d6f79f5d933"
+    },
+    {
+      "path": "scripts/run-rust-workspace.mjs",
+      "sha256": "sha256:72b0a96a12496debd58f1768f60bbcccd711c418c1d519171fbf81639bbd248f"
+    }
+  ],
+  "reviewer": {
+    "identity": "frontier-codex:independent-worker/x1-final-review2",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "GPT-5.6-sol frontier Codex independent read-only exact-revision review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

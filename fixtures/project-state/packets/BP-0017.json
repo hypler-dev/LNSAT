@@ -1,0 +1,11 @@
+{
+  "id": "BP-0017",
+  "phase": "MCP",
+  "status": "done",
+  "objective": "Demonstrate read-only fixture-backed packet inspection.",
+  "acceptance_checks": ["Response is deterministic", "Side effects remain empty"],
+  "verification_commands": ["npm test --workspace @lnsat/mcp"],
+  "result": {
+    "side_effects": []
+  }
+}

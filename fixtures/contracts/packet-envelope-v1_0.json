@@ -1,0 +1,165 @@
+{
+  "schema": "lnsat.packet_envelope.golden_vectors.v1_0",
+  "vectors": [
+    {
+      "case_id": "execution_packet_v1",
+      "packet": {
+        "contract_version": "lnsat.contracts.v1_0",
+        "schema_id": "lnsat.packet_envelope.schema.v1_0",
+        "packet_id": "pkt_execute_v1_0001",
+        "packet_type": "ExecutionPacket",
+        "actor_ref": "identity:agent:codex",
+        "session_ref": "session:local:0001",
+        "project_ref": "project:lnsat",
+        "intent": "Run source verification inside the approved workspace boundary.",
+        "risk_level": 3,
+        "source_refs": ["doc:docs/architecture/PACKET_MODEL.md", "repo:lnsat"],
+        "resource_refs": ["repo:lnsat"],
+        "policy_profile_ref": "policy:agent_sandbox",
+        "permission_envelope": {
+          "allow": ["tests.run.sandbox"],
+          "block": ["database.write", "deploy.execute", "network.open", "ssh"]
+        },
+        "budget": {
+          "tokens": 4000,
+          "runtime_seconds": 900,
+          "cost_microusd": 500000,
+          "cpu_millicores": 2000,
+          "memory_bytes": 4294967296
+        },
+        "constraints": {
+          "network": "disabled",
+          "writes": "workspace_only"
+        },
+        "requires_approval": false,
+        "idempotency_key": "idem_execute_v1_0001",
+        "created_at": "2026-07-22T20:00:00Z",
+        "expires_at": "2026-07-22T20:15:00Z"
+      },
+      "canonical_json": "{\"actor_ref\":\"identity:agent:codex\",\"budget\":{\"cost_microusd\":500000,\"cpu_millicores\":2000,\"memory_bytes\":4294967296,\"runtime_seconds\":900,\"tokens\":4000},\"constraints\":{\"network\":\"disabled\",\"writes\":\"workspace_only\"},\"contract_version\":\"lnsat.contracts.v1_0\",\"created_at\":\"2026-07-22T20:00:00Z\",\"expires_at\":\"2026-07-22T20:15:00Z\",\"idempotency_key\":\"idem_execute_v1_0001\",\"intent\":\"Run source verification inside the approved workspace boundary.\",\"packet_id\":\"pkt_execute_v1_0001\",\"packet_type\":\"ExecutionPacket\",\"permission_envelope\":{\"allow\":[\"tests.run.sandbox\"],\"block\":[\"database.write\",\"deploy.execute\",\"network.open\",\"ssh\"]},\"policy_profile_ref\":\"policy:agent_sandbox\",\"project_ref\":\"project:lnsat\",\"requires_approval\":false,\"resource_refs\":[\"repo:lnsat\"],\"risk_level\":3,\"schema_id\":\"lnsat.packet_envelope.schema.v1_0\",\"session_ref\":\"session:local:0001\",\"source_refs\":[\"doc:docs/architecture/PACKET_MODEL.md\",\"repo:lnsat\"]}",
+      "canonical_sha256": "sha256:2c16bde69ca4d359dd2f29226c0dc852ce706309556380b1cecd9b4ca484d101"
+    }
+  ],
+  "canonicalization_cases": [
+    {
+      "case_id": "utf16_order_array_and_escape",
+      "constraints": {
+        "\ue000": "bmp",
+        "😀": "supplementary",
+        "array": [
+          {
+            "z": 2,
+            "a": 1
+          },
+          "line\nbreak",
+          "é",
+          "line\u2028paragraph\u2029end"
+        ]
+      },
+      "expected_canonical_json": "{\"actor_ref\":\"identity:agent:codex\",\"budget\":{\"cost_microusd\":500000,\"cpu_millicores\":2000,\"memory_bytes\":4294967296,\"runtime_seconds\":900,\"tokens\":4000},\"constraints\":{\"array\":[{\"a\":1,\"z\":2},\"line\\nbreak\",\"é\",\"line\u2028paragraph\u2029end\"],\"😀\":\"supplementary\",\"\ue000\":\"bmp\"},\"contract_version\":\"lnsat.contracts.v1_0\",\"created_at\":\"2026-07-22T20:00:00Z\",\"expires_at\":\"2026-07-22T20:15:00Z\",\"idempotency_key\":\"idem_execute_v1_0001\",\"intent\":\"Run source verification inside the approved workspace boundary.\",\"packet_id\":\"pkt_execute_v1_0001\",\"packet_type\":\"ExecutionPacket\",\"permission_envelope\":{\"allow\":[\"tests.run.sandbox\"],\"block\":[\"database.write\",\"deploy.execute\",\"network.open\",\"ssh\"]},\"policy_profile_ref\":\"policy:agent_sandbox\",\"project_ref\":\"project:lnsat\",\"requires_approval\":false,\"resource_refs\":[\"repo:lnsat\"],\"risk_level\":3,\"schema_id\":\"lnsat.packet_envelope.schema.v1_0\",\"session_ref\":\"session:local:0001\",\"source_refs\":[\"doc:docs/architecture/PACKET_MODEL.md\",\"repo:lnsat\"]}",
+      "expected_sha256": "sha256:7ee693f729aa95b7c20d4d9ea65e5c0057c48064b687305195668e82737cb0c4"
+    }
+  ],
+  "validation_cases": [
+    {
+      "case_id": "valid_golden_packet",
+      "mutation": "none",
+      "expected": "ok"
+    },
+    {
+      "case_id": "malformed_json",
+      "mutation": "malformed_json",
+      "expected": "packet_envelope.invalid_json"
+    },
+    {
+      "case_id": "root_array",
+      "mutation": "root_array",
+      "expected": "packet_envelope.invalid_type"
+    },
+    {
+      "case_id": "unknown_root_field",
+      "mutation": "add_unknown_root_field",
+      "expected": "packet_envelope.unexpected_field"
+    },
+    {
+      "case_id": "missing_schema",
+      "mutation": "remove_schema_id",
+      "expected": "packet_envelope.missing_required_field"
+    },
+    {
+      "case_id": "unsupported_contract",
+      "mutation": "set_contract_v1_1",
+      "expected": "packet_envelope.unsupported_contract_version"
+    },
+    {
+      "case_id": "contract_wrong_type",
+      "mutation": "set_contract_number",
+      "expected": "packet_envelope.unsupported_contract_version"
+    },
+    {
+      "case_id": "unsupported_schema",
+      "mutation": "set_schema_v0_1",
+      "expected": "packet_envelope.unsupported_schema"
+    },
+    {
+      "case_id": "risk_wrong_type",
+      "mutation": "set_risk_string",
+      "expected": "packet_envelope.invalid_field"
+    },
+    {
+      "case_id": "integral_decimal_risk",
+      "mutation": "set_risk_integral_decimal",
+      "expected": "ok"
+    },
+    {
+      "case_id": "permission_wrong_type",
+      "mutation": "set_permission_allow_string",
+      "expected": "packet_envelope.invalid_field"
+    },
+    {
+      "case_id": "permission_leading_digit",
+      "mutation": "set_permission_leading_digit",
+      "expected": "packet_envelope.invalid_field"
+    },
+    {
+      "case_id": "permission_allow_unsorted",
+      "mutation": "set_permission_allow_unsorted",
+      "expected": "packet_envelope.noncanonical_collection"
+    },
+    {
+      "case_id": "permission_block_duplicate",
+      "mutation": "set_permission_block_duplicate",
+      "expected": "packet_envelope.noncanonical_collection"
+    },
+    {
+      "case_id": "permission_allow_block_conflict",
+      "mutation": "set_permission_allow_block_conflict",
+      "expected": "packet_envelope.invalid_field"
+    },
+    {
+      "case_id": "created_at_invalid_calendar",
+      "mutation": "set_created_at_invalid_calendar",
+      "expected": "packet_envelope.invalid_field"
+    },
+    {
+      "case_id": "expires_not_after_created",
+      "mutation": "set_expires_equal_created",
+      "expected": "packet_envelope.invalid_time_window"
+    },
+    {
+      "case_id": "constraint_fractional_number",
+      "mutation": "set_constraint_fractional_number",
+      "expected": "packet_envelope.invalid_field"
+    },
+    {
+      "case_id": "constraint_unsafe_integer",
+      "mutation": "set_constraint_unsafe_integer",
+      "expected": "packet_envelope.invalid_field"
+    },
+    {
+      "case_id": "constraint_negative_zero",
+      "mutation": "set_constraint_negative_zero",
+      "expected": "packet_envelope.invalid_field"
+    }
+  ]
+}

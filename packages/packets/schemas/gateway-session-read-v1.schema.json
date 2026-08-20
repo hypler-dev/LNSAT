@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-session-read-v1.schema.json",
+  "title": "LNSAT Gateway Session Read v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "status",
+        "session",
+        "transport",
+        "side_effects",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.session_read.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": true
+        },
+        "status": {
+          "const": "authenticated"
+        },
+        "session": {
+          "$ref": "#/$defs/session"
+        },
+        "transport": {
+          "$ref": "#/$defs/transport"
+        },
+        "side_effects": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "session_activity_evidence_may_append"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "session",
+        "errors",
+        "side_effects",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.session_read.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": false
+        },
+        "session": {
+          "type": "null"
+        },
+        "errors": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/error"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "side_effects": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "identity_ref", "role", "issued_at", "expires_at"],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "identity_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "role": {
+          "enum": ["owner", "operator", "auditor"]
+        },
+        "issued_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        },
+        "expires_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        }
+      }
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bind_scope", "same_origin_required", "cors_enabled"],
+      "properties": {
+        "bind_scope": {
+          "const": "loopback"
+        },
+        "same_origin_required": {
+          "const": true
+        },
+        "cors_enabled": {
+          "const": false
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message", "severity"],
+      "properties": {
+        "code": {
+          "const": "gateway.session_read.denied"
+        },
+        "path": {
+          "const": "/session"
+        },
+        "message": {
+          "const": "Session read denied."
+        },
+        "severity": {
+          "const": "error"
+        }
+      }
+    }
+  }
+}

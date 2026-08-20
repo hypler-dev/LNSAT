@@ -1,0 +1,213 @@
+# ADR-0007: Docker-First Runtime-Neutral Enforcement
+
+- Status: accepted architecture direction
+- Date: 2026-08-20
+- Decision owners: LNSAT maintainers
+- Extends: ADR-0002 and ADR-0003 without changing the fourteen-phase release
+  gate
+- Implementation state: direction only; no Docker adapter, image, package, or
+  supported runtime exists
+
+## Context
+
+LNSAT must become usable soon without rebuilding agent runtimes, MCP lifecycle
+management, container isolation, or VM orchestration. Docker Agent, Docker MCP
+Gateway, and Docker Sandboxes already cover substantial parts of those adjacent
+problems. LNSAT should integrate with them while retaining its distinct
+boundary: deterministic authorization and durable evidence for consequential
+actions.
+
+Docker is a practical first integration because it provides a widely available
+OCI execution boundary and an existing MCP operations layer. Docker must not
+become the source of LNSAT authority, a required paid governance dependency, or
+the only future execution substrate.
+
+Current LNSAT source remains one local loopback authority cell with SQLite and
+bounded local foundations. Runtime-target contracts and adapter manifests are
+declarative today; they do not grant invocation or execution authority.
+
+## Decision
+
+### Docker Is the First Runtime Profile
+
+First v1 integration target is one local, single-node Docker/OCI profile. Its
+intended vertical path is:
+
+```text
+agent or MCP client
+  -> LNSAT Gateway authority facade
+  -> identity + policy + distinct approval + one-time authorization
+  -> isolated Docker adapter
+  -> Docker MCP Gateway or bounded OCI workload
+  -> bound receipt + audit + reconciliation
+```
+
+Docker Agent may act as a client. Docker MCP Gateway may provide upstream MCP
+catalog, routing, OAuth, and server lifecycle. Docker Sandboxes may provide a
+microVM boundary. Each remains replaceable. Possession of a Docker socket,
+container endpoint, MCP session, runtime process, or governance decision never
+grants LNSAT action authority.
+
+Agents do not receive direct Docker-socket access, upstream infrastructure
+credentials, or unrestricted tools. Only the adapter receives a narrow,
+expiring authorization bound to exact operation, action, arguments, target,
+runtime profile, adapter, attempt, and idempotency identities. It returns a
+verifiable receipt or an explicit ambiguous outcome. Transport loss never
+means success or confirmed non-execution.
+
+### Runtime-Neutral Core
+
+Public core owns one closed, versioned runtime-target contract and conformance
+suite. Planned profile families are:
+
+- `docker_local`: first v1 integration target;
+- `secure_vm`: later integration with an independently managed VM or microVM;
+- `native_host`: later constrained host-service integration with weaker
+  isolation claims;
+- `remote_connector`: later authenticated out-of-process adapter integration.
+
+Names above are architecture identifiers, not current schema values or support
+claims. Adding a profile requires explicit design, threat-model, compatibility,
+artifact, lifecycle, and conformance proof. Authority semantics cannot fork by
+runtime, package, edition, or connector.
+
+Deployment, transport, and execution are separate choices. `lnsatd` may run on
+a host while an adapter uses Docker; a future VM may contain both; a remote
+adapter may use neither. LNSAT does not become a container orchestrator, VM
+manager, operating-system hardener, or general agent runtime.
+
+Docker governance controls are optional defense in depth. LNSAT cannot require
+commercial Docker policy services for core security behavior. Any upstream
+allow remains untrusted input until LNSAT independently authorizes exact action.
+
+### Monotonic Configuration Inheritance
+
+Operational and managed configuration resolves through explicit, versioned
+layers:
+
+1. compiled safety floor;
+2. managed organization baseline, when present;
+3. deployment or project configuration;
+4. runtime-profile and connector configuration;
+5. local operator narrowing;
+6. request-scoped narrowing.
+
+Resolution is visible in redacted diagnostics and evidence. Later layers may
+narrow authority, lower limits, or require stronger approval. They cannot
+silently remove inherited denies, approval requirements, evidence obligations,
+runtime restrictions, or emergency stops.
+
+Normative merge rules are fail-closed:
+
+- deny sets combine by union;
+- allow sets combine by intersection;
+- numeric and time limits choose most restrictive bound;
+- approval chooses strongest applicable requirement;
+- unknown, malformed, ambiguous, conflicting, or unsafe values deny startup or
+  action admission;
+- secrets remain references and never appear in resolved output.
+
+Phase 10 owns explicit operational schema, source selection, precedence, and
+redacted resolution evidence. Broader organization policy distribution remains
+later work.
+
+### Authority-Managed Emergency Stop
+
+Every runtime profile must support a monotonic stop state scoped to one or more
+of operation, capability, connector, project, tenant, runtime profile, or local
+authority cell. Stop state carries immutable event identity, authority actor,
+reason class, activation time, scope, and generation or epoch.
+
+An active stop:
+
+- denies new matching authorizations and dispatches;
+- revokes or expires matching pending authority where contractually safe;
+- requests cancellation only through an adapter's bounded cancellation
+  contract;
+- preserves `outcome_unknown` and reconciliation for attempts that may already
+  have crossed consequence boundary;
+- cannot erase receipts, evidence, or audit history.
+
+Stop must be easy for authorized operators to activate. Resume requires
+separate, equal-or-stronger authority and explicit evidence; process restart,
+configuration reload, adapter reconnect, or Docker restart cannot clear it.
+
+This decision defines required semantics only. It does not open served stop,
+resume, cancellation, or recovery mutation routes.
+
+### Data and Transport
+
+LNSAT continues using versioned JSON contracts and canonical byte/digest rules.
+A custom file format is not required. JSON is not a security boundary: local
+transports require strict origin/peer checks, remote transports require a
+separately approved authenticated and confidential profile, and every
+consequential message requires schema validation, exact identity binding,
+authorization, replay protection, size limits, and secret-safe logging.
+
+Current SQLite remains initial single-node authority store. Large datasets,
+artifacts, logs, and customer payloads stay outside it; LNSAT stores identities,
+digests, decisions, authorization state, receipts, and bounded evidence.
+
+## Initial v1 Scope
+
+Docker-first v1 remains deliberately small:
+
+- one owner-controlled, local/self-hosted, single-node authority cell;
+- one explicit Docker/OCI runtime profile;
+- one isolated adapter and one bounded disposable consequence;
+- existing MCP/CLI/UI surfaces over same Gateway decisions;
+- exact configuration resolution, emergency-stop semantics, receipt binding,
+  ambiguity handling, reconciliation, recovery, and release proof;
+- non-root and least-privilege operation, with no automatic host lockdown or
+  service start.
+
+Multi-tenant service operation, fleet/HA, hosted control planes, certified
+product connectors, custom secure-VM images, native-host support, and broad
+provider actions remain later lanes. External management and commerce products
+may connect after public contracts stabilize; they are not v1 dependencies.
+
+## Security Boundaries
+
+- Gateway remains sole action-authority boundary.
+- Executor or adapter compromise cannot mint, widen, approve, or replay
+  authority.
+- Runtime selection and immutable artifact/runtime digests bind before
+  approval and cannot drift before dispatch.
+- Claim, dispatch, receipt, and reconciliation preserve one-time consumption
+  and fencing across crashes and retries.
+- No blind retry follows an ambiguous consequence boundary.
+- Secrets are references only; no credentials or tokens appear in packets,
+  arguments, diagnostics, receipts, or source control.
+- Native-host enforcement cannot be described as tamper-resistant when agent
+  or workload retains root or equivalent administrator authority.
+
+## Required Proof Before Support
+
+Docker support cannot be claimed until checked-in evidence proves:
+
+1. closed runtime-profile schema and fail-closed parser behavior;
+2. exact configuration inheritance and redacted resolved-source diagnostics;
+3. adapter isolation with no agent Docker-socket or ambient-credential access;
+4. authorization-to-runtime and receipt cross-binding;
+5. one-time consumption under concurrency, crash, reconnect, and replay;
+6. stop/resume authorization, persistence, restart, and reconciliation
+   behavior;
+7. OCI image provenance, SBOM, signature verification, reproducibility, and
+   lifecycle behavior for every selected support row;
+8. compatibility and conformance across selected Docker versions and hosts;
+9. anonymous clean-install and explicit-start proof in disposable environments;
+10. Phase 13 and Phase 14 release gates plus separate publication authority.
+
+## Consequences
+
+- Docker becomes build priority, not product identity.
+- LNSAT reuses Docker runtime and MCP strengths instead of duplicating them.
+- Secure VM, native-host, and remote connectors reuse one authority contract
+  later, with profile-specific isolation claims.
+- Phase 10 remains next gate because visible fail-closed configuration is
+  prerequisite to any runtime adapter.
+- Phase 11 should prove existing bounded consequence through selected Docker
+  profile without opening production repositories or unrestricted
+  infrastructure.
+- No code, Dockerfile, image, package, connector, route, credential, release,
+  publication, deployment, or production authority is created by this ADR.

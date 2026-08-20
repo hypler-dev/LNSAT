@@ -1,0 +1,59 @@
+{
+  "schema": "lnsat.error_envelope.golden_vectors.v1_0",
+  "vectors": [
+    {
+      "case_id": "contract_version_unsupported",
+      "family_result_field": "version",
+      "expected": {
+        "code": "contract.version.unsupported",
+        "path": "/version",
+        "severity": "error"
+      }
+    },
+    {
+      "case_id": "packet_contract_unsupported",
+      "family_result_field": "packet",
+      "expected": {
+        "code": "packet_envelope.unsupported_contract_version",
+        "path": "/contract_version",
+        "severity": "error"
+      }
+    },
+    {
+      "case_id": "policy_time_malformed",
+      "family_result_field": "policy_decision",
+      "expected": {
+        "code": "policy_decision.invalid_evaluation_time",
+        "path": "/evaluated_at",
+        "severity": "error"
+      }
+    },
+    {
+      "case_id": "approval_request_not_required",
+      "family_result_field": "approval_request",
+      "expected": {
+        "code": "approval_request.not_required",
+        "path": "/policy_decision/decision",
+        "severity": "error"
+      }
+    },
+    {
+      "case_id": "approval_decision_input_malformed",
+      "family_result_field": "approval_decision",
+      "expected": {
+        "code": "approval_decision.invalid_input",
+        "path": "/decision",
+        "severity": "error"
+      }
+    },
+    {
+      "case_id": "audit_input_malformed",
+      "family_result_field": "audit_event",
+      "expected": {
+        "code": "audit_event.invalid_input",
+        "path": "/input",
+        "severity": "error"
+      }
+    }
+  ]
+}

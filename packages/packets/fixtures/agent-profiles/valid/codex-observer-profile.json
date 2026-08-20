@@ -1,0 +1,44 @@
+{
+  "actor_id": "agent.codex",
+  "display_name": "Codex Observer",
+  "provider": "OpenAI Codex",
+  "model_or_client": "codex-cli",
+  "role": "observer",
+  "status": "draft",
+  "source_refs": [
+    "doc:docs/onboarding/AGENT_ONBOARDING.md",
+    "doc:packages/packets/fixtures/agent-profiles/valid/codex-observer-profile.json",
+    "doc:docs/ROADMAP.md"
+  ],
+  "projects_allowed": ["lnsat"],
+  "capabilities": {
+    "allow": ["context.read", "context.compile", "repo.read"],
+    "block": ["secret.read.never", "raw_shell", "production_db.write", "deploy.prod"]
+  },
+  "budgets": {
+    "token_limit": 120000,
+    "cost_usd": 10,
+    "runtime_seconds": 7200
+  },
+  "session": {
+    "ttl_seconds": 7200,
+    "requires_human_owner": true
+  },
+  "approval": {
+    "required_for": [
+      "repo.write_branch",
+      "tests.run.sandbox",
+      "container.sandbox",
+      "deploy.request"
+    ]
+  },
+  "output_contract": {
+    "required_sections": ["summary", "verification", "next_step"],
+    "forbidden_actions": [
+      "echo_secret_values",
+      "mutate_live_services",
+      "bypass_gateway_policy"
+    ]
+  },
+  "notes": "Clean-room agent profile fixture for BP-0021 validation only."
+}

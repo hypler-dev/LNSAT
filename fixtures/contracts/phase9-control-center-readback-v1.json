@@ -1,0 +1,30 @@
+{
+  "schema_id": "lnsat.control_center.operation_readback.v1_0",
+  "source_kinds": ["live_gateway", "synthetic_fixture"],
+  "observation_statuses": ["fresh", "stale", "degraded", "unavailable"],
+  "presentation_states": [
+    "prepared",
+    "expired",
+    "receipt_pending",
+    "unknown",
+    "reconciling",
+    "completed",
+    "failed"
+  ],
+  "source_contract": "lnsat.gateway.runtime_composition.v1_0",
+  "source_contract_version": "lnsat.contracts.v1_0",
+  "mappings": {
+    "prepared_active": "prepared",
+    "prepared_expired": "expired",
+    "dispatching_without_receipt": "receipt_pending",
+    "outcome_unknown": "unknown",
+    "reconciliation_in_progress": "reconciling",
+    "completed_with_receipt": "completed",
+    "completed_without_receipt": "degraded_unknown",
+    "failed_with_gateway_evidence": "failed"
+  },
+  "read_only": true,
+  "runtime_authority": false,
+  "action_authority": false,
+  "retry_available": false
+}

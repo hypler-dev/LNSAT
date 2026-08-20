@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/universal-packet.schema.json",
+  "title": "LNSAT Universal Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "packet_type",
+    "version",
+    "project_id",
+    "actor_id",
+    "session_id",
+    "intent",
+    "risk_level",
+    "source_refs",
+    "resource_refs",
+    "policy_profile",
+    "permission_envelope",
+    "budget",
+    "constraints",
+    "requires_approval",
+    "ttl_seconds",
+    "created_at"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "pattern": "^pkt_[a-z0-9][a-z0-9_-]{7,63}$"
+    },
+    "packet_type": {
+      "$ref": "./universal-packet-definitions.schema.json#/$defs/packet_type"
+    },
+    "version": {
+      "const": "0.1"
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^sess_[a-z0-9][a-z0-9_-]{7,63}$"
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "risk_level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 8
+    },
+    "source_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "resource_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "policy_profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "permission_envelope": {
+      "$ref": "./universal-packet-definitions.schema.json#/$defs/permission_envelope"
+    },
+    "budget": {
+      "$ref": "./universal-packet-definitions.schema.json#/$defs/budget"
+    },
+    "constraints": {
+      "type": "object"
+    },
+    "requires_approval": {
+      "type": "boolean"
+    },
+    "ttl_seconds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

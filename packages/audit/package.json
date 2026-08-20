@@ -1,0 +1,24 @@
+{
+  "name": "@lnsat/audit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Audit contracts and PostgreSQL writer foundation for LNSAT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hypler-dev/LNSAT.git",
+    "directory": "packages/audit"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lnsat/packets": "0.1.0",
+    "@lnsat/policy": "0.1.0"
+  },
+  "license": "Apache-2.0"
+}

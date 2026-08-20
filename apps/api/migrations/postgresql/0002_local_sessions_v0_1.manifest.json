@@ -1,0 +1,31 @@
+{
+  "artifact_id": "local_sessions.postgresql.0002.v0_1",
+  "packet_id": "BP-0872",
+  "schema_version": "local_sessions.v0_1",
+  "target_storage": "PostgreSQL",
+  "environment": "loopback_disposable_local_development_only",
+  "sql_artifact": "apps/api/migrations/postgresql/0002_local_sessions_v0_1.sql",
+  "installed_schema_catalog_sha256": "7cd7986c78f576eb4d3de174b97ce7c6d479915024841b72234feba22a0e861f",
+  "tables": ["local_operators", "local_sessions"],
+  "persistence": "credential, session token, and client-binding proof digests only",
+  "raw_credential_storage": "ignored owner-only local-state file",
+  "raw_session_delivery": "single HttpOnly SameSite=Strict loopback cookie plus separate one-time client-binding response header; neither appears in response body, database, log, fixture, or error",
+  "rollback": "guarded reset removes only the disposable local-state cluster and re-bootstrap reapplies committed migrations",
+  "forbidden": [
+    "raw_credential_or_session_database_storage",
+    "non_loopback_exposure",
+    "production_or_customer_data",
+    "provider_or_model_dispatch",
+    "hosted_runtime",
+    "deploy_or_dns_mutation",
+    "external_ssh",
+    "public_package_publication",
+    "paid_service",
+    "release_signing_sbom_provenance_attestation"
+  ],
+  "side_effects": [
+    "local_disposable_operator_table_created",
+    "local_disposable_session_table_created",
+    "local_migration_ledger_record_appended"
+  ]
+}

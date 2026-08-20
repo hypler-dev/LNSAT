@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/project-profile.schema.json",
+  "title": "LNSAT Project Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "display_name",
+    "owner",
+    "status",
+    "source_refs",
+    "repos",
+    "docs",
+    "runtimes",
+    "resources",
+    "secrets",
+    "policies"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{2,63}$"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "indexed",
+        "packet_ready",
+        "sandbox_ready",
+        "operator_ready",
+        "fleet_ready",
+        "archived"
+      ]
+    },
+    "source_refs": {
+      "$ref": "#/$defs/string_list"
+    },
+    "repos": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "default_branch"],
+        "anyOf": [{ "required": ["path"] }, { "required": ["remote"] }],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "remote": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default_branch": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "docs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entrypoints"],
+      "properties": {
+        "entrypoints": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "runtimes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["languages", "package_managers", "build_commands", "test_commands"],
+      "properties": {
+        "languages": {
+          "$ref": "#/$defs/string_list"
+        },
+        "package_managers": {
+          "$ref": "#/$defs/string_list"
+        },
+        "build_commands": {
+          "$ref": "#/$defs/string_list"
+        },
+        "test_commands": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "services",
+        "databases",
+        "queues",
+        "object_storage",
+        "models",
+        "domains"
+      ],
+      "properties": {
+        "services": {
+          "$ref": "#/$defs/string_list"
+        },
+        "databases": {
+          "$ref": "#/$defs/string_list"
+        },
+        "queues": {
+          "$ref": "#/$defs/string_list"
+        },
+        "object_storage": {
+          "$ref": "#/$defs/string_list"
+        },
+        "models": {
+          "$ref": "#/$defs/string_list"
+        },
+        "domains": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["refs_only"],
+      "properties": {
+        "refs_only": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_role",
+        "allowed_capabilities",
+        "blocked_capabilities",
+        "approval_required_for"
+      ],
+      "properties": {
+        "default_role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowed_capabilities": {
+          "$ref": "#/$defs/string_list"
+        },
+        "blocked_capabilities": {
+          "$ref": "#/$defs/string_list"
+        },
+        "approval_required_for": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "string_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

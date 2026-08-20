@@ -1,0 +1,55 @@
+{
+  "artifact_id": "audit_events.postgresql.0001.v0_1",
+  "packet_id": "BP-0044",
+  "schema_version": "audit_events.v0_1",
+  "target_storage": "PostgreSQL",
+  "target_table": "audit_events",
+  "sql_artifact": "packages/audit/migrations/postgresql/0001_audit_events_v0_1.sql",
+  "source_contract_refs": [
+    {
+      "packet_id": "BP-0036",
+      "ref": "packages/audit/src/index.ts",
+      "contract": "AuditLedgerRecord"
+    },
+    {
+      "packet_id": "BP-0039",
+      "ref": "packages/policy/src/index.ts",
+      "contract": "lnsat.policy.audit_ledger_writer_gate.v0_1"
+    },
+    {
+      "packet_id": "BP-0040",
+      "ref": "packages/policy/src/index.ts",
+      "contract": "lnsat.policy.audit_ledger_writer_approval_request.v0_1"
+    },
+    {
+      "packet_id": "BP-0041",
+      "ref": "docs/architecture/DATA_MODEL.md",
+      "contract": "PostgreSQL audit_events hot storage choice"
+    },
+    {
+      "packet_id": "BP-0042",
+      "ref": "docs/architecture/DATA_MODEL.md",
+      "contract": "audit_events.v0_1 schema contract"
+    },
+    {
+      "packet_id": "BP-0043",
+      "ref": "docs/architecture/AUDIT_LEDGER_MIGRATION_ARTIFACTS.md",
+      "contract": "repo-local no-live migration artifact plan"
+    }
+  ],
+  "policy_gate_required": "lnsat.policy.audit_ledger_writer_gate.v0_1",
+  "approval_request_required": "lnsat.policy.audit_ledger_writer_approval_request.v0_1",
+  "live_execution_allowed": false,
+  "side_effects": [],
+  "review_checks": [
+    "SQL artifact preserves every BP-0036 AuditLedgerRecord field.",
+    "SQL artifact adds only canonical_record_digest, schema_version, and inserted_at as storage-owned fields.",
+    "ledger_record_id is primary key.",
+    "event_id is unique.",
+    "idempotency_key is unique.",
+    "canonical_record_digest uses sha256:<64 lowercase hex> shape.",
+    "event_type, result_status, retention_class, redaction states, risk_level, JSON shapes, source_refs, and timestamps are constrained.",
+    "Artifact contains no live connection command, credential or role creation, seed data, writer function, queue, scheduled job, environment-specific content, or runtime mutation.",
+    "Future live execution requires BP-0039 writer.migrate policy gate evidence and BP-0040 approval request evidence."
+  ]
+}

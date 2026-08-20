@@ -1,0 +1,205 @@
+{
+  "schema": "lnsat.policy_decision.golden_vectors.v1_0",
+  "vectors": [
+    {
+      "case_id": "allow_sandbox_test",
+      "packet_vector": {
+        "path": "fixtures/contracts/packet-envelope-v1_0.json",
+        "case_id": "execution_packet_v1"
+      },
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision_id": "pol_b70956bfbc87d65b119fcc9cd76687fb5fb0164ecf58135defeffa2f0901049e",
+        "packet_hash": "sha256:2c16bde69ca4d359dd2f29226c0dc852ce706309556380b1cecd9b4ca484d101",
+        "decision": "allow",
+        "requires_approval": false,
+        "capability_decisions": [
+          {
+            "capability": "tests.run.sandbox",
+            "decision": "allow",
+            "reason_code": null
+          }
+        ],
+        "reason_codes": [],
+        "side_effects": []
+      }
+    }
+  ],
+  "evaluation_cases": [
+    {
+      "case_id": "allow_sandbox_test",
+      "mutation": "none",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "allow",
+        "requires_approval": false,
+        "reason_codes": [],
+        "capability_decisions": [
+          {
+            "capability": "tests.run.sandbox",
+            "decision": "allow",
+            "reason_code": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "unsupported_profile_denied",
+      "mutation": "set_unsupported_profile",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "deny",
+        "requires_approval": false,
+        "reason_codes": ["policy.profile_unsupported"],
+        "capability_decisions": [
+          {
+            "capability": "tests.run.sandbox",
+            "decision": "deny",
+            "reason_code": "policy.profile_unsupported"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "forbidden_capability_denied",
+      "mutation": "set_forbidden_capability",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "deny",
+        "requires_approval": false,
+        "reason_codes": ["policy.capability_forbidden"],
+        "capability_decisions": [
+          {
+            "capability": "root",
+            "decision": "deny",
+            "reason_code": "policy.capability_forbidden"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "unknown_capability_denied",
+      "mutation": "set_unknown_capability",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "deny",
+        "requires_approval": false,
+        "reason_codes": ["policy.capability_unknown"],
+        "capability_decisions": [
+          {
+            "capability": "teleport.execute",
+            "decision": "deny",
+            "reason_code": "policy.capability_unknown"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "empty_capability_denied",
+      "mutation": "clear_capabilities",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "deny",
+        "requires_approval": false,
+        "reason_codes": ["policy.no_capability_requested"],
+        "capability_decisions": []
+      }
+    },
+    {
+      "case_id": "packet_flag_requires_approval",
+      "mutation": "set_requires_approval",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "approval_required",
+        "requires_approval": true,
+        "reason_codes": ["policy.packet_requires_approval"],
+        "capability_decisions": [
+          {
+            "capability": "tests.run.sandbox",
+            "decision": "allow",
+            "reason_code": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "risk_threshold_requires_approval",
+      "mutation": "set_risk_threshold",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "approval_required",
+        "requires_approval": true,
+        "reason_codes": ["policy.risk_requires_approval"],
+        "capability_decisions": [
+          {
+            "capability": "tests.run.sandbox",
+            "decision": "allow",
+            "reason_code": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "capability_gate_requires_approval",
+      "mutation": "set_approval_capability",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "approval_required",
+        "requires_approval": true,
+        "reason_codes": ["policy.capability_requires_approval"],
+        "capability_decisions": [
+          {
+            "capability": "deploy.request",
+            "decision": "approval_required",
+            "reason_code": "policy.capability_requires_approval"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "denial_precedes_approval",
+      "mutation": "set_denial_and_approval",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected": {
+        "decision": "deny",
+        "requires_approval": false,
+        "reason_codes": [
+          "policy.capability_forbidden",
+          "policy.packet_requires_approval",
+          "policy.risk_requires_approval"
+        ],
+        "capability_decisions": [
+          {
+            "capability": "root",
+            "decision": "deny",
+            "reason_code": "policy.capability_forbidden"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "evaluation_before_creation_rejected",
+      "mutation": "none",
+      "evaluated_at": "2026-07-22T19:59:59.999Z",
+      "expected_error": "policy_decision.packet_expired"
+    },
+    {
+      "case_id": "evaluation_at_expiry_rejected",
+      "mutation": "none",
+      "evaluated_at": "2026-07-22T20:15:00Z",
+      "expected_error": "policy_decision.packet_expired"
+    },
+    {
+      "case_id": "malformed_evaluation_time_rejected",
+      "mutation": "none",
+      "evaluated_at": "2026-02-31T00:00:00Z",
+      "expected_error": "policy_decision.invalid_evaluation_time"
+    },
+    {
+      "case_id": "invalid_packet_time_rejected",
+      "mutation": "set_invalid_created_at",
+      "evaluated_at": "2026-07-22T20:00:00Z",
+      "expected_error": "policy_decision.invalid_packet"
+    }
+  ]
+}

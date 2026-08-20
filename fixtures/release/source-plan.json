@@ -1,0 +1,9 @@
+{
+  "fixture": true,
+  "version": "0.1.0",
+  "artifact_families": ["source"],
+  "source_archive_verification": "not_executed",
+  "required_security_evidence": ["public-readiness-scan"],
+  "publication_allowed": false,
+  "side_effects": []
+}

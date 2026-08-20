@@ -1,0 +1,49 @@
+name: Source verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Node and Rust source gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Configure Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.22.3
+          cache: npm
+
+      - name: Configure pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --component clippy,rustfmt
+          echo "LNSAT_RUSTUP_HOME=$(rustup show home)" >> "$GITHUB_ENV"
+          echo "LNSAT_CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}" >> "$GITHUB_ENV"
+
+      - name: Fetch locked Rust dependencies
+        run: cargo fetch --locked --config net.offline=false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify public source
+        run: npm run source:check
+
+      - name: Audit dependencies
+        run: npm run audit:dependencies:check

@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-identity-event-read-v1.schema.json",
+  "title": "LNSAT Gateway Identity Event Read v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "status",
+        "scope",
+        "identity_ref",
+        "events",
+        "event_order",
+        "side_effects",
+        "identity_state_changed",
+        "session_authority_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.identity_event_read.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": true
+        },
+        "status": {
+          "const": "evidence_read"
+        },
+        "scope": {
+          "const": "target_identity"
+        },
+        "identity_ref": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 256
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/event"
+          },
+          "maxItems": 65
+        },
+        "event_order": {
+          "const": "event_sequence_ascending"
+        },
+        "side_effects": {
+          "$ref": "#/$defs/activity_side_effects"
+        },
+        "identity_state_changed": {
+          "const": false
+        },
+        "session_authority_state_changed": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "identity_ref",
+        "events",
+        "errors",
+        "side_effects",
+        "identity_state_changed",
+        "session_authority_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.identity_event_read.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": false
+        },
+        "identity_ref": {
+          "type": "null"
+        },
+        "events": {
+          "type": "null"
+        },
+        "errors": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/error"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "side_effects": {
+          "$ref": "#/$defs/activity_side_effects"
+        },
+        "identity_state_changed": {
+          "const": false
+        },
+        "session_authority_state_changed": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "identity_ref",
+        "event_sequence",
+        "event_kind",
+        "actor_session_id",
+        "credential_version",
+        "source_evidence_digest",
+        "occurred_at",
+        "event_evidence_digest"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "identity_ref": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 256
+        },
+        "event_sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65
+        },
+        "event_kind": {
+          "enum": [
+            "owner_bootstrapped",
+            "identity_created",
+            "password_rotated",
+            "identity_disabled",
+            "owner_recovered"
+          ]
+        },
+        "actor_session_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "credential_version": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_evidence_digest": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "occurred_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        },
+        "event_evidence_digest": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "activity_side_effects": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "const": "session_activity_evidence_may_append"
+        }
+      ],
+      "minItems": 1,
+      "maxItems": 1
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message", "severity"],
+      "properties": {
+        "code": {
+          "const": "gateway.identity_event_read.denied"
+        },
+        "path": {
+          "const": "/identities/{identity_ref}/events"
+        },
+        "message": {
+          "const": "Identity event read denied."
+        },
+        "severity": {
+          "const": "error"
+        }
+      }
+    }
+  }
+}

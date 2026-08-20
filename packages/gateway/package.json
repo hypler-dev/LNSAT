@@ -1,0 +1,40 @@
+{
+  "name": "@lnsat/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Transport-neutral Gateway contracts and handlers for LNSAT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hypler-dev/LNSAT.git",
+    "directory": "packages/gateway"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./control-center-readback": {
+      "types": "./src/control-center-readback.ts",
+      "import": "./dist/control-center-readback.js"
+    }
+  },
+  "scripts": {
+    "build": "npm run build -w @lnsat/packets && npm run build -w @lnsat/policy && npm run build -w @lnsat/audit && tsc -p tsconfig.json",
+    "test": "npm run build && vitest run",
+    "test:a2a-contract": "vitest run test/a2a-contract.test.ts",
+    "test:identity-observability": "vitest run test/identity-observability.test.ts",
+    "test:operation-recovery": "vitest run test/operation-recovery.test.ts",
+    "test:registry-supply-chain": "vitest run test/registry-supply-chain.test.ts",
+    "test:control-center-readback": "vitest run test/control-center-readback.test.ts",
+    "typecheck": "npm run build -w @lnsat/packets && npm run build -w @lnsat/policy && npm run build -w @lnsat/audit && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lnsat/audit": "0.1.0",
+    "@lnsat/packets": "0.1.0",
+    "@lnsat/policy": "0.1.0"
+  },
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,16 @@
+# schema: lnsat.contract-version-fixtures.v1_0
+case_id	input	expected_version	expected_stability	expected_error
+supported_v1_0	lnsat.contracts.v1_0	lnsat.contracts.v1_0	stable	-
+deprecated_v0_1	lnsat.contracts.v0_1	lnsat.contracts.v0_1	deprecated	-
+required_empty	<empty>	-	-	contract.version.required
+malformed_space	 lnsat.contracts.v1_0	-	-	contract.version.malformed
+malformed_namespace	lnsat.contract.v1_0	-	-	contract.version.malformed
+malformed_dot_separator	lnsat.contracts.v1.0	-	-	contract.version.malformed
+malformed_missing_minor	lnsat.contracts.v1_	-	-	contract.version.malformed
+malformed_extra_component	lnsat.contracts.v1_0_0	-	-	contract.version.malformed
+malformed_leading_zero_major	lnsat.contracts.v01_0	-	-	contract.version.malformed
+malformed_leading_zero_minor	lnsat.contracts.v1_00	-	-	contract.version.malformed
+malformed_negative	lnsat.contracts.v-1_0	-	-	contract.version.malformed
+unsupported_pre_foundation	lnsat.contracts.v0_0	-	-	contract.version.unsupported
+unsupported_minor	lnsat.contracts.v1_1	-	-	contract.version.unsupported
+unsupported_major	lnsat.contracts.v2_0	-	-	contract.version.unsupported

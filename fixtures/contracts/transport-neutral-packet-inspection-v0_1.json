@@ -1,0 +1,60 @@
+{
+  "contract_id": "lnsat.gateway.packet_inspection.v0_1",
+  "observed_at": "2026-05-03T00:00:00.000Z",
+  "cases": [
+    {
+      "id": "valid_context_packet",
+      "request_id": "req_transport_neutral_valid",
+      "packet_fixture": "packages/packets/fixtures/valid/context-packet.json",
+      "expected": {
+        "ok": true,
+        "request_digest": "sha256:b71b7790d2865485784ca12b5bd7ee027fd532a957603c003f7c74832e055611",
+        "packet_hash": "sha256:2e3967959e325d18a0222afd74f2ade775f6b405cee068c0c26ee0d0d3c6f436",
+        "policy_decision": "allow",
+        "side_effects": []
+      }
+    },
+    {
+      "id": "missing_identity",
+      "request_id": "req_transport_neutral_missing_identity",
+      "packet_fixture": "packages/packets/fixtures/invalid/missing-required-field.json",
+      "expected": {
+        "ok": false,
+        "error_code": "packet.missing_required_field",
+        "error_path": "/intent",
+        "request_digest": null,
+        "side_effects": []
+      }
+    },
+    {
+      "id": "unknown_field_and_scope",
+      "request_id": "req_transport_neutral_scope",
+      "packet_fixture": "packages/packets/fixtures/invalid/rejects-unknown-field.json",
+      "expected": {
+        "ok": false,
+        "error_code": "packet.unexpected_field",
+        "error_path": "/shell",
+        "request_digest": null,
+        "side_effects": []
+      }
+    },
+    {
+      "id": "malformed_gateway_request",
+      "request_id": "req_transport_neutral_malformed",
+      "request": {
+        "packet_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "requested_scope": "production"
+      },
+      "expected": {
+        "ok": false,
+        "request_error_codes": [
+          "gateway.unexpected_field",
+          "gateway.unexpected_field",
+          "gateway.missing_packet"
+        ],
+        "request_digest": null,
+        "side_effects": []
+      }
+    }
+  ]
+}

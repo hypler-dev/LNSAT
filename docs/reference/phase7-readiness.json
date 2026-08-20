@@ -1,0 +1,885 @@
+{
+  "schema_version": "lnsat.phase7_readiness.v3",
+  "packet_provenance": [
+    {
+      "packet_id": "P7-RP0",
+      "completion_revision": "4993eb6def5991d41213daa420a6b230af0ebd2b",
+      "protected_files": [
+        {
+          "path": "docs/DOCS_INDEX.md",
+          "sha256": "sha256:da3a0d8634fa8fdd1962401796a0eba2479cf17b576d20e49c6e9124c465a266"
+        },
+        {
+          "path": "docs/PROJECT_STATUS.md",
+          "sha256": "sha256:7f8cda592ebf86328acefd4ceedfa12f287d68d2ce69a104a7154830aa747697"
+        },
+        {
+          "path": "docs/ROADMAP.md",
+          "sha256": "sha256:6c1fdd73ca3796a45076fe0d130a33c2681022b48f24b4e273e4da3e8f7e97e3"
+        },
+        {
+          "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+          "sha256": "sha256:55c32b4c6e7aa79e467547dc6a9ab803465229c3a1c403ccb84d0170047c63c2"
+        },
+        {
+          "path": "docs/reference/legacy-identifier-inventory.json",
+          "sha256": "sha256:79aee1cb1799ea6e69d544b629a41e23b6b2ffc409e97648619aee5593610f7f"
+        },
+        {
+          "path": "docs/reference/phase7-readiness.json",
+          "sha256": "sha256:6afa3027ddccc9ca56f50239d181f480cbbd0d6472498708785a17f377fa6870"
+        },
+        {
+          "path": "package.json",
+          "sha256": "sha256:b53cb3094b922d4fc8ff5d9626ad6c4bed0e9cca4802a94f4d32e0980f4b9d3a"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:dc62ada7bd92628e587244aa2de7ec772d6f1733fa48a3af51c455021cfb9eec"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:2a60a6d36c8d9f2c49dffcd7094d3852ea4277677e766396bf6aad322ded18fd"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-ADR0",
+      "completion_revision": "699efc76d08d5650be2d98d81f30ab94e2714351",
+      "protected_files": [
+        {
+          "path": "docs/DOCS_INDEX.md",
+          "sha256": "sha256:fa15d3529f99fca6c28df8a21d5f3d76ad6fa7626b788b32e54234916d548e16"
+        },
+        {
+          "path": "docs/PROJECT_STATUS.md",
+          "sha256": "sha256:014544b133b04e1873e5c49296e9d72c6cd21bf852724a61b458e8d358f1cc04"
+        },
+        {
+          "path": "docs/RELEASING.md",
+          "sha256": "sha256:3dc297eec330f8a60360c6faa7b79b5d8d5a5d3f64dfcda39f0cedd54eb20198"
+        },
+        {
+          "path": "docs/ROADMAP.md",
+          "sha256": "sha256:758d109a54c31c33f3330e0b76243f7783274276c0e41e448837ce789e301064"
+        },
+        {
+          "path": "docs/architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md",
+          "sha256": "sha256:9a84b83b3ea3891e44d15651a8618fd50f766e51ebdf71ccb0aa4dc836ddd525"
+        },
+        {
+          "path": "docs/architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md",
+          "sha256": "sha256:8beff4e427f512e32375f8aa98ab84ab5b54c2e6bc82408a74e683b68f2aece8"
+        },
+        {
+          "path": "docs/architecture/ADR-0004_PHASE_7_SIGNED_APPROVAL_EVIDENCE.md",
+          "sha256": "sha256:4a1412e3dc9c67b41de36fb60680b428864cf12a2bf3e7638840a07dd5b61ffb"
+        },
+        {
+          "path": "docs/architecture/ADR-0005_PHASE_7D_ENTERPRISE_LOCAL_PERSISTENCE.md",
+          "sha256": "sha256:89346ef349288d8b5ca28596a0d873af5bc57572fcc9c4fa4d19690ae870d278"
+        },
+        {
+          "path": "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
+          "sha256": "sha256:d2b84f16d0b71a8b1bf69f4725014dd95fffb657375e5c26b0e003a9f4bc9cf5"
+        },
+        {
+          "path": "docs/architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md",
+          "sha256": "sha256:ca5d65ace0907fc3f864774ced5b1422b738245d404633da024406f381aeb09c"
+        },
+        {
+          "path": "docs/architecture/COMPATIBILITY_AND_CONFORMANCE_MATRIX.md",
+          "sha256": "sha256:e10226973548e84a4ac314050bff2bb4b9d6439f3bf8bfaddce97a79243c1399"
+        },
+        {
+          "path": "docs/architecture/DATA_MODEL.md",
+          "sha256": "sha256:57fe38cc22fb622de87018605505616d5761952556de23c0a369c91a844fe2fa"
+        },
+        {
+          "path": "docs/architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md",
+          "sha256": "sha256:e1ef1f66bbdae7ba4fd76ee860b30f7a14a9abfa336d8039886afb65f52e9cfe"
+        },
+        {
+          "path": "docs/architecture/DISTRIBUTION_REALITY_AND_SECURE_INSTALLER_PLAN.md",
+          "sha256": "sha256:bb268d8c8cb68aef00e469dcd9bcc2fdebe9cb6d7191250af0488a6ff4fadcea"
+        },
+        {
+          "path": "docs/architecture/GATEWAY_V1_APPROVAL_DECISION.md",
+          "sha256": "sha256:48ff7e51ecfaa073e1b95efd260aaf9bfe50cdfceee40ba467d5f96bd9f527d5"
+        },
+        {
+          "path": "docs/architecture/GATEWAY_V1_APPROVAL_REQUEST.md",
+          "sha256": "sha256:cd8f026960a09b58c0edee5f9ad85f08fe37e6ea7b2fc4ba4eed3495d80a323c"
+        },
+        {
+          "path": "docs/architecture/LOCAL_IDENTITY_AND_OWNER_BOOTSTRAP.md",
+          "sha256": "sha256:2d4c01d0e3dbd7ea55a43cd655e5467ae06f46eb66551c118d9af6f76ed43f56"
+        },
+        {
+          "path": "docs/architecture/LOCAL_PERSISTENCE_IMPLEMENTATION_READINESS.md",
+          "sha256": "sha256:9e1b22d40a72338356b25fd26259e37d0545be773aff71ca530170a7fd1c7cb0"
+        },
+        {
+          "path": "docs/architecture/LOCAL_SERVER_SESSION_EVIDENCE.md",
+          "sha256": "sha256:b6d448ab2dcce3a1bbad753bec5dd88f5819021a68028b3eff55dc680572e5ec"
+        },
+        {
+          "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+          "sha256": "sha256:71191813e24f313c0dba2d5e60e9f0de40525708b3ecbffd6bff5a7d2cd9af0c"
+        },
+        {
+          "path": "docs/architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md",
+          "sha256": "sha256:c181614195cbe27e402be6faf8465c3b9efe018ce6cdb393c1a65f7350a6ba9f"
+        },
+        {
+          "path": "docs/architecture/POLICY_AND_AUDIT.md",
+          "sha256": "sha256:50425fc3e365d78877227fee182acfa088edeb938ff806eff3f95d42e2698257"
+        },
+        {
+          "path": "docs/architecture/README.md",
+          "sha256": "sha256:76c4dbf21596ffff62a6cb8a14ed64a0c5a47812dfc0bb0cd3c72f8e78c87133"
+        },
+        {
+          "path": "docs/architecture/THREAT_MODEL.md",
+          "sha256": "sha256:188c4d712ecfc752cc3074cb40445f2b670b8733cda6b60dfdaf1d26624abd70"
+        },
+        {
+          "path": "docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md",
+          "sha256": "sha256:af1fcf96a48d05910556356cd147d1257a669f60e9b951a49fc20080c1c1a116"
+        },
+        {
+          "path": "docs/reference/legacy-identifier-inventory.json",
+          "sha256": "sha256:77d18318113bd0a1af9fc2f7468d5d351a7cf2fd5023dd4c8383a7bb903e3d41"
+        },
+        {
+          "path": "docs/reference/phase7-readiness.json",
+          "sha256": "sha256:8c1e25032f991cf8e5120d07502a18254f93215b00e83e8ecf58ccb07940911e"
+        },
+        {
+          "path": "docs/sdk/release.md",
+          "sha256": "sha256:8ac04240ae8286a2aa242507a491ac573cc1b0beceb09ef9e10b1f1463d361eb"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:48334177b44ed03fbaccfd90c4aa47d2c7dfcb17212e63a5941d39b7b708af5c"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:8ea2f8e14728cbcda20da03764a3f8c5368d9c79cbd7b1a323a00a9e214acd23"
+        },
+        {
+          "path": "scripts/check-product-direction-alignment.mjs",
+          "sha256": "sha256:4ac008569a09384853d8dd5d6115ccf55d7f16ee16c572f4c6fafc8383d10fb1"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-M1",
+      "completion_revision": "0ad088efe68cb9227f550bf7ccf48cc67f85a80d",
+      "protected_files": [
+        {
+          "path": "crates/lnsat-store/migrations/0016_phase7_core_persistence.sql",
+          "sha256": "sha256:44a687dfe302c8ea79ca6a48b1e65057a813c9de22164776f2a6ae6e2090a5d5"
+        },
+        {
+          "path": "crates/lnsat-store/src/lib.rs",
+          "sha256": "sha256:f1f2951c53b78589b4acdd13521ba8c7a306dc3a6dc34d7753043c8707e6cc91"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_persistence.rs",
+          "sha256": "sha256:385d2e1d3aa0043e277768ea78fe620238c4496add1c76181d96d7b3d2527a09"
+        },
+        {
+          "path": "crates/lnsat-store/tests/fixtures/phase7d_public_material_schema_candidate.sql",
+          "sha256": "sha256:ce1bd61ed3f3d45d991c223586a7f562fc4f8952db2f407def617f30b8646989"
+        },
+        {
+          "path": "docs/PROJECT_STATUS.md",
+          "sha256": "sha256:6c05e7985f891422e1d76ed50e85fcad85cd71874665065068bcbddeb20ea571"
+        },
+        {
+          "path": "docs/ROADMAP.md",
+          "sha256": "sha256:d723c5bcd82fcd6b8191240b95dbc67459966dd152459cb77067df2fd3376caa"
+        },
+        {
+          "path": "docs/architecture/ADR-0005_PHASE_7D_ENTERPRISE_LOCAL_PERSISTENCE.md",
+          "sha256": "sha256:b74e96a1764eacab0abee02e96bbdd8dd17319a3eee90fc09ba66f9a53f8fa1d"
+        },
+        {
+          "path": "docs/architecture/DATA_MODEL.md",
+          "sha256": "sha256:2fd74ca703eb9ae06d1189e366dab2da0d3b9d00585dc62f359c361f16c356f0"
+        },
+        {
+          "path": "docs/architecture/LOCAL_PERSISTENCE_IMPLEMENTATION_READINESS.md",
+          "sha256": "sha256:230f903fbde509844919c5036ddbc96680a0192cfd6aeedbff01bfe1a7f7e3af"
+        },
+        {
+          "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+          "sha256": "sha256:6d5baa35245fae96533179b85fdca59743918657a2e7b317a4bb3cfd9f909428"
+        },
+        {
+          "path": "docs/reference/legacy-identifier-inventory.json",
+          "sha256": "sha256:ddac0cccfb9fadc4a5aad08db2154077e8daf986a2ce3787ff3af342b5d9a8e5"
+        },
+        {
+          "path": "docs/reference/phase7-readiness.json",
+          "sha256": "sha256:f66491286a284a67961256973efe5590100dfb7ca7f2dfc1050e41c62e981b34"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:f0dd8d172d0439440932589cb3d9e20ef40d4263bd522ceb8113969144b3c7b1"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:97c207189f28dc1b37d07c755748fa23b4f14ce10056c2700907e1de2f870110"
+        },
+        {
+          "path": "scripts/check-phase7d-truth.mjs",
+          "sha256": "sha256:1afee102b38f0092c2c3600758074164236733b391bcad57a63dcfa01b3c5257"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-N1",
+      "completion_revision": "c374e7d53d7dfe7684a7a59c1e7272cfaf5c8fac",
+      "protected_files": [
+        {
+          "path": "Cargo.lock",
+          "sha256": "sha256:de2cbe61fc86540396c7e81cadde69cdc2bf31267c3684c8f4a13a2ee4da818f"
+        },
+        {
+          "path": "crates/lnsat-store/Cargo.toml",
+          "sha256": "sha256:3d57b4258cf190c88fec5ea0929381bbd5819906a0fe22227f09fdc7ede33d0b"
+        },
+        {
+          "path": "crates/lnsat-store/src/lib.rs",
+          "sha256": "sha256:a5d3390e697ccdbdce44af3f117ba60f6f8b4a733a2c29657fc57c748c410603"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_nonce.rs",
+          "sha256": "sha256:bf99c15d328e0b28e9bf700b0d2955598b97d77e0780ca4c5a1e03504f62d63a"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_persistence.rs",
+          "sha256": "sha256:7ecd0209f0f1ca4ed4224c2cae17f8b9f2da20aec5f1b219c9de500ea4847daf"
+        },
+        {
+          "path": "docs/PROJECT_STATUS.md",
+          "sha256": "sha256:631469a0ca2fe766d0ddeb0da666e58575f26e4ddb2cf5d164506bd0ed4080c1"
+        },
+        {
+          "path": "docs/ROADMAP.md",
+          "sha256": "sha256:03e7f15490ef7ec184af6f85feac156193abbb89fe0707d99e149526106d3b2f"
+        },
+        {
+          "path": "docs/architecture/ADR-0005_PHASE_7D_ENTERPRISE_LOCAL_PERSISTENCE.md",
+          "sha256": "sha256:1d433ab2d0f094a3194a4ec9cb03fd870ded10124309fbd9071fb3052ea7af7c"
+        },
+        {
+          "path": "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
+          "sha256": "sha256:b166c8572a8091f348f08e59e4cb433b24f4ec34b1b295bb7b1c878804f28da6"
+        },
+        {
+          "path": "docs/architecture/DATA_MODEL.md",
+          "sha256": "sha256:d9b9766f62472ade22b8c03a9e41af0e3b70976a69070600241c93f3b67354a5"
+        },
+        {
+          "path": "docs/architecture/LOCAL_PERSISTENCE_IMPLEMENTATION_READINESS.md",
+          "sha256": "sha256:d714b8af7353162bd9e26216e1381542dfbb223f0064fe08ed535f042dcf0538"
+        },
+        {
+          "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+          "sha256": "sha256:e065af43c15da90dce5bfed3ca5a398acb0f539c7a35357d44fff0f9f0ba82a4"
+        },
+        {
+          "path": "docs/reference/legacy-identifier-inventory.json",
+          "sha256": "sha256:c50c0a21029cbde789fbd809f8f594f5616f98573146db4bfaea2eaa2373d1d0"
+        },
+        {
+          "path": "docs/reference/phase7-readiness.json",
+          "sha256": "sha256:e231585377435e5d461ac14d7bf0c144758c4af67e79535f35f05f7a0b12442f"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:7e717adfa005b014850c57e32655350302b8426ba282025234a8222c00ddc436"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:0f7e37571278d3a6cf91c6b5b5128b0e81dff2ff2b77960b2ed988de881b0d19"
+        },
+        {
+          "path": "scripts/check-phase7d-truth.mjs",
+          "sha256": "sha256:4b8f257f9d2533ebac142ca783b35882bc74db24ad1350411e68de423792d636"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-B1",
+      "completion_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41",
+      "protected_files": [
+        {
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "sha256": "sha256:2418a52b67b8de45fd90a16577e59fe38d874018d3d2bddfce3fdc99c7c06a47"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "sha256": "sha256:7d9049ebc258cfb5857250ddbecd7483f22c6f5a5145a16b193634486f22f541"
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "sha256": "sha256:b50d1420b200c71b37ea8e16e41e14a0705b35871f20afa25c87f3e26edb1ef9"
+        },
+        {
+          "path": "crates/lnsat-contracts/src/execution.rs",
+          "sha256": "sha256:62699ab04e3437b167c6a320e5aa9c65fa283298d34e01a793749189cca340f6"
+        },
+        {
+          "path": "crates/lnsat-contracts/src/lib.rs",
+          "sha256": "sha256:8e0b631c269d6b6685651b6e0b7fae18c7ee21717a126ce4511a81b2807ba6b6"
+        },
+        {
+          "path": "crates/lnsat-contracts/tests/conformance.rs",
+          "sha256": "sha256:35320c4661b29f49a7ccf60ac805f1b748367ee869f557e18634d1e73f0f756f"
+        },
+        {
+          "path": "crates/lnsat-store/migrations/0017_phase7_core_semantics_correction.sql",
+          "sha256": "sha256:0667c0812a59a279b5f3ac11a1f718bad76f4bbe2bb41178496fc376586dd8eb"
+        },
+        {
+          "path": "crates/lnsat-store/src/lib.rs",
+          "sha256": "sha256:49543b3c62e2b3ce8fcab359317db9055358ae90df7b451634ea7e65c229e2ed"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_persistence.rs",
+          "sha256": "sha256:3ddfa0ddde57fe0b036d54711f542273b5021f993eae57cc39b1de1e6f10fe6a"
+        },
+        {
+          "path": "crates/lnsat-store/src/tests/phase7d_signed_candidate.rs",
+          "sha256": "sha256:1190baecea79aa66c7f1041d22a050bd1c5edfb4c6ed90417299f1c4e2b1a207"
+        },
+        {
+          "path": "crates/lnsat-store/tests/fixtures/phase7d_public_material_schema_candidate.sql",
+          "sha256": "sha256:e01d69c3aa6d2fef9ef0deda5b0f16834a69a18b61530b84ce42bab7e2927bde"
+        },
+        {
+          "path": "docs/DOCS_INDEX.md",
+          "sha256": "sha256:1821eabc0030bf8475dfc04fe5ff25f49611bfc52f7b944785e070f3ceb6fe7a"
+        },
+        {
+          "path": "docs/PROJECT_STATUS.md",
+          "sha256": "sha256:bc70bfdf17cda2b4788712e49796c9d9c631ae74bde831dca44ab04d2377e8bb"
+        },
+        {
+          "path": "docs/ROADMAP.md",
+          "sha256": "sha256:ddc970f2be862eb02a050befddb1e6dd4b7c5a39c6b8ef9d4b2f806f910bf037"
+        },
+        {
+          "path": "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
+          "sha256": "sha256:469faef0c62543a022fb2794ae60621c449c987d2efe71a6f6b77c79bc2ad27c"
+        },
+        {
+          "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+          "sha256": "sha256:76dc65ca890ad72e9f33b9792ea103bb0400547c28f3cb111c8db50dc80e4fac"
+        },
+        {
+          "path": "docs/architecture/SQLITE_BACKUP_AND_RESTORE.md",
+          "sha256": "sha256:a6c58de90447a64e68993eb4b9066d3525e9091bd2f4176c9a8d43d5d44cf8c3"
+        },
+        {
+          "path": "docs/architecture/SQLITE_RECOVERY_INSPECTION_EVENTS.md",
+          "sha256": "sha256:a5fbe6b13a5728fc714544473879c9fdcda3d454bf25f9ed685517324ff3b2ef"
+        },
+        {
+          "path": "docs/reference/security-reviews/P7-B1/post-merge-review-0526845.json",
+          "sha256": "sha256:be5f4af5b8f377e6bc2a8b721febc2d721885e8a18e1064ee408c7e3a505c819"
+        },
+        {
+          "path": "fixtures/contracts/execution-request-v1_0.json",
+          "sha256": "sha256:6ec04c0057ccf58b6e19bf217302e5e7b68764c8898b58432636fe0c57017783"
+        },
+        {
+          "path": "package.json",
+          "sha256": "sha256:0544c2e5e696bb3dabcd3536f0f6956c18e2cd3aef00df7947bc2b014086a2ee"
+        },
+        {
+          "path": "packages/packets/src/execution-request-v1.ts",
+          "sha256": "sha256:a758a06d71d449ce37d8b16d1fbc079825b11bc5cf259aef4fde8fb292bbdd74"
+        },
+        {
+          "path": "packages/packets/src/index.ts",
+          "sha256": "sha256:8efc6befc8219f1326b250ea142a22d3fff2f69bd3d19999c536436389006f46"
+        },
+        {
+          "path": "packages/packets/test/execution-request-v1.test.ts",
+          "sha256": "sha256:af452d7c5725699dd6924d9022593cf07bcfa4186e4d23ff7478bb2389f6ab52"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:465344b4531fcccdbeb9a020b0dea8ec62c496b30264bc2382e446848d688428"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:624beae764710c60228ffaf314bdc0cc42879ad1e5494e0a7e6be8ed80067813"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.mjs",
+          "sha256": "sha256:f8a4b931273d0a88ceb8fba7329b219fc3f599d6bd5c09789d650b119dd76f30"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.test.mjs",
+          "sha256": "sha256:9b1072e153b4872e31e756e61076c25eef5adaa47c7a3838a2b92b8493a7910b"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-C1",
+      "completion_revision": "89b7a021e2db32878c40a7a9a5320da0f0b9ef6e",
+      "protected_files": [
+        {
+          "path": "Cargo.lock",
+          "sha256": "sha256:5e1bf66b6a257fe6082b347cae010bb1735473356b8f5501d5df0c53ded25f45"
+        },
+        {
+          "path": "crates/lnsat-store/Cargo.toml",
+          "sha256": "sha256:55826bba5608f70f8e17064f3a79a1379977101bf30f380caa3bd8ea09703d0b"
+        },
+        {
+          "path": "crates/lnsat-store/src/lib.rs",
+          "sha256": "sha256:f9eb12c62651473320ee22911a673ec28fc5ff2405d442058ff1051a57da0506"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_consumption.rs",
+          "sha256": "sha256:9efb6d0e2e6f5c622865f0661db655245217aa0852aa687154724cf712e902bf"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_nonce.rs",
+          "sha256": "sha256:438225c1146b8cf854f76f498e07be65623e7173e420c2c11121db328f4dae92"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_persistence.rs",
+          "sha256": "sha256:328102c8aaee1bc261aa7074fc28bc501bca8e443ac8bf29403102081bab70c5"
+        },
+        {
+          "path": "crates/lnsat-store/src/tests/phase7_atomic_consumption.rs",
+          "sha256": "sha256:d9669fdb95504ece62cdd55082ce5a28d2afe978ad1135337b07e4864730d93d"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:ac96e14866c949c48c8be6de2a888fa5a4ccbba2a319187caab3c89c7fe4f914"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:570f8b0f25b2ed880eeb6e07d4ab83d442e05a44d53ddd4f39a41a405cbddf5c"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.mjs",
+          "sha256": "sha256:e47515d26c811cfe9984f01b51d55b5846e70a68eeac6a5569356b2c0e58cec6"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.test.mjs",
+          "sha256": "sha256:47fcc190473f765421af46f411019a560514a281ff645d2a5ec3ef8a2cdbda92"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-A1",
+      "completion_revision": "8c3c3e59e65ee52b977fdbe404ddcf7cf915f6ae",
+      "protected_files": [
+        {
+          "path": "crates/lnsat-store/src/lib.rs",
+          "sha256": "sha256:2632ae8c52073ebee84e9e0319791b6b109ed9e433646458093b8a0e9433703e"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_consumption.rs",
+          "sha256": "sha256:04d46b9c51703aadcc3cb180821f5fea9fbe0b2de852bc4529128f687700fea6"
+        },
+        {
+          "path": "crates/lnsat-store/src/tests/phase7_local_authorization.rs",
+          "sha256": "sha256:7c4f6c97b3b865d58784325eda61a839fe1b5d451c6f66cf99f94946119b3000"
+        },
+        {
+          "path": "crates/lnsatd/src/lib.rs",
+          "sha256": "sha256:3c90b77e271ab6b7744953f7e803c8fc23ed6d44978a9ae28a4d580b81d47d73"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:970d87bf2e2a52694e7a158b85cc65e52c771eab7c5e5f80320deba1cabdc1d5"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:5e911f5df31dc81117796b278e56561233c6bfe796e021b3f6fa4a1976f71a2e"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.mjs",
+          "sha256": "sha256:0768ff5386bdc2796115a9323bf756c38db6836209637de3abd7558164796a22"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.test.mjs",
+          "sha256": "sha256:42084b3534d4e247f611e75fa59a95be5b84f11df355a90eca217a6fc1132189"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-R1",
+      "completion_revision": "530f62c4f12c84d3195fb07e3147936d0c738144",
+      "protected_files": [
+        {
+          "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+          "sha256": "sha256:bfb91d1b2865084d4562d3b5236a103a1b22c6d80f3356f0e7a2f34c2fbbdb77"
+        }
+      ]
+    },
+    {
+      "packet_id": "P7-X1",
+      "completion_revision": "29de82424b97ede36b96fa87d82f0b545be16d7f",
+      "protected_files": [
+        {
+          "path": "CHANGELOG.md",
+          "sha256": "sha256:28897ff4c3a9ed701dcc710e59f57fce7e4033512f291190ba2f89bd4b72e17d"
+        },
+        {
+          "path": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+          "sha256": "sha256:fe6a448bbd03a582f6ca3e343e1f2a50819b3a1ab36cffdf36e35ca572106f11"
+        },
+        {
+          "path": "docs/DOCS_INDEX.md",
+          "sha256": "sha256:035aedebd910a94355107a69029274dbe90089bf6b824ecd2d9b7e84774bc8a8"
+        },
+        {
+          "path": "docs/PROJECT_STATUS.md",
+          "sha256": "sha256:523f8b4c5cdf356f228168d93b2cc7fed42303be5ce735d9ee58e8296381bb09"
+        },
+        {
+          "path": "docs/ROADMAP.md",
+          "sha256": "sha256:e9e569c13f98e61778da5dc7fbce382b403791adfe6b8b4ae5d8645c37371e89"
+        },
+        {
+          "path": "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
+          "sha256": "sha256:6cc4718588a662ba1ee046384bc4168b8bb6bc22a9cde6eeebb68741dd3a30fb"
+        },
+        {
+          "path": "docs/architecture/PHASE_7_LOCAL_V1_CONFORMANCE_FREEZE.md",
+          "sha256": "sha256:61b2624fcd571a40a9caacd2fff244c6759ec93d7ef770f5a47d0f0f69972493"
+        },
+        {
+          "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+          "sha256": "sha256:e754a92e334586c65f38a080884c03549689731af6bfadbae7803694bff4a491"
+        },
+        {
+          "path": "docs/architecture/README.md",
+          "sha256": "sha256:ee55192ec4726401d620eb3d6f23dedc5b33587969b28114774e30c4c8a68388"
+        },
+        {
+          "path": "fixtures/contracts/phase7-local-v1-conformance-v1.json",
+          "sha256": "sha256:81452f68a052d41aa49239f0451864a33434b3ab0077c249571ea80e24f5707f"
+        },
+        {
+          "path": "package.json",
+          "sha256": "sha256:21d0574ee7aa18361bec7294e00ec69e3bceb042752856e781b529713baf2e48"
+        },
+        {
+          "path": "scripts/check-phase7-local-conformance.mjs",
+          "sha256": "sha256:9d769f9fd200c4584b545baa0ace882839caa8e83c3b3331d000416f663cc56c"
+        },
+        {
+          "path": "scripts/check-phase7-local-conformance.test.mjs",
+          "sha256": "sha256:e7da6b1fbdff4dde55cba71c27fab7fa54eb7e293b89ef4733cc36dcad6f0705"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.mjs",
+          "sha256": "sha256:72768458e92db8f36ff30dde2344183a1ffc864375a8e8a3664ebe1e49ef2184"
+        },
+        {
+          "path": "scripts/check-phase7-readiness-plan.test.mjs",
+          "sha256": "sha256:ac971e7ddf29bdce1250c2e94f4669a3ec10ab5c0c8b25ca620788d14159d2d3"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.mjs",
+          "sha256": "sha256:9b749fd01cf8a22928743938aff4731b6100c83d34eba17ffbaf072bce6c6b22"
+        },
+        {
+          "path": "scripts/check-security-review-evidence.test.mjs",
+          "sha256": "sha256:35ab7c17d9e02dba955b6b2f07f307587a4de3b9e496582d78944d6f79f5d933"
+        },
+        {
+          "path": "scripts/run-rust-workspace.mjs",
+          "sha256": "sha256:72b0a96a12496debd58f1768f60bbcccd711c418c1d519171fbf81639bbd248f"
+        }
+      ]
+    }
+  ],
+  "status_vocabulary": [
+    "complete",
+    "implemented_record_only",
+    "implemented_verification_only",
+    "implemented_not_wired",
+    "proposed_test_only",
+    "unset",
+    "blocked_pending_explicit_input",
+    "closed",
+    "unavailable",
+    "superseded_non_authorizing"
+  ],
+  "phase_status": {
+    "phase_6_source_exit": "complete",
+    "phase_7a_signed_evidence_design": "complete",
+    "phase_7b_wrapper_verification": "implemented_verification_only",
+    "phase_7c_ed25519_primitive": "implemented_not_wired",
+    "phase_7d_schema_candidate": "proposed_test_only",
+    "phase_7_adr0_local_v1_trust_model": "complete"
+  },
+  "trust_model": {
+    "local_v1_trusted_boundary": "local_lnsat_daemon_and_host_os",
+    "default_approval_proof": "local_session",
+    "approval_proof_variants": [
+      "local_session",
+      "external_signature",
+      "local_session_and_external_signature"
+    ],
+    "portable_signed_approval_required_for_local_v1": false,
+    "execution_authorization_profile": "server_record_plus_digest_stored_one_time_capability",
+    "private_keys_enter_lnsat": false,
+    "private_keys_enter_repo_or_codex": false,
+    "schema_0016_scope": "core_local_authority_loop",
+    "schema_0017_scope": "phase7_core_semantics_correction",
+    "schema_0018_scope": "public_key_and_signed_approval_evidence"
+  },
+  "runtime_truth": {
+    "sqlite_schema_version": 17,
+    "registered_migration_count": 17,
+    "migration_0016": "implemented_registered",
+    "migration_0017": "implemented_registered",
+    "authorization_attempt_persistence": "implemented_record_only",
+    "local_session_approval_record": "implemented_record_only",
+    "p1_public_material": "unset",
+    "operational_wrapper_verification": "unavailable",
+    "signer_custody": "closed",
+    "runtime_signing": "closed",
+    "provider_calls": "closed",
+    "private_key_custody": "closed",
+    "nonce_generation": "implemented_not_wired",
+    "nonce_runtime_persistence": "implemented_record_only",
+    "signed_evidence_issuance": "closed",
+    "verification_attempt_runtime_persistence": "closed",
+    "atomic_single_use_consumption": "implemented_not_wired",
+    "server_side_authorization_record": "implemented_record_only",
+    "one_time_capability": "implemented_not_wired",
+    "execution_authorization": "implemented_not_wired",
+    "receipt_binding": "implemented_not_wired",
+    "reference_git_commit_adapter": "implemented_not_wired",
+    "adapter_dispatch": "implemented_not_wired",
+    "runtime_api": "closed",
+    "deployment": "closed"
+  },
+  "authority_transitions": {
+    "verified_chain": false,
+    "active_public_material": false,
+    "valid_signed_evidence": false,
+    "active_unexpired_nonce": true,
+    "server_side_authorization_record": true,
+    "one_time_capability_issued": true,
+    "atomic_single_use_consumption": true,
+    "bound_authorization_record": true,
+    "adapter_execution": false,
+    "digest_bound_receipt": false,
+    "immutable_phase7_audit_evidence": false,
+    "execution_authorized": true
+  },
+  "current_executable_packet": null,
+  "blocked_future_packets": ["P7-K1", "P7-S1", "P7-V1", "P7-I1"],
+  "superseded_packets": [
+    {
+      "packet_id": "P7-P1",
+      "superseded_by": "P7-K1",
+      "status": "superseded_non_authorizing",
+      "authority_granted": false
+    }
+  ],
+  "release_lanes": {
+    "local_v1_core": {
+      "packet_ids": ["P7-M1", "P7-N1", "P7-B1", "P7-C1", "P7-A1", "P7-R1", "P7-X1"],
+      "blocks_supported_local_release": true,
+      "portable_signed_approval_required": false
+    },
+    "optional_signed_evidence": {
+      "packet_ids": ["P7-K1", "P7-S1", "P7-V1", "P7-I1"],
+      "blocks_supported_local_release": false,
+      "private_key_custody_allowed": false
+    },
+    "post_local_v1": {
+      "capabilities": [
+        "hardware_environment_attestation",
+        "postgresql_ha",
+        "fleet_management",
+        "multi_tenancy",
+        "contractual_rpo_rto",
+        "centralized_siem_alerting",
+        "legal_hold",
+        "cross_region_failover",
+        "unselected_distribution_rows"
+      ],
+      "blocks_supported_local_release": false
+    }
+  },
+  "approval_gates": [
+    {
+      "gate_id": "P7_M1_CORE_PERSISTENCE",
+      "title": "revised v16 core local authority-loop persistence",
+      "status": "complete",
+      "granted": true
+    },
+    {
+      "gate_id": "P7_N1_NONCE_EXPIRY",
+      "title": "server-owned nonce and expiry lifecycle",
+      "status": "complete",
+      "granted": true
+    },
+    {
+      "gate_id": "P7_B1_PREAUTHORIZATION_HARDENING",
+      "title": "preauthorization binding, cardinality, audit, receipt, provenance, and review hardening",
+      "status": "complete",
+      "granted": true
+    },
+    {
+      "gate_id": "P7_C1_ATOMIC_CONSUMPTION",
+      "title": "atomic one-time capability redemption and consumption",
+      "status": "complete",
+      "granted": true
+    },
+    {
+      "gate_id": "P7_A1_LOCAL_AUTHORIZATION",
+      "title": "online exact-bound local execution authorization",
+      "status": "complete",
+      "granted": true
+    },
+    {
+      "gate_id": "P7_R1_GIT_REFERENCE_ADAPTER",
+      "title": "bounded disposable Git commit adapter and receipt",
+      "status": "complete",
+      "granted": true
+    },
+    {
+      "gate_id": "P7_X1_LOCAL_CONFORMANCE_FREEZE",
+      "title": "local-v1 core security and operability conformance freeze",
+      "status": "complete",
+      "granted": true
+    },
+    {
+      "gate_id": "P7_K1_PUBLIC_KEY_LIFECYCLE",
+      "title": "optional v18 public-key enrollment and lifecycle",
+      "status": "blocked_pending_explicit_input",
+      "granted": false
+    },
+    {
+      "gate_id": "P7_S1_SIGNER_TRANSPORT",
+      "title": "optional provider-neutral hybrid signer transport",
+      "status": "blocked_pending_explicit_input",
+      "granted": false
+    },
+    {
+      "gate_id": "P7_V1_SIGNATURE_VERIFICATION",
+      "title": "optional operational signature verification",
+      "status": "blocked_pending_explicit_input",
+      "granted": false
+    },
+    {
+      "gate_id": "P7_I1_SIGNED_APPROVAL_PROOF",
+      "title": "optional or policy-required signed approval proof",
+      "status": "blocked_pending_explicit_input",
+      "granted": false
+    }
+  ],
+  "packets": [
+    {
+      "packet_id": "P7-RP0",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": [],
+      "approval_gate_ids": []
+    },
+    {
+      "packet_id": "P7-ADR0",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-RP0"],
+      "approval_gate_ids": []
+    },
+    {
+      "packet_id": "P7-M1",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-ADR0"],
+      "approval_gate_ids": ["P7_M1_CORE_PERSISTENCE"]
+    },
+    {
+      "packet_id": "P7-N1",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-M1"],
+      "approval_gate_ids": ["P7_N1_NONCE_EXPIRY"]
+    },
+    {
+      "packet_id": "P7-B1",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-M1", "P7-N1"],
+      "approval_gate_ids": ["P7_B1_PREAUTHORIZATION_HARDENING"]
+    },
+    {
+      "packet_id": "P7-C1",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-M1", "P7-N1", "P7-B1"],
+      "approval_gate_ids": ["P7_C1_ATOMIC_CONSUMPTION"]
+    },
+    {
+      "packet_id": "P7-A1",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-M1", "P7-N1", "P7-B1", "P7-C1"],
+      "approval_gate_ids": ["P7_A1_LOCAL_AUTHORIZATION"]
+    },
+    {
+      "packet_id": "P7-R1",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-B1", "P7-A1"],
+      "approval_gate_ids": ["P7_R1_GIT_REFERENCE_ADAPTER"]
+    },
+    {
+      "packet_id": "P7-X1",
+      "status": "complete",
+      "executable": true,
+      "prerequisites": ["P7-M1", "P7-N1", "P7-B1", "P7-C1", "P7-A1", "P7-R1"],
+      "approval_gate_ids": ["P7_X1_LOCAL_CONFORMANCE_FREEZE"]
+    },
+    {
+      "packet_id": "P7-K1",
+      "status": "blocked_pending_explicit_input",
+      "executable": false,
+      "prerequisites": ["P7-M1"],
+      "approval_gate_ids": ["P7_K1_PUBLIC_KEY_LIFECYCLE"]
+    },
+    {
+      "packet_id": "P7-S1",
+      "status": "blocked_pending_explicit_input",
+      "executable": false,
+      "prerequisites": ["P7-K1"],
+      "approval_gate_ids": ["P7_S1_SIGNER_TRANSPORT"]
+    },
+    {
+      "packet_id": "P7-V1",
+      "status": "blocked_pending_explicit_input",
+      "executable": false,
+      "prerequisites": ["P7-K1"],
+      "approval_gate_ids": ["P7_V1_SIGNATURE_VERIFICATION"]
+    },
+    {
+      "packet_id": "P7-I1",
+      "status": "blocked_pending_explicit_input",
+      "executable": false,
+      "prerequisites": ["P7-S1", "P7-V1"],
+      "approval_gate_ids": ["P7_I1_SIGNED_APPROVAL_PROOF"]
+    }
+  ]
+}

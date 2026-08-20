@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-identity-creation-response-v1.schema.json",
+  "title": "LNSAT Gateway Identity Creation Response v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "status",
+        "scope",
+        "identity",
+        "credential",
+        "authorization",
+        "replay_semantics",
+        "side_effects",
+        "identity_state_changed",
+        "credential_state_changed",
+        "session_authority_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.identity_creation.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": true
+        },
+        "status": {
+          "const": "created"
+        },
+        "scope": {
+          "const": "new_non_owner_identity"
+        },
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "credential": {
+          "$ref": "#/$defs/credential"
+        },
+        "authorization": {
+          "$ref": "#/$defs/authorization"
+        },
+        "replay_semantics": {
+          "const": "create_once_identity_ref"
+        },
+        "side_effects": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "authentication_limiter_advanced"
+            },
+            {
+              "const": "session_activity_evidence_may_append"
+            },
+            {
+              "const": "identity_evidence_appended"
+            },
+            {
+              "const": "password_credential_evidence_appended"
+            },
+            {
+              "const": "identity_security_event_appended"
+            }
+          ],
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "identity_state_changed": {
+          "const": true
+        },
+        "credential_state_changed": {
+          "const": true
+        },
+        "session_authority_state_changed": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "identity",
+        "credential",
+        "errors",
+        "side_effects",
+        "identity_state_changed",
+        "credential_state_changed",
+        "session_authority_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.identity_creation.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": false
+        },
+        "identity": {
+          "type": "null"
+        },
+        "credential": {
+          "type": "null"
+        },
+        "errors": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/error"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "side_effects": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "authentication_limiter_may_advance"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "identity_state_changed": {
+          "const": false
+        },
+        "credential_state_changed": {
+          "const": false
+        },
+        "session_authority_state_changed": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity_ref",
+        "display_name",
+        "role",
+        "lifecycle_status",
+        "created_at"
+      ],
+      "properties": {
+        "identity_ref": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 256,
+          "pattern": "^identity:human:[^\\s\\u0000-\\u001F\\u007F]{1,240}$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^(?!\\s)(?!.*\\s$)[^\\u0000-\\u001F\\u007F]+$"
+        },
+        "role": {
+          "enum": ["operator", "auditor"]
+        },
+        "lifecycle_status": {
+          "const": "active"
+        },
+        "created_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        }
+      }
+    },
+    "credential": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "version", "created_at", "secret_exposed"],
+      "properties": {
+        "profile": {
+          "const": "lnsat.argon2id.v1"
+        },
+        "version": {
+          "const": 1
+        },
+        "created_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        },
+        "secret_exposed": {
+          "const": false
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "actor_role",
+        "permission",
+        "actor_session_bound",
+        "csrf_verified"
+      ],
+      "properties": {
+        "source": {
+          "const": "local_session"
+        },
+        "actor_role": {
+          "const": "owner"
+        },
+        "permission": {
+          "const": "manage_identities"
+        },
+        "actor_session_bound": {
+          "const": true
+        },
+        "csrf_verified": {
+          "const": true
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message", "severity"],
+      "properties": {
+        "code": {
+          "const": "gateway.identity_creation.denied"
+        },
+        "path": {
+          "const": "/identities"
+        },
+        "message": {
+          "const": "Identity creation denied."
+        },
+        "severity": {
+          "const": "error"
+        }
+      }
+    }
+  }
+}

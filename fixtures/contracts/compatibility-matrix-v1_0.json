@@ -1,0 +1,90 @@
+{
+  "contract_id": "lnsat.contract_compatibility_matrix.v1_0",
+  "contract_version": "lnsat.contracts.v1_0",
+  "fixture_schema": "lnsat.contract_compatibility_matrix.golden_vectors.v1_0",
+  "negotiation": "exact_match_only",
+  "reader_compatibility": "exact_declared_contract_and_family_schema",
+  "writer_compatibility": "emit_exact_selected_contract_and_family_schema",
+  "unknown_version": "reject_before_policy_or_mutation",
+  "implicit_upgrade_allowed": false,
+  "implicit_downgrade_allowed": false,
+  "deprecated_compatibility": {
+    "contract_versions": ["lnsat.contracts.v0_1"],
+    "implicit_entry_allowed": false,
+    "removal_floor": "product_2_0_0_and_90_days_and_one_supported_minor"
+  },
+  "migration": "parallel_version_and_explicit_audited_migration_only",
+  "families": [
+    {
+      "family": "contract_version",
+      "contract_id": "lnsat.contract_version_policy.v1_0",
+      "schema_id": null,
+      "shape": "canonical_scalar",
+      "unknown_fields": "not_applicable",
+      "evidence_identity": "validated_contract_version",
+      "replay_and_idempotency": "pure_validation_exact_replay",
+      "stale_evidence": "not_applicable"
+    },
+    {
+      "family": "packet_envelope",
+      "contract_id": "lnsat.packet_envelope.v1_0",
+      "schema_id": "lnsat.packet_envelope.schema.v1_0",
+      "shape": "closed",
+      "unknown_fields": "reject",
+      "evidence_identity": "canonical_utf8_sha256",
+      "replay_and_idempotency": "caller_key_validated_and_packet_hash_deterministic",
+      "stale_evidence": "time_window_bound_for_policy_evaluation"
+    },
+    {
+      "family": "policy_decision",
+      "contract_id": "lnsat.policy_decision.v1_0",
+      "schema_id": "lnsat.policy_decision.schema.v1_0",
+      "shape": "closed",
+      "unknown_fields": "reject",
+      "evidence_identity": "schema_packet_hash_and_evaluation_time_sha256",
+      "replay_and_idempotency": "exact_input_produces_exact_decision_id",
+      "stale_evidence": "expired_packet_rejected"
+    },
+    {
+      "family": "approval_request",
+      "contract_id": "lnsat.approval_request.v1_0",
+      "schema_id": "lnsat.approval_request.schema.v1_0",
+      "shape": "closed",
+      "unknown_fields": "reject",
+      "evidence_identity": "canonical_request_sha256",
+      "replay_and_idempotency": "exact_input_produces_exact_request_id",
+      "stale_evidence": "expired_or_tampered_policy_evidence_rejected"
+    },
+    {
+      "family": "approval_decision",
+      "contract_id": "lnsat.approval_decision.v1_0",
+      "schema_id": "lnsat.approval_decision.schema.v1_0",
+      "shape": "closed",
+      "unknown_fields": "reject",
+      "evidence_identity": "request_decision_time_and_human_identity_sha256",
+      "replay_and_idempotency": "exact_input_produces_exact_decision_id",
+      "stale_evidence": "expired_request_or_decision_time_rejected"
+    },
+    {
+      "family": "audit_event",
+      "contract_id": "lnsat.audit_event.v1_0",
+      "schema_id": "lnsat.audit_event.schema.v1_0",
+      "shape": "closed",
+      "unknown_fields": "reject",
+      "evidence_identity": "canonical_event_body_sha256",
+      "replay_and_idempotency": "terminal_source_key_with_collision_rejection",
+      "stale_evidence": "invalid_or_inconsistent_source_chain_rejected"
+    },
+    {
+      "family": "error_envelope",
+      "contract_id": "lnsat.error_envelope.v1_0",
+      "schema_id": "lnsat.error_envelope.schema.v1_0",
+      "shape": "closed",
+      "unknown_fields": "reject",
+      "evidence_identity": "stable_code_and_json_pointer_path",
+      "replay_and_idempotency": "deterministic_failure_shape_no_side_effects",
+      "stale_evidence": "not_applicable"
+    }
+  ],
+  "side_effects": []
+}

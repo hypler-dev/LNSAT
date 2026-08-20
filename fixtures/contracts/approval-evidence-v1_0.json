@@ -1,0 +1,120 @@
+{
+  "schema": "lnsat.approval_evidence.golden_vectors.v1_0",
+  "vectors": [
+    {
+      "case_id": "human_approves_deploy_request_gate",
+      "packet_vector": {
+        "path": "fixtures/contracts/packet-envelope-v1_0.json",
+        "case_id": "execution_packet_v1",
+        "permission_allow_override": ["deploy.request"]
+      },
+      "policy_evaluated_at": "2026-07-22T20:00:00Z",
+      "requested_at": "2026-07-22T20:01:00Z",
+      "approver_ref": "identity:human:owner",
+      "approver_session_ref": "session:local:owner-0001",
+      "decision": "approved",
+      "reason_code": "approval.operator_approved",
+      "decided_at": "2026-07-22T20:02:00Z",
+      "expected": {
+        "policy_decision_id": "pol_9630400273afc9f4839b85936fe71eb94b0c6ae909152ee3bf81e20e2d8bc683",
+        "packet_hash": "sha256:63ec524013ca94c42d379d5c8df2a687849448977a007d59ab7ba792b17ae140",
+        "approval_request_id": "apr_d61781239a25205a20153ba3c20fd3087fd141180123a32b5518e1e13db25ea0",
+        "approval_decision_id": "apd_4debe323047353bacff30f4db8b8dd6550d6a00b71c529bcd01924d397478103",
+        "requested_capabilities": ["deploy.request"],
+        "policy_reason_codes": ["policy.capability_requires_approval"],
+        "approval_gate_satisfied": true,
+        "execution_authorized": false,
+        "side_effects": []
+      }
+    }
+  ],
+  "validation_cases": [
+    {
+      "case_id": "request_not_required",
+      "stage": "request",
+      "mutation": "use_allow_policy",
+      "expected": "approval_request.not_required"
+    },
+    {
+      "case_id": "request_policy_identity_tampered",
+      "stage": "request",
+      "mutation": "tamper_policy_id",
+      "expected": "approval_request.invalid_policy_decision"
+    },
+    {
+      "case_id": "request_policy_semantics_tampered",
+      "stage": "request",
+      "mutation": "tamper_policy_risk",
+      "expected": "approval_request.invalid_policy_decision"
+    },
+    {
+      "case_id": "request_time_malformed",
+      "stage": "request",
+      "mutation": "malformed_request_time",
+      "expected": "approval_request.invalid_request_time"
+    },
+    {
+      "case_id": "request_before_policy",
+      "stage": "request",
+      "mutation": "early_request_time",
+      "expected": "approval_request.expired"
+    },
+    {
+      "case_id": "request_at_expiry",
+      "stage": "request",
+      "mutation": "expired_request_time",
+      "expected": "approval_request.expired"
+    },
+    {
+      "case_id": "human_denies_request",
+      "stage": "decision",
+      "mutation": "deny_scope",
+      "expected": "ok",
+      "expected_decision": "denied",
+      "expected_reason": "approval.scope_rejected",
+      "expected_gate_satisfied": false
+    },
+    {
+      "case_id": "nonhuman_approver_rejected",
+      "stage": "decision",
+      "mutation": "nonhuman_approver",
+      "expected": "approval_decision.invalid_input"
+    },
+    {
+      "case_id": "self_approval_rejected",
+      "stage": "decision",
+      "mutation": "self_approval",
+      "expected": "approval_decision.self_approval_forbidden"
+    },
+    {
+      "case_id": "outcome_reason_mismatch",
+      "stage": "decision",
+      "mutation": "mismatched_reason",
+      "expected": "approval_decision.invalid_input"
+    },
+    {
+      "case_id": "decision_before_request",
+      "stage": "decision",
+      "mutation": "early_decision_time",
+      "expected": "approval_decision.expired"
+    },
+    {
+      "case_id": "decision_at_expiry",
+      "stage": "decision",
+      "mutation": "expired_decision_time",
+      "expected": "approval_decision.expired"
+    },
+    {
+      "case_id": "request_identity_tampered",
+      "stage": "decision",
+      "mutation": "tamper_request_id",
+      "expected": "approval_decision.invalid_request"
+    },
+    {
+      "case_id": "request_body_tampered",
+      "stage": "decision",
+      "mutation": "tamper_request_project",
+      "expected": "approval_decision.invalid_request"
+    }
+  ]
+}

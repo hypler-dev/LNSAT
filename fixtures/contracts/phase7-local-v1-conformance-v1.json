@@ -1,0 +1,179 @@
+{
+  "schema_version": "lnsat.phase7_local_v1_conformance.v1",
+  "packet_id": "P7-X1",
+  "freeze_status": "complete",
+  "scope": {
+    "source_only": true,
+    "new_runtime_features": false,
+    "runtime_authority_opened": false,
+    "publication_authorized": false,
+    "deployment_authorized": false,
+    "signed_evidence_required": false,
+    "enterprise_topology_required": false
+  },
+  "platform_profile": {
+    "profile_id": "macos-26-arm64-apfs-source-conformance",
+    "operating_system": "macOS 26",
+    "architecture": "arm64",
+    "filesystem": "APFS",
+    "support_level": "development_source_conformance_only",
+    "ci_portability_profile": "Ubuntu 24.04 x86_64 source gates",
+    "distribution_artifact_supported": false
+  },
+  "evidence_rows": [
+    {
+      "id": "ts_rust_execution_request_parity",
+      "evidence_file": "packages/packets/test/execution-request-v1.test.ts",
+      "evidence_marker": "matches shared Rust and TypeScript conformance vector",
+      "command": "npm run source:check"
+    },
+    {
+      "id": "authenticated_local_full_chain",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_local_v1_full_chain_freeze_restores_without_duplicate_consequence",
+      "command": "npm run phase7:local-conformance:test"
+    },
+    {
+      "id": "backup_restore_no_duplicate",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "restored X1 chain must never repeat Git consequence",
+      "command": "npm run phase7:local-conformance:test"
+    },
+    {
+      "id": "retention_preserve_only",
+      "evidence_file": "crates/lnsat-store/src/lib.rs",
+      "evidence_marker": "retention_plan_preserves_every_current_record_family_without_cleanup",
+      "command": "npm run rust:check"
+    },
+    {
+      "id": "audit_health_fail_closed",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_git_adapter_receipt_audit_failure_preserves_consequence_for_reconciliation",
+      "command": "npm run rust:check"
+    },
+    {
+      "id": "owner_readable_diagnostics",
+      "evidence_file": "crates/lnsat-store/src/lib.rs",
+      "evidence_marker": "pub fn state(&self) -> Result<SqliteStoreStateV1, SqliteStoreError>",
+      "command": "npm run rust:check"
+    },
+    {
+      "id": "bounded_connection_resources",
+      "evidence_file": "crates/lnsatd/src/lib.rs",
+      "evidence_marker": "pub const MAX_CONCURRENT_CONNECTIONS_V1: usize = 8;",
+      "command": "npm run rust:check"
+    },
+    {
+      "id": "capacity_failure_rollback",
+      "evidence_file": "crates/lnsat-store/src/lib.rs",
+      "evidence_marker": "phase7_authorization_attempt_capacity_failure_leaves_no_partial_record",
+      "command": "npm run rust:check"
+    },
+    {
+      "id": "schema_17_migration_freeze",
+      "evidence_file": "crates/lnsat-store/src/lib.rs",
+      "evidence_marker": "pub const SQLITE_SCHEMA_VERSION: i64 = 17;",
+      "command": "npm run audit:migrations:check"
+    },
+    {
+      "id": "local_lifecycle_runbook",
+      "evidence_file": "docs/architecture/PHASE_7_LOCAL_V1_CONFORMANCE_FREEZE.md",
+      "evidence_marker": "## Source Update, Rollback, Uninstall, and Data-Loss Semantics",
+      "command": "npm run phase7:local-conformance:check"
+    },
+    {
+      "id": "platform_filesystem_statement",
+      "evidence_file": "docs/architecture/PHASE_7_LOCAL_V1_CONFORMANCE_FREEZE.md",
+      "evidence_marker": "Selected source-conformance profile: macOS 26, arm64, APFS.",
+      "command": "npm run phase7:local-conformance:check"
+    },
+    {
+      "id": "private_release_metadata",
+      "evidence_file": "scripts/check-release-readiness.mjs",
+      "evidence_marker": "workspace must remain private",
+      "command": "npm run release:metadata:check"
+    }
+  ],
+  "required_negatives": [
+    {
+      "id": "binding_substitution",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_git_adapter_rejects_derived_payload_and_reconciliation_drift"
+    },
+    {
+      "id": "expired_cancelled_revoked_authority",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_atomic_consumption.rs",
+      "evidence_marker": "phase7_atomic_consumption_rejects_cancelled_revoked_and_expired_authorizations"
+    },
+    {
+      "id": "duplicate_consequence_after_restore",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "restored X1 chain must never repeat Git consequence"
+    },
+    {
+      "id": "concurrent_double_consume",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_atomic_consumption.rs",
+      "evidence_marker": "phase7_atomic_consumption_32_exact_writers_converge_on_one_commit"
+    },
+    {
+      "id": "fail_open_audit_write",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_git_adapter_receipt_audit_failure_preserves_consequence_for_reconciliation"
+    },
+    {
+      "id": "ambiguous_success",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_git_adapter_lost_response_stays_unknown_then_reconciles_objects"
+    },
+    {
+      "id": "adapter_storage_escape",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_git_adapter_rejects_nested_git_storage_symlinks_before_claim"
+    },
+    {
+      "id": "repository_hook_execution",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_git_adapter_never_runs_repository_hooks"
+    },
+    {
+      "id": "receipt_tamper",
+      "evidence_file": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "evidence_marker": "phase7_git_adapter_reopen_verifier_binds_reconciliation_to_receipt"
+    },
+    {
+      "id": "unsupported_platform_claim",
+      "evidence_file": "docs/architecture/PHASE_7_LOCAL_V1_CONFORMANCE_FREEZE.md",
+      "evidence_marker": "This profile is not a supported"
+    },
+    {
+      "id": "hidden_signed_dependency",
+      "evidence_file": "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
+      "evidence_marker": "`P7-X1` does not depend on `P7-K1`, `P7-S1`, `P7-V1`, or `P7-I1`."
+    },
+    {
+      "id": "implicit_data_purge",
+      "evidence_file": "docs/architecture/PHASE_7_LOCAL_V1_CONFORMANCE_FREEZE.md",
+      "evidence_marker": "No uninstall or rollback step deletes authority or audit data."
+    }
+  ],
+  "validation_commands": [
+    "npm run phase7:local-conformance:test",
+    "npm run phase7:local-conformance:check",
+    "npm run security:conformance:check",
+    "npm run audit:migrations:check",
+    "npm run security:review:check",
+    "npm run phase7:readiness:check",
+    "npm run source:check",
+    "npm run audit:dependencies:check",
+    "git diff --check"
+  ],
+  "explicit_exclusions": [
+    "runtime_or_public_adapter_wiring",
+    "production_or_user_repository_execution",
+    "migration_0018_or_signed_evidence",
+    "postgresql_ha_fleet_or_multi_tenancy",
+    "package_target_selection_or_artifact_build",
+    "deployment_publication_or_production_write"
+  ],
+  "side_effects": []
+}

@@ -1,0 +1,177 @@
+{
+  "schema_version": "lnsat.security_conformance_ledger.v0_1",
+  "generated_for": "mcp-2026-07-28-interoperability",
+  "official_conformance": {
+    "package": "@modelcontextprotocol/conformance",
+    "version": "0.1.16",
+    "supported_spec_versions": ["2025-06-18", "2025-11-25"],
+    "verified_http_scenario": "server-initialize",
+    "verified_http_protocol_version": "2025-11-25",
+    "modern_2026_framework_coverage": "upstream_not_available",
+    "stdio_framework_coverage": "upstream_not_available",
+    "modern_2026_sdk_coverage": "official_sdk_tests",
+    "stdio_sdk_coverage": "official_sdk_tests"
+  },
+  "deprecated_mcp_rules": {
+    "roots_dependency": false,
+    "sampling_dependency": false,
+    "stdio_application_logging": "stderr_only_if_added",
+    "structured_observability": "otel_contract",
+    "legacy_status": "temporary_tested_compatibility_only"
+  },
+  "required_negatives": [
+    {
+      "id": "protocol_downgrade_confusion",
+      "evidence_file": "packages/mcp/test/negotiation.test.ts",
+      "evidence_marker": "pins modern and rejects legacy or unsupported versions",
+      "command": "npm run mcp:negotiation:test"
+    },
+    {
+      "id": "malformed_capability_envelope",
+      "evidence_file": "packages/mcp/test/negotiation.test.ts",
+      "evidence_marker": "mcp.negotiation.malformed_metadata",
+      "command": "npm run mcp:negotiation:test"
+    },
+    {
+      "id": "unsupported_version_fallback_abuse",
+      "evidence_file": "packages/mcp/test/negotiation.test.ts",
+      "evidence_marker": "fallback_attempted: false",
+      "command": "npm run mcp:negotiation:test"
+    },
+    {
+      "id": "token_passthrough",
+      "evidence_file": "packages/mcp/test/oauth-security.test.ts",
+      "evidence_marker": "token_passthrough: false",
+      "command": "npm run mcp:oauth-security:test"
+    },
+    {
+      "id": "audience_issuer_resource_mismatch",
+      "evidence_file": "packages/mcp/test/oauth-security.test.ts",
+      "evidence_marker": "fails closed for token claim mismatch",
+      "command": "npm run mcp:oauth-security:test"
+    },
+    {
+      "id": "pkce_downgrade",
+      "evidence_file": "packages/mcp/test/oauth-security.test.ts",
+      "evidence_marker": "requires PKCE S256, exact redirect URI, and exact state",
+      "command": "npm run mcp:oauth-security:test"
+    },
+    {
+      "id": "oauth_mixup_confused_deputy",
+      "evidence_file": "packages/mcp/test/oauth-security.test.ts",
+      "evidence_marker": "validates protected-resource and authorization-server metadata",
+      "command": "npm run mcp:oauth-security:test"
+    },
+    {
+      "id": "redirect_metadata_ssrf",
+      "evidence_file": "packages/mcp/test/oauth-security.test.ts",
+      "evidence_marker": "blocks metadata SSRF, redirects, private IPs, and oversized responses",
+      "command": "npm run mcp:oauth-security:test"
+    },
+    {
+      "id": "dns_rebinding",
+      "evidence_file": "packages/mcp/test/oauth-security.test.ts",
+      "evidence_marker": "dns_revalidation_required: true",
+      "command": "npm run mcp:oauth-security:test"
+    },
+    {
+      "id": "schema_external_ref_ssrf",
+      "evidence_file": "packages/mcp/test/schema-security.test.ts",
+      "evidence_marker": "rejects external, missing, cyclic, and over-deep refs",
+      "command": "npm run mcp:schema-security:test"
+    },
+    {
+      "id": "schema_response_resource_exhaustion",
+      "evidence_file": "packages/mcp/test/schema-security.test.ts",
+      "evidence_marker": "allows any JSON output root but bounds output bytes",
+      "command": "npm run mcp:schema-security:test"
+    },
+    {
+      "id": "registry_rug_pull_version_substitution",
+      "evidence_file": "packages/gateway/test/registry-supply-chain.test.ts",
+      "evidence_marker": "detects version, digest, metadata, and malformed substitution",
+      "command": "npm run registry:supply-chain:test"
+    },
+    {
+      "id": "agent_card_substitution",
+      "evidence_file": "packages/gateway/test/a2a-contract.test.ts",
+      "evidence_marker": "identity substitution",
+      "command": "npm run a2a:contract:test"
+    },
+    {
+      "id": "prompt_tool_metadata_injection",
+      "evidence_file": "packages/mcp/test/negotiation.test.ts",
+      "evidence_marker": "server_info_trusted: false",
+      "command": "npm run mcp:negotiation:test"
+    },
+    {
+      "id": "approval_bypass",
+      "evidence_file": "packages/policy/test/policy-decision-v1.test.ts",
+      "evidence_marker": "requires approval for explicit, risk, or capability gates",
+      "command": "npm test -w @lnsat/policy"
+    },
+    {
+      "id": "policy_widening",
+      "evidence_file": "packages/policy/test/policy-decision-v1.test.ts",
+      "evidence_marker": "denies forbidden, unknown, or absent capabilities",
+      "command": "npm test -w @lnsat/policy"
+    },
+    {
+      "id": "cross_tenant_operation_lookup",
+      "evidence_file": "packages/gateway/test/operation-recovery.test.ts",
+      "evidence_marker": "isolates tenant and project reads",
+      "command": "npm run operation:recovery:test"
+    },
+    {
+      "id": "idempotency_collision",
+      "evidence_file": "packages/gateway/test/operation-recovery.test.ts",
+      "evidence_marker": "fails closed when same key changes argument digest",
+      "command": "npm run operation:recovery:test"
+    },
+    {
+      "id": "blind_retry",
+      "evidence_file": "packages/gateway/test/operation-recovery.test.ts",
+      "evidence_marker": "forbids blind retry while outcome is unknown",
+      "command": "npm run operation:recovery:test"
+    },
+    {
+      "id": "receipt_substitution",
+      "evidence_file": "packages/gateway/test/operation-recovery.test.ts",
+      "evidence_marker": "binds receipt result digest and rejects future receipt time",
+      "command": "npm run operation:recovery:test"
+    },
+    {
+      "id": "trace_baggage_as_authority",
+      "evidence_file": "packages/gateway/test/identity-observability.test.ts",
+      "evidence_marker": "keeps baggage free of authority and secrets",
+      "command": "npm run identity:observability:test"
+    },
+    {
+      "id": "secret_raw_input_echo",
+      "evidence_file": "packages/mcp/test/negotiation.test.ts",
+      "evidence_marker": "raw probe failure must not escape",
+      "command": "npm run mcp:negotiation:test"
+    },
+    {
+      "id": "stale_cache_as_trust",
+      "evidence_file": "packages/gateway/test/registry-supply-chain.test.ts",
+      "evidence_marker": "rejects stale, missing, future, or malformed cache",
+      "command": "npm run registry:supply-chain:test"
+    },
+    {
+      "id": "hsm_software_provider_substitution",
+      "evidence_file": "packages/policy/test/signer-provider.test.ts",
+      "evidence_marker": "rejects provider, algorithm, validity, and private-material substitution",
+      "command": "npm run signer:provider:test"
+    },
+    {
+      "id": "m2m_token_as_human_approval",
+      "evidence_file": "packages/mcp/test/oauth-security.test.ts",
+      "evidence_marker": "client_credentials_machine",
+      "command": "npm run mcp:oauth-security:test"
+    }
+  ],
+  "production_runtime_started": false,
+  "publication_performed": false,
+  "side_effects": []
+}

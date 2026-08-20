@@ -1,0 +1,11 @@
+{
+  "project": "example-agent-project",
+  "name": "Example Agent Project",
+  "current_stage": "Evaluation",
+  "active_item": null,
+  "next_item": null,
+  "state": "fixture_only",
+  "last_verified": "2026-07-22",
+  "completed_items": ["state-item-mcp-inspection", "state-item-api-inspection"],
+  "last_checks": ["synthetic fixture", "read-only contract"]
+}

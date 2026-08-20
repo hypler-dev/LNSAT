@@ -1,0 +1,27 @@
+{
+  "name": "@lnsat/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLI for validating, hashing, and inspecting LNSAT packets",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hypler-dev/LNSAT.git",
+    "directory": "packages/cli"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "lnsat": "dist/index.js"
+  },
+  "scripts": {
+    "build": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json",
+    "test": "npm run build -w @lnsat/gateway && vitest run",
+    "typecheck": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lnsat/gateway": "0.1.0",
+    "@lnsat/packets": "0.1.0"
+  },
+  "license": "Apache-2.0"
+}

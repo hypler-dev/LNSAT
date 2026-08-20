@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-session-issue-request-v1.schema.json",
+  "title": "LNSAT Gateway Session Issue Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["identity_ref", "password", "lifetime_seconds"],
+  "properties": {
+    "identity_ref": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 255,
+      "pattern": "^identity:human:[^\\s\\u0000-\\u001f\\u007f]+$",
+      "x-lnsat-max-remainder-characters": 240,
+      "x-lnsat-max-utf16-code-units": 256
+    },
+    "password": {
+      "type": "string",
+      "minLength": 15,
+      "maxLength": 128
+    },
+    "lifetime_seconds": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 3600
+    }
+  }
+}

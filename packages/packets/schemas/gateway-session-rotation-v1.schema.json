@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-session-rotation-v1.schema.json",
+  "title": "LNSAT Gateway Session Rotation v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "status",
+        "scope",
+        "prior_session_id",
+        "session",
+        "transport",
+        "replay_semantics",
+        "absolute_expiry_preserved",
+        "side_effects",
+        "session_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.session_rotation.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": true
+        },
+        "status": {
+          "const": "rotated"
+        },
+        "scope": {
+          "const": "current_session_only"
+        },
+        "prior_session_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "session": {
+          "$ref": "#/$defs/session"
+        },
+        "transport": {
+          "$ref": "#/$defs/transport"
+        },
+        "replay_semantics": {
+          "const": "one_time_current_session"
+        },
+        "absolute_expiry_preserved": {
+          "const": true
+        },
+        "side_effects": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "session_activity_evidence_may_append"
+            },
+            {
+              "const": "prior_session_revocation_appended"
+            },
+            {
+              "const": "replacement_session_evidence_appended"
+            },
+            {
+              "const": "session_rotation_evidence_appended"
+            },
+            {
+              "const": "session_security_events_appended"
+            },
+            {
+              "const": "session_cookies_set"
+            }
+          ],
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "session_state_changed": {
+          "const": true
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "prior_session_id",
+        "session",
+        "errors",
+        "side_effects",
+        "session_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.session_rotation.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": false
+        },
+        "prior_session_id": {
+          "type": "null"
+        },
+        "session": {
+          "type": "null"
+        },
+        "errors": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/error"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "side_effects": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "session_state_changed": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "identity_ref", "role", "issued_at", "expires_at"],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "identity_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "role": {
+          "enum": ["owner", "operator", "auditor"]
+        },
+        "issued_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        },
+        "expires_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        }
+      }
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bind_scope",
+        "same_origin_required",
+        "csrf_verified",
+        "cors_enabled",
+        "session_cookie",
+        "csrf_cookie"
+      ],
+      "properties": {
+        "bind_scope": {
+          "const": "loopback"
+        },
+        "same_origin_required": {
+          "const": true
+        },
+        "csrf_verified": {
+          "const": true
+        },
+        "cors_enabled": {
+          "const": false
+        },
+        "session_cookie": {
+          "const": "host_only_http_only_samesite_strict"
+        },
+        "csrf_cookie": {
+          "const": "host_only_samesite_strict"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message", "severity"],
+      "properties": {
+        "code": {
+          "const": "gateway.session_rotation.denied"
+        },
+        "path": {
+          "const": "/session"
+        },
+        "message": {
+          "const": "Session rotation denied."
+        },
+        "severity": {
+          "const": "error"
+        }
+      }
+    }
+  }
+}

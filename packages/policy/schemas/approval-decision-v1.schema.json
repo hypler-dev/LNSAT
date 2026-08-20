@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/approval-decision-v1.schema.json",
+  "title": "LNSAT Approval Decision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "schema_id",
+    "approval_decision_id",
+    "approval_request_ref",
+    "approver_ref",
+    "approver_session_ref",
+    "decision",
+    "reason_code",
+    "decided_at",
+    "expires_at",
+    "approval_gate_satisfied",
+    "execution_authorized",
+    "side_effects"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "lnsat.contracts.v1_0"
+    },
+    "schema_id": {
+      "const": "lnsat.approval_decision.schema.v1_0"
+    },
+    "approval_decision_id": {
+      "type": "string",
+      "pattern": "^apd_[0-9a-f]{64}$"
+    },
+    "approval_request_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "approval_request_id", "policy_decision_id"],
+      "properties": {
+        "schema_id": {
+          "const": "lnsat.approval_request.schema.v1_0"
+        },
+        "approval_request_id": {
+          "type": "string",
+          "pattern": "^apr_[0-9a-f]{64}$"
+        },
+        "policy_decision_id": {
+          "type": "string",
+          "pattern": "^pol_[0-9a-f]{64}$"
+        }
+      }
+    },
+    "approver_ref": {
+      "type": "string",
+      "pattern": "^identity:human:[^\\s\\u0000-\\u001f\\u007f]{1,234}$",
+      "maxLength": 256
+    },
+    "approver_session_ref": {
+      "$ref": "#/$defs/session_ref"
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["approved", "denied"]
+    },
+    "reason_code": {
+      "$ref": "#/$defs/reason_code"
+    },
+    "decided_at": {
+      "$ref": "#/$defs/utc_timestamp"
+    },
+    "expires_at": {
+      "$ref": "#/$defs/utc_timestamp"
+    },
+    "approval_gate_satisfied": {
+      "type": "boolean"
+    },
+    "execution_authorized": {
+      "const": false
+    },
+    "side_effects": {
+      "type": "array",
+      "maxItems": 0
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "approved"
+          }
+        },
+        "required": ["decision"]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "const": "approval.operator_approved"
+          },
+          "approval_gate_satisfied": {
+            "const": true
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "reason_code": {
+            "enum": [
+              "approval.operator_denied",
+              "approval.scope_rejected",
+              "approval.evidence_insufficient",
+              "approval.request_superseded"
+            ]
+          },
+          "approval_gate_satisfied": {
+            "const": false
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "session_ref": {
+      "type": "string",
+      "pattern": "^session:[^\\s\\u0000-\\u001f\\u007f]{1,240}$",
+      "maxLength": 256
+    },
+    "reason_code": {
+      "type": "string",
+      "enum": [
+        "approval.operator_approved",
+        "approval.operator_denied",
+        "approval.scope_rejected",
+        "approval.evidence_insufficient",
+        "approval.request_superseded"
+      ]
+    },
+    "utc_timestamp": {
+      "type": "string",
+      "pattern": "^(?!0000)\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$",
+      "maxLength": 40
+    }
+  }
+}

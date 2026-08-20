@@ -1,0 +1,11 @@
+{
+  "id": "BP-0018",
+  "phase": "API",
+  "status": "done",
+  "objective": "Demonstrate the read-only gateway wrapper.",
+  "acceptance_checks": ["Response is deterministic", "Missing fixtures fail closed"],
+  "verification_commands": ["npm test --workspace @lnsat/api"],
+  "result": {
+    "side_effects": []
+  }
+}

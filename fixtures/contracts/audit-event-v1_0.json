@@ -1,0 +1,108 @@
+{
+  "schema": "lnsat.audit_event.golden_vectors.v1_0",
+  "source_chain": {
+    "packet_vector": {
+      "path": "fixtures/contracts/packet-envelope-v1_0.json",
+      "case_id": "execution_packet_v1",
+      "permission_allow_override": ["deploy.request"]
+    },
+    "policy_evaluated_at": "2026-07-22T20:00:00Z",
+    "approval_requested_at": "2026-07-22T20:01:00Z",
+    "approver_ref": "identity:human:owner",
+    "approver_session_ref": "session:local:owner-0001",
+    "approval_decision": "approved",
+    "approval_reason_code": "approval.operator_approved",
+    "approval_decided_at": "2026-07-22T20:02:00Z"
+  },
+  "vectors": [
+    {
+      "case_id": "policy_decision_recorded",
+      "event_type": "policy.decision_recorded",
+      "observed_at": "2026-07-22T20:00:10Z",
+      "expected_event_id": "aud_7944617f269b86c59d29fc97b2bcdf1fd5cf3ba3b062a09840c885b999aed595",
+      "expected_source_evidence_hash": "sha256:bc6ba4c4936e4cb4692fa77da0625603a2cff578681b6410611d2422d0b13284",
+      "expected_result_status": "approval_required"
+    },
+    {
+      "case_id": "approval_request_recorded",
+      "event_type": "approval.request_recorded",
+      "observed_at": "2026-07-22T20:01:10Z",
+      "expected_event_id": "aud_46b3c8a0809da90f7410c07b1e419510727ecaed07ee8f0e965e6e0310d8789f",
+      "expected_source_evidence_hash": "sha256:abee3dac561978765b6ebde8ab785c1353596f75dc9b878b9de1d896c77cb6f7",
+      "expected_result_status": "requested"
+    },
+    {
+      "case_id": "approval_decision_recorded",
+      "event_type": "approval.decision_recorded",
+      "observed_at": "2026-07-22T20:02:10Z",
+      "expected_event_id": "aud_dae347f0bba67e08c39521f631727f7f2ff5b930dcfcc39d85d52e06cc042c22",
+      "expected_source_evidence_hash": "sha256:7d716a6042d103252d83abc9ceede994ff9304349dc6f35327f8d7f6fa4a051d",
+      "expected_result_status": "approved"
+    }
+  ],
+  "validation_cases": [
+    {
+      "case_id": "policy_event_valid",
+      "event_type": "policy.decision_recorded",
+      "mutation": "none",
+      "observed_at": "2026-07-22T20:00:10Z",
+      "expected": "ok"
+    },
+    {
+      "case_id": "request_event_valid",
+      "event_type": "approval.request_recorded",
+      "mutation": "none",
+      "observed_at": "2026-07-22T20:01:10Z",
+      "expected": "ok"
+    },
+    {
+      "case_id": "decision_event_valid",
+      "event_type": "approval.decision_recorded",
+      "mutation": "none",
+      "observed_at": "2026-07-22T20:02:10Z",
+      "expected": "ok"
+    },
+    {
+      "case_id": "invalid_observation_time",
+      "event_type": "policy.decision_recorded",
+      "mutation": "none",
+      "observed_at": "2026-02-31T00:00:00Z",
+      "expected": "audit_event.invalid_observed_at"
+    },
+    {
+      "case_id": "observation_before_event",
+      "event_type": "approval.decision_recorded",
+      "mutation": "none",
+      "observed_at": "2026-07-22T20:01:59Z",
+      "expected": "audit_event.observed_before_event"
+    },
+    {
+      "case_id": "packet_source_drift",
+      "event_type": "policy.decision_recorded",
+      "mutation": "tamper_packet",
+      "observed_at": "2026-07-22T20:00:10Z",
+      "expected": "audit_event.source_evidence_mismatch"
+    },
+    {
+      "case_id": "policy_source_drift",
+      "event_type": "approval.request_recorded",
+      "mutation": "tamper_policy",
+      "observed_at": "2026-07-22T20:01:10Z",
+      "expected": "audit_event.source_evidence_mismatch"
+    },
+    {
+      "case_id": "request_source_drift",
+      "event_type": "approval.decision_recorded",
+      "mutation": "tamper_request",
+      "observed_at": "2026-07-22T20:02:10Z",
+      "expected": "audit_event.source_evidence_mismatch"
+    },
+    {
+      "case_id": "decision_source_drift",
+      "event_type": "approval.decision_recorded",
+      "mutation": "tamper_decision",
+      "observed_at": "2026-07-22T20:02:10Z",
+      "expected": "audit_event.source_evidence_mismatch"
+    }
+  ]
+}

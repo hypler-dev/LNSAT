@@ -1,0 +1,42 @@
+{
+  "name": "@lnsat/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Experimental loopback Gateway inspection API for LNSAT",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hypler-dev/LNSAT.git",
+    "directory": "apps/api"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./onboarding-context-inspection": {
+      "types": "./dist/onboarding-context-inspection.d.ts",
+      "default": "./dist/onboarding-context-inspection.js"
+    }
+  },
+  "scripts": {
+    "build": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:operation-readback": "vitest run test/control-center-operation-readback-route.test.ts",
+    "typecheck": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lnsat/audit": "0.1.0",
+    "@lnsat/gateway": "0.1.0",
+    "@lnsat/packets": "0.1.0",
+    "@lnsat/policy": "0.1.0",
+    "fastify": "5.10.0",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.20.0"
+  }
+}

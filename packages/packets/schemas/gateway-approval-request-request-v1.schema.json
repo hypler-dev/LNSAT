@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-approval-request-request-v1.schema.json",
+  "title": "LNSAT Gateway Approval Request Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project_ref", "policy_decision_id"],
+  "properties": {
+    "project_ref": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 256,
+      "pattern": "^project:[^\\s\\u0000-\\u001F\\u007F]{1,240}$"
+    },
+    "policy_decision_id": {
+      "type": "string",
+      "pattern": "^pol_[0-9a-f]{64}$"
+    }
+  }
+}

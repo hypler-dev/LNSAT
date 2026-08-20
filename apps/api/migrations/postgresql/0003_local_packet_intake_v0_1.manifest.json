@@ -1,0 +1,32 @@
+{
+  "artifact_id": "local_packet_intake.postgresql.0003.v0_1",
+  "packet_id": "BP-0875",
+  "schema_version": "local_packet_intake.v0_1",
+  "target_storage": "PostgreSQL",
+  "environment": "loopback_disposable_local_development_only",
+  "sql_artifact": "apps/api/migrations/postgresql/0003_local_packet_intake_v0_1.sql",
+  "installed_schema_catalog_sha256": "18fdea4e11ddb6651b25534523854ea508d742ba4db01be16d5454bea4ad594d",
+  "tables": ["local_packet_intakes"],
+  "persistence": "immutable canonical synthetic packet, existing packet digest, accepted status, and authenticated operator/session references",
+  "raw_input_storage": "withheld",
+  "authorization": "active loopback session snapshot with control_plane.packet.submit capability; database trigger rechecks operator, session, expiry, revocation, ownership, and capability",
+  "rollback": "guarded reset removes only the disposable local-state cluster and re-bootstrap reapplies committed migrations",
+  "forbidden": [
+    "policy_or_approval_decision",
+    "audit_append",
+    "packet_execution",
+    "provider_or_model_dispatch",
+    "non_loopback_exposure",
+    "production_or_customer_data",
+    "hosted_runtime",
+    "deploy_or_dns_mutation",
+    "external_ssh",
+    "public_package_publication",
+    "paid_service",
+    "release_signing_sbom_provenance_attestation"
+  ],
+  "side_effects": [
+    "local_disposable_packet_intake_table_created",
+    "local_migration_ledger_record_appended"
+  ]
+}

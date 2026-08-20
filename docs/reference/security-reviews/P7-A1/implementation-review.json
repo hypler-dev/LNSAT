@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "P7-A1-independent-implementation-review-8c3c3e59",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["P7-A1"],
+  "base_revision": "6e4417dcf1181eb96fe35637a664be74c302a74d",
+  "reviewed_revision": "8c3c3e59e65ee52b977fdbe404ddcf7cf915f6ae",
+  "reviewed_tree_oid": "e4f2659b926fb79613c411de03ebc1c7d4f2da64",
+  "diff_sha256": "sha256:3d7c2185302b587c96bf24ac8613915a43a7ecf5ed2f13b04396d3fcc8c2c2fb",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:2632ae8c52073ebee84e9e0319791b6b109ed9e433646458093b8a0e9433703e"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption.rs",
+      "sha256": "sha256:04d46b9c51703aadcc3cb180821f5fea9fbe0b2de852bc4529128f687700fea6"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/phase7_local_authorization.rs",
+      "sha256": "sha256:7c4f6c97b3b865d58784325eda61a839fe1b5d451c6f66cf99f94946119b3000"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:3c90b77e271ab6b7744953f7e803c8fc23ed6d44978a9ae28a4d580b81d47d73"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.mjs",
+      "sha256": "sha256:970d87bf2e2a52694e7a158b85cc65e52c771eab7c5e5f80320deba1cabdc1d5"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.test.mjs",
+      "sha256": "sha256:5e911f5df31dc81117796b278e56561233c6bfe796e021b3f6fa4a1976f71a2e"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.mjs",
+      "sha256": "sha256:0768ff5386bdc2796115a9323bf756c38db6836209637de3abd7558164796a22"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.test.mjs",
+      "sha256": "sha256:42084b3534d4e247f611e75fa59a95be5b84f11df355a90eca217a6fc1132189"
+    }
+  ],
+  "reviewer": {
+    "identity": "local-model:qwen3.5-9b/exact-commit-review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "Local Qwen3.5-9B read-only review after Codex Spark capacity exhaustion"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

@@ -1,0 +1,12 @@
+title = "LNSAT secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact public test identifiers and password profile name"
+targetRules = ["generic-api-key"]
+regexes = [
+  '''^idem_(?:a2a_operation_0001|operation_0001|execute_v1_(?:deny|approval|capacity))$''',
+  '''^lnsat\.argon2id\.v1$''',
+]

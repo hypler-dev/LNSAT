@@ -1,0 +1,48 @@
+{
+  "schema": "lnsat.audit_event_idempotency.conformance.v1_0",
+  "candidate": {
+    "idempotency_key": "audit:approval.decision_recorded:apd_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "event_id": "aud_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "unrelated_prior": {
+    "idempotency_key": "audit:policy.decision_recorded:pol_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "event_id": "aud_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "cases": [
+    {
+      "case_id": "empty_state_append",
+      "mutation": "none",
+      "expected": "append_proposed"
+    },
+    {
+      "case_id": "unrelated_state_append",
+      "mutation": "unrelated_prior",
+      "expected": "append_proposed"
+    },
+    {
+      "case_id": "exact_replay",
+      "mutation": "exact_replay",
+      "expected": "exact_replay"
+    },
+    {
+      "case_id": "same_key_different_event_collision",
+      "mutation": "collision",
+      "expected": "audit_event_idempotency.collision"
+    },
+    {
+      "case_id": "duplicate_prior_key",
+      "mutation": "duplicate_prior",
+      "expected": "audit_event_idempotency.duplicate_idempotency_key"
+    },
+    {
+      "case_id": "invalid_prior_ref",
+      "mutation": "invalid_prior",
+      "expected": "audit_event_idempotency.invalid_prior_state"
+    },
+    {
+      "case_id": "invalid_candidate_ref",
+      "mutation": "invalid_candidate",
+      "expected": "audit_event_idempotency.invalid_candidate"
+    }
+  ]
+}

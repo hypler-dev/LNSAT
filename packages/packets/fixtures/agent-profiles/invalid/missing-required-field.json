@@ -1,0 +1,26 @@
+{
+  "actor_id": "agent.codex",
+  "display_name": "Codex Observer",
+  "provider": "OpenAI Codex",
+  "model_or_client": "codex-cli",
+  "role": "observer",
+  "status": "draft",
+  "source_refs": ["doc:docs/onboarding/AGENT_ONBOARDING.md"],
+  "projects_allowed": ["lnsat"],
+  "capabilities": {
+    "allow": ["context.read"],
+    "block": ["secret.read.never"]
+  },
+  "budgets": {
+    "token_limit": 120000,
+    "cost_usd": 10,
+    "runtime_seconds": 7200
+  },
+  "session": {
+    "ttl_seconds": 7200,
+    "requires_human_owner": true
+  },
+  "approval": {
+    "required_for": ["deploy.request"]
+  }
+}

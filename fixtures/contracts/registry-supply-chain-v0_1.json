@@ -1,0 +1,29 @@
+{
+  "schema_version": "lnsat.registry_supply_chain_fixture.v0_1",
+  "metadata": {
+    "registry_profile": "private",
+    "namespace": "example",
+    "server_name": "readonly-inspector",
+    "version": "1.2.3",
+    "package_ref": "npm:@example/readonly-inspector@1.2.3",
+    "package_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_url": "https://source.example.test/readonly-inspector",
+    "permissions": ["packet.read"],
+    "environment_refs": ["env-ref:readonly-endpoint"],
+    "network_targets": ["https://api.example.test"],
+    "sbom_ref": "evidence:sbom:0001",
+    "provenance_ref": "evidence:provenance:0001",
+    "signature_ref": "evidence:signature:0001",
+    "vulnerability_inventory_ref": "evidence:vulnerabilities:0001",
+    "published_at": "2026-08-04T00:00:00.000Z"
+  },
+  "expected": {
+    "status": "quarantined",
+    "namespace_verification_grants_authority": false,
+    "auto_install": false,
+    "auto_enable": false,
+    "auto_authorize": false,
+    "auto_execute": false,
+    "side_effects": []
+  }
+}

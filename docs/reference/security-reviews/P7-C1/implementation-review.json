@@ -1,0 +1,84 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "P7-C1-independent-implementation-review-89b7a021",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["P7-C1"],
+  "base_revision": "5d3d1ab92c18540d13393034f18c06f717e4351a",
+  "reviewed_revision": "89b7a021e2db32878c40a7a9a5320da0f0b9ef6e",
+  "reviewed_tree_oid": "0ad4062035b6a0ed6d1bb084ad4edad44da3d55b",
+  "diff_sha256": "sha256:bfa943913bb7322a3c2601a50a1a761a7e2eeaf32fc1a3facb81c4f9691103cd",
+  "protected_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:5e1bf66b6a257fe6082b347cae010bb1735473356b8f5501d5df0c53ded25f45"
+    },
+    {
+      "path": "crates/lnsat-store/Cargo.toml",
+      "sha256": "sha256:55826bba5608f70f8e17064f3a79a1379977101bf30f380caa3bd8ea09703d0b"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:f9eb12c62651473320ee22911a673ec28fc5ff2405d442058ff1051a57da0506"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption.rs",
+      "sha256": "sha256:9efb6d0e2e6f5c622865f0661db655245217aa0852aa687154724cf712e902bf"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_nonce.rs",
+      "sha256": "sha256:438225c1146b8cf854f76f498e07be65623e7173e420c2c11121db328f4dae92"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_persistence.rs",
+      "sha256": "sha256:328102c8aaee1bc261aa7074fc28bc501bca8e443ac8bf29403102081bab70c5"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/phase7_atomic_consumption.rs",
+      "sha256": "sha256:d9669fdb95504ece62cdd55082ce5a28d2afe978ad1135337b07e4864730d93d"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.mjs",
+      "sha256": "sha256:ac96e14866c949c48c8be6de2a888fa5a4ccbba2a319187caab3c89c7fe4f914"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.test.mjs",
+      "sha256": "sha256:570f8b0f25b2ed880eeb6e07d4ab83d442e05a44d53ddd4f39a41a405cbddf5c"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.mjs",
+      "sha256": "sha256:e47515d26c811cfe9984f01b51d55b5846e70a68eeac6a5569356b2c0e58cec6"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.test.mjs",
+      "sha256": "sha256:47fcc190473f765421af46f411019a560514a281ff645d2a5ec3ef8a2cdbda92"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/exact_commit_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex read-only sub-agent review"
+  },
+  "findings": [
+    {
+      "finding_id": "P7-C1-F1",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Wrong-capability replay is rejected without disclosing an existing idempotency record.",
+      "resolution_revision": "89b7a021e2db32878c40a7a9a5320da0f0b9ef6e"
+    },
+    {
+      "finding_id": "P7-C1-F2",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Fixed golden vectors lock capability, request, identity, entity, and state digest framing and field order.",
+      "resolution_revision": "89b7a021e2db32878c40a7a9a5320da0f0b9ef6e"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

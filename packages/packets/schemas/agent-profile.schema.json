@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/agent-profile.schema.json",
+  "title": "LNSAT Agent Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "actor_id",
+    "display_name",
+    "provider",
+    "model_or_client",
+    "role",
+    "status",
+    "source_refs",
+    "projects_allowed",
+    "capabilities",
+    "budgets",
+    "session",
+    "approval",
+    "output_contract"
+  ],
+  "properties": {
+    "actor_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]{2,127}$"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_or_client": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "observer",
+        "local_reviewer",
+        "code_contributor",
+        "ops_assistant",
+        "infra_admin_agent",
+        "workflow_worker"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "paused", "archived"]
+    },
+    "source_refs": {
+      "$ref": "#/$defs/non_empty_string_list"
+    },
+    "projects_allowed": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow", "block"],
+      "properties": {
+        "allow": {
+          "$ref": "#/$defs/non_empty_string_list"
+        },
+        "block": {
+          "$ref": "#/$defs/non_empty_string_list"
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["token_limit", "cost_usd", "runtime_seconds"],
+      "properties": {
+        "token_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runtime_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ttl_seconds", "requires_human_owner"],
+      "properties": {
+        "ttl_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requires_human_owner": {
+          "type": "boolean"
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_for"],
+      "properties": {
+        "required_for": {
+          "$ref": "#/$defs/non_empty_string_list"
+        }
+      }
+    },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_sections", "forbidden_actions"],
+      "properties": {
+        "required_sections": {
+          "$ref": "#/$defs/non_empty_string_list"
+        },
+        "forbidden_actions": {
+          "$ref": "#/$defs/non_empty_string_list"
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "non_empty_string_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

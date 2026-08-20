@@ -1,0 +1,28 @@
+{
+  "artifact_id": "local_packet_policy_decisions.postgresql.0004.v0_1",
+  "packet_id": "BP-0876",
+  "schema_version": "local_packet_policy_decisions.v0_1",
+  "target_storage": "PostgreSQL",
+  "environment": "loopback_disposable_local_development_only",
+  "sql_artifact": "apps/api/migrations/postgresql/0004_local_packet_policy_decisions_v0_1.sql",
+  "installed_schema_catalog_sha256": "2877de5249816a846bb775f33114364a40c6acde8b44332b23cfddca73ea7889",
+  "tables": ["local_packet_policy_decisions"],
+  "reuse_contract": "decideUniversalPacketPolicy",
+  "persistence": "immutable deterministic decision bound to accepted packet digest and authenticated operator/session",
+  "authorization": "active local session with control_plane.packet.policy.evaluate; application and database recheck ownership, expiry, revocation, capability, and packet digest under row locks",
+  "rollback": "guarded reset removes only the disposable local-state cluster and re-bootstrap reapplies committed migrations",
+  "forbidden": [
+    "approval_rows",
+    "audit_append",
+    "workflow_or_execution_rows",
+    "gateway_or_mcp_command_routing",
+    "sandbox_execution",
+    "provider_or_model_dispatch",
+    "non_loopback_or_production_data",
+    "deploy_dns_ssh_publication_paid_release_sbom_or_push"
+  ],
+  "side_effects": [
+    "local_disposable_policy_decision_table_created",
+    "local_migration_ledger_record_appended"
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-session-family-sign-out-v1.schema.json",
+  "title": "LNSAT Gateway Session Family Sign-Out v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "status",
+        "scope",
+        "identity_ref",
+        "family_session_count",
+        "newly_revoked_session_count",
+        "revoked_at",
+        "transport",
+        "replay_semantics",
+        "side_effects",
+        "session_state_changed",
+        "reauthentication_required",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.session_family_sign_out.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": true
+        },
+        "status": {
+          "const": "signed_out"
+        },
+        "scope": {
+          "const": "identity_session_family"
+        },
+        "identity_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "family_session_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "newly_revoked_session_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "revoked_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        },
+        "transport": {
+          "$ref": "#/$defs/transport"
+        },
+        "replay_semantics": {
+          "const": "one_time_active_session_family"
+        },
+        "side_effects": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "session_activity_evidence_may_append"
+            },
+            {
+              "const": "session_family_revocations_appended"
+            },
+            {
+              "const": "session_security_events_appended"
+            },
+            {
+              "const": "session_cookies_cleared"
+            }
+          ],
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "session_state_changed": {
+          "const": true
+        },
+        "reauthentication_required": {
+          "const": true
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "identity_ref",
+        "family_session_count",
+        "newly_revoked_session_count",
+        "revoked_at",
+        "errors",
+        "side_effects",
+        "session_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.session_family_sign_out.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": false
+        },
+        "identity_ref": {
+          "type": "null"
+        },
+        "family_session_count": {
+          "type": "null"
+        },
+        "newly_revoked_session_count": {
+          "type": "null"
+        },
+        "revoked_at": {
+          "type": "null"
+        },
+        "errors": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/error"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "side_effects": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "session_state_changed": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bind_scope",
+        "same_origin_required",
+        "csrf_verified",
+        "cors_enabled",
+        "session_cookie",
+        "csrf_cookie"
+      ],
+      "properties": {
+        "bind_scope": {
+          "const": "loopback"
+        },
+        "same_origin_required": {
+          "const": true
+        },
+        "csrf_verified": {
+          "const": true
+        },
+        "cors_enabled": {
+          "const": false
+        },
+        "session_cookie": {
+          "const": "cleared_host_only_http_only_samesite_strict"
+        },
+        "csrf_cookie": {
+          "const": "cleared_host_only_samesite_strict"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message", "severity"],
+      "properties": {
+        "code": {
+          "const": "gateway.session_family_sign_out.denied"
+        },
+        "path": {
+          "const": "/session"
+        },
+        "message": {
+          "const": "Session family sign-out denied."
+        },
+        "severity": {
+          "const": "error"
+        }
+      }
+    }
+  }
+}

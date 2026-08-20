@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/audit-event-v1.schema.json",
+  "title": "LNSAT Audit Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "schema_id",
+    "event_id",
+    "event_type",
+    "result_status",
+    "actor_ref",
+    "session_ref",
+    "project_ref",
+    "resource_refs",
+    "packet_ref",
+    "policy_ref",
+    "approval_request_ref",
+    "approval_decision_ref",
+    "reason_codes",
+    "source_evidence_hash",
+    "idempotency_key",
+    "event_at",
+    "observed_at",
+    "retention_class",
+    "redaction",
+    "authenticated_provenance",
+    "persistence_requested",
+    "execution_authorized",
+    "side_effects"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "lnsat.contracts.v1_0"
+    },
+    "schema_id": {
+      "const": "lnsat.audit_event.schema.v1_0"
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^aud_[0-9a-f]{64}$"
+    },
+    "event_type": {
+      "$ref": "#/$defs/event_type"
+    },
+    "result_status": {
+      "type": "string",
+      "enum": ["allow", "deny", "approval_required", "requested", "approved", "denied"]
+    },
+    "actor_ref": {
+      "$ref": "#/$defs/identity_ref"
+    },
+    "session_ref": {
+      "$ref": "#/$defs/session_ref"
+    },
+    "project_ref": {
+      "$ref": "#/$defs/project_ref"
+    },
+    "resource_refs": {
+      "$ref": "#/$defs/sorted_unique_refs"
+    },
+    "packet_ref": {
+      "$ref": "#/$defs/packet_ref"
+    },
+    "policy_ref": {
+      "$ref": "#/$defs/policy_ref"
+    },
+    "approval_request_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/approval_request_ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "approval_decision_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/approval_decision_ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+        "maxLength": 128
+      }
+    },
+    "source_evidence_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "pattern": "^audit:(?:policy\\.decision_recorded|approval\\.request_recorded|approval\\.decision_recorded):(?:pol|apr|apd)_[0-9a-f]{64}$",
+      "maxLength": 180
+    },
+    "event_at": {
+      "$ref": "#/$defs/utc_timestamp"
+    },
+    "observed_at": {
+      "$ref": "#/$defs/utc_timestamp"
+    },
+    "retention_class": {
+      "const": "control_plane"
+    },
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_rejected_command",
+        "raw_rejected_value",
+        "raw_invalid_payload_content",
+        "secret_like_values"
+      ],
+      "properties": {
+        "raw_rejected_command": {
+          "const": "not_present"
+        },
+        "raw_rejected_value": {
+          "const": "not_present"
+        },
+        "raw_invalid_payload_content": {
+          "const": "not_present"
+        },
+        "secret_like_values": {
+          "const": "not_present"
+        }
+      }
+    },
+    "authenticated_provenance": {
+      "const": false
+    },
+    "persistence_requested": {
+      "const": false
+    },
+    "execution_authorized": {
+      "const": false
+    },
+    "side_effects": {
+      "type": "array",
+      "maxItems": 0
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "policy.decision_recorded"
+          }
+        },
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "enum": ["allow", "deny", "approval_required"]
+          },
+          "approval_request_ref": {
+            "type": "null"
+          },
+          "approval_decision_ref": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval.request_recorded"
+          }
+        },
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "const": "requested"
+          },
+          "approval_request_ref": {
+            "$ref": "#/$defs/approval_request_ref"
+          },
+          "approval_decision_ref": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "approval.decision_recorded"
+          }
+        },
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "result_status": {
+            "enum": ["approved", "denied"]
+          },
+          "approval_request_ref": {
+            "$ref": "#/$defs/approval_request_ref"
+          },
+          "approval_decision_ref": {
+            "$ref": "#/$defs/approval_decision_ref"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "policy.decision_recorded",
+        "approval.request_recorded",
+        "approval.decision_recorded"
+      ]
+    },
+    "identity_ref": {
+      "type": "string",
+      "pattern": "^identity:[^\\s\\u0000-\\u001f\\u007f]{1,240}$",
+      "maxLength": 256
+    },
+    "session_ref": {
+      "type": "string",
+      "pattern": "^session:[^\\s\\u0000-\\u001f\\u007f]{1,240}$",
+      "maxLength": 256
+    },
+    "project_ref": {
+      "type": "string",
+      "pattern": "^project:[^\\s\\u0000-\\u001f\\u007f]{1,240}$",
+      "maxLength": 256
+    },
+    "sorted_unique_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9+.-]*:[^\\s\\u0000-\\u001f\\u007f]{1,240}$",
+        "maxLength": 256
+      }
+    },
+    "packet_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "packet_id", "packet_hash", "idempotency_key"],
+      "properties": {
+        "schema_id": {
+          "const": "lnsat.packet_envelope.schema.v1_0"
+        },
+        "packet_id": {
+          "type": "string",
+          "pattern": "^pkt_[a-z0-9][a-z0-9_-]{7,63}$"
+        },
+        "packet_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "pattern": "^idem_[a-z0-9][a-z0-9_-]{7,127}$"
+        }
+      }
+    },
+    "policy_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "decision_id", "decision"],
+      "properties": {
+        "schema_id": {
+          "const": "lnsat.policy_decision.schema.v1_0"
+        },
+        "decision_id": {
+          "type": "string",
+          "pattern": "^pol_[0-9a-f]{64}$"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["allow", "deny", "approval_required"]
+        }
+      }
+    },
+    "approval_request_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "approval_request_id", "status"],
+      "properties": {
+        "schema_id": {
+          "const": "lnsat.approval_request.schema.v1_0"
+        },
+        "approval_request_id": {
+          "type": "string",
+          "pattern": "^apr_[0-9a-f]{64}$"
+        },
+        "status": {
+          "const": "requested"
+        }
+      }
+    },
+    "approval_decision_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_id",
+        "approval_decision_id",
+        "decision",
+        "approver_ref",
+        "approver_session_ref"
+      ],
+      "properties": {
+        "schema_id": {
+          "const": "lnsat.approval_decision.schema.v1_0"
+        },
+        "approval_decision_id": {
+          "type": "string",
+          "pattern": "^apd_[0-9a-f]{64}$"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["approved", "denied"]
+        },
+        "approver_ref": {
+          "type": "string",
+          "pattern": "^identity:human:[^\\s\\u0000-\\u001f\\u007f]{1,234}$",
+          "maxLength": 256
+        },
+        "approver_session_ref": {
+          "$ref": "#/$defs/session_ref"
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "utc_timestamp": {
+      "type": "string",
+      "pattern": "^(?!0000)\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$",
+      "maxLength": 40
+    }
+  }
+}

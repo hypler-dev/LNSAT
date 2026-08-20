@@ -1,0 +1,248 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "P7-B1-independent-correction-review-03cadbec",
+  "review_type": "independent_correction_review",
+  "packet_ids": ["P7-B1"],
+  "base_revision": "052684548502e8f48ab8fcd20165dbe974afa682",
+  "reviewed_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41",
+  "reviewed_tree_oid": "bea3c977a1c8a7e490b5a6aef3ae67bbf2ed67a2",
+  "diff_sha256": "sha256:b33f82b49a9562db929a5a4694c44da710f84dea23630fd5faf7f5f021acbe92",
+  "protected_files": [
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "sha256": "sha256:2418a52b67b8de45fd90a16577e59fe38d874018d3d2bddfce3fdc99c7c06a47"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "sha256:7d9049ebc258cfb5857250ddbecd7483f22c6f5a5145a16b193634486f22f541"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "sha256:b50d1420b200c71b37ea8e16e41e14a0705b35871f20afa25c87f3e26edb1ef9"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/execution.rs",
+      "sha256": "sha256:62699ab04e3437b167c6a320e5aa9c65fa283298d34e01a793749189cca340f6"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/lib.rs",
+      "sha256": "sha256:8e0b631c269d6b6685651b6e0b7fae18c7ee21717a126ce4511a81b2807ba6b6"
+    },
+    {
+      "path": "crates/lnsat-contracts/tests/conformance.rs",
+      "sha256": "sha256:35320c4661b29f49a7ccf60ac805f1b748367ee869f557e18634d1e73f0f756f"
+    },
+    {
+      "path": "crates/lnsat-store/migrations/0017_phase7_core_semantics_correction.sql",
+      "sha256": "sha256:0667c0812a59a279b5f3ac11a1f718bad76f4bbe2bb41178496fc376586dd8eb"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:49543b3c62e2b3ce8fcab359317db9055358ae90df7b451634ea7e65c229e2ed"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_persistence.rs",
+      "sha256": "sha256:3ddfa0ddde57fe0b036d54711f542273b5021f993eae57cc39b1de1e6f10fe6a"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/phase7d_signed_candidate.rs",
+      "sha256": "sha256:1190baecea79aa66c7f1041d22a050bd1c5edfb4c6ed90417299f1c4e2b1a207"
+    },
+    {
+      "path": "crates/lnsat-store/tests/fixtures/phase7d_public_material_schema_candidate.sql",
+      "sha256": "sha256:e01d69c3aa6d2fef9ef0deda5b0f16834a69a18b61530b84ce42bab7e2927bde"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:1821eabc0030bf8475dfc04fe5ff25f49611bfc52f7b944785e070f3ceb6fe7a"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:bc70bfdf17cda2b4788712e49796c9d9c631ae74bde831dca44ab04d2377e8bb"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:ddc970f2be862eb02a050befddb1e6dd4b7c5a39c6b8ef9d4b2f806f910bf037"
+    },
+    {
+      "path": "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
+      "sha256": "sha256:469faef0c62543a022fb2794ae60621c449c987d2efe71a6f6b77c79bc2ad27c"
+    },
+    {
+      "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md",
+      "sha256": "sha256:76dc65ca890ad72e9f33b9792ea103bb0400547c28f3cb111c8db50dc80e4fac"
+    },
+    {
+      "path": "docs/architecture/SQLITE_BACKUP_AND_RESTORE.md",
+      "sha256": "sha256:a6c58de90447a64e68993eb4b9066d3525e9091bd2f4176c9a8d43d5d44cf8c3"
+    },
+    {
+      "path": "docs/architecture/SQLITE_RECOVERY_INSPECTION_EVENTS.md",
+      "sha256": "sha256:a5fbe6b13a5728fc714544473879c9fdcda3d454bf25f9ed685517324ff3b2ef"
+    },
+    {
+      "path": "docs/reference/security-reviews/P7-B1/post-merge-review-0526845.json",
+      "sha256": "sha256:be5f4af5b8f377e6bc2a8b721febc2d721885e8a18e1064ee408c7e3a505c819"
+    },
+    {
+      "path": "fixtures/contracts/execution-request-v1_0.json",
+      "sha256": "sha256:6ec04c0057ccf58b6e19bf217302e5e7b68764c8898b58432636fe0c57017783"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:0544c2e5e696bb3dabcd3536f0f6956c18e2cd3aef00df7947bc2b014086a2ee"
+    },
+    {
+      "path": "packages/packets/src/execution-request-v1.ts",
+      "sha256": "sha256:a758a06d71d449ce37d8b16d1fbc079825b11bc5cf259aef4fde8fb292bbdd74"
+    },
+    {
+      "path": "packages/packets/src/index.ts",
+      "sha256": "sha256:8efc6befc8219f1326b250ea142a22d3fff2f69bd3d19999c536436389006f46"
+    },
+    {
+      "path": "packages/packets/test/execution-request-v1.test.ts",
+      "sha256": "sha256:af452d7c5725699dd6924d9022593cf07bcfa4186e4d23ff7478bb2389f6ab52"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.mjs",
+      "sha256": "sha256:465344b4531fcccdbeb9a020b0dea8ec62c496b30264bc2382e446848d688428"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.test.mjs",
+      "sha256": "sha256:624beae764710c60228ffaf314bdc0cc42879ad1e5494e0a7e6be8ed80067813"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.mjs",
+      "sha256": "sha256:f8a4b931273d0a88ceb8fba7329b219fc3f599d6bd5c09789d650b119dd76f30"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.test.mjs",
+      "sha256": "sha256:9b1072e153b4872e31e756e61076c25eef5adaa47c7a3838a2b92b8493a7910b"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/p7_b1_diff_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex read-only sub-agent review"
+  },
+  "findings": [
+    {
+      "finding_id": "P7-B1-F1",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Persisted action evidence is rederived from exact approved packet bytes.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F2",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "One approval decision cannot fan out into multiple execution authorizations.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F3",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Attempt time, identifiers, and idempotency identity are server owned.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F4",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Rejected receipts cannot occupy canonical accepted-receipt storage.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F5",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Completed packets bind real Git commits and raw blob SHA-256 manifests.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F6",
+      "severity": "maintainability",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Phase 7d candidate tests are extracted from the store root module.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F7",
+      "severity": "governance",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Correction review evidence is durable and machine checked.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F8",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Persisted approval source rows are recursively decoded and semantically rederived before attempt preparation.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F9",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Authorization approval identity is bound to its authoritative attempt and nonce chain.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F10",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "SQLite INSERT OR REPLACE cannot bypass one-approval authorization cardinality.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F11",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Valid populated v16 evidence is semantically verified, preserved, and never marked migration eligible.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F12",
+      "severity": "governance",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Review attestation remains valid across merge commits and later source packets while its manifest stays immutable.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F13",
+      "severity": "governance",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Review manifests accept unique extra resolved findings without weakening required findings.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    },
+    {
+      "finding_id": "P7-B1-F14",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "CI runs security-review and real-Git readiness validator unit suites.",
+      "resolution_revision": "03cadbecf7f5f1fb312f1184b12dba886d55af41"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

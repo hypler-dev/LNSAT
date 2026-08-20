@@ -1,0 +1,32 @@
+{
+  "schema_version": "lnsat.fastmcp_upstream_lock.v0_1",
+  "python_requirement": ">=3.10",
+  "profiles": {
+    "3-legacy": {
+      "status": "tested_legacy_compatibility",
+      "package": "fastmcp",
+      "version": "3.4.5",
+      "wheel": "fastmcp-3.4.5-py3-none-any.whl",
+      "wheel_sha256": "5d3d438eb2917e63e6faf53e8cb8fe26d887ec3232f848093a4eecad7fa34861",
+      "source_url": "https://pypi.org/project/fastmcp/3.4.5/",
+      "mcp_era": "legacy",
+      "production_dependency": false
+    },
+    "4-modern": {
+      "status": "experimental",
+      "package": "fastmcp",
+      "version": "4.0.0b1",
+      "wheel": "fastmcp-4.0.0b1-py3-none-any.whl",
+      "wheel_sha256": "d66eb7b0763ffff2ae0fc573778ea25604dcb7e59769e5afaf9851a806eb1129",
+      "source_url": "https://pypi.org/project/fastmcp/4.0.0b1/",
+      "mcp_era": "2026-07-28",
+      "production_dependency": false
+    }
+  },
+  "install_policy": {
+    "isolated_virtual_environment_required": true,
+    "global_install_forbidden": true,
+    "automatic_install_forbidden": true,
+    "authority_core_dependency_forbidden": true
+  }
+}

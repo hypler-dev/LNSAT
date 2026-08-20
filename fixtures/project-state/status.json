@@ -1,0 +1,11 @@
+{
+  "project": "example-agent-project",
+  "name": "Example Agent Project",
+  "current_phase": "Evaluation",
+  "active_packet": null,
+  "next_packet": null,
+  "build_state": "fixture_only",
+  "last_verified": "2026-07-22",
+  "completed_packets": ["BP-0016", "BP-0017", "BP-0018"],
+  "last_checks": ["synthetic fixture", "read-only contract"]
+}

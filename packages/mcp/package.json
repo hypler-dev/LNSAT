@@ -1,0 +1,40 @@
+{
+  "name": "@lnsat/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read-only MCP adapters for LNSAT inspection contracts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hypler-dev/LNSAT.git",
+    "directory": "packages/mcp"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "lnsat-mcp-stdio": "dist/stdio.js"
+  },
+  "scripts": {
+    "build": "npm run build -w @lnsat/api && tsc -p tsconfig.json",
+    "test": "npm run build && vitest run",
+    "test:negotiation": "vitest run test/negotiation.test.ts test/modern-http.test.ts",
+    "test:oauth-security": "vitest run test/oauth-security.test.ts",
+    "test:schema-security": "vitest run test/schema-security.test.ts test/transport-security.test.ts",
+    "test:official-conformance": "vitest run test/official-stdio-client-smoke.test.ts test/official-stdio-transport.test.ts test/modern-http.test.ts",
+    "typecheck": "npm run build -w @lnsat/api && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cfworker/json-schema": "^4.1.1",
+    "@lnsat/api": "0.1.0",
+    "@lnsat/gateway": "0.1.0",
+    "@modelcontextprotocol/core": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
+    "zod": "^4.4.2"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/conformance": "0.1.16"
+  },
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-identity-disablement-v1.schema.json",
+  "title": "LNSAT Gateway Identity Disablement v1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs.success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "status",
+        "scope",
+        "identity_ref",
+        "disabled_at",
+        "revoked_session_count",
+        "authorization",
+        "replay_semantics",
+        "side_effects",
+        "permanent",
+        "target_session_family_closed",
+        "reenable_authority",
+        "identity_state_changed",
+        "session_authority_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.identity_disablement.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": true
+        },
+        "status": {
+          "const": "disabled"
+        },
+        "scope": {
+          "const": "non_owner_identity"
+        },
+        "identity_ref": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 256,
+          "pattern": "^identity:human:[^\\s\\u0000-\\u001F\\u007F]{1,240}$"
+        },
+        "disabled_at": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 32
+        },
+        "revoked_session_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "authorization": {
+          "$ref": "#/$defs.authorization"
+        },
+        "replay_semantics": {
+          "const": "one_time_active_target_identity"
+        },
+        "side_effects": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "session_activity_evidence_may_append"
+            },
+            {
+              "const": "identity_status_evidence_appended"
+            },
+            {
+              "const": "identity_security_event_appended"
+            },
+            {
+              "const": "target_session_revocations_may_append"
+            },
+            {
+              "const": "target_session_security_events_may_append"
+            }
+          ],
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "permanent": {
+          "const": true
+        },
+        "target_session_family_closed": {
+          "const": true
+        },
+        "reenable_authority": {
+          "const": false
+        },
+        "identity_state_changed": {
+          "const": true
+        },
+        "session_authority_state_changed": {
+          "const": true
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "contract_version",
+        "ok",
+        "identity_ref",
+        "disabled_at",
+        "revoked_session_count",
+        "errors",
+        "side_effects",
+        "identity_state_changed",
+        "session_authority_state_changed",
+        "execution_authority",
+        "mutation_authority"
+      ],
+      "properties": {
+        "contract": {
+          "const": "lnsat.gateway.identity_disablement.v1_0"
+        },
+        "contract_version": {
+          "const": "lnsat.contracts.v1_0"
+        },
+        "ok": {
+          "const": false
+        },
+        "identity_ref": {
+          "type": "null"
+        },
+        "disabled_at": {
+          "type": "null"
+        },
+        "revoked_session_count": {
+          "type": "null"
+        },
+        "errors": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "$ref": "#/$defs.error"
+            }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "side_effects": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "identity_state_changed": {
+          "const": false
+        },
+        "session_authority_state_changed": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "mutation_authority": {
+          "const": false
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "actor_role",
+        "permission",
+        "actor_session_bound",
+        "csrf_verified"
+      ],
+      "properties": {
+        "source": {
+          "const": "local_session"
+        },
+        "actor_role": {
+          "const": "owner"
+        },
+        "permission": {
+          "const": "manage_identities"
+        },
+        "actor_session_bound": {
+          "const": true
+        },
+        "csrf_verified": {
+          "const": true
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message", "severity"],
+      "properties": {
+        "code": {
+          "const": "gateway.identity_disablement.denied"
+        },
+        "path": {
+          "const": "/identities/{identity_ref}"
+        },
+        "message": {
+          "const": "Identity disablement denied."
+        },
+        "severity": {
+          "const": "error"
+        }
+      }
+    }
+  }
+}

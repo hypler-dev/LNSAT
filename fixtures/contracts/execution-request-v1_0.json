@@ -1,0 +1,56 @@
+{
+  "schema_version": "lnsat.execution_request.conformance.v1_0",
+  "packet_vector": {
+    "fixture": "packet-envelope-v1_0.json",
+    "vector_index": 0,
+    "permission_allow_override": ["deploy.request"],
+    "requires_approval": true
+  },
+  "proposal": {
+    "schema_id": "lnsat.execution_proposal.schema.v1_0",
+    "derivation_profile": "lnsat.execution_request.packet_embedded.v1",
+    "action": {
+      "kind": "git.commit",
+      "arguments": {
+        "message": "bounded fixture commit",
+        "path": "fixture.txt"
+      }
+    },
+    "target": {
+      "resource_ref": "repo:lnsat",
+      "identity": {
+        "base": "fixture-base",
+        "repository": "fixture"
+      }
+    },
+    "configuration_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "adapter": {
+      "ref": "adapter:local:git-commit",
+      "version": "v1"
+    },
+    "executable_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "audience": "audience:gateway:local"
+  },
+  "chain": {
+    "policy_decision_id": "pol_1111111111111111111111111111111111111111111111111111111111111111",
+    "approval_request_id": "apr_2222222222222222222222222222222222222222222222222222222222222222",
+    "approval_decision_id": "apd_3333333333333333333333333333333333333333333333333333333333333333",
+    "requester_ref": "identity:agent:codex",
+    "requester_session_ref": "session:local:0001",
+    "approver_ref": "identity:human:owner",
+    "approver_session_ref": "session:local:owner-0001",
+    "prepared_at": "2026-07-22T20:03:00.000Z",
+    "expires_at": "2026-07-22T20:05:00Z"
+  },
+  "expected": {
+    "packet_sha256": "sha256:f68072fd6ca6e67aa65580a4dc55540bef33d48ddc06ab29aa69f985d41f4822",
+    "canonical_request": "{\"action\":{\"arguments\":{\"message\":\"bounded fixture commit\",\"path\":\"fixture.txt\"},\"kind\":\"git.commit\"},\"adapter\":{\"ref\":\"adapter:local:git-commit\",\"version\":\"v1\"},\"approval_decision_ref\":{\"approval_decision_id\":\"apd_3333333333333333333333333333333333333333333333333333333333333333\",\"schema_id\":\"lnsat.approval_decision.schema.v1_0\"},\"approval_request_ref\":{\"approval_request_id\":\"apr_2222222222222222222222222222222222222222222222222222222222222222\",\"schema_id\":\"lnsat.approval_request.schema.v1_0\"},\"approver_ref\":\"identity:human:owner\",\"approver_session_ref\":\"session:local:owner-0001\",\"audience\":\"audience:gateway:local\",\"configuration_digest\":\"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\",\"contract_version\":\"lnsat.contracts.v1_0\",\"derivation_profile\":\"lnsat.execution_request.packet_embedded.v1\",\"executable_digest\":\"sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\",\"expires_at\":\"2026-07-22T20:05:00Z\",\"packet_ref\":{\"packet_id\":\"pkt_execute_v1_0001\",\"packet_sha256\":\"sha256:f68072fd6ca6e67aa65580a4dc55540bef33d48ddc06ab29aa69f985d41f4822\",\"schema_id\":\"lnsat.packet_envelope.schema.v1_0\"},\"policy_decision_ref\":{\"decision_id\":\"pol_1111111111111111111111111111111111111111111111111111111111111111\",\"schema_id\":\"lnsat.policy_decision.schema.v1_0\"},\"prepared_at\":\"2026-07-22T20:03:00.000Z\",\"project_ref\":\"project:lnsat\",\"requester_ref\":\"identity:agent:codex\",\"requester_session_ref\":\"session:local:0001\",\"resource_ref\":\"repo:lnsat\",\"schema_id\":\"lnsat.execution_request.schema.v1_0\",\"target\":{\"identity\":{\"base\":\"fixture-base\",\"repository\":\"fixture\"},\"resource_ref\":\"repo:lnsat\"}}",
+    "request_digest": "sha256:f3c0255a110737c314d05ce3f93392e02ca81d0ef1141f21ada9f2d3a841b868",
+    "action_digest": "sha256:35eb0209a75b84b30f87cb20aa3bb1d844cd94d834a743bc846e47746c15a756",
+    "target_digest": "sha256:b1084adcc5ac5d28d31190f94decf8990b8393f2ffc8cebf5d31b772c37bba0b",
+    "configuration_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "executable_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "execution_authorized": false,
+    "side_effects": []
+  }
+}

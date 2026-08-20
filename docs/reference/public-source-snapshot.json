@@ -1,0 +1,20 @@
+{
+  "schema_version": "lnsat.public_source_snapshot.v1",
+  "history_strategy": "fresh_root",
+  "source_base_revision": "cae4fbde070b35a4b84c2729617a17db3ef54be5",
+  "historical_git_evidence": "retained_private_not_locally_replayable",
+  "claim_scope": "pre_release_source_only",
+  "immutable_paths": [
+    "docs/reference/public-source-snapshot.json",
+    "docs/reference/phase7-readiness.json",
+    "docs/reference/security-reviews/P7-A1/implementation-review.json",
+    "docs/reference/security-reviews/P7-B1/correction-review.json",
+    "docs/reference/security-reviews/P7-B1/post-merge-review-0526845.json",
+    "docs/reference/security-reviews/P7-C1/implementation-review.json",
+    "docs/reference/security-reviews/P7-R1/implementation-review.json",
+    "docs/reference/security-reviews/P7-X1/implementation-review.json"
+  ],
+  "release_authority": false,
+  "artifact_authority": false,
+  "deployment_authority": false
+}

@@ -1,0 +1,165 @@
+{
+  "schema_id": "lnsat.phase8_runtime_composition_fixture.schema.v1_0",
+  "fixture_id": "phase8-runtime-composition-v1",
+  "gate_id": "P8_RUNTIME_COMPOSITION_IMPLEMENTATION",
+  "status": "experimental_source_implementation",
+  "production_supported": false,
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/v1/execution-authorizations",
+      "effect": "compose_attempt_nonce_and_authorization_issue"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/execution-authorizations/{authorization_id}",
+      "effect": "read_secret_free_authorization"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/execution-authorizations/{authorization_id}/cancel",
+      "effect": "requester_cancel_before_consumption"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/execution-authorizations/{authorization_id}/revoke",
+      "effect": "approver_or_owner_revoke_before_consumption"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/execution-authorizations/{authorization_id}/execute",
+      "effect": "atomic_consume_claim_then_bounded_git_dispatch"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/operations/{operation_id}",
+      "effect": "read_secret_free_operation_attempt_receipt_reconciliation"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/operations/{operation_id}/attempts/{operation_attempt_id}",
+      "effect": "read_secret_free_attempt"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/operations/{operation_id}/reconcile",
+      "effect": "inspect_and_persist_exact_consequence_evidence_without_retry"
+    }
+  ],
+  "limits": {
+    "phase8_json_body_bytes": 16384,
+    "approved_patch_bytes": 1048576,
+    "allowed_paths": 64,
+    "git_stdout_bytes": 1048576,
+    "git_stderr_capture": false,
+    "git_process_deadline_seconds": 30,
+    "daemon_consequential_dispatches": 1,
+    "queued_dispatches": 0,
+    "authorization_ttl_seconds": 60,
+    "operation_attempts_per_operation": 1
+  },
+  "atomic_boundary": {
+    "transaction": "sqlite_begin_immediate",
+    "same_commit": [
+      "capability_consumption",
+      "authorization_active_to_consumed",
+      "unique_operation_attempt_claim",
+      "operation_prepared_to_dispatching",
+      "operation_attempt_dispatching",
+      "required_audit_bindings"
+    ],
+    "before_commit": "no_consumption_no_attempt_no_git_process",
+    "after_ambiguous_commit": "consumed_claimed_outcome_unknown_no_retry"
+  },
+  "dispatch_boundary": {
+    "admission": "daemon_wide_compare_exchange_before_capability_parse_or_redemption",
+    "queue": "none",
+    "executable": "absolute_digest_bound_git",
+    "environment": "cleared_fixed_allowlist",
+    "argv": "fixed_plumbing_only_no_shell",
+    "network": "forbidden",
+    "push_fetch_remote": "forbidden",
+    "hooks_signers_filters_helpers": "disabled",
+    "timeout_or_kill": "outcome_unknown",
+    "consequential_retry": "forbidden"
+  },
+  "secret_boundary": {
+    "capability_wire": "64_lowercase_hex_bytes_once",
+    "request_parse_count": 1,
+    "owner": "zeroizing_redacted_type",
+    "durable_form": "domain_separated_digest_only",
+    "response_headers": ["Cache-Control: no-store"],
+    "request_response_logging": false,
+    "forbidden_surfaces": [
+      "url",
+      "cookie",
+      "header",
+      "command_argument",
+      "environment",
+      "trace",
+      "metric",
+      "error",
+      "debug",
+      "audit",
+      "receipt",
+      "database_readback"
+    ]
+  },
+  "state_machines": {
+    "authorization": "active -> consumed | cancelled | revoked | expired",
+    "operation": "prepared -> dispatching -> completed | failed | outcome_unknown; outcome_unknown -> completed",
+    "restart": "dispatching -> outcome_unknown_without_process_launch"
+  },
+  "positive_evidence": [
+    "exact_eight_route_inventory",
+    "first_atomic_consume_claim_dispatch_completes_with_receipt",
+    "exact_redemption_replay_returns_metadata_without_dispatch",
+    "daemon_admission_race_has_one_winner",
+    "operator_reconciliation_persists_exact_receipt_without_retry",
+    "operation_and_attempt_readback_are_secret_free"
+  ],
+  "negative_evidence": [
+    "wrong_method_path_host_version_media_origin_fetch_metadata_session_csrf_or_role_denies",
+    "body_limit_plus_one_denies_without_redemption",
+    "second_inflight_dispatch_denies_before_redemption",
+    "wrong_capability_scope_operation_or_idempotency_denies_generically",
+    "unmarked_dirty_escaped_or_non_temporary_repository_denies_before_redemption",
+    "patch_path_tree_configuration_or_executable_drift_denies",
+    "stdout_limit_plus_one_denies_and_preserves_ambiguity",
+    "timeout_kill_lost_response_or_receipt_persistence_failure_never_proves_failure_or_success",
+    "retry_receipt_submission_external_adapter_and_inflight_cancel_routes_do_not_exist"
+  ],
+  "crash_boundaries": [
+    {
+      "point": "before_atomic_commit",
+      "expected": "authorization_active_no_consumption_no_attempt_no_dispatch"
+    },
+    {
+      "point": "ambiguous_atomic_commit",
+      "expected": "readback_decides_absent_or_consumed_claimed_outcome_unknown"
+    },
+    {
+      "point": "after_claim_before_process",
+      "expected": "consumed_claimed_outcome_unknown_after_restart_no_dispatch"
+    },
+    {
+      "point": "during_or_after_git_before_receipt",
+      "expected": "outcome_unknown_reconcile_only_no_retry"
+    },
+    {
+      "point": "after_exact_receipt",
+      "expected": "completed_idempotent_readback_no_retry"
+    }
+  ],
+  "hard_stops": [
+    "no_migration_0018_or_schema_version_change",
+    "no_key_signer_or_secret_material",
+    "no_public_listener_or_mcp_execution_authority",
+    "no_new_cli_execution_command",
+    "no_production_or_user_repository",
+    "no_network_push_fetch_remote_shell_or_arbitrary_command",
+    "no_package_release_deploy_or_production_support_claim",
+    "no_phase9_or_later_work",
+    "no_implementation_pr_merge"
+  ]
+}

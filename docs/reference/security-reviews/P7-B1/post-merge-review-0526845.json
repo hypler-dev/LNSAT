@@ -1,0 +1,74 @@
+{
+  "schema_version": "lnsat.post_merge_security_review.v1",
+  "review_id": "P7-B1-input-review-0526845",
+  "review_type": "post_merge_review",
+  "is_pr_approval": false,
+  "reviewed_revision": "052684548502e8f48ab8fcd20165dbe974afa682",
+  "reviewed_tree_oid": "9d85206cad2d1d521370b88f23c90390500f5f41",
+  "source_evidence": {
+    "kind": "user_supplied_review_text",
+    "sha256": "sha256:d556ef2db57e866087749a608a07158671b871dedf2a6adc8947dc4255187f50"
+  },
+  "reviewer": {
+    "identity": "unattributed_external_reviewer",
+    "identity_verified": false
+  },
+  "verdict": "architecture_approved_corrections_required_before_P7-C1",
+  "execution_authorized": false,
+  "findings": [
+    {
+      "finding_id": "P7-B1-F1",
+      "severity": "high",
+      "summary": "Persisted action evidence was caller supplied instead of rederived from exact approved packet bytes.",
+      "maintainer_disposition": "accepted_for_P7-B1"
+    },
+    {
+      "finding_id": "P7-B1-F2",
+      "severity": "high",
+      "summary": "One approval decision could fan out into multiple future execution authorizations.",
+      "maintainer_disposition": "accepted_for_P7-B1"
+    },
+    {
+      "finding_id": "P7-B1-F3",
+      "severity": "medium",
+      "summary": "Authorization-attempt time, identifiers, and idempotency identity were caller controlled.",
+      "maintainer_disposition": "accepted_for_P7-B1"
+    },
+    {
+      "finding_id": "P7-B1-F4",
+      "severity": "medium",
+      "summary": "Rejected receipt rows could occupy the unique canonical receipt slot.",
+      "maintainer_disposition": "accepted_for_P7-B1"
+    },
+    {
+      "finding_id": "P7-B1-F5",
+      "severity": "medium",
+      "summary": "Readiness source revision was stale and self-confirming instead of packet-specific Git evidence.",
+      "maintainer_disposition": "accepted_for_P7-B1"
+    },
+    {
+      "finding_id": "P7-B1-F6",
+      "severity": "maintainability",
+      "summary": "Phase 7d candidate tests made the store root too large for bounded review.",
+      "maintainer_disposition": "accepted_for_P7-B1"
+    },
+    {
+      "finding_id": "P7-B1-F7",
+      "severity": "governance",
+      "summary": "PR 95 preserved no durable independent review or submitted GitHub review record.",
+      "maintainer_disposition": "accepted_for_P7-B1"
+    }
+  ],
+  "closed_lanes": [
+    "capability_consumption",
+    "execution_authorization_issuance",
+    "keys_and_signer_transport",
+    "provider_calls",
+    "adapter_dispatch",
+    "receipt_api",
+    "gateway_api_activation",
+    "deployment",
+    "publication"
+  ],
+  "side_effects": []
+}

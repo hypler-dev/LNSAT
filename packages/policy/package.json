@@ -1,0 +1,24 @@
+{
+  "name": "@lnsat/policy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Policy decision and approval-gate contracts for LNSAT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hypler-dev/LNSAT.git",
+    "directory": "packages/policy"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:signer-provider": "vitest run test/signer-provider.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lnsat/packets": "0.1.0"
+  },
+  "license": "Apache-2.0"
+}

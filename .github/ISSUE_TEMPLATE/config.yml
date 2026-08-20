@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/hypler-dev/LNSAT/security/advisories/new
+    about: Send vulnerability details privately; never post secrets or exploits publicly.
+  - name: Read support policy
+    url: https://github.com/hypler-dev/LNSAT/blob/main/SUPPORT.md
+    about: Review supported scope and safe public support channels.

@@ -1,0 +1,54 @@
+{
+  "project_id": "lnsat",
+  "display_name": "LNSAT Example Project",
+  "owner": "Jeff",
+  "status": "draft",
+  "source_refs": [
+    "doc:docs/onboarding/PROJECT_ONBOARDING.md",
+    "doc:packages/packets/fixtures/project-profiles/valid/lnsat-project-profile.json",
+    "doc:docs/ROADMAP.md"
+  ],
+  "repos": [
+    {
+      "id": "lnsat-main",
+      "path": "/workspace/LNSAT",
+      "default_branch": "main"
+    }
+  ],
+  "docs": {
+    "entrypoints": ["AGENTS.md", "docs/ROADMAP.md", "docs/DOCS_INDEX.md"]
+  },
+  "runtimes": {
+    "languages": ["TypeScript"],
+    "package_managers": ["npm"],
+    "build_commands": ["npm run build"],
+    "test_commands": ["npm run check", "npm run format:check"]
+  },
+  "resources": {
+    "services": [],
+    "databases": [],
+    "queues": [],
+    "object_storage": [],
+    "models": [],
+    "domains": ["lnsat.example.invalid"]
+  },
+  "secrets": {
+    "refs_only": []
+  },
+  "policies": {
+    "default_role": "observer",
+    "allowed_capabilities": ["context.read", "context.compile", "repo.read"],
+    "blocked_capabilities": [
+      "secret.read.never",
+      "deploy.execute.approved",
+      "database.query_readonly.dev"
+    ],
+    "approval_required_for": [
+      "repo.write_branch",
+      "tests.run.sandbox",
+      "container.sandbox",
+      "deploy.request"
+    ]
+  },
+  "notes": "Clean-room project profile fixture for BP-0020 validation only."
+}

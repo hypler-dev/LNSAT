@@ -1,0 +1,110 @@
+{
+  "name": "lnsat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pre-release authorization and evidence source for consequential AI-agent actions",
+  "keywords": [
+    "ai-agents",
+    "authorization",
+    "audit",
+    "mcp",
+    "policy",
+    "security"
+  ],
+  "homepage": "https://github.com/hypler-dev/LNSAT#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hypler-dev/LNSAT.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hypler-dev/LNSAT/issues"
+  },
+  "packageManager": "npm@10.9.8",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:contracts": "npm run build -w @lnsat/packets && npm run build -w @lnsat/policy && npm run build -w @lnsat/audit && npm run build -w @lnsat/gateway",
+    "build:console": "npm run build -w @lnsat/console",
+    "check": "npm run public:check && npm run audit:dependencies:test && npm run docs:direction:check && npm run legacy:inventory:check && npm run audit:migrations:check && npm run security:conformance:check && npm run phase7d:truth:check && npm run phase7:local-conformance:test && npm run phase7:local-conformance:check && npm run security:review:test && npm run security:review:check && npm run phase7:readiness:test && npm run phase7:readiness:check && npm run typecheck:workspaces && npm run test:workspaces && npm run rust:check",
+    "docs:direction:check": "node --test scripts/check-product-direction-alignment.test.mjs && node scripts/check-product-direction-alignment.mjs",
+    "fastmcp:3:interop": "npm run build -w @lnsat/mcp && npm run mcp:oauth-security:test && node scripts/run-fastmcp-interop.mjs 3-legacy",
+    "fastmcp:4:interop": "npm run build -w @lnsat/mcp && npm run mcp:oauth-security:test && node scripts/run-fastmcp-interop.mjs 4-modern",
+    "identity:observability:test": "npm run build -w @lnsat/gateway && npm run test:identity-observability -w @lnsat/gateway",
+    "audit:migrations:check": "node scripts/check-audit-ledger-migrations.mjs",
+    "audit:dependencies:check": "node scripts/check-npm-audit.mjs",
+    "audit:dependencies:test": "node --test scripts/npm-audit-rules.test.mjs",
+    "a2a:contract:test": "npm run build -w @lnsat/gateway && npm run test:a2a-contract -w @lnsat/gateway",
+    "public:check": "node --test scripts/public-readiness-rules.test.mjs && node scripts/check-public-readiness.mjs",
+    "release:metadata:check": "node --test scripts/check-release-readiness.test.mjs && node scripts/check-release-readiness.mjs",
+    "source:check": "npm run format:check && npm run check && npm run release:metadata:check && npm run build",
+    "release:check": "npm run security:review:supported-release-check && npm run source:check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "local:beta:db:bootstrap": "node scripts/local-beta-db.mjs bootstrap",
+    "local:beta:db:restart": "node scripts/local-beta-db.mjs restart",
+    "local:beta:db:status": "node scripts/local-beta-db.mjs status",
+    "local:beta:db:stop": "node scripts/local-beta-db.mjs stop",
+    "local:beta:db:verify": "node scripts/local-beta-db.mjs verify",
+    "local:beta:db:reset": "node scripts/local-beta-db.mjs reset",
+    "local:beta:db:test": "node --test scripts/local-beta-db.test.mjs",
+    "local:beta:session:test": "npm run build -w @lnsat/api && node --test scripts/local-beta-session.integration.test.mjs",
+    "local:beta:packet-intake:test": "npm run build -w @lnsat/api && node --test scripts/local-beta-packet-intake.integration.test.mjs",
+    "local:beta:policy-decision:test": "npm run build -w @lnsat/api && node --test scripts/local-beta-policy-decision.integration.test.mjs",
+    "local:beta:approval-request:test": "npm run build -w @lnsat/api && node --test scripts/local-beta-approval-request.integration.test.mjs",
+    "mcp:negotiation:test": "npm run build -w @lnsat/mcp && npm run test:negotiation -w @lnsat/mcp",
+    "mcp:official-conformance": "npm run build -w @lnsat/mcp && node scripts/run-mcp-official-conformance.mjs && npm run test:official-conformance -w @lnsat/mcp",
+    "mcp:oauth-security:test": "npm run build -w @lnsat/mcp && npm run test:oauth-security -w @lnsat/mcp",
+    "mcp:schema-security:test": "npm run build -w @lnsat/mcp && npm run test:schema-security -w @lnsat/mcp",
+    "operation:recovery:test": "npm run build -w @lnsat/gateway && npm run test:operation-recovery -w @lnsat/gateway",
+    "registry:supply-chain:test": "npm run build -w @lnsat/gateway && npm run test:registry-supply-chain -w @lnsat/gateway",
+    "signer:provider:test": "npm run build -w @lnsat/policy && npm run test:signer-provider -w @lnsat/policy",
+    "control-center:readback:test": "npm run build -w @lnsat/gateway && npm run test:control-center-readback -w @lnsat/gateway && npm run test:operation-readback -w @lnsat/api && npm run test:operation-readback -w @lnsat/console",
+    "security:conformance:check": "node scripts/check-security-conformance-ledger.mjs",
+    "security:review:test": "node --test scripts/public-source-snapshot-provenance.test.mjs scripts/check-security-review-evidence.test.mjs",
+    "security:review:check": "node scripts/check-security-review-evidence.mjs",
+    "security:review:supported-release-check": "node scripts/check-security-review-evidence.mjs --supported-release",
+    "phase7d:truth:check": "node scripts/check-phase7d-truth.mjs",
+    "phase7:local-conformance:test": "node --test scripts/check-phase7-local-conformance.test.mjs && node scripts/run-rust-workspace.mjs phase7-local-conformance",
+    "phase7:local-conformance:check": "node scripts/check-phase7-local-conformance.mjs",
+    "phase7:readiness:test": "node --test scripts/check-phase7-readiness-plan.test.mjs",
+    "phase7:readiness:check": "node scripts/check-phase7-readiness-plan.mjs",
+    "legacy:inventory:write": "node scripts/inventory-legacy-identifiers.mjs --write",
+    "legacy:inventory:check": "node scripts/inventory-legacy-identifiers.mjs --check",
+    "rust:format:check": "node scripts/run-rust-workspace.mjs fmt",
+    "rust:lint": "node scripts/run-rust-workspace.mjs clippy",
+    "rust:test": "node scripts/run-rust-workspace.mjs test",
+    "rust:conformance": "npm run build:contracts && node scripts/rust-contract-conformance.mjs && npm run rust:test",
+    "rust:metadata": "node scripts/run-rust-workspace.mjs metadata",
+    "rust:check": "npm run rust:format:check && npm run rust:lint && npm run rust:conformance && npm run rust:metadata",
+    "test:workspaces": "npm run build:contracts && npm run test --workspaces --if-present",
+    "typecheck:workspaces": "npm run build:contracts && npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "smol-toml": "1.8.0",
+    "typescript": "^5.8.3",
+    "vitest": "3.2.7"
+  },
+  "overrides": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "body-parser": "2.3.0",
+    "esbuild": "0.28.1",
+    "express-rate-limit": "8.5.2",
+    "hono": "4.12.34",
+    "ip-address": "10.4.0",
+    "qs": "6.15.3",
+    "sharp": "0.35.3",
+    "next@16.3.0": {
+      "sharp": "0.35.3"
+    },
+    "vite": "7.3.6"
+  },
+  "license": "Apache-2.0"
+}

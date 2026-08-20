@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/gateway-approval-decision-request-v1.schema.json",
+  "title": "LNSAT Gateway Approval Decision Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project_ref", "decision", "reason"],
+  "properties": {
+    "project_ref": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 256,
+      "pattern": "^project:[^\\s\\u0000-\\u001F\\u007F]{1,240}$"
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["approved", "denied"]
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "approval.operator_approved",
+        "approval.operator_denied",
+        "approval.scope_rejected",
+        "approval.evidence_insufficient",
+        "approval.request_superseded"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "approved"
+          }
+        },
+        "required": ["decision"]
+      },
+      "then": {
+        "properties": {
+          "reason": {
+            "const": "approval.operator_approved"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "reason": {
+            "enum": [
+              "approval.operator_denied",
+              "approval.scope_rejected",
+              "approval.evidence_insufficient",
+              "approval.request_superseded"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

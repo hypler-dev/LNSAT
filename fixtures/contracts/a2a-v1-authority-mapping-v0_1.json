@@ -1,0 +1,38 @@
+{
+  "schema_version": "lnsat.a2a_authority_mapping_fixture.v0_1",
+  "agent_card": {
+    "protocol_version": "1.0",
+    "agent_id": "agent.example.readonly",
+    "endpoint": "https://agent.example.test/a2a",
+    "capabilities": ["message.send", "task.observe"],
+    "skills": ["packet.inspect"],
+    "auth_schemes": ["oauth2"],
+    "issued_at": "2026-08-04T00:00:00.000Z",
+    "signing": {
+      "key_id": "agent-card-key-ref-0001",
+      "signature_ref": "evidence:agent-card-signature:0001",
+      "expires_at": "2026-09-04T00:00:00.000Z"
+    }
+  },
+  "message": {
+    "protocol_version": "1.0",
+    "message_id": "a2a-message-0001",
+    "task_id": "a2a-task-0001",
+    "context_id": "a2a-context-0001",
+    "skill_id": "packet.inspect",
+    "capability": "packet.inspect",
+    "principal_ref": "user:alice",
+    "artifact_refs": ["artifact:result:0001"],
+    "delivery": "stream",
+    "cancellation_requested": false,
+    "a2a_idempotency_key": "a2a-advisory-0001"
+  },
+  "expected": {
+    "gateway_protocol": "a2a",
+    "gateway_protocol_version": "1.0",
+    "gateway_terminal_observation": "outcome_unknown",
+    "action_authorized_by_a2a": false,
+    "a2a_idempotency_is_authority": false,
+    "side_effects": []
+  }
+}

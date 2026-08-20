@@ -1,0 +1,27 @@
+{
+  "artifact_id": "local_packet_approval_requests.postgresql.0005.v0_1",
+  "packet_id": "BP-0877",
+  "schema_version": "local_packet_approval_requests.v0_1",
+  "target_storage": "PostgreSQL",
+  "environment": "loopback_disposable_local_development_only",
+  "sql_artifact": "apps/api/migrations/postgresql/0005_local_packet_approval_requests_v0_1.sql",
+  "installed_schema_catalog_sha256": "bb9deba793fdfa1d7aa7d01fc5873d4c9cb61ff842f0793b1b448c8e7a5e53a1",
+  "tables": ["local_packet_approval_requests"],
+  "persistence": "immutable pending request bound to exact approval-required policy decision, packet digest, operator, and authenticated session",
+  "authorization": "active local session with control_plane.packet.approval.request; application and database recheck ownership, expiry, revocation, capability, decision kind, digest, and exact reason codes under row locks",
+  "rollback": "guarded reset removes only the disposable local-state cluster and re-bootstrap reapplies committed migrations",
+  "forbidden": [
+    "approval_grant_deny_or_state_transition",
+    "audit_append",
+    "workflow_or_execution_rows",
+    "gateway_or_mcp_command_routing",
+    "sandbox_execution",
+    "provider_or_model_dispatch",
+    "non_loopback_or_production_data",
+    "deploy_dns_ssh_publication_paid_release_sbom_or_push"
+  ],
+  "side_effects": [
+    "local_disposable_approval_request_table_created",
+    "local_migration_ledger_record_appended"
+  ]
+}

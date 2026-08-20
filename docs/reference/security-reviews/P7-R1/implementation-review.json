@@ -1,0 +1,39 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "P7-R1-independent-implementation-review-530f62c4",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["P7-R1"],
+  "base_revision": "19f6fa0fda3cf431244f192356e45f34e7791144",
+  "reviewed_revision": "530f62c4f12c84d3195fb07e3147936d0c738144",
+  "reviewed_tree_oid": "86051b14908e5f11dd41f69aabedca0888047831",
+  "diff_sha256": "sha256:4b365313aac5e56a272f9c1d00aede2dd404bbb5dd33a259eab31251fd666509",
+  "protected_files": [
+    { "path": "AGENTS.md", "sha256": "sha256:fc33eb5a13db75f1360cc5528e3e207f0857bf7aa64ecd4f0153ca6661ca4b20" },
+    { "path": "crates/lnsat-contracts/src/execution.rs", "sha256": "sha256:fc0c37aa8322b7dfdc7fddc09c2731367b11cbcb040331f28bc4df8cefb6b46e" },
+    { "path": "crates/lnsat-contracts/src/lib.rs", "sha256": "sha256:b6168e3c134e16f168663b488a80a8ad9527b427671ace1b24de613646395ee8" },
+    { "path": "crates/lnsat-store/Cargo.toml", "sha256": "sha256:baeb3041c301845f88bbf7a0a59ab718a1808b3a0d4e4e1bebe4b8fdbd76e000" },
+    { "path": "crates/lnsat-store/src/lib.rs", "sha256": "sha256:9fbfdb5454a43747a34cb5b9645328574897fe3e215d0ea893ffeeb80a61a180" },
+    { "path": "crates/lnsat-store/src/phase7_consumption.rs", "sha256": "sha256:8c7886063e460863157960a57dd355d4212c30021d7ee47d814cf88cb58352ad" },
+    { "path": "crates/lnsat-store/src/phase7_git_adapter.rs", "sha256": "sha256:a2aa7b6d5bc6130fc47b83718846ad28f018371ce58bc651c151f6473b10d0c7" },
+    { "path": "crates/lnsat-store/src/phase7_persistence.rs", "sha256": "sha256:df4d5324cf807b42c4deef89803c1868a2350ff0b55dfbcacbb2c803012b68aa" },
+    { "path": "crates/lnsat-store/src/tests/phase7_git_adapter.rs", "sha256": "sha256:31afb4f01e01f537514f01645c06098201946d7a1ab4a620bbed7aff465bdfde" },
+    { "path": "docs/PROJECT_STATUS.md", "sha256": "sha256:2743f16d3cf36bacf87d5957f81a756acd7df586ee88935a1917406d9b8e9aef" },
+    { "path": "docs/ROADMAP.md", "sha256": "sha256:a9c018916526475b5d55ca4f8695c331996f896b8c5e3e77dd6fbe0f1fbd1daf" },
+    { "path": "docs/architecture/PHASE_7_READINESS_EXECUTION_PLAN.md", "sha256": "sha256:bfb91d1b2865084d4562d3b5236a103a1b22c6d80f3356f0e7a2f34c2fbbdb77" },
+    { "path": "docs/reference/phase7-readiness.json", "sha256": "sha256:f58bd1a45ac2594ef34ae2f4278d7c64ae357082db106faad842ec5de33e49cd" },
+    { "path": "scripts/check-phase7-readiness-plan.mjs", "sha256": "sha256:a0c960469778546570dff7009349f0fd3b9c32326eeb81fed2c0d65ac609ee3d" },
+    { "path": "scripts/check-phase7-readiness-plan.test.mjs", "sha256": "sha256:ce7b5dd6b8729403dad5b2f91ce492c6c713b3593fcb30526c36595900aa81ea" },
+    { "path": "scripts/check-security-review-evidence.mjs", "sha256": "sha256:3bc97b2fd566133de0709645743da06142b7135a32a80a14cdcd31a6bd45d9ba" }
+  ],
+  "reviewer": {
+    "identity": "frontier-codex:independent-worker/p7-r1",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "Frontier Codex independent read-only exact-range review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
