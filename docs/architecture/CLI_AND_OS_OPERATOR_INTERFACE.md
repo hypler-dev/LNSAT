@@ -1,9 +1,10 @@
 # CLI and OS Operator Interface
 
 - Status: accepted direction with experimental P10-A1 source contract spine and
-  P10-A2 explicit daemon configuration
+  P10-A2 explicit daemon configuration plus P10-A3 authenticated local
+  health/status and stable output formats
 - Availability: packet inspection, direct/explicit-config daemon arguments,
-  target-neutral manifest, operator doctor/config/recovery inspection,
+  target-neutral manifest, operator doctor/health/status/config/recovery inspection,
   completion, and man source exist; stable supported product CLI does not
 
 Product split and extension boundary are accepted by
@@ -67,12 +68,14 @@ lnsatctl emergency-disable
 Commands ship only when owning roadmap phase implements and tests authority.
 Documentation of a name does not authorize implementation or runtime mutation.
 
-Current P10-A1/P10-A2 implemented subset:
+Current P10-A1/P10-A2/P10-A3 implemented subset:
 
 ```text
 lnsat packet validate|hash|inspect ...
 lnsat manifest|completion|man|--help|--version
 lnsatctl doctor
+lnsatctl health --endpoint <numeric-loopback-http-url> --session-token-stdin [--output <text|json|jsonl|yaml>]
+lnsatctl status --endpoint <numeric-loopback-http-url> --session-token-stdin [--output <text|json|jsonl|yaml>]
 lnsatctl config inspect --config <absolute-path>
 lnsatctl recovery inspect --database <path>
 lnsatctl manifest|completion|man|--help|--version
@@ -83,6 +86,13 @@ lnsatd --database ... | --manifest | --help | --version
 All other listed groups remain reserved and unavailable. Current recovery
 inspection is read-only, reflects no raw path, and grants no repair, migration,
 quarantine, credential, or activation authority.
+
+P10-A3 health/status accept no default target. Exact accepted endpoints are
+`http://127.0.0.1:<nonzero-port>` and `http://[::1]:<nonzero-port>`. One opaque
+session token is read only from stdin and zeroized after request construction.
+Hostname, DNS, non-loopback, TLS, userinfo, query, fragment, path prefix, proxy
+environment, redirect, retry, discovery, secret argument/file/URL, and remote
+transport behavior are absent. Invalid arguments and stdin fail before connect.
 
 ## Command Safety Contract
 
@@ -189,6 +199,15 @@ Human output is concise. Automation has versioned closed schemas:
 - correlation, packet, approval, authorization, receipt, and audit identifiers;
 - pagination, timeout, and cancellation controls;
 - compatibility negotiation and actionable upgrade errors.
+
+P10-A3 implements `text`, `json`, `jsonl`, and `yaml` for `doctor`, config and
+recovery inspection, health, and status. JSON remains default and preserves
+existing doctor/config/recovery semantics. JSONL emits one compact object line
+for these single-result commands. YAML is one deterministic plain document
+without tags, anchors, aliases, or multiple documents. `--output` appears at
+most once in documented final position. Manifest remains canonical JSON only.
+Success uses stdout; formatted public-safe failures use stderr. Read-only
+transport failure never maps to outcome-unknown.
 
 Shell completion for bash, zsh, and fish plus generated man pages are Phase 10
 deliverables. Commands should remain wrapper-friendly so third parties can

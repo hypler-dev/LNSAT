@@ -18,6 +18,8 @@
       "audience": "owner_operator",
       "implemented_commands": [
         "doctor",
+        "health",
+        "status",
         "config inspect",
         "recovery inspect",
         "manifest",
@@ -60,8 +62,6 @@
       "graph"
     ],
     "lnsatctl": [
-      "status",
-      "health",
       "identity",
       "role",
       "session",
@@ -125,8 +125,8 @@
   },
   "diagnostics": {
     "machine_schema": "lnsat.cli.output.v1",
-    "implemented_output_formats": ["json"],
-    "reserved_output_formats": ["text", "jsonl", "yaml"],
+    "implemented_output_formats": ["text", "json", "jsonl", "yaml"],
+    "reserved_output_formats": [],
     "stdout": "requested_result",
     "stderr": "public_safe_diagnostics",
     "exit_code_families": {
@@ -140,6 +140,23 @@
       "outcome_unknown": 7,
       "internal_failure": 70
     }
+  },
+  "authenticated_read_transport": {
+    "routes": ["/v1/health", "/v1/status"],
+    "methods": ["GET", "HEAD"],
+    "roles": ["owner", "operator", "auditor"],
+    "permission": "read_evidence",
+    "session_transport": "existing_host_only_cookie",
+    "csrf_required": false,
+    "endpoint_required": true,
+    "endpoint_schemes": ["http"],
+    "endpoint_hosts": ["127.0.0.1", "[::1]"],
+    "proxy_environment_used": false,
+    "redirects": false,
+    "retries": false,
+    "remote_transport": false,
+    "mutation_authority": false,
+    "side_effects": ["session_activity_evidence_may_append"]
   },
   "recovery": {
     "inspect": "implemented_read_only",

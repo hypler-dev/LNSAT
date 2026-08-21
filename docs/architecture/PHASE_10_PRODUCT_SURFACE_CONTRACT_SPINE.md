@@ -2,9 +2,9 @@
 
 - Status: experimental source implementation; Phase 10 remains in progress
 - Gates: `P10_A1_PRODUCT_SURFACE_CONTRACT_SPINE`,
-  `P10_A2_EXPLICIT_CONFIGURATION`
-- Runtime effect: explicit configuration loading plus read-only operator
-  configuration/recovery inspection
+  `P10_A2_EXPLICIT_CONFIGURATION`, `P10_A3_STATUS_HEALTH_OUTPUT`
+- Runtime effect: explicit configuration loading, authenticated read-only local
+  health/status, and operator configuration/recovery inspection
 - Mutation effect: none
 - Package, binary, service, or production support claim: none
 
@@ -22,6 +22,13 @@ does not select system, user, OS, target, package, data, or log paths. Existing
 direct daemon arguments remain an alternate compatible mode; mixing direct and
 configuration-file values is rejected.
 
+P10-A3 adds exact authenticated `GET|HEAD /v1/health` and
+`GET|HEAD /v1/status` routes while preserving unauthenticated `GET /healthz`
+bytes. It adds explicit numeric-loopback-only `lnsatctl` transport and one
+shared deterministic `text|json|jsonl|yaml` renderer for `doctor`, config and
+recovery inspection, health, and status. JSON remains default; manifest remains
+canonical JSON only.
+
 The canonical manifest is
 `fixtures/contracts/phase10-product-surface-v1.json` with contract
 `lnsat.product_surface.v1`. It is embedded or loaded from repository source. It
@@ -35,22 +42,26 @@ absolute path to a regular, non-symlinked, UTF-8 closed JSON file no larger than
 64 KiB. Duplicate keys, unknown fields, wrong identities/versions, and unsafe
 values fail closed.
 
+P10-A3 fixtures are `phase10-health-v1.json`, `phase10-status-v1.json`, and
+`phase10-output-v1.json`. They contain no session, identity, path, host, or
+operator data.
+
 ## Current Source Truth
 
-| Surface          | Implemented source                                                                                                                                             | Remaining Phase 10 work                                                                                                                            |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lnsatd`         | `DaemonConfigV1`, direct arguments, `--config` with closed `lnsat.daemon.config.v1`, loopback bind, public-safe errors, help/version/manifest                  | selected user/system paths, full output-format handling, target-neutral non-root enforcement evidence                                              |
-| `lnsatctl`       | `doctor`, public-safe `config inspect`, read-only `recovery inspect`, manifest, completion, man, help, and version                                             | authenticated daemon health/status, offline backup/restore/owner-recovery commands, service/update/audit commands only after their authority gates |
-| `lnsat`          | TypeScript dispatcher in `packages/cli/src/index.ts`; packet validate/hash/inspect plus manifest, completion, man, help, and version                           | later Gateway-client workflow groups only when owning phases open them                                                                             |
-| command taxonomy | canonical implemented and reserved groups in Phase 10 manifest                                                                                                 | each reserved command needs its owning phase, exact authority, and conformance before exposure                                                     |
-| configuration    | bounded explicit UTF-8 JSON, recursive duplicate/unknown-key rejection, exact-byte digest, visible applied layers, no environment discovery                    | system/user path selection remains deliberately unimplemented                                                                                      |
-| diagnostics      | `lnsat.cli.output.v1`, public-safe JSON, stdout/stderr separation, stable exit families                                                                        | text/JSONL/YAML format implementations and compatibility negotiation                                                                               |
-| recovery         | exact database classification through `SqliteStore::inspect_recovery_state_v1`; no path reflection                                                             | offline backup, inert restore, and owner recovery remain unexposed                                                                                 |
-| service managers | metadata-only boundary; install/start/auto-start/sudo/helper all false                                                                                         | target-specific metadata and lifecycle proof remain Phase 14                                                                                       |
-| completion/man   | bash, zsh, fish and three source man pages generated to stdout                                                                                                 | installation and target integration remain Phase 14                                                                                                |
-| version/build    | source version plus unbound target-neutral manifest                                                                                                            | source revision, target, recipe, digests, SBOM, provenance, and artifact binding remain Phase 13/14                                                |
-| non-root         | required contract; no sudo or privileged helper                                                                                                                | target-specific enforcement and lifecycle proof remain Phase 14                                                                                    |
-| parity           | CLI/API/MCP packet-inspection equality retained; Control Center projection preserves exact Gateway response, policy decision, audit preview, and empty effects | rendered product workflow parity follows only with later owned commands                                                                            |
+| Surface          | Implemented source                                                                                                                                             | Remaining Phase 10 work                                                                             |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `lnsatd`         | direct/config arguments, loopback bind, preserved `/healthz`, authenticated read-only `/v1/health` and `/v1/status`, public-safe errors, help/version/manifest | selected user/system paths and target-neutral non-root enforcement evidence                         |
+| `lnsatctl`       | `doctor`, authenticated explicit-loopback `health`/`status`, config/recovery inspection, text/JSON/JSONL/YAML, manifest, completion, man, help, version        | offline backup/restore/owner-recovery and service/update/audit commands after their authority gates |
+| `lnsat`          | TypeScript dispatcher in `packages/cli/src/index.ts`; packet validate/hash/inspect plus manifest, completion, man, help, and version                           | later Gateway-client workflow groups only when owning phases open them                              |
+| command taxonomy | canonical implemented and reserved groups in Phase 10 manifest                                                                                                 | each reserved command needs its owning phase, exact authority, and conformance before exposure      |
+| configuration    | bounded explicit UTF-8 JSON, recursive duplicate/unknown-key rejection, exact-byte digest, visible applied layers, no environment discovery                    | system/user path selection remains deliberately unimplemented                                       |
+| diagnostics      | `lnsat.cli.output.v1`, deterministic text/JSON/JSONL/YAML, stdout/stderr separation, stable exit families                                                      | later command schemas require their own compatibility gates                                         |
+| recovery         | exact database classification through `SqliteStore::inspect_recovery_state_v1`; no path reflection                                                             | offline backup, inert restore, and owner recovery remain unexposed                                  |
+| service managers | metadata-only boundary; install/start/auto-start/sudo/helper all false                                                                                         | target-specific metadata and lifecycle proof remain Phase 14                                        |
+| completion/man   | bash, zsh, fish and three source man pages generated to stdout                                                                                                 | installation and target integration remain Phase 14                                                 |
+| version/build    | source version plus unbound target-neutral manifest                                                                                                            | source revision, target, recipe, digests, SBOM, provenance, and artifact binding remain Phase 13/14 |
+| non-root         | required contract; no sudo or privileged helper                                                                                                                | target-specific enforcement and lifecycle proof remain Phase 14                                     |
+| parity           | CLI/API/MCP packet-inspection equality retained; Control Center projection preserves exact Gateway response, policy decision, audit preview, and empty effects | rendered product workflow parity follows only with later owned commands                             |
 
 ## Source Ownership
 
@@ -61,7 +72,12 @@ values fail closed.
   duplicate-key rejection, closed-schema parsing, explicit seam mapping, and
   exact-byte SHA-256 evidence.
 - `crates/lnsatd/src/product_surface.rs` owns Rust exit families, manifest,
-  doctor/config/recovery projection, generated completion, and man source.
+  doctor/config/recovery plus authenticated health/status projection, generated
+  completion, and man source.
+- `crates/lnsatd/src/product_output.rs` owns closed deterministic output
+  rendering.
+- `crates/lnsatd/src/product_transport.rs` owns exact numeric-loopback endpoint,
+  stdin-token, bounded HTTP, response validation, and read-only exit mapping.
 - `crates/lnsatd/src/bin/lnsatctl.rs` owns current operator entry point.
 - `crates/lnsatd/src/lib.rs` and `crates/lnsatd/src/main.rs` own daemon manifest
   dispatch without storage or listener use.
@@ -89,6 +105,16 @@ unavailable in this packet.
 ## Security Properties
 
 - `lnsat` and `lnsatctl` do not receive direct infrastructure authority.
+- Health/status require one explicit numeric-loopback HTTP endpoint and an
+  opaque session token supplied only through stdin. No default endpoint,
+  hostname, DNS, proxy environment, redirect, retry, discovery, remote target,
+  TLS, URL secret, file secret, or secret process argument exists.
+- Health/status reuse exact Host, contract-version, same-origin fetch metadata,
+  existing host-only session cookie, active-session verification, and
+  `ReadEvidence`. GET and HEAD require equal auth; HEAD emits no body.
+- Owner, operator, and auditor may read. Missing, malformed, expired, revoked,
+  unreadable, or unauthorized evidence maps to one generic denial. Only
+  `session_activity_evidence_may_append` may change during authentication.
 - Operator commands use no ambient environment for target or secret selection.
 - No secret is accepted in process arguments or reflected in diagnostics.
 - Explicit configuration accepts no secret fields, reads no environment
@@ -119,6 +145,10 @@ unavailable in this packet.
   is invalid rather than precedence-dependent.
 - `lnsatctl` is new experimental source. Its contract may change before support,
   but exit families and machine schema now require explicit versioned changes.
+- Existing default JSON for doctor/config/recovery remains compatible.
+  `--output` is accepted only once in documented final position. Read-only
+  transport failure maps to unavailable/temporary failure, never
+  outcome-unknown.
 - System/user paths remain deliberately unselected. Downstream code must not
   infer Linux, Homebrew, XDG, OCI, or Windows paths from this source manifest.
 - Reserved command names are not availability claims and must not become hidden
@@ -134,6 +164,11 @@ unavailable in this packet.
   mixed-mode, secret-field, environment-discovery, and path-reflection negatives;
 - source-only/package-closed/service-closed hard-stop assertions;
 - `lnsatctl doctor` JSON and stable usage failures;
+- exact health/status GET/HEAD, all fixed local roles, generic auth denial,
+  preserved `/healthz`, secret-free fixtures, IPv4/IPv6 client transport,
+  input-before-connect refusal, response caps, and timeout/exit mapping;
+- exact text/JSON/JSONL/YAML golden bytes plus existing default JSON
+  compatibility and formatted failures;
 - real read-only recovery inspection with raw-path non-reflection;
 - bash/zsh/fish completion and `lnsat`/`lnsatctl`/`lnsatd` man source;
 - existing packet CLI/API/MCP equality plus exact Control Center projection;
@@ -142,16 +177,13 @@ unavailable in this packet.
 
 ## Remaining Phase 10 Gates
 
-P10-A1 and P10-A2 do not complete Phase 10. Remaining bounded gates are:
+P10-A1 through P10-A3 do not complete Phase 10. Remaining bounded gates are:
 
-1. **P10-A3 transport and output:** authenticated `status`/`health` transport
-   plus stable text/JSONL/YAML output contracts without remote-default or
-   ambient-target behavior;
-2. **P10-A4 recovery, non-root, and parity:** offline backup, inert restore,
+1. **P10-A4 recovery, non-root, and parity:** offline backup, inert restore,
    protected owner recovery with non-argument secret intake, target-neutral
    non-root enforcement evidence, and full CLI/API/MCP/UI fixtures for every
    newly exposed command;
-3. **P10-X1 exit freeze:** one exact Phase 10 conformance and compatibility
+2. **P10-X1 exit freeze:** one exact Phase 10 conformance and compatibility
    freeze proving all required product surfaces while keeping target/package
    lifecycle proof in Phase 14.
 
@@ -160,7 +192,7 @@ remains Phase 10 -> Phase 11 -> Phase 13 -> Phase 14; Phase 12 remains optional.
 
 ## Hard Stops
 
-P10-A1/P10-A2 grant no served recovery mutation, production/user-repository
+P10-A1/P10-A2/P10-A3 grant no served recovery mutation, production/user-repository
 consequence, migration `0018`, key/provider work, package or supported-binary
 claim, filesystem installation, service registration/start, tag, release,
 publication, deployment, Phase 11+ implementation, or automatic promotion.

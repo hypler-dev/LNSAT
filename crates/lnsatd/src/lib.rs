@@ -3,7 +3,9 @@
 //! Fail-closed loopback daemon foundation for one local LNSAT deployment.
 
 pub mod product_config;
+pub mod product_output;
 pub mod product_surface;
+pub mod product_transport;
 
 use lnsat_auth::{
     LOCAL_CSRF_HEADER_NAME_V1, LocalBrowserAuthTransportV1, LocalBrowserOriginV1,
@@ -83,6 +85,10 @@ const OVERLOAD_TIMEOUT_V1: Duration = Duration::from_millis(100);
 const SHUTDOWN_WAKE_TIMEOUT_V1: Duration = Duration::from_millis(250);
 const READINESS_PATH_V1: &str = "/healthz";
 const READINESS_CONTRACT_V1: &str = "lnsat.daemon.readiness.v1_0";
+const AUTHENTICATED_HEALTH_PATH_V1: &str = "/v1/health";
+const AUTHENTICATED_STATUS_PATH_V1: &str = "/v1/status";
+const AUTHENTICATED_PRODUCT_READ_DENIAL_CONTRACT_V1: &str = "lnsat.daemon.authenticated_read.v1";
+const AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1: &str = "lnsatd.authenticated_read.denied";
 const GATEWAY_ROOT_PATH_V1: &str = "/v1";
 const GATEWAY_NEGOTIATION_CONTRACT_V1: &str = "lnsat.gateway.negotiation.v1_0";
 /// Exact request and response header carrying stable Gateway wire-contract identity.
@@ -2107,6 +2113,15 @@ enum RequestReadV1 {
 
 enum HttpResponseV1 {
     Ready,
+    AuthenticatedHealth {
+        head_only: bool,
+    },
+    AuthenticatedStatus {
+        head_only: bool,
+    },
+    AuthenticatedProductReadRejected {
+        head_only: bool,
+    },
     ConsoleAsset {
         asset: Phase9ConsoleAssetV1,
         head_only: bool,
@@ -2598,6 +2613,16 @@ fn classify_versioned_gateway_route_v1(
     peer_address: IpAddr,
     context: GatewayRuntimeContextV1<'_>,
 ) -> HttpResponseV1 {
+    if let Some(response) = classify_authenticated_product_read_route_v1(
+        request_bytes,
+        request,
+        body,
+        peer_address,
+        context.bound_address,
+        context.store,
+    ) {
+        return response;
+    }
     if let Some(response) = classify_phase8_runtime_route_v1(
         request_bytes,
         request,
@@ -2708,6 +2733,63 @@ fn classify_versioned_gateway_route_v1(
         );
     }
     classify_readiness_or_unknown_v1(request, body, context.bound_address)
+}
+
+fn classify_authenticated_product_read_route_v1(
+    request_bytes: &[u8],
+    request: ParsedRequestHeadV1<'_>,
+    body: &[u8],
+    peer_address: IpAddr,
+    bound_address: SocketAddr,
+    store: &Arc<Mutex<SqliteStore>>,
+) -> Option<HttpResponseV1> {
+    let response = match request.target {
+        AUTHENTICATED_HEALTH_PATH_V1 => HttpResponseV1::AuthenticatedHealth {
+            head_only: request.method == "HEAD",
+        },
+        AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus {
+            head_only: request.method == "HEAD",
+        },
+        target
+            if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
+                || target.starts_with(AUTHENTICATED_STATUS_PATH_V1) =>
+        {
+            return Some(HttpResponseV1::BadRequest);
+        }
+        _ => return None,
+    };
+    if !matches!(request.method, "GET" | "HEAD") {
+        return Some(HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" });
+    }
+    let head_only = request.method == "HEAD";
+    if !body.is_empty()
+        || request.content_length.is_some_and(|length| length != 0)
+        || request.content_type.is_some()
+        || request.forwarded_present
+    {
+        return Some(HttpResponseV1::AuthenticatedProductReadRejected { head_only });
+    }
+    let authorized =
+        parse_local_browser_transport_request_v1(request_bytes, peer_address, bound_address)
+            .and_then(|transport| {
+                let mut store = store
+                    .lock()
+                    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+                authorize_local_browser_transport_request_v1(&mut store, &transport)
+            });
+    match authorized {
+        Ok(authorized)
+            if authorized.target == request.target
+                && authorized.class == LocalBrowserRequestClassV1::ReadOnly
+                && authorized
+                    .session
+                    .role
+                    .allows_control(LocalControlPermissionV1::ReadEvidence) =>
+        {
+            Some(response)
+        }
+        Ok(_) | Err(_) => Some(HttpResponseV1::AuthenticatedProductReadRejected { head_only }),
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -3852,6 +3934,29 @@ fn compose_http_response_v1(
     }
     let (status, body, allow, head_only, cookie_headers) = match response {
         HttpResponseV1::Ready => ("200 OK", readiness_body_v1(state), None, false, None),
+        HttpResponseV1::AuthenticatedHealth { head_only } => (
+            "200 OK",
+            serde_json::to_string(&product_surface::daemon_health_v1(state))
+                .expect("authenticated health evidence must serialize"),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::AuthenticatedStatus { head_only } => (
+            "200 OK",
+            serde_json::to_string(&product_surface::daemon_status_v1())
+                .expect("authenticated status evidence must serialize"),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::AuthenticatedProductReadRejected { head_only } => (
+            "403 Forbidden",
+            authenticated_product_read_denied_body_v1(),
+            None,
+            head_only,
+            None,
+        ),
         HttpResponseV1::ConsoleAsset { .. } => unreachable!(),
         HttpResponseV1::GatewayContractNegotiated { .. }
         | HttpResponseV1::GatewayContractVersionRejected { .. } => {
@@ -4284,6 +4389,18 @@ fn readiness_body_v1(state: &SqliteStoreStateV1) -> String {
         ),
         READINESS_CONTRACT_V1, state.schema_version, state.migration_count
     )
+}
+
+fn authenticated_product_read_denied_body_v1() -> String {
+    serde_json::json!({
+        "contract": AUTHENTICATED_PRODUCT_READ_DENIAL_CONTRACT_V1,
+        "contract_version": CONTRACT_VERSION_V1_0,
+        "ok": false,
+        "error": { "code": AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1 },
+        "side_effects": [],
+        "mutation_authority": false,
+    })
+    .to_string()
 }
 
 fn gateway_contract_negotiation_body_v1(version: ContractVersion) -> String {
@@ -6261,6 +6378,26 @@ mod tests {
             )
         }
 
+        fn product_read_request(&self, method: &str, path: &str, token: &str) -> String {
+            format!(
+                concat!(
+                    "{method} {path} HTTP/1.1\r\n",
+                    "Host: {address}\r\n",
+                    "{version_name}: {version}\r\n",
+                    "Sec-Fetch-Site: same-origin\r\n",
+                    "Cookie: {cookie_name}={token}\r\n",
+                    "Connection: close\r\n\r\n"
+                ),
+                method = method,
+                path = path,
+                address = self.address,
+                version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+                version = CONTRACT_VERSION_V1_0,
+                cookie_name = lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
+                token = token,
+            )
+        }
+
         fn session_issue_request(&self, body: &str) -> String {
             format!(
                 concat!(
@@ -6758,6 +6895,25 @@ mod tests {
     fn readiness_reports_verified_store_and_zero_mutation_authority() {
         let response = request_once("ready", b"GET /healthz HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
 
+        assert_eq!(
+            response,
+            concat!(
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Type: application/json\r\n",
+                "Content-Length: 151\r\n",
+                "Cache-Control: no-store\r\n",
+                "Content-Security-Policy: default-src 'none'; frame-ancestors 'none'\r\n",
+                "Cross-Origin-Resource-Policy: same-origin\r\n",
+                "Referrer-Policy: no-referrer\r\n",
+                "Permissions-Policy: camera=(), microphone=(), geolocation=()\r\n",
+                "X-Content-Type-Options: nosniff\r\n",
+                "Connection: close\r\n\r\n",
+                "{\"contract\":\"lnsat.daemon.readiness.v1_0\",\"status\":\"ready\",",
+                "\"schema_version\":17,\"migration_count\":17,",
+                "\"bind_scope\":\"loopback\",\"mutation_authority\":false}"
+            )
+        );
+
         assert!(response.starts_with("HTTP/1.1 200 OK\r\n"));
         assert!(response.contains("\"contract\":\"lnsat.daemon.readiness.v1_0\""));
         assert!(response.contains(&format!(
@@ -6996,6 +7152,198 @@ mod tests {
         assert!(host_drift.starts_with("HTTP/1.1 400 Bad Request\r\n"));
         assert!(host_drift.contains("lnsatd.request.invalid"));
         assert!(!host_drift.contains("contract.version."));
+    }
+
+    #[test]
+    fn authenticated_health_and_status_get_head_and_roles_match_fixtures() {
+        let fixture = ServedSessionGatewayFixture::start("product-health-status-success");
+        for (path, expected) in [
+            (
+                AUTHENTICATED_HEALTH_PATH_V1,
+                include_str!("../../../fixtures/contracts/phase10-health-v1.json"),
+            ),
+            (
+                AUTHENTICATED_STATUS_PATH_V1,
+                include_str!("../../../fixtures/contracts/phase10-status-v1.json"),
+            ),
+        ] {
+            let request = fixture.product_read_request("GET", path, &fixture.session_token);
+            let get = request_at(fixture.address, request.as_bytes());
+            assert!(get.starts_with("HTTP/1.1 200 OK\r\n"));
+            assert!(get.contains("LNSAT-Contract-Version: lnsat.contracts.v1_0\r\n"));
+            let (_, body) = get
+                .split_once("\r\n\r\n")
+                .expect("GET must contain header boundary");
+            assert_eq!(
+                serde_json::from_str::<serde_json::Value>(body).expect("GET body must be JSON"),
+                serde_json::from_str::<serde_json::Value>(expected)
+                    .expect("frozen fixture must be JSON")
+            );
+            let head_request = fixture.product_read_request("HEAD", path, &fixture.session_token);
+            let head = request_at(fixture.address, head_request.as_bytes());
+            assert!(head.starts_with("HTTP/1.1 200 OK\r\n"));
+            let (_, head_body) = head
+                .split_once("\r\n\r\n")
+                .expect("HEAD must contain header boundary");
+            assert!(head_body.is_empty());
+            let get_length = get
+                .lines()
+                .find_map(|line| line.strip_prefix("Content-Length: "))
+                .expect("GET content length must exist");
+            let head_length = head
+                .lines()
+                .find_map(|line| line.strip_prefix("Content-Length: "))
+                .expect("HEAD content length must exist");
+            assert_eq!(head_length, get_length);
+        }
+
+        for (role, identity_ref, display_name, password) in [
+            (
+                LocalIdentityRoleV1::Operator,
+                "identity:human:product-operator",
+                "Product Operator",
+                "operator product password 2026",
+            ),
+            (
+                LocalIdentityRoleV1::Auditor,
+                "identity:human:product-auditor",
+                "Product Auditor",
+                "auditor product password 2026",
+            ),
+        ] {
+            assert!(role.allows_control(LocalControlPermissionV1::ReadEvidence));
+            fixture.create_non_owner(identity_ref, display_name, role, password);
+            let now = SystemTime::now();
+            let issued_at = canonical_system_time_v1(now).expect("current time must format");
+            let expires_at = canonical_system_time_v1(
+                now.checked_add(Duration::from_mins(5))
+                    .expect("expiry must advance"),
+            )
+            .expect("expiry must format");
+            let token = {
+                let mut store = SqliteStore::open(fixture.directory.database_path())
+                    .expect("fixture store must reopen");
+                store
+                    .issue_local_session_v1(&LocalSessionIssueInputV1 {
+                        identity_ref,
+                        password,
+                        issued_at: &issued_at,
+                        expires_at: &expires_at,
+                    })
+                    .expect("non-owner session must issue")
+                    .raw_session_token
+            };
+            let request = fixture.product_read_request("GET", AUTHENTICATED_STATUS_PATH_V1, &token);
+            let response = request_at(fixture.address, request.as_bytes());
+            assert!(response.starts_with("HTTP/1.1 200 OK\r\n"));
+            assert!(!response.contains(identity_ref));
+            assert!(!response.contains(&token));
+        }
+    }
+
+    #[test]
+    fn authenticated_product_reads_fail_closed_without_oracles_or_ambiguous_framing() {
+        let fixture = ServedSessionGatewayFixture::start("product-health-status-denials");
+        let missing_cookie = format!(
+            concat!(
+                "GET /v1/health HTTP/1.1\r\n",
+                "Host: {address}\r\n",
+                "{version_name}: {version}\r\n",
+                "Sec-Fetch-Site: same-origin\r\n\r\n"
+            ),
+            address = fixture.address,
+            version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+            version = CONTRACT_VERSION_V1_0,
+        );
+        let missing = request_at(fixture.address, missing_cookie.as_bytes());
+        assert!(missing.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        let (_, denial_body) = missing
+            .split_once("\r\n\r\n")
+            .expect("denial must contain header boundary");
+        assert!(denial_body.contains(AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1));
+
+        for token in ["malformed", fixture.expired_session_token.as_str()] {
+            let request = fixture.product_read_request("GET", AUTHENTICATED_HEALTH_PATH_V1, token);
+            let response = request_at(fixture.address, request.as_bytes());
+            assert!(response.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+            assert_eq!(
+                response
+                    .split_once("\r\n\r\n")
+                    .expect("denial must contain header boundary")
+                    .1,
+                denial_body
+            );
+            assert!(!response.contains(token));
+        }
+
+        let sign_out = fixture.session_family_sign_out_request();
+        assert!(request_at(fixture.address, sign_out.as_bytes()).starts_with("HTTP/1.1 200 OK"));
+        let revoked = fixture.product_read_request(
+            "GET",
+            AUTHENTICATED_STATUS_PATH_V1,
+            &fixture.session_token,
+        );
+        let revoked = request_at(fixture.address, revoked.as_bytes());
+        assert!(revoked.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert_eq!(
+            revoked
+                .split_once("\r\n\r\n")
+                .expect("denial must contain header boundary")
+                .1,
+            denial_body
+        );
+        for forbidden in [
+            fixture.session_token.as_str(),
+            "identity:human:",
+            "database_path",
+            "/Users/",
+        ] {
+            assert!(!revoked.contains(forbidden));
+        }
+
+        let denied_head = missing_cookie.replacen("GET ", "HEAD ", 1);
+        let denied_head = request_at(fixture.address, denied_head.as_bytes());
+        assert!(denied_head.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert!(
+            denied_head
+                .split_once("\r\n\r\n")
+                .expect("HEAD denial must contain boundary")
+                .1
+                .is_empty()
+        );
+
+        for (request, status) in [
+            (
+                format!(
+                    "POST /v1/health HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nContent-Length: 0\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 405 Method Not Allowed",
+            ),
+            (
+                format!(
+                    "GET /v1/health?detail=1 HTTP/1.1\r\nHost: {}\r\n{}: {}\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 400 Bad Request",
+            ),
+            (
+                format!(
+                    "GET /v1/%68ealth HTTP/1.1\r\nHost: {}\r\n{}: {}\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 404 Not Found",
+            ),
+            (
+                format!(
+                    "GET /v1/status HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nTransfer-Encoding: chunked\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 400 Bad Request",
+            ),
+        ] {
+            assert!(request_at(fixture.address, request.as_bytes()).starts_with(status));
+        }
     }
 
     #[test]

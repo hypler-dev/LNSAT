@@ -1,0 +1,25 @@
+{
+  "contract_id": "lnsat.cli.output.formats.v1",
+  "contract_version": "lnsat.contracts.v1_0",
+  "schema_version": 1,
+  "default_format": "json",
+  "formats": ["text", "json", "jsonl", "yaml"],
+  "semantic_result": {
+    "command": "fixture",
+    "ok": true,
+    "schema": "lnsat.cli.output.v1",
+    "side_effects": []
+  },
+  "goldens": {
+    "json": "{\"command\":\"fixture\",\"ok\":true,\"schema\":\"lnsat.cli.output.v1\",\"side_effects\":[]}\n",
+    "jsonl": "{\"command\":\"fixture\",\"ok\":true,\"schema\":\"lnsat.cli.output.v1\",\"side_effects\":[]}\n",
+    "text": "command=fixture\nok=true\nschema=lnsat.cli.output.v1\nside_effects=[]\n",
+    "yaml": "command: \"fixture\"\nok: true\nschema: \"lnsat.cli.output.v1\"\nside_effects: []\n"
+  },
+  "rules": {
+    "manifest_canonical_json_only": true,
+    "one_result_per_jsonl_line": true,
+    "yaml_aliases_anchors_tags_documents": false,
+    "color_or_progress_noise": false
+  }
+}

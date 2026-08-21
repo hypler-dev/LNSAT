@@ -50,6 +50,16 @@
   non-root requirements, and CLI/API/MCP/UI evidence parity. No served recovery
   mutation, target/package claim, install/start, production consequence,
   migration `0018`, key/provider work, release, publication, or deployment opens.
+- Added P10-A3 authenticated read-only `GET|HEAD /v1/health` and `/v1/status`
+  while preserving unauthenticated `/healthz` bytes. New `lnsatctl`
+  health/status transport accepts only an explicit numeric IPv4/IPv6 loopback
+  HTTP endpoint and one opaque stdin session token, with bounded timeouts and
+  response caps, no proxy/DNS/redirect/retry/discovery/remote behavior, and no
+  secret reflection. Doctor, config/recovery inspection, health, and status now
+  share deterministic text/JSON/JSONL/YAML rendering; JSON remains compatible
+  default and manifest remains canonical JSON only. Only bounded session
+  activity evidence may change; mutation authority, P10-A4, P10-X1, Phase 11,
+  package, release, service, and deployment lanes remain closed.
 - Added P7-X1 local-v1 source conformance freeze: one authenticated
   proposal-to-policy-to-local-approval-to-authorization-to-consume-to-disposable
   Git-receipt/reconciliation chain, inert backup/restore replay proof, 12-row

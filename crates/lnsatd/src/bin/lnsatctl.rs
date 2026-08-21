@@ -1,34 +1,53 @@
 #![forbid(unsafe_code)]
 
 use lnsatd::product_config::load_daemon_config_v1;
+use lnsatd::product_output::{
+    ProductOutputFormatV1, ProductSemanticResultV1, render_product_result_v1,
+};
 use lnsatd::product_surface::{
     PRODUCT_SOURCE_VERSION_V1, ProductExitCodeV1, completion_source_v1,
     config_inspection_output_json_v1, doctor_output_json_v1, failure_output_json_v1,
     lnsatctl_usage_v1, man_page_source_v1, product_surface_manifest_json_v1,
     recovery_inspection_output_json_v1,
 };
-use std::ffi::OsStr;
+use lnsatd::product_transport::{
+    NumericLoopbackEndpointV1, ProductClientErrorV1, ProductReadCommandV1,
+    read_session_token_stdin_v1, request_authenticated_product_read_v1,
+};
+use std::ffi::{OsStr, OsString};
+use std::io;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+#[allow(clippy::too_many_lines)] // Exact command shapes stay together for fail-closed review.
 fn main() -> ExitCode {
     let arguments: Vec<_> = std::env::args_os().skip(1).collect();
-    match arguments.as_slice() {
-        [argument] if argument == OsStr::new("--help") || argument == OsStr::new("-h") => {
+    let selection = match OutputSelectionV1::parse(arguments) {
+        Ok(selection) => selection,
+        Err(format) => return invalid_arguments("usage", format),
+    };
+    let format = selection.format;
+    match selection.arguments.as_slice() {
+        [argument]
+            if !selection.output_selected
+                && (argument == OsStr::new("--help") || argument == OsStr::new("-h")) =>
+        {
             print!("{}", lnsatctl_usage_v1());
             ExitCode::SUCCESS
         }
-        [argument] if argument == OsStr::new("--version") || argument == OsStr::new("-V") => {
+        [argument]
+            if !selection.output_selected
+                && (argument == OsStr::new("--version") || argument == OsStr::new("-V")) =>
+        {
             println!("lnsatctl {PRODUCT_SOURCE_VERSION_V1} (source-only)");
             ExitCode::SUCCESS
         }
-        [command] if command == OsStr::new("manifest") => {
+        [command] if !selection.output_selected && command == OsStr::new("manifest") => {
             print!("{}", product_surface_manifest_json_v1());
             ExitCode::SUCCESS
         }
         [command] if command == OsStr::new("doctor") => {
-            println!("{}", doctor_output_json_v1());
-            ExitCode::SUCCESS
+            emit_json_success(&doctor_output_json_v1(), "doctor", format)
         }
         [config, inspect, option, path]
             if config == OsStr::new("config")
@@ -36,41 +55,35 @@ fn main() -> ExitCode {
                 && option == OsStr::new("--config") =>
         {
             match load_daemon_config_v1(PathBuf::from(path)) {
-                Ok(loaded) => {
-                    println!("{}", config_inspection_output_json_v1(&loaded));
-                    ExitCode::SUCCESS
-                }
-                Err(error) => {
-                    let exit_code = ProductExitCodeV1::UsageOrConfiguration;
-                    eprintln!(
-                        "{}",
-                        failure_output_json_v1(
-                            "lnsatctl",
-                            "config.inspect",
-                            error.code(),
-                            exit_code,
-                        )
-                    );
-                    ExitCode::from(exit_code.as_u8())
-                }
+                Ok(loaded) => emit_json_success(
+                    &config_inspection_output_json_v1(&loaded),
+                    "config.inspect",
+                    format,
+                ),
+                Err(error) => emit_failure(
+                    "config.inspect",
+                    error.code(),
+                    ProductExitCodeV1::UsageOrConfiguration,
+                    format,
+                ),
             }
         }
-        [command, shell] if command == OsStr::new("completion") => {
+        [command, shell] if !selection.output_selected && command == OsStr::new("completion") => {
             let Some(shell) = shell.to_str() else {
-                return invalid_arguments("completion");
+                return invalid_arguments("completion", format);
             };
             let Some(source) = completion_source_v1(shell) else {
-                return invalid_arguments("completion");
+                return invalid_arguments("completion", format);
             };
             print!("{source}");
             ExitCode::SUCCESS
         }
-        [command, page] if command == OsStr::new("man") => {
+        [command, page] if !selection.output_selected && command == OsStr::new("man") => {
             let Some(page) = page.to_str() else {
-                return invalid_arguments("man");
+                return invalid_arguments("man", format);
             };
             let Some(source) = man_page_source_v1(page) else {
-                return invalid_arguments("man");
+                return invalid_arguments("man", format);
             };
             print!("{source}");
             ExitCode::SUCCESS
@@ -81,34 +94,159 @@ fn main() -> ExitCode {
                 && database == OsStr::new("--database") =>
         {
             match recovery_inspection_output_json_v1(PathBuf::from(path)) {
-                Ok(output) => {
-                    println!("{output}");
-                    ExitCode::SUCCESS
-                }
-                Err(error) => {
-                    let exit_code = ProductExitCodeV1::UsageOrConfiguration;
-                    eprintln!(
-                        "{}",
-                        failure_output_json_v1(
-                            "lnsatctl",
-                            "recovery.inspect",
-                            error.code(),
-                            exit_code,
-                        )
-                    );
-                    ExitCode::from(exit_code.as_u8())
-                }
+                Ok(output) => emit_json_success(&output, "recovery.inspect", format),
+                Err(error) => emit_failure(
+                    "recovery.inspect",
+                    error.code(),
+                    ProductExitCodeV1::UsageOrConfiguration,
+                    format,
+                ),
             }
         }
-        _ => invalid_arguments("usage"),
+        [command, endpoint_option, endpoint, stdin_option]
+            if (command == OsStr::new("health") || command == OsStr::new("status"))
+                && endpoint_option == OsStr::new("--endpoint")
+                && stdin_option == OsStr::new("--session-token-stdin") =>
+        {
+            let command_name = command_name(command);
+            let Some(endpoint) = endpoint.to_str() else {
+                return emit_client_failure(
+                    command_name,
+                    ProductClientErrorV1::EndpointInvalid,
+                    format,
+                );
+            };
+            let endpoint = match NumericLoopbackEndpointV1::parse(endpoint) {
+                Ok(endpoint) => endpoint,
+                Err(error) => return emit_client_failure(command_name, error, format),
+            };
+            let token = match read_session_token_stdin_v1(&mut io::stdin().lock()) {
+                Ok(token) => token,
+                Err(error) => return emit_client_failure(command_name, error, format),
+            };
+            let read_command = if command == OsStr::new("health") {
+                ProductReadCommandV1::Health
+            } else {
+                ProductReadCommandV1::Status
+            };
+            match request_authenticated_product_read_v1(read_command, &endpoint, &token) {
+                Ok(result) => emit_semantic_success(&result, format),
+                Err(error) => emit_client_failure(read_command.name(), error, format),
+            }
+        }
+        _ => invalid_arguments("usage", format),
     }
 }
 
-fn invalid_arguments(command: &str) -> ExitCode {
-    let exit_code = ProductExitCodeV1::UsageOrConfiguration;
-    eprintln!(
-        "{}",
-        failure_output_json_v1("lnsatctl", command, "lnsatctl.arguments.invalid", exit_code,)
-    );
+struct OutputSelectionV1 {
+    arguments: Vec<OsString>,
+    format: ProductOutputFormatV1,
+    output_selected: bool,
+}
+
+impl OutputSelectionV1 {
+    fn parse(mut arguments: Vec<OsString>) -> Result<Self, ProductOutputFormatV1> {
+        let mut format = ProductOutputFormatV1::default();
+        let mut output_selected = false;
+        if arguments.len() >= 2 && arguments[arguments.len() - 2] == OsStr::new("--output") {
+            let Some(value) = arguments.last().and_then(|value| value.to_str()) else {
+                return Err(format);
+            };
+            let Some(parsed) = ProductOutputFormatV1::parse(value) else {
+                return Err(format);
+            };
+            format = parsed;
+            arguments.truncate(arguments.len() - 2);
+            output_selected = true;
+        }
+        if arguments
+            .iter()
+            .any(|argument| argument == OsStr::new("--output"))
+        {
+            return Err(format);
+        }
+        Ok(Self {
+            arguments,
+            format,
+            output_selected,
+        })
+    }
+}
+
+fn command_name(command: &OsStr) -> &'static str {
+    if command == OsStr::new("health") {
+        "health"
+    } else {
+        "status"
+    }
+}
+
+fn semantic_from_json(value: &str) -> Option<ProductSemanticResultV1> {
+    serde_json::from_str(value)
+        .ok()
+        .and_then(|value| ProductSemanticResultV1::new(value).ok())
+}
+
+fn emit_json_success(value: &str, command: &str, format: ProductOutputFormatV1) -> ExitCode {
+    let Some(result) = semantic_from_json(value) else {
+        return emit_failure(
+            command,
+            "lnsatctl.output.serialization_failed",
+            ProductExitCodeV1::InternalFailure,
+            format,
+        );
+    };
+    emit_semantic_success(&result, format)
+}
+
+fn emit_semantic_success(
+    result: &ProductSemanticResultV1,
+    format: ProductOutputFormatV1,
+) -> ExitCode {
+    match render_product_result_v1(result, format) {
+        Ok(output) => {
+            print!("{output}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => emit_failure(
+            "output",
+            error.code(),
+            ProductExitCodeV1::InternalFailure,
+            format,
+        ),
+    }
+}
+
+fn emit_client_failure(
+    command: &str,
+    error: ProductClientErrorV1,
+    format: ProductOutputFormatV1,
+) -> ExitCode {
+    emit_failure(command, error.code(), error.exit_code(), format)
+}
+
+fn emit_failure(
+    command: &str,
+    error_code: &str,
+    exit_code: ProductExitCodeV1,
+    format: ProductOutputFormatV1,
+) -> ExitCode {
+    let failure = failure_output_json_v1("lnsatctl", command, error_code, exit_code);
+    if let Some(result) = semantic_from_json(&failure)
+        && let Ok(output) = render_product_result_v1(&result, format)
+    {
+        eprint!("{output}");
+    } else {
+        eprintln!("{failure}");
+    }
     ExitCode::from(exit_code.as_u8())
+}
+
+fn invalid_arguments(command: &str, format: ProductOutputFormatV1) -> ExitCode {
+    emit_failure(
+        command,
+        "lnsatctl.arguments.invalid",
+        ProductExitCodeV1::UsageOrConfiguration,
+        format,
+    )
 }

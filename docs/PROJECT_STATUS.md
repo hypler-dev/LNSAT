@@ -33,9 +33,10 @@ no public/private key input is requested.
 
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
 exact-ID Control Center readback and manifest-only source-local console hosting
-are implemented as experimental source. Phase 10 P10-A1 target-neutral
-product-surface spine and P10-A2 explicit-only daemon configuration/path
-contract are implemented; Phase 10 stabilization remains in progress. Required
+are implemented as experimental source. Phase 10 P10-A1 product-surface spine,
+P10-A2 explicit-only configuration, and P10-A3 authenticated local
+health/status plus stable output contracts are implemented; Phase 10
+stabilization remains in progress. Required
 path stays Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
 packets remain nonblocking unless separately selected. No binary/package work
@@ -49,23 +50,23 @@ package, runtime dispatch, emergency-stop route, or supported deployment exists.
 
 ## Maturity Summary
 
-| Area                 | Status                 | Evidence                                                                              |
-| -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
-| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests |
-| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`       |
-| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests             |
-| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                  |
-| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting   |
-| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source |
-| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility    |
-| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` config/recovery read-only inspection          |
-| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel        |
-| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only  |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation              |
-| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core             |
-| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                      |
-| Docker integration   | Accepted plan          | First v1 runtime profile; no adapter, image, package, or support exists               |
-| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                        |
+| Area                 | Status                 | Evidence                                                                                   |
+| -------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests      |
+| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`            |
+| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                  |
+| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                       |
+| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting        |
+| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source      |
+| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility         |
+| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` health/status/config/recovery read-only inspection |
+| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel             |
+| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only       |
+| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                   |
+| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                  |
+| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                           |
+| Docker integration   | Accepted plan          | First v1 runtime profile; no adapter, image, package, or support exists                    |
+| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                             |
 
 “Experimental” means checked-in implementation has automated coverage but no
 stable compatibility or support commitment.
@@ -357,6 +358,11 @@ The source-only Rust `lnsatd` now requires one explicit database path, rejects
 wildcard/non-loopback/port-zero configuration, opens and verifies SQLite before
 binding, confirms the operating-system address is loopback, and serves at most
 eight bounded concurrent requests. `GET /healthz` remains readiness-only.
+Authenticated `GET|HEAD /v1/health` and `/v1/status` reuse exact Host,
+contract-version, same-origin fetch metadata, existing session cookie, active
+owner/operator/auditor `ReadEvidence`, and one generic denial. They preserve
+bodyless HEAD parity, expose no identity/session/path/host data, grant no
+mutation authority, and declare only bounded session-activity evidence.
 Source-local `POST|GET|HEAD|PATCH|DELETE /v1/session` now issues one bounded
 password-authenticated session, reads active SQLite session proof, rotates the
 current session secrets, or revokes the authenticated identity's active
@@ -863,8 +869,11 @@ environment discovery fail closed. Existing direct daemon arguments remain
 compatible.
 
 Current `lnsatctl` implements only source-local `doctor`, public-safe `config
-inspect`, exact read-only `recovery inspect`, manifest, completion, man, help,
-and version. Config inspection returns exact-byte SHA-256 and applied-layer
+inspect`, exact read-only `recovery inspect`, authenticated `health`/`status`,
+stable text/JSON/JSONL/YAML, manifest, completion, man, help, and version.
+Health/status require an explicit numeric-loopback HTTP endpoint and one opaque
+session token from stdin; no default/remote/DNS/proxy/redirect/retry/discovery
+transport exists. Config inspection returns exact-byte SHA-256 and applied-layer
 evidence without path, address, or source-byte reflection. Recovery
 inspection reflects no raw path and performs no migration, repair, quarantine,
 credential change, or activation. Service install/start, offline recovery
@@ -873,8 +882,8 @@ unavailable. Existing packet inspection retains CLI/API/MCP equality; one
 read-only Control Center projection now preserves exact Gateway policy and audit
 evidence with empty effects.
 
-System/user config paths, target/package paths, P10-A3 transport/output,
-P10-A4 recovery/non-root/full parity, and P10-X1 exit freeze remain. Phase 10
+System/user config paths, target/package paths, P10-A4 recovery/non-root/full
+parity, and P10-X1 exit freeze remain. Phase 10
 remains in progress. See
 [Phase 10 product-surface contract spine](architecture/PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md).
 
