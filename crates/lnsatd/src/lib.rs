@@ -2,6 +2,7 @@
 
 //! Fail-closed loopback daemon foundation for one local LNSAT deployment.
 
+pub mod product_config;
 pub mod product_surface;
 
 use lnsat_auth::{
@@ -1426,6 +1427,12 @@ pub enum DaemonErrorV1 {
     InvalidArguments,
     /// A command-line option was missing its value.
     ArgumentValueRequired,
+    /// Explicit configuration path was not absolute.
+    InvalidConfigPath,
+    /// Explicit configuration file or contract was unsafe or invalid.
+    InvalidConfigFile,
+    /// Explicit configuration file exceeded its fixed byte bound.
+    ConfigFileTooLarge,
     /// Listen address was not one numeric socket address.
     InvalidListenAddress,
     /// Phase 8 runtime paths were incomplete, empty, or non-absolute.
@@ -1464,6 +1471,9 @@ impl DaemonErrorV1 {
             Self::DatabasePathRequired => "lnsatd.database.path_required",
             Self::InvalidArguments => "lnsatd.arguments.invalid",
             Self::ArgumentValueRequired => "lnsatd.arguments.value_required",
+            Self::InvalidConfigPath => "lnsatd.config.path_invalid",
+            Self::InvalidConfigFile => "lnsatd.config.file_invalid",
+            Self::ConfigFileTooLarge => "lnsatd.config.file_too_large",
             Self::InvalidListenAddress => "lnsatd.listen.invalid",
             Self::InvalidRuntimeConfiguration => "lnsatd.runtime_configuration.invalid",
             Self::InvalidConsoleConfiguration => "lnsatd.console_configuration.invalid",
@@ -1507,9 +1517,10 @@ pub fn install_os_shutdown_handler_v1(shutdown: DaemonShutdownV1) -> Result<(), 
 
 /// Parses strict source-only daemon arguments.
 ///
-/// Supported options are `--database <path>`, optional `--listen <ip:port>`,
-/// paired Phase 8 runtime paths, `--help`, `--version`, and `--manifest`. Values are never
-/// included in returned errors.
+/// Supported modes are `--config <absolute-path>` or existing direct
+/// `--database <path>` arguments with optional `--listen <ip:port>` and paired
+/// Phase 8 runtime paths. Help, version, and manifest remain standalone. Values
+/// are never included in returned errors.
 ///
 /// # Errors
 ///
@@ -1522,6 +1533,7 @@ where
 {
     let mut arguments = arguments.into_iter().map(Into::into);
     let _program = arguments.next();
+    let mut config_path = None;
     let mut database_path = None;
     let mut listen_address = None;
     let mut disposable_git_root = None;
@@ -1529,47 +1541,56 @@ where
 
     while let Some(argument) = arguments.next() {
         if argument == OsStr::new("--help") || argument == OsStr::new("-h") {
-            if database_path.is_some()
-                || listen_address.is_some()
-                || disposable_git_root.is_some()
-                || git_executable.is_some()
-                || arguments.next().is_some()
+            if daemon_run_arguments_present_v1(
+                config_path.as_ref(),
+                database_path.as_ref(),
+                listen_address.as_ref(),
+                disposable_git_root.as_ref(),
+                git_executable.as_ref(),
+            ) || arguments.next().is_some()
             {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
             return Ok(DaemonCliActionV1::Help);
         }
         if argument == OsStr::new("--version") || argument == OsStr::new("-V") {
-            if database_path.is_some()
-                || listen_address.is_some()
-                || disposable_git_root.is_some()
-                || git_executable.is_some()
-                || arguments.next().is_some()
+            if daemon_run_arguments_present_v1(
+                config_path.as_ref(),
+                database_path.as_ref(),
+                listen_address.as_ref(),
+                disposable_git_root.as_ref(),
+                git_executable.as_ref(),
+            ) || arguments.next().is_some()
             {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
             return Ok(DaemonCliActionV1::Version);
         }
         if argument == OsStr::new("--manifest") {
-            if database_path.is_some()
-                || listen_address.is_some()
-                || disposable_git_root.is_some()
-                || git_executable.is_some()
-                || arguments.next().is_some()
+            if daemon_run_arguments_present_v1(
+                config_path.as_ref(),
+                database_path.as_ref(),
+                listen_address.as_ref(),
+                disposable_git_root.as_ref(),
+                git_executable.as_ref(),
+            ) || arguments.next().is_some()
             {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
             return Ok(DaemonCliActionV1::Manifest);
         }
+        if argument == OsStr::new("--config") {
+            if config_path.is_some() {
+                return Err(DaemonErrorV1::InvalidArguments);
+            }
+            config_path = Some(next_daemon_argument_value_v1(&mut arguments)?);
+            continue;
+        }
         if argument == OsStr::new("--database") {
             if database_path.is_some() {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
-            database_path = Some(
-                arguments
-                    .next()
-                    .ok_or(DaemonErrorV1::ArgumentValueRequired)?,
-            );
+            database_path = Some(next_daemon_argument_value_v1(&mut arguments)?);
             continue;
         }
         if argument == OsStr::new("--listen") {
@@ -1591,25 +1612,52 @@ where
             if disposable_git_root.is_some() {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
-            disposable_git_root = Some(
-                arguments
-                    .next()
-                    .ok_or(DaemonErrorV1::ArgumentValueRequired)?,
-            );
+            disposable_git_root = Some(next_daemon_argument_value_v1(&mut arguments)?);
             continue;
         }
         if argument == OsStr::new("--git-executable") {
             if git_executable.is_some() {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
-            git_executable = Some(
-                arguments
-                    .next()
-                    .ok_or(DaemonErrorV1::ArgumentValueRequired)?,
-            );
+            git_executable = Some(next_daemon_argument_value_v1(&mut arguments)?);
             continue;
         }
         return Err(DaemonErrorV1::InvalidArguments);
+    }
+
+    resolve_daemon_run_arguments_v1(
+        config_path,
+        database_path,
+        listen_address,
+        disposable_git_root,
+        git_executable,
+    )
+}
+
+fn next_daemon_argument_value_v1(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<OsString, DaemonErrorV1> {
+    arguments.next().ok_or(DaemonErrorV1::ArgumentValueRequired)
+}
+
+fn resolve_daemon_run_arguments_v1(
+    config_path: Option<OsString>,
+    database_path: Option<OsString>,
+    listen_address: Option<SocketAddr>,
+    disposable_git_root: Option<OsString>,
+    git_executable: Option<OsString>,
+) -> Result<DaemonCliActionV1, DaemonErrorV1> {
+    if let Some(config_path) = config_path {
+        if database_path.is_some()
+            || listen_address.is_some()
+            || disposable_git_root.is_some()
+            || git_executable.is_some()
+        {
+            return Err(DaemonErrorV1::InvalidArguments);
+        }
+        return product_config::load_daemon_config_v1(config_path)
+            .map(product_config::LoadedDaemonConfigV1::into_config)
+            .map(DaemonCliActionV1::Run);
     }
 
     let database_path = database_path.ok_or(DaemonErrorV1::DatabasePathRequired)?;
@@ -1622,6 +1670,20 @@ where
             .map(DaemonCliActionV1::Run),
         _ => Err(DaemonErrorV1::InvalidRuntimeConfiguration),
     }
+}
+
+fn daemon_run_arguments_present_v1<T>(
+    config_path: Option<&T>,
+    database_path: Option<&T>,
+    listen_address: Option<&SocketAddr>,
+    disposable_git_root: Option<&T>,
+    git_executable: Option<&T>,
+) -> bool {
+    config_path.is_some()
+        || database_path.is_some()
+        || listen_address.is_some()
+        || disposable_git_root.is_some()
+        || git_executable.is_some()
 }
 
 /// One verified store and loopback listener.
@@ -5260,6 +5322,7 @@ fn error_body(code: &str) -> String {
 pub const fn daemon_usage_v1() -> &'static str {
     concat!(
         "Usage: lnsatd --database <path> [--listen <loopback-ip:port>] [--disposable-git-root <temp-path> --git-executable <absolute-path>]\n",
+        "       lnsatd --config <absolute-path>\n",
         "       lnsatd --manifest\n\n",
         "Defaults:\n",
         "  --listen 127.0.0.1:7447\n\n",

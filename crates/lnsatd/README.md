@@ -5,6 +5,11 @@ Source-only loopback daemon foundation for one local LNSAT deployment.
 Current behavior:
 
 - requires an explicit file-backed SQLite path;
+- accepts either existing direct daemon arguments or one
+  `--config <absolute-path>` using closed `lnsat.daemon.config.v1`;
+- bounds explicit configuration to one regular, non-symlinked UTF-8 JSON file
+  of at most 64 KiB, rejects recursive duplicate/unknown keys, and reads no
+  environment configuration or secret fields;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before
@@ -98,10 +103,12 @@ Current behavior:
   peers;
 - never reflects request bytes or configured paths in errors.
 
-This crate also contains experimental `lnsatctl` source for `doctor`, read-only
-`recovery inspect`, manifest, completion, man, help, and version. It does not
-reflect inspected database paths or expose recovery mutation, service install,
-service start, `sudo`, or automatic privilege escalation.
+This crate also contains experimental `lnsatctl` source for `doctor`, public-safe
+`config inspect`, read-only `recovery inspect`, manifest, completion, man, help,
+and version. Config inspection returns exact-byte SHA-256 and applied-layer
+evidence without raw paths or source bytes. It does not expose recovery
+mutation, service install, service start, `sudo`, or automatic privilege
+escalation.
 
 This crate exposes stable source-level `/v1` negotiation and authenticated
 `POST|GET|HEAD|PATCH|DELETE /v1/session` plus
@@ -125,14 +132,16 @@ Developer invocation:
 
 ```sh
 cargo run -p lnsatd -- --database ./local-state/lnsat.sqlite3
+cargo run -p lnsatd -- --config /absolute/path/to/lnsatd.json
 ```
 
 Parent directory must already exist. The source binary is not a published or
 supported artifact.
 
-Phase 10 P10-A1 establishes a target-neutral contract spine; full daemon,
-operator, configuration, recovery, and client stabilization remains incomplete.
-Current source does not install, daemonize,
+Phase 10 P10-A1 establishes a target-neutral contract spine and P10-A2 adds
+explicit-only configuration/path evidence. System/user paths, P10-A3
+transport/output, P10-A4 recovery/non-root/parity, and P10-X1 exit freeze remain
+incomplete. Current source does not install, daemonize,
 register, or automatically start an OS service. See
 [CLI and OS operator interface](../../docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
 and [Phase 14 distribution](../../docs/architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md).

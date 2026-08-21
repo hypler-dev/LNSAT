@@ -3,6 +3,9 @@
 //! This module embeds source contracts only. It installs no files, starts no
 //! service, selects no package target, and grants no mutation authority.
 
+use crate::product_config::{
+    DAEMON_CONFIG_CONTRACT_ID_V1, LoadedDaemonConfigV1, MAX_DAEMON_CONFIG_BYTES_V1,
+};
 use lnsat_store::{SqliteRecoveryErrorV1, SqliteStore};
 use serde_json::json;
 use std::path::Path;
@@ -89,6 +92,8 @@ pub fn doctor_output_json_v1() -> String {
             "current_path_profile": "explicit_only_source",
             "resolved_system_path": null,
             "resolved_user_path": null,
+            "applied_layers": ["compiled_safe_defaults"],
+            "explicit_config_digest": null,
             "ambient_environment_used": false,
             "secret_process_arguments_allowed": false
         },
@@ -104,6 +109,40 @@ pub fn doctor_output_json_v1() -> String {
             "supported_release": false,
             "package_or_binary_claim": false
         },
+        "side_effects": []
+    })
+    .to_string()
+}
+
+/// Public-safe inspection of one validated explicit configuration.
+///
+/// No configured path, address, request path, asset path, or source bytes are
+/// included in output.
+#[must_use]
+pub fn config_inspection_output_json_v1(loaded: &LoadedDaemonConfigV1) -> String {
+    json!({
+        "ok": true,
+        "schema": CLI_OUTPUT_SCHEMA_V1,
+        "command": "config.inspect",
+        "configuration": {
+            "contract_id": DAEMON_CONFIG_CONTRACT_ID_V1,
+            "config_digest": loaded.config_digest(),
+            "applied_layers": [
+                "compiled_safe_defaults",
+                "explicit_config_file"
+            ],
+            "source": "explicit_absolute_file",
+            "system_path_selected": false,
+            "user_path_selected": false,
+            "ambient_environment_used": false,
+            "secret_fields_allowed": false,
+            "max_file_bytes": MAX_DAEMON_CONFIG_BYTES_V1,
+            "phase8_runtime_configured": loaded.phase8_runtime_configured(),
+            "console_manifest_configured": loaded.console_manifest_configured()
+        },
+        "runtime_started": false,
+        "storage_opened": false,
+        "listener_opened": false,
         "side_effects": []
     })
     .to_string()
@@ -161,7 +200,7 @@ pub fn failure_output_json_v1(
 /// Bounded `lnsatctl` help text.
 #[must_use]
 pub const fn lnsatctl_usage_v1() -> &'static str {
-    "Usage:\n  lnsatctl doctor\n  lnsatctl recovery inspect --database <path>\n  lnsatctl manifest\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
+    "Usage:\n  lnsatctl doctor\n  lnsatctl config inspect --config <absolute-path>\n  lnsatctl recovery inspect --database <path>\n  lnsatctl manifest\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
 }
 
 /// Generated completion source for supported shells.
@@ -169,13 +208,13 @@ pub const fn lnsatctl_usage_v1() -> &'static str {
 pub fn completion_source_v1(shell: &str) -> Option<&'static str> {
     match shell {
         "bash" => Some(
-            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor recovery manifest completion man --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
+            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor config recovery manifest completion man --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
         ),
         "zsh" => Some(
-            "#compdef lnsatctl lnsat lnsatd\n_arguments '1:command:(doctor recovery manifest completion man packet)' '*::argument:->args'\n",
+            "#compdef lnsatctl lnsat lnsatd\n_arguments '1:command:(doctor config recovery manifest completion man packet)' '*::argument:->args'\n",
         ),
         "fish" => Some(
-            "complete -c lnsatctl -f -a 'doctor recovery manifest completion man'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
+            "complete -c lnsatctl -f -a 'doctor config recovery manifest completion man'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
         ),
         _ => None,
     }
@@ -189,10 +228,10 @@ pub fn man_page_source_v1(command: &str) -> Option<&'static str> {
             ".TH LNSAT 1\n.SH NAME\nlnsat - source-only LNSAT workflow dispatcher\n.SH SYNOPSIS\nlnsat packet <validate|hash|inspect> <packet.json> [request_id]\n.SH SAFETY\nNo command grants ambient authority. Current commands are read-only or pure local inspection.\n",
         ),
         "lnsatctl" => Some(
-            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics\n.SH SYNOPSIS\nlnsatctl doctor | recovery inspect --database <path> | manifest\n.SH SAFETY\nRecovery inspection is read-only. Service install, start, recovery mutation, and activation are unavailable.\n",
+            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics\n.SH SYNOPSIS\nlnsatctl doctor | config inspect --config <absolute-path> | recovery inspect --database <path> | manifest\n.SH SAFETY\nConfiguration and recovery inspection are read-only. Service install, start, recovery mutation, and activation are unavailable.\n",
         ),
         "lnsatd" => Some(
-            ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --database <path> [--listen <numeric-loopback:port>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically.\n",
+            ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --config <absolute-path> | --database <path> [--listen <numeric-loopback:port>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically.\n",
         ),
         _ => None,
     }
@@ -209,6 +248,18 @@ mod tests {
         assert_eq!(value["contract_id"], PRODUCT_SURFACE_CONTRACT_ID_V1);
         assert_eq!(value["supported_release"], false);
         assert_eq!(value["package_or_binary_claim"], false);
+        assert_eq!(
+            value["configuration"]["explicit_config_contract"],
+            DAEMON_CONFIG_CONTRACT_ID_V1
+        );
+        assert_eq!(
+            value["configuration"]["explicit_config_file"]["maximum_bytes"],
+            MAX_DAEMON_CONFIG_BYTES_V1
+        );
+        assert_eq!(
+            value["configuration"]["mixed_direct_and_config_input"],
+            "rejected"
+        );
         assert_eq!(value["recovery"]["served_mutation"], false);
         assert_eq!(value["service_manager"]["install_implemented"], false);
         assert_eq!(value["service_manager"]["start_implemented"], false);

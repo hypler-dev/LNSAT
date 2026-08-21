@@ -11,13 +11,14 @@
   "binaries": {
     "lnsatd": {
       "audience": "service_manager",
-      "implemented_commands": ["run", "help", "version", "manifest"],
+      "implemented_commands": ["run", "run --config", "help", "version", "manifest"],
       "authority_boundary": "gateway_only"
     },
     "lnsatctl": {
       "audience": "owner_operator",
       "implemented_commands": [
         "doctor",
+        "config inspect",
         "recovery inspect",
         "manifest",
         "completion",
@@ -79,6 +80,7 @@
     ]
   },
   "configuration": {
+    "explicit_config_contract": "lnsat.daemon.config.v1",
     "precedence": [
       "compiled_safe_defaults",
       "system_config",
@@ -86,11 +88,34 @@
       "explicit_config_file"
     ],
     "current_path_profile": "explicit_only_source",
+    "direct_arguments_compatible": true,
+    "mixed_direct_and_config_input": "rejected",
     "system_paths_selected": false,
     "user_paths_selected": false,
     "target_path_selection_owner": "phase14",
+    "explicit_config_file": {
+      "path": "absolute_only",
+      "format": "closed_json",
+      "encoding": "utf-8",
+      "file_type": "regular_non_symlink",
+      "maximum_bytes": 65536,
+      "duplicate_keys": "rejected",
+      "unknown_fields": "rejected",
+      "digest": "sha256_exact_bytes"
+    },
+    "implemented_fields": [
+      "database_path",
+      "listen_address",
+      "phase8_runtime.disposable_git_root",
+      "phase8_runtime.git_executable",
+      "console.root",
+      "console.asset_manifest"
+    ],
+    "environment_discovery_used": false,
+    "environment_authority_allowed": false,
     "environment_secrets_allowed": false,
     "process_argument_secrets_allowed": false,
+    "config_secret_fields_allowed": false,
     "secret_inputs": [
       "protected_stdin",
       "inherited_file_descriptor",

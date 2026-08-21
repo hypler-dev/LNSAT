@@ -1,9 +1,10 @@
 # CLI and OS Operator Interface
 
-- Status: accepted direction with experimental P10-A1 source contract spine
-- Availability: packet inspection, source-only daemon arguments, target-neutral
-  manifest, operator doctor/read-only recovery inspection, completion, and man
-  source exist; stable supported product CLI does not
+- Status: accepted direction with experimental P10-A1 source contract spine and
+  P10-A2 explicit daemon configuration
+- Availability: packet inspection, direct/explicit-config daemon arguments,
+  target-neutral manifest, operator doctor/config/recovery inspection,
+  completion, and man source exist; stable supported product CLI does not
 
 Product split and extension boundary are accepted by
 [ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
@@ -66,14 +67,16 @@ lnsatctl emergency-disable
 Commands ship only when owning roadmap phase implements and tests authority.
 Documentation of a name does not authorize implementation or runtime mutation.
 
-Current P10-A1 implemented subset:
+Current P10-A1/P10-A2 implemented subset:
 
 ```text
 lnsat packet validate|hash|inspect ...
 lnsat manifest|completion|man|--help|--version
 lnsatctl doctor
+lnsatctl config inspect --config <absolute-path>
 lnsatctl recovery inspect --database <path>
 lnsatctl manifest|completion|man|--help|--version
+lnsatd --config <absolute-path>
 lnsatd --database ... | --manifest | --help | --version
 ```
 
@@ -149,8 +152,17 @@ Paths are compatibility contracts, not hidden implementation choices:
 | direct user install | XDG-compatible or explicit `--config`                   | XDG-compatible or explicit `--data-dir` | stderr/structured file by explicit choice |
 | OCI                 | read-only config injection                              | explicit persistent volume              | stdout/stderr structured events           |
 
-Final paths require Phase 14 compatibility rows. CLI exposes resolved paths with
-`lnsatctl doctor` and never writes outside declared scope.
+Final paths require Phase 14 compatibility rows. Current `lnsatctl doctor`
+reports system/user paths as unselected and never reflects raw configured paths.
+
+Current P10-A2 source deliberately selects none of the system/user paths above.
+`lnsatd --config` accepts only one operator-supplied absolute path to a regular,
+non-symlinked UTF-8 JSON file no larger than 64 KiB. Contract
+`lnsat.daemon.config.v1` is schema-closed and rejects duplicate keys, unknown
+fields, wrong versions, secret fields, non-loopback listeners, unpaired Phase 8
+runtime paths, unsafe console manifests, and mixed direct/config input.
+`lnsatctl config inspect` returns only exact-byte SHA-256 and applied-layer
+evidence; configured and rejected paths/bytes are never reflected.
 
 Configuration precedence must be visible:
 
@@ -158,10 +170,11 @@ Configuration precedence must be visible:
 compiled safe defaults < system config < user config < explicit config file
 ```
 
-Environment variables and command arguments may select references and safe
-options. Secrets use file descriptor, protected stdin, OS credential broker, or
-secret-store reference—not process arguments, shell history, config export, or
-diagnostic output.
+Current P10-A2 source reads no environment variables for authority, secrets,
+configuration, target, or path discovery. Future approved profiles may define
+safe reference selection. Secrets use file descriptor, protected stdin, OS
+credential broker, or secret-store reference—not process arguments, shell
+history, config export, or diagnostic output.
 
 ## Output and Automation
 
