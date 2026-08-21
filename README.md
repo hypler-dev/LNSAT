@@ -14,6 +14,12 @@
        INTENT -> AUTHORITY -> EVIDENCE
 ```
 
+**Where the name came from:** LNSAT originally meant **Layered Network Substrate
+for Agent Telemetry**. The scope evolved, and the public product name is now
+simply **LNSAT**, focused on execution authorization and evidence for
+consequential agent actions. Telemetry supports review and evidence; it never
+grants authority.
+
 **Execution authorization and evidence for consequential agent actions.**
 
 LNSAT is an open-source authority layer for AI agents. It sits between agents
