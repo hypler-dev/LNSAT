@@ -22,6 +22,16 @@ grants authority.
 
 **Execution authorization and evidence for consequential agent actions.**
 
+LNSAT's authority model binds an agent's exact intended action to policy,
+approval, one-time authorization, execution, receipt, and
+reconciliation—independently of the model, protocol, or runtime that performs
+it.
+
+```text
+Intent -> Policy -> Approval -> Authorization
+       -> Execution -> Receipt -> Audit -> Reconciliation
+```
+
 LNSAT is an open-source authority layer for AI agents. It sits between agents
 and systems capable of real consequences, turning a proposed action into a
 policy decision, a scoped human approval when required, a narrow execution
@@ -41,6 +51,10 @@ evidence will prove the result?
 > package, container, installer, hosted service, or production deployment is
 > available yet.
 
+See the [provenance timeline](PROVENANCE.md) and
+[why LNSAT became public now](docs/WHY_PUBLIC_NOW.md) for the pre-public
+chronology and August 20 cutover record.
+
 ## Why LNSAT
 
 Giving an agent access to a tool does not answer whether a particular use of
@@ -54,14 +68,8 @@ answer:
 5. What exact authorization reaches the executor?
 6. What receipt or evidence proves the outcome?
 
-LNSAT models that lifecycle explicitly:
-
-```text
-Intent -> Packet -> Gateway -> Policy -> Approval -> Authorization
-       -> Adapter -> Receipt -> Audit
-```
-
-A packet describes intent; it never grants authority. Gateway validates the
+Packets and Gateway make that lifecycle explicit. A packet describes intent;
+it never grants authority. Gateway validates the
 request, binds identity and scope, evaluates deterministic policy, and creates
 a narrow authorization only when every required condition is satisfied. An
 adapter may redeem that authorization for one exact operation and must return a

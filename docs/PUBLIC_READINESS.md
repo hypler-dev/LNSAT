@@ -53,6 +53,12 @@ Public repository begins from one audited root snapshot derived from private
 bounded public-readiness changes documented in that snapshot. Public Git
 history is authoritative for all later work.
 
+The root [provenance timeline](../PROVENANCE.md) records selected private
+milestones and the exact tree shared by the final private export and fresh
+public root. [Why LNSAT became public now](WHY_PUBLIC_NOW.md) records the
+maintainer's publication context without making copying or exclusive-priority
+claims.
+
 Private engineering history, branches, pull requests, tags, Actions logs, and
 reviews are not imported. They remain private for provenance and incident
 response. Fresh public root prevents old private refs from becoming part of

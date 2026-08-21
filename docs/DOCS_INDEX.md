@@ -10,15 +10,19 @@ subsystem or proposal.
 
 1. [README](../README.md) — project purpose, source-evaluation quick start, and
    current limitations.
-2. [Project status](PROJECT_STATUS.md) — implemented, experimental, planned, and
+2. [Provenance timeline](../PROVENANCE.md) — selected private milestones, exact
+   public-cutover tree mapping, and verification limits.
+3. [Why LNSAT became public now](WHY_PUBLIC_NOW.md) — publication context,
+   independent market convergence, and next reference proof.
+4. [Project status](PROJECT_STATUS.md) — implemented, experimental, planned, and
    unsupported scope.
-3. [Claims and maturity vocabulary](CLAIMS_AND_MATURITY.md) — meaning of
+5. [Claims and maturity vocabulary](CLAIMS_AND_MATURITY.md) — meaning of
    implemented, experimental, planned, public-source, and supported claims.
-4. [Architecture and developer guide](architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
+6. [Architecture and developer guide](architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
    — mental model, repository ownership, and safe change workflow.
-5. [Local development](LOCAL_DEVELOPMENT.md) — prerequisites, commands, focused
+7. [Local development](LOCAL_DEVELOPMENT.md) — prerequisites, commands, focused
    tests, and troubleshooting.
-6. [Contributing](../CONTRIBUTING.md) — first-contribution, pull-request, DCO,
+8. [Contributing](../CONTRIBUTING.md) — first-contribution, pull-request, DCO,
    security, and review requirements.
 
 ## Community
@@ -132,6 +136,8 @@ security behavior, and conformance remain public-core concerns.
 - [Mandatory Phase 14 distribution](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)
 - [Source release process](RELEASING.md)
 - [Public-readiness report](PUBLIC_READINESS.md)
+- [Provenance timeline](../PROVENANCE.md)
+- [Why LNSAT became public now](WHY_PUBLIC_NOW.md)
 - [Legacy identifier inventory](reference/LEGACY_IDENTIFIER_INVENTORY.md)
 - [Product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md)
 - [Pinned Rust toolchain](RUST_TOOLCHAIN.md)
