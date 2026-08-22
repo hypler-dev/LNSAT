@@ -25,11 +25,17 @@ See [claims and maturity vocabulary](CLAIMS_AND_MATURITY.md).
 
 ## Public Source Position
 
+Public product name is **LNSAT**. It is not expanded into a longer public name.
+
 Allowed public description:
 
-> LNSAT is open-source, pre-release execution authorization and evidence source
-> for consequential AI-agent actions. Current repository contains experimental
-> contracts, tests, and local foundations for evaluation and contribution.
+> LNSAT is open-source, pre-release source for policy-governed AI-agent
+> authorization, scoped human approval, audit evidence, and read-only MCP
+> adapters. Current repository contains experimental contracts, tests, and local
+> foundations for evaluation and contribution.
+
+Read-only MCP stdio and stateless HTTP-handler adapter source exists. It grants
+no mutation or execution authority.
 
 Do not claim production readiness, tamper-proof enforcement, certification,
 compliance, enterprise support, runtime mobility, supported platforms,
@@ -46,6 +52,12 @@ Public repository begins from one audited root snapshot derived from private
 `origin/main` revision `cae4fbde070b35a4b84c2729617a17db3ef54be5` plus the
 bounded public-readiness changes documented in that snapshot. Public Git
 history is authoritative for all later work.
+
+The root [provenance timeline](../PROVENANCE.md) records selected private
+milestones and the exact tree shared by the final private export and fresh
+public root. [Why LNSAT became public now](WHY_PUBLIC_NOW.md) records the
+maintainer's publication context without making copying or exclusive-priority
+claims.
 
 Private engineering history, branches, pull requests, tags, Actions logs, and
 reviews are not imported. They remain private for provenance and incident
@@ -88,13 +100,15 @@ secret from history is not remediation.
 
 Description:
 
-> Open-source, pre-release execution authorization and evidence layer for
-> consequential AI-agent actions.
+> Open-source, pre-release source for policy-governed AI-agent authorization,
+> scoped human approval, audit evidence, and read-only MCP adapters.
 
-Homepage stays blank until a dedicated factual LNSAT page exists. Initial
-topics are `ai-agents`, `agent-security`, `authorization`, `mcp`,
-`policy-engine`, `audit-trail`, `human-in-the-loop`, `rust`, and `typescript`.
-Add `docker` only after Docker adapter source exists.
+Homepage stays blank until a dedicated factual LNSAT page exists. Initial topics,
+ranked by fit and public search intent, are `ai-agents`, `agent-security`,
+`authorization`, `mcp`, `model-context-protocol`, `policy-engine`,
+`human-in-the-loop`, `audit-trail`, `access-control`, `ai-governance`,
+`ai-security`, `agentic-ai`, `rust`, `typescript`, and `open-source`. Add `docker`
+only after Docker adapter source exists.
 
 Issues are enabled. Projects, wiki, and discussions stay disabled until they
 have an owned public workflow. Default branch is `main`; merged branches are

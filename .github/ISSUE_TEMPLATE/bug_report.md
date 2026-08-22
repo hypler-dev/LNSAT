@@ -23,7 +23,17 @@ private vulnerability details.
 
 ## Environment
 
+- Source revision:
+- Affected workspace or crate:
 - OS:
 - Architecture:
-- Browser or runtime:
-- Deployment mode:
+- Node.js version:
+- npm version:
+- Rust version, if relevant:
+- Browser or local runtime, if relevant:
+
+## Validation
+
+- Command run:
+- Result:
+- Focused test or minimal reproduction:

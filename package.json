@@ -3,14 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Pre-release authorization and evidence source for consequential AI-agent actions",
+  "description": "Pre-release source for policy-governed AI-agent authorization, human approval, and audit evidence",
   "keywords": [
     "ai-agents",
+    "agent-security",
     "authorization",
-    "audit",
     "mcp",
-    "policy",
-    "security"
+    "model-context-protocol",
+    "policy-engine",
+    "human-in-the-loop",
+    "audit-trail",
+    "access-control",
+    "ai-governance",
+    "ai-security",
+    "agentic-ai",
+    "rust",
+    "typescript",
+    "open-source"
   ],
   "homepage": "https://github.com/hypler-dev/LNSAT#readme",
   "repository": {

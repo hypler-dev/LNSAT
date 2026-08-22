@@ -4,248 +4,319 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](docs/PROJECT_STATUS.md)
 
+```text
+ _      _   _  ____    _  _____
+| |    | \ | |/ ___|  / \|_   _|
+| |    |  \| |\___ \ / _ \ | |
+| |___ | |\  | ___) / ___ \| |
+|_____||_| \_||____/_/   \_\_|
+
+       INTENT -> AUTHORITY -> EVIDENCE
+```
+
+**Where the name came from:** LNSAT originally meant **Layered Network Substrate
+for Agent Telemetry**. The scope evolved, and the public product name is now
+simply **LNSAT**, focused on execution authorization and evidence for
+consequential agent actions. Telemetry supports review and evidence; it never
+grants authority.
+
 **Execution authorization and evidence for consequential agent actions.**
 
-LNSAT is being built as a policy-governed authority layer for AI-agent
-actions. The intended product turns intent into versioned packets, evaluates
-authority, requires scoped human approval when policy demands it, and preserves
-evidence across the decision path.
+LNSAT's authority model binds an agent's exact intended action to policy,
+approval, one-time authorization, execution, receipt, and
+reconciliation—independently of the model, protocol, or runtime that performs
+it.
 
-MCP exposes tools. LNSAT's intended boundary determines whether a proposed
-action may execute and records proof. Public product name is simply **LNSAT**;
-an older telemetry-oriented expansion is retired.
+```text
+Intent -> Policy -> Approval -> Authorization
+       -> Execution -> Receipt -> Audit -> Reconciliation
+```
 
-Current repository contains experimental source and automated tests for
-versioned contracts, local authority persistence, bounded loopback behavior,
-read-only protocol adapters, and evidence inspection. Some deeper consequence
-authorization and disposable Git-adapter behavior exists only as source-level
-conformance and is not exposed as a supported product workflow. See
-[project status](docs/PROJECT_STATUS.md) for exact merged truth.
+LNSAT is an open-source authority layer for AI agents. It sits between agents
+and systems capable of real consequences, turning a proposed action into a
+policy decision, a scoped human approval when required, a narrow execution
+authorization, and evidence of what happened.
 
-> **Pre-release:** current `0.1.0` source is for evaluation and development.
-> APIs and schemas may change. No package, binary, container, hosted service, or
-> production endpoint is published from this repository.
+Existing systems keep doing the jobs they already do well. MCP exposes tools.
+A2A connects agents. Agent frameworks orchestrate model loops. Docker provides
+runtime and isolation. Identity systems authenticate people and workloads. OPA
+can evaluate policy. LNSAT adds a consistent authority boundary across those
+systems: should this exact action be allowed, under what conditions, and what
+evidence will prove the result?
 
-## Useful Today
+> **Project status:** LNSAT `0.1.0` is pre-release source for evaluation and
+> contribution. The repository contains experimental contracts, local and
+> loopback foundations, read-only interfaces, bounded execution tests, and
+> automated conformance and security checks. APIs may change. No supported
+> package, container, installer, hosted service, or production deployment is
+> available yet.
 
-From a source checkout, contributors and evaluators can:
-
-- inspect versioned packet, policy, approval, authorization, receipt, and audit
-  contracts;
-- run TypeScript/Rust conformance and fail-closed security tests;
-- exercise experimental local loopback, read-only MCP, CLI inspection, and
-  Control Center evidence surfaces;
-- review threat, recovery, compatibility, and release-safety decisions;
-- build integrations against explicitly experimental contracts while accepting
-  breaking changes before first supported release.
-
-Current source is not a production enforcement guarantee. It provides no
-supported installer, packaged daemon, hosted control plane, fleet runtime,
-certified connector, or stable compatibility promise.
+See the [provenance timeline](PROVENANCE.md) and
+[why LNSAT became public now](docs/WHY_PUBLIC_NOW.md) for the pre-public
+chronology and August 20 cutover record.
 
 ## Why LNSAT
 
-Agent systems need more than tool access. Consequential actions need a boundary
-that can answer five questions before execution:
+Giving an agent access to a tool does not answer whether a particular use of
+that tool should be authorized. Consequential actions need a boundary that can
+answer:
 
-1. What is being requested?
-2. Who or what requested it?
+1. What action is being requested?
+2. Who requested it, and in which project and environment?
 3. Which policy applies?
-4. Is human approval required?
-5. What evidence proves the decision?
+4. Is approval from a distinct authenticated human required?
+5. What exact authorization reaches the executor?
+6. What receipt or evidence proves the outcome?
 
-LNSAT models that path explicitly:
+Packets and Gateway make that lifecycle explicit. A packet describes intent;
+it never grants authority. Gateway validates the
+request, binds identity and scope, evaluates deterministic policy, and creates
+a narrow authorization only when every required condition is satisfied. An
+adapter may redeem that authorization for one exact operation and must return a
+bound receipt or an explicit ambiguous outcome.
+
+LNSAT's version of agent governance is this complete chain. The requested,
+approved, authorized, and executed action must match. If the outcome cannot be
+proven, it remains `outcome_unknown` and must be reconciled instead of being
+reported as success or silently retried.
+
+## How LNSAT Approaches Authority
+
+- **Transport-neutral:** MCP, A2A, REST, CLI, browser, and framework adapters
+  map into the same authority contract.
+- **Least-authority:** authorization is bound to the exact action, arguments,
+  target, adapter, attempt, expiry, and idempotency identity.
+- **Fail-closed:** unknown contracts, capabilities, evidence, and outcomes do
+  not become permission or success.
+- **Human-authorized:** models may recommend or explain; deterministic policy
+  and authenticated humans authorize consequential work.
+- **Evidence-first:** approvals, authorizations, receipts, recovery, and
+  reconciliation remain reviewable.
+- **Secret-safe:** packets and evidence carry secret references, not secret
+  values.
+
+See the [authority layer and reference workflow](docs/architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
+for the complete contract model.
+
+## What Works In Source Today
+
+Current experimental source includes:
+
+- versioned packet, policy, approval, authorization, receipt, audit, and
+  evidence contracts;
+- deterministic allow, deny, and approval-required policy decisions;
+- local identity, role, session, CSRF, approval, and credential-lifecycle
+  foundations;
+- an embedded SQLite authority chain with integrity checks, transactions,
+  backup, inert restore, recovery inspection, and append-oriented audit
+  evidence;
+- a Rust loopback daemon with bounded local routes, strict host and origin
+  handling, session-protected identity and session operations, and graceful
+  shutdown;
+- atomic one-time authorization consumption, bounded adapter dispatch, bound
+  receipts, `outcome_unknown`, and reconciliation tests against disposable
+  local Git targets;
+- packet inspection, source diagnostics, and read-only recovery inspection
+  through CLI source;
+- authenticated, exact-ID, read-only Control Center evidence views with live
+  and synthetic data kept separate;
+- read-only MCP stdio and HTTP-handler adapters, modern and temporary legacy
+  negotiation, and official SDK conformance tests;
+- shared TypeScript and Rust fixtures plus fail-closed security,
+  compatibility, recovery, dependency, and release-readiness gates.
+
+Some pieces run together as bounded local experimental flows; others remain
+source-level contracts and conformance tests. [Project Status](docs/PROJECT_STATUS.md)
+tracks the exact implementation state.
+
+## What We Are Building For v1
+
+The first supported release is planned as an owner-controlled, local or
+self-hosted, single-node authority product:
+
+- Rust security core, daemon, and operator CLI;
+- SQLite as the embedded authority store;
+- TypeScript and React Control Center;
+- local identities, deterministic policy, distinct-human approval, one-time
+  authorization, bounded execution, receipts, reconciliation, and audit in one
+  end-to-end loop;
+- non-root operation with loopback-default interfaces and explicit startup;
+- one isolated local Docker/OCI runtime profile for the first real adapter;
+- selected installation artifacts only after their install, update, rollback,
+  uninstall, provenance, and compatibility evidence passes.
+
+Work is ordered around four practical milestones:
+
+1. finish operational configuration, visible precedence, authenticated status,
+   recovery commands, output formats, and non-root product behavior;
+2. prove one complete consequential workflow through an isolated Docker/OCI
+   adapter and disposable target;
+3. harden recovery, limits, updates, rollback, revocation, dependencies, and
+   release-candidate source;
+4. build and verify a small set of selected packages and images from the same
+   canonical components.
+
+The [Product Build Sequence](docs/PRODUCT_BUILD_SEQUENCE.md) and
+[Roadmap](docs/ROADMAP.md) track that work in detail.
+
+## Docker And Other Runtimes
+
+Docker/OCI is the first planned v1 runtime integration because it provides a
+widely available local execution boundary and an existing MCP operations
+layer. LNSAT plans to use Docker's strengths rather than rebuild them:
+
+- Docker Agent can orchestrate agents and act as a client;
+- Docker MCP Gateway can provide MCP catalogs, routing, OAuth, and server
+  lifecycle;
+- Docker Sandboxes can provide a microVM isolation boundary;
+- bounded OCI workloads can execute authorized actions;
+- LNSAT independently owns policy, approval, one-time authorization, receipt
+  binding, and consequence evidence.
+
+The intended first path is:
 
 ```text
-Intent -> Packet -> Gateway -> Policy -> Approval -> Authorization
-       -> Adapter -> Receipt -> Audit
+agent or MCP client
+  -> LNSAT Gateway
+  -> identity + policy + approval + one-time authorization
+  -> isolated Docker adapter
+  -> Docker MCP Gateway or bounded OCI workload
+  -> receipt + audit + reconciliation
 ```
 
-Packets describe intent; they never grant authority. Gateway owns validation
-and authorization boundaries. MCP, CLI, API, and console surfaces remain
-adapters over those contracts.
+Agents do not receive direct Docker-socket access or ambient infrastructure
+credentials. The adapter receives only a narrow, expiring authorization bound
+to the exact operation and returns a bound result. Docker governance may add
+defense in depth, but an upstream allow does not replace LNSAT authorization.
 
-See [authority layer and reference workflow](docs/architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
-for LNSAT's relationship to MCP, A2A, identity, OPA, attestations, and evidence
-export.
+Docker is the first profile, not the product identity or the only future
+runtime. The same authority contract is intended to support:
 
-### Runtime integrations: Docker first
+- independently managed secure VMs and microVMs;
+- constrained native-host services with appropriately weaker isolation claims;
+- authenticated remote connectors and product-specific adapters.
 
-Docker Agent, Docker MCP Gateway, and Docker Sandboxes are adjacent systems,
-not targets for LNSAT to rebuild. Docker already provides a substantial agent
-runtime, MCP operations layer, catalog, and microVM isolation. LNSAT targets a
-different boundary: runtime-neutral authorization and durable consequence
-evidence above whichever agent, transport, or executor is selected.
+Bare-metal operation remains a valid future profile, but LNSAT will not claim
+that one binary can harden an arbitrary operating system. Native deployments
+will need OS accounts, mandatory access controls, network policy, process
+isolation, or other controls appropriate to their threat model. Containers and
+VMs remain the preferred high-assurance boundaries.
 
-Docker/OCI is now the accepted first v1 integration profile while core
-authority contracts remain runtime-neutral. Current LNSAT source does not ship
-that integration or any supported container, VM, remote, or bare-metal runtime.
-See [ADR-0007](docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
-and the
-[dated technical comparison](docs/reference/DOCKER_AI_TECHNICAL_COMPARISON.md)
-for exact reviewed revisions, Docker strengths, current gaps, and claim limits.
+See the accepted [Docker-first runtime-neutral decision](docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
+and the [Docker AI technical comparison](docs/reference/DOCKER_AI_TECHNICAL_COMPARISON.md).
 
-## Current Source Capabilities
+## How LNSAT Relates To The Agent Stack
 
-| Area           | Current source                                                                                                                             |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Contracts      | Versioned packet, policy, approval, audit, knowledge, substrate, and evidence models                                                       |
-| Policy         | Deterministic allow, deny, and approval-required decisions with fail-closed defaults                                                       |
-| Audit          | Append-oriented evidence contracts, idempotency rules, and local PostgreSQL migration foundations                                          |
-| Durability     | SQLite authority chain, recovery evidence, offline owner recovery, backup, and inert restore                                               |
-| Local auth     | Same-origin sessions, identity lifecycle, CSRF, approval decisions, and identity/session event reads                                       |
-| Interfaces     | Packet CLI, source-only operator diagnostics/recovery inspection, loopback routes, dual-era read-only MCP, authenticated read-only console |
-| Interop        | Native MCP v2, bounded legacy, FastMCP 3/4, A2A, OAuth, OTel/SPIFFE, and Registry contracts                                                |
-| Recovery       | Durable/test-only operation stores, ambiguity/reconciliation rules, receipt-gated completion                                               |
-| Conformance    | Shared TS/Rust fixtures, security ledger, official SDK/framework checks, Rust `1.97.1`                                                     |
-| Release safety | Documentation, license, metadata, secret-pattern, dependency, build, and public-readiness gates                                            |
+LNSAT is designed to work beside existing protocols and runtimes rather than
+replace them.
 
-Runtime dispatch, unrestricted infrastructure access, production data paths,
-and published artifacts are not enabled. See [project status](docs/PROJECT_STATUS.md)
-and [roadmap](docs/ROADMAP.md) for exact boundaries.
+| System             | Relationship to LNSAT                                                                      | Current source evidence                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| MCP                | Carries tool discovery and requests; never grants action authority                         | Experimental read-only modern stdio/HTTP handlers, temporary legacy compatibility, and official SDK tests |
+| A2A                | Carries delegated agent intent; never grants authority                                     | A2A 1.0 mapping and Gateway contract tests                                                                |
+| OPA                | May evaluate a bounded, versioned policy input                                             | OPA-compatible input contracts; no live OPA runtime connection yet                                        |
+| Identity           | OIDC, OAuth, and SPIFFE may supply human or workload identity claims                       | Local identity/session source plus experimental OAuth and SPIFFE contract tests                           |
+| Telemetry          | OpenTelemetry and CloudEvents carry correlation or evidence-export data, not authorization | OTel correlation contracts and Gateway tests                                                              |
+| Agent frameworks   | Orchestrate models and tools, then propose actions through adapters                        | FastMCP 3.4.5 and FastMCP 4.0.0b1 interoperability harnesses                                              |
+| REST, CLI, browser | Alternative interfaces over the same Gateway semantics                                     | Shared contract and read-only evidence tests                                                              |
 
-Current build position: Phase 8 bounded runtime composition and Phase 9
-authenticated, exact-ID Control Center readback are implemented as experimental
-source. Phase 10 P10-A1 target-neutral product-surface contract spine is
-implemented; Phase 10 remains in progress. Required path is Phase 8 -> Phase 9
--> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
-binaries and packages come only after required product/runtime work and
-release-candidate source freeze. See
-[product build sequence](docs/PRODUCT_BUILD_SEQUENCE.md).
-
-## Repository Map
-
-```text
-apps/api               Gateway inspection and loopback control-plane source
-apps/console           Read-only live Gateway evidence plus separate synthetic fixtures
-packages/gateway       Transport-neutral inspection, recovery, identity, and interop contracts
-packages/packets       Versioned packet and governance contracts
-packages/policy        Policy decisions and approval gates
-packages/audit         Audit contracts and PostgreSQL writer foundation
-packages/mcp           Read-only dual-era MCP stdio and stateless HTTP-handler source
-packages/cli           Current lnsat dispatcher and packet CLI source
-packages/core          Product identity and shared source constants
-crates/lnsat-contracts Minimal Rust contract crate
-crates/lnsat-auth      Versioned local credential foundation
-crates/lnsat-store     Embedded SQLite durability foundation
-crates/lnsatd          Loopback-only Rust lnsatd plus sibling source-only lnsatctl diagnostics
-fixtures               Synthetic public and cross-language fixtures
-interop                Pinned third-party compatibility harnesses
-docs                   Architecture, SDK, development, and project guidance
-```
-
-Website and management-product source live outside this repository. This
-repository contains LNSAT product source only.
+Transport, framework, runtime, and policy metadata may inform a decision, but
+none can grant approval or widen authority by itself.
 
 ## Product Ecosystem
 
-LNSAT source is Apache-2.0 authority core. Future management products,
-certified connectors, governed model packs, and release composition remain
-separate downstream work. Names and boundaries below describe ownership, not
-available products. Downstream systems must not fork or replace Gateway
-authority behavior.
+This repository contains the Apache-2.0 authority core. Future management
+applications, certified connector packs, governed model profiles, and release
+composition will build on the same public contracts. They may improve how
+people configure, operate, and extend LNSAT, but they cannot create an alternate
+authority path or weaken Gateway decisions.
 
-| System              | Current state       | Role                                                                                                 |
-| ------------------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
-| LNSAT core          | Experimental source | Authority contracts, local daemon/CLI foundations, Control Center source, conformance, release gates |
-| Management plane    | Planned             | Visual configuration, shared libraries, collaboration, and organization operations                   |
-| Connectors          | Contracts only      | Isolated product-specific adapters consuming one-time authorization and returning bound receipts     |
-| Model profiles      | Planned             | Advisory delegation, overlays, provenance, evaluation, and compatibility evidence                    |
-| Release composition | Planned             | Exact core/module digest assembly, promotion, update, rollback, and revocation policy                |
+Portable formats, security behavior, compatibility tests, and operator
+conventions remain public-core concerns. See [Open Core and Product Repositories](docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+and the [CLI and OS Operator Interface](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
+for those boundaries.
 
-See [open core and product repositories](docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md),
-[agent configuration and skill management](docs/architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md),
-and [CLI and OS operator interface](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md).
-Repository creation does not claim any commercial or runtime feature exists.
-The accepted decision is
-[ADR-0003](docs/architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md);
-[product-direction alignment](docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md)
-maps that decision across public documentation.
-
-## Getting Started
+## Evaluate From Source
 
 ### Requirements
 
 - Node.js 22
 - npm `10.9.8` (declared by `packageManager`)
-- Rust `1.97.1` with `rustfmt` and `clippy` for Rust checks
+- Rust `1.97.1` with `rustfmt` and `clippy`
 - PostgreSQL only for optional disposable local-beta integration tests
 
 Repository scripts never install toolchains or start databases implicitly.
 
-### Install and verify
-
 ```sh
 npm ci
+npm run public:check
 npm run typecheck:workspaces
 npm run test:workspaces
-npm run build
-npm run mcp:official-conformance
-npm run security:conformance:check
 ```
 
-Run the read-only Control Center:
-
-```sh
-npm run dev -w @lnsat/console
-```
-
-Before opening a pull request:
+Run the complete source and dependency gates before proposing a pull request:
 
 ```sh
 npm run source:check
 npm run audit:dependencies:check
 ```
 
-`source:check` checks formatting, scans public-source boundaries, validates
-migrations, typechecks, tests, runs Rust conformance, verifies metadata, and
-builds every workspace. It does not publish, deploy, or approve a supported
-release. `release:check` adds supported-release evidence and intentionally fails
-current public-snapshot mode until public-history-native review evidence and a
-dedicated exact release-source review gate exist.
+Run the experimental, read-only Control Center from the checkout:
+
+```sh
+npm run dev -w @lnsat/console
+```
+
+See [Local Development](docs/LOCAL_DEVELOPMENT.md) for focused commands and
+troubleshooting.
 
 ## Documentation
 
-| Need                        | Start here                                                                                                               |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Understand system           | [Architecture and developer guide](docs/architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md)                                |
-| Set up workspace            | [Local development](docs/LOCAL_DEVELOPMENT.md)                                                                           |
-| Find all docs               | [Documentation index](docs/DOCS_INDEX.md)                                                                                |
-| Use source contracts        | [SDK documentation](docs/sdk/README.md)                                                                                  |
-| MCP and interop status      | [MCP 2026-07-28 interoperability and recovery](docs/architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md) |
-| Check maturity              | [Project status](docs/PROJECT_STATUS.md)                                                                                 |
-| Interpret claims            | [Claims and maturity vocabulary](docs/CLAIMS_AND_MATURITY.md)                                                            |
-| Compare with Docker AI      | [Docker AI technical comparison](docs/reference/DOCKER_AI_TECHNICAL_COMPARISON.md)                                       |
-| Follow build order          | [Product build sequence](docs/PRODUCT_BUILD_SEQUENCE.md)                                                                 |
-| Review release gates        | [Source release process](docs/RELEASING.md)                                                                              |
-| Understand security policy  | [Security policy](SECURITY.md)                                                                                           |
-| Understand product boundary | [Open core and product repositories](docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)                            |
-| Plan OS automation          | [CLI and OS operator interface](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)                                      |
+| Need                       | Start here                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| Understand the system      | [Architecture and Developer Guide](docs/architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md) |
+| Check implementation truth | [Project Status](docs/PROJECT_STATUS.md)                                                  |
+| Follow the v1 build order  | [Product Build Sequence](docs/PRODUCT_BUILD_SEQUENCE.md)                                  |
+| Understand maturity claims | [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md)                                        |
+| Use source contracts       | [SDK Documentation](docs/sdk/README.md)                                                   |
+| Review release gates       | [Source Release Process](docs/RELEASING.md)                                               |
+| Find every document        | [Documentation Index](docs/DOCS_INDEX.md)                                                 |
 
-## Design Principles
+## Community
 
-- Gateway is the security boundary; transports do not grant authority.
-- Secrets are references only, never packet or audit values.
-- Unknown contracts, capabilities, and evidence fail closed.
-- Agents request capabilities; they do not receive direct infrastructure control.
-- State-changing authority requires policy, approval, audit, rollback, and tests.
-- Managed instructions, skills, profiles, context, and model overlays are
-  versioned inputs, never authority.
-- Gatekeeper models advise; deterministic policy and authenticated humans
-  authorize.
-- Synthetic fixtures and local-only defaults protect contributor environments.
-- Compatibility changes are versioned, documented, and covered by conformance.
+- Report reproducible bugs through the [issue chooser](https://github.com/hypler-dev/LNSAT/issues/new/choose).
+- Ask source-evaluation, documentation, build, or compatibility questions
+  through the [community support form](https://github.com/hypler-dev/LNSAT/issues/new?template=community_support.yml).
+- Read [Contributing](CONTRIBUTING.md), [Governance](GOVERNANCE.md), and
+  [Support](SUPPORT.md) before proposing larger changes.
+- Report vulnerabilities privately through [Security](SECURITY.md).
 
-## Contributing
+Public issues and pull requests must not contain secrets, credentials, customer
+data, private topology, or vulnerability details.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing changes. Pull requests
-should state rationale, contract impact, security impact, compatibility impact,
-and validation evidence. Use [GitHub issues](https://github.com/hypler-dev/LNSAT/issues)
-for public bugs and feature requests without sensitive data.
+<details>
+<summary>Repository layout</summary>
 
-Report vulnerabilities privately through instructions in
-[SECURITY.md](SECURITY.md). Never place credentials, private data, or exploit
-details in public issues.
+```text
+apps/api               Gateway inspection and loopback control-plane source
+apps/console           Read-only live Gateway evidence plus synthetic fixtures
+packages/gateway       Transport-neutral authority and interop contracts
+packages/packets       Versioned packet and governance contracts
+packages/policy        Deterministic policy and approval gates
+packages/audit         Audit contracts and PostgreSQL writer foundation
+packages/mcp           Read-only MCP stdio and HTTP-handler source
+packages/cli           Dispatcher and packet CLI source
+packages/core          Product identity and shared source constants
+crates/lnsat-contracts Rust contract primitives
+crates/lnsat-auth      Local authentication primitives
+crates/lnsat-store     Embedded SQLite authority and durability foundation
+crates/lnsatd          Loopback daemon and operator CLI source
+fixtures               Public and cross-language conformance fixtures
+interop                Pinned third-party compatibility harnesses
+docs                   Architecture, SDK, development, and project guidance
+```
+
+</details>
 
 ## License
 

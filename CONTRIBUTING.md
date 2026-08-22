@@ -3,9 +3,40 @@
 Contributions should preserve LNSAT's execution-authorization, evidence, and
 fail-closed boundary.
 
+LNSAT is pre-release source. A successful source build does not create a
+supported package, service, production workflow, or compatibility promise. Read
+[project status](docs/PROJECT_STATUS.md) and
+[claims and maturity vocabulary](docs/CLAIMS_AND_MATURITY.md) before changing a
+public contract or product claim.
+
+## First Contribution
+
+Small documentation fixes, test clarifications, and narrowly scoped bug fixes
+may go directly to a focused pull request with clear rationale. Open an issue
+first for changes that affect public contracts, runtime authority, persistence,
+security boundaries, compatibility, packaging, release behavior, or broad
+architecture.
+
+Use the [issue chooser](https://github.com/hypler-dev/LNSAT/issues/new/choose)
+for bugs and feature proposals. Use the
+[community support form](https://github.com/hypler-dev/LNSAT/issues/new?template=community_support.yml)
+for documentation, build, source-evaluation, or compatibility questions. Never
+place secrets, private data, or vulnerability details in either channel.
+
+Before editing:
+
+1. choose one bounded problem and identify its owning package or document;
+2. read nearby tests and the relevant architecture or contract guide;
+3. state current behavior, expected behavior, and claim or compatibility impact;
+4. run the smallest relevant package check while developing;
+5. run the full source gate before requesting review.
+
+See [local development](docs/LOCAL_DEVELOPMENT.md) for workspace-specific
+commands and troubleshooting.
+
 ## Development Flow
 
-1. Open an issue for substantial changes or explain rationale in pull request.
+1. Open an issue when required above or explain rationale in the pull request.
 2. Create focused branch from current `main`.
 3. Install dependencies with `npm ci`; never edit generated dependency trees.
 4. Make one bounded change with tests and documentation.
