@@ -8,16 +8,30 @@ subsystem or proposal.
 
 ## New Contributors
 
-1. [Project status](PROJECT_STATUS.md) — implemented, experimental, planned, and
+1. [README](../README.md) — project purpose, source-evaluation quick start, and
+   current limitations.
+2. [Provenance timeline](../PROVENANCE.md) — selected private milestones, exact
+   public-cutover tree mapping, and verification limits.
+3. [Why LNSAT became public now](WHY_PUBLIC_NOW.md) — publication context,
+   independent market convergence, and next reference proof.
+4. [Project status](PROJECT_STATUS.md) — implemented, experimental, planned, and
    unsupported scope.
-2. [Claims and maturity vocabulary](CLAIMS_AND_MATURITY.md) — meaning of
+5. [Claims and maturity vocabulary](CLAIMS_AND_MATURITY.md) — meaning of
    implemented, experimental, planned, public-source, and supported claims.
-3. [Architecture and developer guide](architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
+6. [Architecture and developer guide](architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
    — mental model, repository ownership, and safe change workflow.
-4. [Local development](LOCAL_DEVELOPMENT.md) — prerequisites, commands, focused
+7. [Local development](LOCAL_DEVELOPMENT.md) — prerequisites, commands, focused
    tests, and troubleshooting.
-5. [Contributing](../CONTRIBUTING.md) — pull-request, DCO, security, and review
-   requirements.
+8. [Contributing](../CONTRIBUTING.md) — first-contribution, pull-request, DCO,
+   security, and review requirements.
+
+## Community
+
+- [Support](../SUPPORT.md) — public issue scope and pre-release support limits.
+- [Governance](../GOVERNANCE.md) — roles, decisions, review, and conflicts.
+- [Code of Conduct](../CODE_OF_CONDUCT.md) — participation and reporting rules.
+- [Security policy](../SECURITY.md) — private vulnerability reporting and tested
+  security scope.
 
 ## Core Architecture
 
@@ -122,6 +136,8 @@ security behavior, and conformance remain public-core concerns.
 - [Mandatory Phase 14 distribution](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)
 - [Source release process](RELEASING.md)
 - [Public-readiness report](PUBLIC_READINESS.md)
+- [Provenance timeline](../PROVENANCE.md)
+- [Why LNSAT became public now](WHY_PUBLIC_NOW.md)
 - [Legacy identifier inventory](reference/LEGACY_IDENTIFIER_INVENTORY.md)
 - [Product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md)
 - [Pinned Rust toolchain](RUST_TOOLCHAIN.md)

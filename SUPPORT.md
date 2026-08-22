@@ -15,7 +15,13 @@ or a support contract.
 
 ## Community Support
 
-Use public issues for:
+Use the [GitHub issue chooser](https://github.com/hypler-dev/LNSAT/issues/new/choose)
+for reproducible bugs and feature requests. Use the
+[community support form](https://github.com/hypler-dev/LNSAT/issues/new?template=community_support.yml)
+for documentation gaps, build or test failures, source-evaluation questions, and
+compatibility reports.
+
+Public issue scope includes:
 
 - documentation gaps;
 - build or test failures;
@@ -25,6 +31,9 @@ Use public issues for:
 
 Include source revision, operating system, architecture, Node/Rust versions,
 minimal reproduction, expected behavior, actual behavior, and validation output.
+
+Community responses are best-effort. No response time, resolution time, or
+maintenance commitment applies before a supported release defines those terms.
 
 Do not post secrets, credentials, tokens, customer data, proprietary logs, or
 private vulnerability details in public issues.
