@@ -8,7 +8,7 @@ use lnsat_contracts::CONTRACT_VERSION_V1_0;
 use std::fmt;
 use std::io::{self, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, Shutdown, SocketAddr, TcpStream};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use zeroize::{Zeroize, Zeroizing};
 
 /// Maximum opaque session token bytes accepted from protected stdin.
@@ -26,8 +26,12 @@ pub const MAX_PRODUCT_RESPONSE_BODY_BYTES_V1: usize = 64 * 1024;
 /// Exact connect timeout for one explicit local endpoint.
 pub const PRODUCT_CONNECT_TIMEOUT_V1: Duration = Duration::from_secs(2);
 
-/// Exact read/write timeout after connection.
+/// Absolute wall-clock deadline for the entire write and read phase after
+/// connection is established. Not a per-operation timeout.
 pub const PRODUCT_IO_TIMEOUT_V1: Duration = Duration::from_secs(2);
+
+/// Fixed socket polling interval used while enforcing the absolute I/O deadline.
+const PRODUCT_IO_POLL_TIMEOUT_V1: Duration = Duration::from_millis(50);
 
 /// Closed authenticated daemon read commands.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -247,9 +251,11 @@ pub fn request_authenticated_product_read_v1(
     let mut stream =
         TcpStream::connect_timeout(&endpoint.socket_address, PRODUCT_CONNECT_TIMEOUT_V1)
             .map_err(|error| map_io_error_v1(&error))?;
+    let io_deadline = Instant::now() + PRODUCT_IO_TIMEOUT_V1;
+
     stream
-        .set_read_timeout(Some(PRODUCT_IO_TIMEOUT_V1))
-        .and_then(|()| stream.set_write_timeout(Some(PRODUCT_IO_TIMEOUT_V1)))
+        .set_write_timeout(Some(PRODUCT_IO_POLL_TIMEOUT_V1))
+        .and_then(|()| stream.set_read_timeout(Some(PRODUCT_IO_POLL_TIMEOUT_V1)))
         .map_err(|error| map_io_error_v1(&error))?;
     let mut request = Zeroizing::new(format!(
         concat!(
@@ -267,11 +273,9 @@ pub fn request_authenticated_product_read_v1(
         cookie_name = LOCAL_SESSION_COOKIE_NAME_V1,
         session_token = session_token,
     ));
-    let write_result = stream
-        .write_all(request.as_bytes())
-        .and_then(|()| stream.flush());
+    let write_result = write_all_until_v1(&mut stream, request.as_bytes(), io_deadline);
     request.zeroize();
-    write_result.map_err(|error| map_io_error_v1(&error))?;
+    write_result?;
     stream
         .shutdown(Shutdown::Write)
         .map_err(|error| map_io_error_v1(&error))?;
@@ -281,12 +285,26 @@ pub fn request_authenticated_product_read_v1(
         .and_then(|value| value.checked_add(1))
         .ok_or(ProductClientErrorV1::InternalFailure)?;
     let mut response = Vec::with_capacity(4096);
-    stream
-        .take(u64::try_from(response_limit).unwrap_or(u64::MAX))
-        .read_to_end(&mut response)
-        .map_err(|error| map_io_error_v1(&error))?;
-    if response.len() >= response_limit {
-        return Err(ProductClientErrorV1::IncompatibleResponse);
+    let mut buf = [0u8; 8192];
+    loop {
+        if Instant::now() >= io_deadline {
+            return Err(ProductClientErrorV1::TemporaryFailure);
+        }
+        match stream.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => {
+                response.extend_from_slice(&buf[..n]);
+                if response.len() >= response_limit {
+                    return Err(ProductClientErrorV1::IncompatibleResponse);
+                }
+            }
+            Err(ref error)
+                if matches!(
+                    error.kind(),
+                    io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
+                ) => {}
+            Err(e) => return Err(map_io_error_v1(&e)),
+        }
     }
     parse_product_response_v1(command, &response)
 }
@@ -297,6 +315,42 @@ fn valid_session_token_transport_v1(value: &str) -> bool {
         && value.bytes().all(|byte| {
             (b'!'..=b'~').contains(&byte) && !matches!(byte, b'"' | b',' | b';' | b'\\')
         })
+}
+
+fn write_all_until_v1(
+    stream: &mut TcpStream,
+    mut bytes: &[u8],
+    deadline: Instant,
+) -> Result<(), ProductClientErrorV1> {
+    while !bytes.is_empty() {
+        if Instant::now() >= deadline {
+            return Err(ProductClientErrorV1::TemporaryFailure);
+        }
+        match stream.write(bytes) {
+            Ok(0) => return Err(ProductClientErrorV1::Unavailable),
+            Ok(written) => bytes = &bytes[written..],
+            Err(ref error)
+                if matches!(
+                    error.kind(),
+                    io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
+                ) => {}
+            Err(error) => return Err(map_io_error_v1(&error)),
+        }
+    }
+    loop {
+        if Instant::now() >= deadline {
+            return Err(ProductClientErrorV1::TemporaryFailure);
+        }
+        match stream.flush() {
+            Ok(()) => return Ok(()),
+            Err(ref error)
+                if matches!(
+                    error.kind(),
+                    io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
+                ) => {}
+            Err(error) => return Err(map_io_error_v1(&error)),
+        }
+    }
 }
 
 fn map_io_error_v1(error: &io::Error) -> ProductClientErrorV1 {

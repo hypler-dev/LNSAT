@@ -464,7 +464,7 @@ pub fn completion_source_v1(shell: &str) -> Option<&'static str> {
             "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor health status config recovery manifest completion man --endpoint --session-token-stdin --output --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
         ),
         "zsh" => Some(
-            "#compdef lnsatctl lnsat lnsatd\n_arguments '1:command:(doctor health status config recovery manifest completion man packet)' '*::argument:->args'\n",
+            "#compdef lnsatctl lnsat lnsatd\ncase \"$service\" in\n  lnsatctl)\n    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--endpoint' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsat)\n    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsatd)\n    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n    ;;\nesac\n",
         ),
         "fish" => Some(
             "complete -c lnsatctl -f -a 'doctor health status config recovery manifest completion man'\ncomplete -c lnsatctl -f -l endpoint\ncomplete -c lnsatctl -f -l session-token-stdin\ncomplete -c lnsatctl -f -l output -a 'text json jsonl yaml'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
@@ -593,6 +593,27 @@ mod tests {
         assert!(output.contains("\"side_effects\":[]"));
         assert!(!output.contains("HOME"));
         assert!(!output.contains("TOKEN"));
+    }
+
+    #[test]
+    fn zsh_completion_has_per_binary_exact_surfaces() {
+        assert_eq!(
+            completion_source_v1("zsh"),
+            Some(concat!(
+                "#compdef lnsatctl lnsat lnsatd\n",
+                "case \"$service\" in\n",
+                "  lnsatctl)\n",
+                "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--endpoint' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+                "    ;;\n",
+                "  lnsat)\n",
+                "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",
+                "    ;;\n",
+                "  lnsatd)\n",
+                "    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n",
+                "    ;;\n",
+                "esac\n",
+            ))
+        );
     }
 
     #[test]

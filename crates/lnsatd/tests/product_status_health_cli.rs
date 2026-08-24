@@ -12,12 +12,13 @@ use lnsatd::{
 };
 use serde_json::Value;
 use std::fs;
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener};
 use std::path::PathBuf;
 use std::process::{Command, Output, Stdio};
+use std::sync::mpsc;
 use std::thread;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 #[test]
 fn lnsatctl_reads_ipv4_and_ipv6_with_exact_output_contracts() {
@@ -53,10 +54,14 @@ fn lnsatctl_reads_ipv4_and_ipv6_with_exact_output_contracts() {
                 );
                 assert!(
                     output.status.success(),
+                    "ip={ip:?} command={command} format={format:?} stderr={}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                assert!(
+                    output.stderr.is_empty(),
                     "stderr={}",
                     String::from_utf8_lossy(&output.stderr)
                 );
-                assert!(output.stderr.is_empty());
                 assert_eq!(
                     String::from_utf8(output.stdout).expect("stdout must be UTF-8"),
                     render_product_result_v1(&semantic, format).expect("fixture must render")
@@ -147,6 +152,46 @@ fn unavailable_and_timeout_are_bounded_read_only_exit_families() {
     assert_eq!(timeout.status.code(), Some(6));
     assert_ne!(timeout.status.code(), Some(7));
     server.join().expect("timeout server must join");
+}
+
+#[test]
+fn drip_feed_peer_cannot_extend_absolute_deadline() {
+    let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).expect("drip listener must bind");
+    let endpoint = format!(
+        "http://{}",
+        listener.local_addr().expect("address must exist")
+    );
+    let (stop_sender, stop_receiver) = mpsc::channel();
+    let wall_start = Instant::now();
+    let server = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("drip connection must arrive");
+        let mut drain = [0u8; 4096];
+        while Read::read(&mut stream, &mut drain).is_ok_and(|n| n > 0) {}
+        loop {
+            if stop_receiver
+                .recv_timeout(Duration::from_millis(500))
+                .is_ok()
+            {
+                break;
+            }
+            if stream
+                .write_all(b"x")
+                .and_then(|()| stream.flush())
+                .is_err()
+            {
+                break;
+            }
+        }
+    });
+    let output = run_cli(&endpoint, "health", None, b"opaque-token");
+    let elapsed = wall_start.elapsed();
+    let _ = stop_sender.send(());
+    assert_eq!(output.status.code(), Some(6));
+    assert!(
+        elapsed < PRODUCT_IO_TIMEOUT_V1 + Duration::from_secs(2),
+        "drip-feed must be bounded by absolute deadline, took {elapsed:?}"
+    );
+    server.join().expect("drip server must join");
 }
 
 fn run_cli(endpoint: &str, command: &str, output: Option<&str>, stdin: &[u8]) -> Output {

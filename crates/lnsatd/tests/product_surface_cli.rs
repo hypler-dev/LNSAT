@@ -160,3 +160,43 @@ impl Drop for TestDirectory {
         let _ = fs::remove_dir_all(&self.path);
     }
 }
+
+#[test]
+fn zsh_completion_per_binary_exact_surfaces() {
+    let output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["completion", "zsh"])
+        .output()
+        .expect("lnsatctl completion zsh must run");
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("zsh completion must be UTF-8"),
+        concat!(
+            "#compdef lnsatctl lnsat lnsatd\n",
+            "case \"$service\" in\n",
+            "  lnsatctl)\n",
+            "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--endpoint' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+            "    ;;\n",
+            "  lnsat)\n",
+            "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",
+            "    ;;\n",
+            "  lnsatd)\n",
+            "    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n",
+            "    ;;\n",
+            "esac\n",
+        )
+    );
+
+    // Bash and fish remain intact.
+    for shell in ["bash", "fish"] {
+        let out = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["completion", shell])
+            .output()
+            .expect("completion must run");
+        assert!(out.status.success());
+        let text = String::from_utf8(out.stdout).expect("must be UTF-8");
+        assert!(text.contains("lnsatctl"));
+        assert!(text.contains("lnsat"));
+        assert!(text.contains("lnsatd"));
+    }
+}
