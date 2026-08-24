@@ -390,6 +390,7 @@ pub fn config_inspection_output_json_v1(loaded: &LoadedDaemonConfigV1) -> String
             "ambient_environment_used": false,
             "secret_fields_allowed": false,
             "max_file_bytes": MAX_DAEMON_CONFIG_BYTES_V1,
+            "control_socket_configured": loaded.control_socket_configured(),
             "phase8_runtime_configured": loaded.phase8_runtime_configured(),
             "console_manifest_configured": loaded.console_manifest_configured()
         },
@@ -453,7 +454,7 @@ pub fn failure_output_json_v1(
 /// Bounded `lnsatctl` help text.
 #[must_use]
 pub const fn lnsatctl_usage_v1() -> &'static str {
-    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --endpoint <numeric-loopback-http-url> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --endpoint <numeric-loopback-http-url> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
+    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
 }
 
 /// Generated completion source for supported shells.
@@ -461,13 +462,13 @@ pub const fn lnsatctl_usage_v1() -> &'static str {
 pub fn completion_source_v1(shell: &str) -> Option<&'static str> {
     match shell {
         "bash" => Some(
-            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor health status config recovery manifest completion man --endpoint --session-token-stdin --output --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
+            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor health status config recovery manifest completion man --socket --session-token-stdin --output --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
         ),
         "zsh" => Some(
-            "#compdef lnsatctl lnsat lnsatd\ncase \"$service\" in\n  lnsatctl)\n    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--endpoint' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsat)\n    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsatd)\n    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n    ;;\nesac\n",
+            "#compdef lnsatctl lnsat lnsatd\ncase \"$service\" in\n  lnsatctl)\n    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsat)\n    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsatd)\n    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n    ;;\nesac\n",
         ),
         "fish" => Some(
-            "complete -c lnsatctl -f -a 'doctor health status config recovery manifest completion man'\ncomplete -c lnsatctl -f -l endpoint\ncomplete -c lnsatctl -f -l session-token-stdin\ncomplete -c lnsatctl -f -l output -a 'text json jsonl yaml'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
+            "complete -c lnsatctl -f -a 'doctor health status config recovery manifest completion man'\ncomplete -c lnsatctl -f -l socket\ncomplete -c lnsatctl -f -l session-token-stdin\ncomplete -c lnsatctl -f -l output -a 'text json jsonl yaml'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
         ),
         _ => None,
     }
@@ -481,7 +482,7 @@ pub fn man_page_source_v1(command: &str) -> Option<&'static str> {
             ".TH LNSAT 1\n.SH NAME\nlnsat - source-only LNSAT workflow dispatcher\n.SH SYNOPSIS\nlnsat packet <validate|hash|inspect> <packet.json> [request_id]\n.SH SAFETY\nNo command grants ambient authority. Current commands are read-only or pure local inspection.\n",
         ),
         "lnsatctl" => Some(
-            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics\n.SH SYNOPSIS\nlnsatctl doctor | health --endpoint <numeric-loopback-http-url> --session-token-stdin | status --endpoint <numeric-loopback-http-url> --session-token-stdin | config inspect --config <absolute-path> | recovery inspect --database <path> | manifest\n.SH OUTPUT\nRead-only commands accept --output text|json|jsonl|yaml in the documented final position; JSON is default.\n.SH SAFETY\nHealth and status require an explicit numeric-loopback HTTP endpoint and one opaque session token from stdin. Configuration and recovery inspection are read-only. Service install, start, recovery mutation, and activation are unavailable.\n",
+            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin | config inspect --config <absolute-path> | recovery inspect --database <path> | manifest\n.SH OUTPUT\nRead-only commands accept --output text|json|jsonl|yaml in the documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Client proves socket path, mode, owner, stable identity, and peer effective UID before transmitting bearer material. Configuration and recovery inspection are read-only. Service install, start, recovery mutation, and activation are unavailable.\n",
         ),
         "lnsatd" => Some(
             ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --config <absolute-path> | --database <path> [--listen <numeric-loopback:port>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically.\n",
@@ -532,6 +533,18 @@ mod tests {
         assert_eq!(
             value["authenticated_read_transport"]["routes"],
             serde_json::json!(["/v1/health", "/v1/status"])
+        );
+        assert_eq!(
+            value["authenticated_read_transport"]["supported_targets"],
+            serde_json::json!(["linux", "macos"])
+        );
+        assert_eq!(
+            value["authenticated_read_transport"]["peer_identity"],
+            "effective_uid_equal"
+        );
+        assert_eq!(
+            value["authenticated_read_transport"]["tcp_bearer_transport"],
+            false
         );
         assert_eq!(
             value["authenticated_read_transport"]["side_effects"],
@@ -603,7 +616,7 @@ mod tests {
                 "#compdef lnsatctl lnsat lnsatd\n",
                 "case \"$service\" in\n",
                 "  lnsatctl)\n",
-                "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--endpoint' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+                "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
                 "    ;;\n",
                 "  lnsat)\n",
                 "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",

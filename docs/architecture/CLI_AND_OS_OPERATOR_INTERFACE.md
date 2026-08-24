@@ -74,8 +74,8 @@ Current P10-A1/P10-A2/P10-A3 implemented subset:
 lnsat packet validate|hash|inspect ...
 lnsat manifest|completion|man|--help|--version
 lnsatctl doctor
-lnsatctl health --endpoint <numeric-loopback-http-url> --session-token-stdin [--output <text|json|jsonl|yaml>]
-lnsatctl status --endpoint <numeric-loopback-http-url> --session-token-stdin [--output <text|json|jsonl|yaml>]
+lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
+lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
 lnsatctl config inspect --config <absolute-path>
 lnsatctl recovery inspect --database <path>
 lnsatctl manifest|completion|man|--help|--version
@@ -87,12 +87,16 @@ All other listed groups remain reserved and unavailable. Current recovery
 inspection is read-only, reflects no raw path, and grants no repair, migration,
 quarantine, credential, or activation authority.
 
-P10-A3 health/status accept no default target. Exact accepted endpoints are
-`http://127.0.0.1:<nonzero-port>` and `http://[::1]:<nonzero-port>`. One opaque
-session token is read only from stdin and zeroized after request construction.
-Hostname, DNS, non-loopback, TLS, userinfo, query, fragment, path prefix, proxy
-environment, redirect, retry, discovery, secret argument/file/URL, and remote
-transport behavior are absent. Invalid arguments and stdin fail before connect.
+P10-A3 health/status accept no default target. macOS/Linux accept one explicit
+absolute, bounded, normalized UTF-8 Unix-socket path. One opaque session token
+is read only from stdin and zeroized after request construction. Client proves
+private parent mode `0700`, non-symlink socket type, socket mode `0600`, owner,
+stable device/inode identity, and connected peer effective UID before bearer
+transmission. Daemon verifies accepted client effective UID before request read.
+TCP bearer, hostname, DNS, TLS, userinfo, query, fragment, proxy environment,
+redirect, retry, discovery, secret argument/file/URL, and remote transport
+behavior are absent. Invalid arguments, path syntax, and stdin fail before
+connect. Unsafe path or server identity fails before request bytes are written.
 
 ## Command Safety Contract
 
@@ -128,8 +132,10 @@ stay result-equivalent to direct Gateway, REST, and MCP fixtures.
 
 Default v1 client/server path:
 
-- macOS/Linux: owner-controlled Unix domain socket where packaging and runtime
-  support it, with loopback HTTP as explicit compatible local transport;
+- macOS/Linux authenticated CLI reads: owner-controlled Unix domain socket with
+  strict path and peer-credential proof before bearer transmission;
+- macOS/Linux browser/API Gateway: numeric-loopback HTTP remains compatible,
+  but `lnsatctl` never sends its bearer through that lane;
 - Windows later lane: named pipe or loopback transport after threat model and
   compatibility evidence;
 - remote administration: disabled by default; later authenticated TLS/mTLS
@@ -170,7 +176,9 @@ Current P10-A2 source deliberately selects none of the system/user paths above.
 non-symlinked UTF-8 JSON file no larger than 64 KiB. Contract
 `lnsat.daemon.config.v1` is schema-closed and rejects duplicate keys, unknown
 fields, wrong versions, secret fields, non-loopback listeners, unpaired Phase 8
-runtime paths, unsafe console manifests, and mixed direct/config input.
+runtime paths, invalid control-socket paths, unsafe console manifests, and mixed
+direct/config input. Optional `control_socket_path` enables authenticated CLI
+reads; inspection validates syntax only and opens no listener.
 `lnsatctl config inspect` returns only exact-byte SHA-256 and applied-layer
 evidence; configured and rejected paths/bytes are never reflected.
 

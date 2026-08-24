@@ -2,6 +2,8 @@
 
 //! Fail-closed loopback daemon foundation for one local LNSAT deployment.
 
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+mod local_unix_socket;
 pub mod product_config;
 pub mod product_output;
 pub mod product_surface;
@@ -61,6 +63,28 @@ use zeroize::{Zeroize, Zeroizing};
 pub const DEFAULT_LISTEN_ADDRESS_V1: SocketAddr =
     SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 7447);
 
+/// Cross-target maximum UTF-8 bytes accepted for one explicit Unix-socket path.
+pub const MAX_CONTROL_SOCKET_PATH_BYTES_V1: usize = 100;
+
+pub(crate) fn valid_control_socket_path_v1(path: &Path) -> bool {
+    let Some(text) = path.to_str() else {
+        return false;
+    };
+    !text.is_empty()
+        && text.len() <= MAX_CONTROL_SOCKET_PATH_BYTES_V1
+        && !text.as_bytes().contains(&0)
+        && !text.ends_with('/')
+        && !text.contains("//")
+        && !text
+            .split('/')
+            .any(|component| matches!(component, "." | ".."))
+        && path.is_absolute()
+        && path
+            .components()
+            .all(|component| matches!(component, Component::RootDir | Component::Normal(_)))
+        && path.file_name().is_some()
+}
+
 /// Maximum request-head bytes accepted by the source-local HTTP surface.
 pub const MAX_REQUEST_HEAD_BYTES_V1: usize = 8 * 1024;
 
@@ -83,6 +107,8 @@ const MAX_HEADER_COUNT_V1: usize = 64;
 const CONNECTION_TIMEOUT_V1: Duration = Duration::from_secs(5);
 const OVERLOAD_TIMEOUT_V1: Duration = Duration::from_millis(100);
 const SHUTDOWN_WAKE_TIMEOUT_V1: Duration = Duration::from_millis(250);
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+const CONTROL_ACCEPT_POLL_INTERVAL_V1: Duration = Duration::from_millis(10);
 const READINESS_PATH_V1: &str = "/healthz";
 const READINESS_CONTRACT_V1: &str = "lnsat.daemon.readiness.v1_0";
 const AUTHENTICATED_HEALTH_PATH_V1: &str = "/v1/health";
@@ -1252,6 +1278,7 @@ fn civil_date_from_unix_days_v1(days: u64) -> Option<(u64, u64, u64)> {
 pub struct DaemonConfigV1 {
     database_path: PathBuf,
     listen_address: SocketAddr,
+    control_socket_path: Option<PathBuf>,
     disposable_git_root: Option<PathBuf>,
     git_executable: Option<PathBuf>,
     internal_console_root: Option<PathBuf>,
@@ -1299,11 +1326,30 @@ impl DaemonConfigV1 {
         Ok(Self {
             database_path: database_path.to_path_buf(),
             listen_address,
+            control_socket_path: None,
             disposable_git_root: None,
             git_executable: None,
             internal_console_root: None,
             internal_console_asset_manifest: BTreeMap::new(),
         })
+    }
+
+    /// Enables one explicit macOS/Linux Unix socket for authenticated CLI reads.
+    ///
+    /// # Errors
+    ///
+    /// Rejects empty, relative, oversized, non-UTF-8, dot-component, or
+    /// trailing-separator paths without inspecting filesystem state.
+    pub fn with_control_socket_path(
+        mut self,
+        control_socket_path: impl AsRef<Path>,
+    ) -> Result<Self, DaemonErrorV1> {
+        let control_socket_path = control_socket_path.as_ref();
+        if !valid_control_socket_path_v1(control_socket_path) {
+            return Err(DaemonErrorV1::InvalidControlSocketPath);
+        }
+        self.control_socket_path = Some(control_socket_path.to_path_buf());
+        Ok(self)
     }
 
     /// Enables frozen Phase 8 runtime routes for one configured disposable
@@ -1376,6 +1422,12 @@ impl DaemonConfigV1 {
         self.listen_address
     }
 
+    /// Returns explicit authenticated CLI Unix-socket path when configured.
+    #[must_use]
+    pub fn control_socket_path(&self) -> Option<&Path> {
+        self.control_socket_path.as_deref()
+    }
+
     /// Returns configured disposable Git root when runtime composition is enabled.
     #[must_use]
     pub fn disposable_git_root(&self) -> Option<&Path> {
@@ -1441,6 +1493,14 @@ pub enum DaemonErrorV1 {
     ConfigFileTooLarge,
     /// Listen address was not one numeric socket address.
     InvalidListenAddress,
+    /// Explicit authenticated CLI Unix-socket path was syntactically invalid.
+    InvalidControlSocketPath,
+    /// Configured Unix-socket transport is unavailable on this target.
+    ControlSocketUnsupported,
+    /// Unix-socket listener creation failed without exposing its path.
+    ControlSocketBindFailed,
+    /// Unix-socket path, ownership, mode, or peer identity failed closed.
+    ControlSocketIdentityRejected,
     /// Phase 8 runtime paths were incomplete, empty, or non-absolute.
     InvalidRuntimeConfiguration,
     /// Source-local console root or exact asset manifest was invalid.
@@ -1481,6 +1541,10 @@ impl DaemonErrorV1 {
             Self::InvalidConfigFile => "lnsatd.config.file_invalid",
             Self::ConfigFileTooLarge => "lnsatd.config.file_too_large",
             Self::InvalidListenAddress => "lnsatd.listen.invalid",
+            Self::InvalidControlSocketPath => "lnsatd.control_socket.path_invalid",
+            Self::ControlSocketUnsupported => "lnsatd.control_socket.unsupported",
+            Self::ControlSocketBindFailed => "lnsatd.control_socket.bind_failed",
+            Self::ControlSocketIdentityRejected => "lnsatd.control_socket.identity_rejected",
             Self::InvalidRuntimeConfiguration => "lnsatd.runtime_configuration.invalid",
             Self::InvalidConsoleConfiguration => "lnsatd.console_configuration.invalid",
             Self::ConsoleAssetLoadFailed => "lnsatd.console_asset.load_failed",
@@ -1710,6 +1774,24 @@ struct Phase9ConsoleRuntimeV1 {
     assets: BTreeMap<String, Phase9ConsoleAssetV1>,
 }
 
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn map_control_socket_bind_error_v1(
+    error: local_unix_socket::LocalUnixSocketErrorV1,
+) -> DaemonErrorV1 {
+    match error {
+        local_unix_socket::LocalUnixSocketErrorV1::PathInvalid => {
+            DaemonErrorV1::InvalidControlSocketPath
+        }
+        local_unix_socket::LocalUnixSocketErrorV1::IdentityRejected => {
+            DaemonErrorV1::ControlSocketIdentityRejected
+        }
+        local_unix_socket::LocalUnixSocketErrorV1::Unavailable
+        | local_unix_socket::LocalUnixSocketErrorV1::TemporaryFailure => {
+            DaemonErrorV1::ControlSocketBindFailed
+        }
+    }
+}
+
 fn valid_console_request_path_v1(value: &str) -> bool {
     if value.is_empty()
         || value.len() > 512
@@ -1812,6 +1894,8 @@ fn load_phase9_console_runtime_v1(
 
 pub struct DaemonServerV1 {
     listener: TcpListener,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    control_listener: Option<local_unix_socket::SecureUnixListenerV1>,
     bound_address: SocketAddr,
     _database_lease: LocalDaemonDatabaseLeaseV1,
     store: Arc<Mutex<SqliteStore>>,
@@ -1889,6 +1973,16 @@ impl DaemonServerV1 {
         if !bound_address.ip().is_loopback() {
             return Err(DaemonErrorV1::BoundAddressInvalid);
         }
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let control_listener = config
+            .control_socket_path()
+            .map(local_unix_socket::SecureUnixListenerV1::bind)
+            .transpose()
+            .map_err(map_control_socket_bind_error_v1)?;
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+        if config.control_socket_path().is_some() {
+            return Err(DaemonErrorV1::ControlSocketUnsupported);
+        }
         let shutdown = DaemonShutdownV1 {
             requested: Arc::new(AtomicBool::new(false)),
             wake_address: bound_address,
@@ -1896,6 +1990,8 @@ impl DaemonServerV1 {
 
         Ok(Self {
             listener,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            control_listener,
             bound_address,
             _database_lease: database_lease,
             store: Arc::new(Mutex::new(store)),
@@ -1954,6 +2050,29 @@ impl DaemonServerV1 {
         )
     }
 
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    fn spawn_control_listener_v1(
+        &self,
+    ) -> Result<Option<JoinHandle<Result<(), DaemonErrorV1>>>, DaemonErrorV1> {
+        let Some(listener) = self.control_listener.as_ref() else {
+            return Ok(None);
+        };
+        let listener = listener
+            .try_clone()
+            .map_err(map_control_socket_bind_error_v1)?;
+        listener
+            .set_nonblocking(true)
+            .map_err(|_| DaemonErrorV1::ControlSocketBindFailed)?;
+        let store = Arc::clone(&self.store);
+        let store_state = self.store_state.clone();
+        let shutdown = self.shutdown.clone();
+        thread::Builder::new()
+            .name("lnsatd-control-unix".to_owned())
+            .spawn(move || serve_control_listener_v1(&listener, &store, &store_state, &shutdown))
+            .map(Some)
+            .map_err(|_| DaemonErrorV1::WorkerFailed)
+    }
+
     /// Serves at most eight bounded local requests concurrently until
     /// cooperative shutdown or listener failure.
     ///
@@ -1964,6 +2083,13 @@ impl DaemonServerV1 {
     /// connection. Shutdown stops accepting, then joins every in-flight bounded
     /// worker before returning.
     pub fn serve(&self) -> Result<(), DaemonErrorV1> {
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let control_worker = self.spawn_control_listener_v1()?;
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let tcp_worker_limit =
+            MAX_CONCURRENT_CONNECTIONS_V1 - usize::from(control_worker.is_some());
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+        let tcp_worker_limit = MAX_CONCURRENT_CONNECTIONS_V1;
         let mut workers = Vec::with_capacity(MAX_CONCURRENT_CONNECTIONS_V1);
         let listener_result = loop {
             if let Err(error) = reap_finished_workers(&mut workers) {
@@ -1978,7 +2104,7 @@ impl DaemonServerV1 {
             if let Err(error) = reap_finished_workers(&mut workers) {
                 break Err(error);
             }
-            if workers.len() == MAX_CONCURRENT_CONNECTIONS_V1 {
+            if workers.len() == tcp_worker_limit {
                 let _ = refuse_capacity(&mut stream, &self.store_state);
                 continue;
             }
@@ -2011,7 +2137,21 @@ impl DaemonServerV1 {
                 Err(_) => break Err(DaemonErrorV1::WorkerFailed),
             }
         };
+        if listener_result.is_err() {
+            self.shutdown.request_shutdown();
+        }
         let join_result = join_workers(workers);
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let control_result = match control_worker {
+            Some(worker) => worker
+                .join()
+                .map_err(|_| DaemonErrorV1::WorkerFailed)
+                .and_then(|result| result),
+            None => Ok(()),
+        };
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        return listener_result.and(join_result).and(control_result);
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         listener_result.and(join_result)
     }
 }
@@ -2023,6 +2163,64 @@ fn configure_connection_timeouts(stream: &TcpStream) -> Result<(), DaemonErrorV1
     stream
         .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
         .map_err(|_| DaemonErrorV1::ResponseWriteFailed)
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn serve_control_listener_v1(
+    listener: &std::os::unix::net::UnixListener,
+    store: &Arc<Mutex<SqliteStore>>,
+    store_state: &SqliteStoreStateV1,
+    shutdown: &DaemonShutdownV1,
+) -> Result<(), DaemonErrorV1> {
+    loop {
+        if shutdown.is_shutdown_requested() {
+            return Ok(());
+        }
+        match listener.accept() {
+            Ok((stream, _)) => {
+                let _ = serve_accepted_control_connection_v1(stream, store, store_state);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                thread::sleep(CONTROL_ACCEPT_POLL_INTERVAL_V1);
+            }
+            Err(_) => {
+                shutdown.request_shutdown();
+                return Err(DaemonErrorV1::AcceptFailed);
+            }
+        }
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn serve_accepted_control_connection_v1(
+    mut stream: std::os::unix::net::UnixStream,
+    store: &Arc<Mutex<SqliteStore>>,
+    store_state: &SqliteStoreStateV1,
+) -> Result<(), DaemonErrorV1> {
+    stream
+        .set_read_timeout(Some(CONNECTION_TIMEOUT_V1))
+        .map_err(|_| DaemonErrorV1::RequestReadFailed)?;
+    stream
+        .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
+        .map_err(|_| DaemonErrorV1::ResponseWriteFailed)?;
+    if local_unix_socket::validate_peer_uid_v1(&stream).is_err() {
+        return Ok(());
+    }
+    let response = match read_http_request_v1(&mut stream) {
+        Ok(RequestReadV1::Complete(mut request)) => {
+            let response = classify_control_product_read_request_v1(&request, store);
+            request.zeroize();
+            response
+        }
+        Ok(RequestReadV1::HeadTooLarge) => {
+            ClassifiedHttpResponseV1::unversioned(HttpResponseV1::RequestHeadTooLarge)
+        }
+        Ok(RequestReadV1::BodyTooLarge) => {
+            ClassifiedHttpResponseV1::unversioned(HttpResponseV1::RequestBodyTooLarge)
+        }
+        Err(()) => return Err(DaemonErrorV1::RequestReadFailed),
+    };
+    write_response_with_state(&mut stream, response, store_state)
 }
 
 fn refuse_capacity(
@@ -2223,7 +2421,7 @@ impl ClassifiedHttpResponseV1 {
     }
 }
 
-fn read_http_request_v1(stream: &mut TcpStream) -> Result<RequestReadV1, ()> {
+fn read_http_request_v1(stream: &mut impl Read) -> Result<RequestReadV1, ()> {
     let mut request = Zeroizing::new(Vec::with_capacity(1024));
     let mut buffer = [0_u8; 512];
     loop {
@@ -2790,6 +2988,91 @@ fn classify_authenticated_product_read_route_v1(
         }
         Ok(_) | Err(_) => Some(HttpResponseV1::AuthenticatedProductReadRejected { head_only }),
     }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn classify_control_product_read_request_v1(
+    request_bytes: &[u8],
+    store: &Arc<Mutex<SqliteStore>>,
+) -> ClassifiedHttpResponseV1 {
+    let Ok(parsed_request) = parse_http_request_v1(request_bytes) else {
+        return ClassifiedHttpResponseV1::unversioned(HttpResponseV1::BadRequest);
+    };
+    let request = parsed_request.head;
+    let head_only = request.method == "HEAD";
+    let version = match validate_gateway_contract_version_v1(request.contract_version) {
+        Ok(version) => version,
+        Err(error) => {
+            return ClassifiedHttpResponseV1::unversioned(
+                HttpResponseV1::GatewayContractVersionRejected { error, head_only },
+            );
+        }
+    };
+    let response = match request.target {
+        AUTHENTICATED_HEALTH_PATH_V1 => HttpResponseV1::AuthenticatedHealth { head_only },
+        AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus { head_only },
+        target
+            if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
+                || target.starts_with(AUTHENTICATED_STATUS_PATH_V1) =>
+        {
+            HttpResponseV1::BadRequest
+        }
+        _ => HttpResponseV1::NotFound,
+    };
+    if !matches!(
+        response,
+        HttpResponseV1::AuthenticatedHealth { .. } | HttpResponseV1::AuthenticatedStatus { .. }
+    ) {
+        return ClassifiedHttpResponseV1::versioned(response, version);
+    }
+    if !matches!(request.method, "GET" | "HEAD") {
+        return ClassifiedHttpResponseV1::versioned(
+            HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" },
+            version,
+        );
+    }
+    if !parsed_request.body.is_empty()
+        || request.host != local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1
+        || request.origin.is_some()
+        || request.fetch_site != Some("same-origin")
+        || request.content_length.is_some_and(|length| length != 0)
+        || request.content_type.is_some()
+        || request.csrf.is_some()
+        || request.session_issue_intent.is_some()
+        || request.forwarded_present
+    {
+        return ClassifiedHttpResponseV1::versioned(
+            HttpResponseV1::AuthenticatedProductReadRejected { head_only },
+            version,
+        );
+    }
+    let authorized = parse_local_browser_auth_transport_v1(request.method, request.cookie, None)
+        .map_err(|_| ())
+        .and_then(|auth| {
+            let checked_at = canonical_system_time_v1(SystemTime::now())?;
+            let mut store = store.lock().map_err(|_| ())?;
+            store
+                .verify_and_touch_local_session_v1(
+                    auth.raw_session_token(),
+                    None,
+                    &checked_at,
+                    LOCAL_BROWSER_SESSION_IDLE_TIMEOUT_SECONDS_V1,
+                )
+                .map_err(|_| ())
+        });
+    let allowed = matches!(
+        authorized,
+        Ok(LocalSessionActivityVerificationV1::Verified(ref activity))
+            if activity.session.role.allows_control(LocalControlPermissionV1::ReadEvidence)
+    );
+    ClassifiedHttpResponseV1::versioned(
+        if allowed {
+            response
+        } else {
+            HttpResponseV1::AuthenticatedProductReadRejected { head_only }
+        },
+        version,
+    )
 }
 
 #[derive(Clone, Copy)]
@@ -5323,7 +5606,7 @@ fn runtime_composition_denied_parts_v1(capacity: bool) -> HttpResponsePartsTuple
 }
 
 fn write_response_with_state(
-    stream: &mut TcpStream,
+    stream: &mut impl Write,
     response: ClassifiedHttpResponseV1,
     state: &SqliteStoreStateV1,
 ) -> Result<(), DaemonErrorV1> {
@@ -5395,7 +5678,7 @@ fn write_response_with_state(
 }
 
 fn write_phase9_console_asset_response_v1(
-    stream: &mut TcpStream,
+    stream: &mut impl Write,
     asset: &Phase9ConsoleAssetV1,
     head_only: bool,
 ) -> Result<(), DaemonErrorV1> {

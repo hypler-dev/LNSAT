@@ -525,7 +525,9 @@ mutation remains unopened.
 
 Status: P10-A1 target-neutral source contract spine, P10-A2 explicit-only
 `lnsat.daemon.config.v1` loading/path evidence, and P10-A3 authenticated local
-health/status plus deterministic text/JSON/JSONL/YAML are implemented.
+health/status over a server-authenticated macOS/Linux Unix socket plus
+deterministic text/JSON/JSONL/YAML are implemented. Numeric-loopback HTTP
+remains browser/API transport and is not a CLI bearer lane.
 System/user paths remain unselected. P10-A4 recovery/non-root/full parity and
 P10-X1 exit freeze remain; Phase 10 is still in progress.
 

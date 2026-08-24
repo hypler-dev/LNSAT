@@ -30,6 +30,11 @@ jobs:
           node-version: 22.22.3
           cache: npm
 
+      - name: Verify pinned Node.js and npm
+        run: |
+          test "$(node --version)" = "v22.22.3"
+          test "$(npm --version)" = "10.9.8"
+
       - name: Configure pinned Rust toolchain
         run: |
           rustup toolchain install 1.97.1 --profile minimal --component clippy,rustfmt
@@ -40,10 +45,13 @@ jobs:
         run: cargo fetch --locked --config net.offline=false
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts --strict-peer-deps
 
-      - name: Verify public source
-        run: npm run source:check
+      - name: Verify dependency signatures
+        run: npm run audit:signatures:check
 
       - name: Audit dependencies
         run: npm run audit:dependencies:check
+
+      - name: Verify public source
+        run: npm run source:check

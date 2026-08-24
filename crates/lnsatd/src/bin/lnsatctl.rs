@@ -11,8 +11,8 @@ use lnsatd::product_surface::{
     recovery_inspection_output_json_v1,
 };
 use lnsatd::product_transport::{
-    NumericLoopbackEndpointV1, ProductClientErrorV1, ProductReadCommandV1,
-    read_session_token_stdin_v1, request_authenticated_product_read_v1,
+    ProductClientErrorV1, ProductReadCommandV1, UnixSocketEndpointV1, read_session_token_stdin_v1,
+    request_authenticated_product_read_v1,
 };
 use std::ffi::{OsStr, OsString};
 use std::io;
@@ -103,20 +103,13 @@ fn main() -> ExitCode {
                 ),
             }
         }
-        [command, endpoint_option, endpoint, stdin_option]
+        [command, socket_option, socket_path, stdin_option]
             if (command == OsStr::new("health") || command == OsStr::new("status"))
-                && endpoint_option == OsStr::new("--endpoint")
+                && socket_option == OsStr::new("--socket")
                 && stdin_option == OsStr::new("--session-token-stdin") =>
         {
             let command_name = command_name(command);
-            let Some(endpoint) = endpoint.to_str() else {
-                return emit_client_failure(
-                    command_name,
-                    ProductClientErrorV1::EndpointInvalid,
-                    format,
-                );
-            };
-            let endpoint = match NumericLoopbackEndpointV1::parse(endpoint) {
+            let endpoint = match UnixSocketEndpointV1::parse(PathBuf::from(socket_path)) {
                 Ok(endpoint) => endpoint,
                 Err(error) => return emit_client_failure(command_name, error, format),
             };

@@ -175,7 +175,7 @@ fn zsh_completion_per_binary_exact_surfaces() {
             "#compdef lnsatctl lnsat lnsatd\n",
             "case \"$service\" in\n",
             "  lnsatctl)\n",
-            "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--endpoint' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+            "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
             "    ;;\n",
             "  lnsat)\n",
             "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",

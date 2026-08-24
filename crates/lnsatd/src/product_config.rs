@@ -59,6 +59,12 @@ impl LoadedDaemonConfigV1 {
         self.config.disposable_git_root().is_some()
     }
 
+    /// Reports whether authenticated CLI Unix-socket transport was selected.
+    #[must_use]
+    pub fn control_socket_configured(&self) -> bool {
+        self.config.control_socket_path().is_some()
+    }
+
     /// Reports whether one exact console asset manifest was selected.
     #[must_use]
     pub fn console_manifest_configured(&self) -> bool {
@@ -74,6 +80,7 @@ struct DaemonConfigContractV1 {
     schema_version: u32,
     database_path: String,
     listen_address: Option<String>,
+    control_socket_path: Option<String>,
     phase8_runtime: Option<Phase8RuntimeConfigV1>,
     console: Option<ConsoleConfigV1>,
 }
@@ -203,6 +210,11 @@ impl DaemonConfigContractV1 {
             None => DEFAULT_LISTEN_ADDRESS_V1,
         };
         let mut config = DaemonConfigV1::new(database_path, listen_address)?;
+
+        if let Some(control_socket_path) = self.control_socket_path {
+            config = config
+                .with_control_socket_path(explicit_absolute_path_v1(&control_socket_path)?)?;
+        }
 
         if let Some(runtime) = self.phase8_runtime {
             config = config.with_phase8_runtime(

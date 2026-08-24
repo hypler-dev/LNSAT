@@ -1,4 +1,4 @@
-//! Explicit numeric-loopback transport for authenticated P10-A3 reads.
+//! Explicit server-authenticated Unix-socket transport for P10-A3 reads.
 
 use crate::GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1;
 use crate::product_output::{ProductOutputErrorV1, ProductSemanticResultV1};
@@ -7,7 +7,9 @@ use lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1;
 use lnsat_contracts::CONTRACT_VERSION_V1_0;
 use std::fmt;
 use std::io::{self, Read, Write};
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, Shutdown, SocketAddr, TcpStream};
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+use std::net::Shutdown;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 use zeroize::{Zeroize, Zeroizing};
 
@@ -62,82 +64,53 @@ impl ProductReadCommandV1 {
     }
 }
 
-/// Parsed exact numeric-loopback HTTP endpoint.
+/// Parsed exact macOS/Linux Unix-socket path.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct NumericLoopbackEndpointV1 {
-    socket_address: SocketAddr,
-    host_header: String,
+pub struct UnixSocketEndpointV1 {
+    path: PathBuf,
 }
 
-impl NumericLoopbackEndpointV1 {
-    /// Parses only `http://127.0.0.1:<port>` or `http://[::1]:<port>`.
+impl UnixSocketEndpointV1 {
+    /// Parses one explicit absolute, bounded, normalized UTF-8 socket path.
     ///
     /// # Errors
     ///
-    /// Rejects every implicit, remote, hostname, TLS, userinfo, path, query,
-    /// fragment, malformed, or port-zero target.
-    pub fn parse(value: &str) -> Result<Self, ProductClientErrorV1> {
-        let authority = value
-            .strip_prefix("http://")
-            .ok_or(ProductClientErrorV1::EndpointInvalid)?;
-        if authority.is_empty()
-            || authority
-                .bytes()
-                .any(|byte| matches!(byte, b'/' | b'?' | b'#' | b'@'))
+    /// Rejects relative, oversized, non-UTF-8, dot-component, or trailing
+    /// separator paths before secret input or connection.
+    pub fn parse(value: impl AsRef<Path>) -> Result<Self, ProductClientErrorV1> {
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         {
-            return Err(ProductClientErrorV1::EndpointInvalid);
+            let _ = value;
+            return Err(ProductClientErrorV1::PlatformUnsupported);
         }
-        let (ip, port_text, host_header) = if let Some(port_text) = authority.strip_prefix("[::1]:")
-        {
-            (
-                IpAddr::V6(Ipv6Addr::LOCALHOST),
-                port_text,
-                authority.to_owned(),
-            )
-        } else if let Some(port_text) = authority.strip_prefix("127.0.0.1:") {
-            (
-                IpAddr::V4(Ipv4Addr::LOCALHOST),
-                port_text,
-                authority.to_owned(),
-            )
-        } else {
-            return Err(ProductClientErrorV1::EndpointInvalid);
-        };
-        if port_text.is_empty()
-            || (port_text.len() > 1 && port_text.starts_with('0'))
-            || !port_text.bytes().all(|byte| byte.is_ascii_digit())
-        {
-            return Err(ProductClientErrorV1::EndpointInvalid);
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let path = value.as_ref();
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        if !crate::valid_control_socket_path_v1(path) {
+            return Err(ProductClientErrorV1::SocketPathInvalid);
         }
-        let port = port_text
-            .parse::<u16>()
-            .ok()
-            .filter(|port| *port != 0)
-            .ok_or(ProductClientErrorV1::EndpointInvalid)?;
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         Ok(Self {
-            socket_address: SocketAddr::new(ip, port),
-            host_header,
+            path: path.to_path_buf(),
         })
     }
 
-    /// Exact numeric loopback socket address.
+    /// Exact validated local socket path.
     #[must_use]
-    pub const fn socket_address(&self) -> SocketAddr {
-        self.socket_address
-    }
-
-    /// Exact HTTP Host field value.
-    #[must_use]
-    pub fn host_header(&self) -> &str {
-        &self.host_header
+    pub fn path(&self) -> &Path {
+        &self.path
     }
 }
 
 /// Stable public-safe client transport failures.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProductClientErrorV1 {
-    /// Explicit endpoint was absent or outside exact loopback HTTP syntax.
-    EndpointInvalid,
+    /// Explicit Unix-socket path was absent or outside exact syntax.
+    SocketPathInvalid,
+    /// Unix-socket CLI transport is closed on this target.
+    PlatformUnsupported,
+    /// Socket path, mode, owner, inode, or server peer identity failed closed.
+    ServerIdentityRejected,
     /// Protected stdin did not contain exactly one bounded opaque token.
     SessionTokenInputInvalid,
     /// Explicit local endpoint could not be reached.
@@ -157,10 +130,12 @@ impl ProductClientErrorV1 {
     #[must_use]
     pub const fn code(self) -> &'static str {
         match self {
-            Self::EndpointInvalid => "lnsatctl.endpoint.invalid",
+            Self::SocketPathInvalid => "lnsatctl.socket.path_invalid",
+            Self::PlatformUnsupported => "lnsatctl.socket.unsupported",
+            Self::ServerIdentityRejected => "lnsatctl.server_identity.denied",
             Self::SessionTokenInputInvalid => "lnsatctl.session_token_stdin.invalid",
-            Self::Unavailable => "lnsatctl.endpoint.unavailable",
-            Self::TemporaryFailure => "lnsatctl.endpoint.temporary_failure",
+            Self::Unavailable => "lnsatctl.socket.unavailable",
+            Self::TemporaryFailure => "lnsatctl.socket.temporary_failure",
             Self::Authentication => "lnsatctl.authentication.denied",
             Self::IncompatibleResponse => "lnsatctl.response.incompatible",
             Self::InternalFailure => "lnsatctl.internal_failure",
@@ -171,12 +146,14 @@ impl ProductClientErrorV1 {
     #[must_use]
     pub const fn exit_code(self) -> ProductExitCodeV1 {
         match self {
-            Self::EndpointInvalid | Self::SessionTokenInputInvalid => {
-                ProductExitCodeV1::UsageOrConfiguration
+            Self::SocketPathInvalid
+            | Self::PlatformUnsupported
+            | Self::SessionTokenInputInvalid => ProductExitCodeV1::UsageOrConfiguration,
+            Self::ServerIdentityRejected | Self::Authentication => {
+                ProductExitCodeV1::Authentication
             }
             Self::Unavailable => ProductExitCodeV1::Unavailable,
             Self::TemporaryFailure => ProductExitCodeV1::TemporaryFailure,
-            Self::Authentication => ProductExitCodeV1::Authentication,
             Self::IncompatibleResponse => ProductExitCodeV1::Conflict,
             Self::InternalFailure => ProductExitCodeV1::InternalFailure,
         }
@@ -206,12 +183,12 @@ impl std::error::Error for ProductClientErrorV1 {}
 pub fn read_session_token_stdin_v1(
     input: &mut impl Read,
 ) -> Result<Zeroizing<String>, ProductClientErrorV1> {
-    let mut bytes = Zeroizing::new(Vec::with_capacity(MAX_SESSION_TOKEN_STDIN_BYTES_V1 + 1));
+    let mut bytes = Zeroizing::new(Vec::with_capacity(MAX_SESSION_TOKEN_STDIN_BYTES_V1 + 2));
     input
-        .take(u64::try_from(MAX_SESSION_TOKEN_STDIN_BYTES_V1 + 1).unwrap_or(u64::MAX))
+        .take(u64::try_from(MAX_SESSION_TOKEN_STDIN_BYTES_V1 + 3).unwrap_or(u64::MAX))
         .read_to_end(&mut bytes)
         .map_err(|_| ProductClientErrorV1::SessionTokenInputInvalid)?;
-    if bytes.is_empty() || bytes.len() > MAX_SESSION_TOKEN_STDIN_BYTES_V1 || bytes.contains(&0) {
+    if bytes.is_empty() || bytes.contains(&0) {
         return Err(ProductClientErrorV1::SessionTokenInputInvalid);
     }
     if bytes.ends_with(b"\n") {
@@ -220,7 +197,7 @@ pub fn read_session_token_stdin_v1(
             bytes.pop();
         }
     }
-    if bytes.is_empty() {
+    if bytes.is_empty() || bytes.len() > MAX_SESSION_TOKEN_STDIN_BYTES_V1 {
         return Err(ProductClientErrorV1::SessionTokenInputInvalid);
     }
     let token = String::from_utf8(bytes.to_vec())
@@ -231,7 +208,7 @@ pub fn read_session_token_stdin_v1(
     Ok(Zeroizing::new(token))
 }
 
-/// Performs exactly one bounded authenticated read against one explicit local endpoint.
+/// Performs one bounded authenticated read after proving local server identity.
 ///
 /// No environment, proxy, redirect, retry, discovery, DNS, TLS, or hostname
 /// behavior exists in this transport.
@@ -242,21 +219,34 @@ pub fn read_session_token_stdin_v1(
 /// failures to stable read-only exit families.
 pub fn request_authenticated_product_read_v1(
     command: ProductReadCommandV1,
-    endpoint: &NumericLoopbackEndpointV1,
+    endpoint: &UnixSocketEndpointV1,
     session_token: &str,
 ) -> Result<ProductSemanticResultV1, ProductClientErrorV1> {
     if !valid_session_token_transport_v1(session_token) {
         return Err(ProductClientErrorV1::SessionTokenInputInvalid);
     }
-    let mut stream =
-        TcpStream::connect_timeout(&endpoint.socket_address, PRODUCT_CONNECT_TIMEOUT_V1)
-            .map_err(|error| map_io_error_v1(&error))?;
-    let io_deadline = Instant::now() + PRODUCT_IO_TIMEOUT_V1;
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    {
+        let _ = (command, endpoint);
+        return Err(ProductClientErrorV1::PlatformUnsupported);
+    }
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    let mut stream = crate::local_unix_socket::connect_secure_unix_socket_v1(
+        endpoint.path(),
+        PRODUCT_CONNECT_TIMEOUT_V1,
+    )
+    .map_err(map_local_socket_error_v1)?;
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    let io_deadline = Instant::now()
+        .checked_add(PRODUCT_IO_TIMEOUT_V1)
+        .ok_or(ProductClientErrorV1::TemporaryFailure)?;
 
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     stream
         .set_write_timeout(Some(PRODUCT_IO_POLL_TIMEOUT_V1))
         .and_then(|()| stream.set_read_timeout(Some(PRODUCT_IO_POLL_TIMEOUT_V1)))
         .map_err(|error| map_io_error_v1(&error))?;
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     let mut request = Zeroizing::new(format!(
         concat!(
             "GET {path} HTTP/1.1\r\n",
@@ -267,25 +257,33 @@ pub fn request_authenticated_product_read_v1(
             "Connection: close\r\n\r\n"
         ),
         path = command.path(),
-        host = endpoint.host_header,
+        host = crate::local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1,
         version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
         version = CONTRACT_VERSION_V1_0,
         cookie_name = LOCAL_SESSION_COOKIE_NAME_V1,
         session_token = session_token,
     ));
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     let write_result = write_all_until_v1(&mut stream, request.as_bytes(), io_deadline);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     request.zeroize();
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     write_result?;
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     stream
         .shutdown(Shutdown::Write)
         .map_err(|error| map_io_error_v1(&error))?;
 
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     let response_limit = MAX_PRODUCT_RESPONSE_HEAD_BYTES_V1
         .checked_add(MAX_PRODUCT_RESPONSE_BODY_BYTES_V1)
         .and_then(|value| value.checked_add(1))
         .ok_or(ProductClientErrorV1::InternalFailure)?;
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     let mut response = Vec::with_capacity(4096);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     let mut buf = [0u8; 8192];
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     loop {
         if Instant::now() >= io_deadline {
             return Err(ProductClientErrorV1::TemporaryFailure);
@@ -306,6 +304,7 @@ pub fn request_authenticated_product_read_v1(
             Err(e) => return Err(map_io_error_v1(&e)),
         }
     }
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     parse_product_response_v1(command, &response)
 }
 
@@ -318,7 +317,7 @@ fn valid_session_token_transport_v1(value: &str) -> bool {
 }
 
 fn write_all_until_v1(
-    stream: &mut TcpStream,
+    stream: &mut impl Write,
     mut bytes: &[u8],
     deadline: Instant,
 ) -> Result<(), ProductClientErrorV1> {
@@ -349,6 +348,26 @@ fn write_all_until_v1(
                     io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
                 ) => {}
             Err(error) => return Err(map_io_error_v1(&error)),
+        }
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn map_local_socket_error_v1(
+    error: crate::local_unix_socket::LocalUnixSocketErrorV1,
+) -> ProductClientErrorV1 {
+    match error {
+        crate::local_unix_socket::LocalUnixSocketErrorV1::PathInvalid => {
+            ProductClientErrorV1::SocketPathInvalid
+        }
+        crate::local_unix_socket::LocalUnixSocketErrorV1::Unavailable => {
+            ProductClientErrorV1::Unavailable
+        }
+        crate::local_unix_socket::LocalUnixSocketErrorV1::TemporaryFailure => {
+            ProductClientErrorV1::TemporaryFailure
+        }
+        crate::local_unix_socket::LocalUnixSocketErrorV1::IdentityRejected => {
+            ProductClientErrorV1::ServerIdentityRejected
         }
     }
 }
@@ -491,41 +510,31 @@ mod tests {
     use super::*;
 
     #[test]
-    fn endpoint_parser_accepts_only_exact_numeric_loopback_http() {
+    fn socket_parser_accepts_only_exact_absolute_paths() {
         assert_eq!(
-            NumericLoopbackEndpointV1::parse("http://127.0.0.1:7447")
-                .expect("IPv4 endpoint must parse")
-                .socket_address(),
-            "127.0.0.1:7447"
-                .parse()
-                .expect("fixture address must parse")
-        );
-        assert_eq!(
-            NumericLoopbackEndpointV1::parse("http://[::1]:7447")
-                .expect("IPv6 endpoint must parse")
-                .socket_address(),
-            "[::1]:7447".parse().expect("fixture address must parse")
+            UnixSocketEndpointV1::parse("/tmp/lnsat/control.sock")
+                .expect("absolute socket path must parse")
+                .path(),
+            Path::new("/tmp/lnsat/control.sock")
         );
         for invalid in [
             "",
-            "https://127.0.0.1:7447",
-            "http://localhost:7447",
-            "http://127.0.0.2:7447",
-            "http://0.0.0.0:7447",
-            "http://127.0.0.1:0",
-            "http://127.0.0.1:07447",
-            "http://user@127.0.0.1:7447",
-            "http://127.0.0.1:7447/",
-            "http://127.0.0.1:7447/v1",
-            "http://127.0.0.1:7447?x=1",
-            "http://127.0.0.1:7447#x",
+            "relative/control.sock",
+            "/tmp/./control.sock",
+            "/tmp/../control.sock",
+            "/tmp/lnsat/",
         ] {
             assert_eq!(
-                NumericLoopbackEndpointV1::parse(invalid),
-                Err(ProductClientErrorV1::EndpointInvalid),
-                "unexpected accepted endpoint: {invalid}"
+                UnixSocketEndpointV1::parse(invalid),
+                Err(ProductClientErrorV1::SocketPathInvalid),
+                "unexpected accepted socket path: {invalid}"
             );
         }
+        let oversized = format!("/{}", "x".repeat(crate::MAX_CONTROL_SOCKET_PATH_BYTES_V1));
+        assert_eq!(
+            UnixSocketEndpointV1::parse(oversized),
+            Err(ProductClientErrorV1::SocketPathInvalid)
+        );
     }
 
     #[test]
@@ -540,6 +549,16 @@ mod tests {
                     .expect("one token must parse")
                     .as_str(),
                 "opaque-token"
+            );
+        }
+        for newline in [b"\n".as_slice(), b"\r\n"] {
+            let mut input = vec![b'x'; MAX_SESSION_TOKEN_STDIN_BYTES_V1];
+            input.extend_from_slice(newline);
+            assert_eq!(
+                read_session_token_stdin_v1(&mut input.as_slice())
+                    .expect("maximum token plus one terminal newline must parse")
+                    .len(),
+                MAX_SESSION_TOKEN_STDIN_BYTES_V1
             );
         }
         for input in [
@@ -612,6 +631,7 @@ mod tests {
         for error in [
             ProductClientErrorV1::Unavailable,
             ProductClientErrorV1::TemporaryFailure,
+            ProductClientErrorV1::ServerIdentityRejected,
             ProductClientErrorV1::Authentication,
             ProductClientErrorV1::IncompatibleResponse,
         ] {

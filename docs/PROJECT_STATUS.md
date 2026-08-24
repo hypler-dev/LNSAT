@@ -863,18 +863,22 @@ P10-A2 adds closed contract `lnsat.daemon.config.v1` and
 `lnsatd --config <absolute-path>`. One explicit file must be regular,
 non-symlinked, UTF-8, at most 64 KiB, duplicate-key-free, and schema-closed. It
 may select only the existing database path, numeric-loopback listen address,
-paired disposable Phase 8 Git paths, and exact console-root asset manifest.
-Mixed direct/config input, unsafe paths/manifests, secret fields, and
-environment discovery fail closed. Existing direct daemon arguments remain
-compatible.
+optional authenticated CLI Unix-socket path, paired disposable Phase 8 Git
+paths, and exact console-root asset manifest. Mixed direct/config input, unsafe
+paths/manifests, secret fields, and environment discovery fail closed. Existing
+direct daemon arguments remain compatible.
 
 Current `lnsatctl` implements only source-local `doctor`, public-safe `config
 inspect`, exact read-only `recovery inspect`, authenticated `health`/`status`,
 stable text/JSON/JSONL/YAML, manifest, completion, man, help, and version.
-Health/status require an explicit numeric-loopback HTTP endpoint and one opaque
-session token from stdin; no default/remote/DNS/proxy/redirect/retry/discovery
-transport exists. Config inspection returns exact-byte SHA-256 and applied-layer
-evidence without path, address, or source-byte reflection. Recovery
+Health/status require one explicit macOS/Linux Unix-socket path and one opaque
+session token from stdin. Client proves private parent, socket mode/type/owner,
+stable inode identity, and peer effective UID before bearer transmission;
+daemon applies the equal-UID check to clients. Numeric-loopback HTTP remains
+browser/API transport but is closed for `lnsatctl` bearer reads. No
+default/remote/DNS/proxy/redirect/retry/discovery transport exists. Config
+inspection returns exact-byte SHA-256 and applied-layer evidence without path,
+address, or source-byte reflection. Recovery
 inspection reflects no raw path and performs no migration, repair, quarantine,
 credential change, or activation. Service install/start, offline recovery
 mutation, backup/restore, update, provider, and consequence commands remain

@@ -139,10 +139,12 @@ diagnostics, operator assets, and packet-inspection parity. P10-A2 adds one
 bounded explicit `lnsat.daemon.config.v1` file, `lnsatd --config`, public-safe
 digest/applied-layer inspection, and exact existing database/listen/Phase 8/
 console seams without selecting system, user, target, or package paths.
-P10-A3 now adds authenticated read-only health/status, explicit numeric-loopback
-client transport, stdin-only session-token intake, and stable
-text/JSON/JSONL/YAML. P10-A4 recovery/non-root/full parity and P10-X1 exit freeze
-remain before Phase 10 exit. Phase 11 remains closed.
+P10-A3 now adds authenticated read-only health/status, explicit macOS/Linux
+Unix-socket client transport with path and peer-UID proof before bearer
+transmission, stdin-only session-token intake, and stable text/JSON/JSONL/YAML.
+Numeric-loopback HTTP remains browser/API transport and is closed for
+`lnsatctl` bearer reads. P10-A4 recovery/non-root/full parity and P10-X1 exit
+freeze remain before Phase 10 exit. Phase 11 remains closed.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

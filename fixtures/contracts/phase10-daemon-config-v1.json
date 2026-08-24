@@ -4,6 +4,7 @@
   "schema_version": 1,
   "database_path": "/tmp/lnsat-phase10/configured.sqlite3",
   "listen_address": "127.0.0.1:7447",
+  "control_socket_path": "/tmp/lnsat-phase10/control/lnsatd.sock",
   "phase8_runtime": {
     "disposable_git_root": "/tmp/lnsat-phase10/disposable-git",
     "git_executable": "/usr/bin/git"

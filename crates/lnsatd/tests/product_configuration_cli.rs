@@ -27,6 +27,10 @@ fn exact_fixture_loads_all_existing_daemon_seams() {
     );
     assert_eq!(config.listen_address().to_string(), "127.0.0.1:7447");
     assert_eq!(
+        config.control_socket_path(),
+        Some(Path::new("/tmp/lnsat-phase10/control/lnsatd.sock"))
+    );
+    assert_eq!(
         config.disposable_git_root(),
         Some(Path::new("/tmp/lnsat-phase10/disposable-git"))
     );
@@ -38,9 +42,10 @@ fn exact_fixture_loads_all_existing_daemon_seams() {
     assert_eq!(config.internal_console_asset_manifest().len(), 2);
     assert_eq!(
         loaded.config_digest(),
-        "sha256:168580b8c453dd6ce157eadd4367d4b0c8fd18c86b12c671f2d01e2ca8743919"
+        "sha256:d2db022c2bb287396e05b857c0bdb51d78dba7fabdedadc50c32ec94fd4d3c8a"
     );
     assert!(loaded.phase8_runtime_configured());
+    assert!(loaded.control_socket_configured());
     assert!(loaded.console_manifest_configured());
     assert!(!String::from_utf8_lossy(CONFIG_FIXTURE).contains("secret"));
 }
@@ -293,6 +298,21 @@ fn values_fail_closed_for_paths_listener_runtime_and_console_manifest() {
 }
 
 #[test]
+fn control_socket_paths_reject_relative_and_dot_components() {
+    let directory = TestDirectory::new("invalid-control-socket");
+    let database = directory.path.join("daemon.sqlite3");
+    for (label, socket_path) in [
+        ("relative-control-socket", "relative/control.sock"),
+        ("dot-control-socket", "/tmp/lnsat/../control.sock"),
+    ] {
+        let mut value = minimal_config(&database);
+        value["control_socket_path"] = json!(socket_path);
+        let path = directory.write_json(label, &value);
+        assert!(load_daemon_config_v1(path).is_err(), "{label}");
+    }
+}
+
+#[test]
 fn file_boundary_rejects_missing_directory_symlink_non_utf8_and_oversize() {
     let directory = TestDirectory::new("file-boundary");
     assert_eq!(
@@ -364,6 +384,10 @@ fn config_inspection_reports_digest_layers_without_paths_or_runtime_effects() {
             .as_str()
             .expect("digest")
             .starts_with("sha256:")
+    );
+    assert_eq!(
+        evidence["configuration"]["control_socket_configured"],
+        false
     );
     assert_eq!(evidence["runtime_started"], false);
     assert_eq!(evidence["storage_opened"], false);
@@ -443,6 +467,7 @@ fn minimal_config(database_path: &Path) -> Value {
         "schema_version": 1,
         "database_path": database_path,
         "listen_address": "127.0.0.1:7447",
+        "control_socket_path": null,
         "phase8_runtime": null,
         "console": null
     })
