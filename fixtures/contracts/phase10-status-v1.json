@@ -12,14 +12,23 @@
   },
   "mutation_authority": false,
   "phase10": {
-    "implemented_packets": ["P10-A1", "P10-A2", "P10-A3"],
-    "next_packet": "P10-A4",
+    "implemented_packets": ["P10-A1", "P10-A2", "P10-A3", "P10-A4"],
+    "next_packet": "P10-X1",
     "phase11_open": false,
     "status": "in_progress"
   },
   "product_surface": {
-    "implemented": ["doctor", "config.inspect", "recovery.inspect", "health", "status"],
-    "reserved": ["recovery_mutation", "service", "update"]
+    "implemented": [
+      "doctor",
+      "config.inspect",
+      "recovery.inspect",
+      "backup",
+      "restore",
+      "recovery.owner",
+      "health",
+      "status"
+    ],
+    "reserved": ["recovery.activate", "service", "update"]
   },
   "readiness": {
     "daemon_reachable": true,

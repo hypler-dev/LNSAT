@@ -190,6 +190,11 @@ export {
 } from "./packet-inspection.js";
 
 export {
+  API_OFFLINE_RECOVERY_STATUS,
+  apiOfflineRecoveryPostureV1,
+} from "./offline-recovery-parity.js";
+
+export {
   API_GATEWAY_STATUS,
   registerAgentContextFirewallRoute,
   registerAdapterInvocationAuthorizationBundleRoute,

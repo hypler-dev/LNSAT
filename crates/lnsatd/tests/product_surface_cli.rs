@@ -1,10 +1,13 @@
 #![forbid(unsafe_code)]
 
-use lnsat_store::SqliteStore;
+use lnsat_store::{
+    LocalOwnerBootstrapInputV1, LocalSessionIssueInputV1, LocalSessionStoreErrorV1, SqliteStore,
+};
 use serde_json::Value;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
@@ -123,6 +126,170 @@ fn operator_recovery_inspection_is_read_only_and_does_not_reflect_path() {
 }
 
 #[test]
+fn offline_backup_and_inert_restore_create_fresh_verified_files_without_path_reflection() {
+    let directory = TestDirectory::new("backup-restore");
+    let database = directory.path.join("private-source.sqlite3");
+    let backup = directory.path.join("private-backup.sqlite3");
+    let restored = directory.path.join("private-restored.sqlite3");
+    SqliteStore::open(&database).expect("test database must open");
+
+    let backup_output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["backup", "--database"])
+        .arg(&database)
+        .args(["--destination"])
+        .arg(&backup)
+        .output()
+        .expect("lnsatctl backup must run");
+    assert!(backup_output.status.success());
+    assert!(backup_output.stderr.is_empty());
+    assert!(backup.is_file());
+    let backup_stdout = String::from_utf8(backup_output.stdout).expect("backup must be UTF-8");
+    assert!(!backup_stdout.contains("private-source"));
+    assert!(!backup_stdout.contains("private-backup"));
+    let backup_result: Value = serde_json::from_str(&backup_stdout).expect("backup must be JSON");
+    assert_eq!(backup_result["command"], "backup");
+    assert_eq!(backup_result["daemon_quiescence_proved"], true);
+    assert_eq!(backup_result["evidence"]["replaced_existing"], false);
+    assert_eq!(
+        backup_result["side_effects"],
+        serde_json::json!(["backup_snapshot_created"])
+    );
+
+    let restore_output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["restore", "--backup"])
+        .arg(&backup)
+        .args(["--destination"])
+        .arg(&restored)
+        .output()
+        .expect("lnsatctl restore must run");
+    assert!(restore_output.status.success());
+    assert!(restore_output.stderr.is_empty());
+    assert!(restored.is_file());
+    let restore_stdout = String::from_utf8(restore_output.stdout).expect("restore must be UTF-8");
+    assert!(!restore_stdout.contains("private-backup"));
+    assert!(!restore_stdout.contains("private-restored"));
+    let restore_result: Value =
+        serde_json::from_str(&restore_stdout).expect("restore must be JSON");
+    assert_eq!(restore_result["command"], "restore");
+    assert_eq!(restore_result["evidence"]["activated"], false);
+    assert_eq!(
+        restore_result["evidence"]["snapshot_sha256"],
+        backup_result["evidence"]["snapshot_sha256"]
+    );
+    assert_eq!(
+        restore_result["side_effects"],
+        serde_json::json!(["inert_restore_created"])
+    );
+    assert_eq!(
+        SqliteStore::inspect_recovery_state_v1(&restored)
+            .expect("restored database must inspect")
+            .disposition
+            .as_str(),
+        "ready"
+    );
+}
+
+#[test]
+fn offline_owner_recovery_reads_password_only_from_stdin_and_revokes_sessions() {
+    let directory = TestDirectory::new("owner-recovery");
+    let database = directory.path.join("private-owner.sqlite3");
+    let old_password = "correct horse battery staple";
+    let new_password = "replacement password remains private";
+    let mut store = SqliteStore::open(&database).expect("test database must open");
+    store
+        .bootstrap_local_owner_v1(&LocalOwnerBootstrapInputV1 {
+            identity_ref: "identity:human:owner",
+            display_name: "Local Owner",
+            password: old_password,
+            created_at: "2026-08-25T17:00:00Z",
+        })
+        .expect("owner must bootstrap");
+    store
+        .issue_local_session_v1(&LocalSessionIssueInputV1 {
+            identity_ref: "identity:human:owner",
+            password: old_password,
+            issued_at: "2026-08-25T17:01:00Z",
+            expires_at: "2026-08-25T17:31:00Z",
+        })
+        .expect("owner session must issue");
+    drop(store);
+
+    let mut child = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["recovery", "owner", "--database"])
+        .arg(&database)
+        .args([
+            "--expected-owner",
+            "identity:human:owner",
+            "--recovered-at",
+            "2026-08-25T17:02:00Z",
+            "--new-password-stdin",
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("lnsatctl owner recovery must spawn");
+    child
+        .stdin
+        .take()
+        .expect("stdin must pipe")
+        .write_all(format!("{new_password}\n").as_bytes())
+        .expect("password must write");
+    let output = child
+        .wait_with_output()
+        .expect("owner recovery must finish");
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let stdout = String::from_utf8(output.stdout).expect("owner recovery must be UTF-8");
+    assert!(!stdout.contains(old_password));
+    assert!(!stdout.contains(new_password));
+    assert!(!stdout.contains("private-owner"));
+    let result: Value = serde_json::from_str(&stdout).expect("owner recovery must be JSON");
+    assert_eq!(result["command"], "recovery.owner");
+    assert_eq!(result["secret_intake"], "protected_stdin");
+    assert_eq!(result["revoked_session_count"], 1);
+    assert_eq!(result["served_mutation"], false);
+
+    let mut reopened = SqliteStore::open(&database).expect("recovered store must reopen");
+    assert!(matches!(
+        reopened.issue_local_session_v1(&LocalSessionIssueInputV1 {
+            identity_ref: "identity:human:owner",
+            password: old_password,
+            issued_at: "2026-08-25T17:03:00Z",
+            expires_at: "2026-08-25T17:33:00Z",
+        }),
+        Err(LocalSessionStoreErrorV1::InvalidCredential)
+    ));
+    reopened
+        .issue_local_session_v1(&LocalSessionIssueInputV1 {
+            identity_ref: "identity:human:owner",
+            password: new_password,
+            issued_at: "2026-08-25T17:03:00Z",
+            expires_at: "2026-08-25T17:33:00Z",
+        })
+        .expect("replacement password must authenticate");
+
+    let forbidden_argument = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["recovery", "owner", "--database"])
+        .arg(&database)
+        .args([
+            "--expected-owner",
+            "identity:human:owner",
+            "--recovered-at",
+            "2026-08-25T17:04:00Z",
+            "--new-password",
+            "forbidden-secret-argument",
+        ])
+        .output()
+        .expect("forbidden password argument must run");
+    assert_eq!(forbidden_argument.status.code(), Some(2));
+    assert!(forbidden_argument.stdout.is_empty());
+    assert!(
+        !String::from_utf8_lossy(&forbidden_argument.stderr).contains("forbidden-secret-argument")
+    );
+}
+
+#[test]
 fn operator_invalid_arguments_use_stable_usage_family() {
     let output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
         .args(["service", "start"])
@@ -175,7 +342,7 @@ fn zsh_completion_per_binary_exact_surfaces() {
             "#compdef lnsatctl lnsat lnsatd\n",
             "case \"$service\" in\n",
             "  lnsatctl)\n",
-            "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+            "    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
             "    ;;\n",
             "  lnsat)\n",
             "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",

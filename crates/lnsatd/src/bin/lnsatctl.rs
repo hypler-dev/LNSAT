@@ -4,6 +4,11 @@ use lnsatd::product_config::load_daemon_config_v1;
 use lnsatd::product_output::{
     ProductOutputFormatV1, ProductSemanticResultV1, render_product_result_v1,
 };
+use lnsatd::product_recovery::{
+    ProductRecoveryErrorV1, create_offline_backup_output_json_v1, prepare_owner_recovery_v1,
+    read_recovery_password_stdin_v1, recover_prepared_owner_output_json_v1,
+    restore_inert_backup_output_json_v1,
+};
 use lnsatd::product_surface::{
     PRODUCT_SOURCE_VERSION_V1, ProductExitCodeV1, completion_source_v1,
     config_inspection_output_json_v1, doctor_output_json_v1, failure_output_json_v1,
@@ -101,6 +106,66 @@ fn main() -> ExitCode {
                     ProductExitCodeV1::UsageOrConfiguration,
                     format,
                 ),
+            }
+        }
+        [backup, database, database_path, destination, backup_path]
+            if backup == OsStr::new("backup")
+                && database == OsStr::new("--database")
+                && destination == OsStr::new("--destination") =>
+        {
+            match create_offline_backup_output_json_v1(
+                PathBuf::from(database_path),
+                PathBuf::from(backup_path),
+            ) {
+                Ok(output) => emit_json_success(&output, "backup", format),
+                Err(error) => emit_recovery_failure("backup", error, format),
+            }
+        }
+        [restore, backup, backup_path, destination, restored_path]
+            if restore == OsStr::new("restore")
+                && backup == OsStr::new("--backup")
+                && destination == OsStr::new("--destination") =>
+        {
+            match restore_inert_backup_output_json_v1(
+                PathBuf::from(backup_path),
+                PathBuf::from(restored_path),
+            ) {
+                Ok(output) => emit_json_success(&output, "restore", format),
+                Err(error) => emit_recovery_failure("restore", error, format),
+            }
+        }
+        [
+            recovery,
+            owner,
+            database,
+            database_path,
+            expected_owner,
+            owner_ref,
+            recovered_at,
+            timestamp,
+            password_stdin,
+        ] if recovery == OsStr::new("recovery")
+            && owner == OsStr::new("owner")
+            && database == OsStr::new("--database")
+            && expected_owner == OsStr::new("--expected-owner")
+            && recovered_at == OsStr::new("--recovered-at")
+            && password_stdin == OsStr::new("--new-password-stdin") =>
+        {
+            let (Some(owner_ref), Some(timestamp)) = (owner_ref.to_str(), timestamp.to_str())
+            else {
+                return invalid_arguments("recovery.owner", format);
+            };
+            let prepared = match prepare_owner_recovery_v1(PathBuf::from(database_path)) {
+                Ok(prepared) => prepared,
+                Err(error) => return emit_recovery_failure("recovery.owner", error, format),
+            };
+            let password = match read_recovery_password_stdin_v1(&mut io::stdin().lock()) {
+                Ok(password) => password,
+                Err(error) => return emit_recovery_failure("recovery.owner", error, format),
+            };
+            match recover_prepared_owner_output_json_v1(prepared, owner_ref, timestamp, &password) {
+                Ok(output) => emit_json_success(&output, "recovery.owner", format),
+                Err(error) => emit_recovery_failure("recovery.owner", error, format),
             }
         }
         [command, socket_option, socket_path, stdin_option]
@@ -213,6 +278,14 @@ fn emit_semantic_success(
 fn emit_client_failure(
     command: &str,
     error: ProductClientErrorV1,
+    format: ProductOutputFormatV1,
+) -> ExitCode {
+    emit_failure(command, error.code(), error.exit_code(), format)
+}
+
+fn emit_recovery_failure(
+    command: &str,
+    error: ProductRecoveryErrorV1,
     format: ProductOutputFormatV1,
 ) -> ExitCode {
     emit_failure(command, error.code(), error.exit_code(), format)

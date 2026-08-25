@@ -528,8 +528,11 @@ Status: P10-A1 target-neutral source contract spine, P10-A2 explicit-only
 health/status over a server-authenticated macOS/Linux Unix socket plus
 deterministic text/JSON/JSONL/YAML are implemented. Numeric-loopback HTTP
 remains browser/API transport and is not a CLI bearer lane.
-System/user paths remain unselected. P10-A4 recovery/non-root/full parity and
-P10-X1 exit freeze remain; Phase 10 is still in progress.
+P10-A4 non-root offline backup, fresh inert restore, and protected-stdin owner
+recovery are implemented with exclusive-lease preflight, credential/audit
+append, all-owner-session revocation, and exact API/MCP/UI unavailability
+parity. No served recovery or activation opens. System/user paths remain
+unselected. P10-X1 exit freeze remains; Phase 10 is still in progress.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.

@@ -8,7 +8,7 @@ describe("MCP status vocabulary", () => {
       /^MCP_[A-Z0-9_]+_STATUS$/u.test(name),
     );
 
-    expect(statuses).toHaveLength(57);
+    expect(statuses).toHaveLength(58);
     expect(statuses.every(([, value]) => value === "read_only")).toBe(true);
     expect(statuses.every(([, value]) => !/^bp-\d{4}/u.test(String(value)))).toBe(true);
   });

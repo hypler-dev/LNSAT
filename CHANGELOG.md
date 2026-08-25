@@ -52,14 +52,26 @@
   migration `0018`, key/provider work, release, publication, or deployment opens.
 - Added P10-A3 authenticated read-only `GET|HEAD /v1/health` and `/v1/status`
   while preserving unauthenticated `/healthz` bytes. New `lnsatctl`
-  health/status transport accepts only an explicit numeric IPv4/IPv6 loopback
-  HTTP endpoint and one opaque stdin session token, with bounded timeouts and
-  response caps, no proxy/DNS/redirect/retry/discovery/remote behavior, and no
-  secret reflection. Doctor, config/recovery inspection, health, and status now
-  share deterministic text/JSON/JSONL/YAML rendering; JSON remains compatible
-  default and manifest remains canonical JSON only. Only bounded session
-  activity evidence may change; mutation authority, P10-A4, P10-X1, Phase 11,
-  package, release, service, and deployment lanes remain closed.
+  health/status transport accepts only an explicit owner-controlled
+  macOS/Linux Unix socket and one opaque stdin session token. Client proves
+  private parent, socket type/mode/owner, stable inode identity, and peer
+  effective UID before bearer transmission. Bounded timeouts and response caps,
+  no TCP bearer/proxy/DNS/redirect/retry/discovery/remote behavior, and no
+  secret reflection apply. Doctor, config/recovery inspection, health, and
+  status now share deterministic text/JSON/JSONL/YAML rendering; JSON remains
+  compatible default and manifest remains canonical JSON only. Only bounded
+  session activity evidence may change; P10-X1, Phase 11, package, release,
+  service, and deployment lanes remain closed.
+- Added P10-A4 non-root offline `lnsatctl backup`, fresh inert `restore`, and
+  protected-stdin `recovery owner`. Backup and owner recovery prove daemon
+  quiescence through the shared exclusive database lease; owner recovery
+  preflights current schema and expected owner before password input, then
+  atomically appends credential/audit evidence and revokes every owner session.
+  Restore never overwrites or activates existing state. Daemon bind and offline
+  mutations refuse effective UID zero on macOS/Linux. Exact
+  `lnsat.operator_recovery.v1` parity keeps API routes, MCP tools, Control Center
+  actions, served recovery, activation, schema changes, production use,
+  deployment, and Phase 11 closed.
 - Added P7-X1 local-v1 source conformance freeze: one authenticated
   proposal-to-policy-to-local-approval-to-authorization-to-consume-to-disposable
   Git-receipt/reconciliation chain, inert backup/restore replay proof, 12-row

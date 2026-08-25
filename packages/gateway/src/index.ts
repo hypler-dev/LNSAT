@@ -20,3 +20,4 @@ export * from "./telemetry-contract.js";
 export * from "./workload-identity.js";
 export * from "./registry-supply-chain.js";
 export * from "./control-center-readback.js";
+export * from "./offline-recovery-parity.js";

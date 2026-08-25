@@ -18,7 +18,7 @@ describe("Gateway source status vocabulary", () => {
       ([name]) => name !== projectStateStatusName,
     );
 
-    expect(supportedStatusEntries).toHaveLength(35);
+    expect(supportedStatusEntries).toHaveLength(36);
     expect(
       supportedStatusEntries.every(([, value]) =>
         ["contract_only", "local_only", "read_only"].includes(value),

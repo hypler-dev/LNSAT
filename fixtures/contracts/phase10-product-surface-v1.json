@@ -22,13 +22,16 @@
         "status",
         "config inspect",
         "recovery inspect",
+        "backup",
+        "restore",
+        "recovery owner",
         "manifest",
         "completion",
         "man",
         "help",
         "version"
       ],
-      "authority_boundary": "read_only_source_commands"
+      "authority_boundary": "read_only_and_offline_recovery_source_commands"
     },
     "lnsat": {
       "audience": "user_agent_script_developer",
@@ -71,9 +74,7 @@
       "module",
       "model",
       "service",
-      "backup",
-      "restore",
-      "recovery mutate",
+      "recovery activate",
       "update",
       "audit",
       "emergency-disable"
@@ -167,9 +168,16 @@
   },
   "recovery": {
     "inspect": "implemented_read_only",
-    "backup": "reserved_not_exposed",
-    "restore": "reserved_not_exposed",
-    "owner_recovery": "reserved_not_exposed",
+    "contract": "lnsat.operator_recovery.v1",
+    "backup": "implemented_offline",
+    "restore": "implemented_inert",
+    "owner_recovery": "implemented_offline_protected_stdin",
+    "daemon_quiescence": "exclusive_database_lease",
+    "existing_file_replacement": false,
+    "path_reflection": false,
+    "api": "unavailable",
+    "mcp": "unavailable",
+    "ui_action": "unavailable",
     "served_mutation": false,
     "automatic_activation": false
   },
@@ -195,6 +203,10 @@
   },
   "non_root": {
     "runtime_required": true,
+    "runtime_enforced": true,
+    "offline_recovery_enforced": true,
+    "effective_uid_zero": "refused",
+    "implemented_targets": ["linux", "macos"],
     "automatic_privilege_escalation": false,
     "target_lifecycle_proof_owner": "phase14"
   },
