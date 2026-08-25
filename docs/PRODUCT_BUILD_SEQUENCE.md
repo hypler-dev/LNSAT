@@ -67,7 +67,7 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 | 7     | P7-X1 source conformance complete                      | preserve Phase 7 authority-chain and disposable-target invariants                    |
 | 8     | bounded loopback runtime composition merged            | preserve exact routes, one-attempt evidence, and production-unsupported boundary     |
 | 9     | authenticated exact-ID Control Center readback exists  | preserve live/fixture separation and fail-closed ambiguity mapping                   |
-| 10    | P10-A1 through P10-A4 implemented                      | complete P10-X1 conformance and compatibility exit freeze                            |
+| 10    | P10-X1 source conformance complete                     | preserve product-surface compatibility and Phase 14 lifecycle ownership              |
 | 11    | source-only disposable Git proof exists                | prove served local reference workflow without production repository authority        |
 | 12    | optional post-local-v1 lane                            | none unless selected support profile requires it                                     |
 | 13    | planned                                                | complete reliability, security, recovery, update/revocation, and RC-source freeze    |
@@ -133,8 +133,8 @@ support profile makes it required.
 
 ## Current Next Lane
 
-Next required lane remains **Phase 10 product-surface stabilization**. P10-A1
-implements the target-neutral source manifest, stable exit families, JSON
+Phase 10 product-surface stabilization is complete at source-conformance level.
+P10-A1 implements the target-neutral source manifest, stable exit families, JSON
 diagnostics, operator assets, and packet-inspection parity. P10-A2 adds one
 bounded explicit `lnsat.daemon.config.v1` file, `lnsatd --config`, public-safe
 digest/applied-layer inspection, and exact existing database/listen/Phase 8/
@@ -147,8 +147,9 @@ Numeric-loopback HTTP remains browser/API transport and is closed for
 restore, and protected-stdin owner recovery with exclusive-lease preflight,
 credential/audit append, and all-owner-session revocation. Exact parity keeps
 API routes, MCP tools, Control Center actions, served mutation, and activation
-unavailable. P10-X1 exit freeze remains before Phase 10 exit. Phase 11 remains
-closed.
+unavailable. P10-X1 now freezes 13 evidence rows, 13 required negatives, and
+eight compatibility guarantees. Phase 11 is next in required sequence but
+remains closed until separately authorized.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

@@ -72,6 +72,13 @@
   `lnsat.operator_recovery.v1` parity keeps API routes, MCP tools, Control Center
   actions, served recovery, activation, schema changes, production use,
   deployment, and Phase 11 closed.
+- Added P10-X1 Phase 10 product-surface conformance freeze: 13 exact evidence
+  rows, 13 required negatives, eight compatibility guarantees, fail-closed
+  fixture validation, and full Rust product-surface proof. Daemon status now
+  reports Phase 10 complete through P10-X1 while `next_packet` remains
+  `none_authorized` and Phase 11 remains closed. Target/package lifecycle,
+  supported artifacts, install/service, schema, deployment, production use,
+  and later-phase implementation remain unopened.
 - Added P7-X1 local-v1 source conformance freeze: one authenticated
   proposal-to-policy-to-local-approval-to-authorization-to-consume-to-disposable
   Git-receipt/reconciliation chain, inert backup/restore replay proof, 12-row

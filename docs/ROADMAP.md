@@ -532,7 +532,9 @@ P10-A4 non-root offline backup, fresh inert restore, and protected-stdin owner
 recovery are implemented with exclusive-lease preflight, credential/audit
 append, all-owner-session revocation, and exact API/MCP/UI unavailability
 parity. No served recovery or activation opens. System/user paths remain
-unselected. P10-X1 exit freeze remains; Phase 10 is still in progress.
+unselected. P10-X1 source conformance passes with 13 evidence rows, 13 required
+negatives, and eight compatibility guarantees. Phase 10 is complete at
+source-conformance level; Phase 11 remains closed pending separate authority.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.

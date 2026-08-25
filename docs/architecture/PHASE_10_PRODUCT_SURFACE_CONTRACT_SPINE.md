@@ -1,9 +1,9 @@
 # Phase 10 Product-Surface Contract Spine
 
-- Status: experimental source implementation; Phase 10 remains in progress
+- Status: experimental source implementation; Phase 10 source conformance complete
 - Gates: `P10_A1_PRODUCT_SURFACE_CONTRACT_SPINE`,
   `P10_A2_EXPLICIT_CONFIGURATION`, `P10_A3_STATUS_HEALTH_OUTPUT`,
-  `P10_A4_RECOVERY_NON_ROOT_PARITY`
+  `P10_A4_RECOVERY_NON_ROOT_PARITY`, `P10_X1_PRODUCT_SURFACE_CONFORMANCE`
 - Runtime effect: explicit configuration loading, authenticated read-only local
   health/status, operator configuration/recovery inspection, and explicit
   offline local backup, inert restore, and owner-password recovery
@@ -73,7 +73,7 @@ stdin, non-root refusal, no-clobber restore, and closed activation/served lanes.
 
 ## Current Source Truth
 
-| Surface          | Implemented source                                                                                                                                                                                                                          | Remaining Phase 10 work                                                                             |
+| Surface          | Implemented source                                                                                                                                                                                                                          | Later separately owned work                                                                         |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `lnsatd`         | direct/config arguments, non-root macOS/Linux bind enforcement, loopback Gateway bind, optional authenticated Unix control socket, preserved `/healthz`, read-only `/v1/health` and `/v1/status`, public-safe errors, help/version/manifest | selected user/system paths and target lifecycle proof in Phase 14                                   |
 | `lnsatctl`       | `doctor`, server-authenticated Unix-socket `health`/`status`, config/recovery inspection, offline backup, inert restore, offline owner recovery, text/JSON/JSONL/YAML, manifest, completion, man, help, version                             | service/update/audit commands only after their owning authority gates                               |
@@ -91,6 +91,9 @@ stdin, non-root refusal, no-clobber restore, and closed activation/served lanes.
 ## Source Ownership
 
 - `fixtures/contracts/phase10-product-surface-v1.json` owns canonical manifest.
+- `fixtures/contracts/phase10-product-surface-conformance-v1.json` and
+  `scripts/check-phase10-product-surface-conformance.mjs` own P10-X1 exit
+  evidence and fail-closed validation.
 - `fixtures/contracts/phase10-daemon-config-v1.json` owns canonical explicit
   configuration fixture.
 - `crates/lnsatd/src/product_config.rs` owns bounded file loading, recursive
@@ -245,20 +248,19 @@ applicable. Served consequential commands remain unavailable in this packet.
 - focused TypeScript typecheck/tests and Rust format/clippy/tests;
 - repository-wide `npm run check` and `npm run public:check` before delivery.
 
-## Remaining Phase 10 Gates
+## Phase 10 Exit
 
-P10-A1 through P10-A4 do not complete Phase 10. Remaining bounded gate is:
+P10-X1 completes target-neutral Phase 10 source conformance. Its closed ledger
+proves all required product surfaces and compatibility negatives while keeping
+target/package lifecycle proof in Phase 14. See the
+[Phase 10 product-surface conformance freeze](PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md).
 
-1. **P10-X1 exit freeze:** one exact Phase 10 conformance and compatibility
-   freeze proving all required product surfaces while keeping target/package
-   lifecycle proof in Phase 14.
-
-Phase 11 remains closed until Phase 10 exit evidence passes. Required sequence
+Phase 11 remains closed and requires separate authorization. Required sequence
 remains Phase 10 -> Phase 11 -> Phase 13 -> Phase 14; Phase 12 remains optional.
 
 ## Hard Stops
 
-P10-A1/P10-A2/P10-A3/P10-A4 grant no served recovery mutation, recovery
+P10-A1/P10-A2/P10-A3/P10-A4/P10-X1 grant no served recovery mutation, recovery
 activation, production/user-repository consequence, schema change, migration
 `0018`, key/provider work, package or supported-binary claim, filesystem
 installation, service registration/start, tag, release, publication,
