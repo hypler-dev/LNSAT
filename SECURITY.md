@@ -123,11 +123,19 @@ deployment remain unimplemented and unsupported.
 
 ## Public Development Security
 
-Public development does not weaken review or release boundaries. Protected
-`main` changes require a pull request, configured source checks, an eligible
-independent approval, and resolved review conversations. Green CI is evidence,
-not merge authority. Maintainers do not bypass branch protection, force-push
-protected history, or treat repository visibility as release approval.
+Public development does not weaken source or release boundaries. Protected
+`main` changes require a pull request, strict configured source checks, and
+resolved review conversations. Required approval count is zero so a sole
+maintainer can integrate an owner-authored pull request after its checks pass;
+contributor pull requests remain maintainer-controlled through repository write
+permissions. Independent review is requested when an eligible reviewer exists
+and remains mandatory for any later packet that explicitly requires independent
+evidence, but its absence does not deadlock ordinary pre-release source work.
+
+Green CI satisfies the source-check gate; it does not create release,
+publication, deployment, or production authority. Maintainers do not bypass
+required status checks, force-push protected history, or treat repository
+visibility as release approval.
 
 GitHub-hosted settings live outside this source tree and must be reverified at
 each consequential gate. At this document update, the public repository has
