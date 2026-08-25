@@ -523,9 +523,13 @@ operator, and request layers. An authority-managed emergency stop dominates
 lower-precedence configuration and survives reload/restart; served stop/resume
 mutation remains unopened.
 
-Status: P10-A1 target-neutral source contract spine is implemented. Supported
-daemon, operator CLI, dispatcher, configuration/path, recovery, and service
-contracts remain incomplete; Phase 10 is still in progress.
+Status: P10-A1 target-neutral source contract spine, P10-A2 explicit-only
+`lnsat.daemon.config.v1` loading/path evidence, and P10-A3 authenticated local
+health/status over a server-authenticated macOS/Linux Unix socket plus
+deterministic text/JSON/JSONL/YAML are implemented. Numeric-loopback HTTP
+remains browser/API transport and is not a CLI bearer lane.
+System/user paths remain unselected. P10-A4 recovery/non-root/full parity and
+P10-X1 exit freeze remain; Phase 10 is still in progress.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.

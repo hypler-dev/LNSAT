@@ -45,6 +45,7 @@
     "identity:observability:test": "npm run build -w @lnsat/gateway && npm run test:identity-observability -w @lnsat/gateway",
     "audit:migrations:check": "node scripts/check-audit-ledger-migrations.mjs",
     "audit:dependencies:check": "node scripts/check-npm-audit.mjs",
+    "audit:signatures:check": "node scripts/check-npm-audit.mjs --signatures",
     "audit:dependencies:test": "node --test scripts/npm-audit-rules.test.mjs",
     "a2a:contract:test": "npm run build -w @lnsat/gateway && npm run test:a2a-contract -w @lnsat/gateway",
     "public:check": "node --test scripts/public-readiness-rules.test.mjs && node scripts/check-public-readiness.mjs",
@@ -93,7 +94,20 @@
     "typecheck:workspaces": "npm run build:contracts && npm run typecheck --workspaces --if-present"
   },
   "engines": {
-    "node": ">=22"
+    "node": "22.22.3",
+    "npm": "10.9.8"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "22.22.3",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": "10.9.8",
+      "onFail": "error"
+    }
   },
   "devDependencies": {
     "prettier": "^3.5.3",

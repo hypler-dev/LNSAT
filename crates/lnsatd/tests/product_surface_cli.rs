@@ -43,6 +43,62 @@ fn operator_doctor_is_machine_readable_and_side_effect_free() {
 }
 
 #[test]
+fn shared_output_formats_preserve_default_json_and_exact_position() {
+    let default_json = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .arg("doctor")
+        .output()
+        .expect("default doctor must run");
+    let selected_json = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["doctor", "--output", "json"])
+        .output()
+        .expect("selected JSON doctor must run");
+    let jsonl = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["doctor", "--output", "jsonl"])
+        .output()
+        .expect("JSONL doctor must run");
+    assert!(default_json.status.success());
+    assert_eq!(default_json.stdout, selected_json.stdout);
+    assert_eq!(default_json.stdout, jsonl.stdout);
+
+    let text = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["doctor", "--output", "text"])
+        .output()
+        .expect("text doctor must run");
+    assert!(text.status.success());
+    let text = String::from_utf8(text.stdout).expect("text must be UTF-8");
+    assert!(text.starts_with("command=doctor\n"));
+    assert!(text.contains("configuration.ambient_environment_used=false\n"));
+    assert!(text.contains("side_effects=[]\n"));
+    assert!(text.ends_with("source_version=0.1.0\n"));
+
+    let yaml = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["doctor", "--output", "yaml"])
+        .output()
+        .expect("YAML doctor must run");
+    assert!(yaml.status.success());
+    let yaml = String::from_utf8(yaml.stdout).expect("YAML must be UTF-8");
+    assert!(yaml.starts_with("command: \"doctor\"\n"));
+    assert!(yaml.contains("ambient_environment_used: false\n"));
+    assert!(!yaml.contains("---"));
+
+    for arguments in [
+        vec!["doctor", "--output"],
+        vec!["doctor", "--output", "toml"],
+        vec!["doctor", "--output", "json", "extra"],
+        vec!["doctor", "--output", "text", "--output", "yaml"],
+        vec!["manifest", "--output", "json"],
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("invalid output arguments must run");
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stdout.is_empty());
+        assert!(!output.stderr.is_empty());
+    }
+}
+
+#[test]
 fn operator_recovery_inspection_is_read_only_and_does_not_reflect_path() {
     let directory = TestDirectory::new("recovery-inspect");
     let database = directory.path.join("private-operator-name.sqlite3");
@@ -102,5 +158,45 @@ impl TestDirectory {
 impl Drop for TestDirectory {
     fn drop(&mut self) {
         let _ = fs::remove_dir_all(&self.path);
+    }
+}
+
+#[test]
+fn zsh_completion_per_binary_exact_surfaces() {
+    let output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["completion", "zsh"])
+        .output()
+        .expect("lnsatctl completion zsh must run");
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("zsh completion must be UTF-8"),
+        concat!(
+            "#compdef lnsatctl lnsat lnsatd\n",
+            "case \"$service\" in\n",
+            "  lnsatctl)\n",
+            "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+            "    ;;\n",
+            "  lnsat)\n",
+            "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",
+            "    ;;\n",
+            "  lnsatd)\n",
+            "    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n",
+            "    ;;\n",
+            "esac\n",
+        )
+    );
+
+    // Bash and fish remain intact.
+    for shell in ["bash", "fish"] {
+        let out = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["completion", shell])
+            .output()
+            .expect("completion must run");
+        assert!(out.status.success());
+        let text = String::from_utf8(out.stdout).expect("must be UTF-8");
+        assert!(text.contains("lnsatctl"));
+        assert!(text.contains("lnsat"));
+        assert!(text.contains("lnsatd"));
     }
 }

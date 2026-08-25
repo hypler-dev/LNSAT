@@ -5,6 +5,11 @@ Source-only loopback daemon foundation for one local LNSAT deployment.
 Current behavior:
 
 - requires an explicit file-backed SQLite path;
+- accepts either existing direct daemon arguments or one
+  `--config <absolute-path>` using closed `lnsat.daemon.config.v1`;
+- bounds explicit configuration to one regular, non-symlinked UTF-8 JSON file
+  of at most 64 KiB, rejects recursive duplicate/unknown keys, and reads no
+  environment configuration or secret fields;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before
@@ -14,6 +19,12 @@ Current behavior:
 - accepts only numeric loopback addresses and rejects port zero;
 - serves at most eight bounded requests concurrently;
 - exposes readiness at `GET /healthz`;
+- preserves unauthenticated `GET /healthz` bytes and adds authenticated,
+  read-only `GET|HEAD /v1/health` and `GET|HEAD /v1/status` for active
+  owner/operator/auditor sessions with `ReadEvidence`; both use exact Host,
+  contract-version, same-origin fetch metadata, and existing session-cookie
+  transport, expose no identity or target data, grant no mutation authority,
+  and declare only `session_activity_evidence_may_append`;
 - exposes static loopback `GET|HEAD /v1` contract negotiation requiring one
   exact `LNSAT-Contract-Version: lnsat.contracts.v1_0` header, with no
   downgrade, storage access, side effect, or authority;
@@ -98,13 +109,21 @@ Current behavior:
   peers;
 - never reflects request bytes or configured paths in errors.
 
-This crate also contains experimental `lnsatctl` source for `doctor`, read-only
-`recovery inspect`, manifest, completion, man, help, and version. It does not
-reflect inspected database paths or expose recovery mutation, service install,
-service start, `sudo`, or automatic privilege escalation.
+This crate also contains experimental `lnsatctl` source for `doctor`,
+authenticated `health`/`status`, public-safe `config inspect`, read-only
+`recovery inspect`, manifest, completion, man, help, and version. Health/status
+require one explicit `http://127.0.0.1:<port>` or `http://[::1]:<port>` endpoint
+and one opaque session token from stdin. Transport uses no proxy environment,
+DNS, hostname, redirect, retry, discovery, TLS, remote target, or secret
+argument. Read-only commands share deterministic `text|json|jsonl|yaml` output;
+JSON remains default and manifest remains canonical JSON only. Config
+inspection returns exact-byte SHA-256 and applied-layer evidence without raw
+paths or source bytes. No recovery mutation, service install/start, `sudo`, or
+automatic privilege escalation is exposed.
 
 This crate exposes stable source-level `/v1` negotiation and authenticated
-`POST|GET|HEAD|PATCH|DELETE /v1/session` plus
+`POST|GET|HEAD|PATCH|DELETE /v1/session`, authenticated read-only
+`GET|HEAD /v1/health` and `GET|HEAD /v1/status`, plus
 `PATCH /v1/identity/password`, owner-only `POST /v1/identities`, and owner-only
 `DELETE /v1/identities/{identity_ref}` disablement with
 `lnsat.gateway.identity_disablement.v1_0`, authenticated
@@ -125,14 +144,17 @@ Developer invocation:
 
 ```sh
 cargo run -p lnsatd -- --database ./local-state/lnsat.sqlite3
+cargo run -p lnsatd -- --config /absolute/path/to/lnsatd.json
 ```
 
 Parent directory must already exist. The source binary is not a published or
 supported artifact.
 
-Phase 10 P10-A1 establishes a target-neutral contract spine; full daemon,
-operator, configuration, recovery, and client stabilization remains incomplete.
-Current source does not install, daemonize,
+Phase 10 P10-A1 establishes a target-neutral contract spine, P10-A2 adds
+explicit-only configuration/path evidence, and P10-A3 adds authenticated local
+health/status plus stable output formats. System/user paths, P10-A4
+recovery/non-root/parity, and P10-X1 exit freeze remain
+incomplete. Current source does not install, daemonize,
 register, or automatically start an OS service. See
 [CLI and OS operator interface](../../docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
 and [Phase 14 distribution](../../docs/architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md).

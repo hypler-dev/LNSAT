@@ -58,20 +58,20 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 
 ## Current Build Position
 
-| Phase | Current truth                                          | Remaining release blocker                                                            |
-| ----- | ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| 1-3   | source and deterministic-contract foundations complete | preserve public/source and TS/Rust conformance gates                                 |
-| 4     | source checkpoint complete                             | packaged lifecycle proof belongs to Phase 14                                         |
-| 5     | source-local exit complete                             | preserve auth/session/approval security gates                                        |
-| 6     | source exit complete                                   | supported runtime claim remains closed                                               |
-| 7     | P7-X1 source conformance complete                      | preserve Phase 7 authority-chain and disposable-target invariants                    |
-| 8     | bounded loopback runtime composition merged            | preserve exact routes, one-attempt evidence, and production-unsupported boundary     |
-| 9     | authenticated exact-ID Control Center readback exists  | preserve live/fixture separation and fail-closed ambiguity mapping                   |
-| 10    | P10-A1 target-neutral contract spine implemented       | finish config/path, transport/output, recovery, non-root, and full parity contracts  |
-| 11    | source-only disposable Git proof exists                | prove served local reference workflow without production repository authority        |
-| 12    | optional post-local-v1 lane                            | none unless selected support profile requires it                                     |
-| 13    | planned                                                | complete reliability, security, recovery, update/revocation, and RC-source freeze    |
-| 14    | blocked; no support row selected; no artifacts         | build and prove only selected target/package rows after required product phases pass |
+| Phase | Current truth                                                    | Remaining release blocker                                                            |
+| ----- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 1-3   | source and deterministic-contract foundations complete           | preserve public/source and TS/Rust conformance gates                                 |
+| 4     | source checkpoint complete                                       | packaged lifecycle proof belongs to Phase 14                                         |
+| 5     | source-local exit complete                                       | preserve auth/session/approval security gates                                        |
+| 6     | source exit complete                                             | supported runtime claim remains closed                                               |
+| 7     | P7-X1 source conformance complete                                | preserve Phase 7 authority-chain and disposable-target invariants                    |
+| 8     | bounded loopback runtime composition merged                      | preserve exact routes, one-attempt evidence, and production-unsupported boundary     |
+| 9     | authenticated exact-ID Control Center readback exists            | preserve live/fixture separation and fail-closed ambiguity mapping                   |
+| 10    | P10-A1 spine, P10-A2 config, P10-A3 transport/output implemented | finish recovery, non-root, and full parity contracts                                 |
+| 11    | source-only disposable Git proof exists                          | prove served local reference workflow without production repository authority        |
+| 12    | optional post-local-v1 lane                                      | none unless selected support profile requires it                                     |
+| 13    | planned                                                          | complete reliability, security, recovery, update/revocation, and RC-source freeze    |
+| 14    | blocked; no support row selected; no artifacts                   | build and prove only selected target/package rows after required product phases pass |
 
 No current package, binary, container, installer, supported runtime, or
 published release artifact exists.
@@ -135,12 +135,16 @@ support profile makes it required.
 
 Next required lane remains **Phase 10 product-surface stabilization**. P10-A1
 implements the target-neutral source manifest, stable exit families, JSON
-diagnostics, `lnsatctl` doctor/read-only recovery inspection, dispatcher
-help/version/manifest, generated completion/man source, and packet-inspection
-CLI/API/MCP/UI projection parity. Operational config loading, selected path
-behavior, authenticated status/health, additional output formats, offline
-recovery commands, non-root enforcement proof, and full new-command parity
-remain before Phase 10 exit. Phase 11 remains closed.
+diagnostics, operator assets, and packet-inspection parity. P10-A2 adds one
+bounded explicit `lnsat.daemon.config.v1` file, `lnsatd --config`, public-safe
+digest/applied-layer inspection, and exact existing database/listen/Phase 8/
+console seams without selecting system, user, target, or package paths.
+P10-A3 now adds authenticated read-only health/status, explicit macOS/Linux
+Unix-socket client transport with path and peer-UID proof before bearer
+transmission, stdin-only session-token intake, and stable text/JSON/JSONL/YAML.
+Numeric-loopback HTTP remains browser/API transport and is closed for
+`lnsatctl` bearer reads. P10-A4 recovery/non-root/full parity and P10-X1 exit
+freeze remain before Phase 10 exit. Phase 11 remains closed.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

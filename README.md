@@ -223,6 +223,40 @@ replace them.
 Transport, framework, runtime, and policy metadata may inform a decision, but
 none can grant approval or widen authority by itself.
 
+Current build position: Phase 8 bounded runtime composition and Phase 9
+authenticated, exact-ID Control Center readback are implemented as experimental
+source. Phase 10 P10-A1 product-surface spine, P10-A2 explicit configuration,
+and P10-A3 authenticated local health/status transport plus stable operator
+output formats are implemented; Phase 10 remains in progress. Required path is Phase 8 -> Phase 9
+-> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
+binaries and packages come only after required product/runtime work and
+release-candidate source freeze. See
+[product build sequence](docs/PRODUCT_BUILD_SEQUENCE.md).
+
+## Repository Map
+
+```text
+apps/api               Gateway inspection and loopback control-plane source
+apps/console           Read-only live Gateway evidence plus separate synthetic fixtures
+packages/gateway       Transport-neutral inspection, recovery, identity, and interop contracts
+packages/packets       Versioned packet and governance contracts
+packages/policy        Policy decisions and approval gates
+packages/audit         Audit contracts and PostgreSQL writer foundation
+packages/mcp           Read-only dual-era MCP stdio and stateless HTTP-handler source
+packages/cli           Current lnsat dispatcher and packet CLI source
+packages/core          Product identity and shared source constants
+crates/lnsat-contracts Minimal Rust contract crate
+crates/lnsat-auth      Versioned local credential foundation
+crates/lnsat-store     Embedded SQLite durability foundation
+crates/lnsatd          Loopback-only Rust lnsatd plus sibling source-only lnsatctl diagnostics
+fixtures               Synthetic public and cross-language fixtures
+interop                Pinned third-party compatibility harnesses
+docs                   Architecture, SDK, development, and project guidance
+```
+
+Website and management-product source live outside this repository. This
+repository contains LNSAT product source only.
+
 ## Product Ecosystem
 
 This repository contains the Apache-2.0 authority core. Future management

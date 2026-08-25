@@ -1,0 +1,16 @@
+{
+  "bind_scope": "loopback",
+  "contract": "lnsat.daemon.health.v1",
+  "contract_version": "lnsat.contracts.v1_0",
+  "daemon_reachable": true,
+  "mutation_authority": false,
+  "request_authenticated": true,
+  "side_effects": ["session_activity_evidence_may_append"],
+  "storage": {
+    "integrity_ok": true,
+    "migration_count": 17,
+    "schema_current": true,
+    "schema_version": 17,
+    "status": "ready"
+  }
+}

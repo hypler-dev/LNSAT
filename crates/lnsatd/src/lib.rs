@@ -2,7 +2,12 @@
 
 //! Fail-closed loopback daemon foundation for one local LNSAT deployment.
 
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+mod local_unix_socket;
+pub mod product_config;
+pub mod product_output;
 pub mod product_surface;
+pub mod product_transport;
 
 use lnsat_auth::{
     LOCAL_CSRF_HEADER_NAME_V1, LocalBrowserAuthTransportV1, LocalBrowserOriginV1,
@@ -58,6 +63,28 @@ use zeroize::{Zeroize, Zeroizing};
 pub const DEFAULT_LISTEN_ADDRESS_V1: SocketAddr =
     SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 7447);
 
+/// Cross-target maximum UTF-8 bytes accepted for one explicit Unix-socket path.
+pub const MAX_CONTROL_SOCKET_PATH_BYTES_V1: usize = 100;
+
+pub(crate) fn valid_control_socket_path_v1(path: &Path) -> bool {
+    let Some(text) = path.to_str() else {
+        return false;
+    };
+    !text.is_empty()
+        && text.len() <= MAX_CONTROL_SOCKET_PATH_BYTES_V1
+        && !text.as_bytes().contains(&0)
+        && !text.ends_with('/')
+        && !text.contains("//")
+        && !text
+            .split('/')
+            .any(|component| matches!(component, "." | ".."))
+        && path.is_absolute()
+        && path
+            .components()
+            .all(|component| matches!(component, Component::RootDir | Component::Normal(_)))
+        && path.file_name().is_some()
+}
+
 /// Maximum request-head bytes accepted by the source-local HTTP surface.
 pub const MAX_REQUEST_HEAD_BYTES_V1: usize = 8 * 1024;
 
@@ -80,8 +107,14 @@ const MAX_HEADER_COUNT_V1: usize = 64;
 const CONNECTION_TIMEOUT_V1: Duration = Duration::from_secs(5);
 const OVERLOAD_TIMEOUT_V1: Duration = Duration::from_millis(100);
 const SHUTDOWN_WAKE_TIMEOUT_V1: Duration = Duration::from_millis(250);
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+const CONTROL_ACCEPT_POLL_INTERVAL_V1: Duration = Duration::from_millis(10);
 const READINESS_PATH_V1: &str = "/healthz";
 const READINESS_CONTRACT_V1: &str = "lnsat.daemon.readiness.v1_0";
+const AUTHENTICATED_HEALTH_PATH_V1: &str = "/v1/health";
+const AUTHENTICATED_STATUS_PATH_V1: &str = "/v1/status";
+const AUTHENTICATED_PRODUCT_READ_DENIAL_CONTRACT_V1: &str = "lnsat.daemon.authenticated_read.v1";
+const AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1: &str = "lnsatd.authenticated_read.denied";
 const GATEWAY_ROOT_PATH_V1: &str = "/v1";
 const GATEWAY_NEGOTIATION_CONTRACT_V1: &str = "lnsat.gateway.negotiation.v1_0";
 /// Exact request and response header carrying stable Gateway wire-contract identity.
@@ -1245,6 +1278,7 @@ fn civil_date_from_unix_days_v1(days: u64) -> Option<(u64, u64, u64)> {
 pub struct DaemonConfigV1 {
     database_path: PathBuf,
     listen_address: SocketAddr,
+    control_socket_path: Option<PathBuf>,
     disposable_git_root: Option<PathBuf>,
     git_executable: Option<PathBuf>,
     internal_console_root: Option<PathBuf>,
@@ -1292,11 +1326,30 @@ impl DaemonConfigV1 {
         Ok(Self {
             database_path: database_path.to_path_buf(),
             listen_address,
+            control_socket_path: None,
             disposable_git_root: None,
             git_executable: None,
             internal_console_root: None,
             internal_console_asset_manifest: BTreeMap::new(),
         })
+    }
+
+    /// Enables one explicit macOS/Linux Unix socket for authenticated CLI reads.
+    ///
+    /// # Errors
+    ///
+    /// Rejects empty, relative, oversized, non-UTF-8, dot-component, or
+    /// trailing-separator paths without inspecting filesystem state.
+    pub fn with_control_socket_path(
+        mut self,
+        control_socket_path: impl AsRef<Path>,
+    ) -> Result<Self, DaemonErrorV1> {
+        let control_socket_path = control_socket_path.as_ref();
+        if !valid_control_socket_path_v1(control_socket_path) {
+            return Err(DaemonErrorV1::InvalidControlSocketPath);
+        }
+        self.control_socket_path = Some(control_socket_path.to_path_buf());
+        Ok(self)
     }
 
     /// Enables frozen Phase 8 runtime routes for one configured disposable
@@ -1369,6 +1422,12 @@ impl DaemonConfigV1 {
         self.listen_address
     }
 
+    /// Returns explicit authenticated CLI Unix-socket path when configured.
+    #[must_use]
+    pub fn control_socket_path(&self) -> Option<&Path> {
+        self.control_socket_path.as_deref()
+    }
+
     /// Returns configured disposable Git root when runtime composition is enabled.
     #[must_use]
     pub fn disposable_git_root(&self) -> Option<&Path> {
@@ -1426,8 +1485,22 @@ pub enum DaemonErrorV1 {
     InvalidArguments,
     /// A command-line option was missing its value.
     ArgumentValueRequired,
+    /// Explicit configuration path was not absolute.
+    InvalidConfigPath,
+    /// Explicit configuration file or contract was unsafe or invalid.
+    InvalidConfigFile,
+    /// Explicit configuration file exceeded its fixed byte bound.
+    ConfigFileTooLarge,
     /// Listen address was not one numeric socket address.
     InvalidListenAddress,
+    /// Explicit authenticated CLI Unix-socket path was syntactically invalid.
+    InvalidControlSocketPath,
+    /// Configured Unix-socket transport is unavailable on this target.
+    ControlSocketUnsupported,
+    /// Unix-socket listener creation failed without exposing its path.
+    ControlSocketBindFailed,
+    /// Unix-socket path, ownership, mode, or peer identity failed closed.
+    ControlSocketIdentityRejected,
     /// Phase 8 runtime paths were incomplete, empty, or non-absolute.
     InvalidRuntimeConfiguration,
     /// Source-local console root or exact asset manifest was invalid.
@@ -1464,7 +1537,14 @@ impl DaemonErrorV1 {
             Self::DatabasePathRequired => "lnsatd.database.path_required",
             Self::InvalidArguments => "lnsatd.arguments.invalid",
             Self::ArgumentValueRequired => "lnsatd.arguments.value_required",
+            Self::InvalidConfigPath => "lnsatd.config.path_invalid",
+            Self::InvalidConfigFile => "lnsatd.config.file_invalid",
+            Self::ConfigFileTooLarge => "lnsatd.config.file_too_large",
             Self::InvalidListenAddress => "lnsatd.listen.invalid",
+            Self::InvalidControlSocketPath => "lnsatd.control_socket.path_invalid",
+            Self::ControlSocketUnsupported => "lnsatd.control_socket.unsupported",
+            Self::ControlSocketBindFailed => "lnsatd.control_socket.bind_failed",
+            Self::ControlSocketIdentityRejected => "lnsatd.control_socket.identity_rejected",
             Self::InvalidRuntimeConfiguration => "lnsatd.runtime_configuration.invalid",
             Self::InvalidConsoleConfiguration => "lnsatd.console_configuration.invalid",
             Self::ConsoleAssetLoadFailed => "lnsatd.console_asset.load_failed",
@@ -1507,9 +1587,10 @@ pub fn install_os_shutdown_handler_v1(shutdown: DaemonShutdownV1) -> Result<(), 
 
 /// Parses strict source-only daemon arguments.
 ///
-/// Supported options are `--database <path>`, optional `--listen <ip:port>`,
-/// paired Phase 8 runtime paths, `--help`, `--version`, and `--manifest`. Values are never
-/// included in returned errors.
+/// Supported modes are `--config <absolute-path>` or existing direct
+/// `--database <path>` arguments with optional `--listen <ip:port>` and paired
+/// Phase 8 runtime paths. Help, version, and manifest remain standalone. Values
+/// are never included in returned errors.
 ///
 /// # Errors
 ///
@@ -1522,6 +1603,7 @@ where
 {
     let mut arguments = arguments.into_iter().map(Into::into);
     let _program = arguments.next();
+    let mut config_path = None;
     let mut database_path = None;
     let mut listen_address = None;
     let mut disposable_git_root = None;
@@ -1529,47 +1611,56 @@ where
 
     while let Some(argument) = arguments.next() {
         if argument == OsStr::new("--help") || argument == OsStr::new("-h") {
-            if database_path.is_some()
-                || listen_address.is_some()
-                || disposable_git_root.is_some()
-                || git_executable.is_some()
-                || arguments.next().is_some()
+            if daemon_run_arguments_present_v1(
+                config_path.as_ref(),
+                database_path.as_ref(),
+                listen_address.as_ref(),
+                disposable_git_root.as_ref(),
+                git_executable.as_ref(),
+            ) || arguments.next().is_some()
             {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
             return Ok(DaemonCliActionV1::Help);
         }
         if argument == OsStr::new("--version") || argument == OsStr::new("-V") {
-            if database_path.is_some()
-                || listen_address.is_some()
-                || disposable_git_root.is_some()
-                || git_executable.is_some()
-                || arguments.next().is_some()
+            if daemon_run_arguments_present_v1(
+                config_path.as_ref(),
+                database_path.as_ref(),
+                listen_address.as_ref(),
+                disposable_git_root.as_ref(),
+                git_executable.as_ref(),
+            ) || arguments.next().is_some()
             {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
             return Ok(DaemonCliActionV1::Version);
         }
         if argument == OsStr::new("--manifest") {
-            if database_path.is_some()
-                || listen_address.is_some()
-                || disposable_git_root.is_some()
-                || git_executable.is_some()
-                || arguments.next().is_some()
+            if daemon_run_arguments_present_v1(
+                config_path.as_ref(),
+                database_path.as_ref(),
+                listen_address.as_ref(),
+                disposable_git_root.as_ref(),
+                git_executable.as_ref(),
+            ) || arguments.next().is_some()
             {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
             return Ok(DaemonCliActionV1::Manifest);
         }
+        if argument == OsStr::new("--config") {
+            if config_path.is_some() {
+                return Err(DaemonErrorV1::InvalidArguments);
+            }
+            config_path = Some(next_daemon_argument_value_v1(&mut arguments)?);
+            continue;
+        }
         if argument == OsStr::new("--database") {
             if database_path.is_some() {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
-            database_path = Some(
-                arguments
-                    .next()
-                    .ok_or(DaemonErrorV1::ArgumentValueRequired)?,
-            );
+            database_path = Some(next_daemon_argument_value_v1(&mut arguments)?);
             continue;
         }
         if argument == OsStr::new("--listen") {
@@ -1591,25 +1682,52 @@ where
             if disposable_git_root.is_some() {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
-            disposable_git_root = Some(
-                arguments
-                    .next()
-                    .ok_or(DaemonErrorV1::ArgumentValueRequired)?,
-            );
+            disposable_git_root = Some(next_daemon_argument_value_v1(&mut arguments)?);
             continue;
         }
         if argument == OsStr::new("--git-executable") {
             if git_executable.is_some() {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
-            git_executable = Some(
-                arguments
-                    .next()
-                    .ok_or(DaemonErrorV1::ArgumentValueRequired)?,
-            );
+            git_executable = Some(next_daemon_argument_value_v1(&mut arguments)?);
             continue;
         }
         return Err(DaemonErrorV1::InvalidArguments);
+    }
+
+    resolve_daemon_run_arguments_v1(
+        config_path,
+        database_path,
+        listen_address,
+        disposable_git_root,
+        git_executable,
+    )
+}
+
+fn next_daemon_argument_value_v1(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<OsString, DaemonErrorV1> {
+    arguments.next().ok_or(DaemonErrorV1::ArgumentValueRequired)
+}
+
+fn resolve_daemon_run_arguments_v1(
+    config_path: Option<OsString>,
+    database_path: Option<OsString>,
+    listen_address: Option<SocketAddr>,
+    disposable_git_root: Option<OsString>,
+    git_executable: Option<OsString>,
+) -> Result<DaemonCliActionV1, DaemonErrorV1> {
+    if let Some(config_path) = config_path {
+        if database_path.is_some()
+            || listen_address.is_some()
+            || disposable_git_root.is_some()
+            || git_executable.is_some()
+        {
+            return Err(DaemonErrorV1::InvalidArguments);
+        }
+        return product_config::load_daemon_config_v1(config_path)
+            .map(product_config::LoadedDaemonConfigV1::into_config)
+            .map(DaemonCliActionV1::Run);
     }
 
     let database_path = database_path.ok_or(DaemonErrorV1::DatabasePathRequired)?;
@@ -1622,6 +1740,20 @@ where
             .map(DaemonCliActionV1::Run),
         _ => Err(DaemonErrorV1::InvalidRuntimeConfiguration),
     }
+}
+
+fn daemon_run_arguments_present_v1<T>(
+    config_path: Option<&T>,
+    database_path: Option<&T>,
+    listen_address: Option<&SocketAddr>,
+    disposable_git_root: Option<&T>,
+    git_executable: Option<&T>,
+) -> bool {
+    config_path.is_some()
+        || database_path.is_some()
+        || listen_address.is_some()
+        || disposable_git_root.is_some()
+        || git_executable.is_some()
 }
 
 /// One verified store and loopback listener.
@@ -1640,6 +1772,24 @@ struct Phase9ConsoleAssetV1 {
 #[derive(Clone, Debug)]
 struct Phase9ConsoleRuntimeV1 {
     assets: BTreeMap<String, Phase9ConsoleAssetV1>,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn map_control_socket_bind_error_v1(
+    error: local_unix_socket::LocalUnixSocketErrorV1,
+) -> DaemonErrorV1 {
+    match error {
+        local_unix_socket::LocalUnixSocketErrorV1::PathInvalid => {
+            DaemonErrorV1::InvalidControlSocketPath
+        }
+        local_unix_socket::LocalUnixSocketErrorV1::IdentityRejected => {
+            DaemonErrorV1::ControlSocketIdentityRejected
+        }
+        local_unix_socket::LocalUnixSocketErrorV1::Unavailable
+        | local_unix_socket::LocalUnixSocketErrorV1::TemporaryFailure => {
+            DaemonErrorV1::ControlSocketBindFailed
+        }
+    }
 }
 
 fn valid_console_request_path_v1(value: &str) -> bool {
@@ -1744,6 +1894,8 @@ fn load_phase9_console_runtime_v1(
 
 pub struct DaemonServerV1 {
     listener: TcpListener,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    control_listener: Option<local_unix_socket::SecureUnixListenerV1>,
     bound_address: SocketAddr,
     _database_lease: LocalDaemonDatabaseLeaseV1,
     store: Arc<Mutex<SqliteStore>>,
@@ -1821,6 +1973,16 @@ impl DaemonServerV1 {
         if !bound_address.ip().is_loopback() {
             return Err(DaemonErrorV1::BoundAddressInvalid);
         }
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let control_listener = config
+            .control_socket_path()
+            .map(local_unix_socket::SecureUnixListenerV1::bind)
+            .transpose()
+            .map_err(map_control_socket_bind_error_v1)?;
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+        if config.control_socket_path().is_some() {
+            return Err(DaemonErrorV1::ControlSocketUnsupported);
+        }
         let shutdown = DaemonShutdownV1 {
             requested: Arc::new(AtomicBool::new(false)),
             wake_address: bound_address,
@@ -1828,6 +1990,8 @@ impl DaemonServerV1 {
 
         Ok(Self {
             listener,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            control_listener,
             bound_address,
             _database_lease: database_lease,
             store: Arc::new(Mutex::new(store)),
@@ -1886,6 +2050,29 @@ impl DaemonServerV1 {
         )
     }
 
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    fn spawn_control_listener_v1(
+        &self,
+    ) -> Result<Option<JoinHandle<Result<(), DaemonErrorV1>>>, DaemonErrorV1> {
+        let Some(listener) = self.control_listener.as_ref() else {
+            return Ok(None);
+        };
+        let listener = listener
+            .try_clone()
+            .map_err(map_control_socket_bind_error_v1)?;
+        listener
+            .set_nonblocking(true)
+            .map_err(|_| DaemonErrorV1::ControlSocketBindFailed)?;
+        let store = Arc::clone(&self.store);
+        let store_state = self.store_state.clone();
+        let shutdown = self.shutdown.clone();
+        thread::Builder::new()
+            .name("lnsatd-control-unix".to_owned())
+            .spawn(move || serve_control_listener_v1(&listener, &store, &store_state, &shutdown))
+            .map(Some)
+            .map_err(|_| DaemonErrorV1::WorkerFailed)
+    }
+
     /// Serves at most eight bounded local requests concurrently until
     /// cooperative shutdown or listener failure.
     ///
@@ -1896,6 +2083,13 @@ impl DaemonServerV1 {
     /// connection. Shutdown stops accepting, then joins every in-flight bounded
     /// worker before returning.
     pub fn serve(&self) -> Result<(), DaemonErrorV1> {
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let control_worker = self.spawn_control_listener_v1()?;
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let tcp_worker_limit =
+            MAX_CONCURRENT_CONNECTIONS_V1 - usize::from(control_worker.is_some());
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+        let tcp_worker_limit = MAX_CONCURRENT_CONNECTIONS_V1;
         let mut workers = Vec::with_capacity(MAX_CONCURRENT_CONNECTIONS_V1);
         let listener_result = loop {
             if let Err(error) = reap_finished_workers(&mut workers) {
@@ -1910,7 +2104,7 @@ impl DaemonServerV1 {
             if let Err(error) = reap_finished_workers(&mut workers) {
                 break Err(error);
             }
-            if workers.len() == MAX_CONCURRENT_CONNECTIONS_V1 {
+            if workers.len() == tcp_worker_limit {
                 let _ = refuse_capacity(&mut stream, &self.store_state);
                 continue;
             }
@@ -1943,7 +2137,21 @@ impl DaemonServerV1 {
                 Err(_) => break Err(DaemonErrorV1::WorkerFailed),
             }
         };
+        if listener_result.is_err() {
+            self.shutdown.request_shutdown();
+        }
         let join_result = join_workers(workers);
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let control_result = match control_worker {
+            Some(worker) => worker
+                .join()
+                .map_err(|_| DaemonErrorV1::WorkerFailed)
+                .and_then(|result| result),
+            None => Ok(()),
+        };
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        return listener_result.and(join_result).and(control_result);
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         listener_result.and(join_result)
     }
 }
@@ -1955,6 +2163,64 @@ fn configure_connection_timeouts(stream: &TcpStream) -> Result<(), DaemonErrorV1
     stream
         .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
         .map_err(|_| DaemonErrorV1::ResponseWriteFailed)
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn serve_control_listener_v1(
+    listener: &std::os::unix::net::UnixListener,
+    store: &Arc<Mutex<SqliteStore>>,
+    store_state: &SqliteStoreStateV1,
+    shutdown: &DaemonShutdownV1,
+) -> Result<(), DaemonErrorV1> {
+    loop {
+        if shutdown.is_shutdown_requested() {
+            return Ok(());
+        }
+        match listener.accept() {
+            Ok((stream, _)) => {
+                let _ = serve_accepted_control_connection_v1(stream, store, store_state);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                thread::sleep(CONTROL_ACCEPT_POLL_INTERVAL_V1);
+            }
+            Err(_) => {
+                shutdown.request_shutdown();
+                return Err(DaemonErrorV1::AcceptFailed);
+            }
+        }
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn serve_accepted_control_connection_v1(
+    mut stream: std::os::unix::net::UnixStream,
+    store: &Arc<Mutex<SqliteStore>>,
+    store_state: &SqliteStoreStateV1,
+) -> Result<(), DaemonErrorV1> {
+    stream
+        .set_read_timeout(Some(CONNECTION_TIMEOUT_V1))
+        .map_err(|_| DaemonErrorV1::RequestReadFailed)?;
+    stream
+        .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
+        .map_err(|_| DaemonErrorV1::ResponseWriteFailed)?;
+    if local_unix_socket::validate_peer_uid_v1(&stream).is_err() {
+        return Ok(());
+    }
+    let response = match read_http_request_v1(&mut stream) {
+        Ok(RequestReadV1::Complete(mut request)) => {
+            let response = classify_control_product_read_request_v1(&request, store);
+            request.zeroize();
+            response
+        }
+        Ok(RequestReadV1::HeadTooLarge) => {
+            ClassifiedHttpResponseV1::unversioned(HttpResponseV1::RequestHeadTooLarge)
+        }
+        Ok(RequestReadV1::BodyTooLarge) => {
+            ClassifiedHttpResponseV1::unversioned(HttpResponseV1::RequestBodyTooLarge)
+        }
+        Err(()) => return Err(DaemonErrorV1::RequestReadFailed),
+    };
+    write_response_with_state(&mut stream, response, store_state)
 }
 
 fn refuse_capacity(
@@ -2045,6 +2311,15 @@ enum RequestReadV1 {
 
 enum HttpResponseV1 {
     Ready,
+    AuthenticatedHealth {
+        head_only: bool,
+    },
+    AuthenticatedStatus {
+        head_only: bool,
+    },
+    AuthenticatedProductReadRejected {
+        head_only: bool,
+    },
     ConsoleAsset {
         asset: Phase9ConsoleAssetV1,
         head_only: bool,
@@ -2146,7 +2421,7 @@ impl ClassifiedHttpResponseV1 {
     }
 }
 
-fn read_http_request_v1(stream: &mut TcpStream) -> Result<RequestReadV1, ()> {
+fn read_http_request_v1(stream: &mut impl Read) -> Result<RequestReadV1, ()> {
     let mut request = Zeroizing::new(Vec::with_capacity(1024));
     let mut buffer = [0_u8; 512];
     loop {
@@ -2536,6 +2811,16 @@ fn classify_versioned_gateway_route_v1(
     peer_address: IpAddr,
     context: GatewayRuntimeContextV1<'_>,
 ) -> HttpResponseV1 {
+    if let Some(response) = classify_authenticated_product_read_route_v1(
+        request_bytes,
+        request,
+        body,
+        peer_address,
+        context.bound_address,
+        context.store,
+    ) {
+        return response;
+    }
     if let Some(response) = classify_phase8_runtime_route_v1(
         request_bytes,
         request,
@@ -2646,6 +2931,148 @@ fn classify_versioned_gateway_route_v1(
         );
     }
     classify_readiness_or_unknown_v1(request, body, context.bound_address)
+}
+
+fn classify_authenticated_product_read_route_v1(
+    request_bytes: &[u8],
+    request: ParsedRequestHeadV1<'_>,
+    body: &[u8],
+    peer_address: IpAddr,
+    bound_address: SocketAddr,
+    store: &Arc<Mutex<SqliteStore>>,
+) -> Option<HttpResponseV1> {
+    let response = match request.target {
+        AUTHENTICATED_HEALTH_PATH_V1 => HttpResponseV1::AuthenticatedHealth {
+            head_only: request.method == "HEAD",
+        },
+        AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus {
+            head_only: request.method == "HEAD",
+        },
+        target
+            if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
+                || target.starts_with(AUTHENTICATED_STATUS_PATH_V1) =>
+        {
+            return Some(HttpResponseV1::BadRequest);
+        }
+        _ => return None,
+    };
+    if !matches!(request.method, "GET" | "HEAD") {
+        return Some(HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" });
+    }
+    let head_only = request.method == "HEAD";
+    if !body.is_empty()
+        || request.content_length.is_some_and(|length| length != 0)
+        || request.content_type.is_some()
+        || request.forwarded_present
+    {
+        return Some(HttpResponseV1::AuthenticatedProductReadRejected { head_only });
+    }
+    let authorized =
+        parse_local_browser_transport_request_v1(request_bytes, peer_address, bound_address)
+            .and_then(|transport| {
+                let mut store = store
+                    .lock()
+                    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+                authorize_local_browser_transport_request_v1(&mut store, &transport)
+            });
+    match authorized {
+        Ok(authorized)
+            if authorized.target == request.target
+                && authorized.class == LocalBrowserRequestClassV1::ReadOnly
+                && authorized
+                    .session
+                    .role
+                    .allows_control(LocalControlPermissionV1::ReadEvidence) =>
+        {
+            Some(response)
+        }
+        Ok(_) | Err(_) => Some(HttpResponseV1::AuthenticatedProductReadRejected { head_only }),
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn classify_control_product_read_request_v1(
+    request_bytes: &[u8],
+    store: &Arc<Mutex<SqliteStore>>,
+) -> ClassifiedHttpResponseV1 {
+    let Ok(parsed_request) = parse_http_request_v1(request_bytes) else {
+        return ClassifiedHttpResponseV1::unversioned(HttpResponseV1::BadRequest);
+    };
+    let request = parsed_request.head;
+    let head_only = request.method == "HEAD";
+    let version = match validate_gateway_contract_version_v1(request.contract_version) {
+        Ok(version) => version,
+        Err(error) => {
+            return ClassifiedHttpResponseV1::unversioned(
+                HttpResponseV1::GatewayContractVersionRejected { error, head_only },
+            );
+        }
+    };
+    let response = match request.target {
+        AUTHENTICATED_HEALTH_PATH_V1 => HttpResponseV1::AuthenticatedHealth { head_only },
+        AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus { head_only },
+        target
+            if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
+                || target.starts_with(AUTHENTICATED_STATUS_PATH_V1) =>
+        {
+            HttpResponseV1::BadRequest
+        }
+        _ => HttpResponseV1::NotFound,
+    };
+    if !matches!(
+        response,
+        HttpResponseV1::AuthenticatedHealth { .. } | HttpResponseV1::AuthenticatedStatus { .. }
+    ) {
+        return ClassifiedHttpResponseV1::versioned(response, version);
+    }
+    if !matches!(request.method, "GET" | "HEAD") {
+        return ClassifiedHttpResponseV1::versioned(
+            HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" },
+            version,
+        );
+    }
+    if !parsed_request.body.is_empty()
+        || request.host != local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1
+        || request.origin.is_some()
+        || request.fetch_site != Some("same-origin")
+        || request.content_length.is_some_and(|length| length != 0)
+        || request.content_type.is_some()
+        || request.csrf.is_some()
+        || request.session_issue_intent.is_some()
+        || request.forwarded_present
+    {
+        return ClassifiedHttpResponseV1::versioned(
+            HttpResponseV1::AuthenticatedProductReadRejected { head_only },
+            version,
+        );
+    }
+    let authorized = parse_local_browser_auth_transport_v1(request.method, request.cookie, None)
+        .map_err(|_| ())
+        .and_then(|auth| {
+            let checked_at = canonical_system_time_v1(SystemTime::now())?;
+            let mut store = store.lock().map_err(|_| ())?;
+            store
+                .verify_and_touch_local_session_v1(
+                    auth.raw_session_token(),
+                    None,
+                    &checked_at,
+                    LOCAL_BROWSER_SESSION_IDLE_TIMEOUT_SECONDS_V1,
+                )
+                .map_err(|_| ())
+        });
+    let allowed = matches!(
+        authorized,
+        Ok(LocalSessionActivityVerificationV1::Verified(ref activity))
+            if activity.session.role.allows_control(LocalControlPermissionV1::ReadEvidence)
+    );
+    ClassifiedHttpResponseV1::versioned(
+        if allowed {
+            response
+        } else {
+            HttpResponseV1::AuthenticatedProductReadRejected { head_only }
+        },
+        version,
+    )
 }
 
 #[derive(Clone, Copy)]
@@ -3790,6 +4217,29 @@ fn compose_http_response_v1(
     }
     let (status, body, allow, head_only, cookie_headers) = match response {
         HttpResponseV1::Ready => ("200 OK", readiness_body_v1(state), None, false, None),
+        HttpResponseV1::AuthenticatedHealth { head_only } => (
+            "200 OK",
+            serde_json::to_string(&product_surface::daemon_health_v1(state))
+                .expect("authenticated health evidence must serialize"),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::AuthenticatedStatus { head_only } => (
+            "200 OK",
+            serde_json::to_string(&product_surface::daemon_status_v1())
+                .expect("authenticated status evidence must serialize"),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::AuthenticatedProductReadRejected { head_only } => (
+            "403 Forbidden",
+            authenticated_product_read_denied_body_v1(),
+            None,
+            head_only,
+            None,
+        ),
         HttpResponseV1::ConsoleAsset { .. } => unreachable!(),
         HttpResponseV1::GatewayContractNegotiated { .. }
         | HttpResponseV1::GatewayContractVersionRejected { .. } => {
@@ -4222,6 +4672,18 @@ fn readiness_body_v1(state: &SqliteStoreStateV1) -> String {
         ),
         READINESS_CONTRACT_V1, state.schema_version, state.migration_count
     )
+}
+
+fn authenticated_product_read_denied_body_v1() -> String {
+    serde_json::json!({
+        "contract": AUTHENTICATED_PRODUCT_READ_DENIAL_CONTRACT_V1,
+        "contract_version": CONTRACT_VERSION_V1_0,
+        "ok": false,
+        "error": { "code": AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1 },
+        "side_effects": [],
+        "mutation_authority": false,
+    })
+    .to_string()
 }
 
 fn gateway_contract_negotiation_body_v1(version: ContractVersion) -> String {
@@ -5144,7 +5606,7 @@ fn runtime_composition_denied_parts_v1(capacity: bool) -> HttpResponsePartsTuple
 }
 
 fn write_response_with_state(
-    stream: &mut TcpStream,
+    stream: &mut impl Write,
     response: ClassifiedHttpResponseV1,
     state: &SqliteStoreStateV1,
 ) -> Result<(), DaemonErrorV1> {
@@ -5216,7 +5678,7 @@ fn write_response_with_state(
 }
 
 fn write_phase9_console_asset_response_v1(
-    stream: &mut TcpStream,
+    stream: &mut impl Write,
     asset: &Phase9ConsoleAssetV1,
     head_only: bool,
 ) -> Result<(), DaemonErrorV1> {
@@ -5260,6 +5722,7 @@ fn error_body(code: &str) -> String {
 pub const fn daemon_usage_v1() -> &'static str {
     concat!(
         "Usage: lnsatd --database <path> [--listen <loopback-ip:port>] [--disposable-git-root <temp-path> --git-executable <absolute-path>]\n",
+        "       lnsatd --config <absolute-path>\n",
         "       lnsatd --manifest\n\n",
         "Defaults:\n",
         "  --listen 127.0.0.1:7447\n\n",
@@ -6198,6 +6661,26 @@ mod tests {
             )
         }
 
+        fn product_read_request(&self, method: &str, path: &str, token: &str) -> String {
+            format!(
+                concat!(
+                    "{method} {path} HTTP/1.1\r\n",
+                    "Host: {address}\r\n",
+                    "{version_name}: {version}\r\n",
+                    "Sec-Fetch-Site: same-origin\r\n",
+                    "Cookie: {cookie_name}={token}\r\n",
+                    "Connection: close\r\n\r\n"
+                ),
+                method = method,
+                path = path,
+                address = self.address,
+                version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+                version = CONTRACT_VERSION_V1_0,
+                cookie_name = lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
+                token = token,
+            )
+        }
+
         fn session_issue_request(&self, body: &str) -> String {
             format!(
                 concat!(
@@ -6695,6 +7178,25 @@ mod tests {
     fn readiness_reports_verified_store_and_zero_mutation_authority() {
         let response = request_once("ready", b"GET /healthz HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
 
+        assert_eq!(
+            response,
+            concat!(
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Type: application/json\r\n",
+                "Content-Length: 151\r\n",
+                "Cache-Control: no-store\r\n",
+                "Content-Security-Policy: default-src 'none'; frame-ancestors 'none'\r\n",
+                "Cross-Origin-Resource-Policy: same-origin\r\n",
+                "Referrer-Policy: no-referrer\r\n",
+                "Permissions-Policy: camera=(), microphone=(), geolocation=()\r\n",
+                "X-Content-Type-Options: nosniff\r\n",
+                "Connection: close\r\n\r\n",
+                "{\"contract\":\"lnsat.daemon.readiness.v1_0\",\"status\":\"ready\",",
+                "\"schema_version\":17,\"migration_count\":17,",
+                "\"bind_scope\":\"loopback\",\"mutation_authority\":false}"
+            )
+        );
+
         assert!(response.starts_with("HTTP/1.1 200 OK\r\n"));
         assert!(response.contains("\"contract\":\"lnsat.daemon.readiness.v1_0\""));
         assert!(response.contains(&format!(
@@ -6933,6 +7435,198 @@ mod tests {
         assert!(host_drift.starts_with("HTTP/1.1 400 Bad Request\r\n"));
         assert!(host_drift.contains("lnsatd.request.invalid"));
         assert!(!host_drift.contains("contract.version."));
+    }
+
+    #[test]
+    fn authenticated_health_and_status_get_head_and_roles_match_fixtures() {
+        let fixture = ServedSessionGatewayFixture::start("product-health-status-success");
+        for (path, expected) in [
+            (
+                AUTHENTICATED_HEALTH_PATH_V1,
+                include_str!("../../../fixtures/contracts/phase10-health-v1.json"),
+            ),
+            (
+                AUTHENTICATED_STATUS_PATH_V1,
+                include_str!("../../../fixtures/contracts/phase10-status-v1.json"),
+            ),
+        ] {
+            let request = fixture.product_read_request("GET", path, &fixture.session_token);
+            let get = request_at(fixture.address, request.as_bytes());
+            assert!(get.starts_with("HTTP/1.1 200 OK\r\n"));
+            assert!(get.contains("LNSAT-Contract-Version: lnsat.contracts.v1_0\r\n"));
+            let (_, body) = get
+                .split_once("\r\n\r\n")
+                .expect("GET must contain header boundary");
+            assert_eq!(
+                serde_json::from_str::<serde_json::Value>(body).expect("GET body must be JSON"),
+                serde_json::from_str::<serde_json::Value>(expected)
+                    .expect("frozen fixture must be JSON")
+            );
+            let head_request = fixture.product_read_request("HEAD", path, &fixture.session_token);
+            let head = request_at(fixture.address, head_request.as_bytes());
+            assert!(head.starts_with("HTTP/1.1 200 OK\r\n"));
+            let (_, head_body) = head
+                .split_once("\r\n\r\n")
+                .expect("HEAD must contain header boundary");
+            assert!(head_body.is_empty());
+            let get_length = get
+                .lines()
+                .find_map(|line| line.strip_prefix("Content-Length: "))
+                .expect("GET content length must exist");
+            let head_length = head
+                .lines()
+                .find_map(|line| line.strip_prefix("Content-Length: "))
+                .expect("HEAD content length must exist");
+            assert_eq!(head_length, get_length);
+        }
+
+        for (role, identity_ref, display_name, password) in [
+            (
+                LocalIdentityRoleV1::Operator,
+                "identity:human:product-operator",
+                "Product Operator",
+                "operator product password 2026",
+            ),
+            (
+                LocalIdentityRoleV1::Auditor,
+                "identity:human:product-auditor",
+                "Product Auditor",
+                "auditor product password 2026",
+            ),
+        ] {
+            assert!(role.allows_control(LocalControlPermissionV1::ReadEvidence));
+            fixture.create_non_owner(identity_ref, display_name, role, password);
+            let now = SystemTime::now();
+            let issued_at = canonical_system_time_v1(now).expect("current time must format");
+            let expires_at = canonical_system_time_v1(
+                now.checked_add(Duration::from_mins(5))
+                    .expect("expiry must advance"),
+            )
+            .expect("expiry must format");
+            let token = {
+                let mut store = SqliteStore::open(fixture.directory.database_path())
+                    .expect("fixture store must reopen");
+                store
+                    .issue_local_session_v1(&LocalSessionIssueInputV1 {
+                        identity_ref,
+                        password,
+                        issued_at: &issued_at,
+                        expires_at: &expires_at,
+                    })
+                    .expect("non-owner session must issue")
+                    .raw_session_token
+            };
+            let request = fixture.product_read_request("GET", AUTHENTICATED_STATUS_PATH_V1, &token);
+            let response = request_at(fixture.address, request.as_bytes());
+            assert!(response.starts_with("HTTP/1.1 200 OK\r\n"));
+            assert!(!response.contains(identity_ref));
+            assert!(!response.contains(&token));
+        }
+    }
+
+    #[test]
+    fn authenticated_product_reads_fail_closed_without_oracles_or_ambiguous_framing() {
+        let fixture = ServedSessionGatewayFixture::start("product-health-status-denials");
+        let missing_cookie = format!(
+            concat!(
+                "GET /v1/health HTTP/1.1\r\n",
+                "Host: {address}\r\n",
+                "{version_name}: {version}\r\n",
+                "Sec-Fetch-Site: same-origin\r\n\r\n"
+            ),
+            address = fixture.address,
+            version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+            version = CONTRACT_VERSION_V1_0,
+        );
+        let missing = request_at(fixture.address, missing_cookie.as_bytes());
+        assert!(missing.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        let (_, denial_body) = missing
+            .split_once("\r\n\r\n")
+            .expect("denial must contain header boundary");
+        assert!(denial_body.contains(AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1));
+
+        for token in ["malformed", fixture.expired_session_token.as_str()] {
+            let request = fixture.product_read_request("GET", AUTHENTICATED_HEALTH_PATH_V1, token);
+            let response = request_at(fixture.address, request.as_bytes());
+            assert!(response.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+            assert_eq!(
+                response
+                    .split_once("\r\n\r\n")
+                    .expect("denial must contain header boundary")
+                    .1,
+                denial_body
+            );
+            assert!(!response.contains(token));
+        }
+
+        let sign_out = fixture.session_family_sign_out_request();
+        assert!(request_at(fixture.address, sign_out.as_bytes()).starts_with("HTTP/1.1 200 OK"));
+        let revoked = fixture.product_read_request(
+            "GET",
+            AUTHENTICATED_STATUS_PATH_V1,
+            &fixture.session_token,
+        );
+        let revoked = request_at(fixture.address, revoked.as_bytes());
+        assert!(revoked.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert_eq!(
+            revoked
+                .split_once("\r\n\r\n")
+                .expect("denial must contain header boundary")
+                .1,
+            denial_body
+        );
+        for forbidden in [
+            fixture.session_token.as_str(),
+            "identity:human:",
+            "database_path",
+            "/Users/",
+        ] {
+            assert!(!revoked.contains(forbidden));
+        }
+
+        let denied_head = missing_cookie.replacen("GET ", "HEAD ", 1);
+        let denied_head = request_at(fixture.address, denied_head.as_bytes());
+        assert!(denied_head.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert!(
+            denied_head
+                .split_once("\r\n\r\n")
+                .expect("HEAD denial must contain boundary")
+                .1
+                .is_empty()
+        );
+
+        for (request, status) in [
+            (
+                format!(
+                    "POST /v1/health HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nContent-Length: 0\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 405 Method Not Allowed",
+            ),
+            (
+                format!(
+                    "GET /v1/health?detail=1 HTTP/1.1\r\nHost: {}\r\n{}: {}\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 400 Bad Request",
+            ),
+            (
+                format!(
+                    "GET /v1/%68ealth HTTP/1.1\r\nHost: {}\r\n{}: {}\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 404 Not Found",
+            ),
+            (
+                format!(
+                    "GET /v1/status HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nTransfer-Encoding: chunked\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 400 Bad Request",
+            ),
+        ] {
+            assert!(request_at(fixture.address, request.as_bytes()).starts_with(status));
+        }
     }
 
     #[test]

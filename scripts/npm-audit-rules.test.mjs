@@ -1,73 +1,144 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { evaluateNpmAudit } from "./npm-audit-rules.mjs";
+import { evaluateNpmAudit, evaluateNpmSignatures } from "./npm-audit-rules.mjs";
+import { runNpmAuditCheckV1 } from "./check-npm-audit.mjs";
 
 const advisoryUrl = "https://github.com/advisories/GHSA-frvp-7c67-39w9";
 
-test("accepts only the exact upstream MCP Node static-serving advisory", () => {
-  const result = evaluateNpmAudit(allowedReport(), allowedLock());
+test("rejects the obsolete upstream MCP Node static-serving advisory", () => {
+  const result = evaluateNpmAudit(obsoleteAdvisoryReport());
 
-  assert.equal(result.ok, true);
-  assert.equal(result.errors.length, 0);
-  assert.equal(result.allowedAdvisories[0].advisory, advisoryUrl);
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, ["npm audit reported 2 vulnerable package(s)."]);
+  assert.deepEqual(result.allowedAdvisories, []);
 });
 
 test("accepts a clean audit report", () => {
-  const result = evaluateNpmAudit(
-    { auditReportVersion: 2, vulnerabilities: {} },
-    { packages: {} },
-  );
+  const result = evaluateNpmAudit({ auditReportVersion: 2, vulnerabilities: {} });
 
   assert.equal(result.ok, true);
   assert.deepEqual(result.allowedAdvisories, []);
 });
 
 test("rejects every unexpected vulnerable package", () => {
-  const report = allowedReport();
-  report.vulnerabilities.fast_uri = {
-    name: "fast_uri",
-    severity: "high",
+  const report = {
+    auditReportVersion: 2,
+    vulnerabilities: {
+      fast_uri: {
+        name: "fast_uri",
+        severity: "high",
+      },
+    },
   };
 
-  const result = evaluateNpmAudit(report, allowedLock());
+  const result = evaluateNpmAudit(report);
 
   assert.equal(result.ok, false);
-  assert.match(result.errors.join("\n"), /Unexpected vulnerable package/);
+  assert.deepEqual(result.errors, ["npm audit reported 1 vulnerable package(s)."]);
+  assert.deepEqual(result.allowedAdvisories, []);
+  assert.doesNotMatch(result.errors.join("\n"), /fast_uri/);
 });
 
-test("rejects advisory, path, severity, or version drift", () => {
-  const report = allowedReport();
-  report.vulnerabilities["@hono/node-server"].severity = "high";
-  report.vulnerabilities["@hono/node-server"].via[0].url =
-    "https://github.com/advisories/GHSA-unexpected";
-  report.vulnerabilities["@modelcontextprotocol/node"].via.push("hono");
-  const lock = allowedLock();
-  lock.packages[
-    "node_modules/@modelcontextprotocol/node/node_modules/@hono/node-server"
-  ].version = "1.19.18";
-
-  const result = evaluateNpmAudit(report, lock);
-  const errors = result.errors.join("\n");
+test("rejects unsupported npm audit schema with no allowance", () => {
+  const result = evaluateNpmAudit({ auditReportVersion: 1, vulnerabilities: {} });
 
   assert.equal(result.ok, false);
-  assert.match(errors, /Hono Node severity changed/);
-  assert.match(errors, /Hono Node advisory URL changed/);
-  assert.match(errors, /MCP Node advisory path changed/);
-  assert.match(errors, /Hono Node locked version changed/);
+  assert.deepEqual(result.errors, ["Unsupported npm audit JSON schema."]);
+  assert.deepEqual(result.allowedAdvisories, []);
 });
 
-test("rejects one-sided propagated advisory state", () => {
-  const report = allowedReport();
-  delete report.vulnerabilities["@modelcontextprotocol/node"];
+test("accepts a signature report with no invalid or missing entries", () => {
+  const result = evaluateNpmSignatures({ invalid: [], missing: [] });
 
-  const result = evaluateNpmAudit(report, allowedLock());
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.errors, []);
+});
+
+test("rejects invalid and missing npm signatures", () => {
+  const result = evaluateNpmSignatures({
+    invalid: [{ keyid: "SHA256:invalid" }],
+    missing: [{ name: "unsigned-package" }],
+  });
 
   assert.equal(result.ok, false);
-  assert.match(result.errors.join("\n"), /must appear together/);
+  assert.deepEqual(result.errors, [
+    "npm signature audit reported 1 invalid signature(s).",
+    "npm signature audit reported 1 missing signature(s).",
+  ]);
 });
 
-function allowedReport() {
+test("rejects npm signature schema drift", () => {
+  const result = evaluateNpmSignatures({ message: "registry unavailable" });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, ["Unsupported npm signature audit JSON schema."]);
+});
+
+test("rejects each missing npm signature array", () => {
+  for (const report of [{ invalid: [] }, { missing: [] }]) {
+    const result = evaluateNpmSignatures(report);
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.errors, ["Unsupported npm signature audit JSON schema."]);
+  }
+});
+
+test("wrapper rejects malformed JSON without reflecting registry stderr", () => {
+  const result = runNpmAuditCheckV1(true, () => ({
+    error: undefined,
+    status: 1,
+    stdout: "not-json",
+    stderr: "registry-private-value",
+  }));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.stderr, "npm audit did not return valid JSON.\n");
+  assert.doesNotMatch(result.stderr, /registry-private-value/);
+});
+
+test("wrapper rejects clean-looking JSON from nonzero npm exit", () => {
+  const result = runNpmAuditCheckV1(true, () => ({
+    error: undefined,
+    status: 1,
+    stdout: JSON.stringify({ invalid: [], missing: [] }),
+    stderr: "registry-private-value",
+  }));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.stderr, "npm audit exited with nonzero status.\n");
+  assert.doesNotMatch(result.stderr, /registry-private-value/);
+});
+
+test("wrapper rejects process-spawn failure without reflecting process details", () => {
+  const result = runNpmAuditCheckV1(false, () => ({
+    error: new Error("private executable path"),
+    status: null,
+    stdout: "",
+    stderr: "",
+  }));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.stderr, "npm audit process could not be started.\n");
+  assert.doesNotMatch(result.stderr, /private executable path/);
+});
+
+test("wrapper never reflects untrusted signature report values", () => {
+  const result = runNpmAuditCheckV1(true, () => ({
+    error: undefined,
+    status: 1,
+    stdout: JSON.stringify({
+      invalid: [{ name: "registry-private-value" }],
+      missing: [],
+    }),
+    stderr: "registry-private-stderr",
+  }));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.stderr, "npm signature audit reported 1 invalid signature(s).\n");
+  assert.doesNotMatch(result.stderr, /registry-private/);
+});
+
+function obsoleteAdvisoryReport() {
   return {
     auditReportVersion: 2,
     vulnerabilities: {
@@ -103,17 +174,6 @@ function allowedReport() {
         range: "*",
         nodes: ["node_modules/@modelcontextprotocol/node"],
         fixAvailable: false,
-      },
-    },
-  };
-}
-
-function allowedLock() {
-  return {
-    packages: {
-      "node_modules/@modelcontextprotocol/node": { version: "2.0.0" },
-      "node_modules/@modelcontextprotocol/node/node_modules/@hono/node-server": {
-        version: "1.19.17",
       },
     },
   };
