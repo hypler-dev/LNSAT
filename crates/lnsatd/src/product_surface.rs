@@ -131,17 +131,17 @@ pub struct DaemonExplicitTargetV1 {
     pub remote_transport: bool,
 }
 
-/// Closed Phase 10 progress posture returned by daemon status.
+/// Closed Phase 10 exit posture returned by daemon status.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct DaemonPhase10PostureV1 {
-    /// Implemented bounded packets including this source packet.
+    /// Implemented bounded packets through the source-conformance exit freeze.
     pub implemented_packets: Vec<String>,
-    /// Next separately gated packet.
+    /// No later packet is authorized by Phase 10 exit.
     pub next_packet: String,
     /// Phase 11 remains closed.
     pub phase11_open: bool,
-    /// Phase 10 remains incomplete.
+    /// Phase 10 source conformance status.
     pub status: String,
 }
 
@@ -205,10 +205,11 @@ impl DaemonStatusV1 {
             && self.explicit_target.endpoint_required
             && !self.explicit_target.remote_transport
             && !self.mutation_authority
-            && self.phase10.implemented_packets == ["P10-A1", "P10-A2", "P10-A3", "P10-A4"]
-            && self.phase10.next_packet == "P10-X1"
+            && self.phase10.implemented_packets
+                == ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"]
+            && self.phase10.next_packet == "none_authorized"
             && !self.phase10.phase11_open
-            && self.phase10.status == "in_progress"
+            && self.phase10.status == "complete"
             && self.product_surface.implemented
                 == [
                     "doctor",
@@ -268,12 +269,12 @@ pub fn daemon_status_v1() -> DaemonStatusV1 {
         },
         mutation_authority: false,
         phase10: DaemonPhase10PostureV1 {
-            implemented_packets: ["P10-A1", "P10-A2", "P10-A3", "P10-A4"]
+            implemented_packets: ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"]
                 .map(str::to_owned)
                 .to_vec(),
-            next_packet: "P10-X1".to_owned(),
+            next_packet: "none_authorized".to_owned(),
             phase11_open: false,
-            status: "in_progress".to_owned(),
+            status: "complete".to_owned(),
         },
         product_surface: DaemonProductSurfacePostureV1 {
             implemented: [

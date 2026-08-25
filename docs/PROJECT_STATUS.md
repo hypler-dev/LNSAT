@@ -37,8 +37,9 @@ are implemented as experimental source. Phase 10 P10-A1 product-surface spine,
 P10-A2 explicit-only configuration, and P10-A3 authenticated local
 health/status plus stable output contracts are implemented. P10-A4 offline
 backup, inert restore, protected owner recovery, non-root enforcement, and
-cross-surface unavailability parity are also implemented; Phase 10
-stabilization remains in progress. Required
+cross-surface unavailability parity are also implemented. P10-X1 closes Phase
+10 source conformance with a fail-closed evidence/compatibility ledger. Phase
+11 remains separately gated and closed. Required
 path stays Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
 packets remain nonblocking unless separately selected. No binary/package work
@@ -900,9 +901,11 @@ unavailable. Existing packet inspection retains CLI/API/MCP equality; its
 read-only Control Center projection still preserves exact Gateway policy and
 audit evidence with empty effects.
 
-System/user config paths, target/package paths, and P10-X1 exit freeze remain.
-Phase 10 remains in progress. See
-[Phase 10 product-surface contract spine](architecture/PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md).
+System/user config paths and target/package lifecycle proof remain Phase 14
+work. P10-X1 completes Phase 10 source conformance without opening Phase 11.
+See the
+[Phase 10 product-surface contract spine](architecture/PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
+and [conformance freeze](architecture/PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md).
 
 ## Release Readiness Still Required
 

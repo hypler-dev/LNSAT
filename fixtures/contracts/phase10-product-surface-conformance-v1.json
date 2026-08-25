@@ -1,0 +1,199 @@
+{
+  "schema_version": "lnsat.phase10_product_surface_conformance.v1",
+  "packet_id": "P10-X1",
+  "freeze_status": "complete",
+  "scope": {
+    "source_only": true,
+    "new_runtime_features": false,
+    "new_mutation_authority": false,
+    "phase11_open": false,
+    "package_lifecycle_open": false,
+    "supported_release": false,
+    "publication_authorized": false,
+    "deployment_authorized": false,
+    "schema_change_authorized": false
+  },
+  "status_posture": {
+    "phase10_status": "complete",
+    "implemented_packets": ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"],
+    "next_gate": "phase11_authorization_required",
+    "phase11_open": false
+  },
+  "evidence_rows": [
+    {
+      "id": "three_command_manifest_equality",
+      "evidence_file": "crates/lnsatd/tests/product_surface_cli.rs",
+      "evidence_marker": "three_product_commands_expose_same_source_manifest",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "explicit_config_contract",
+      "evidence_file": "crates/lnsatd/tests/product_configuration_cli.rs",
+      "evidence_marker": "exact_fixture_loads_all_existing_daemon_seams",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "closed_config_negatives",
+      "evidence_file": "crates/lnsatd/tests/product_configuration_cli.rs",
+      "evidence_marker": "closed_contract_rejects_malformed_duplicate_unknown_and_wrong_identity",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "authenticated_health_status",
+      "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
+      "evidence_marker": "authenticated_health_and_status_match_exact_output_contracts_over_unix_socket",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "output_compatibility",
+      "evidence_file": "crates/lnsatd/tests/product_surface_cli.rs",
+      "evidence_marker": "shared_output_formats_preserve_default_json_and_exact_position",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "offline_backup_restore",
+      "evidence_file": "crates/lnsatd/tests/product_surface_cli.rs",
+      "evidence_marker": "offline_backup_and_inert_restore_create_fresh_verified_files_without_path_reflection",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "offline_owner_recovery",
+      "evidence_file": "crates/lnsatd/tests/product_surface_cli.rs",
+      "evidence_marker": "offline_owner_recovery_reads_password_only_from_stdin_and_revokes_sessions",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "non_root_enforcement",
+      "evidence_file": "crates/lnsatd/src/product_surface.rs",
+      "evidence_marker": "effective_uid_zero_is_always_refused",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "offline_recovery_channel_parity",
+      "evidence_file": "packages/gateway/test/offline-recovery-parity.test.ts",
+      "evidence_marker": "matches frozen fixture and keeps served channels unavailable",
+      "command": "npm run test:workspaces"
+    },
+    {
+      "id": "packet_cli_api_mcp_parity",
+      "evidence_file": "packages/cli/test/transport-neutral-packet-inspection.test.ts",
+      "evidence_marker": "matches API and MCP behavior for valid packet inspection",
+      "command": "npm run test:workspaces"
+    },
+    {
+      "id": "completion_and_man_source",
+      "evidence_file": "crates/lnsatd/src/product_surface.rs",
+      "evidence_marker": "completion_and_man_sources_cover_three_product_commands",
+      "command": "npm run phase10:exit:test"
+    },
+    {
+      "id": "source_only_hard_stops",
+      "evidence_file": "fixtures/contracts/phase10-product-surface-v1.json",
+      "evidence_marker": "\"phase11_or_later_implementation\": false",
+      "command": "npm run phase10:exit:check"
+    },
+    {
+      "id": "phase14_lifecycle_ownership",
+      "evidence_file": "docs/ROADMAP.md",
+      "evidence_marker": "proof on each later-selected canonical target.",
+      "command": "npm run docs:direction:check"
+    }
+  ],
+  "compatibility_guarantees": [
+    "default_json_output_preserved",
+    "packet_cli_api_mcp_decision_and_evidence_equal",
+    "direct_daemon_arguments_preserved",
+    "mixed_direct_and_config_input_rejected",
+    "new_commands_occupy_previously_invalid_shapes",
+    "stable_exit_families_preserved",
+    "target_neutral_manifest_preserved",
+    "phase14_lifecycle_ownership_preserved"
+  ],
+  "required_negatives": [
+    {
+      "id": "ambient_authority_or_secret_argument",
+      "evidence_file": "crates/lnsatd/tests/product_configuration_cli.rs",
+      "evidence_marker": "rejected_paths_bytes_arguments_and_environment_are_never_reflected_or_discovered"
+    },
+    {
+      "id": "mixed_configuration_precedence",
+      "evidence_file": "crates/lnsatd/tests/product_configuration_cli.rs",
+      "evidence_marker": "explicit_config_and_legacy_direct_arguments_are_distinct_compatible_modes"
+    },
+    {
+      "id": "tcp_bearer_or_input_before_validation",
+      "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
+      "evidence_marker": "removed_endpoint_and_invalid_stdin_fail_before_any_connection"
+    },
+    {
+      "id": "insecure_socket_identity",
+      "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
+      "evidence_marker": "insecure_parent_or_socket_mode_rejects_before_bearer_write"
+    },
+    {
+      "id": "socket_symlink_traversal",
+      "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
+      "evidence_marker": "ancestor_symlink_traversal_rejects_bind_and_client_before_bearer_write"
+    },
+    {
+      "id": "get_head_auth_drift",
+      "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
+      "evidence_marker": "unix_control_get_and_head_have_equal_auth_and_bodyless_head"
+    },
+    {
+      "id": "restore_overwrite_or_activation",
+      "evidence_file": "crates/lnsatd/tests/product_surface_cli.rs",
+      "evidence_marker": "assert_eq!(restore_result[\"evidence\"][\"activated\"], false);"
+    },
+    {
+      "id": "owner_secret_argument_or_reflection",
+      "evidence_file": "crates/lnsatd/tests/product_surface_cli.rs",
+      "evidence_marker": "forbidden password argument must run"
+    },
+    {
+      "id": "root_runtime_or_recovery",
+      "evidence_file": "crates/lnsatd/src/product_surface.rs",
+      "evidence_marker": "effective_uid_zero_is_always_refused"
+    },
+    {
+      "id": "served_recovery_api",
+      "evidence_file": "apps/api/test/offline-recovery-parity.test.ts",
+      "evidence_marker": "exposes posture only and grants no served command"
+    },
+    {
+      "id": "served_recovery_mcp",
+      "evidence_file": "packages/mcp/test/offline-recovery-parity.test.ts",
+      "evidence_marker": "registers no recovery tool and grants no command"
+    },
+    {
+      "id": "rendered_recovery_ui_action",
+      "evidence_file": "apps/console/src/lib/offline-recovery-parity.test.ts",
+      "evidence_marker": "renders no recovery action and grants no authority"
+    },
+    {
+      "id": "phase10_target_lifecycle_claim",
+      "evidence_file": "scripts/product-direction-invariants.mjs",
+      "evidence_marker": "Phase 10 lifecycle proof claims must not precede Phase 14 target selection"
+    }
+  ],
+  "validation_commands": [
+    "npm run phase10:exit:test",
+    "npm run phase10:exit:check",
+    "npm run docs:direction:check",
+    "npm run security:conformance:check",
+    "npm run audit:migrations:check",
+    "npm run public:check",
+    "npm run check",
+    "git diff --check"
+  ],
+  "explicit_exclusions": [
+    "served_or_public_consequence_routes",
+    "production_or_user_repository_execution",
+    "migration_0018_key_or_provider_work",
+    "system_user_target_or_package_path_selection",
+    "artifact_build_install_service_or_lifecycle_proof",
+    "tag_release_publication_deployment_or_production_write",
+    "phase11_or_later_implementation"
+  ],
+  "side_effects": []
+}

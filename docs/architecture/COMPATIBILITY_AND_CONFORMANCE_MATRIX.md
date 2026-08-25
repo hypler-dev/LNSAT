@@ -10,6 +10,20 @@ candidate records all mandatory evidence and passes tests. Unknown, unselected,
 missing, partial, or untested rows are unsupported and do not block a narrower
 claim.
 
+## Phase 10 Source Conformance
+
+P10-X1 freezes target-neutral source contracts before any target row is
+selected. Exact manifest/config/status/output fixtures, authenticated local
+health/status, offline recovery, non-root enforcement, completion/man source,
+packet CLI/API/MCP equality, and recovery API/MCP/UI unavailability pass under
+`npm run phase10:exit:test` and `npm run phase10:exit:check`.
+
+This source freeze grants no supported row. Target selection, artifact binding,
+installation, service lifecycle, package compatibility, and support evidence
+remain Phase 14 work. Phase 11 also remains closed pending separate authority.
+See the
+[Phase 10 product-surface conformance freeze](PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md).
+
 ## Mandatory Evidence Columns
 
 Every selected OS, architecture, and artifact-family row must record:

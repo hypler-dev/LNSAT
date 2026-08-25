@@ -12,10 +12,10 @@
   },
   "mutation_authority": false,
   "phase10": {
-    "implemented_packets": ["P10-A1", "P10-A2", "P10-A3", "P10-A4"],
-    "next_packet": "P10-X1",
+    "implemented_packets": ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"],
+    "next_packet": "none_authorized",
     "phase11_open": false,
-    "status": "in_progress"
+    "status": "complete"
   },
   "product_surface": {
     "implemented": [

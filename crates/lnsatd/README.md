@@ -162,8 +162,9 @@ Phase 10 P10-A1 establishes a target-neutral contract spine, P10-A2 adds
 explicit-only configuration/path evidence, and P10-A3 adds authenticated local
 health/status plus stable output formats. P10-A4 adds offline backup, inert
 restore, protected owner recovery, non-root enforcement, and exact
-CLI/API/MCP/UI unavailability parity. System/user paths and P10-X1 exit freeze
-remain incomplete. Current source does not install, daemonize, register, or
+CLI/API/MCP/UI unavailability parity. System/user paths remain unselected;
+P10-X1 source conformance is complete. Current source does not install,
+daemonize, register, or
 automatically start an OS service. See
 [CLI and OS operator interface](../../docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
 and [Phase 14 distribution](../../docs/architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md).

@@ -26,6 +26,19 @@ const commands = {
   clippy: ["clippy", "--workspace", "--all-targets", "--", "-D", "warnings"],
   test: ["test", "--workspace", "--all-targets", "--locked"],
   "phase7-local-conformance": ["test", "-p", "lnsat-store", "phase7_", "--locked"],
+  "product-surface": [
+    "test",
+    "-p",
+    "lnsatd",
+    "--lib",
+    "--test",
+    "product_configuration_cli",
+    "--test",
+    "product_status_health_cli",
+    "--test",
+    "product_surface_cli",
+    "--locked",
+  ],
   metadata: ["metadata", "--format-version", "1", "--no-deps", "--locked"],
 };
 

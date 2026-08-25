@@ -89,6 +89,7 @@ publication order is controlled by [product build sequence](../PRODUCT_BUILD_SEQ
 - [Phase 8 adapter authority conformance](PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md)
 - [Phase 9 API-backed Control Center](PHASE_9_API_BACKED_CONTROL_CENTER.md)
 - [Phase 10 product-surface contract spine](PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
+- [Phase 10 product-surface conformance freeze](PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md)
 
 These files describe experimental local foundations. Local owner, append-only
 credential rotation, permanent non-owner disablement, hash-only session
@@ -114,10 +115,12 @@ service is implemented or supported.
 
 - [CLI and OS operator interface](CLI_AND_OS_OPERATOR_INTERFACE.md)
 - [Phase 10 product-surface contract spine](PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
+- [Phase 10 product-surface conformance freeze](PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md)
 
 Phase 10 requires first-class `lnsat`, `lnsatctl`, and `lnsatd` OS interfaces.
-P10-A1 implements an experimental target-neutral source spine only. It claims no
-stable support, package, target path, service lifecycle, or artifact.
+P10-A1 through P10-A4 implement experimental target-neutral source surfaces;
+P10-X1 freezes their source conformance. Phase 10 completion claims no stable
+support, package, target path, service lifecycle, or artifact.
 
 ## Proposals and Future Design
 
