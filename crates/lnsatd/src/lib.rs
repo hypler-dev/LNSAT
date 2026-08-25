@@ -6,6 +6,7 @@
 mod local_unix_socket;
 pub mod product_config;
 pub mod product_output;
+pub mod product_recovery;
 pub mod product_surface;
 pub mod product_transport;
 
@@ -1513,6 +1514,8 @@ pub enum DaemonErrorV1 {
     PortZeroForbidden,
     /// Durable storage failed to open or verify before listener creation.
     StoreOpenFailed,
+    /// Daemon runtime may not start with privileged effective UID.
+    PrivilegedRuntimeForbidden,
     /// Loopback listener creation failed.
     ListenFailed,
     /// Bound address could not be verified as loopback.
@@ -1551,6 +1554,7 @@ impl DaemonErrorV1 {
             Self::NonLoopbackAddress => "lnsatd.listen.non_loopback_forbidden",
             Self::PortZeroForbidden => "lnsatd.listen.port_zero_forbidden",
             Self::StoreOpenFailed => "lnsatd.store.open_failed",
+            Self::PrivilegedRuntimeForbidden => "lnsatd.runtime.non_root_required",
             Self::ListenFailed => "lnsatd.listen.failed",
             Self::BoundAddressInvalid => "lnsatd.listen.bound_address_invalid",
             Self::AcceptFailed => "lnsatd.connection.accept_failed",
@@ -1940,6 +1944,9 @@ impl DaemonServerV1 {
     /// Fails closed when storage, listener creation, or bound-address
     /// verification fails.
     pub fn bind(config: &DaemonConfigV1) -> Result<Self, DaemonErrorV1> {
+        if !product_surface::current_process_is_non_root_v1() {
+            return Err(DaemonErrorV1::PrivilegedRuntimeForbidden);
+        }
         let database_lease = acquire_local_daemon_database_lease_v1(config.database_path())
             .map_err(|_| DaemonErrorV1::StoreOpenFailed)?;
         let mut store = SqliteStore::open(config.database_path())

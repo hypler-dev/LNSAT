@@ -30,6 +30,28 @@ pub const DAEMON_STATUS_CONTRACT_V1: &str = "lnsat.daemon.status.v1";
 /// Only bounded evidence change permitted while authenticating a read.
 pub const SESSION_ACTIVITY_SIDE_EFFECT_V1: &str = "session_activity_evidence_may_append";
 
+/// Evaluates target-neutral non-root runtime policy from one effective UID.
+#[must_use]
+pub const fn effective_uid_is_non_root_v1(effective_uid: u32) -> bool {
+    effective_uid != 0
+}
+
+/// Returns whether current process satisfies implemented non-root enforcement.
+///
+/// macOS and Linux use kernel-reported effective UID. Other targets remain
+/// unsupported until their privilege identity has an explicit contract.
+#[must_use]
+pub fn current_process_is_non_root_v1() -> bool {
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    {
+        effective_uid_is_non_root_v1(nix::unistd::geteuid().as_raw())
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    {
+        false
+    }
+}
+
 /// Closed storage posture returned by authenticated health reads.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -183,8 +205,8 @@ impl DaemonStatusV1 {
             && self.explicit_target.endpoint_required
             && !self.explicit_target.remote_transport
             && !self.mutation_authority
-            && self.phase10.implemented_packets == ["P10-A1", "P10-A2", "P10-A3"]
-            && self.phase10.next_packet == "P10-A4"
+            && self.phase10.implemented_packets == ["P10-A1", "P10-A2", "P10-A3", "P10-A4"]
+            && self.phase10.next_packet == "P10-X1"
             && !self.phase10.phase11_open
             && self.phase10.status == "in_progress"
             && self.product_surface.implemented
@@ -192,10 +214,13 @@ impl DaemonStatusV1 {
                     "doctor",
                     "config.inspect",
                     "recovery.inspect",
+                    "backup",
+                    "restore",
+                    "recovery.owner",
                     "health",
                     "status",
                 ]
-            && self.product_surface.reserved == ["recovery_mutation", "service", "update"]
+            && self.product_surface.reserved == ["recovery.activate", "service", "update"]
             && self.readiness.daemon_reachable
             && self.readiness.schema_current
             && self.readiness.storage_ready
@@ -243,8 +268,10 @@ pub fn daemon_status_v1() -> DaemonStatusV1 {
         },
         mutation_authority: false,
         phase10: DaemonPhase10PostureV1 {
-            implemented_packets: ["P10-A1", "P10-A2", "P10-A3"].map(str::to_owned).to_vec(),
-            next_packet: "P10-A4".to_owned(),
+            implemented_packets: ["P10-A1", "P10-A2", "P10-A3", "P10-A4"]
+                .map(str::to_owned)
+                .to_vec(),
+            next_packet: "P10-X1".to_owned(),
             phase11_open: false,
             status: "in_progress".to_owned(),
         },
@@ -253,12 +280,15 @@ pub fn daemon_status_v1() -> DaemonStatusV1 {
                 "doctor",
                 "config.inspect",
                 "recovery.inspect",
+                "backup",
+                "restore",
+                "recovery.owner",
                 "health",
                 "status",
             ]
             .map(str::to_owned)
             .to_vec(),
-            reserved: ["recovery_mutation", "service", "update"]
+            reserved: ["recovery.activate", "service", "update"]
                 .map(str::to_owned)
                 .to_vec(),
         },
@@ -359,6 +389,7 @@ pub fn doctor_output_json_v1() -> String {
         },
         "runtime": {
             "non_root_required": true,
+            "non_root_enforced": true,
             "supported_release": false,
             "package_or_binary_claim": false
         },
@@ -454,7 +485,7 @@ pub fn failure_output_json_v1(
 /// Bounded `lnsatctl` help text.
 #[must_use]
 pub const fn lnsatctl_usage_v1() -> &'static str {
-    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
+    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
 }
 
 /// Generated completion source for supported shells.
@@ -462,13 +493,13 @@ pub const fn lnsatctl_usage_v1() -> &'static str {
 pub fn completion_source_v1(shell: &str) -> Option<&'static str> {
     match shell {
         "bash" => Some(
-            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor health status config recovery manifest completion man --socket --session-token-stdin --output --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
+            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor health status config recovery backup restore manifest completion man --database --destination --backup --expected-owner --recovered-at --new-password-stdin --socket --session-token-stdin --output --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
         ),
         "zsh" => Some(
-            "#compdef lnsatctl lnsat lnsatd\ncase \"$service\" in\n  lnsatctl)\n    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsat)\n    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsatd)\n    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n    ;;\nesac\n",
+            "#compdef lnsatctl lnsat lnsatd\ncase \"$service\" in\n  lnsatctl)\n    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsat)\n    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsatd)\n    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n    ;;\nesac\n",
         ),
         "fish" => Some(
-            "complete -c lnsatctl -f -a 'doctor health status config recovery manifest completion man'\ncomplete -c lnsatctl -f -l socket\ncomplete -c lnsatctl -f -l session-token-stdin\ncomplete -c lnsatctl -f -l output -a 'text json jsonl yaml'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
+            "complete -c lnsatctl -f -a 'doctor health status config recovery backup restore manifest completion man'\ncomplete -c lnsatctl -f -l database\ncomplete -c lnsatctl -f -l destination\ncomplete -c lnsatctl -f -l backup\ncomplete -c lnsatctl -f -l expected-owner\ncomplete -c lnsatctl -f -l recovered-at\ncomplete -c lnsatctl -f -l new-password-stdin\ncomplete -c lnsatctl -f -l socket\ncomplete -c lnsatctl -f -l session-token-stdin\ncomplete -c lnsatctl -f -l output -a 'text json jsonl yaml'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
         ),
         _ => None,
     }
@@ -482,7 +513,7 @@ pub fn man_page_source_v1(command: &str) -> Option<&'static str> {
             ".TH LNSAT 1\n.SH NAME\nlnsat - source-only LNSAT workflow dispatcher\n.SH SYNOPSIS\nlnsat packet <validate|hash|inspect> <packet.json> [request_id]\n.SH SAFETY\nNo command grants ambient authority. Current commands are read-only or pure local inspection.\n",
         ),
         "lnsatctl" => Some(
-            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin | config inspect --config <absolute-path> | recovery inspect --database <path> | manifest\n.SH OUTPUT\nRead-only commands accept --output text|json|jsonl|yaml in the documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Client proves socket path, mode, owner, stable identity, and peer effective UID before transmitting bearer material. Configuration and recovery inspection are read-only. Service install, start, recovery mutation, and activation are unavailable.\n",
+            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics and offline recovery\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin | config inspect --config <absolute-path> | recovery inspect --database <path> | backup --database <path> --destination <fresh-path> | restore --backup <path> --destination <fresh-path> | recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin | manifest\n.SH OUTPUT\nCommands accept --output text|json|jsonl|yaml in documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Offline backup and owner recovery prove daemon quiescence through exclusive database lease. Restore creates only one fresh inert file. Owner replacement password is accepted only through protected stdin. Daemon and offline recovery commands refuse root. No API, MCP, UI, service start, automatic activation, or existing-file replacement authority exists.\n",
         ),
         "lnsatd" => Some(
             ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --config <absolute-path> | --database <path> [--listen <numeric-loopback:port>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically.\n",
@@ -515,6 +546,14 @@ mod tests {
             "rejected"
         );
         assert_eq!(value["recovery"]["served_mutation"], false);
+        assert_eq!(value["recovery"]["backup"], "implemented_offline");
+        assert_eq!(value["recovery"]["restore"], "implemented_inert");
+        assert_eq!(
+            value["recovery"]["owner_recovery"],
+            "implemented_offline_protected_stdin"
+        );
+        assert_eq!(value["non_root"]["runtime_enforced"], true);
+        assert_eq!(value["non_root"]["offline_recovery_enforced"], true);
         assert_eq!(value["service_manager"]["install_implemented"], false);
         assert_eq!(value["service_manager"]["start_implemented"], false);
         assert_eq!(value["hard_stops"]["migration_0018"], false);
@@ -599,13 +638,51 @@ mod tests {
     }
 
     #[test]
+    fn offline_recovery_parity_fixture_keeps_served_channels_closed() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../fixtures/contracts/phase10-recovery-parity-v1.json"
+        ))
+        .expect("recovery parity fixture must parse");
+        assert_eq!(fixture["contract_id"], "lnsat.operator_recovery.parity.v1");
+        assert_eq!(
+            fixture["operator_contract_id"],
+            "lnsat.operator_recovery.v1"
+        );
+        assert_eq!(fixture["commands"].as_array().map(Vec::len), Some(3));
+        for command in fixture["commands"]
+            .as_array()
+            .expect("commands must be an array")
+        {
+            assert_ne!(command["cli"], "unavailable");
+            assert_eq!(command["api"], "unavailable");
+            assert_eq!(command["mcp"], "unavailable");
+            assert_eq!(command["ui"], "unavailable");
+            assert_eq!(command["served_mutation"], false);
+            assert_eq!(command["automatic_activation"], false);
+        }
+        assert_eq!(fixture["hard_stops"]["served_api_route"], false);
+        assert_eq!(fixture["hard_stops"]["mcp_tool"], false);
+        assert_eq!(fixture["hard_stops"]["ui_action"], false);
+        assert_eq!(fixture["hard_stops"]["schema_change"], false);
+        assert_eq!(fixture["hard_stops"]["phase11"], false);
+    }
+
+    #[test]
     fn doctor_is_secret_free_and_uses_no_ambient_environment() {
         let output = doctor_output_json_v1();
         assert!(output.contains("\"ambient_environment_used\":false"));
         assert!(output.contains("\"secret_process_arguments_allowed\":false"));
+        assert!(output.contains("\"non_root_enforced\":true"));
         assert!(output.contains("\"side_effects\":[]"));
         assert!(!output.contains("HOME"));
         assert!(!output.contains("TOKEN"));
+    }
+
+    #[test]
+    fn effective_uid_zero_is_always_refused() {
+        assert!(!effective_uid_is_non_root_v1(0));
+        assert!(effective_uid_is_non_root_v1(1));
+        assert!(effective_uid_is_non_root_v1(501));
     }
 
     #[test]
@@ -616,7 +693,7 @@ mod tests {
                 "#compdef lnsatctl lnsat lnsatd\n",
                 "case \"$service\" in\n",
                 "  lnsatctl)\n",
-                "    _arguments '1:command:(doctor health status config recovery manifest completion man)' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+                "    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
                 "    ;;\n",
                 "  lnsat)\n",
                 "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",

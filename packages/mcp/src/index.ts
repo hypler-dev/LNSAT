@@ -136,6 +136,11 @@ export type {
 export * from "./schema-security.js";
 export * from "./transport-security.js";
 export * from "./oauth-security.js";
+export {
+  MCP_OFFLINE_RECOVERY_STATUS,
+  MCP_OFFLINE_RECOVERY_TOOL_REGISTERED,
+  mcpOfflineRecoveryPostureV1,
+} from "./offline-recovery-parity.js";
 
 export const MCP_ADAPTER_STATUS = "read_only";
 export const MCP_SERVER_STATUS = "read_only";

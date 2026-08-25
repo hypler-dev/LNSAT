@@ -111,15 +111,23 @@ Current behavior:
 
 This crate also contains experimental `lnsatctl` source for `doctor`,
 authenticated `health`/`status`, public-safe `config inspect`, read-only
-`recovery inspect`, manifest, completion, man, help, and version. Health/status
-require one explicit `http://127.0.0.1:<port>` or `http://[::1]:<port>` endpoint
-and one opaque session token from stdin. Transport uses no proxy environment,
-DNS, hostname, redirect, retry, discovery, TLS, remote target, or secret
-argument. Read-only commands share deterministic `text|json|jsonl|yaml` output;
+`recovery inspect`, non-root offline `backup`, fresh inert `restore`, protected
+`recovery owner`, manifest, completion, man, help, and version. Health/status
+require one explicit owner-controlled macOS/Linux Unix-socket path and one
+opaque session token from stdin. Transport proves path, socket, owner, stable
+inode, and peer effective UID before bearer transmission and uses no proxy
+environment, DNS, hostname, redirect, retry, discovery, TLS, remote target, or
+secret argument. Commands share deterministic `text|json|jsonl|yaml` output;
 JSON remains default and manifest remains canonical JSON only. Config
 inspection returns exact-byte SHA-256 and applied-layer evidence without raw
-paths or source bytes. No recovery mutation, service install/start, `sudo`, or
-automatic privilege escalation is exposed.
+paths or source bytes. Backup and owner recovery require the daemon-shared
+exclusive database lease. Restore creates only one fresh inert file. Owner
+recovery preflights current schema and expected owner before reading one
+bounded UTF-8 password from protected stdin, then atomically appends
+credential/audit evidence and revokes every owner session. Daemon bind and
+offline recovery mutations refuse effective UID zero on macOS/Linux. No served
+recovery route, activation, existing-file replacement, service install/start,
+`sudo`, or automatic privilege escalation is exposed.
 
 This crate exposes stable source-level `/v1` negotiation and authenticated
 `POST|GET|HEAD|PATCH|DELETE /v1/session`, authenticated read-only
@@ -152,9 +160,10 @@ supported artifact.
 
 Phase 10 P10-A1 establishes a target-neutral contract spine, P10-A2 adds
 explicit-only configuration/path evidence, and P10-A3 adds authenticated local
-health/status plus stable output formats. System/user paths, P10-A4
-recovery/non-root/parity, and P10-X1 exit freeze remain
-incomplete. Current source does not install, daemonize,
-register, or automatically start an OS service. See
+health/status plus stable output formats. P10-A4 adds offline backup, inert
+restore, protected owner recovery, non-root enforcement, and exact
+CLI/API/MCP/UI unavailability parity. System/user paths and P10-X1 exit freeze
+remain incomplete. Current source does not install, daemonize, register, or
+automatically start an OS service. See
 [CLI and OS operator interface](../../docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
 and [Phase 14 distribution](../../docs/architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md).

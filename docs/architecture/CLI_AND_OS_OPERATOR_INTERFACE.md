@@ -2,9 +2,11 @@
 
 - Status: accepted direction with experimental P10-A1 source contract spine and
   P10-A2 explicit daemon configuration plus P10-A3 authenticated local
-  health/status and stable output formats
+  health/status and stable output formats plus P10-A4 offline recovery,
+  non-root enforcement, and parity evidence
 - Availability: packet inspection, direct/explicit-config daemon arguments,
-  target-neutral manifest, operator doctor/health/status/config/recovery inspection,
+  target-neutral manifest, operator doctor/health/status/config/recovery
+  inspection, offline backup, inert restore, protected owner recovery,
   completion, and man source exist; stable supported product CLI does not
 
 Product split and extension boundary are accepted by
@@ -68,7 +70,7 @@ lnsatctl emergency-disable
 Commands ship only when owning roadmap phase implements and tests authority.
 Documentation of a name does not authorize implementation or runtime mutation.
 
-Current P10-A1/P10-A2/P10-A3 implemented subset:
+Current P10-A1/P10-A2/P10-A3/P10-A4 implemented subset:
 
 ```text
 lnsat packet validate|hash|inspect ...
@@ -78,14 +80,21 @@ lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|j
 lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
 lnsatctl config inspect --config <absolute-path>
 lnsatctl recovery inspect --database <path>
+lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]
+lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]
+lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]
 lnsatctl manifest|completion|man|--help|--version
 lnsatd --config <absolute-path>
 lnsatd --database ... | --manifest | --help | --version
 ```
 
-All other listed groups remain reserved and unavailable. Current recovery
-inspection is read-only, reflects no raw path, and grants no repair, migration,
-quarantine, credential, or activation authority.
+All other listed groups remain reserved and unavailable. Recovery inspection
+is read-only. Backup creates one non-root offline snapshot. Restore creates one
+fresh inert database without replacing or activating existing state. Owner
+recovery accepts its replacement password only from protected stdin, appends
+credential/audit evidence, and revokes every owner session. None reflects raw
+paths or secret material. No repair, migration, quarantine, served recovery,
+or activation authority exists.
 
 P10-A3 health/status accept no default target. macOS/Linux accept one explicit
 absolute, bounded, normalized UTF-8 Unix-socket path. One opaque session token
@@ -97,6 +106,14 @@ TCP bearer, hostname, DNS, TLS, userinfo, query, fragment, proxy environment,
 redirect, retry, discovery, secret argument/file/URL, and remote transport
 behavior are absent. Invalid arguments, path syntax, and stdin fail before
 connect. Unsafe path or server identity fails before request bytes are written.
+
+P10-A4 recovery commands accept no default store or destination. Backup and
+owner recovery acquire the daemon-shared exclusive database lease. Owner
+recovery validates current schema and expected owner before reading password
+stdin. Password input is one bounded UTF-8 value, rejects embedded line breaks
+and NUL, and is zeroized after use. Daemon bind and offline recovery mutations
+refuse effective UID zero on macOS/Linux. API exposes no recovery route, MCP
+registers no recovery tool, and Control Center renders no recovery action.
 
 ## Command Safety Contract
 
@@ -146,7 +163,7 @@ authenticates; Gateway applies role/capability policy and records evidence.
 
 ## Privilege and Service Separation
 
-- `lnsatd` runs as non-root.
+- `lnsatd` bind refuses effective UID zero on macOS/Linux.
 - Installer may place files and service metadata but never starts service
   automatically.
 - `systemd`, launchd, and Homebrew service management require explicit operator
@@ -156,6 +173,8 @@ authenticates; Gateway applies role/capability policy and records evidence.
   deny-by-default, and covered by dedicated threat model.
 - Recovery runs through explicit offline or service-stopped workflow with exact
   store, owner, and lease proof.
+- Offline backup and owner recovery prove quiescence with an exclusive database
+  lease. Inert restore requires a fresh destination and never starts a daemon.
 
 ## Configuration, Data, and Logs
 
@@ -208,14 +227,16 @@ Human output is concise. Automation has versioned closed schemas:
 - pagination, timeout, and cancellation controls;
 - compatibility negotiation and actionable upgrade errors.
 
-P10-A3 implements `text`, `json`, `jsonl`, and `yaml` for `doctor`, config and
-recovery inspection, health, and status. JSON remains default and preserves
-existing doctor/config/recovery semantics. JSONL emits one compact object line
-for these single-result commands. YAML is one deterministic plain document
-without tags, anchors, aliases, or multiple documents. `--output` appears at
-most once in documented final position. Manifest remains canonical JSON only.
-Success uses stdout; formatted public-safe failures use stderr. Read-only
-transport failure never maps to outcome-unknown.
+P10-A3/P10-A4 implement `text`, `json`, `jsonl`, and `yaml` for `doctor`, config
+and recovery inspection, health, status, backup, restore, and owner recovery.
+JSON remains default and preserves existing doctor/config/recovery semantics.
+JSONL emits one compact object line for these single-result commands. YAML is
+one deterministic plain document without tags, anchors, aliases, or multiple
+documents. `--output` appears at most once in documented final position.
+Manifest remains canonical JSON only. Success uses stdout; formatted
+public-safe failures use stderr. Read-only transport failure never maps to
+outcome-unknown. Recovery output identifies exact side-effect classes but
+never includes raw paths, password material, or password-derived values.
 
 Shell completion for bash, zsh, and fish plus generated man pages are Phase 10
 deliverables. Commands should remain wrapper-friendly so third parties can
