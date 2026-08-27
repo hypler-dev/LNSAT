@@ -420,7 +420,7 @@ schema:
 - one exact 30-second supervised Git process deadline that kills, waits, and
   preserves `outcome_unknown` on any termination ambiguity;
 - route-specific 16 KiB request framing and response redaction;
-- served operation/attempt readback and operator-triggered reconciliation over
+- served operation/attempt readback and requester-triggered reconciliation over
   current evidence without adding retry or receipt-submission authority.
 
 Focused source tests and fixture
@@ -462,6 +462,34 @@ That merge opened no deployment, production support, public listener, or target
 beyond the marked disposable fixture. Each still requires later independent
 authorization.
 
+## Phase 11 Served Reference Intake Proof
+
+P11-R1 adds one experimental daemon-level proof over the unchanged eight Phase
+8 routes. `phase11_served_reference` uses a real numeric-loopback daemon, two
+distinct local human sessions, and one marked disposable Git repository. It
+proves request, distinct-human approval, capability issue, atomic consume and
+attempt claim, then deliberately discards the execute response. The client does
+not infer execution or non-execution. After the consequence worker finishes, the
+daemon restarts; authenticated operation/attempt readback and inspection-only
+reconciliation resolve the client-side unknown outcome. Exact replay then proves
+one Git commit, one attempt, one receipt, and no second dispatch.
+
+Reconciliation no longer reuses the dispatch-only approved-base identity check;
+that property intentionally changes after the adapter advances `HEAD` through
+its temporary index. Reconciliation still requires exact repository path, Git
+directory, object format, head ref, fixture marker, disposable-root containment,
+path safety, patch digest, executable and configuration bindings, plus index and
+worktree equality with the approved base. Non-normal index flags, including
+`assume-unchanged` and `skip-worktree`, also fail closed before existing exact
+receipt and Git-object inspection. Fresh dispatch still requires the approved
+base and clean target through the same validator, so ignored untracked files
+and non-normal index flags reject before attempt claim.
+
+Packet and deterministic policy creation remain validated fixture seeding.
+P11-R1 adds no route, migration, dependency, Docker invocation, production or
+user-repository target, package, deployment, or support claim. Phase 11 remains
+incomplete.
+
 ## Hard Stops
 
 This implementation packet does not authorize:
@@ -478,8 +506,8 @@ This implementation packet does not authorize:
 - binaries, packages, containers, installers, service registration, host
   installation, signing, tags, GitHub Releases, publication, deployment, or
   production writes;
-- Phase 9 or later implementation, automatic implementation after review, or
-  any production-support claim.
+- any further Phase 11 or later implementation, automatic implementation after
+  review, or any production-support claim.
 
 Stable conformance 0.1.16 covers the supported 2025-11-25 HTTP initialize
 scenario; official v2 SDK tests cover modern/stdin behavior because upstream

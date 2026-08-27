@@ -534,7 +534,12 @@ append, all-owner-session revocation, and exact API/MCP/UI unavailability
 parity. No served recovery or activation opens. System/user paths remain
 unselected. P10-X1 source conformance passes with 13 evidence rows, 13 required
 negatives, and eight compatibility guarantees. Phase 10 is complete at
-source-conformance level; Phase 11 remains closed pending separate authority.
+source-conformance level. P11-R1 proves one experimental full served chain over
+the existing Phase 8 loopback routes and a marked disposable Git fixture. It
+discards the execute response, restarts the daemon, and resolves the client-side
+unknown outcome only through authenticated readback and reconciliation. No new
+route, Docker profile, production target, or support claim opens; Phase 11
+remains incomplete and separately gated.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.

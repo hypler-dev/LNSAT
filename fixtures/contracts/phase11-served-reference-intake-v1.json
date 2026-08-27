@@ -1,0 +1,63 @@
+{
+  "schema_id": "lnsat.phase11_served_reference_intake_fixture.schema.v1_0",
+  "fixture_id": "phase11-served-reference-intake-v1",
+  "packet_id": "P11-R1",
+  "status": "experimental_source_proof",
+  "phase11_complete": false,
+  "production_supported": false,
+  "authority_source": "existing_phase7_and_phase8_gateway_chain",
+  "fixture_boundary": {
+    "packet_and_policy": "validated_test_fixture_seed",
+    "served_steps": [
+      "approval_request",
+      "distinct_human_approval_decision",
+      "execution_authorization_issue",
+      "atomic_consume_claim_and_git_execute",
+      "client_disconnect_without_execute_response_read",
+      "daemon_restart_before_readback",
+      "operation_and_attempt_readback",
+      "requester_reconciliation",
+      "exact_execution_replay"
+    ],
+    "new_routes": [],
+    "new_authority_paths": []
+  },
+  "required_bindings": [
+    "operation_id",
+    "packet_and_action_digest",
+    "tool_arguments_digest",
+    "authorization_id",
+    "idempotency_key",
+    "adapter_identity",
+    "protocol_version",
+    "attempt_sequence",
+    "repository_and_worktree_identity",
+    "base_commit",
+    "allowed_paths",
+    "patch_digest",
+    "commit_metadata",
+    "expected_tree",
+    "receipt_commit_and_tree",
+    "reconciliation_result"
+  ],
+  "required_results": {
+    "consequences": 1,
+    "attempts": 1,
+    "receipts": 1,
+    "terminal_state": "completed",
+    "disconnected_client_outcome": "unresolved_until_authenticated_read_and_reconciliation",
+    "daemon_restart": "required_before_readback",
+    "replay": "metadata_only_no_dispatch",
+    "reconciliation": "inspection_only_no_dispatch"
+  },
+  "hard_stops": [
+    "no_new_route_cli_mcp_or_ui_action",
+    "no_schema_migration_dependency_or_lockfile_change",
+    "no_git_network_push_fetch_remote_hook_or_shell",
+    "no_user_or_production_repository",
+    "no_docker_socket_or_live_docker_invocation",
+    "no_blind_retry",
+    "no_phase13_or_phase14_implementation",
+    "no_package_release_deploy_or_support_claim"
+  ]
+}
