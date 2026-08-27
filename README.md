@@ -229,8 +229,13 @@ source. Phase 10 P10-A1 product-surface spine, P10-A2 explicit configuration,
 and P10-A3 authenticated local health/status transport plus stable operator
 output formats are implemented. P10-A4 adds non-root offline recovery and
 closed API/MCP/UI parity; P10-X1 completes Phase 10 source conformance. Phase 11
-remains separately gated. Required path is Phase 8 -> Phase 9 -> Phase 10 ->
-Phase 11 -> Phase 13 -> Phase 14. Supported
+now has one experimental served reference proof over the existing eight Phase 8
+loopback routes and a marked disposable Git fixture. The client discards the
+execute response, restarts the daemon, then resolves the unknown outcome only
+through authenticated evidence readback and reconciliation. It opens no new
+route, production target, or support claim; Phase 11 remains incomplete.
+Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase
+14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See
 [product build sequence](docs/PRODUCT_BUILD_SEQUENCE.md).

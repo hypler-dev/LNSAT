@@ -860,6 +860,91 @@ fn phase7_git_adapter_rejects_dirty_target_before_dispatch() {
 }
 
 #[test]
+fn phase7_git_adapter_rejects_hidden_target_drift_before_dispatch() {
+    let mut ignored_fixture = authorize_git_fixture(717);
+    let exclude_path = ignored_fixture
+        .repository
+        .identity
+        .git_dir_path
+        .join("info/exclude");
+    let mut exclude = fs::read(&exclude_path).expect("fixture exclude file must read");
+    exclude.extend_from_slice(b"\nhidden-untracked.txt\n");
+    fs::write(exclude_path, exclude).expect("fixture exclude file must write");
+    fs::write(
+        ignored_fixture.repository.path.join("hidden-untracked.txt"),
+        b"hidden\n",
+    )
+    .expect("ignored untracked file must write");
+    let ignored_error = {
+        let (store, input) = ignored_fixture.parts();
+        store
+            .dispatch_phase7_git_commit_with_sources_v1(
+                &input,
+                || Ok(DISPATCHED_AT.to_owned()),
+                || panic!("ignored untracked target must never dispatch"),
+            )
+            .expect_err("ignored untracked target must reject")
+    };
+    assert_eq!(ignored_error, Phase7GitAdapterErrorV1::TargetRejected);
+    assert_eq!(
+        table_count(&ignored_fixture.store, "lnsat_operation_attempts"),
+        0
+    );
+
+    let mut assume_fixture = authorize_git_fixture(718);
+    git(
+        &assume_fixture.repository.path,
+        &["update-index", "--assume-unchanged", "--", "fixture.txt"],
+    );
+    fs::write(
+        assume_fixture.repository.path.join("fixture.txt"),
+        b"assume-unchanged drift\n",
+    )
+    .expect("assume-unchanged drift must write");
+    let assume_error = {
+        let (store, input) = assume_fixture.parts();
+        store
+            .dispatch_phase7_git_commit_with_sources_v1(
+                &input,
+                || Ok(DISPATCHED_AT.to_owned()),
+                || panic!("assume-unchanged target must never dispatch"),
+            )
+            .expect_err("assume-unchanged target must reject")
+    };
+    assert_eq!(assume_error, Phase7GitAdapterErrorV1::TargetRejected);
+    assert_eq!(
+        table_count(&assume_fixture.store, "lnsat_operation_attempts"),
+        0
+    );
+
+    let mut skip_fixture = authorize_git_fixture(719);
+    git(
+        &skip_fixture.repository.path,
+        &["update-index", "--skip-worktree", "--", "fixture.txt"],
+    );
+    fs::write(
+        skip_fixture.repository.path.join("fixture.txt"),
+        b"skip-worktree drift\n",
+    )
+    .expect("skip-worktree drift must write");
+    let skip_error = {
+        let (store, input) = skip_fixture.parts();
+        store
+            .dispatch_phase7_git_commit_with_sources_v1(
+                &input,
+                || Ok(DISPATCHED_AT.to_owned()),
+                || panic!("skip-worktree target must never dispatch"),
+            )
+            .expect_err("skip-worktree target must reject")
+    };
+    assert_eq!(skip_error, Phase7GitAdapterErrorV1::TargetRejected);
+    assert_eq!(
+        table_count(&skip_fixture.store, "lnsat_operation_attempts"),
+        0
+    );
+}
+
+#[test]
 fn phase7_git_adapter_rejects_derived_payload_and_reconciliation_drift() {
     let mut payload_fixture = authorize_git_fixture(710);
     payload_fixture.derived.request.action.arguments.insert(

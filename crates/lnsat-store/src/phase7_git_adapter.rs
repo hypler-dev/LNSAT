@@ -1005,7 +1005,7 @@ impl SqliteStore {
             disposable_root,
             git_executable,
         };
-        validate_phase8_runtime_target_v1(&runtime_input, &parsed, patch)?;
+        validate_phase8_reconciliation_target_v1(&runtime_input, &parsed, patch)?;
         let dispatch = Phase7GitCommitDispatchInputV1 {
             project_ref: &operation.project_ref,
             resource_ref: &operation.resource_ref,
@@ -1133,6 +1133,28 @@ fn validate_phase8_runtime_target_v1(
     parsed: &ParsedGitRequest,
     patch: &[u8],
 ) -> Result<(), Phase7GitAdapterErrorV1> {
+    validate_phase8_runtime_target_mode_v1(input, parsed, patch, true).map(|_| ())
+}
+
+fn validate_phase8_reconciliation_target_v1(
+    input: &Phase8RuntimeCompositionInputV1<'_>,
+    parsed: &ParsedGitRequest,
+    patch: &[u8],
+) -> Result<(), Phase7GitAdapterErrorV1> {
+    let identity = validate_phase8_runtime_target_mode_v1(input, parsed, patch, false)?;
+    validate_phase8_approved_base_index_and_worktree_v1(
+        input.git_executable,
+        &identity,
+        &parsed.identity.base_commit_oid,
+    )
+}
+
+fn validate_phase8_runtime_target_mode_v1(
+    input: &Phase8RuntimeCompositionInputV1<'_>,
+    parsed: &ParsedGitRequest,
+    patch: &[u8],
+    require_approved_base: bool,
+) -> Result<Phase7GitRepositoryIdentityV1, Phase7GitAdapterErrorV1> {
     if !bounded_reference(input.redemption.project_ref)
         || !is_valid_reference_v1(input.redemption.project_ref)
         || !bounded_reference(input.redemption.resource_ref)
@@ -1149,15 +1171,23 @@ fn validate_phase8_runtime_target_v1(
         &parsed.identity.repository_path,
         input.git_executable,
     )?;
-    if actual_identity != parsed.identity
-        || actual_identity.repository_path == disposable_root
+    let identity_rejected = actual_identity.repository_path != parsed.identity.repository_path
+        || actual_identity.git_dir_path != parsed.identity.git_dir_path
+        || actual_identity.object_format != parsed.identity.object_format
+        || actual_identity.head_ref != parsed.identity.head_ref
+        || actual_identity.fixture_marker_sha256 != parsed.identity.fixture_marker_sha256
+        || (require_approved_base
+            && actual_identity.base_commit_oid != parsed.identity.base_commit_oid);
+    let root_rejected = actual_identity.repository_path == disposable_root
         || !actual_identity
             .repository_path
-            .starts_with(&disposable_root)
-    {
+            .starts_with(&disposable_root);
+    if identity_rejected || root_rejected {
         return Err(Phase7GitAdapterErrorV1::TargetRejected);
     }
-    validate_clean_target(input.git_executable, &actual_identity)?;
+    if require_approved_base {
+        validate_clean_target(input.git_executable, &actual_identity)?;
+    }
     validate_path_safety(&actual_identity.repository_path, &parsed.allowed_paths)?;
     if prefixed_sha256(patch) != parsed.patch_sha256 {
         return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
@@ -1169,7 +1199,76 @@ fn validate_phase8_runtime_target_v1(
     {
         return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
     }
+    Ok(actual_identity)
+}
+
+fn validate_phase8_approved_base_index_and_worktree_v1(
+    git_executable: &Path,
+    identity: &Phase7GitRepositoryIdentityV1,
+    approved_base_commit_oid: &str,
+) -> Result<(), Phase7GitAdapterErrorV1> {
+    let executable = canonical_git_executable(git_executable)?;
+    let index_flags = git_bytes(
+        &executable,
+        &identity.repository_path,
+        &["ls-files", "-v", "-z"],
+        &[],
+        &[],
+    )?;
+    let tracked_drift = git_bytes(
+        &executable,
+        &identity.repository_path,
+        &[
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--name-status",
+            "-z",
+            approved_base_commit_oid,
+            "--",
+        ],
+        &[],
+        &[],
+    )?;
+    let index_drift = git_bytes(
+        &executable,
+        &identity.repository_path,
+        &[
+            "diff",
+            "--cached",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--name-status",
+            "-z",
+            approved_base_commit_oid,
+            "--",
+        ],
+        &[],
+        &[],
+    )?;
+    let untracked_drift = git_bytes(
+        &executable,
+        &identity.repository_path,
+        &["ls-files", "--others", "-z"],
+        &[],
+        &[],
+    )?;
+    if !phase8_reconciliation_index_flags_normal_v1(&index_flags)
+        || !tracked_drift.is_empty()
+        || !index_drift.is_empty()
+        || !untracked_drift.is_empty()
+    {
+        return Err(Phase7GitAdapterErrorV1::TargetRejected);
+    }
     Ok(())
+}
+
+fn phase8_reconciliation_index_flags_normal_v1(value: &[u8]) -> bool {
+    value.is_empty()
+        || (value.ends_with(&[0])
+            && value[..value.len() - 1]
+                .split(|byte| *byte == 0)
+                .all(|entry| entry.len() > 2 && entry[0] == b'H' && entry[1] == b' '))
 }
 
 fn canonical_phase8_disposable_root_v1(path: &Path) -> Result<PathBuf, Phase7GitAdapterErrorV1> {
@@ -2749,18 +2848,11 @@ fn validate_clean_target(
     git_executable: &Path,
     identity: &Phase7GitRepositoryIdentityV1,
 ) -> Result<(), Phase7GitAdapterErrorV1> {
-    let executable = canonical_git_executable(git_executable)?;
-    let status = git_bytes(
-        &executable,
-        &identity.repository_path,
-        &["status", "--porcelain=v1", "-z", "--untracked-files=all"],
-        &[],
-        &[],
-    )?;
-    if !status.is_empty() {
-        return Err(Phase7GitAdapterErrorV1::TargetRejected);
-    }
-    Ok(())
+    validate_phase8_approved_base_index_and_worktree_v1(
+        git_executable,
+        identity,
+        &identity.base_commit_oid,
+    )
 }
 
 fn validate_path_safety(root: &Path, paths: &[String]) -> Result<(), Phase7GitAdapterErrorV1> {

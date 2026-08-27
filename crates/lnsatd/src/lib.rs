@@ -5773,6 +5773,8 @@ mod tests {
     use std::thread;
     use std::time::Instant;
 
+    mod phase11_served_reference;
+
     static NEXT_TEST_DIRECTORY: AtomicU64 = AtomicU64::new(1);
 
     struct TestDirectory {

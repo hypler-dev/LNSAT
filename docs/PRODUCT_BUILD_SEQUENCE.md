@@ -68,7 +68,7 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 | 8     | bounded loopback runtime composition merged            | preserve exact routes, one-attempt evidence, and production-unsupported boundary     |
 | 9     | authenticated exact-ID Control Center readback exists  | preserve live/fixture separation and fail-closed ambiguity mapping                   |
 | 10    | P10-X1 source conformance complete                     | preserve product-surface compatibility and Phase 14 lifecycle ownership              |
-| 11    | source-only disposable Git proof exists                | prove served local reference workflow without production repository authority        |
+| 11    | first existing-route served disposable Git proof exists | complete separately gated local profile proof without production repository authority |
 | 12    | optional post-local-v1 lane                            | none unless selected support profile requires it                                     |
 | 13    | planned                                                | complete reliability, security, recovery, update/revocation, and RC-source freeze    |
 | 14    | blocked; no support row selected; no artifacts         | build and prove only selected target/package rows after required product phases pass |
@@ -148,8 +148,12 @@ restore, and protected-stdin owner recovery with exclusive-lease preflight,
 credential/audit append, and all-owner-session revocation. Exact parity keeps
 API routes, MCP tools, Control Center actions, served mutation, and activation
 unavailable. P10-X1 now freezes 13 evidence rows, 13 required negatives, and
-eight compatibility guarantees. Phase 11 is next in required sequence but
-remains closed until separately authorized.
+eight compatibility guarantees. P11-R1 now proves one full served chain over
+the existing eight Phase 8 loopback routes and one marked disposable Git
+fixture, including disconnected execute response, daemon restart, authenticated
+evidence readback, reconciliation, and exact replay without redispatch. It adds
+no route, Docker profile, production target, or support claim; Phase 11 remains
+incomplete and separately gated.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.
@@ -159,7 +163,8 @@ this local-v1 critical path.
 Until an exact later gate says otherwise:
 
 - no served/public execution-authorization, capability-redemption, adapter,
-  receipt, or recovery mutation route;
+  receipt, or recovery mutation route beyond the exact existing Phase 8
+  loopback disposable-reference set;
 - no production or user-repository consequence;
 - no private-key intake, key generation, provider credential, signer call, or
   migration 0018;

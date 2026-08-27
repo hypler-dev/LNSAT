@@ -38,9 +38,13 @@ P10-A2 explicit-only configuration, and P10-A3 authenticated local
 health/status plus stable output contracts are implemented. P10-A4 offline
 backup, inert restore, protected owner recovery, non-root enforcement, and
 cross-surface unavailability parity are also implemented. P10-X1 closes Phase
-10 source conformance with a fail-closed evidence/compatibility ledger. Phase
-11 remains separately gated and closed. Required
-path stays Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 ->
+10 source conformance with a fail-closed evidence/compatibility ledger. P11-R1
+adds one experimental served reference proof over existing Phase 8 loopback
+routes and a marked disposable Git fixture. The execute response is discarded;
+after daemon restart, the requester resolves the unknown outcome only through
+authenticated evidence readback and reconciliation. It opens no new route,
+production target, Docker profile, or support claim; Phase 11 remains
+incomplete. Required path stays Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
 packets remain nonblocking unless separately selected. No binary/package work
 starts until required product/runtime phases and Phase 13 release-candidate
@@ -824,6 +828,20 @@ reconciliation evidence. It remains experimental and production-unsupported;
 no public listener, user/production repository, blind retry, external receipt
 submission, package, deployment, or artifact publication exists.
 
+P11-R1 proves one full served request -> distinct-human approval -> capability
+issue -> atomic consume/claim -> disconnected execute response -> daemon restart
+-> exact operation and attempt readback -> requester reconciliation -> exact
+replay chain through those existing routes. The disconnected client treats the
+outcome as unresolved until readback and reconciliation. The proof records
+exactly one disposable Git consequence, one attempt, one receipt, and no
+redispatch. Reconciliation now validates stable repository identity and
+approved evidence while permitting expected post-commit `HEAD`; index and
+worktree must still match the approved base. Fresh dispatch still requires
+exact approved base and a clean target.
+Packet/policy creation remains validated fixture seeding because no served
+writer exists. Phase 11 Docker/profile selection and support claims remain
+closed.
+
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit Load/Refresh action performs only relative same-origin GETs with the
 stable contract-version header and active host-only session cookie. It reads
@@ -902,7 +920,8 @@ read-only Control Center projection still preserves exact Gateway policy and
 audit evidence with empty effects.
 
 System/user config paths and target/package lifecycle proof remain Phase 14
-work. P10-X1 completes Phase 10 source conformance without opening Phase 11.
+work. P10-X1 completes Phase 10 source conformance; P11-R1 opens only the
+bounded experimental proof described above.
 See the
 [Phase 10 product-surface contract spine](architecture/PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
 and [conformance freeze](architecture/PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md).
