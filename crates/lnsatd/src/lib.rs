@@ -9,6 +9,7 @@ pub mod product_output;
 pub mod product_recovery;
 pub mod product_surface;
 pub mod product_transport;
+pub mod runtime_profile;
 
 use lnsat_auth::{
     LOCAL_CSRF_HEADER_NAME_V1, LocalBrowserAuthTransportV1, LocalBrowserOriginV1,

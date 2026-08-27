@@ -43,8 +43,13 @@ adds one experimental served reference proof over existing Phase 8 loopback
 routes and a marked disposable Git fixture. The execute response is discarded;
 after daemon restart, the requester resolves the unknown outcome only through
 authenticated evidence readback and reconciliation. It opens no new route,
-production target, Docker profile, or support claim; Phase 11 remains
-incomplete. Required path stays Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 ->
+production target, or support claim. P11-D1 adds one closed source-only
+`docker_local` runtime-profile contract, explicit file/parser validation,
+deterministic profile and authority-configuration digests, and a side-effect-
+free execution-request binding check. It opens no Docker endpoint, adapter,
+image, route, dispatch, receipt, or execution authority. Phase 11 remains
+incomplete and separately gated. Required path stays Phase 8 -> Phase 9 ->
+Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
 packets remain nonblocking unless separately selected. No binary/package work
 starts until required product/runtime phases and Phase 13 release-candidate
@@ -52,8 +57,9 @@ source freeze pass. See [product build sequence](PRODUCT_BUILD_SEQUENCE.md).
 
 ADR-0007 accepts Docker/OCI as first v1 runtime integration profile while
 preserving runtime-neutral Gateway authority and later secure-VM, native-host,
-and remote profile lanes. This is direction only: no Docker adapter, image,
-package, runtime dispatch, emergency-stop route, or supported deployment exists.
+and remote profile lanes. P11-D1 implements only its closed profile and
+digest-binding foundation: no Docker adapter, image, package, runtime dispatch,
+emergency-stop route, or supported deployment exists.
 
 ## Maturity Summary
 
@@ -72,7 +78,7 @@ package, runtime dispatch, emergency-stop route, or supported deployment exists.
 | Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation              |
 | Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core             |
 | Distribution         | Not available          | No package, binary, image, installer, release, or update channel                      |
-| Docker integration   | Accepted plan          | First v1 runtime profile; no adapter, image, package, or support exists               |
+| Docker integration   | Source foundation      | Closed P11-D1 profile/digest binding; no adapter, image, package, runtime, or support |
 | Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                        |
 
 “Experimental” means checked-in implementation has automated coverage but no

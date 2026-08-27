@@ -30,7 +30,8 @@ product/runtime phases and Phase 13 release-candidate source freeze pass.
 
 [ADR-0007](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 selects one local Docker/OCI profile as first v1 runtime integration while
-keeping authority contracts runtime-neutral. This direction creates no current
+keeping authority contracts runtime-neutral. P11-D1 implements a closed
+source-only profile/parser and exact digest-binding foundation. It creates no current
 Docker adapter, image, package, runtime dispatch, or support claim.
 
 Successful source validation never implies shipped support. Unknown or untested
@@ -538,8 +539,10 @@ source-conformance level. P11-R1 proves one experimental full served chain over
 the existing Phase 8 loopback routes and a marked disposable Git fixture. It
 discards the execute response, restarts the daemon, and resolves the client-side
 unknown outcome only through authenticated readback and reconciliation. No new
-route, Docker profile, production target, or support claim opens; Phase 11
-remains incomplete and separately gated.
+route, production target, or support claim opens. P11-D1 adds one closed
+source-only profile/parser plus exact digest binding; no Docker endpoint,
+invocation, adapter/image, dispatch, receipt, or execution authority opens.
+Phase 11 remains incomplete and separately gated.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.
@@ -558,8 +561,14 @@ consequence behind one isolated local Docker/OCI profile. Agent access to
 Docker socket, ambient credentials, or unrestricted upstream tools remains
 forbidden.
 
-Status: source-only disposable Git conformance exists through `P7-R1/X1`;
-served supported reference workflow remains incomplete.
+Status: source-only disposable Git conformance exists through `P7-R1/X1`, and
+P11-R1 proves one experimental served chain over existing Phase 8 routes.
+P11-D1 adds the closed `lnsat.runtime_profile.docker_local.v1` contract,
+strict explicit-file/parser boundary, deterministic profile and authority-
+configuration digests, and side-effect-free binding to a verified derived
+execution request. Docker endpoint selection, invocation, adapter/image
+delivery, routes, dispatch, receipts, and support remain unopened; served
+reference workflow remains incomplete.
 
 Required operation identity before dispatch:
 

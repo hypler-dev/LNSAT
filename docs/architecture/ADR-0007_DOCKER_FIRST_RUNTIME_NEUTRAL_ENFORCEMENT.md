@@ -5,8 +5,9 @@
 - Decision owners: LNSAT maintainers
 - Extends: ADR-0002 and ADR-0003 without changing the fourteen-phase release
   gate
-- Implementation state: direction only; no Docker adapter, image, package, or
-  supported runtime exists
+- Implementation state: P11-D1 closed source-only profile/parser and
+  digest-binding foundation; no Docker adapter, image, package, route,
+  dispatch, or supported runtime exists
 
 ## Context
 
@@ -166,6 +167,30 @@ product connectors, custom secure-VM images, native-host support, and broad
 provider actions remain later lanes. External management and commerce products
 may connect after public contracts stabilize; they are not v1 dependencies.
 
+## P11-D1 Source Checkpoint
+
+P11-D1 defines one exact `lnsat.runtime_profile.docker_local.v1` JSON contract
+and explicit absolute-file loader. Unknown or duplicate fields, symlinks,
+non-regular or changed files, non-UTF-8 input, floats, widened isolation,
+unsafe container paths, and out-of-bound resource values fail closed. The
+profile fixes network isolation, non-root identity, read-only root filesystem,
+one writable disposable target mount, dropped capabilities, no new privileges,
+default seccomp, no host namespaces or devices, no Docker-socket mount, no
+ambient environment or credentials, and no shell.
+
+Canonical JSON produces a domain-separated profile digest. A second domain-
+separated digest binds that profile to the compiled Phase 7 Git-adapter
+configuration identity. A side-effect-free validator requires a verified
+derived execution request to match that combined configuration digest, exact
+adapter reference/version, adapter-executable digest, and Gateway audience.
+The separately pinned OCI image digest is part of the profile digest and
+therefore cannot drift without changing approved configuration identity.
+
+This checkpoint does not discover or select a Docker endpoint, inspect or pull
+an image, open a socket, start a process, mount a repository, dispatch work,
+emit a receipt, add a served route, or grant authority. It is contract and
+binding foundation only; later Phase 11 packets remain separately gated.
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.
@@ -204,8 +229,8 @@ Docker support cannot be claimed until checked-in evidence proves:
 - LNSAT reuses Docker runtime and MCP strengths instead of duplicating them.
 - Secure VM, native-host, and remote connectors reuse one authority contract
   later, with profile-specific isolation claims.
-- Phase 10 remains next gate because visible fail-closed configuration is
-  prerequisite to any runtime adapter.
+- Phase 10 source conformance remains prerequisite to runtime work. P11-D1
+  follows it with contract/binding foundation only.
 - Phase 11 should prove existing bounded consequence through selected Docker
   profile without opening production repositories or unrestricted
   infrastructure.

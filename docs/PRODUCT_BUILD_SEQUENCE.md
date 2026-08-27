@@ -152,8 +152,11 @@ eight compatibility guarantees. P11-R1 now proves one full served chain over
 the existing eight Phase 8 loopback routes and one marked disposable Git
 fixture, including disconnected execute response, daemon restart, authenticated
 evidence readback, reconciliation, and exact replay without redispatch. It adds
-no route, Docker profile, production target, or support claim; Phase 11 remains
-incomplete and separately gated.
+no route, production target, or support claim. P11-D1 now establishes one
+closed source-only `docker_local` profile/parser, canonical
+profile/configuration digests, and exact execution-request binding. It adds no
+Docker endpoint, invocation, adapter/image, route, dispatch, receipt, or
+support. Phase 11 remains incomplete; later packets require separate authority.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.
