@@ -58,20 +58,20 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 
 ## Current Build Position
 
-| Phase | Current truth                                          | Remaining release blocker                                                            |
-| ----- | ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| 1-3   | source and deterministic-contract foundations complete | preserve public/source and TS/Rust conformance gates                                 |
-| 4     | source checkpoint complete                             | packaged lifecycle proof belongs to Phase 14                                         |
-| 5     | source-local exit complete                             | preserve auth/session/approval security gates                                        |
-| 6     | source exit complete                                   | supported runtime claim remains closed                                               |
-| 7     | P7-X1 source conformance complete                      | preserve Phase 7 authority-chain and disposable-target invariants                    |
-| 8     | bounded loopback runtime composition merged            | preserve exact routes, one-attempt evidence, and production-unsupported boundary     |
-| 9     | authenticated exact-ID Control Center readback exists  | preserve live/fixture separation and fail-closed ambiguity mapping                   |
-| 10    | P10-X1 source conformance complete                     | preserve product-surface compatibility and Phase 14 lifecycle ownership              |
+| Phase | Current truth                                           | Remaining release blocker                                                             |
+| ----- | ------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1-3   | source and deterministic-contract foundations complete  | preserve public/source and TS/Rust conformance gates                                  |
+| 4     | source checkpoint complete                              | packaged lifecycle proof belongs to Phase 14                                          |
+| 5     | source-local exit complete                              | preserve auth/session/approval security gates                                         |
+| 6     | source exit complete                                    | supported runtime claim remains closed                                                |
+| 7     | P7-X1 source conformance complete                       | preserve Phase 7 authority-chain and disposable-target invariants                     |
+| 8     | bounded loopback runtime composition merged             | preserve exact routes, one-attempt evidence, and production-unsupported boundary      |
+| 9     | authenticated exact-ID Control Center readback exists   | preserve live/fixture separation and fail-closed ambiguity mapping                    |
+| 10    | P10-X1 source conformance complete                      | preserve product-surface compatibility and Phase 14 lifecycle ownership               |
 | 11    | first existing-route served disposable Git proof exists | complete separately gated local profile proof without production repository authority |
-| 12    | optional post-local-v1 lane                            | none unless selected support profile requires it                                     |
-| 13    | planned                                                | complete reliability, security, recovery, update/revocation, and RC-source freeze    |
-| 14    | blocked; no support row selected; no artifacts         | build and prove only selected target/package rows after required product phases pass |
+| 12    | optional post-local-v1 lane                             | none unless selected support profile requires it                                      |
+| 13    | planned                                                 | complete reliability, security, recovery, update/revocation, and RC-source freeze     |
+| 14    | blocked; no support row selected; no artifacts          | build and prove only selected target/package rows after required product phases pass  |
 
 No current package, binary, container, installer, supported runtime, or
 published release artifact exists.
