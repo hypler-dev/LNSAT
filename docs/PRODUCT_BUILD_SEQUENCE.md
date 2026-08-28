@@ -58,20 +58,20 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 
 ## Current Build Position
 
-| Phase | Current truth                                           | Remaining release blocker                                                             |
-| ----- | ------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 1-3   | source and deterministic-contract foundations complete  | preserve public/source and TS/Rust conformance gates                                  |
-| 4     | source checkpoint complete                              | packaged lifecycle proof belongs to Phase 14                                          |
-| 5     | source-local exit complete                              | preserve auth/session/approval security gates                                         |
-| 6     | source exit complete                                    | supported runtime claim remains closed                                                |
-| 7     | P7-X1 source conformance complete                       | preserve Phase 7 authority-chain and disposable-target invariants                     |
-| 8     | bounded loopback runtime composition merged             | preserve exact routes, one-attempt evidence, and production-unsupported boundary      |
-| 9     | authenticated exact-ID Control Center readback exists   | preserve live/fixture separation and fail-closed ambiguity mapping                    |
-| 10    | P10-X1 source conformance complete                      | preserve product-surface compatibility and Phase 14 lifecycle ownership               |
-| 11    | first existing-route served disposable Git proof exists | complete separately gated local profile proof without production repository authority |
-| 12    | optional post-local-v1 lane                             | none unless selected support profile requires it                                      |
-| 13    | planned                                                 | complete reliability, security, recovery, update/revocation, and RC-source freeze     |
-| 14    | blocked; no support row selected; no artifacts          | build and prove only selected target/package rows after required product phases pass  |
+| Phase | Current truth                                               | Remaining release blocker                                                               |
+| ----- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1-3   | source and deterministic-contract foundations complete      | preserve public/source and TS/Rust conformance gates                                    |
+| 4     | source checkpoint complete                                  | packaged lifecycle proof belongs to Phase 14                                            |
+| 5     | source-local exit complete                                  | preserve auth/session/approval security gates                                           |
+| 6     | source exit complete                                        | supported runtime claim remains closed                                                  |
+| 7     | P7-X1 source conformance complete                           | preserve Phase 7 authority-chain and disposable-target invariants                       |
+| 8     | bounded loopback runtime composition merged                 | preserve exact routes, one-attempt evidence, and production-unsupported boundary        |
+| 9     | authenticated exact-ID Control Center readback exists       | preserve live/fixture separation and fail-closed ambiguity mapping                      |
+| 10    | P10-X1 source conformance complete                          | preserve product-surface compatibility and Phase 14 lifecycle ownership                 |
+| 11    | served Git proof plus closed Docker profile/config readback | complete separately gated adapter/runtime proof without production repository authority |
+| 12    | optional post-local-v1 lane                                 | none unless selected support profile requires it                                        |
+| 13    | planned                                                     | complete reliability, security, recovery, update/revocation, and RC-source freeze       |
+| 14    | blocked; no support row selected; no artifacts              | build and prove only selected target/package rows after required product phases pass    |
 
 No current package, binary, container, installer, supported runtime, or
 published release artifact exists.
@@ -156,7 +156,13 @@ no route, production target, or support claim. P11-D1 now establishes one
 closed source-only `docker_local` profile/parser, canonical
 profile/configuration digests, and exact execution-request binding. It adds no
 Docker endpoint, invocation, adapter/image, route, dispatch, receipt, or
-support. Phase 11 remains incomplete; later packets require separate authority.
+support. P11-D2 now selects that profile only through explicit daemon
+configuration, loads it through the closed D1 file boundary, retains validated
+evidence for a later packet, and exposes only profile identity plus profile and
+authority-configuration digests through public-safe config inspection. It
+opens no Docker endpoint, socket, process, image operation, mount, route,
+dispatch, receipt, or support. Phase 11 remains incomplete; later packets
+require separate authority.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

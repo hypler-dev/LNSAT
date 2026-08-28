@@ -238,6 +238,11 @@ route, production target, or support claim. P11-D1 adds a closed source-only
 canonical profile/configuration digests, and an exact pre-dispatch
 execution-request binding check. It does not select or open a Docker endpoint,
 invoke Docker, provide an adapter or image, add a route, or grant execution
+authority. P11-D2 lets one explicit daemon configuration select and validate
+that profile file, retains its closed evidence for later packets, and adds
+public-safe `lnsatctl config inspect` readback of profile identity plus profile
+and authority-configuration digests. It opens no Docker endpoint, socket,
+process, image operation, mount, route, dispatch, receipt, or execution
 authority. Phase 11 remains incomplete and separately gated.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and

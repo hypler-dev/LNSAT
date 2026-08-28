@@ -1283,6 +1283,7 @@ pub struct DaemonConfigV1 {
     control_socket_path: Option<PathBuf>,
     disposable_git_root: Option<PathBuf>,
     git_executable: Option<PathBuf>,
+    docker_local_runtime_profile: Option<Box<runtime_profile::LoadedDockerLocalRuntimeProfileV1>>,
     internal_console_root: Option<PathBuf>,
     internal_console_asset_manifest: BTreeMap<String, PathBuf>,
 }
@@ -1331,6 +1332,7 @@ impl DaemonConfigV1 {
             control_socket_path: None,
             disposable_git_root: None,
             git_executable: None,
+            docker_local_runtime_profile: None,
             internal_console_root: None,
             internal_console_asset_manifest: BTreeMap::new(),
         })
@@ -1376,6 +1378,23 @@ impl DaemonConfigV1 {
         }
         self.disposable_git_root = Some(disposable_git_root.to_path_buf());
         self.git_executable = Some(git_executable.to_path_buf());
+        Ok(self)
+    }
+
+    /// Selects one already-validated Docker-local profile without invoking it.
+    ///
+    /// # Errors
+    ///
+    /// Rejects profile selection unless paired disposable Phase 8 runtime
+    /// paths were already configured.
+    pub fn with_docker_local_runtime_profile(
+        mut self,
+        profile: runtime_profile::LoadedDockerLocalRuntimeProfileV1,
+    ) -> Result<Self, DaemonErrorV1> {
+        if self.disposable_git_root.is_none() || self.git_executable.is_none() {
+            return Err(DaemonErrorV1::InvalidRuntimeConfiguration);
+        }
+        self.docker_local_runtime_profile = Some(Box::new(profile));
         Ok(self)
     }
 
@@ -1440,6 +1459,14 @@ impl DaemonConfigV1 {
     #[must_use]
     pub fn git_executable(&self) -> Option<&Path> {
         self.git_executable.as_deref()
+    }
+
+    /// Returns selected Docker-local profile without opening runtime access.
+    #[must_use]
+    pub fn docker_local_runtime_profile(
+        &self,
+    ) -> Option<&runtime_profile::LoadedDockerLocalRuntimeProfileV1> {
+        self.docker_local_runtime_profile.as_deref()
     }
 
     /// Returns source-local internal console root when explicitly enabled.

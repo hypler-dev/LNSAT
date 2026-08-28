@@ -5,9 +5,10 @@
 - Decision owners: LNSAT maintainers
 - Extends: ADR-0002 and ADR-0003 without changing the fourteen-phase release
   gate
-- Implementation state: P11-D1 closed source-only profile/parser and
-  digest-binding foundation; no Docker adapter, image, package, route,
-  dispatch, or supported runtime exists
+- Implementation state: P11-D1 closed source-only profile/parser and digest
+  binding plus P11-D2 explicit configuration/redacted readback; no Docker
+  endpoint, adapter, image, package, route, dispatch, or supported runtime
+  exists
 
 ## Context
 
@@ -191,6 +192,30 @@ an image, open a socket, start a process, mount a repository, dispatch work,
 emit a receipt, add a served route, or grant authority. It is contract and
 binding foundation only; later Phase 11 packets remain separately gated.
 
+## P11-D2 Configuration And Readback Checkpoint
+
+P11-D2 extends existing explicit `lnsat.daemon.config.v1` file with one
+optional closed `runtime_profile` selection containing exact family
+`docker_local` and one absolute profile path. Selection requires paired
+disposable Phase 8 Git runtime paths. Configuration loading passes selected
+file through complete P11-D1 path, file-identity, schema, isolation, limit,
+canonicalization, and digest validation boundary, then retains validated
+loaded profile in daemon configuration.
+
+`lnsatctl config inspect` may open that explicitly selected profile file. Its
+public-safe response adds profile contract, id, family, profile digest,
+authority-configuration digest, applied-layer evidence, and exact disclosure
+that profile file was opened. It reflects no daemon/profile path, profile
+source bytes, image digest, adapter-executable digest, container path, or
+runtime argument.
+
+This checkpoint does not discover or select a Docker endpoint, inspect or pull
+an image, open a Docker socket, start a process, mount a repository, invoke an
+adapter, add a served route, dispatch work, emit a receipt, or grant execution
+authority. Invalid, missing, relative, symlinked, changed, or unknown-family
+profile selection fails before storage or listener startup without path or
+source-byte reflection.
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.
@@ -230,7 +255,8 @@ Docker support cannot be claimed until checked-in evidence proves:
 - Secure VM, native-host, and remote connectors reuse one authority contract
   later, with profile-specific isolation claims.
 - Phase 10 source conformance remains prerequisite to runtime work. P11-D1
-  follows it with contract/binding foundation only.
+  follows it with contract/binding foundation; P11-D2 adds explicit selection
+  and redacted readback only.
 - Phase 11 should prove existing bounded consequence through selected Docker
   profile without opening production repositories or unrestricted
   infrastructure.

@@ -23,7 +23,9 @@ packet-inspection parity.
 P10-A2 adds one target-neutral explicit-only daemon configuration contract. It
 does not select system, user, OS, target, package, data, or log paths. Existing
 direct daemon arguments remain an alternate compatible mode; mixing direct and
-configuration-file values is rejected.
+configuration-file values is rejected. P11-D2 later adds one optional explicit
+Docker-local profile-file selection to this same pre-release contract while
+preserving every P10-A2 path, precedence, secret, and ambient-discovery rule.
 
 P10-A3 adds exact authenticated `GET|HEAD /v1/health` and
 `GET|HEAD /v1/status` routes while preserving unauthenticated `GET /healthz`
@@ -73,20 +75,20 @@ stdin, non-root refusal, no-clobber restore, and closed activation/served lanes.
 
 ## Current Source Truth
 
-| Surface          | Implemented source                                                                                                                                                                                                                          | Later separately owned work                                                                         |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `lnsatd`         | direct/config arguments, non-root macOS/Linux bind enforcement, loopback Gateway bind, optional authenticated Unix control socket, preserved `/healthz`, read-only `/v1/health` and `/v1/status`, public-safe errors, help/version/manifest | selected user/system paths and target lifecycle proof in Phase 14                                   |
-| `lnsatctl`       | `doctor`, server-authenticated Unix-socket `health`/`status`, config/recovery inspection, offline backup, inert restore, offline owner recovery, text/JSON/JSONL/YAML, manifest, completion, man, help, version                             | service/update/audit commands only after their owning authority gates                               |
-| `lnsat`          | TypeScript dispatcher in `packages/cli/src/index.ts`; packet validate/hash/inspect plus manifest, completion, man, help, and version                                                                                                        | later Gateway-client workflow groups only when owning phases open them                              |
-| command taxonomy | canonical implemented and reserved groups in Phase 10 manifest                                                                                                                                                                              | each reserved command needs its owning phase, exact authority, and conformance before exposure      |
-| configuration    | bounded explicit UTF-8 JSON, recursive duplicate/unknown-key rejection, exact-byte digest, visible applied layers, no environment discovery                                                                                                 | system/user path selection remains deliberately unimplemented                                       |
-| diagnostics      | `lnsat.cli.output.v1`, deterministic text/JSON/JSONL/YAML, stdout/stderr separation, stable exit families                                                                                                                                   | later command schemas require their own compatibility gates                                         |
-| recovery         | exact read-only classification, non-root offline backup, fresh inert restore, and protected-stdin owner recovery with credential/audit append plus all-owner-session revocation; no path or secret reflection                               | activation and served recovery remain closed                                                        |
-| service managers | metadata-only boundary; install/start/auto-start/sudo/helper all false                                                                                                                                                                      | target-specific metadata and lifecycle proof remain Phase 14                                        |
-| completion/man   | bash, zsh, fish and three source man pages generated to stdout                                                                                                                                                                              | installation and target integration remain Phase 14                                                 |
-| version/build    | source version plus unbound target-neutral manifest                                                                                                                                                                                         | source revision, target, recipe, digests, SBOM, provenance, and artifact binding remain Phase 13/14 |
-| non-root         | daemon bind plus offline recovery entry points refuse effective UID zero on macOS/Linux; no sudo or privileged helper                                                                                                                       | target-specific service/package lifecycle proof remains Phase 14                                    |
-| parity           | CLI/API/MCP packet-inspection equality retained; recovery fixture proves CLI-only mutation with API/MCP/UI unavailable; Control Center recovery projection renders no actions                                                               | later owned commands require their own parity rows                                                  |
+| Surface          | Implemented source                                                                                                                                                                                                                                   | Later separately owned work                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `lnsatd`         | direct/config arguments, non-root macOS/Linux bind enforcement, loopback Gateway bind, optional authenticated Unix control socket, preserved `/healthz`, read-only `/v1/health` and `/v1/status`, public-safe errors, help/version/manifest          | selected user/system paths and target lifecycle proof in Phase 14                                   |
+| `lnsatctl`       | `doctor`, server-authenticated Unix-socket `health`/`status`, config/recovery inspection, offline backup, inert restore, offline owner recovery, text/JSON/JSONL/YAML, manifest, completion, man, help, version                                      | service/update/audit commands only after their owning authority gates                               |
+| `lnsat`          | TypeScript dispatcher in `packages/cli/src/index.ts`; packet validate/hash/inspect plus manifest, completion, man, help, and version                                                                                                                 | later Gateway-client workflow groups only when owning phases open them                              |
+| command taxonomy | canonical implemented and reserved groups in Phase 10 manifest                                                                                                                                                                                       | each reserved command needs its owning phase, exact authority, and conformance before exposure      |
+| configuration    | bounded explicit UTF-8 JSON, recursive duplicate/unknown-key rejection, exact-byte digest, visible applied layers, no environment discovery; P11-D2 optionally validates one explicit Docker-local profile file and exposes redacted digest evidence | system/user path selection remains deliberately unimplemented                                       |
+| diagnostics      | `lnsat.cli.output.v1`, deterministic text/JSON/JSONL/YAML, stdout/stderr separation, stable exit families                                                                                                                                            | later command schemas require their own compatibility gates                                         |
+| recovery         | exact read-only classification, non-root offline backup, fresh inert restore, and protected-stdin owner recovery with credential/audit append plus all-owner-session revocation; no path or secret reflection                                        | activation and served recovery remain closed                                                        |
+| service managers | metadata-only boundary; install/start/auto-start/sudo/helper all false                                                                                                                                                                               | target-specific metadata and lifecycle proof remain Phase 14                                        |
+| completion/man   | bash, zsh, fish and three source man pages generated to stdout                                                                                                                                                                                       | installation and target integration remain Phase 14                                                 |
+| version/build    | source version plus unbound target-neutral manifest                                                                                                                                                                                                  | source revision, target, recipe, digests, SBOM, provenance, and artifact binding remain Phase 13/14 |
+| non-root         | daemon bind plus offline recovery entry points refuse effective UID zero on macOS/Linux; no sudo or privileged helper                                                                                                                                | target-specific service/package lifecycle proof remains Phase 14                                    |
+| parity           | CLI/API/MCP packet-inspection equality retained; recovery fixture proves CLI-only mutation with API/MCP/UI unavailable; Control Center recovery projection renders no actions                                                                        | later owned commands require their own parity rows                                                  |
 
 ## Source Ownership
 
@@ -165,11 +167,18 @@ applicable. Served consequential commands remain unavailable in this packet.
   variables, and never reflects rejected paths or bytes.
 - Configuration may select only an absolute database path, numeric-loopback
   listen address, optional absolute control-socket path, paired Phase 8
-  disposable Git root/executable, and an exact existing console-root manifest
-  seam. Filesystem identity checks occur only at daemon bind, never inspection.
+  disposable Git root/executable, an exact existing console-root manifest
+  seam, and the P11-D2 optional absolute Docker-local profile path. Profile
+  selection requires paired Phase 8 runtime paths and uses the complete P11-D1
+  file/schema/isolation/digest boundary. Console filesystem identity checks
+  occur only at daemon bind; profile identity is validated during configuration
+  load and inspection.
 - `lnsatctl config inspect` opens no database or listener and emits only public
   contract identity, exact-byte digest, applied layers, safe booleans, and
-  empty effects.
+  empty effects. P11-D2 inspection may open the selected profile file and emit
+  only its contract/profile identities plus profile and authority-configuration
+  digests. Paths, profile bytes, image/executable digests, container paths, and
+  runtime arguments remain absent; runtime remains stopped.
 - Recovery inspection opens one explicit database read-only and returns no raw
   path, migration, repair, quarantine, credential, or activation action.
 - Daemon bind and every offline recovery mutation refuse effective UID zero on
@@ -212,6 +221,10 @@ applicable. Served consequential commands remain unavailable in this packet.
   `--output` is accepted only once in documented final position. Read-only
   transport failure maps to unavailable/temporary failure, never
   outcome-unknown.
+- P11-D2 adds optional `runtime_profile` input and additive config-inspection
+  fields to the pre-release schema. Configurations that omit it retain previous
+  startup behavior and applied-layer evidence. Unknown families/fields and
+  unpaired runtime selection fail closed.
 - System/user paths remain deliberately unselected. Downstream code must not
   infer Linux, Homebrew, XDG, OCI, or Windows paths from this source manifest.
 - Reserved command names are not availability claims and must not become hidden
@@ -221,7 +234,8 @@ applicable. Served consequential commands remain unavailable in this packet.
 
 - exact shared manifest equality across `lnsatd`, `lnsatctl`, and `lnsat`;
 - exact explicit-config fixture/parser equality and public-safe digest/layer
-  evidence;
+  evidence, including optional P11-D2 profile/configuration digests and path/
+  source-byte non-reflection;
 - malformed, duplicate-key, unknown-field, wrong-version, oversize,
   directory, symlink, non-loopback, port-zero, unpaired-runtime, unsafe-console,
   mixed-mode, secret-field, environment-discovery, and path-reflection negatives;

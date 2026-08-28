@@ -4,6 +4,9 @@ use lnsatd::product_config::{
     DAEMON_CONFIG_CONTRACT_ID_V1, DAEMON_CONFIG_VERSION_V1, MAX_DAEMON_CONFIG_BYTES_V1,
     load_daemon_config_v1,
 };
+use lnsatd::runtime_profile::{
+    DOCKER_LOCAL_PROFILE_CONTRACT_ID_V1, DOCKER_LOCAL_PROFILE_FAMILY_V1, DOCKER_LOCAL_PROFILE_ID_V1,
+};
 use lnsatd::{DaemonCliActionV1, DaemonErrorV1, parse_daemon_args_v1};
 use serde_json::{Value, json};
 use std::fs;
@@ -13,6 +16,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const CONFIG_FIXTURE: &[u8] =
     include_bytes!("../../../fixtures/contracts/phase10-daemon-config-v1.json");
+const PROFILE_FIXTURE: &[u8] =
+    include_bytes!("../../../fixtures/contracts/phase11-docker-local-profile-v1.json");
+const EXPECTED_PROFILE_DIGEST: &str =
+    "sha256:eb27aa91cea967ed9686b949011e220bc0085e827c1d97b4a477f267dff548fc";
+const EXPECTED_AUTHORITY_CONFIGURATION_DIGEST: &str =
+    "sha256:076bf61ee91b38010221372b33cf2f47c4dc731667bad90cdbd50145c7ec0cdc";
 
 #[test]
 fn exact_fixture_loads_all_existing_daemon_seams() {
@@ -47,7 +56,94 @@ fn exact_fixture_loads_all_existing_daemon_seams() {
     assert!(loaded.phase8_runtime_configured());
     assert!(loaded.control_socket_configured());
     assert!(loaded.console_manifest_configured());
+    assert!(!loaded.docker_local_runtime_profile_configured());
     assert!(!String::from_utf8_lossy(CONFIG_FIXTURE).contains("secret"));
+}
+
+#[test]
+fn explicit_docker_local_profile_loads_into_config_and_public_safe_readback() {
+    let directory = TestDirectory::new("docker-local-profile");
+    let profile_path = directory.write("private-runtime-profile.json", PROFILE_FIXTURE);
+    let database = directory.path.join("private-database-name.sqlite3");
+    let config = runtime_profile_config(&database, &profile_path);
+    let config_path = directory.write_json("private-daemon-config.json", &config);
+
+    let loaded = load_daemon_config_v1(&config_path).expect("profile configuration must load");
+    assert!(loaded.phase8_runtime_configured());
+    assert!(loaded.docker_local_runtime_profile_configured());
+    let profile = loaded
+        .docker_local_runtime_profile()
+        .expect("validated profile must remain available to later packets");
+    assert_eq!(
+        profile.profile().contract_id,
+        DOCKER_LOCAL_PROFILE_CONTRACT_ID_V1
+    );
+    assert_eq!(profile.profile().profile_id, DOCKER_LOCAL_PROFILE_ID_V1);
+    assert_eq!(
+        profile.profile().profile_family,
+        DOCKER_LOCAL_PROFILE_FAMILY_V1
+    );
+    assert_eq!(profile.profile_digest_text(), EXPECTED_PROFILE_DIGEST);
+    assert_eq!(
+        profile.authority_configuration_digest_text(),
+        EXPECTED_AUTHORITY_CONFIGURATION_DIGEST
+    );
+
+    let output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "inspect", "--config"])
+        .arg(&config_path)
+        .output()
+        .expect("config inspect must run");
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let stdout = String::from_utf8(output.stdout).expect("output must be UTF-8");
+    assert!(!stdout.contains("private-runtime-profile"));
+    assert!(!stdout.contains("private-daemon-config"));
+    assert!(!stdout.contains("private-database-name"));
+    assert!(!stdout.contains("image_digest"));
+    assert!(!stdout.contains("adapter_executable_digest"));
+    let evidence: Value = serde_json::from_str(&stdout).expect("output must be JSON");
+    assert_eq!(
+        evidence["configuration"]["applied_layers"],
+        json!([
+            "compiled_safe_defaults",
+            "explicit_config_file",
+            "runtime_profile_file"
+        ])
+    );
+    assert_eq!(
+        evidence["configuration"]["runtime_profile"]["configured"],
+        true
+    );
+    assert_eq!(
+        evidence["configuration"]["runtime_profile"]["contract_id"],
+        DOCKER_LOCAL_PROFILE_CONTRACT_ID_V1
+    );
+    assert_eq!(
+        evidence["configuration"]["runtime_profile"]["profile_id"],
+        DOCKER_LOCAL_PROFILE_ID_V1
+    );
+    assert_eq!(
+        evidence["configuration"]["runtime_profile"]["profile_family"],
+        DOCKER_LOCAL_PROFILE_FAMILY_V1
+    );
+    assert_eq!(
+        evidence["configuration"]["runtime_profile"]["profile_digest"],
+        EXPECTED_PROFILE_DIGEST
+    );
+    assert_eq!(
+        evidence["configuration"]["runtime_profile"]["authority_configuration_digest"],
+        EXPECTED_AUTHORITY_CONFIGURATION_DIGEST
+    );
+    assert_eq!(
+        evidence["configuration"]["runtime_profile"]["source"],
+        "explicit_absolute_file"
+    );
+    assert_eq!(evidence["runtime_profile_file_opened"], true);
+    assert_eq!(evidence["runtime_started"], false);
+    assert_eq!(evidence["storage_opened"], false);
+    assert_eq!(evidence["listener_opened"], false);
+    assert_eq!(evidence["side_effects"], json!([]));
 }
 
 #[test]
@@ -298,6 +394,55 @@ fn values_fail_closed_for_paths_listener_runtime_and_console_manifest() {
 }
 
 #[test]
+fn runtime_profile_selection_fails_closed_without_runtime_or_path_disclosure() {
+    let directory = TestDirectory::new("invalid-runtime-profile");
+    let database = directory.path.join("daemon.sqlite3");
+    let profile_path = directory.write("valid-profile.json", PROFILE_FIXTURE);
+
+    let mut wrong_family = runtime_profile_config(&database, &profile_path);
+    wrong_family["runtime_profile"]["profile_family"] = json!("secure_vm");
+    let mut relative_path = runtime_profile_config(&database, &profile_path);
+    relative_path["runtime_profile"]["profile_path"] = json!("relative-profile.json");
+    let mut missing_profile = runtime_profile_config(&database, &profile_path);
+    missing_profile["runtime_profile"]["profile_path"] =
+        json!(directory.path.join("missing-private-profile.json"));
+    let invalid_profile_path = directory.write("invalid-profile.json", b"{}");
+    let invalid_profile = runtime_profile_config(&database, &invalid_profile_path);
+    let mut unpaired_runtime = runtime_profile_config(&database, &profile_path);
+    unpaired_runtime["phase8_runtime"] = Value::Null;
+    let mut unknown_field = runtime_profile_config(&database, &profile_path);
+    unknown_field["runtime_profile"]["secret"] = json!("must-not-be-accepted");
+
+    for (label, value) in [
+        ("wrong-family", wrong_family),
+        ("relative-path", relative_path),
+        ("missing-profile", missing_profile),
+        ("invalid-profile", invalid_profile),
+        ("unpaired-runtime", unpaired_runtime),
+        ("unknown-field", unknown_field),
+    ] {
+        let path = directory.write_json(label, &value);
+        assert!(load_daemon_config_v1(path).is_err(), "{label}");
+    }
+
+    let missing_config = runtime_profile_config(
+        &database,
+        &directory.path.join("operator-private-profile-name.json"),
+    );
+    let config_path = directory.write_json("missing-profile-config.json", &missing_config);
+    let output = Command::new(env!("CARGO_BIN_EXE_lnsatd"))
+        .args(["--config"])
+        .arg(&config_path)
+        .output()
+        .expect("invalid profile config command must run");
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    let stderr = String::from_utf8(output.stderr).expect("diagnostic must be UTF-8");
+    assert_eq!(stderr.trim(), "lnsatd.config.file_invalid");
+    assert!(!stderr.contains("operator-private-profile-name"));
+}
+
+#[test]
 fn control_socket_paths_reject_relative_and_dot_components() {
     let directory = TestDirectory::new("invalid-control-socket");
     let database = directory.path.join("daemon.sqlite3");
@@ -469,8 +614,22 @@ fn minimal_config(database_path: &Path) -> Value {
         "listen_address": "127.0.0.1:7447",
         "control_socket_path": null,
         "phase8_runtime": null,
+        "runtime_profile": null,
         "console": null
     })
+}
+
+fn runtime_profile_config(database_path: &Path, profile_path: &Path) -> Value {
+    let mut config = minimal_config(database_path);
+    config["phase8_runtime"] = json!({
+        "disposable_git_root": "/tmp/lnsat-phase11/disposable-git",
+        "git_executable": "/usr/bin/git"
+    });
+    config["runtime_profile"] = json!({
+        "profile_family": DOCKER_LOCAL_PROFILE_FAMILY_V1,
+        "profile_path": profile_path
+    });
+    config
 }
 
 struct TestDirectory {

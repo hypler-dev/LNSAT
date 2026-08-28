@@ -33,6 +33,9 @@ selects one local Docker/OCI profile as first v1 runtime integration while
 keeping authority contracts runtime-neutral. P11-D1 implements a closed
 source-only profile/parser and exact digest-binding foundation. It creates no current
 Docker adapter, image, package, runtime dispatch, or support claim.
+P11-D2 adds explicit profile-file selection and public-safe configuration
+readback only; it creates no Docker endpoint, process, mount, adapter, route,
+dispatch, receipt, or support claim.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -542,6 +545,9 @@ unknown outcome only through authenticated readback and reconciliation. No new
 route, production target, or support claim opens. P11-D1 adds one closed
 source-only profile/parser plus exact digest binding; no Docker endpoint,
 invocation, adapter/image, dispatch, receipt, or execution authority opens.
+P11-D2 extends only explicit daemon configuration and config-inspection
+readback with closed Docker-local profile selection plus profile/configuration
+digest evidence. It opens no runtime endpoint or consequence path.
 Phase 11 remains incomplete and separately gated.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
@@ -568,7 +574,13 @@ strict explicit-file/parser boundary, deterministic profile and authority-
 configuration digests, and side-effect-free binding to a verified derived
 execution request. Docker endpoint selection, invocation, adapter/image
 delivery, routes, dispatch, receipts, and support remain unopened; served
-reference workflow remains incomplete.
+reference workflow remains incomplete. P11-D2 selects that exact profile
+through one explicit daemon configuration, requires paired disposable Phase 8
+runtime paths, validates the profile at configuration load, retains its
+evidence for later packets, and exposes only profile identity plus profile and
+authority-configuration digests through `lnsatctl config inspect`. Docker
+endpoint/socket/process/image/mount access, adapter invocation, served routes,
+dispatch, receipts, and support remain unopened.
 
 Required operation identity before dispatch:
 

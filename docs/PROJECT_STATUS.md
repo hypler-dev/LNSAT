@@ -47,8 +47,13 @@ production target, or support claim. P11-D1 adds one closed source-only
 `docker_local` runtime-profile contract, explicit file/parser validation,
 deterministic profile and authority-configuration digests, and a side-effect-
 free execution-request binding check. It opens no Docker endpoint, adapter,
-image, route, dispatch, receipt, or execution authority. Phase 11 remains
-incomplete and separately gated. Required path stays Phase 8 -> Phase 9 ->
+image, route, dispatch, receipt, or execution authority. P11-D2 adds explicit
+daemon-configuration selection of that closed profile plus public-safe config
+readback of profile identity and profile/authority-configuration digests. It
+retains validated profile evidence for later packets but opens no Docker
+endpoint, socket, process, image operation, mount, route, dispatch, receipt, or
+execution authority. Phase 11 remains incomplete and separately gated.
+Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
 packets remain nonblocking unless separately selected. No binary/package work
@@ -57,29 +62,30 @@ source freeze pass. See [product build sequence](PRODUCT_BUILD_SEQUENCE.md).
 
 ADR-0007 accepts Docker/OCI as first v1 runtime integration profile while
 preserving runtime-neutral Gateway authority and later secure-VM, native-host,
-and remote profile lanes. P11-D1 implements only its closed profile and
-digest-binding foundation: no Docker adapter, image, package, runtime dispatch,
-emergency-stop route, or supported deployment exists.
+and remote profile lanes. P11-D1 implements its closed profile and digest-
+binding foundation. P11-D2 adds explicit configuration and redacted readback
+only: no Docker adapter, image, package, runtime dispatch, emergency-stop
+route, or supported deployment exists.
 
 ## Maturity Summary
 
-| Area                 | Status                 | Evidence                                                                              |
-| -------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
-| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests |
-| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`       |
-| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests             |
-| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                  |
-| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting   |
-| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source |
-| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility    |
-| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery |
-| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel        |
-| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only  |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation              |
-| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core             |
-| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                      |
-| Docker integration   | Source foundation      | Closed P11-D1 profile/digest binding; no adapter, image, package, runtime, or support |
-| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                        |
+| Area                 | Status                 | Evidence                                                                                           |
+| -------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
+| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests              |
+| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                    |
+| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                          |
+| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                               |
+| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                |
+| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source              |
+| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                 |
+| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery              |
+| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                     |
+| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only               |
+| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                           |
+| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                          |
+| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                   |
+| Docker integration   | Source foundation      | Closed P11-D1 profile plus P11-D2 config/readback; no adapter, image, package, runtime, or support |
+| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                     |
 
 “Experimental” means checked-in implementation has automated coverage but no
 stable compatibility or support commitment.
@@ -845,8 +851,9 @@ approved evidence while permitting expected post-commit `HEAD`; index and
 worktree must still match the approved base. Fresh dispatch still requires
 exact approved base and a clean target.
 Packet/policy creation remains validated fixture seeding because no served
-writer exists. Phase 11 Docker/profile selection and support claims remain
-closed.
+writer exists. P11-D2 permits explicit closed Docker-local profile selection
+and public-safe digest readback only. Docker endpoint selection, adapter
+invocation, dispatch, receipts, and support claims remain closed.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit Load/Refresh action performs only relative same-origin GETs with the
@@ -906,7 +913,10 @@ daemon applies the equal-UID check to clients. Numeric-loopback HTTP remains
 browser/API transport but is closed for `lnsatctl` bearer reads. No
 default/remote/DNS/proxy/redirect/retry/discovery transport exists. Config
 inspection returns exact-byte SHA-256 and applied-layer evidence without path,
-address, or source-byte reflection. Recovery
+address, or source-byte reflection. P11-D2 may additionally open one explicitly
+selected Docker-local profile file through the closed D1 loader and return only
+its contract/profile identities plus profile and authority-configuration
+digests; it starts no runtime. Recovery
 inspection reflects no raw path and performs no migration, repair, quarantine,
 credential change, or activation. Backup and owner recovery prove daemon
 quiescence through the shared exclusive database lease. Restore requires a

@@ -405,6 +405,16 @@ pub fn doctor_output_json_v1() -> String {
 /// included in output.
 #[must_use]
 pub fn config_inspection_output_json_v1(loaded: &LoadedDaemonConfigV1) -> String {
+    let runtime_profile = loaded.docker_local_runtime_profile();
+    let profile_digest = runtime_profile
+        .map(crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1::profile_digest_text);
+    let authority_configuration_digest = runtime_profile.map(
+        crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1::authority_configuration_digest_text,
+    );
+    let mut applied_layers = vec!["compiled_safe_defaults", "explicit_config_file"];
+    if runtime_profile.is_some() {
+        applied_layers.push("runtime_profile_file");
+    }
     json!({
         "ok": true,
         "schema": CLI_OUTPUT_SCHEMA_V1,
@@ -412,10 +422,7 @@ pub fn config_inspection_output_json_v1(loaded: &LoadedDaemonConfigV1) -> String
         "configuration": {
             "contract_id": DAEMON_CONFIG_CONTRACT_ID_V1,
             "config_digest": loaded.config_digest(),
-            "applied_layers": [
-                "compiled_safe_defaults",
-                "explicit_config_file"
-            ],
+            "applied_layers": applied_layers,
             "source": "explicit_absolute_file",
             "system_path_selected": false,
             "user_path_selected": false,
@@ -424,8 +431,18 @@ pub fn config_inspection_output_json_v1(loaded: &LoadedDaemonConfigV1) -> String
             "max_file_bytes": MAX_DAEMON_CONFIG_BYTES_V1,
             "control_socket_configured": loaded.control_socket_configured(),
             "phase8_runtime_configured": loaded.phase8_runtime_configured(),
+            "runtime_profile": {
+                "configured": loaded.docker_local_runtime_profile_configured(),
+                "contract_id": runtime_profile.map(|profile| profile.profile().contract_id.as_str()),
+                "profile_id": runtime_profile.map(|profile| profile.profile().profile_id.as_str()),
+                "profile_family": runtime_profile.map(|profile| profile.profile().profile_family.as_str()),
+                "profile_digest": profile_digest,
+                "authority_configuration_digest": authority_configuration_digest,
+                "source": runtime_profile.map(|_| "explicit_absolute_file")
+            },
             "console_manifest_configured": loaded.console_manifest_configured()
         },
+        "runtime_profile_file_opened": runtime_profile.is_some(),
         "runtime_started": false,
         "storage_opened": false,
         "listener_opened": false,
