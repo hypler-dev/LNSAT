@@ -3,7 +3,8 @@
 - Status: accepted direction with experimental P10-A1 source contract spine and
   P10-A2 explicit daemon configuration plus P10-A3 authenticated local
   health/status and stable output formats plus P10-A4 offline recovery,
-  non-root enforcement, and parity evidence
+  non-root enforcement, and parity evidence; P11-D2 adds optional closed
+  Docker-local profile selection and redacted config readback only
 - Availability: packet inspection, direct/explicit-config daemon arguments,
   target-neutral manifest, operator doctor/health/status/config/recovery
   inspection, offline backup, inert restore, protected owner recovery,
@@ -200,6 +201,15 @@ direct/config input. Optional `control_socket_path` enables authenticated CLI
 reads; inspection validates syntax only and opens no listener.
 `lnsatctl config inspect` returns only exact-byte SHA-256 and applied-layer
 evidence; configured and rejected paths/bytes are never reflected.
+
+P11-D2 adds optional `runtime_profile` with exact `docker_local` family and one
+absolute profile path. It requires paired Phase 8 disposable Git paths and
+loads the selected profile through the P11-D1 file/schema/isolation/digest
+boundary. Config inspection may open that profile file and returns only its
+contract/profile identities, profile digest, authority-configuration digest,
+and applied-layer/file-opened evidence. It reflects no profile path, source
+bytes, image or adapter-executable digest, container path, or runtime argument.
+No Docker endpoint, socket, process, mount, route, dispatch, or receipt opens.
 
 Configuration precedence must be visible:
 

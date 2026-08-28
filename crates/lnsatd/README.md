@@ -10,6 +10,10 @@ Current behavior:
 - bounds explicit configuration to one regular, non-symlinked UTF-8 JSON file
   of at most 64 KiB, rejects recursive duplicate/unknown keys, and reads no
   environment configuration or secret fields;
+- optionally selects one exact `docker_local` profile through that explicit
+  configuration, requires paired disposable Phase 8 runtime paths, validates
+  the profile through the closed P11-D1 loader, and retains its digest-bound
+  evidence without opening Docker or invoking an adapter;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before
@@ -120,7 +124,11 @@ environment, DNS, hostname, redirect, retry, discovery, TLS, remote target, or
 secret argument. Commands share deterministic `text|json|jsonl|yaml` output;
 JSON remains default and manifest remains canonical JSON only. Config
 inspection returns exact-byte SHA-256 and applied-layer evidence without raw
-paths or source bytes. Backup and owner recovery require the daemon-shared
+paths or source bytes. When one Docker-local profile is selected, inspection
+also returns only its contract/profile identities, profile digest, authority-
+configuration digest, and profile-file-opened evidence. It reflects no profile
+path, image/executable digest, container path, or source bytes and starts no
+runtime. Backup and owner recovery require the daemon-shared
 exclusive database lease. Restore creates only one fresh inert file. Owner
 recovery preflights current schema and expected owner before reading one
 bounded UTF-8 password from protected stdin, then atomically appends

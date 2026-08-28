@@ -184,6 +184,12 @@ impl LoadedDockerLocalRuntimeProfileV1 {
     pub fn authority_configuration_digest(&self) -> [u8; 32] {
         docker_local_authority_configuration_digest_v1(&self.profile_digest)
     }
+
+    /// Returns stable prefixed authority-configuration digest text.
+    #[must_use]
+    pub fn authority_configuration_digest_text(&self) -> String {
+        prefixed_sha256_v1(&self.authority_configuration_digest())
+    }
 }
 
 /// Stable, secret-free profile/configuration failures.

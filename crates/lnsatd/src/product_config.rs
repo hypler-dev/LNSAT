@@ -4,6 +4,10 @@
 //! system/user path discovery, environment lookup, secret intake, migration,
 //! listener creation, or service action.
 
+use crate::runtime_profile::{
+    DOCKER_LOCAL_PROFILE_FAMILY_V1, LoadedDockerLocalRuntimeProfileV1,
+    load_docker_local_runtime_profile_v1,
+};
 use crate::{DEFAULT_LISTEN_ADDRESS_V1, DaemonConfigV1, DaemonErrorV1};
 use serde::de::{MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
@@ -70,6 +74,18 @@ impl LoadedDaemonConfigV1 {
     pub fn console_manifest_configured(&self) -> bool {
         self.config.internal_console_root().is_some()
     }
+
+    /// Reports whether one validated Docker-local runtime profile was selected.
+    #[must_use]
+    pub fn docker_local_runtime_profile_configured(&self) -> bool {
+        self.config.docker_local_runtime_profile().is_some()
+    }
+
+    /// Returns validated Docker-local profile evidence without its source path.
+    #[must_use]
+    pub fn docker_local_runtime_profile(&self) -> Option<&LoadedDockerLocalRuntimeProfileV1> {
+        self.config.docker_local_runtime_profile()
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -82,6 +98,7 @@ struct DaemonConfigContractV1 {
     listen_address: Option<String>,
     control_socket_path: Option<String>,
     phase8_runtime: Option<Phase8RuntimeConfigV1>,
+    runtime_profile: Option<RuntimeProfileConfigV1>,
     console: Option<ConsoleConfigV1>,
 }
 
@@ -90,6 +107,13 @@ struct DaemonConfigContractV1 {
 struct Phase8RuntimeConfigV1 {
     disposable_git_root: String,
     git_executable: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RuntimeProfileConfigV1 {
+    profile_family: String,
+    profile_path: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -221,6 +245,16 @@ impl DaemonConfigContractV1 {
                 explicit_absolute_path_v1(&runtime.disposable_git_root)?,
                 explicit_absolute_path_v1(&runtime.git_executable)?,
             )?;
+        }
+
+        if let Some(runtime_profile) = self.runtime_profile {
+            if runtime_profile.profile_family != DOCKER_LOCAL_PROFILE_FAMILY_V1 {
+                return Err(DaemonErrorV1::InvalidConfigFile);
+            }
+            let profile_path = explicit_absolute_path_v1(&runtime_profile.profile_path)?;
+            let loaded = load_docker_local_runtime_profile_v1(profile_path)
+                .map_err(|_| DaemonErrorV1::InvalidConfigFile)?;
+            config = config.with_docker_local_runtime_profile(loaded)?;
         }
 
         if let Some(console) = self.console {
