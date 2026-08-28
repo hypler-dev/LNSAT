@@ -1,0 +1,49 @@
+{
+  "schema_id": "lnsat.phase11_authenticated_action_intake.schema.v1_0",
+  "fixture_id": "phase11-authenticated-action-intake-v1",
+  "packet_id": "P11-I1",
+  "status": "experimental_source_proof",
+  "phase11_complete": false,
+  "production_supported": false,
+  "route": {
+    "method": "POST",
+    "path": "/v1/packets",
+    "contract": "lnsat.gateway.action_intake.v1_0"
+  },
+  "authentication": {
+    "transport": "numeric_loopback_same_origin_browser",
+    "session": "active_local_owner_or_operator",
+    "csrf": "required",
+    "permission": "request_action",
+    "actor_session_binding": "exact"
+  },
+  "atomic_evidence": [
+    "immutable_packet",
+    "server_time_deterministic_policy_decision",
+    "session_activity"
+  ],
+  "replay": "exact_packet_and_idempotency_replays_original_policy_evidence",
+  "response_disclosure": {
+    "returns": [
+      "packet_identity_and_digest",
+      "policy_decision_and_reasons",
+      "public_scope_and_time_evidence"
+    ],
+    "withholds": [
+      "canonical_packet_bytes",
+      "intent",
+      "constraints",
+      "action_arguments",
+      "session_and_csrf_secrets"
+    ]
+  },
+  "hard_stops": [
+    "no_approval_request_or_decision",
+    "no_execution_authorization_or_capability",
+    "no_adapter_process_launch_or_dispatch",
+    "no_docker_endpoint_socket_image_or_container_operation",
+    "no_repository_consequence_or_receipt",
+    "no_cli_mcp_or_control_center_mutation",
+    "no_package_release_deploy_or_support_claim"
+  ]
+}

@@ -7,9 +7,9 @@
   gate
 - Implementation state: P11-D1 closed source-only profile/parser and digest
   binding, P11-D2 explicit configuration/redacted readback, and P11-D3 closed
-  adapter-process protocol framing; no Docker endpoint, process launch,
-  adapter execution, image operation, package, route, dispatch, or supported
-  runtime exists
+  adapter-process protocol framing; P11-I1 adds authenticated atomic packet and
+  policy intake. No Docker endpoint, process launch, adapter execution, image
+  operation, package, dispatch, or supported runtime exists
 
 ## Context
 
@@ -246,6 +246,30 @@ repository, dispatch an approved action, create a receipt, add a served route,
 or authorize execution. Real isolated Docker execution and result/receipt
 semantics remain P11-D4.
 
+## P11-I1 Authenticated Action Intake Checkpoint
+
+P11-I1 adds one same-origin loopback `POST /v1/packets` route under stable
+`lnsat.gateway.action_intake.v1_0`. Input is one strict packet-envelope v1 JSON
+object. Existing browser transport requires an active local owner/operator
+session, matching CSRF proof, and `request_action` permission. Packet
+`actor_ref` and `session_ref` must exactly match verified session evidence.
+
+One immediate SQLite transaction verifies and touches session evidence,
+persists immutable canonical packet evidence, evaluates deterministic policy at
+server-owned time, and persists that policy evidence. Packet or idempotency
+conflicts, expiry, invalid policy, multiple/missing replay decisions, identity
+drift, and any persistence failure roll back the transaction. Exact replay
+returns original packet and policy identities without reevaluating durable
+policy evidence at a different time.
+
+Response exposes only bounded packet identity/digest, policy decision/reasons,
+scope, and time evidence. It withholds canonical packet bytes, intent,
+constraints, action arguments, and authentication secrets. Intake creates no
+approval request or decision, execution authorization or capability, adapter
+dispatch, Docker operation, repository consequence, receipt, CLI/MCP/UI
+mutation, package, deployment, or support claim. Real isolated Docker execution
+remains P11-D4.
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.
@@ -286,7 +310,8 @@ Docker support cannot be claimed until checked-in evidence proves:
   later, with profile-specific isolation claims.
 - Phase 10 source conformance remains prerequisite to runtime work. P11-D1
   follows it with contract/binding foundation; P11-D2 adds explicit selection
-  and redacted readback; P11-D3 adds closed process-protocol framing only.
+  and redacted readback; P11-D3 adds closed process-protocol framing; P11-I1
+  adds authenticated packet/policy intake only.
 - Phase 11 should prove existing bounded consequence through selected Docker
   profile without opening production repositories or unrestricted
   infrastructure.

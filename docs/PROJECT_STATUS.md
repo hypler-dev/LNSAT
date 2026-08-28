@@ -57,8 +57,13 @@ canonical single-frame JSON request/result bytes, exact operation and runtime
 identity binding, bounded stdin/stdout/stderr observations and deadlines, and
 fail-closed malformed, duplicate, truncated, oversized, substituted, timed-out,
 or ambiguous-result handling. It launches no process, opens no Docker surface,
-and creates no repository consequence or receipt. Phase 11 remains incomplete
-and separately gated.
+and creates no repository consequence or receipt. P11-I1 adds authenticated
+same-origin packet intake for active owner/operator sessions with CSRF, exact
+actor/session binding, and atomic immutable packet plus server-time policy
+evidence. Exact replay returns original policy evidence. It creates no approval,
+execution authorization, adapter dispatch, Docker action, repository
+consequence, or receipt. Phase 11 remains incomplete and separately gated;
+P11-D4 isolated Docker execution is next.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -70,29 +75,30 @@ ADR-0007 accepts Docker/OCI as first v1 runtime integration profile while
 preserving runtime-neutral Gateway authority and later secure-VM, native-host,
 and remote profile lanes. P11-D1 implements its closed profile and digest-
 binding foundation. P11-D2 adds explicit configuration and redacted readback
-only. P11-D3 adds protocol framing and identity binding only. No Docker adapter
+only. P11-D3 adds protocol framing and identity binding only. P11-I1 closes
+fixture-only packet/policy seeding through authenticated atomic intake. No Docker adapter
 process launch, image operation, package, runtime dispatch, emergency-stop
 route, or supported deployment exists.
 
 ## Maturity Summary
 
-| Area                 | Status                 | Evidence                                                                                                                    |
-| -------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                       |
-| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                             |
-| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                   |
-| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                        |
-| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                         |
-| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                       |
-| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                          |
-| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                       |
-| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                              |
-| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                        |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                    |
-| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                   |
-| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                            |
-| Docker integration   | Source foundation      | Closed P11-D1 profile, P11-D2 config/readback, and P11-D3 process protocol; no launch, image operation, runtime, or support |
-| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                              |
+| Area                 | Status                 | Evidence                                                                                                                                                 |
+| -------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                                                    |
+| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                                                          |
+| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                                                |
+| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                                                     |
+| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                                                      |
+| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                                                    |
+| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                                                       |
+| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                    |
+| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                           |
+| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                     |
+| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                 |
+| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                |
+| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                         |
+| Docker integration   | Source foundation      | Closed P11-D1 profile, P11-D2 config/readback, P11-D3 process protocol, and P11-I1 authenticated intake; no launch, image operation, runtime, or support |
+| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                                                           |
 
 “Experimental” means checked-in implementation has automated coverage but no
 stable compatibility or support commitment.
@@ -857,9 +863,13 @@ redispatch. Reconciliation now validates stable repository identity and
 approved evidence while permitting expected post-commit `HEAD`; index and
 worktree must still match the approved base. Fresh dispatch still requires
 exact approved base and a clean target.
-Packet/policy creation remains validated fixture seeding because no served
-writer exists. P11-D2 permits explicit closed Docker-local profile selection
-and public-safe digest readback only. P11-D3 defines canonical bounded
+P11-I1 replaces packet/policy fixture seeding for new served requests with
+authenticated same-origin `POST /v1/packets`. Active owner/operator session,
+CSRF, `request_action`, packet actor/session, immutable packet digest, and
+server-time deterministic policy evidence bind in one transaction. Exact
+replay returns original policy evidence; response withholds canonical packet,
+intent, constraints, and action arguments. P11-D2 permits explicit closed
+Docker-local profile selection and public-safe digest readback only. P11-D3 defines canonical bounded
 adapter-process request/result framing and exact identity binding only. Docker
 endpoint selection, adapter-process launch, dispatch, receipts, and support
 claims remain closed.
@@ -927,7 +937,8 @@ selected Docker-local profile file through the closed D1 loader and return only
 its contract/profile identities plus profile and authority-configuration
 digests; it starts no runtime. P11-D3 consumes that retained identity only in
 side-effect-free protocol frame construction and validation; it does not open
-the profile path again or launch an executable. Recovery
+the profile path again or launch an executable. P11-I1 opens only authenticated
+packet/policy intake and does not invoke D3 framing or any runtime. Recovery
 inspection reflects no raw path and performs no migration, repair, quarantine,
 credential change, or activation. Backup and owner recovery prove daemon
 quiescence through the shared exclusive database lease. Restore requires a

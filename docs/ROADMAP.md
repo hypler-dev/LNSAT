@@ -38,7 +38,9 @@ readback only; it creates no Docker endpoint, process, mount, adapter, route,
 dispatch, receipt, or support claim. P11-D3 adds one closed canonical
 adapter-process protocol with exact request/result framing, complete identity
 binding, bounded I/O observations and deadlines, and fail-closed ambiguity. It
-launches no process and creates no Docker or repository consequence.
+launches no process and creates no Docker or repository consequence. P11-I1
+adds authenticated atomic packet and server-time policy intake only; no
+approval, authorization, dispatch, Docker action, consequence, or receipt.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -555,8 +557,11 @@ P11-D3 freezes canonical single-frame adapter-process request/result bytes,
 operation and runtime identity binding, bounded stdin/stdout/stderr
 observations, profile-selected deadlines, stable secret-free errors, and
 unknown-outcome rejection. It launches no adapter process and opens no Docker,
-repository, receipt, or served-intake path.
-Phase 11 remains incomplete and separately gated.
+repository, or receipt path. P11-I1 adds authenticated same-origin
+`POST /v1/packets` for active owner/operator sessions with CSRF, exact
+actor/session binding, atomic packet/policy evidence, and stable exact replay.
+It grants no approval or execution authority. Phase 11 remains incomplete and
+separately gated; P11-D4 isolated Docker execution is next.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.
@@ -597,7 +602,10 @@ retained-stderr bytes, applies the profile-selected deadline up to 30 seconds,
 requires empty stderr, rejects duplicate/truncated/multiple/noncanonical frames
 and every identity substitution, and never treats timeout or explicit
 `outcome_unknown` as success. It starts no process, performs no Docker or Git
-action, and creates no receipt.
+action, and creates no receipt. P11-I1 closes validated fixture-only packet and
+policy seeding for new served requests through authenticated atomic intake.
+Responses expose bounded identity, digest, policy, scope, and time evidence but
+withhold canonical packet bytes, intent, constraints, and action arguments.
 
 Required operation identity before dispatch:
 

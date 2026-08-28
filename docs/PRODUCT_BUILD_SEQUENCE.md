@@ -168,7 +168,14 @@ identity set; bounds stdin/stdout/stderr observations and the profile-selected
 deadline; rejects framing ambiguity, substitution, timeout, and explicit
 unknown outcomes; and returns only stable secret-free errors. It launches no
 adapter process, performs no Docker or repository action, and emits no receipt.
-Phase 11 remains incomplete; later packets require separate authority.
+P11-I1 now adds authenticated same-origin `POST /v1/packets` for active local
+owner/operator sessions. CSRF, `request_action`, packet actor/session identity,
+immutable packet digest, and server-time deterministic policy evidence bind in
+one transaction; exact replay returns original evidence. Canonical packet bytes,
+intent, constraints, and action arguments remain withheld from response. Intake
+creates no approval, execution authorization, adapter dispatch, Docker action,
+repository consequence, or receipt. Phase 11 remains incomplete; P11-D4
+isolated Docker execution requires separate authority.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.
