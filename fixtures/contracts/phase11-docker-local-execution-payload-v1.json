@@ -1,0 +1,63 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_execution_payload_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-execution-payload-v1",
+  "packet_id": "P11-D4A",
+  "status": "experimental_source_payload_binding",
+  "phase11_complete": false,
+  "production_supported": false,
+  "contract_id": "lnsat.adapter_execution_payload.docker_local.v1",
+  "framing": {
+    "encoding": "utf-8",
+    "canonical_json": true,
+    "delimiter": "single_lf",
+    "frames": 1,
+    "duplicate_keys": "reject",
+    "unknown_fields": "reject"
+  },
+  "limits": {
+    "payload_frame_bytes": 8388608,
+    "approved_patch_bytes": 1048576
+  },
+  "required_bindings": [
+    "control.execution_request_digest",
+    "control.action_digest",
+    "execution_request",
+    "target_digest",
+    "tool_arguments_digest",
+    "control.authority_configuration_digest",
+    "control.adapter_executable_digest",
+    "control.adapter_ref",
+    "control.adapter_version",
+    "control.audience"
+  ],
+  "error_codes": [
+    "docker_local_execution_payload.input_invalid",
+    "docker_local_execution_payload.control_invalid",
+    "docker_local_execution_payload.execution_request_invalid",
+    "docker_local_execution_payload.binding_invalid",
+    "docker_local_execution_payload.request_too_large",
+    "docker_local_execution_payload.request_framing_invalid",
+    "docker_local_execution_payload.canonicalization_failed"
+  ],
+  "sample": {
+    "expected_payload_request_digest": "sha256:5d5932cc764d06128b06000285f7c6c2b10df421c2f6120a130400375d270d64"
+  },
+  "secret_and_reflection_boundary": {
+    "payload_retained_for_adapter_stdin": true,
+    "payload_in_error": false,
+    "repository_path_in_error": false,
+    "patch_in_error": false,
+    "credential": false,
+    "capability": false
+  },
+  "hard_stops": [
+    "no_process_launch",
+    "no_docker_endpoint_socket_api_or_invocation",
+    "no_image_pull_build_or_run",
+    "no_container_mount_or_execution",
+    "no_repository_consequence",
+    "no_receipt_creation",
+    "no_served_route",
+    "no_package_release_publication_deploy_or_production_write"
+  ]
+}

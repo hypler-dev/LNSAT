@@ -558,6 +558,31 @@ fn parse_frame_value_v1(
     Ok(value.0)
 }
 
+pub(crate) fn parse_unique_canonical_frame_value_v1(
+    frame: &[u8],
+    limit: usize,
+) -> Result<Value, ()> {
+    let value = parse_frame_value_v1(
+        frame,
+        limit,
+        DockerLocalAdapterProcessProtocolErrorV1::RequestTooLarge,
+        DockerLocalAdapterProcessProtocolErrorV1::RequestFramingInvalid,
+        DockerLocalAdapterProcessProtocolErrorV1::RequestInvalid,
+    )
+    .map_err(|_| ())?;
+    let canonical = canonical_json_v1(&value)?;
+    let mut expected = canonical.into_bytes();
+    expected.push(b'\n');
+    if expected != frame {
+        return Err(());
+    }
+    Ok(value)
+}
+
+pub(crate) fn canonical_json_value_v1(value: &Value) -> Result<String, ()> {
+    canonical_json_v1(value)
+}
+
 fn valid_prefixed_lower_hex_v1(value: &str, prefix: &str) -> bool {
     value.strip_prefix(prefix).is_some_and(|suffix| {
         suffix.len() == 64
