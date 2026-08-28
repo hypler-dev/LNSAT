@@ -35,7 +35,8 @@ pub use execution::{
     EXECUTION_REQUEST_DERIVATION_PROFILE_V1, EXECUTION_REQUEST_SCHEMA_V1_0, ExecutionActionV1,
     ExecutionAdapterV1, ExecutionProposalV1, ExecutionRequestV1, ExecutionRequestV1Error,
     ExecutionRequestV1Input, ExecutionTargetV1, derive_execution_request_v1,
-    parse_execution_proposal_v1, verify_derived_execution_request_v1,
+    parse_canonical_execution_request_v1, parse_execution_proposal_v1,
+    verify_derived_execution_request_v1,
 };
 pub use idempotency::{
     AUDIT_EVENT_IDEMPOTENCY_MAX_PRIOR_ENTRIES, AuditEventIdempotencyDecisionV1,

@@ -41,6 +41,9 @@ binding, bounded I/O observations and deadlines, and fail-closed ambiguity. It
 launches no process and creates no Docker or repository consequence. P11-I1
 adds authenticated atomic packet and server-time policy intake only; no
 approval, authorization, dispatch, Docker action, consequence, or receipt.
+P11-D4A adds one bounded canonical executable-payload wrapper around the D3
+control frame. It carries the approved execution request and binds target plus
+shared Git tool-argument digests without launching Docker or creating a receipt.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -561,7 +564,13 @@ repository, or receipt path. P11-I1 adds authenticated same-origin
 `POST /v1/packets` for active owner/operator sessions with CSRF, exact
 actor/session binding, atomic packet/policy evidence, and stable exact replay.
 It grants no approval or execution authority. Phase 11 remains incomplete and
-separately gated; P11-D4 isolated Docker execution is next.
+separately gated. P11-D4A closes the digest-only D3 payload gap by wrapping the
+control request with the exact canonical approved execution request, target
+digest, and existing Git tool-argument digest. All execution, action, target,
+configuration, adapter, executable, and audience identities are recomputed and
+cross-bound in one bounded frame. The wrapper opens no process, Docker endpoint,
+image, mount, route, consequence, or receipt. P11-D4B supervised isolated Docker
+execution is next.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.
@@ -606,6 +615,12 @@ action, and creates no receipt. P11-I1 closes validated fixture-only packet and
 policy seeding for new served requests through authenticated atomic intake.
 Responses expose bounded identity, digest, policy, scope, and time evidence but
 withhold canonical packet bytes, intent, constraints, and action arguments.
+P11-D4A supplies those approved action and target bytes only to a future bounded
+adapter stdin frame. Its 8 MiB ceiling safely contains the existing one-MiB
+UTF-8 patch contract after canonical JSON escaping. Exact replay is stable;
+payload, target, configuration, executable, adapter, audience, or tool-argument
+substitution rejects before launch. Docker selection and execution remain
+unimplemented.
 
 Required operation identity before dispatch:
 

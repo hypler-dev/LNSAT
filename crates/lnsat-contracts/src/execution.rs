@@ -356,6 +356,210 @@ pub fn verify_derived_execution_request_v1(
     Ok(())
 }
 
+/// Parses one exact canonical post-approval execution request.
+///
+/// This reconstructs digest evidence from closed canonical bytes. It grants no
+/// execution authority and performs no side effect.
+///
+/// # Errors
+///
+/// Rejects noncanonical JSON, duplicate or unknown fields, invalid identities,
+/// malformed action or target content, invalid time bounds, and digest fields
+/// outside the exact v1 contract.
+#[allow(clippy::too_many_lines)]
+pub fn parse_canonical_execution_request_v1(
+    canonical_request: &str,
+) -> Result<DerivedExecutionRequestV1, ExecutionRequestV1Error> {
+    let value: Value = serde_json::from_str(canonical_request)
+        .map_err(|_| ExecutionRequestV1Error::ProposalInvalid)?;
+    let canonical = canonicalize_json_value(&value)
+        .map_err(|_| ExecutionRequestV1Error::CanonicalizationFailed)?;
+    if canonical != canonical_request {
+        return Err(ExecutionRequestV1Error::ChainInvalid);
+    }
+    let object = value
+        .as_object()
+        .ok_or(ExecutionRequestV1Error::ProposalInvalid)?;
+    exact_keys(
+        object,
+        &[
+            "contract_version",
+            "schema_id",
+            "derivation_profile",
+            "packet_ref",
+            "policy_decision_ref",
+            "approval_request_ref",
+            "approval_decision_ref",
+            "requester_ref",
+            "requester_session_ref",
+            "approver_ref",
+            "approver_session_ref",
+            "project_ref",
+            "resource_ref",
+            "action",
+            "target",
+            "configuration_digest",
+            "adapter",
+            "executable_digest",
+            "audience",
+            "prepared_at",
+            "expires_at",
+        ],
+    )?;
+    if required_string(object, "contract_version")? != CONTRACT_VERSION_V1_0
+        || required_string(object, "schema_id")? != EXECUTION_REQUEST_SCHEMA_V1_0
+        || required_string(object, "derivation_profile")? != EXECUTION_REQUEST_DERIVATION_PROFILE_V1
+    {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+
+    let packet_ref = required_object(object, "packet_ref")?;
+    exact_keys(packet_ref, &["schema_id", "packet_id", "packet_sha256"])?;
+    let packet_id = required_string(packet_ref, "packet_id")?;
+    let packet_sha256 = required_string(packet_ref, "packet_sha256")?;
+    if required_string(packet_ref, "schema_id")? != "lnsat.packet_envelope.schema.v1_0"
+        || !valid_prefixed_digest(packet_id, "pkt_")
+        || !valid_prefixed_digest(packet_sha256, "sha256:")
+    {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+
+    let policy_ref = required_object(object, "policy_decision_ref")?;
+    exact_keys(policy_ref, &["schema_id", "decision_id"])?;
+    let policy_decision_id = required_string(policy_ref, "decision_id")?;
+    if required_string(policy_ref, "schema_id")? != POLICY_DECISION_SCHEMA_V1_0
+        || !valid_prefixed_digest(policy_decision_id, "pol_")
+    {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+
+    let approval_request_ref = required_object(object, "approval_request_ref")?;
+    exact_keys(approval_request_ref, &["schema_id", "approval_request_id"])?;
+    let approval_request_id = required_string(approval_request_ref, "approval_request_id")?;
+    if required_string(approval_request_ref, "schema_id")? != APPROVAL_REQUEST_SCHEMA_V1_0
+        || !valid_prefixed_digest(approval_request_id, "apr_")
+    {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+
+    let approval_decision_ref = required_object(object, "approval_decision_ref")?;
+    exact_keys(
+        approval_decision_ref,
+        &["schema_id", "approval_decision_id"],
+    )?;
+    let approval_decision_id = required_string(approval_decision_ref, "approval_decision_id")?;
+    if required_string(approval_decision_ref, "schema_id")? != APPROVAL_DECISION_SCHEMA_V1_0
+        || !valid_prefixed_digest(approval_decision_id, "apd_")
+    {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+
+    let requester_ref = required_string(object, "requester_ref")?;
+    let requester_session_ref = required_string(object, "requester_session_ref")?;
+    let approver_ref = required_string(object, "approver_ref")?;
+    let approver_session_ref = required_string(object, "approver_session_ref")?;
+    let project_ref = required_string(object, "project_ref")?;
+    let resource_ref = required_string(object, "resource_ref")?;
+    let audience = required_string(object, "audience")?;
+    if [
+        requester_ref,
+        requester_session_ref,
+        approver_ref,
+        approver_session_ref,
+        project_ref,
+        resource_ref,
+        audience,
+    ]
+    .iter()
+    .any(|value| !is_valid_reference_v1(value))
+    {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+
+    let action = required_object(object, "action")?;
+    exact_keys(action, &["kind", "arguments"])?;
+    let action_kind = required_bounded_string(action, "kind", 256)?;
+    let action_arguments = required_object(action, "arguments")?.clone();
+
+    let target = required_object(object, "target")?;
+    exact_keys(target, &["resource_ref", "identity"])?;
+    if required_string(target, "resource_ref")? != resource_ref {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+    let target_identity = required_object(target, "identity")?.clone();
+
+    let adapter = required_object(object, "adapter")?;
+    exact_keys(adapter, &["ref", "version"])?;
+    let adapter_ref = required_string(adapter, "ref")?;
+    let adapter_version = required_string(adapter, "version")?;
+    if !is_valid_reference_v1(adapter_ref)
+        || adapter_ref.contains('@')
+        || !valid_adapter_version(adapter_version)
+        || adapter_ref.encode_utf16().count() + adapter_version.encode_utf16().count() + 1 > 256
+    {
+        return Err(ExecutionRequestV1Error::ProposalInvalid);
+    }
+
+    let configuration_digest = required_sha256(object, "configuration_digest")?;
+    let executable_digest = required_sha256(object, "executable_digest")?;
+    let prepared_at = required_string(object, "prepared_at")?;
+    let expires_at = required_string(object, "expires_at")?;
+    let prepared = canonical_utc_timestamp_millis_v1(prepared_at)
+        .ok_or(ExecutionRequestV1Error::TimeInvalid)?;
+    let expires = canonical_utc_timestamp_millis_v1(expires_at)
+        .ok_or(ExecutionRequestV1Error::TimeInvalid)?;
+    if prepared >= expires {
+        return Err(ExecutionRequestV1Error::TimeInvalid);
+    }
+
+    let request = ExecutionRequestV1 {
+        contract_version: CONTRACT_VERSION_V1_0.to_owned(),
+        schema_id: EXECUTION_REQUEST_SCHEMA_V1_0.to_owned(),
+        derivation_profile: EXECUTION_REQUEST_DERIVATION_PROFILE_V1.to_owned(),
+        packet_id: packet_id.to_owned(),
+        packet_sha256: packet_sha256.to_owned(),
+        policy_decision_id: policy_decision_id.to_owned(),
+        approval_request_id: approval_request_id.to_owned(),
+        approval_decision_id: approval_decision_id.to_owned(),
+        requester_ref: requester_ref.to_owned(),
+        requester_session_ref: requester_session_ref.to_owned(),
+        approver_ref: approver_ref.to_owned(),
+        approver_session_ref: approver_session_ref.to_owned(),
+        project_ref: project_ref.to_owned(),
+        resource_ref: resource_ref.to_owned(),
+        action: ExecutionActionV1 {
+            kind: action_kind.to_owned(),
+            arguments: action_arguments,
+        },
+        target: ExecutionTargetV1 {
+            resource_ref: resource_ref.to_owned(),
+            identity: target_identity,
+        },
+        configuration_digest: configuration_digest.to_owned(),
+        adapter: ExecutionAdapterV1 {
+            adapter_ref: adapter_ref.to_owned(),
+            version: adapter_version.to_owned(),
+        },
+        executable_digest: executable_digest.to_owned(),
+        audience: audience.to_owned(),
+        prepared_at: prepared_at.to_owned(),
+        expires_at: expires_at.to_owned(),
+    };
+    let derived = DerivedExecutionRequestV1 {
+        canonical_request: canonical,
+        request_digest: Sha256::digest(canonical_request.as_bytes()).into(),
+        action_digest: domain_digest(ACTION_DIGEST_DOMAIN_V1, &action_json(&request.action))?,
+        target_digest: domain_digest(TARGET_DIGEST_DOMAIN_V1, &target_json(&request.target))?,
+        configuration_digest: decode_sha256(configuration_digest)
+            .ok_or(ExecutionRequestV1Error::ProposalInvalid)?,
+        executable_digest: decode_sha256(executable_digest)
+            .ok_or(ExecutionRequestV1Error::ProposalInvalid)?,
+        request,
+    };
+    verify_derived_execution_request_v1(&derived)?;
+    Ok(derived)
+}
+
 fn execution_request_json(request: &ExecutionRequestV1) -> Value {
     serde_json::json!({
         "contract_version": request.contract_version,
@@ -620,6 +824,44 @@ mod tests {
         assert!(!derived.canonical_request.contains('\t'));
         assert!(!derived.canonical_request.contains(": "));
         assert!(!derived.canonical_request.contains(", "));
+    }
+
+    #[test]
+    fn canonical_execution_request_parser_round_trips_and_rejects_shape_drift() {
+        let packet = packet();
+        let packet_sha256 = hash_packet_envelope_v1(&packet).expect("packet hash");
+        let derived = derive(&packet, &packet_sha256);
+        let parsed = parse_canonical_execution_request_v1(&derived.canonical_request)
+            .expect("canonical request must parse");
+        assert_eq!(parsed, derived);
+
+        let value: Value = serde_json::from_str(&derived.canonical_request).expect("request value");
+        let pretty = serde_json::to_string_pretty(&value).expect("pretty request");
+        assert_eq!(
+            parse_canonical_execution_request_v1(&pretty),
+            Err(ExecutionRequestV1Error::ChainInvalid)
+        );
+
+        let duplicate = derived.canonical_request.replacen(
+            "\"contract_version\":",
+            "\"contract_version\":\"lnsat.contracts.v1_0\",\"contract_version\":",
+            1,
+        );
+        assert_eq!(
+            parse_canonical_execution_request_v1(&duplicate),
+            Err(ExecutionRequestV1Error::ChainInvalid)
+        );
+
+        let mut unknown = value;
+        unknown
+            .as_object_mut()
+            .expect("request object")
+            .insert("unknown".to_owned(), Value::Bool(true));
+        let unknown = canonicalize_json_value(&unknown).expect("canonical unknown request");
+        assert_eq!(
+            parse_canonical_execution_request_v1(&unknown),
+            Err(ExecutionRequestV1Error::ProposalInvalid)
+        );
     }
 
     #[test]
