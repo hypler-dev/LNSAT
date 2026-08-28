@@ -56,6 +56,7 @@ pub use phase7_git_adapter::{
     Phase8OperationAttemptReadbackV1, Phase8OperationReadbackV1, Phase8RuntimeCompositionInputV1,
     Phase8RuntimeCompositionWriteV1, inspect_phase7_disposable_git_repository_v1,
     phase7_git_adapter_configuration_digest_v1, phase7_git_executable_digest_v1,
+    phase7_git_tool_arguments_digest_v1,
 };
 pub use phase7_nonce::{
     PHASE7_NONCE_BYTES_V1, PHASE7_NONCE_TTL_SECONDS_V1, Phase7AuthorizationNonceCancelInputV1,

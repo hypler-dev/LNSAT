@@ -63,7 +63,10 @@ actor/session binding, and atomic immutable packet plus server-time policy
 evidence. Exact replay returns original policy evidence. It creates no approval,
 execution authorization, adapter dispatch, Docker action, repository
 consequence, or receipt. Phase 11 remains incomplete and separately gated;
-P11-D4 isolated Docker execution is next.
+P11-D4A now closes the digest-only adapter payload gap with a bounded canonical
+wrapper carrying the exact approved execution request plus target and shared
+Git tool-argument digests. It performs no process or Docker action. P11-D4B
+supervised isolated Docker execution is next.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -76,29 +79,30 @@ preserving runtime-neutral Gateway authority and later secure-VM, native-host,
 and remote profile lanes. P11-D1 implements its closed profile and digest-
 binding foundation. P11-D2 adds explicit configuration and redacted readback
 only. P11-D3 adds protocol framing and identity binding only. P11-I1 closes
-fixture-only packet/policy seeding through authenticated atomic intake. No Docker adapter
-process launch, image operation, package, runtime dispatch, emergency-stop
-route, or supported deployment exists.
+fixture-only packet/policy seeding through authenticated atomic intake. P11-D4A
+adds canonical approved-payload, target, and Git tool-argument binding only. No
+Docker adapter process launch, image operation, package, runtime dispatch,
+emergency-stop route, or supported deployment exists.
 
 ## Maturity Summary
 
-| Area                 | Status                 | Evidence                                                                                                                                                 |
-| -------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                                                    |
-| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                                                          |
-| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                                                |
-| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                                                     |
-| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                                                      |
-| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                                                    |
-| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                                                       |
-| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                    |
-| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                           |
-| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                     |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                 |
-| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                |
-| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                         |
-| Docker integration   | Source foundation      | Closed P11-D1 profile, P11-D2 config/readback, P11-D3 process protocol, and P11-I1 authenticated intake; no launch, image operation, runtime, or support |
-| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                                                           |
+| Area                 | Status                 | Evidence                                                                                                                                                                                     |
+| -------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                                                                                        |
+| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                                                                                              |
+| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                                                                                    |
+| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                                                                                         |
+| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                                                                                          |
+| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                                                                                        |
+| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                                                                                           |
+| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                                                        |
+| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                                                               |
+| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                                                         |
+| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                                                     |
+| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                                                    |
+| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                                                             |
+| Docker integration   | Source foundation      | Closed P11-D1 profile, P11-D2 config/readback, P11-D3 control protocol, P11-I1 authenticated intake, and P11-D4A executable-payload binding; no launch, image operation, runtime, or support |
+| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                                                                                               |
 
 “Experimental” means checked-in implementation has automated coverage but no
 stable compatibility or support commitment.

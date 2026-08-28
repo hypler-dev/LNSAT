@@ -272,6 +272,31 @@ pub fn phase7_git_adapter_configuration_digest_v1() -> [u8; 32] {
     )
 }
 
+/// Recomputes exact bounded Git tool-argument identity from one verified
+/// execution request without inspecting a repository or running Git.
+///
+/// Runtime-specific adapter identity is validated by its authority profile;
+/// this helper validates the shared Git action, target, metadata, and digest
+/// contract only.
+///
+/// # Errors
+///
+/// Rejects derived-request drift or any malformed Git action/target field.
+pub fn phase7_git_tool_arguments_digest_v1(
+    derived_request: &DerivedExecutionRequestV1,
+) -> Result<[u8; 32], Phase7GitAdapterErrorV1> {
+    verify_derived_execution_request_v1(derived_request)
+        .map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
+    let request = &derived_request.request;
+    let parsed = parse_derived_request_for_adapter(
+        &request.project_ref,
+        &request.resource_ref,
+        derived_request,
+        None,
+    )?;
+    Ok(tool_arguments_digest(&parsed))
+}
+
 /// Hashes the canonical executable bytes used by the bounded Git adapter.
 ///
 /// # Errors
@@ -1534,10 +1559,25 @@ fn parse_derived_request(
     resource_ref: &str,
     derived_request: &DerivedExecutionRequestV1,
 ) -> Result<ParsedGitRequest, Phase7GitAdapterErrorV1> {
+    parse_derived_request_for_adapter(
+        project_ref,
+        resource_ref,
+        derived_request,
+        Some(PHASE7_GIT_ADAPTER_REF_V1),
+    )
+}
+
+#[allow(clippy::too_many_lines)]
+fn parse_derived_request_for_adapter(
+    project_ref: &str,
+    resource_ref: &str,
+    derived_request: &DerivedExecutionRequestV1,
+    expected_adapter_ref: Option<&str>,
+) -> Result<ParsedGitRequest, Phase7GitAdapterErrorV1> {
     let request = &derived_request.request;
     if request.project_ref != project_ref
         || request.resource_ref != resource_ref
-        || request.adapter.adapter_ref != PHASE7_GIT_ADAPTER_REF_V1
+        || expected_adapter_ref.is_some_and(|expected| request.adapter.adapter_ref != expected)
         || request.adapter.version != PHASE7_GIT_ADAPTER_VERSION_V1
         || request.audience != "audience:gateway:local"
     {
