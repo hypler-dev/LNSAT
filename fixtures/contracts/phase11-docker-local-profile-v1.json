@@ -1,0 +1,55 @@
+{
+  "contract_id": "lnsat.runtime_profile.docker_local.v1",
+  "contract_version": "lnsat.contracts.v1_0",
+  "schema_version": 1,
+  "profile_id": "runtime-profile:docker-local:git-reference",
+  "profile_family": "docker_local",
+  "adapter": {
+    "ref": "adapter:docker-local:git-commit",
+    "version": "v1"
+  },
+  "audience": "audience:gateway:local",
+  "adapter_executable_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "image_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "entrypoint": "/usr/local/bin/lnsat-git-reference",
+  "filesystem": {
+    "root_filesystem_read_only": true,
+    "workdir": "/workspace",
+    "target_mount_path": "/workspace/repository",
+    "target_mount_mode": "read_write",
+    "additional_mounts": false
+  },
+  "isolation": {
+    "network": "none",
+    "run_as_uid": 65532,
+    "run_as_gid": 65532,
+    "privilege": {
+      "privileged": false,
+      "no_new_privileges": true,
+      "capabilities_drop_all": true
+    },
+    "host_namespaces": {
+      "pid": false,
+      "ipc": false,
+      "network": false
+    },
+    "host_access": {
+      "docker_socket_mount": false,
+      "devices": false
+    },
+    "seccomp_profile": "runtime_default",
+    "ambient": {
+      "environment": false,
+      "credentials": false,
+      "shell": false
+    }
+  },
+  "limits": {
+    "memory_bytes": 268435456,
+    "pids": 64,
+    "cpu_millis": 1000,
+    "wall_clock_seconds": 30,
+    "stdout_bytes": 1048576,
+    "stderr_bytes": 0
+  }
+}

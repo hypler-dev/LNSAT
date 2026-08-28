@@ -233,7 +233,12 @@ now has one experimental served reference proof over the existing eight Phase 8
 loopback routes and a marked disposable Git fixture. The client discards the
 execute response, restarts the daemon, then resolves the unknown outcome only
 through authenticated evidence readback and reconciliation. It opens no new
-route, production target, or support claim; Phase 11 remains incomplete.
+route, production target, or support claim. P11-D1 adds a closed source-only
+`lnsat.runtime_profile.docker_local.v1` profile, strict file/parser validation,
+canonical profile/configuration digests, and an exact pre-dispatch
+execution-request binding check. It does not select or open a Docker endpoint,
+invoke Docker, provide an adapter or image, add a route, or grant execution
+authority. Phase 11 remains incomplete and separately gated.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See
