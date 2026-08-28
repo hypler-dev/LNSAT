@@ -2,6 +2,7 @@
 
 //! Fail-closed loopback daemon foundation for one local LNSAT deployment.
 
+pub mod adapter_process_protocol;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 mod local_unix_socket;
 pub mod product_config;
