@@ -6,9 +6,10 @@
 - Extends: ADR-0002 and ADR-0003 without changing the fourteen-phase release
   gate
 - Implementation state: P11-D1 closed source-only profile/parser and digest
-  binding plus P11-D2 explicit configuration/redacted readback; no Docker
-  endpoint, adapter, image, package, route, dispatch, or supported runtime
-  exists
+  binding, P11-D2 explicit configuration/redacted readback, and P11-D3 closed
+  adapter-process protocol framing; no Docker endpoint, process launch,
+  adapter execution, image operation, package, route, dispatch, or supported
+  runtime exists
 
 ## Context
 
@@ -216,6 +217,35 @@ authority. Invalid, missing, relative, symlinked, changed, or unknown-family
 profile selection fails before storage or listener startup without path or
 source-byte reflection.
 
+## P11-D3 Adapter Process Protocol Checkpoint
+
+P11-D3 defines exact `lnsat.adapter_process_protocol.docker_local.v1`
+canonical UTF-8 JSON request and result frames. Each message is one canonical
+object followed by one LF; missing, duplicate, multiple, noncanonical,
+malformed, truncated, or oversized framing fails closed. Request construction
+first revalidates the complete D1 profile-to-approved-request binding.
+
+The request and result bind operation ID, execution-request and action digests,
+authorization ID, idempotency key, attempt sequence, profile identity and
+digest, authority-configuration digest, adapter identity/version,
+adapter-executable digest, image digest, and Gateway audience. The request also
+binds a 64 KiB stdin ceiling, a profile-narrowed stdout ceiling no larger than
+64 KiB, zero accepted stderr bytes, and the profile-selected monotonic deadline
+no larger than 30 seconds. A later supervisor may retain at most 16 KiB of
+stderr only to detect overflow; protocol success requires stderr to be empty.
+
+`completed` carries one opaque result digest for later D4 semantic binding.
+`outcome_unknown` carries no result digest and is always rejected as success.
+Elapsed time at or beyond the deadline also returns the same stable
+`outcome_unknown` error. Every error is a closed code-only enum with no path,
+profile bytes, source bytes, stderr content, or secret-bearing payload.
+
+This checkpoint constructs and validates bytes only. It does not select or
+launch an executable, open Docker, inspect or operate on an image, mount a
+repository, dispatch an approved action, create a receipt, add a served route,
+or authorize execution. Real isolated Docker execution and result/receipt
+semantics remain P11-D4.
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.
@@ -256,7 +286,7 @@ Docker support cannot be claimed until checked-in evidence proves:
   later, with profile-specific isolation claims.
 - Phase 10 source conformance remains prerequisite to runtime work. P11-D1
   follows it with contract/binding foundation; P11-D2 adds explicit selection
-  and redacted readback only.
+  and redacted readback; P11-D3 adds closed process-protocol framing only.
 - Phase 11 should prove existing bounded consequence through selected Docker
   profile without opening production repositories or unrestricted
   infrastructure.

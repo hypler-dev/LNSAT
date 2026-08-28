@@ -1,0 +1,90 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_adapter_process_protocol_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-adapter-process-protocol-v1",
+  "packet_id": "P11-D3",
+  "status": "experimental_source_protocol",
+  "phase11_complete": false,
+  "production_supported": false,
+  "contract_id": "lnsat.adapter_process_protocol.docker_local.v1",
+  "framing": {
+    "encoding": "utf-8",
+    "canonical_json": true,
+    "delimiter": "single_lf",
+    "stdin_frames": 1,
+    "stdout_frames": 1,
+    "stderr_accepted_bytes": 0,
+    "duplicate_keys": "reject",
+    "trailing_or_multiple_frames": "reject"
+  },
+  "limits": {
+    "stdin_bytes": 65536,
+    "stdout_bytes": 65536,
+    "stderr_retained_bytes": 16384,
+    "deadline_millis_max": 30000,
+    "attempt_sequence": 1
+  },
+  "required_bindings": [
+    "operation_id",
+    "execution_request_digest",
+    "action_digest",
+    "authorization_id",
+    "idempotency_key",
+    "attempt_sequence",
+    "profile_id",
+    "profile_family",
+    "profile_digest",
+    "authority_configuration_digest",
+    "adapter_ref",
+    "adapter_version",
+    "adapter_executable_digest",
+    "image_digest",
+    "audience"
+  ],
+  "error_codes": [
+    "docker_local_adapter_process.input_invalid",
+    "docker_local_adapter_process.authority_binding_invalid",
+    "docker_local_adapter_process.request_too_large",
+    "docker_local_adapter_process.request_framing_invalid",
+    "docker_local_adapter_process.request_invalid",
+    "docker_local_adapter_process.result_too_large",
+    "docker_local_adapter_process.result_framing_invalid",
+    "docker_local_adapter_process.result_invalid",
+    "docker_local_adapter_process.binding_invalid",
+    "docker_local_adapter_process.stderr_too_large",
+    "docker_local_adapter_process.adapter_rejected",
+    "docker_local_adapter_process.outcome_unknown"
+  ],
+  "sample": {
+    "operation_id": "opn_1111111111111111111111111111111111111111111111111111111111111111",
+    "authorization_id": "xau_2222222222222222222222222222222222222222222222222222222222222222",
+    "idempotency_key": "idempotency:p11-d3:fixture",
+    "attempt_sequence": 1,
+    "adapter_result_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "expected_request_digest": "sha256:f4137d1e69b58af713246afa6398956a3628fb61f370553970712ef1eecd5488",
+    "expected_result_frame_sha256": "sha256:53b743adbc69db1721abc01f1658a749568cd260be71b2ece9f49526d3595b97"
+  },
+  "ambiguous_outcome": {
+    "wire_outcome": "outcome_unknown",
+    "result_digest": null,
+    "caller_result": "reject_as_outcome_unknown",
+    "blind_retry": false
+  },
+  "secret_and_reflection_boundary": {
+    "capability": false,
+    "credential": false,
+    "repository_path": false,
+    "profile_path": false,
+    "source_bytes": false,
+    "error_payload": false
+  },
+  "hard_stops": [
+    "no_process_launch_in_product_source",
+    "no_docker_endpoint_socket_api_or_invocation",
+    "no_image_pull_build_or_run",
+    "no_container_mount_or_execution",
+    "no_repository_consequence",
+    "no_served_intake_route",
+    "no_p11_d4_or_later_implementation",
+    "no_package_release_publication_deploy_or_production_write"
+  ]
+}

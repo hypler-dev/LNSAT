@@ -35,7 +35,10 @@ source-only profile/parser and exact digest-binding foundation. It creates no cu
 Docker adapter, image, package, runtime dispatch, or support claim.
 P11-D2 adds explicit profile-file selection and public-safe configuration
 readback only; it creates no Docker endpoint, process, mount, adapter, route,
-dispatch, receipt, or support claim.
+dispatch, receipt, or support claim. P11-D3 adds one closed canonical
+adapter-process protocol with exact request/result framing, complete identity
+binding, bounded I/O observations and deadlines, and fail-closed ambiguity. It
+launches no process and creates no Docker or repository consequence.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -548,6 +551,11 @@ invocation, adapter/image, dispatch, receipt, or execution authority opens.
 P11-D2 extends only explicit daemon configuration and config-inspection
 readback with closed Docker-local profile selection plus profile/configuration
 digest evidence. It opens no runtime endpoint or consequence path.
+P11-D3 freezes canonical single-frame adapter-process request/result bytes,
+operation and runtime identity binding, bounded stdin/stdout/stderr
+observations, profile-selected deadlines, stable secret-free errors, and
+unknown-outcome rejection. It launches no adapter process and opens no Docker,
+repository, receipt, or served-intake path.
 Phase 11 remains incomplete and separately gated.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
@@ -580,7 +588,16 @@ runtime paths, validates the profile at configuration load, retains its
 evidence for later packets, and exposes only profile identity plus profile and
 authority-configuration digests through `lnsatctl config inspect`. Docker
 endpoint/socket/process/image/mount access, adapter invocation, served routes,
-dispatch, receipts, and support remain unopened.
+dispatch, receipts, and support remain unopened. P11-D3 defines exact canonical
+stdin request and stdout result frames for a future Docker-local adapter
+process. The request binds operation, execution-request/action, authorization,
+idempotency, attempt, profile, configuration, adapter/version, executable,
+image, and audience identities. Protocol validation caps request/result and
+retained-stderr bytes, applies the profile-selected deadline up to 30 seconds,
+requires empty stderr, rejects duplicate/truncated/multiple/noncanonical frames
+and every identity substitution, and never treats timeout or explicit
+`outcome_unknown` as success. It starts no process, performs no Docker or Git
+action, and creates no receipt.
 
 Required operation identity before dispatch:
 

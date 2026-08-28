@@ -243,7 +243,15 @@ that profile file, retains its closed evidence for later packets, and adds
 public-safe `lnsatctl config inspect` readback of profile identity plus profile
 and authority-configuration digests. It opens no Docker endpoint, socket,
 process, image operation, mount, route, dispatch, receipt, or execution
-authority. Phase 11 remains incomplete and separately gated.
+authority. P11-D3 adds the closed source-only
+`lnsat.adapter_process_protocol.docker_local.v1` single-frame canonical JSON
+request/result contract. It binds operation, approved action, authorization,
+idempotency, attempt, profile, configuration, adapter, executable, image, and
+audience identities; caps stdin/stdout/stderr observations and deadlines; and
+rejects malformed, duplicate, truncated, oversized, substituted, timed-out,
+or ambiguous results without reflecting paths or source bytes. It launches no
+process, opens no Docker surface, and creates no consequence or receipt. Phase
+11 remains incomplete and separately gated.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See
