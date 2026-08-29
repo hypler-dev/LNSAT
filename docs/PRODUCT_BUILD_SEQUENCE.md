@@ -174,8 +174,14 @@ immutable packet digest, and server-time deterministic policy evidence bind in
 one transaction; exact replay returns original evidence. Canonical packet bytes,
 intent, constraints, and action arguments remain withheld from response. Intake
 creates no approval, execution authorization, adapter dispatch, Docker action,
-repository consequence, or receipt. Phase 11 remains incomplete; P11-D4
-isolated Docker execution requires separate authority.
+repository consequence, or receipt. P11-D4A now closes the D3 payload gap with
+one bounded canonical executable-payload wrapper. It carries the exact approved
+execution request and binds its execution, action, target, configuration,
+adapter-executable, adapter, audience, and shared Git tool-argument identities
+before any later supervisor may use it. It launches no process, opens no Docker
+endpoint, mounts no repository, and creates no consequence or receipt. Phase 11
+remains incomplete; P11-D4B supervised isolated Docker execution requires
+separate authority.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

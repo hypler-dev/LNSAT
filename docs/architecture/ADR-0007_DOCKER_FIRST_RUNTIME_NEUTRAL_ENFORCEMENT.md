@@ -8,8 +8,9 @@
 - Implementation state: P11-D1 closed source-only profile/parser and digest
   binding, P11-D2 explicit configuration/redacted readback, and P11-D3 closed
   adapter-process protocol framing; P11-I1 adds authenticated atomic packet and
-  policy intake. No Docker endpoint, process launch, adapter execution, image
-  operation, package, dispatch, or supported runtime exists
+  policy intake; P11-D4A adds bounded canonical execution-payload, target, and
+  Git tool-argument binding. No Docker endpoint, process launch, adapter
+  execution, image operation, package, dispatch, or supported runtime exists
 
 ## Context
 
@@ -270,6 +271,30 @@ dispatch, Docker operation, repository consequence, receipt, CLI/MCP/UI
 mutation, package, deployment, or support claim. Real isolated Docker execution
 remains P11-D4.
 
+## P11-D4A Executable Payload Binding Checkpoint
+
+P11-D3 intentionally carries control identities and digests only. A real
+`git.commit` adapter also requires the exact approved action and target fields:
+patch bytes and digest, base and expected tree, allowed paths, repository
+identity, and commit metadata. P11-D4A closes that gap before process launch.
+
+`lnsat.adapter_execution_payload.docker_local.v1` wraps one validated D3 control
+request with the exact canonical approved execution request, its target digest,
+and the existing Phase 7 Git tool-argument digest. Parsing reconstructs the
+execution request and recomputes execution, action, target, configuration,
+adapter-executable, adapter/version, audience, and tool-argument identities.
+Every mismatch rejects. The single canonical UTF-8 JSON frame has one trailing
+LF and an 8 MiB ceiling, sufficient for the existing one-MiB UTF-8 patch bound
+after canonical JSON escaping plus bounded metadata and target fields.
+
+The retained payload is intended only for a later isolated adapter stdin.
+Errors remain closed codes and never reflect the patch, repository path, or
+canonical request. This checkpoint selects no Docker executable or endpoint,
+starts no process, inspects or operates on no image, mounts no repository,
+dispatches no consequence, creates no result or receipt, adds no served route,
+and grants no execution authority. P11-D4B owns supervised isolated Docker
+launch and result/receipt semantics under separate authority.
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.
@@ -311,7 +336,8 @@ Docker support cannot be claimed until checked-in evidence proves:
 - Phase 10 source conformance remains prerequisite to runtime work. P11-D1
   follows it with contract/binding foundation; P11-D2 adds explicit selection
   and redacted readback; P11-D3 adds closed process-protocol framing; P11-I1
-  adds authenticated packet/policy intake only.
+  adds authenticated packet/policy intake; P11-D4A adds executable-payload,
+  target, and shared Git tool-argument binding only.
 - Phase 11 should prove existing bounded consequence through selected Docker
   profile without opening production repositories or unrestricted
   infrastructure.

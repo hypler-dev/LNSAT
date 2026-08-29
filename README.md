@@ -259,8 +259,15 @@ owner/operator sessions with CSRF and exact actor/session binding. One atomic
 transaction persists immutable packet evidence plus its server-time
 deterministic policy decision; exact replay returns original evidence. It
 creates no approval, execution authorization, adapter dispatch, Docker action,
-repository consequence, or receipt. Phase 11 remains incomplete and separately
-gated; P11-D4 isolated Docker execution is next.
+repository consequence, or receipt. P11-D4A closes the executable-payload gap
+left by the digest-only D3 control frame. One bounded canonical wrapper now
+carries the exact approved execution request and cross-binds execution,
+action, target, configuration, adapter executable, audience, and shared Git
+tool-argument digests. Payload drift, duplicate/unknown fields, noncanonical
+framing, and oversize input fail with code-only errors. It launches no process,
+opens no Docker endpoint, and creates no consequence or receipt. Phase 11
+remains incomplete and separately gated; P11-D4B supervised isolated Docker
+execution is next.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See
