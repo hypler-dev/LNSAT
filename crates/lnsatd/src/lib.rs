@@ -24,16 +24,16 @@ use lnsat_contracts::{
     CONTRACT_VERSION_V1_0, ContractVersion, ContractVersionError, DerivedExecutionRequestV1,
     ExecutionRequestV1Input, IntoContractErrorEnvelopeV1, canonical_utc_timestamp_millis_v1,
     decide_approval_request_v1, derive_execution_request_v1, is_valid_reference_v1,
-    validate_contract_version,
+    parse_packet_envelope_v1, validate_contract_version,
 };
 #[cfg(test)]
 use lnsat_store::LocalSessionVerificationV1;
 use lnsat_store::{
     ApprovalDecisionStoreWriteV1, ApprovalRequestStoreWriteV1,
-    LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1, LocalControlPermissionV1,
-    LocalDaemonDatabaseLeaseV1, LocalIdentityCreateInputV1, LocalIdentityCredentialRecordV1,
-    LocalIdentityDisablementResultV1, LocalIdentityEventV1, LocalIdentityRoleV1,
-    LocalPasswordRotationInputV1, LocalPasswordRotationResultV1,
+    AuthenticatedPacketIntakeStoreWriteV1, LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1,
+    LocalControlPermissionV1, LocalDaemonDatabaseLeaseV1, LocalIdentityCreateInputV1,
+    LocalIdentityCredentialRecordV1, LocalIdentityDisablementResultV1, LocalIdentityEventV1,
+    LocalIdentityRoleV1, LocalPasswordRotationInputV1, LocalPasswordRotationResultV1,
     LocalSessionActivityVerificationV1, LocalSessionEventV1, LocalSessionFamilyRevocationV1,
     LocalSessionIssueInputV1, LocalSessionIssueResultV1, LocalSessionRecordV1,
     LocalSessionRevocationReasonV1, LocalSessionRotationResultV1,
@@ -212,6 +212,14 @@ const GATEWAY_APPROVAL_DECISION_ACTIVITY_SIDE_EFFECT_V1: &str =
 const GATEWAY_APPROVAL_DECISION_EVIDENCE_SIDE_EFFECT_V1: &str =
     "approval_decision_evidence_appended";
 const GATEWAY_APPROVAL_DECISION_FAILURE_SIDE_EFFECT_V1: &str = "authentication_limiter_may_advance";
+const LOCAL_PACKET_INTAKE_GATEWAY_PATH_V1: &str = "/v1/packets";
+const GATEWAY_PACKET_INTAKE_CONTRACT_V1: &str = "lnsat.gateway.action_intake.v1_0";
+const GATEWAY_PACKET_INTAKE_ERROR_CODE_V1: &str = "gateway.action_intake.denied";
+const GATEWAY_PACKET_INTAKE_LIMITER_SIDE_EFFECT_V1: &str = "authentication_limiter_advanced";
+const GATEWAY_PACKET_INTAKE_ACTIVITY_SIDE_EFFECT_V1: &str = "session_activity_evidence_may_append";
+const GATEWAY_PACKET_INTAKE_PACKET_SIDE_EFFECT_V1: &str = "packet_evidence_appended";
+const GATEWAY_PACKET_INTAKE_POLICY_SIDE_EFFECT_V1: &str = "policy_evidence_appended";
+const GATEWAY_PACKET_INTAKE_FAILURE_SIDE_EFFECT_V1: &str = "authentication_limiter_may_advance";
 const LOCAL_EXECUTION_AUTHORIZATIONS_PATH_V1: &str = "/v1/execution-authorizations";
 const LOCAL_EXECUTION_AUTHORIZATIONS_PREFIX_V1: &str = "/v1/execution-authorizations/";
 const LOCAL_OPERATIONS_PREFIX_V1: &str = "/v1/operations/";
@@ -804,6 +812,44 @@ pub fn create_local_browser_identity_v1(
             request.raw_session_token(),
             raw_csrf_token,
             &created_at,
+        )
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)
+}
+
+/// Authenticates one local owner/operator and atomically persists one exact
+/// packet with its deterministic server-time policy decision.
+///
+/// Strict mutation transport and CSRF proof bind packet actor/session fields
+/// to active local session evidence. Intake grants no approval, execution
+/// authorization, adapter dispatch, receipt, or consequence authority.
+///
+/// # Errors
+///
+/// Collapses transport, authentication, role, packet, expiry, identity,
+/// policy, durable-drift, and persistence failures to one public denial.
+pub fn intake_local_browser_packet_v1(
+    store: &mut SqliteStore,
+    request: &LocalBrowserTransportRequestV1<'_>,
+    packet_bytes: &[u8],
+) -> Result<AuthenticatedPacketIntakeStoreWriteV1, LocalBrowserTransportErrorV1> {
+    let Some(raw_csrf_token) = request.raw_csrf_token() else {
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    };
+    if request.classify_after_session_verification(true)?
+        != LocalBrowserRequestClassV1::MutationPreflight
+    {
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    }
+    let packet = parse_packet_envelope_v1(packet_bytes)
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    let evaluated_at = canonical_system_time_v1(SystemTime::now())
+        .map_err(|()| LocalBrowserTransportErrorV1::Rejected)?;
+    store
+        .append_authenticated_packet_intake_v1(
+            &packet,
+            request.raw_session_token(),
+            raw_csrf_token,
+            &evaluated_at,
         )
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)
 }
@@ -2397,6 +2443,8 @@ enum HttpResponseV1 {
     SessionEventReadRejected {
         head_only: bool,
     },
+    PacketIntakeAccepted(AuthenticatedPacketIntakeStoreWriteV1),
+    PacketIntakeRejected,
     ApprovalRequestCreated(ApprovalRequestStoreWriteV1),
     ApprovalRequestRejected,
     ApprovalDecisionRecorded(ApprovalDecisionStoreWriteV1),
@@ -2683,7 +2731,8 @@ fn parse_http_request_v1(request: &[u8]) -> Result<ParsedHttpRequestV1<'_>, ()> 
 }
 
 fn request_body_limit_v1(target: &str) -> usize {
-    if target == LOCAL_EXECUTION_AUTHORIZATIONS_PATH_V1
+    if target == LOCAL_PACKET_INTAKE_GATEWAY_PATH_V1
+        || target == LOCAL_EXECUTION_AUTHORIZATIONS_PATH_V1
         || target.starts_with(LOCAL_EXECUTION_AUTHORIZATIONS_PREFIX_V1)
         || target.starts_with(LOCAL_OPERATIONS_PREFIX_V1)
     {
@@ -2868,6 +2917,16 @@ fn classify_versioned_gateway_route_v1(
         context.consequential_dispatch_active,
     ) {
         return response;
+    }
+    if request.target == LOCAL_PACKET_INTAKE_GATEWAY_PATH_V1 {
+        return classify_local_packet_intake_v1(
+            request,
+            body,
+            peer_address,
+            context.bound_address,
+            context.store,
+            context.authentication_limiter,
+        );
     }
     if request.target == LOCAL_APPROVAL_REQUEST_GATEWAY_PATH_V1 {
         return classify_local_approval_request_v1(
@@ -3851,6 +3910,36 @@ fn classify_readiness_or_unknown_v1(
     HttpResponseV1::Ready
 }
 
+fn classify_local_packet_intake_v1(
+    request: ParsedRequestHeadV1<'_>,
+    body: &[u8],
+    peer_address: IpAddr,
+    bound_address: SocketAddr,
+    store: &Arc<Mutex<SqliteStore>>,
+    authentication_limiter: &LocalAuthenticationLimiterV1,
+) -> HttpResponseV1 {
+    if request.method != "POST" {
+        return HttpResponseV1::MethodNotAllowed { allow: "POST" };
+    }
+    if request.content_length.is_none_or(|length| length == 0) {
+        return HttpResponseV1::PacketIntakeRejected;
+    }
+    let intake = parse_local_browser_transport_head_v1(request, peer_address, bound_address)
+        .and_then(|request| {
+            if !authentication_limiter.admit_session(request.raw_session_token()) {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
+            let mut store = store
+                .lock()
+                .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            intake_local_browser_packet_v1(&mut store, &request, body)
+        });
+    match intake {
+        Ok(intake) => HttpResponseV1::PacketIntakeAccepted(intake),
+        Err(_) => HttpResponseV1::PacketIntakeRejected,
+    }
+}
+
 fn classify_local_approval_request_v1(
     request: ParsedRequestHeadV1<'_>,
     body: &[u8],
@@ -4310,6 +4399,8 @@ fn compose_http_response_v1(
         HttpResponseV1::SessionEventReadRejected { head_only } => {
             session_event_read_denied_parts_v1(head_only)
         }
+        HttpResponseV1::PacketIntakeAccepted(value) => packet_intake_response_parts_v1(&value),
+        HttpResponseV1::PacketIntakeRejected => packet_intake_denied_parts_v1(),
         HttpResponseV1::ApprovalRequestCreated(value) => approval_request_response_parts_v1(&value),
         HttpResponseV1::ApprovalRequestRejected => approval_request_denied_parts_v1(),
         HttpResponseV1::ApprovalDecisionRecorded(value) => {
@@ -4667,6 +4758,32 @@ fn approval_decision_denied_parts_v1() -> HttpResponsePartsTupleV1 {
     (
         "403 Forbidden",
         gateway_approval_decision_rejected_body_v1(),
+        None,
+        false,
+        None,
+    )
+}
+
+fn packet_intake_response_parts_v1(
+    intake: &AuthenticatedPacketIntakeStoreWriteV1,
+) -> HttpResponsePartsTupleV1 {
+    (
+        if intake.packet.created {
+            "201 Created"
+        } else {
+            "200 OK"
+        },
+        packet_intake_body_v1(intake),
+        None,
+        false,
+        None,
+    )
+}
+
+fn packet_intake_denied_parts_v1() -> HttpResponsePartsTupleV1 {
+    (
+        "403 Forbidden",
+        gateway_packet_intake_rejected_body_v1(),
         None,
         false,
         None,
@@ -5296,6 +5413,141 @@ fn gateway_approval_decision_rejected_body_v1() -> String {
     .to_string()
 }
 
+fn packet_intake_status_v1(created: bool) -> (&'static str, Vec<&'static str>, bool) {
+    if created {
+        (
+            "accepted",
+            vec![
+                GATEWAY_PACKET_INTAKE_LIMITER_SIDE_EFFECT_V1,
+                GATEWAY_PACKET_INTAKE_ACTIVITY_SIDE_EFFECT_V1,
+                GATEWAY_PACKET_INTAKE_PACKET_SIDE_EFFECT_V1,
+                GATEWAY_PACKET_INTAKE_POLICY_SIDE_EFFECT_V1,
+            ],
+            true,
+        )
+    } else {
+        (
+            "replayed",
+            vec![
+                GATEWAY_PACKET_INTAKE_LIMITER_SIDE_EFFECT_V1,
+                GATEWAY_PACKET_INTAKE_ACTIVITY_SIDE_EFFECT_V1,
+            ],
+            false,
+        )
+    }
+}
+
+fn packet_intake_body_v1(intake: &AuthenticatedPacketIntakeStoreWriteV1) -> String {
+    let packet = &intake.packet.record.packet;
+    let decision = &intake.policy.record.decision;
+    let (status, side_effects, state_changed) = packet_intake_status_v1(intake.packet.created);
+    serde_json::json!({
+        "contract": GATEWAY_PACKET_INTAKE_CONTRACT_V1,
+        "contract_version": CONTRACT_VERSION_V1_0,
+        "ok": true,
+        "status": status,
+        "scope": "packet_and_policy_evidence",
+        "packet": {
+            "contract_version": &packet.contract_version,
+            "schema_id": &packet.schema_id,
+            "packet_id": &packet.packet_id,
+            "packet_sha256": &intake.packet.record.packet_sha256,
+            "packet_type": &packet.packet_type,
+            "actor_ref": &packet.actor_ref,
+            "session_ref": &packet.session_ref,
+            "project_ref": &packet.project_ref,
+            "resource_refs": &packet.resource_refs,
+            "policy_profile_ref": &packet.policy_profile_ref,
+            "risk_level": packet.risk_level,
+            "idempotency_key": &packet.idempotency_key,
+            "created_at": &packet.created_at,
+            "expires_at": &packet.expires_at,
+            "side_effects": [],
+        },
+        "policy_decision": {
+            "contract_version": &decision.contract_version,
+            "schema_id": &decision.schema_id,
+            "decision_id": &decision.decision_id,
+            "packet_ref": {
+                "schema_id": &decision.packet_ref.schema_id,
+                "packet_id": &decision.packet_ref.packet_id,
+                "packet_hash": &decision.packet_ref.packet_hash,
+                "idempotency_key": &decision.packet_ref.idempotency_key,
+            },
+            "actor_ref": &decision.actor_ref,
+            "session_ref": &decision.session_ref,
+            "project_ref": &decision.project_ref,
+            "resource_refs": &decision.resource_refs,
+            "policy_profile_ref": &decision.policy_profile_ref,
+            "risk_level": decision.risk_level,
+            "capability_decisions": decision
+                .capability_decisions
+                .iter()
+                .map(|capability| serde_json::json!({
+                    "capability": &capability.capability,
+                    "decision": capability.decision.as_str(),
+                    "reason_code": capability
+                        .reason
+                        .map(lnsat_contracts::PolicyDecisionV1Reason::code),
+                }))
+                .collect::<Vec<_>>(),
+            "decision": decision.decision.as_str(),
+            "requires_approval": decision.requires_approval,
+            "reason_codes": decision
+                .reason_codes
+                .iter()
+                .map(|reason| reason.code())
+                .collect::<Vec<_>>(),
+            "evaluated_at": &decision.evaluated_at,
+            "expires_at": &decision.expires_at,
+            "side_effects": [],
+        },
+        "authorization": {
+            "source": "local_session",
+            "permission": "request_action",
+            "csrf_verified": true,
+            "requester_bound": true,
+            "actor_session_bound": true,
+            "server_time_policy_evaluation": true,
+        },
+        "replay_semantics": "immutable_packet_and_policy_content_bound",
+        "side_effects": side_effects,
+        "packet_state_changed": state_changed,
+        "policy_state_changed": state_changed,
+        "approval_recorded": false,
+        "execution_authorized": false,
+        "adapter_dispatched": false,
+        "receipt_created": false,
+        "mutation_authority": false,
+    })
+    .to_string()
+}
+
+fn gateway_packet_intake_rejected_body_v1() -> String {
+    serde_json::json!({
+        "contract": GATEWAY_PACKET_INTAKE_CONTRACT_V1,
+        "contract_version": CONTRACT_VERSION_V1_0,
+        "ok": false,
+        "packet": null,
+        "policy_decision": null,
+        "errors": [{
+            "code": GATEWAY_PACKET_INTAKE_ERROR_CODE_V1,
+            "path": "/packets",
+            "message": "Action intake denied.",
+            "severity": "error",
+        }],
+        "side_effects": [GATEWAY_PACKET_INTAKE_FAILURE_SIDE_EFFECT_V1],
+        "packet_state_changed": false,
+        "policy_state_changed": false,
+        "approval_recorded": false,
+        "execution_authorized": false,
+        "adapter_dispatched": false,
+        "receipt_created": false,
+        "mutation_authority": false,
+    })
+    .to_string()
+}
+
 fn approval_request_body_v1(created: &ApprovalRequestStoreWriteV1) -> String {
     let request = &created.record.request;
     let (status, side_effects, approval_request_state_changed) = if created.created {
@@ -5773,6 +6025,7 @@ pub const fn daemon_usage_v1() -> &'static str {
         "  DELETE /v1/identities/<identity-ref> (owner-only permanent disablement)\n",
         "  GET|HEAD /v1/identities/<identity-ref>/events (authenticated evidence read)\n",
         "  GET|HEAD /v1/sessions/<session-id>/events (authenticated evidence read)\n",
+        "  POST /v1/packets (authenticated packet and policy intake)\n",
         "  POST /v1/approval-requests (authenticated pending request)\n",
         "  POST /v1/approval-requests/{approval_request_id}/decision (authenticated human decision)\n\n",
         "  POST /v1/execution-authorizations (authenticated authorization issue)\n",
@@ -6885,6 +7138,65 @@ mod tests {
                 csrf_token = self.csrf_token,
                 body = body,
             )
+        }
+
+        fn packet_intake_request(&self, body: &str) -> String {
+            format!(
+                concat!(
+                    "POST /v1/packets HTTP/1.1\r\n",
+                    "Host: {address}\r\n",
+                    "{version_name}: {version}\r\n",
+                    "Origin: http://{address}\r\n",
+                    "Sec-Fetch-Site: same-origin\r\n",
+                    "Content-Type: application/json\r\n",
+                    "Content-Length: {content_length}\r\n",
+                    "Cookie: {cookie}\r\n",
+                    "{csrf_name}: {csrf_token}\r\n\r\n",
+                    "{body}"
+                ),
+                address = self.address,
+                version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+                version = CONTRACT_VERSION_V1_0,
+                content_length = body.len(),
+                cookie = self.cookie,
+                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_token = self.csrf_token,
+                body = body,
+            )
+        }
+
+        fn action_intake_packet(&self, label: &str) -> String {
+            let fixture: serde_json::Value = serde_json::from_str(include_str!(
+                "../../../fixtures/contracts/packet-envelope-v1_0.json"
+            ))
+            .expect("packet fixture wrapper should parse");
+            let mut packet = fixture["vectors"][0]["packet"].clone();
+            let sequence = NEXT_TEST_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+            let now = SystemTime::now();
+            packet["packet_id"] = serde_json::json!(format!("pkt_{label}_{sequence}"));
+            packet["idempotency_key"] = serde_json::json!(format!("idem_{label}_{sequence}"));
+            packet["actor_ref"] = serde_json::json!(self.issued.session().identity_ref);
+            packet["session_ref"] = serde_json::json!(format!(
+                "session:local:{}",
+                self.issued.session().session_id
+            ));
+            packet["permission_envelope"]["allow"] = serde_json::json!(["deploy.request"]);
+            packet["requires_approval"] = serde_json::json!(true);
+            packet["created_at"] = serde_json::json!(
+                canonical_system_time_v1(
+                    now.checked_sub(Duration::from_secs(1))
+                        .expect("packet clock should subtract"),
+                )
+                .expect("packet creation time should format")
+            );
+            packet["expires_at"] = serde_json::json!(
+                canonical_system_time_v1(
+                    now.checked_add(Duration::from_mins(4))
+                        .expect("packet clock should add"),
+                )
+                .expect("packet expiry should format")
+            );
+            serde_json::to_string(&packet).expect("packet should serialize")
         }
 
         fn seed_approval_policy(
@@ -8527,6 +8839,190 @@ mod tests {
 
         let still_authenticated = request_at(fixture.address, fixture.valid_get().as_bytes());
         assert!(still_authenticated.starts_with("HTTP/1.1 200 OK\r\n"));
+        fixture.stop();
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn served_packet_intake_is_authenticated_atomic_replayable_and_authority_closed() {
+        let fixture = ServedSessionGatewayFixture::start("served-packet-intake");
+        let body = fixture.action_intake_packet("served_intake");
+        let response = request_at(
+            fixture.address,
+            fixture.packet_intake_request(&body).as_bytes(),
+        );
+        assert!(response.starts_with("HTTP/1.1 201 Created\r\n"));
+        assert!(response.contains("LNSAT-Contract-Version: lnsat.contracts.v1_0\r\n"));
+        let (_, response_body) = response
+            .split_once("\r\n\r\n")
+            .expect("packet intake response should have one head boundary");
+        let value = serde_json::from_str::<serde_json::Value>(response_body)
+            .expect("packet intake response should be JSON");
+        assert_eq!(value["contract"], GATEWAY_PACKET_INTAKE_CONTRACT_V1);
+        assert_eq!(value["status"], "accepted");
+        assert_eq!(value["scope"], "packet_and_policy_evidence");
+        assert_eq!(value["packet"]["actor_ref"], "identity:human:owner");
+        assert_eq!(
+            value["packet"]["session_ref"],
+            format!("session:local:{}", fixture.issued.session().session_id)
+        );
+        assert_eq!(
+            value["packet"]["packet_sha256"],
+            value["policy_decision"]["packet_ref"]["packet_hash"]
+        );
+        assert_eq!(value["policy_decision"]["decision"], "approval_required");
+        assert_eq!(value["policy_decision"]["requires_approval"], true);
+        assert_eq!(value["packet_state_changed"], true);
+        assert_eq!(value["policy_state_changed"], true);
+        assert_eq!(value["approval_recorded"], false);
+        assert_eq!(value["execution_authorized"], false);
+        assert_eq!(value["adapter_dispatched"], false);
+        assert_eq!(value["receipt_created"], false);
+        assert_eq!(value["mutation_authority"], false);
+        assert!(!response.contains(&fixture.session_token));
+        assert!(!response.contains(&fixture.csrf_token));
+        assert!(!response.contains("Set-Cookie:"));
+        assert!(!response.contains("Access-Control-Allow-"));
+        assert!(!response.contains("Run source verification"));
+        assert!(!response.contains("\"constraints\""));
+
+        let packet_id = value["packet"]["packet_id"]
+            .as_str()
+            .expect("accepted packet should have id")
+            .to_owned();
+        let decision_id = value["policy_decision"]["decision_id"]
+            .as_str()
+            .expect("accepted policy should have id")
+            .to_owned();
+        let project_ref = value["packet"]["project_ref"]
+            .as_str()
+            .expect("accepted packet should have project")
+            .to_owned();
+        let store = SqliteStore::open(fixture.directory.database_path())
+            .expect("packet intake store should reopen");
+        assert!(
+            store
+                .read_packet_envelope_v1(&project_ref, &packet_id)
+                .expect("accepted packet should read")
+                .is_some()
+        );
+        assert!(
+            store
+                .read_policy_decision_v1(&project_ref, &decision_id)
+                .expect("accepted policy should read")
+                .is_some()
+        );
+
+        let replay = request_at(
+            fixture.address,
+            fixture.packet_intake_request(&body).as_bytes(),
+        );
+        assert!(replay.starts_with("HTTP/1.1 200 OK\r\n"));
+        let (_, replay_body) = replay
+            .split_once("\r\n\r\n")
+            .expect("packet replay should have one head boundary");
+        let replay_value = serde_json::from_str::<serde_json::Value>(replay_body)
+            .expect("packet replay should be JSON");
+        assert_eq!(replay_value["status"], "replayed");
+        assert_eq!(replay_value["packet"]["packet_id"], packet_id);
+        assert_eq!(replay_value["policy_decision"]["decision_id"], decision_id);
+        assert_eq!(replay_value["packet_state_changed"], false);
+        assert_eq!(replay_value["policy_state_changed"], false);
+        assert_eq!(
+            replay_value["side_effects"],
+            serde_json::json!([
+                GATEWAY_PACKET_INTAKE_LIMITER_SIDE_EFFECT_V1,
+                GATEWAY_PACKET_INTAKE_ACTIVITY_SIDE_EFFECT_V1,
+            ])
+        );
+        fixture.stop();
+    }
+
+    #[test]
+    fn served_packet_intake_denies_auth_scope_schema_expiry_and_method_oracles() {
+        let fixture = ServedSessionGatewayFixture::start("served-packet-intake-denials");
+        let valid_body = fixture.action_intake_packet("served_intake_denied");
+        let mut wrong_actor = serde_json::from_str::<serde_json::Value>(&valid_body)
+            .expect("packet should parse as JSON");
+        wrong_actor["actor_ref"] = serde_json::json!("identity:human:other");
+        let wrong_actor_body =
+            serde_json::to_string(&wrong_actor).expect("packet should serialize");
+        let wrong_actor_packet_id = wrong_actor["packet_id"]
+            .as_str()
+            .expect("packet should have id")
+            .to_owned();
+
+        let mut unknown_field = serde_json::from_str::<serde_json::Value>(&valid_body)
+            .expect("packet should parse as JSON");
+        unknown_field["unexpected"] = serde_json::json!(true);
+        let unknown_field_body =
+            serde_json::to_string(&unknown_field).expect("packet should serialize");
+
+        let mut expired = serde_json::from_str::<serde_json::Value>(
+            &fixture.action_intake_packet("served_intake_expired"),
+        )
+        .expect("packet should parse as JSON");
+        let now = SystemTime::now();
+        expired["created_at"] = serde_json::json!(
+            canonical_system_time_v1(
+                now.checked_sub(Duration::from_secs(3))
+                    .expect("packet clock should subtract"),
+            )
+            .expect("packet creation time should format")
+        );
+        expired["expires_at"] = serde_json::json!(
+            canonical_system_time_v1(
+                now.checked_sub(Duration::from_secs(2))
+                    .expect("packet clock should subtract"),
+            )
+            .expect("packet expiry should format")
+        );
+        let expired_body = serde_json::to_string(&expired).expect("packet should serialize");
+
+        let missing_csrf = fixture.packet_intake_request(&valid_body).replace(
+            &format!("{}: {}\r\n", LOCAL_CSRF_HEADER_NAME_V1, fixture.csrf_token),
+            "",
+        );
+        let requests = [
+            fixture.packet_intake_request(&wrong_actor_body),
+            fixture.packet_intake_request(&unknown_field_body),
+            fixture.packet_intake_request(&expired_body),
+            missing_csrf,
+        ];
+        let mut stable_body = None;
+        for request in requests {
+            let response = request_at(fixture.address, request.as_bytes());
+            assert!(response.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+            let (_, body) = response
+                .split_once("\r\n\r\n")
+                .expect("denial should have one head boundary");
+            assert_eq!(body, gateway_packet_intake_rejected_body_v1());
+            if let Some(expected) = &stable_body {
+                assert_eq!(body, expected);
+            } else {
+                stable_body = Some(body.to_owned());
+            }
+            assert!(!response.contains(&fixture.session_token));
+            assert!(!response.contains(&fixture.csrf_token));
+        }
+
+        let get_request = fixture.packet_intake_request(&valid_body).replacen(
+            "POST /v1/packets",
+            "GET /v1/packets",
+            1,
+        );
+        let method = request_at(fixture.address, get_request.as_bytes());
+        assert!(method.starts_with("HTTP/1.1 405 Method Not Allowed\r\n"));
+        assert!(method.contains("Allow: POST\r\n"));
+
+        let store = SqliteStore::open(fixture.directory.database_path())
+            .expect("packet denial store should reopen");
+        assert!(
+            store
+                .read_packet_envelope_v1("project:lnsat", &wrong_actor_packet_id)
+                .expect("denied packet lookup should be safe")
+                .is_none()
+        );
         fixture.stop();
     }
 

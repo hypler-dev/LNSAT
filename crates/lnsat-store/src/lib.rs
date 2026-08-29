@@ -1887,6 +1887,52 @@ pub struct PacketStoreWriteV1 {
     pub record: PacketStoreRecordV1,
 }
 
+/// Stable fail-closed authenticated packet-intake errors.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AuthenticatedPacketIntakeStoreErrorV1 {
+    /// Active local session, CSRF proof, role, actor, or session binding failed.
+    AuthorizationRejected,
+    /// Packet or deterministic policy evidence is invalid or expired.
+    InvalidIntake,
+    /// Packet or policy identity already binds different immutable evidence.
+    IdentityConflict,
+    /// Durable packet, policy, identity, or session evidence drifted.
+    EvidenceDrift,
+    /// Atomic authentication or persistence operation failed.
+    PersistenceFailed,
+}
+
+impl AuthenticatedPacketIntakeStoreErrorV1 {
+    /// Stable public-safe error code.
+    #[must_use]
+    pub const fn code(self) -> &'static str {
+        match self {
+            Self::AuthorizationRejected => "packet_intake_store.authorization_rejected",
+            Self::InvalidIntake => "packet_intake_store.invalid_intake",
+            Self::IdentityConflict => "packet_intake_store.identity_conflict",
+            Self::EvidenceDrift => "packet_intake_store.evidence_drift",
+            Self::PersistenceFailed => "packet_intake_store.persistence_failed",
+        }
+    }
+}
+
+impl fmt::Display for AuthenticatedPacketIntakeStoreErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.code())
+    }
+}
+
+impl std::error::Error for AuthenticatedPacketIntakeStoreErrorV1 {}
+
+/// Atomic authenticated packet and deterministic policy intake outcome.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AuthenticatedPacketIntakeStoreWriteV1 {
+    /// Immutable packet append or exact-replay evidence.
+    pub packet: PacketStoreWriteV1,
+    /// Deterministic policy append or exact-replay evidence.
+    pub policy: PolicyStoreWriteV1,
+}
+
 /// Stable fail-closed policy-decision persistence errors.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PolicyStoreErrorV1 {
@@ -3680,88 +3726,15 @@ impl SqliteStore {
         &mut self,
         packet: &PacketEnvelopeV1,
     ) -> Result<PacketStoreWriteV1, PacketStoreErrorV1> {
-        let canonical_packet = canonicalize_packet_envelope_v1(packet)
-            .map_err(|_| PacketStoreErrorV1::InvalidPacket)?;
-        let packet_sha256 =
-            hash_packet_envelope_v1(packet).map_err(|_| PacketStoreErrorV1::InvalidPacket)?;
         let transaction = self
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
-
-        if let Some(existing) = select_packet_by_idempotency(
-            &transaction,
-            &packet.project_ref,
-            &packet.idempotency_key,
-        )? {
-            let record = decode_packet_record(&transaction, &existing)?;
-            if record.packet.packet_id != packet.packet_id
-                || record.packet_sha256 != packet_sha256
-                || record.canonical_packet != canonical_packet
-            {
-                return Err(PacketStoreErrorV1::IdempotencyConflict);
-            }
-            transaction
-                .commit()
-                .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
-            return Ok(PacketStoreWriteV1 {
-                created: false,
-                record,
-            });
-        }
-
-        if select_packet_by_id(&transaction, &packet.packet_id)?.is_some() {
-            return Err(PacketStoreErrorV1::PacketIdentityConflict);
-        }
-
-        transaction
-            .execute(
-                "INSERT INTO lnsat_packet_envelopes (
-                    packet_id, packet_sha256, contract_version, schema_id,
-                    packet_type, actor_ref, session_ref, project_ref,
-                    idempotency_key, created_at, expires_at, canonical_packet
-                 ) VALUES (
-                    ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12
-                 )",
-                params![
-                    packet.packet_id,
-                    packet_sha256,
-                    packet.contract_version,
-                    packet.schema_id,
-                    packet.packet_type,
-                    packet.actor_ref,
-                    packet.session_ref,
-                    packet.project_ref,
-                    packet.idempotency_key,
-                    packet.created_at,
-                    packet.expires_at,
-                    canonical_packet,
-                ],
-            )
-            .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
-        for (ordinal, resource_ref) in packet.resource_refs.iter().enumerate() {
-            let ordinal = i64::try_from(ordinal).map_err(|_| PacketStoreErrorV1::InvalidPacket)?;
-            transaction
-                .execute(
-                    "INSERT INTO lnsat_packet_resource_refs (
-                        packet_id, project_ref, ordinal, resource_ref
-                     ) VALUES (?1, ?2, ?3, ?4)",
-                    params![packet.packet_id, packet.project_ref, ordinal, resource_ref],
-                )
-                .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
-        }
+        let write = append_packet_in_transaction_v1(&transaction, packet)?;
         transaction
             .commit()
             .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
-
-        Ok(PacketStoreWriteV1 {
-            created: true,
-            record: PacketStoreRecordV1 {
-                packet: packet.clone(),
-                canonical_packet,
-                packet_sha256,
-            },
-        })
+        Ok(write)
     }
 
     /// Reads one packet only through its exact project scope.
@@ -3822,74 +3795,86 @@ impl SqliteStore {
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?;
-        let packet_row = select_packet_by_project(
-            &transaction,
-            &decision.project_ref,
-            &decision.packet_ref.packet_id,
-        )
-        .map_err(map_packet_store_error)?
-        .ok_or(PolicyStoreErrorV1::InvalidDecision)?;
-        let packet_record =
-            decode_packet_record(&transaction, &packet_row).map_err(map_packet_store_error)?;
-        let expected =
-            decide_packet_envelope_policy_v1(&packet_record.packet, &decision.evaluated_at)
-                .map_err(|_| PolicyStoreErrorV1::InvalidDecision)?;
-        if expected != *decision {
-            return Err(PolicyStoreErrorV1::InvalidDecision);
-        }
-
-        if let Some(existing) = select_policy_by_id(&transaction, &decision.decision_id)? {
-            let record = decode_policy_record(&transaction, &existing)?;
-            if record.decision != *decision {
-                return Err(PolicyStoreErrorV1::DecisionIdentityConflict);
-            }
-            transaction
-                .commit()
-                .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?;
-            return Ok(PolicyStoreWriteV1 {
-                created: false,
-                record,
-            });
-        }
-        if select_policy_by_packet_time(
-            &transaction,
-            &decision.packet_ref.packet_id,
-            &decision.evaluated_at,
-        )?
-        .is_some()
-        {
-            return Err(PolicyStoreErrorV1::DecisionIdentityConflict);
-        }
-
-        transaction
-            .execute(
-                "INSERT INTO lnsat_policy_decisions (
-                    decision_id, schema_id, packet_id, packet_sha256,
-                    project_ref, evaluated_at, expires_at, decision,
-                    requires_approval
-                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-                params![
-                    decision.decision_id,
-                    decision.schema_id,
-                    decision.packet_ref.packet_id,
-                    decision.packet_ref.packet_hash,
-                    decision.project_ref,
-                    decision.evaluated_at,
-                    decision.expires_at,
-                    decision.decision.as_str(),
-                    i64::from(decision.requires_approval),
-                ],
-            )
-            .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?;
+        let write = append_policy_in_transaction_v1(&transaction, decision)?;
         transaction
             .commit()
             .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?;
+        Ok(write)
+    }
 
-        Ok(PolicyStoreWriteV1 {
-            created: true,
-            record: PolicyStoreRecordV1 {
-                decision: decision.clone(),
-            },
+    /// Authenticates one local owner/operator and atomically persists one
+    /// packet plus its server-time deterministic policy evidence.
+    ///
+    /// Packet actor and session must equal active local session evidence. One
+    /// transaction verifies bearer and CSRF material, touches session activity,
+    /// appends packet evidence, and appends policy evidence. Intake grants no
+    /// approval, execution authorization, adapter dispatch, or consequence.
+    /// Exact replay returns original policy evidence without reevaluation,
+    /// including after packet expiry while authenticated session remains active.
+    ///
+    /// # Errors
+    ///
+    /// Returns stable error for rejected authentication/authorization,
+    /// malformed or expired packet evidence, identity conflict, durable drift,
+    /// or failed atomic persistence.
+    pub fn append_authenticated_packet_intake_v1(
+        &mut self,
+        packet: &PacketEnvelopeV1,
+        raw_session_token: &str,
+        raw_csrf_token: &str,
+        evaluated_at: &str,
+    ) -> Result<AuthenticatedPacketIntakeStoreWriteV1, AuthenticatedPacketIntakeStoreErrorV1> {
+        let transaction = self
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| AuthenticatedPacketIntakeStoreErrorV1::PersistenceFailed)?;
+        let verified = verify_and_touch_local_session_on_connection_v1(
+            &transaction,
+            raw_session_token,
+            Some(raw_csrf_token),
+            evaluated_at,
+            LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1,
+        )
+        .map_err(map_local_session_packet_intake_error_v1)?;
+        let LocalSessionActivityVerificationV1::Verified(activity) = verified else {
+            return Err(AuthenticatedPacketIntakeStoreErrorV1::AuthorizationRejected);
+        };
+        let session = activity.session;
+        let expected_session_ref = format!("session:local:{}", session.session_id);
+        if !session
+            .role
+            .allows_control(LocalControlPermissionV1::RequestAction)
+            || packet.actor_ref != session.identity_ref
+            || packet.session_ref != expected_session_ref
+        {
+            return Err(AuthenticatedPacketIntakeStoreErrorV1::AuthorizationRejected);
+        }
+        let packet_write = append_packet_in_transaction_v1(&transaction, packet)
+            .map_err(map_packet_intake_packet_error_v1)?;
+        let policy_write = if packet_write.created {
+            let decision = decide_packet_envelope_policy_v1(packet, evaluated_at)
+                .map_err(|_| AuthenticatedPacketIntakeStoreErrorV1::InvalidIntake)?;
+            append_policy_in_transaction_v1(&transaction, &decision)
+                .map_err(map_packet_intake_policy_error_v1)?
+        } else {
+            let existing =
+                select_policies_by_packet(&transaction, &packet.project_ref, &packet.packet_id)
+                    .map_err(map_packet_intake_policy_error_v1)?;
+            let [existing] = existing.as_slice() else {
+                return Err(AuthenticatedPacketIntakeStoreErrorV1::EvidenceDrift);
+            };
+            PolicyStoreWriteV1 {
+                created: false,
+                record: decode_policy_record(&transaction, existing)
+                    .map_err(map_packet_intake_policy_error_v1)?,
+            }
+        };
+        transaction
+            .commit()
+            .map_err(|_| AuthenticatedPacketIntakeStoreErrorV1::PersistenceFailed)?;
+        Ok(AuthenticatedPacketIntakeStoreWriteV1 {
+            packet: packet_write,
+            policy: policy_write,
         })
     }
 
@@ -6880,6 +6865,78 @@ fn select_resource_refs(
         .map_err(|_| PacketStoreErrorV1::PersistenceFailed)
 }
 
+fn append_packet_in_transaction_v1(
+    transaction: &rusqlite::Transaction<'_>,
+    packet: &PacketEnvelopeV1,
+) -> Result<PacketStoreWriteV1, PacketStoreErrorV1> {
+    let canonical_packet =
+        canonicalize_packet_envelope_v1(packet).map_err(|_| PacketStoreErrorV1::InvalidPacket)?;
+    let packet_sha256 =
+        hash_packet_envelope_v1(packet).map_err(|_| PacketStoreErrorV1::InvalidPacket)?;
+    if let Some(existing) =
+        select_packet_by_idempotency(transaction, &packet.project_ref, &packet.idempotency_key)?
+    {
+        let record = decode_packet_record(transaction, &existing)?;
+        if record.packet.packet_id != packet.packet_id
+            || record.packet_sha256 != packet_sha256
+            || record.canonical_packet != canonical_packet
+        {
+            return Err(PacketStoreErrorV1::IdempotencyConflict);
+        }
+        return Ok(PacketStoreWriteV1 {
+            created: false,
+            record,
+        });
+    }
+    if select_packet_by_id(transaction, &packet.packet_id)?.is_some() {
+        return Err(PacketStoreErrorV1::PacketIdentityConflict);
+    }
+    transaction
+        .execute(
+            "INSERT INTO lnsat_packet_envelopes (
+                packet_id, packet_sha256, contract_version, schema_id,
+                packet_type, actor_ref, session_ref, project_ref,
+                idempotency_key, created_at, expires_at, canonical_packet
+             ) VALUES (
+                ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12
+             )",
+            params![
+                packet.packet_id,
+                packet_sha256,
+                packet.contract_version,
+                packet.schema_id,
+                packet.packet_type,
+                packet.actor_ref,
+                packet.session_ref,
+                packet.project_ref,
+                packet.idempotency_key,
+                packet.created_at,
+                packet.expires_at,
+                canonical_packet,
+            ],
+        )
+        .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
+    for (ordinal, resource_ref) in packet.resource_refs.iter().enumerate() {
+        let ordinal = i64::try_from(ordinal).map_err(|_| PacketStoreErrorV1::InvalidPacket)?;
+        transaction
+            .execute(
+                "INSERT INTO lnsat_packet_resource_refs (
+                    packet_id, project_ref, ordinal, resource_ref
+                 ) VALUES (?1, ?2, ?3, ?4)",
+                params![packet.packet_id, packet.project_ref, ordinal, resource_ref],
+            )
+            .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
+    }
+    Ok(PacketStoreWriteV1 {
+        created: true,
+        record: PacketStoreRecordV1 {
+            packet: packet.clone(),
+            canonical_packet,
+            packet_sha256,
+        },
+    })
+}
+
 fn map_packet_store_error(error: PacketStoreErrorV1) -> PolicyStoreErrorV1 {
     match error {
         PacketStoreErrorV1::EvidenceDrift => PolicyStoreErrorV1::EvidenceDrift,
@@ -6951,6 +7008,28 @@ fn select_policy_by_packet_time(
             map_stored_policy,
         )
         .optional()
+        .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)
+}
+
+fn select_policies_by_packet(
+    connection: &Connection,
+    project_ref: &str,
+    packet_id: &str,
+) -> Result<Vec<StoredPolicyRow>, PolicyStoreErrorV1> {
+    let mut statement = connection
+        .prepare(
+            "SELECT decision_id, schema_id, packet_id, packet_sha256,
+                    project_ref, evaluated_at, expires_at, decision,
+                    requires_approval
+             FROM lnsat_policy_decisions
+             WHERE project_ref = ?1 AND packet_id = ?2
+             ORDER BY evaluated_at, decision_id",
+        )
+        .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?;
+    statement
+        .query_map(params![project_ref, packet_id], map_stored_policy)
+        .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?
+        .collect::<Result<Vec<_>, _>>()
         .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)
 }
 
@@ -7030,6 +7109,71 @@ fn decode_policy_record(
     }
 
     Ok(PolicyStoreRecordV1 { decision })
+}
+
+fn append_policy_in_transaction_v1(
+    transaction: &rusqlite::Transaction<'_>,
+    decision: &PolicyDecisionV1,
+) -> Result<PolicyStoreWriteV1, PolicyStoreErrorV1> {
+    let packet_row = select_packet_by_project(
+        transaction,
+        &decision.project_ref,
+        &decision.packet_ref.packet_id,
+    )
+    .map_err(map_packet_store_error)?
+    .ok_or(PolicyStoreErrorV1::InvalidDecision)?;
+    let packet_record =
+        decode_packet_record(transaction, &packet_row).map_err(map_packet_store_error)?;
+    let expected = decide_packet_envelope_policy_v1(&packet_record.packet, &decision.evaluated_at)
+        .map_err(|_| PolicyStoreErrorV1::InvalidDecision)?;
+    if expected != *decision {
+        return Err(PolicyStoreErrorV1::InvalidDecision);
+    }
+    if let Some(existing) = select_policy_by_id(transaction, &decision.decision_id)? {
+        let record = decode_policy_record(transaction, &existing)?;
+        if record.decision != *decision {
+            return Err(PolicyStoreErrorV1::DecisionIdentityConflict);
+        }
+        return Ok(PolicyStoreWriteV1 {
+            created: false,
+            record,
+        });
+    }
+    if select_policy_by_packet_time(
+        transaction,
+        &decision.packet_ref.packet_id,
+        &decision.evaluated_at,
+    )?
+    .is_some()
+    {
+        return Err(PolicyStoreErrorV1::DecisionIdentityConflict);
+    }
+    transaction
+        .execute(
+            "INSERT INTO lnsat_policy_decisions (
+                decision_id, schema_id, packet_id, packet_sha256,
+                project_ref, evaluated_at, expires_at, decision,
+                requires_approval
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![
+                decision.decision_id,
+                decision.schema_id,
+                decision.packet_ref.packet_id,
+                decision.packet_ref.packet_hash,
+                decision.project_ref,
+                decision.evaluated_at,
+                decision.expires_at,
+                decision.decision.as_str(),
+                i64::from(decision.requires_approval),
+            ],
+        )
+        .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?;
+    Ok(PolicyStoreWriteV1 {
+        created: true,
+        record: PolicyStoreRecordV1 {
+            decision: decision.clone(),
+        },
+    })
 }
 
 fn map_policy_store_error(error: PolicyStoreErrorV1) -> ApprovalRequestStoreErrorV1 {
@@ -7270,6 +7414,52 @@ fn map_local_session_approval_request_error_v1(
         LocalSessionStoreErrorV1::EvidenceDrift => ApprovalRequestStoreErrorV1::EvidenceDrift,
         LocalSessionStoreErrorV1::PersistenceFailed => {
             ApprovalRequestStoreErrorV1::PersistenceFailed
+        }
+    }
+}
+
+fn map_local_session_packet_intake_error_v1(
+    error: LocalSessionStoreErrorV1,
+) -> AuthenticatedPacketIntakeStoreErrorV1 {
+    match error {
+        LocalSessionStoreErrorV1::InvalidInput | LocalSessionStoreErrorV1::InvalidCredential => {
+            AuthenticatedPacketIntakeStoreErrorV1::AuthorizationRejected
+        }
+        LocalSessionStoreErrorV1::EvidenceDrift => {
+            AuthenticatedPacketIntakeStoreErrorV1::EvidenceDrift
+        }
+        LocalSessionStoreErrorV1::PersistenceFailed => {
+            AuthenticatedPacketIntakeStoreErrorV1::PersistenceFailed
+        }
+    }
+}
+
+fn map_packet_intake_packet_error_v1(
+    error: PacketStoreErrorV1,
+) -> AuthenticatedPacketIntakeStoreErrorV1 {
+    match error {
+        PacketStoreErrorV1::InvalidPacket => AuthenticatedPacketIntakeStoreErrorV1::InvalidIntake,
+        PacketStoreErrorV1::IdempotencyConflict | PacketStoreErrorV1::PacketIdentityConflict => {
+            AuthenticatedPacketIntakeStoreErrorV1::IdentityConflict
+        }
+        PacketStoreErrorV1::EvidenceDrift => AuthenticatedPacketIntakeStoreErrorV1::EvidenceDrift,
+        PacketStoreErrorV1::PersistenceFailed => {
+            AuthenticatedPacketIntakeStoreErrorV1::PersistenceFailed
+        }
+    }
+}
+
+fn map_packet_intake_policy_error_v1(
+    error: PolicyStoreErrorV1,
+) -> AuthenticatedPacketIntakeStoreErrorV1 {
+    match error {
+        PolicyStoreErrorV1::InvalidDecision => AuthenticatedPacketIntakeStoreErrorV1::InvalidIntake,
+        PolicyStoreErrorV1::DecisionIdentityConflict => {
+            AuthenticatedPacketIntakeStoreErrorV1::IdentityConflict
+        }
+        PolicyStoreErrorV1::EvidenceDrift => AuthenticatedPacketIntakeStoreErrorV1::EvidenceDrift,
+        PolicyStoreErrorV1::PersistenceFailed => {
+            AuthenticatedPacketIntakeStoreErrorV1::PersistenceFailed
         }
     }
 }
@@ -12266,6 +12456,167 @@ mod tests {
                 "2026-07-23T17:04:00Z",
             ),
             Err(LocalIdentityStoreErrorV1::IdentityAlreadyExists)
+        );
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn authenticated_packet_intake_binds_session_replays_and_rolls_back_atomically() {
+        let database = TestDatabase::new("authenticated-packet-intake");
+        let owner_password = "correct horse battery staple";
+        let mut store = SqliteStore::open(&database.path).expect("database must bootstrap");
+        store
+            .bootstrap_local_owner_v1(&LocalOwnerBootstrapInputV1 {
+                created_at: "2026-07-22T19:00:00Z",
+                ..owner_bootstrap_input(owner_password)
+            })
+            .expect("owner must bootstrap");
+        let owner_session = store
+            .issue_local_owner_session_v1(&local_session_input(
+                "identity:human:owner",
+                owner_password,
+                "2026-07-22T19:50:00Z",
+                "2026-07-22T20:10:00Z",
+            ))
+            .expect("owner session must issue");
+        let mut packet = packet_fixture();
+        packet.packet_id = "pkt_authenticated_intake".to_owned();
+        packet.idempotency_key = "idem_authenticated_intake".to_owned();
+        packet.actor_ref = owner_session.session.identity_ref.clone();
+        packet.session_ref = format!("session:local:{}", owner_session.session.session_id);
+        packet.permission_allow = vec!["deploy.request".to_owned()];
+        packet.requires_approval = true;
+        packet.expires_at = "2026-07-22T20:00:45Z".to_owned();
+
+        let created = store
+            .append_authenticated_packet_intake_v1(
+                &packet,
+                &owner_session.raw_session_token,
+                &owner_session.raw_csrf_token,
+                "2026-07-22T20:00:30Z",
+            )
+            .expect("bound packet intake must append");
+        assert!(created.packet.created);
+        assert!(created.policy.created);
+        assert_eq!(created.packet.record.packet, packet);
+        assert_eq!(
+            created.policy.record.decision.packet_ref.packet_hash,
+            created.packet.record.packet_sha256
+        );
+        assert_eq!(
+            created.policy.record.decision.decision.as_str(),
+            "approval_required"
+        );
+        assert!(created.policy.record.decision.requires_approval);
+
+        let replay = store
+            .append_authenticated_packet_intake_v1(
+                &packet,
+                &owner_session.raw_session_token,
+                &owner_session.raw_csrf_token,
+                "2026-07-22T20:01:00Z",
+            )
+            .expect("exact packet intake must replay evidence after packet expiry");
+        assert!(!replay.packet.created);
+        assert!(!replay.policy.created);
+        assert_eq!(replay.packet.record, created.packet.record);
+        assert_eq!(replay.policy.record, created.policy.record);
+
+        let packet_count_before_denial = store
+            .connection
+            .query_row("SELECT count(*) FROM lnsat_packet_envelopes", [], |row| {
+                row.get::<_, i64>(0)
+            })
+            .expect("packet count must inspect");
+        let policy_count_before_denial = store
+            .connection
+            .query_row("SELECT count(*) FROM lnsat_policy_decisions", [], |row| {
+                row.get::<_, i64>(0)
+            })
+            .expect("policy count must inspect");
+        let activity_count_before_denial = store
+            .connection
+            .query_row(
+                "SELECT count(*) FROM lnsat_local_session_activity_events",
+                [],
+                |row| row.get::<_, i64>(0),
+            )
+            .expect("activity count must inspect");
+
+        let mut wrong_actor = packet.clone();
+        wrong_actor.packet_id = "pkt_authenticated_intake_wrong_actor".to_owned();
+        wrong_actor.idempotency_key = "idem_authenticated_intake_wrong_actor".to_owned();
+        wrong_actor.actor_ref = "identity:human:other".to_owned();
+        assert_eq!(
+            store.append_authenticated_packet_intake_v1(
+                &wrong_actor,
+                &owner_session.raw_session_token,
+                &owner_session.raw_csrf_token,
+                "2026-07-22T20:01:30Z",
+            ),
+            Err(AuthenticatedPacketIntakeStoreErrorV1::AuthorizationRejected)
+        );
+        assert_eq!(
+            store.append_authenticated_packet_intake_v1(
+                &packet,
+                &owner_session.raw_session_token,
+                "wrong-csrf-token",
+                "2026-07-22T20:01:30Z",
+            ),
+            Err(AuthenticatedPacketIntakeStoreErrorV1::AuthorizationRejected)
+        );
+
+        store
+            .connection
+            .execute_batch(
+                "CREATE TEMP TRIGGER test_reject_authenticated_intake_policy
+                 BEFORE INSERT ON lnsat_policy_decisions
+                 BEGIN
+                   SELECT RAISE(ABORT, 'injected packet-intake policy failure');
+                 END;",
+            )
+            .expect("failure trigger must install");
+        let mut rejected_policy = packet.clone();
+        rejected_policy.packet_id = "pkt_authenticated_intake_rollback".to_owned();
+        rejected_policy.idempotency_key = "idem_authenticated_intake_rollback".to_owned();
+        rejected_policy.expires_at = "2026-07-22T20:15:00Z".to_owned();
+        assert_eq!(
+            store.append_authenticated_packet_intake_v1(
+                &rejected_policy,
+                &owner_session.raw_session_token,
+                &owner_session.raw_csrf_token,
+                "2026-07-22T20:02:00Z",
+            ),
+            Err(AuthenticatedPacketIntakeStoreErrorV1::PersistenceFailed)
+        );
+        assert_eq!(
+            store
+                .connection
+                .query_row("SELECT count(*) FROM lnsat_packet_envelopes", [], |row| {
+                    row.get::<_, i64>(0)
+                })
+                .expect("packet count must inspect"),
+            packet_count_before_denial
+        );
+        assert_eq!(
+            store
+                .connection
+                .query_row("SELECT count(*) FROM lnsat_policy_decisions", [], |row| {
+                    row.get::<_, i64>(0)
+                })
+                .expect("policy count must inspect"),
+            policy_count_before_denial
+        );
+        assert_eq!(
+            store
+                .connection
+                .query_row(
+                    "SELECT count(*) FROM lnsat_local_session_activity_events",
+                    [],
+                    |row| row.get::<_, i64>(0),
+                )
+                .expect("activity count must inspect"),
+            activity_count_before_denial
         );
     }
 

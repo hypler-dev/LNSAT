@@ -113,6 +113,9 @@ Current experimental source includes:
 - a Rust loopback daemon with bounded local routes, strict host and origin
   handling, session-protected identity and session operations, and graceful
   shutdown;
+- authenticated owner/operator packet intake that atomically persists exact
+  packet and server-time deterministic policy evidence without granting
+  approval or execution authority;
 - atomic one-time authorization consumption, bounded adapter dispatch, bound
   receipts, `outcome_unknown`, and reconciliation tests against disposable
   local Git targets;
@@ -250,8 +253,14 @@ idempotency, attempt, profile, configuration, adapter, executable, image, and
 audience identities; caps stdin/stdout/stderr observations and deadlines; and
 rejects malformed, duplicate, truncated, oversized, substituted, timed-out,
 or ambiguous results without reflecting paths or source bytes. It launches no
-process, opens no Docker surface, and creates no consequence or receipt. Phase
-11 remains incomplete and separately gated.
+process, opens no Docker surface, and creates no consequence or receipt.
+P11-I1 adds authenticated same-origin `POST /v1/packets` intake for active
+owner/operator sessions with CSRF and exact actor/session binding. One atomic
+transaction persists immutable packet evidence plus its server-time
+deterministic policy decision; exact replay returns original evidence. It
+creates no approval, execution authorization, adapter dispatch, Docker action,
+repository consequence, or receipt. Phase 11 remains incomplete and separately
+gated; P11-D4 isolated Docker execution is next.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See
