@@ -59,10 +59,24 @@ pub struct DockerLocalRuntimeProfileV1 {
     pub audience: String,
     pub adapter_executable_digest: String,
     pub image_digest: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub supervisor: Option<DockerLocalSupervisorProfileV1>,
     pub entrypoint: String,
     pub filesystem: DockerLocalFilesystemV1,
     pub isolation: DockerLocalIsolationV1,
     pub limits: DockerLocalLimitsV1,
+}
+
+/// Closed host-side supervisor identity required only by schema version 2.
+///
+/// Paths stay inside the profile digest and public-safe readback never reflects
+/// them. Executable bytes are rehashed immediately before and after launch.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DockerLocalSupervisorProfileV1 {
+    pub docker_executable_digest: String,
+    pub verifier_git_executable_digest: String,
+    pub docker_host: String,
 }
 
 /// Exact adapter identity selected before approval.
@@ -189,6 +203,12 @@ impl LoadedDockerLocalRuntimeProfileV1 {
     #[must_use]
     pub fn authority_configuration_digest_text(&self) -> String {
         prefixed_sha256_v1(&self.authority_configuration_digest())
+    }
+
+    /// Returns launch-bound supervisor identity for schema version 2.
+    #[must_use]
+    pub const fn supervisor(&self) -> Option<&DockerLocalSupervisorProfileV1> {
+        self.profile.supervisor.as_ref()
     }
 }
 
@@ -362,9 +382,18 @@ pub fn validate_docker_local_authority_binding_v1(
 fn validate_profile_v1(
     profile: &DockerLocalRuntimeProfileV1,
 ) -> Result<(), DockerLocalRuntimeProfileErrorV1> {
+    let supervisor_valid = match (profile.schema_version, profile.supervisor.as_ref()) {
+        (1, None) => true,
+        (2, Some(supervisor)) => {
+            decode_prefixed_sha256_v1(&supervisor.docker_executable_digest).is_some()
+                && decode_prefixed_sha256_v1(&supervisor.verifier_git_executable_digest).is_some()
+                && valid_local_docker_host_v1(&supervisor.docker_host)
+        }
+        _ => false,
+    };
     if profile.contract_id != DOCKER_LOCAL_PROFILE_CONTRACT_ID_V1
         || profile.contract_version != CONTRACT_VERSION_V1_0
-        || profile.schema_version != 1
+        || !supervisor_valid
         || profile.profile_id != DOCKER_LOCAL_PROFILE_ID_V1
         || profile.profile_family != DOCKER_LOCAL_PROFILE_FAMILY_V1
         || profile.adapter.adapter_ref != DOCKER_LOCAL_ADAPTER_REF_V1
@@ -410,6 +439,32 @@ fn validate_profile_v1(
         return Err(DockerLocalRuntimeProfileErrorV1::ContractInvalid);
     }
     Ok(())
+}
+
+fn valid_local_docker_host_v1(value: &str) -> bool {
+    let Some(path) = value.strip_prefix("unix://") else {
+        return false;
+    };
+    valid_host_path_v1(path, 512)
+}
+
+fn valid_host_path_v1(value: &str, max_bytes: usize) -> bool {
+    if value.is_empty()
+        || value.len() > max_bytes
+        || value.as_bytes().contains(&0)
+        || value.contains('\\')
+        || value.contains("//")
+        || (value.len() > 1 && value.ends_with('/'))
+        || value.bytes().any(|byte| byte.is_ascii_control())
+    {
+        return false;
+    }
+    let path = Path::new(value);
+    path.is_absolute()
+        && path
+            .components()
+            .all(|component| matches!(component, Component::RootDir | Component::Normal(_)))
+        && path.file_name().is_some()
 }
 
 fn valid_container_path_v1(value: &str) -> bool {

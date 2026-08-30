@@ -9,8 +9,12 @@
   binding, P11-D2 explicit configuration/redacted readback, and P11-D3 closed
   adapter-process protocol framing; P11-I1 adds authenticated atomic packet and
   policy intake; P11-D4A adds bounded canonical execution-payload, target, and
-  Git tool-argument binding. No Docker endpoint, process launch, adapter
-  execution, image operation, package, dispatch, or supported runtime exists
+  Git tool-argument binding; P11-D4B1 adds a dormant source-only Docker supervisor
+  with exact runtime/target revalidation, restricted launch arguments, bounded
+  process observation, fail-closed ambiguity, and host-verified semantic results.
+  Tests use a fake Docker executable and disposable Unix socket. No served route,
+  persisted attempt or receipt, real Docker/image proof, package, deploy, or
+  supported runtime exists.
 
 ## Context
 
@@ -292,8 +296,39 @@ Errors remain closed codes and never reflect the patch, repository path, or
 canonical request. This checkpoint selects no Docker executable or endpoint,
 starts no process, inspects or operates on no image, mounts no repository,
 dispatches no consequence, creates no result or receipt, adds no served route,
-and grants no execution authority. P11-D4B owns supervised isolated Docker
-launch and result/receipt semantics under separate authority.
+and grants no execution authority.
+
+## P11-D4B1 Supervised Launch Boundary
+
+P11-D4B1 adds a dormant source API for supervising one schema-2 `docker_local`
+launch. Schema 2 binds exact SHA-256 identities for the Docker CLI and the host
+Git verifier plus one absolute `unix://` endpoint. Schema 1 remains readable but
+cannot launch. Before process creation, the supervisor reconstructs the D4A and
+D3 contracts, verifies every profile and authority binding, hashes both
+executables, validates the socket and marked disposable Git target, constructs
+the complete argument vector, then repeats runtime and target identity checks.
+
+The child receives no ambient environment. A fresh private Docker config contains
+only `{}`. `docker run` uses `--pull=never`, `--rm`, `--network=none`,
+`--ipc=none`, `--read-only`, `--log-driver=none`, a non-root UID/GID,
+`--cap-drop=ALL`, `no-new-privileges`, PID, memory, no-swap and CPU limits, one
+read-write bind mount for the exact disposable target, and profile-pinned
+workdir, entrypoint, and image digest. Stdin, stdout, stderr, and elapsed time are
+bounded. Any anomaly after spawn returns only `outcome_unknown`; the supervisor
+kills the client and requests forced removal only when the private Docker client
+directory contains a valid Docker-written container ID, and only after rehashing
+the Docker CLI and revalidating the endpoint. Missing or malformed CID evidence
+disables cleanup rather than risking an unrelated container. Success requires
+independent host Git inspection of commit, tree, paths, patch and metadata plus
+an exact semantic result-digest match.
+
+Hermetic tests use a fake Docker executable and disposable Unix socket. They
+prove argument construction, identity drift rejection, timeout/cleanup behavior,
+bounded output handling, secret-free errors, and unknown-outcome semantics. They
+do not prove a real daemon, image, kernel isolation, or supported runtime. No
+served route calls this API; no atomic attempt, receipt, restart reconciliation,
+package, deploy, or production path exists. P11-D4B2 owns those gaps under
+separate authority.
 
 ## Security Boundaries
 

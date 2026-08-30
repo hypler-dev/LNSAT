@@ -1,0 +1,81 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_supervisor_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-supervisor-v1",
+  "packet_id": "P11-D4B1",
+  "status": "experimental_source_supervisor_boundary",
+  "phase11_complete": false,
+  "production_supported": false,
+  "contract_id": "lnsat.docker_local_supervised_git_result.v1",
+  "profile_requirement": {
+    "contract_id": "lnsat.runtime_profile.docker_local.v1",
+    "schema_version": 2,
+    "schema_version_1_launch_allowed": false,
+    "required_supervisor_bindings": [
+      "docker_executable_digest",
+      "verifier_git_executable_digest",
+      "docker_host"
+    ]
+  },
+  "launch_boundary": {
+    "endpoint": "explicit_local_unix_only",
+    "environment": "cleared",
+    "docker_config": "fresh_private_empty",
+    "stdin_attached": true,
+    "cleanup_identity": "private_docker_written_container_id_only",
+    "image_pull": "never",
+    "container_remove": true,
+    "network": "none",
+    "ipc": "none",
+    "root_filesystem": "read_only",
+    "run_as_root": false,
+    "capabilities": "drop_all",
+    "no_new_privileges": true,
+    "log_driver": "none",
+    "mounts": "one_marked_disposable_git_target_read_write",
+    "stdin": "canonical_p11_d4a_payload",
+    "stdout": "bounded_p11_d3_result",
+    "stderr": "bounded_and_must_be_empty",
+    "deadline": "profile_bound_monotonic",
+    "timeout_cleanup": "kill_client_then_force_remove_exact_container"
+  },
+  "success_boundary": {
+    "adapter_result": "completed",
+    "host_target_reinspection": "exact_commit_tree_paths_patch_and_metadata",
+    "adapter_result_digest_match": true,
+    "receipt_ready_semantic_result": true,
+    "receipt_persisted": false
+  },
+  "post_spawn_fail_closed": [
+    "timeout",
+    "stdin_failure",
+    "stdout_overflow",
+    "stderr_nonempty_or_overflow",
+    "nonzero_exit",
+    "missing_or_invalid_container_id_disables_cleanup",
+    "executable_or_endpoint_drift",
+    "malformed_or_unbound_result",
+    "target_ambiguity",
+    "semantic_result_digest_mismatch"
+  ],
+  "error_codes": [
+    "docker_local_supervisor.input_invalid",
+    "docker_local_supervisor.profile_binding_invalid",
+    "docker_local_supervisor.docker_executable_invalid",
+    "docker_local_supervisor.verifier_executable_invalid",
+    "docker_local_supervisor.docker_endpoint_invalid",
+    "docker_local_supervisor.target_rejected",
+    "docker_local_supervisor.runtime_unavailable",
+    "docker_local_supervisor.outcome_unknown"
+  ],
+  "hard_stops": [
+    "no_real_docker_in_ci",
+    "no_image_pull_build_or_publication",
+    "no_agent_docker_socket_access",
+    "no_ambient_credentials_or_environment",
+    "no_production_or_user_repository",
+    "no_push_or_networked_git_operation",
+    "no_served_route",
+    "no_receipt_persistence",
+    "no_package_release_deploy_or_production_write"
+  ]
+}

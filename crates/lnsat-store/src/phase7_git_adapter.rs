@@ -115,6 +115,19 @@ pub struct Phase7GitCommitWriteV1 {
     pub receipt: Phase7GitCommitReceiptV1,
 }
 
+/// Exact disposable Git consequence revalidated after an external adapter run.
+///
+/// This is receipt-ready semantic evidence only. It carries no persistence,
+/// authorization, replay, or served-route effect by itself.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Phase7GitExecutionResultV1 {
+    pub commit_oid: String,
+    pub tree_oid: String,
+    pub changed_paths: Vec<String>,
+    pub patch_sha256: String,
+    pub metadata: Phase7GitCommitMetadataV1,
+}
+
 /// Exact server-owned inputs for one served Phase 8 composition. Repository,
 /// patch, adapter, executable digest, and target identity remain approval-bound.
 #[derive(Clone, Copy, Debug)]
@@ -295,6 +308,122 @@ pub fn phase7_git_tool_arguments_digest_v1(
         None,
     )?;
     Ok(tool_arguments_digest(&parsed))
+}
+
+/// Revalidates one approved Docker-adapter target before external dispatch.
+///
+/// The target must be an exact marked descendant of the explicit disposable
+/// root, remain at the approved base with a clean index/worktree, and carry the
+/// approved patch bytes. This function launches no adapter and mutates nothing.
+///
+/// # Errors
+///
+/// Rejects request drift, adapter substitution, target/storage drift, an
+/// unmarked or non-disposable repository, dirty state, or patch mismatch.
+pub fn validate_phase11_disposable_git_target_v1(
+    derived_request: &DerivedExecutionRequestV1,
+    disposable_root: &Path,
+    git_executable: &Path,
+    expected_adapter_ref: &str,
+) -> Result<Phase7GitRepositoryIdentityV1, Phase7GitAdapterErrorV1> {
+    verify_derived_execution_request_v1(derived_request)
+        .map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
+    if !is_valid_reference_v1(expected_adapter_ref) || expected_adapter_ref.contains('@') {
+        return Err(Phase7GitAdapterErrorV1::InvalidInput);
+    }
+    let request = &derived_request.request;
+    let parsed = parse_derived_request_for_adapter(
+        &request.project_ref,
+        &request.resource_ref,
+        derived_request,
+        Some(expected_adapter_ref),
+    )?;
+    let patch = parsed
+        .approved_patch
+        .as_deref()
+        .ok_or(Phase7GitAdapterErrorV1::InvalidInput)?;
+    let root = canonical_phase8_disposable_root_v1(disposable_root)?;
+    let actual = inspect_phase7_disposable_git_repository_v1(
+        &parsed.identity.repository_path,
+        git_executable,
+    )?;
+    if actual != parsed.identity
+        || actual.repository_path == root
+        || !actual.repository_path.starts_with(&root)
+    {
+        return Err(Phase7GitAdapterErrorV1::TargetRejected);
+    }
+    validate_clean_target(git_executable, &actual)?;
+    validate_path_safety(&actual.repository_path, &parsed.allowed_paths)?;
+    if prefixed_sha256(patch) != parsed.patch_sha256 {
+        return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+    }
+    Ok(actual)
+}
+
+/// Revalidates one exact disposable Git consequence after external dispatch.
+///
+/// Worktree and index must still represent the approved base while the exact
+/// approved ref points at the one expected commit/tree. No receipt is persisted.
+///
+/// # Errors
+///
+/// Rejects request drift, target substitution, dirty state, missing or altered
+/// consequence, unexpected paths, commit metadata drift, or patch mismatch.
+pub fn inspect_phase11_disposable_git_result_v1(
+    derived_request: &DerivedExecutionRequestV1,
+    disposable_root: &Path,
+    git_executable: &Path,
+    expected_adapter_ref: &str,
+) -> Result<Phase7GitExecutionResultV1, Phase7GitAdapterErrorV1> {
+    verify_derived_execution_request_v1(derived_request)
+        .map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
+    if !is_valid_reference_v1(expected_adapter_ref) || expected_adapter_ref.contains('@') {
+        return Err(Phase7GitAdapterErrorV1::InvalidInput);
+    }
+    let request = &derived_request.request;
+    let parsed = parse_derived_request_for_adapter(
+        &request.project_ref,
+        &request.resource_ref,
+        derived_request,
+        Some(expected_adapter_ref),
+    )?;
+    let patch = parsed
+        .approved_patch
+        .as_deref()
+        .ok_or(Phase7GitAdapterErrorV1::InvalidInput)?;
+    let root = canonical_phase8_disposable_root_v1(disposable_root)?;
+    let actual = inspect_phase7_disposable_git_repository_v1(
+        &parsed.identity.repository_path,
+        git_executable,
+    )?;
+    if actual.repository_path != parsed.identity.repository_path
+        || actual.git_dir_path != parsed.identity.git_dir_path
+        || actual.object_format != parsed.identity.object_format
+        || actual.head_ref != parsed.identity.head_ref
+        || actual.fixture_marker_sha256 != parsed.identity.fixture_marker_sha256
+        || actual.repository_path == root
+        || !actual.repository_path.starts_with(&root)
+    {
+        return Err(Phase7GitAdapterErrorV1::TargetRejected);
+    }
+    validate_phase8_approved_base_index_and_worktree_v1(
+        git_executable,
+        &actual,
+        &parsed.identity.base_commit_oid,
+    )?;
+    validate_path_safety(&actual.repository_path, &parsed.allowed_paths)?;
+    if prefixed_sha256(patch) != parsed.patch_sha256 {
+        return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+    }
+    let commit_oid = inspect_exact_consequence(git_executable, &parsed.identity, &parsed, None)?;
+    Ok(Phase7GitExecutionResultV1 {
+        commit_oid,
+        tree_oid: parsed.expected_tree_oid,
+        changed_paths: parsed.allowed_paths,
+        patch_sha256: parsed.patch_sha256,
+        metadata: parsed.metadata,
+    })
 }
 
 /// Hashes the canonical executable bytes used by the bounded Git adapter.

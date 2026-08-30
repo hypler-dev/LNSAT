@@ -383,6 +383,7 @@ name = "lnsatd"
 version = "0.1.0"
 dependencies = [
  "ctrlc",
+ "getrandom",
  "lnsat-auth",
  "lnsat-contracts",
  "lnsat-store",
