@@ -1,0 +1,51 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_durable_dispatch_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-durable-dispatch-v1",
+  "packet_id": "P11-D4B2A",
+  "status": "experimental_source_durability_boundary",
+  "phase11_complete": false,
+  "production_supported": false,
+  "authority_chain": {
+    "capability_consumption": "atomic_with_attempt_claim",
+    "attempt_sequence": 1,
+    "adapter_ref": "adapter:docker-local:git-commit@v1",
+    "protocol_version": "lnsat.adapter_process_protocol.docker_local.v1",
+    "exact_replay": "metadata_only_no_launch",
+    "concurrent_claim": "one_creator_one_metadata_replay"
+  },
+  "receipt_boundary": {
+    "accepted_source": "independently_host_verified_semantic_git_result",
+    "attempt_state_before_receipt": ["dispatching", "outcome_unknown"],
+    "receipt_count_maximum": 1,
+    "completed_requires_receipt": true,
+    "outcome_unknown_requires_reconciliation_record": true
+  },
+  "restart_boundary": {
+    "persisted_dispatching": "materialize_outcome_unknown",
+    "adapter_restart": false,
+    "docker_retry": false,
+    "reconciliation": "host_git_inspection_only",
+    "unchanged_target": "remain_outcome_unknown_without_receipt"
+  },
+  "tested_results": {
+    "atomic_concurrent_claim": true,
+    "single_attempt": true,
+    "single_receipt": true,
+    "replay_without_launch": true,
+    "durable_reopen": true,
+    "restart_unknown": true,
+    "host_only_reconciliation": true,
+    "no_consequence_no_receipt": true
+  },
+  "hard_stops": [
+    "no_served_route",
+    "no_docker_configuration_or_invocation",
+    "no_endpoint_or_socket_access",
+    "no_image_pull_build_or_run",
+    "no_agent_docker_socket_access",
+    "no_retry_from_outcome_unknown",
+    "no_production_or_user_repository",
+    "no_package_release_deploy_or_support_claim"
+  ],
+  "next_gate": "explicit_authority_for_served_docker_configuration_and_fake_runtime_integration"
+}

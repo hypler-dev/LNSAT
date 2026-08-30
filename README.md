@@ -115,6 +115,10 @@ Current experimental source includes:
 - atomic one-time authorization consumption, bounded adapter dispatch, bound
   receipts, `outcome_unknown`, and reconciliation tests against disposable
   local Git targets;
+- a source-only Docker-local durability seam that atomically pairs capability
+  consumption with one adapter attempt, accepts only independently verified
+  result evidence, persists one receipt, and materializes interrupted attempts
+  as `outcome_unknown` for inspection-only reconciliation without retry;
 - packet inspection, source diagnostics, and read-only recovery inspection
   through CLI source;
 - authenticated, exact-ID, read-only Control Center evidence views with live
@@ -127,6 +131,10 @@ Current experimental source includes:
 Some pieces run together as bounded local experimental flows; others remain
 source-level contracts and conformance tests. [Project Status](docs/PROJECT_STATUS.md)
 tracks the exact implementation state.
+
+Docker-local durability source is not connected to a served route and does not
+configure or invoke Docker. It establishes persistence and restart semantics
+only; real runtime proof and supported operation remain future gates.
 
 ## What We Are Building For v1
 
@@ -276,10 +284,12 @@ Success requires independent host Git consequence inspection and an exact
 semantic result-digest match. Hermetic tests use a fake Docker executable and a
 disposable Unix socket, so they prove command construction and fail-closed
 supervision, not real Docker or image isolation. No served route calls this
-supervisor, no attempt or receipt is persisted, and no package, deploy,
-production, or support claim opens. Phase 11 remains incomplete; P11-D4B2 owns
-atomic attempt/receipt integration, restart reconciliation, and real disposable
-Docker proof.
+supervisor. P11-D4B2A adds source-only atomic attempt claiming, durable receipts,
+restart materialization to `outcome_unknown`, and inspection-only reconciliation
+without Docker retry. No served route or Docker configuration connects these
+seams, and no package, deploy, production, or support claim opens. Phase 11
+remains incomplete; P11-D4B2B owns served fake-runtime integration, while real
+disposable Docker proof requires a later explicit gate.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See

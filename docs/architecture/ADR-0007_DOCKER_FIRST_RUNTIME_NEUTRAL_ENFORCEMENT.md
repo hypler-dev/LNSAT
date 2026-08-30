@@ -12,9 +12,11 @@
   Git tool-argument binding; P11-D4B1 adds a dormant source-only Docker supervisor
   with exact runtime/target revalidation, restricted launch arguments, bounded
   process observation, fail-closed ambiguity, and host-verified semantic results.
-  Tests use a fake Docker executable and disposable Unix socket. No served route,
-  persisted attempt or receipt, real Docker/image proof, package, deploy, or
-  supported runtime exists.
+  P11-D4B2A adds atomic Docker-adapter attempt claiming, durable receipt binding,
+  startup materialization of interrupted attempts, and inspection-only
+  reconciliation. Tests remain hermetic. No served route configures or invokes
+  Docker, and no real Docker/image proof, package, deploy, or supported runtime
+  exists.
 
 ## Context
 
@@ -326,9 +328,31 @@ Hermetic tests use a fake Docker executable and disposable Unix socket. They
 prove argument construction, identity drift rejection, timeout/cleanup behavior,
 bounded output handling, secret-free errors, and unknown-outcome semantics. They
 do not prove a real daemon, image, kernel isolation, or supported runtime. No
-served route calls this API; no atomic attempt, receipt, restart reconciliation,
-package, deploy, or production path exists. P11-D4B2 owns those gaps under
-separate authority.
+served route calls this API and no package, deploy, or production path exists.
+
+## P11-D4B2A Durable Dispatch Evidence Boundary
+
+P11-D4B2A adds store-owned lifecycle APIs without connecting the supervisor to
+transport. One immediate SQLite transaction consumes the exact capability and
+claims one Docker-adapter attempt. The attempt binds operation, authorization,
+adapter, D3 protocol, and shared Git tool-argument identity before any future
+caller may invoke the supervisor. Competing exact claims converge on one creator
+and one metadata-only replay; neither may create a second attempt.
+
+Only an independently host-verified semantic Git result may create a receipt.
+`dispatching` completes with one receipt. An attempt found `dispatching` after
+store reopen materializes to `outcome_unknown`; it can become `completed` only
+when inspection proves the exact approved consequence and an additional
+reconciliation record is committed. An unchanged target stays unknown and
+creates no receipt. Reconciliation never launches an adapter, invokes Docker, or
+retries a consequence.
+
+Five hermetic store tests cover concurrent claim, single-attempt and
+single-receipt invariants, metadata replay, durable reopen, interrupted-dispatch
+materialization, host-only reconciliation, unchanged-target behavior, and the
+closed contract fixture. No served route or Docker configuration consumes these
+APIs. P11-D4B2B requires separate authority for served fake-runtime integration;
+real Docker remains a later explicit gate.
 
 ## Security Boundaries
 

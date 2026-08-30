@@ -53,7 +53,8 @@ pub struct DockerLocalSupervisorInputV1<'a> {
     pub disposable_root: &'a Path,
 }
 
-/// Receipt-ready semantic result. Persistence remains a later D4B2 boundary.
+/// Receipt-ready semantic result. Separate P11-D4B2A store APIs own persistence;
+/// this supervisor never opens storage or writes a receipt.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DockerLocalSupervisedGitResultV1 {
     pub semantic_result: Phase7GitExecutionResultV1,

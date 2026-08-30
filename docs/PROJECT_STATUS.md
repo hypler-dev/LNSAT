@@ -76,9 +76,16 @@ read-only, and profile-resource-bounded. Post-spawn anomalies remain
 and success requires independent host Git consequence inspection plus an exact
 semantic result-digest match. Hermetic tests use a fake Docker
 executable and disposable Unix socket, so no real Docker or image-isolation
-claim exists. No served route, atomic attempt claim, persisted receipt, package,
-deploy, production, or support claim opens. P11-D4B2 owns those served
-attempt/receipt and real-runtime proof gaps.
+claim exists. P11-D4B2A adds source-only durable lifecycle APIs: capability
+consumption and one Docker-adapter attempt claim are atomic; exact replay never
+creates another attempt; one independently host-verified semantic result may
+persist one receipt; interrupted `dispatching` attempts reopen as
+`outcome_unknown`; and reconciliation inspects exact Git evidence without Docker
+or adapter retry. Five hermetic store tests cover concurrent claim, receipt,
+replay, reopen, reconciliation, no-consequence behavior, and the closed contract
+fixture. No served route configures or invokes Docker. P11-D4B2B still owns
+served fake-runtime integration; real Docker/image proof, package, deploy,
+production, and support claims remain separately closed.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -888,9 +895,11 @@ intent, constraints, and action arguments. P11-D2 permits explicit closed
 Docker-local profile selection and public-safe digest readback only. P11-D3
 defines canonical bounded adapter-process request/result framing and exact
 identity binding only. P11-D4A supplies the exact approved payload. P11-D4B1
-adds a dormant source-only launch supervisor with fake-runtime tests; no served
-route calls it, no real Docker proof exists, and attempt persistence, receipts,
-restart reconciliation, and support claims remain closed.
+adds a dormant source-only launch supervisor with fake-runtime tests.
+P11-D4B2A adds atomic attempt/receipt persistence and restart-safe,
+inspection-only reconciliation around future Docker dispatch. No served route
+calls either seam, no Docker configuration is opened, no real Docker proof
+exists, and support claims remain closed.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit Load/Refresh action performs only relative same-origin GETs with the
