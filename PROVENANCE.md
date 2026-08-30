@@ -74,5 +74,5 @@ release gate passes and separate signing authority is granted may maintainers
 create an annotated signed tag, checksums, SBOMs, provenance statements, or
 release artifacts. See the [source release process](docs/RELEASING.md).
 
-See [Why LNSAT became public now](docs/WHY_PUBLIC_NOW.md) for publication
-context without priority or copying claims.
+See [Why LNSAT Is Public](docs/WHY_PUBLIC_NOW.md) for the public-core purpose,
+inspectability, interoperability, conformance, and contributor rationale.

@@ -55,9 +55,9 @@ history is authoritative for all later work.
 
 The root [provenance timeline](../PROVENANCE.md) records selected private
 milestones and the exact tree shared by the final private export and fresh
-public root. [Why LNSAT became public now](WHY_PUBLIC_NOW.md) records the
-maintainer's publication context without making copying or exclusive-priority
-claims.
+public root. [Why LNSAT Is Public](WHY_PUBLIC_NOW.md) explains why an
+inspectable, interoperable, independently testable authority core and its
+conformance evidence belong in public source.
 
 Private engineering history, branches, pull requests, tags, Actions logs, and
 reviews are not imported. They remain private for provenance and incident

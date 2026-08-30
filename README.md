@@ -47,9 +47,10 @@ evidence will prove the result?
 > package, container, installer, hosted service, or production deployment is
 > available yet.
 
-See the [provenance timeline](PROVENANCE.md) and
-[why LNSAT became public now](docs/WHY_PUBLIC_NOW.md) for the pre-public
-chronology and August 20 cutover record.
+See [Why LNSAT Is Public](docs/WHY_PUBLIC_NOW.md) for the public-core purpose,
+inspectability, interoperability, conformance, and contributor value. See the
+[provenance timeline](PROVENANCE.md) for exact cutover chronology and tracked
+tree mapping.
 
 ## Why LNSAT
 
@@ -132,9 +133,13 @@ Some pieces run together as bounded local experimental flows; others remain
 source-level contracts and conformance tests. [Project Status](docs/PROJECT_STATUS.md)
 tracks the exact implementation state.
 
-Docker-local durability source is not connected to a served route and does not
-configure or invoke Docker. It establishes persistence and restart semantics
-only; real runtime proof and supported operation remain future gates.
+P11-D4B2B exercises the Docker-local supervisor and durability chain only
+through an internal crate-test-only fake-runtime selector over the existing
+eight Phase 8 loopback routes. Those routes and their public-response fields are
+unchanged. The proof uses a fake Docker executable, disposable Unix socket,
+marked temporary Git target, and host Git verifier; it configures or invokes no
+real Docker binary, daemon, socket, or image. Real runtime proof and supported
+operation remain separate future gates.
 
 ## What We Are Building For v1
 
@@ -283,12 +288,15 @@ for an exact container ID written into the private Docker client directory.
 Success requires independent host Git consequence inspection and an exact
 semantic result-digest match. Hermetic tests use a fake Docker executable and a
 disposable Unix socket, so they prove command construction and fail-closed
-supervision, not real Docker or image isolation. No served route calls this
-supervisor. P11-D4B2A adds source-only atomic attempt claiming, durable receipts,
+supervision, not real Docker or image isolation. At the P11-D4B1 checkpoint, no
+served route called this supervisor. P11-D4B2A then added source-only atomic
+attempt claiming, durable receipts,
 restart materialization to `outcome_unknown`, and inspection-only reconciliation
 without Docker retry. P11-D4B2B now passes experimental served fake-runtime
 integration over existing Phase 8 loopback routes with hermetic fake executable,
-disposable Unix socket, marked temporary Git target, and host Git verifier. Three
+disposable Unix socket, marked temporary Git target, and host Git verifier. The
+existing eight routes and their public-response fields remain unchanged; an
+internal crate-test-only selector is the only fake-runtime entry point. Three
 adversarial served tests confirm: success/replay/idempotency drift rejection;
 post-consequence unknown survives restart and reconciles through host Git
 inspection only; unchanged-target unknown persists without receipt. Exact replay

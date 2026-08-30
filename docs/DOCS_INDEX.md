@@ -12,8 +12,8 @@ subsystem or proposal.
    current limitations.
 2. [Provenance timeline](../PROVENANCE.md) — selected private milestones, exact
    public-cutover tree mapping, and verification limits.
-3. [Why LNSAT became public now](WHY_PUBLIC_NOW.md) — publication context,
-   independent market convergence, and next reference proof.
+3. [Why LNSAT Is Public](WHY_PUBLIC_NOW.md) — public-core purpose,
+   inspectability, interoperability, conformance, and contributor value.
 4. [Project status](PROJECT_STATUS.md) — implemented, experimental, planned, and
    unsupported scope.
 5. [Claims and maturity vocabulary](CLAIMS_AND_MATURITY.md) — meaning of
@@ -139,7 +139,7 @@ security behavior, and conformance remain public-core concerns.
 - [Source release process](RELEASING.md)
 - [Public-readiness report](PUBLIC_READINESS.md)
 - [Provenance timeline](../PROVENANCE.md)
-- [Why LNSAT became public now](WHY_PUBLIC_NOW.md)
+- [Why LNSAT Is Public](WHY_PUBLIC_NOW.md)
 - [Legacy identifier inventory](reference/LEGACY_IDENTIFIER_INVENTORY.md)
 - [Product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md)
 - [Pinned Rust toolchain](RUST_TOOLCHAIN.md)
