@@ -51,8 +51,13 @@ resource arguments, bounded I/O, a monotonic deadline, fail-closed unknown
 outcomes, cleanup bound to a private Docker-written container ID, host
 consequence inspection, and semantic result binding are covered by hermetic
 fake-runtime tests. No served route,
-atomic attempt claim, persisted receipt, real Docker proof, package, deploy,
-production, or support claim opens. P11-D4B2 owns those remaining gaps.
+real Docker proof, package, deploy, production, or support claim opens.
+P11-D4B2A adds source-only atomic capability-consumption plus Docker-attempt
+claim, one host-evidence-bound receipt, metadata-only replay, startup
+materialization of interrupted attempts to `outcome_unknown`, and inspection-only
+reconciliation without Docker retry. No served route or Docker configuration
+uses these APIs. P11-D4B2B served fake-runtime integration and separately gated
+real disposable Docker proof remain required.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -582,8 +587,11 @@ image, mount, route, consequence, or receipt. P11-D4B1 now adds the dormant
 source-only supervisor boundary with exact prelaunch identity revalidation,
 restricted Docker argument construction, bounded process observation,
 fail-closed ambiguity, host consequence reinspection, and semantic result
-binding. Fake-runtime tests do not establish real Docker isolation. P11-D4B2
-served attempt/receipt integration and real disposable Docker proof are next.
+binding. Fake-runtime tests do not establish real Docker isolation. P11-D4B2A
+now establishes durable attempt/receipt and restart-reconciliation semantics in
+source without wiring a served route or invoking Docker. P11-D4B2B served
+fake-runtime integration and separately authorized real disposable Docker proof
+remain next.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.
@@ -638,9 +646,12 @@ and the marked disposable target immediately before process creation. It builds
 one restricted, environment-cleared, pull-disabled and networkless Docker run,
 bounds I/O and time, treats every post-spawn anomaly as `outcome_unknown`, and
 requires host Git consequence reinspection plus exact semantic result binding.
-Only a fake Docker executable and disposable Unix socket are tested. No served
-dispatch, atomic attempt persistence, receipt, restart reconciliation, real
-Docker/image isolation proof, or support claim exists; P11-D4B2 remains required.
+Only a fake Docker executable and disposable Unix socket are tested. P11-D4B2A
+adds atomic attempt persistence, one bound receipt, interrupted-dispatch
+materialization, and inspection-only reconciliation using hermetic store tests.
+No served dispatch or Docker configuration invokes the supervisor, and no real
+Docker/image isolation proof or support claim exists; P11-D4B2B and a separate
+real-runtime proof gate remain required.
 
 Required operation identity before dispatch:
 

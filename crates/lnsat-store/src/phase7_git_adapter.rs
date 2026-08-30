@@ -29,6 +29,10 @@ use zeroize::Zeroizing;
 
 pub const PHASE7_GIT_ADAPTER_REF_V1: &str = "adapter:local:git-commit";
 pub const PHASE7_GIT_ADAPTER_VERSION_V1: &str = "v1";
+/// Exact Docker-local Git adapter identity used by Phase 11 served dispatch.
+pub const PHASE11_DOCKER_GIT_ADAPTER_REF_V1: &str = "adapter:docker-local:git-commit";
+/// Exact Docker-local Git adapter version used by Phase 11 served dispatch.
+pub const PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1: &str = "v1";
 pub const PHASE7_GIT_FIXTURE_MARKER_V1: &str = ".lnsat-disposable-git-fixture-v1";
 /// Exact supervised deadline for every bounded Git child process.
 pub const PHASE8_GIT_PROCESS_DEADLINE_SECONDS_V1: u64 = 30;
@@ -38,6 +42,7 @@ pub const PHASE8_GIT_MAX_STDOUT_BYTES_V1: usize = 1_048_576;
 const ACTION_SCHEMA_V1: &str = "lnsat.git_commit_action.schema.v1";
 const TARGET_SCHEMA_V1: &str = "lnsat.disposable_git_repository.schema.v1";
 const PROTOCOL_VERSION_V1: &str = "lnsat.git-reference-adapter.protocol.v1";
+const PHASE11_DOCKER_PROTOCOL_VERSION_V1: &str = "lnsat.adapter_process_protocol.docker_local.v1";
 const RECEIPT_PROFILE_V1: &str = "local_authenticated_adapter_channel";
 const CONFIGURATION_DIGEST_DOMAIN: &str = "lnsat.git-reference-adapter.configuration.v1";
 const TOOL_ARGUMENTS_DIGEST_DOMAIN: &str = "lnsat.git-reference-adapter.tool-arguments.v1";
@@ -136,6 +141,30 @@ pub struct Phase8RuntimeCompositionInputV1<'a> {
     pub derived_request: &'a DerivedExecutionRequestV1,
     pub disposable_root: &'a Path,
     pub git_executable: &'a Path,
+}
+
+/// Exact server-owned inputs for one served Phase 11 Docker composition.
+///
+/// Docker process selection and profile validation remain daemon-owned. Store
+/// owns atomic capability consumption, attempt claim, receipt persistence, and
+/// restart-safe state transitions around caller-supplied bounded execution.
+#[derive(Clone, Copy, Debug)]
+pub struct Phase11DockerRuntimeCompositionInputV1<'a> {
+    pub redemption: Phase7CapabilityRedemptionInputV1<'a>,
+    pub derived_request: &'a DerivedExecutionRequestV1,
+    pub disposable_root: &'a Path,
+    pub verifier_git_executable: &'a Path,
+}
+
+/// Durable result of one atomic Phase 11 Docker attempt claim.
+///
+/// `created == false` is metadata-only replay. Caller must never launch Docker
+/// unless `created == true` and returned attempt remains `dispatching`.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Phase11DockerRuntimeCompositionClaimV1 {
+    pub created: bool,
+    pub consumption: Phase7CapabilityConsumptionRecordV1,
+    pub operation: Phase8OperationReadbackV1,
 }
 
 /// Secret-free operation-attempt readback.
@@ -1084,6 +1113,371 @@ impl SqliteStore {
         })
     }
 
+    /// Atomically consumes one capability and claims one Docker-local attempt
+    /// before caller may invoke the bounded supervisor.
+    ///
+    /// Exact replay returns persisted readback with `created == false`. No
+    /// caller may launch Docker for replay. Claim and capability consumption
+    /// commit in one immediate transaction.
+    ///
+    /// # Errors
+    ///
+    /// Fails closed for source, session, capability, target, adapter, claim, or
+    /// persistence drift. Post-commit ambiguity becomes `outcome_unknown`.
+    pub fn claim_phase11_docker_runtime_composition_v1(
+        &mut self,
+        input: &Phase11DockerRuntimeCompositionInputV1<'_>,
+        capability: Phase7CapabilitySecretV1,
+        raw_session_token: &str,
+        raw_csrf_token: &str,
+    ) -> Result<Phase11DockerRuntimeCompositionClaimV1, Phase7GitAdapterErrorV1> {
+        verify_derived_execution_request_v1(input.derived_request)
+            .map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        let parsed = parse_derived_request_for_adapter(
+            input.redemption.project_ref,
+            input.redemption.resource_ref,
+            input.derived_request,
+            Some(PHASE11_DOCKER_GIT_ADAPTER_REF_V1),
+        )?;
+        let patch = parsed
+            .approved_patch
+            .as_deref()
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        let existing_consumption = self
+            .read_phase8_operation_v1(input.redemption.operation_id)?
+            .and_then(|operation| operation.consumption_id)
+            .is_some();
+        if !existing_consumption {
+            validate_phase11_disposable_git_target_v1(
+                input.derived_request,
+                input.disposable_root,
+                input.verifier_git_executable,
+                PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+            )?;
+        }
+
+        let claimed_at = canonical_system_time_v1(SystemTime::now()).map_err(map_persistence)?;
+        let redemption = input.redemption;
+        let redemption_result = self
+            .redeem_phase7_local_execution_capability_with_transaction_hook_v1(
+                &redemption,
+                capability,
+                (raw_session_token, raw_csrf_token),
+                (
+                    || Ok(claimed_at.clone()),
+                    |transaction, consumption, consumed_at| {
+                        let dispatch = Phase7GitCommitDispatchInputV1 {
+                            project_ref: redemption.project_ref,
+                            resource_ref: redemption.resource_ref,
+                            authorization_id: redemption.authorization_id,
+                            operation_id: redemption.operation_id,
+                            consumption_id: &consumption.consumption_id,
+                            derived_request: input.derived_request,
+                            repository_path: &parsed.identity.repository_path,
+                            git_executable: input.verifier_git_executable,
+                            patch,
+                        };
+                        claim_phase11_docker_dispatch_in_transaction_v1(
+                            transaction,
+                            &dispatch,
+                            &parsed,
+                            consumed_at,
+                        )
+                        .map_err(map_claim_to_persistence)
+                    },
+                    || Ok(()),
+                    || Ok(()),
+                ),
+            );
+        let (consumption, attempt) = match redemption_result {
+            Ok(value) => value,
+            Err(Phase7PersistenceErrorV1::OutcomeAmbiguous) => {
+                if let Ok(Some(attempt)) = select_attempt(&self.connection, redemption.operation_id)
+                {
+                    let _ = self.mark_phase7_git_outcome_unknown_v1(&attempt, &claimed_at);
+                }
+                return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+            }
+            Err(error) => return Err(map_atomic_persistence(error)),
+        };
+
+        let Some(attempt) = attempt else {
+            let operation = self
+                .read_phase8_operation_v1(redemption.operation_id)?
+                .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+            return Ok(Phase11DockerRuntimeCompositionClaimV1 {
+                created: false,
+                consumption: consumption.record,
+                operation,
+            });
+        };
+
+        if validate_phase11_disposable_git_target_v1(
+            input.derived_request,
+            input.disposable_root,
+            input.verifier_git_executable,
+            PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+        )
+        .is_err()
+        {
+            let _ = self.mark_phase7_git_outcome_unknown_v1(&attempt, &claimed_at);
+            return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+        }
+        let operation = self
+            .read_phase8_operation_v1(redemption.operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        Ok(Phase11DockerRuntimeCompositionClaimV1 {
+            created: true,
+            consumption: consumption.record,
+            operation,
+        })
+    }
+
+    /// Persists one independently host-verified Docker result as canonical
+    /// receipt evidence. No adapter or Docker process is launched here.
+    ///
+    /// `dispatching` becomes `completed`. A startup-materialized
+    /// `outcome_unknown` becomes `completed` only through an additional bound
+    /// reconciliation record.
+    ///
+    /// # Errors
+    ///
+    /// Fails closed for operation, attempt, adapter, target, result, receipt,
+    /// state, or persistence drift. Ambiguous persistence never reports
+    /// success.
+    pub fn persist_phase11_docker_runtime_result_v1(
+        &mut self,
+        input: &Phase11DockerRuntimeCompositionInputV1<'_>,
+        result: &Phase7GitExecutionResultV1,
+    ) -> Result<Phase8OperationReadbackV1, Phase7GitAdapterErrorV1> {
+        let operation = self
+            .read_phase8_operation_v1(input.redemption.operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        if operation.authorization_id != input.redemption.authorization_id
+            || operation.project_ref != input.redemption.project_ref
+            || operation.resource_ref != input.redemption.resource_ref
+        {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        let attempt_readback = operation
+            .attempt
+            .as_ref()
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        if !matches!(
+            attempt_readback.state.as_str(),
+            "dispatching" | "outcome_unknown" | "completed"
+        ) || attempt_readback.adapter_ref
+            != format!(
+                "{PHASE11_DOCKER_GIT_ADAPTER_REF_V1}@{PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1}"
+            )
+            || attempt_readback.protocol_version != PHASE11_DOCKER_PROTOCOL_VERSION_V1
+        {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        let parsed = parse_derived_request_for_adapter(
+            input.redemption.project_ref,
+            input.redemption.resource_ref,
+            input.derived_request,
+            Some(PHASE11_DOCKER_GIT_ADAPTER_REF_V1),
+        )?;
+        let patch = parsed
+            .approved_patch
+            .as_deref()
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        let attempt = select_attempt(&self.connection, input.redemption.operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        let consumption_id = operation
+            .consumption_id
+            .as_deref()
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        let dispatch = Phase7GitCommitDispatchInputV1 {
+            project_ref: input.redemption.project_ref,
+            resource_ref: input.redemption.resource_ref,
+            authorization_id: input.redemption.authorization_id,
+            operation_id: input.redemption.operation_id,
+            consumption_id,
+            derived_request: input.derived_request,
+            repository_path: &parsed.identity.repository_path,
+            git_executable: input.verifier_git_executable,
+            patch,
+        };
+        verify_dispatch_context_for_adapter(
+            &dispatch,
+            &read_dispatch_context(&self.connection, &dispatch)?,
+            PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+            PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
+        )?;
+        if attempt.tool_arguments_digest != tool_arguments_digest(&parsed) {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        if attempt_readback.state == "completed" {
+            return if operation.receipt_id.is_some() {
+                Ok(operation)
+            } else {
+                Err(Phase7GitAdapterErrorV1::EvidenceDrift)
+            };
+        }
+        let inspected = inspect_phase11_disposable_git_result_v1(
+            input.derived_request,
+            input.disposable_root,
+            input.verifier_git_executable,
+            PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+        )?;
+        if &inspected != result {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        let recorded_at = canonical_system_time_v1(SystemTime::now()).map_err(map_persistence)?;
+        let receipt = build_receipt_for_adapter(
+            &dispatch,
+            &attempt,
+            &parsed,
+            &result.commit_oid,
+            &recorded_at,
+            PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+            PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
+        );
+        let persisted = if attempt_readback.state == "outcome_unknown" {
+            self.persist_phase7_git_reconciliation_and_receipt_v1(&attempt, &receipt, &recorded_at)
+        } else {
+            self.persist_phase7_git_receipt_v1(&attempt, &receipt, &recorded_at)
+        };
+        if persisted.is_err() {
+            let _ = self.mark_phase11_docker_outcome_unknown_v1(input.redemption.operation_id);
+            return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+        }
+        self.read_phase8_operation_v1(input.redemption.operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)
+    }
+
+    /// Marks one claimed Docker attempt ambiguous without launching or retrying
+    /// any consequence. Repeated calls are idempotent.
+    ///
+    /// # Errors
+    ///
+    /// Fails closed for missing, non-Docker, or invalid attempt evidence.
+    pub fn mark_phase11_docker_outcome_unknown_v1(
+        &mut self,
+        operation_id: &str,
+    ) -> Result<Phase8OperationReadbackV1, Phase7GitAdapterErrorV1> {
+        let operation = self
+            .read_phase8_operation_v1(operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        let attempt_readback = operation
+            .attempt
+            .as_ref()
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        if attempt_readback.adapter_ref
+            != format!(
+                "{PHASE11_DOCKER_GIT_ADAPTER_REF_V1}@{PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1}"
+            )
+            || attempt_readback.protocol_version != PHASE11_DOCKER_PROTOCOL_VERSION_V1
+        {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        if attempt_readback.state == "dispatching" {
+            let attempt = select_attempt(&self.connection, operation_id)?
+                .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+            let recorded_at =
+                canonical_system_time_v1(SystemTime::now()).map_err(map_persistence)?;
+            self.mark_phase7_git_outcome_unknown_v1(&attempt, &recorded_at)?;
+        } else if attempt_readback.state != "outcome_unknown"
+            && attempt_readback.state != "completed"
+        {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        self.read_phase8_operation_v1(operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)
+    }
+
+    /// Reconciles one claimed Docker attempt from exact host Git evidence.
+    /// Docker is never launched and no retry exists.
+    ///
+    /// # Errors
+    ///
+    /// Fails closed when exact approved consequence cannot be proven.
+    pub fn reconcile_phase11_docker_runtime_composition_v1(
+        &mut self,
+        input: &Phase11DockerRuntimeCompositionInputV1<'_>,
+    ) -> Result<Phase8OperationReadbackV1, Phase7GitAdapterErrorV1> {
+        let operation = self
+            .read_phase8_operation_v1(input.redemption.operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        if operation.authorization_id != input.redemption.authorization_id
+            || operation.project_ref != input.redemption.project_ref
+            || operation.resource_ref != input.redemption.resource_ref
+        {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        let attempt_readback = operation
+            .attempt
+            .as_ref()
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        if attempt_readback.adapter_ref
+            != format!(
+                "{PHASE11_DOCKER_GIT_ADAPTER_REF_V1}@{PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1}"
+            )
+            || attempt_readback.protocol_version != PHASE11_DOCKER_PROTOCOL_VERSION_V1
+        {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        let parsed = parse_derived_request_for_adapter(
+            input.redemption.project_ref,
+            input.redemption.resource_ref,
+            input.derived_request,
+            Some(PHASE11_DOCKER_GIT_ADAPTER_REF_V1),
+        )?;
+        let patch = parsed
+            .approved_patch
+            .as_deref()
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        let attempt = select_attempt(&self.connection, input.redemption.operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        let consumption_id = operation
+            .consumption_id
+            .as_deref()
+            .ok_or(Phase7GitAdapterErrorV1::AuthorizationNotConsumed)?;
+        let dispatch = Phase7GitCommitDispatchInputV1 {
+            project_ref: input.redemption.project_ref,
+            resource_ref: input.redemption.resource_ref,
+            authorization_id: input.redemption.authorization_id,
+            operation_id: input.redemption.operation_id,
+            consumption_id,
+            derived_request: input.derived_request,
+            repository_path: &parsed.identity.repository_path,
+            git_executable: input.verifier_git_executable,
+            patch,
+        };
+        verify_dispatch_context_for_adapter(
+            &dispatch,
+            &read_dispatch_context(&self.connection, &dispatch)?,
+            PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+            PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
+        )?;
+        if attempt.tool_arguments_digest != tool_arguments_digest(&parsed) {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        if operation.state == "completed" && operation.receipt_id.is_some() {
+            return Ok(operation);
+        }
+        if validate_phase11_disposable_git_target_v1(
+            input.derived_request,
+            input.disposable_root,
+            input.verifier_git_executable,
+            PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+        )
+        .is_ok()
+        {
+            return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+        }
+        let result = inspect_phase11_disposable_git_result_v1(
+            input.derived_request,
+            input.disposable_root,
+            input.verifier_git_executable,
+            PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+        )?;
+        self.persist_phase11_docker_runtime_result_v1(input, &result)
+    }
+
     /// Reads one operation and its latest secret-free execution evidence.
     ///
     /// # Errors
@@ -1227,8 +1621,46 @@ fn claim_phase8_git_dispatch_in_transaction_v1(
     parsed: &ParsedGitRequest,
     claimed_at: &str,
 ) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
+    claim_dispatch_in_transaction_for_adapter_v1(
+        transaction,
+        input,
+        parsed,
+        claimed_at,
+        PHASE7_GIT_ADAPTER_REF_V1,
+        PHASE7_GIT_ADAPTER_VERSION_V1,
+        PROTOCOL_VERSION_V1,
+    )
+}
+
+fn claim_phase11_docker_dispatch_in_transaction_v1(
+    transaction: &Transaction<'_>,
+    input: &Phase7GitCommitDispatchInputV1<'_>,
+    parsed: &ParsedGitRequest,
+    claimed_at: &str,
+) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
+    claim_dispatch_in_transaction_for_adapter_v1(
+        transaction,
+        input,
+        parsed,
+        claimed_at,
+        PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+        PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
+        PHASE11_DOCKER_PROTOCOL_VERSION_V1,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn claim_dispatch_in_transaction_for_adapter_v1(
+    transaction: &Transaction<'_>,
+    input: &Phase7GitCommitDispatchInputV1<'_>,
+    parsed: &ParsedGitRequest,
+    claimed_at: &str,
+    adapter_ref: &str,
+    adapter_version: &str,
+    protocol_version: &str,
+) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
     let context = read_dispatch_context(transaction, input)?;
-    verify_dispatch_context(input, &context)?;
+    verify_dispatch_context_for_adapter(input, &context, adapter_ref, adapter_version)?;
     if select_attempt(transaction, input.operation_id)?.is_some() {
         return Err(Phase7GitAdapterErrorV1::DispatchAlreadyClaimed);
     }
@@ -1254,7 +1686,7 @@ fn claim_phase8_git_dispatch_in_transaction_v1(
         operation_id: context.operation_id,
         attempt_sequence: 1,
         adapter_ref: context.adapter_ref,
-        protocol_version: PROTOCOL_VERSION_V1.to_owned(),
+        protocol_version: protocol_version.to_owned(),
         tool_arguments_digest,
         created_at: claimed_at.to_owned(),
     };
@@ -1917,6 +2349,20 @@ fn verify_dispatch_context(
     input: &Phase7GitCommitDispatchInputV1<'_>,
     context: &DispatchContext,
 ) -> Result<(), Phase7GitAdapterErrorV1> {
+    verify_dispatch_context_for_adapter(
+        input,
+        context,
+        PHASE7_GIT_ADAPTER_REF_V1,
+        PHASE7_GIT_ADAPTER_VERSION_V1,
+    )
+}
+
+fn verify_dispatch_context_for_adapter(
+    input: &Phase7GitCommitDispatchInputV1<'_>,
+    context: &DispatchContext,
+    adapter_ref: &str,
+    adapter_version: &str,
+) -> Result<(), Phase7GitAdapterErrorV1> {
     if context.project_ref != input.project_ref
         || context.resource_ref != input.resource_ref
         || context.authorization_id != input.authorization_id
@@ -1926,8 +2372,7 @@ fn verify_dispatch_context(
         || context.target_digest != input.derived_request.target_digest
         || context.configuration_digest != input.derived_request.configuration_digest
         || context.executable_digest != input.derived_request.executable_digest
-        || context.adapter_ref
-            != format!("{PHASE7_GIT_ADAPTER_REF_V1}@{PHASE7_GIT_ADAPTER_VERSION_V1}")
+        || context.adapter_ref != format!("{adapter_ref}@{adapter_version}")
     {
         return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
     }
@@ -2256,10 +2701,16 @@ pub(super) fn verify_phase7_git_adapter_records_v1(
                 attempt.created_at.as_bytes(),
             ],
         );
+        let known_adapter_protocol = (attempt.adapter_ref
+            == format!("{PHASE7_GIT_ADAPTER_REF_V1}@{PHASE7_GIT_ADAPTER_VERSION_V1}")
+            && attempt.protocol_version == PROTOCOL_VERSION_V1)
+            || (attempt.adapter_ref
+                == format!(
+                    "{PHASE11_DOCKER_GIT_ADAPTER_REF_V1}@{PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1}"
+                )
+                && attempt.protocol_version == PHASE11_DOCKER_PROTOCOL_VERSION_V1);
         if attempt.attempt_sequence != 1
-            || attempt.protocol_version != PROTOCOL_VERSION_V1
-            || attempt.adapter_ref
-                != format!("{PHASE7_GIT_ADAPTER_REF_V1}@{PHASE7_GIT_ADAPTER_VERSION_V1}")
+            || !known_adapter_protocol
             || attempt.operation_attempt_id
                 != identifier(
                     "opa_",
@@ -2743,7 +3194,36 @@ fn build_receipt(
     commit_oid: &str,
     received_at: &str,
 ) -> Phase7GitCommitReceiptV1 {
-    let result_digest = receipt_result_digest(input, attempt, parsed, commit_oid, received_at);
+    build_receipt_for_adapter(
+        input,
+        attempt,
+        parsed,
+        commit_oid,
+        received_at,
+        PHASE7_GIT_ADAPTER_REF_V1,
+        PHASE7_GIT_ADAPTER_VERSION_V1,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_receipt_for_adapter(
+    input: &Phase7GitCommitDispatchInputV1<'_>,
+    attempt: &AttemptRecord,
+    parsed: &ParsedGitRequest,
+    commit_oid: &str,
+    received_at: &str,
+    adapter_ref: &str,
+    adapter_version: &str,
+) -> Phase7GitCommitReceiptV1 {
+    let result_digest = receipt_result_digest_for_adapter(
+        input,
+        attempt,
+        parsed,
+        commit_oid,
+        received_at,
+        adapter_ref,
+        adapter_version,
+    );
     let receipt_id = identifier(
         "rcp_",
         RECEIPT_ID_DOMAIN,
@@ -2755,8 +3235,8 @@ fn build_receipt(
         operation_attempt_id: attempt.operation_attempt_id.clone(),
         authorization_id: input.authorization_id.to_owned(),
         consumption_id: input.consumption_id.to_owned(),
-        adapter_ref: PHASE7_GIT_ADAPTER_REF_V1.to_owned(),
-        adapter_version: PHASE7_GIT_ADAPTER_VERSION_V1.to_owned(),
+        adapter_ref: adapter_ref.to_owned(),
+        adapter_version: adapter_version.to_owned(),
         commit_oid: commit_oid.to_owned(),
         tree_oid: parsed.expected_tree_oid.clone(),
         changed_paths: parsed.allowed_paths.clone(),
@@ -2767,12 +3247,15 @@ fn build_receipt(
     }
 }
 
-fn receipt_result_digest(
+#[allow(clippy::too_many_arguments)]
+fn receipt_result_digest_for_adapter(
     input: &Phase7GitCommitDispatchInputV1<'_>,
     attempt: &AttemptRecord,
     parsed: &ParsedGitRequest,
     commit_oid: &str,
     received_at: &str,
+    adapter_ref: &str,
+    adapter_version: &str,
 ) -> [u8; 32] {
     let paths = parsed.allowed_paths.join("\0");
     digest_fields(
@@ -2782,8 +3265,8 @@ fn receipt_result_digest(
             attempt.operation_attempt_id.as_bytes(),
             input.authorization_id.as_bytes(),
             input.consumption_id.as_bytes(),
-            PHASE7_GIT_ADAPTER_REF_V1.as_bytes(),
-            PHASE7_GIT_ADAPTER_VERSION_V1.as_bytes(),
+            adapter_ref.as_bytes(),
+            adapter_version.as_bytes(),
             commit_oid.as_bytes(),
             parsed.expected_tree_oid.as_bytes(),
             paths.as_bytes(),

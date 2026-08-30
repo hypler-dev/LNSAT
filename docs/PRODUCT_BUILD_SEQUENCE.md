@@ -190,9 +190,17 @@ valid private Docker-written container ID. Success requires independent host Git
 consequence inspection and an exact semantic result-digest match. Hermetic
 fake-runtime tests prove construction, limits, safe cleanup requests,
 and ambiguity handling, not real Docker or image isolation. No served route,
-atomic attempt claim, persisted receipt, package, deploy, production, or support
-claim opens. Phase 11 remains incomplete. P11-D4B2 owns served attempt/receipt
-integration, restart reconciliation, and real disposable Docker proof.
+package, deploy, production, or support claim opens. P11-D4B2A now adds the
+source-only durability seam around that future supervisor call: capability
+consumption and one Docker-adapter attempt claim commit atomically; concurrent
+exact claims converge on one creator and metadata-only replay; independently
+host-verified semantic result evidence may persist one receipt; interrupted
+`dispatching` attempts materialize as `outcome_unknown` after store reopen; and
+reconciliation inspects exact Git consequence without adapter or Docker retry.
+The seam is not wired to a served route and does not configure, open, or invoke
+Docker. Phase 11 remains incomplete. P11-D4B2B owns explicit served fake-runtime
+integration, and a later separately authorized gate owns real disposable Docker
+proof.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.
