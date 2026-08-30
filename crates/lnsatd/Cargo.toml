@@ -12,6 +12,7 @@ default-run = "lnsatd"
 
 [dependencies]
 ctrlc = { version = "3.5.2", features = ["termination"] }
+getrandom = "0.2.17"
 lnsat-auth = { path = "../lnsat-auth" }
 lnsat-contracts = { path = "../lnsat-contracts" }
 lnsat-store = { path = "../lnsat-store" }

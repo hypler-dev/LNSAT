@@ -52,11 +52,12 @@ pub use phase7_git_adapter::{
     PHASE7_GIT_ADAPTER_REF_V1, PHASE7_GIT_ADAPTER_VERSION_V1, PHASE7_GIT_FIXTURE_MARKER_V1,
     PHASE8_GIT_MAX_STDOUT_BYTES_V1, PHASE8_GIT_PROCESS_DEADLINE_SECONDS_V1,
     Phase7GitAdapterErrorV1, Phase7GitCommitDispatchInputV1, Phase7GitCommitMetadataV1,
-    Phase7GitCommitReceiptV1, Phase7GitCommitWriteV1, Phase7GitRepositoryIdentityV1,
-    Phase8OperationAttemptReadbackV1, Phase8OperationReadbackV1, Phase8RuntimeCompositionInputV1,
-    Phase8RuntimeCompositionWriteV1, inspect_phase7_disposable_git_repository_v1,
+    Phase7GitCommitReceiptV1, Phase7GitCommitWriteV1, Phase7GitExecutionResultV1,
+    Phase7GitRepositoryIdentityV1, Phase8OperationAttemptReadbackV1, Phase8OperationReadbackV1,
+    Phase8RuntimeCompositionInputV1, Phase8RuntimeCompositionWriteV1,
+    inspect_phase7_disposable_git_repository_v1, inspect_phase11_disposable_git_result_v1,
     phase7_git_adapter_configuration_digest_v1, phase7_git_executable_digest_v1,
-    phase7_git_tool_arguments_digest_v1,
+    phase7_git_tool_arguments_digest_v1, validate_phase11_disposable_git_target_v1,
 };
 pub use phase7_nonce::{
     PHASE7_NONCE_BYTES_V1, PHASE7_NONCE_TTL_SECONDS_V1, Phase7AuthorizationNonceCancelInputV1,

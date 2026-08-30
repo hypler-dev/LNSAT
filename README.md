@@ -261,9 +261,25 @@ carries the exact approved execution request and cross-binds execution,
 action, target, configuration, adapter executable, audience, and shared Git
 tool-argument digests. Payload drift, duplicate/unknown fields, noncanonical
 framing, and oversize input fail with code-only errors. It launches no process,
-opens no Docker endpoint, and creates no consequence or receipt. Phase 11
-remains incomplete and separately gated; P11-D4B supervised isolated Docker
-execution is next.
+opens no Docker endpoint, and creates no consequence or receipt. P11-D4B1 adds a
+dormant, source-only supervisor for one schema-2 `docker_local` profile. The
+profile binds exact Docker CLI and host Git verifier digests plus one absolute
+local Unix endpoint. Before launch, the supervisor revalidates the D4A payload,
+D3/profile identities, executables, endpoint, and marked disposable Git target.
+It clears the environment, uses a fresh private empty Docker config, forbids
+pulls and networking, drops capabilities, enables no-new-privileges, applies
+non-root, read-only, PID, memory, no-swap, CPU, IPC, and logging restrictions,
+and mounts only the approved target. Bounded I/O and a monotonic deadline apply;
+every post-spawn anomaly is `outcome_unknown`. Forced cleanup is attempted only
+for an exact container ID written into the private Docker client directory.
+Success requires independent host Git consequence inspection and an exact
+semantic result-digest match. Hermetic tests use a fake Docker executable and a
+disposable Unix socket, so they prove command construction and fail-closed
+supervision, not real Docker or image isolation. No served route calls this
+supervisor, no attempt or receipt is persisted, and no package, deploy,
+production, or support claim opens. Phase 11 remains incomplete; P11-D4B2 owns
+atomic attempt/receipt integration, restart reconciliation, and real disposable
+Docker proof.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See

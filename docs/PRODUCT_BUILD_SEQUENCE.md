@@ -179,9 +179,20 @@ one bounded canonical executable-payload wrapper. It carries the exact approved
 execution request and binds its execution, action, target, configuration,
 adapter-executable, adapter, audience, and shared Git tool-argument identities
 before any later supervisor may use it. It launches no process, opens no Docker
-endpoint, mounts no repository, and creates no consequence or receipt. Phase 11
-remains incomplete; P11-D4B supervised isolated Docker execution requires
-separate authority.
+endpoint, mounts no repository, and creates no consequence or receipt. P11-D4B1
+adds a dormant, source-only supervisor for one schema-2 `docker_local` profile.
+It binds and revalidates exact Docker CLI, host Git verifier, local Unix endpoint,
+D4A payload, D3/profile identities, and marked disposable Git target. Its exact
+launch arguments clear ambient environment and credentials, forbid pulls and
+networking, restrict process and filesystem authority, and bind all profile
+limits. Bounded I/O and deadlines fail to `outcome_unknown`; cleanup requires a
+valid private Docker-written container ID. Success requires independent host Git
+consequence inspection and an exact semantic result-digest match. Hermetic
+fake-runtime tests prove construction, limits, safe cleanup requests,
+and ambiguity handling, not real Docker or image isolation. No served route,
+atomic attempt claim, persisted receipt, package, deploy, production, or support
+claim opens. Phase 11 remains incomplete. P11-D4B2 owns served attempt/receipt
+integration, restart reconciliation, and real disposable Docker proof.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

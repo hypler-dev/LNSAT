@@ -40,6 +40,7 @@ fn exact_profile_fixture_loads_canonical_digest_without_runtime_effects() {
     assert_eq!(profile.adapter.adapter_ref, DOCKER_LOCAL_ADAPTER_REF_V1);
     assert_eq!(profile.adapter.version, DOCKER_LOCAL_ADAPTER_VERSION_V1);
     assert_eq!(profile.audience, DOCKER_LOCAL_AUDIENCE_V1);
+    assert!(loaded.supervisor().is_none());
     assert_eq!(loaded.profile_digest_text(), EXPECTED_PROFILE_DIGEST);
     assert_eq!(loaded.canonical_json().len(), 1230);
     assert!(!loaded.canonical_json().contains('\n'));
@@ -65,6 +66,64 @@ fn exact_profile_fixture_loads_canonical_digest_without_runtime_effects() {
     assert_eq!(
         prefixed_sha256(&loaded.authority_configuration_digest()),
         EXPECTED_AUTHORITY_CONFIGURATION_DIGEST
+    );
+}
+
+#[test]
+fn schema2_requires_exact_launch_bound_supervisor_identity() {
+    let mut schema2 = fixture_value();
+    schema2["schema_version"] = json!(2);
+    schema2["supervisor"] = json!({
+        "docker_executable_digest": format!("sha256:{}", "c".repeat(64)),
+        "verifier_git_executable_digest": format!("sha256:{}", "d".repeat(64)),
+        "docker_host": "unix:///private/tmp/lnsat-docker.sock"
+    });
+    let loaded = parse_docker_local_runtime_profile_v1(
+        &serde_json::to_vec(&schema2).expect("schema2 bytes"),
+    )
+    .expect("schema2 profile");
+    let supervisor = loaded.supervisor().expect("supervisor identity");
+    assert_eq!(
+        supervisor.docker_host,
+        "unix:///private/tmp/lnsat-docker.sock"
+    );
+    assert_ne!(loaded.profile_digest_text(), EXPECTED_PROFILE_DIGEST);
+
+    let mut missing = schema2.clone();
+    missing
+        .as_object_mut()
+        .expect("object")
+        .remove("supervisor");
+    assert_profile_value_rejected("schema2 missing supervisor", &missing);
+
+    let mut schema1_with_supervisor = schema2.clone();
+    schema1_with_supervisor["schema_version"] = json!(1);
+    assert_profile_value_rejected("schema1 supervisor widening", &schema1_with_supervisor);
+
+    for (label, replacement) in [
+        ("remote endpoint", json!("tcp://127.0.0.1:2375")),
+        ("relative endpoint", json!("unix://docker.sock")),
+        (
+            "ambiguous endpoint",
+            json!("unix:///private//tmp/docker.sock"),
+        ),
+        (
+            "control endpoint",
+            json!("unix:///private/tmp/docker\nsock"),
+        ),
+    ] {
+        assert_profile_value_rejected(
+            label,
+            &with_value(&schema2, &["supervisor", "docker_host"], replacement),
+        );
+    }
+    assert_profile_value_rejected(
+        "invalid Docker executable digest",
+        &with_value(
+            &schema2,
+            &["supervisor", "docker_executable_digest"],
+            json!(format!("sha256:{}", "A".repeat(64))),
+        ),
     );
 }
 

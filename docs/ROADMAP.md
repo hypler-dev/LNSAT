@@ -44,6 +44,15 @@ approval, authorization, dispatch, Docker action, consequence, or receipt.
 P11-D4A adds one bounded canonical executable-payload wrapper around the D3
 control frame. It carries the approved execution request and binds target plus
 shared Git tool-argument digests without launching Docker or creating a receipt.
+P11-D4B1 adds a dormant, source-only schema-2 Docker supervisor. It binds and
+revalidates the exact Docker CLI, host Git verifier, local Unix endpoint,
+D4A/D3/profile identities, and marked disposable Git target. Exact isolation and
+resource arguments, bounded I/O, a monotonic deadline, fail-closed unknown
+outcomes, cleanup bound to a private Docker-written container ID, host
+consequence inspection, and semantic result binding are covered by hermetic
+fake-runtime tests. No served route,
+atomic attempt claim, persisted receipt, real Docker proof, package, deploy,
+production, or support claim opens. P11-D4B2 owns those remaining gaps.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -569,8 +578,12 @@ control request with the exact canonical approved execution request, target
 digest, and existing Git tool-argument digest. All execution, action, target,
 configuration, adapter, executable, and audience identities are recomputed and
 cross-bound in one bounded frame. The wrapper opens no process, Docker endpoint,
-image, mount, route, consequence, or receipt. P11-D4B supervised isolated Docker
-execution is next.
+image, mount, route, consequence, or receipt. P11-D4B1 now adds the dormant
+source-only supervisor boundary with exact prelaunch identity revalidation,
+restricted Docker argument construction, bounded process observation,
+fail-closed ambiguity, host consequence reinspection, and semantic result
+binding. Fake-runtime tests do not establish real Docker isolation. P11-D4B2
+served attempt/receipt integration and real disposable Docker proof are next.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.
@@ -619,8 +632,15 @@ P11-D4A supplies those approved action and target bytes only to a future bounded
 adapter stdin frame. Its 8 MiB ceiling safely contains the existing one-MiB
 UTF-8 patch contract after canonical JSON escaping. Exact replay is stable;
 payload, target, configuration, executable, adapter, audience, or tool-argument
-substitution rejects before launch. Docker selection and execution remain
-unimplemented.
+substitution rejects before launch. P11-D4B1 adds a source-only schema-2
+supervisor which revalidates those identities, one exact local Unix endpoint,
+and the marked disposable target immediately before process creation. It builds
+one restricted, environment-cleared, pull-disabled and networkless Docker run,
+bounds I/O and time, treats every post-spawn anomaly as `outcome_unknown`, and
+requires host Git consequence reinspection plus exact semantic result binding.
+Only a fake Docker executable and disposable Unix socket are tested. No served
+dispatch, atomic attempt persistence, receipt, restart reconciliation, real
+Docker/image isolation proof, or support claim exists; P11-D4B2 remains required.
 
 Required operation identity before dispatch:
 

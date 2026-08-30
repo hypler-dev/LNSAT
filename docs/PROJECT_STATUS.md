@@ -65,8 +65,20 @@ execution authorization, adapter dispatch, Docker action, repository
 consequence, or receipt. Phase 11 remains incomplete and separately gated;
 P11-D4A now closes the digest-only adapter payload gap with a bounded canonical
 wrapper carrying the exact approved execution request plus target and shared
-Git tool-argument digests. It performs no process or Docker action. P11-D4B
-supervised isolated Docker execution is next.
+Git tool-argument digests. It performs no process or Docker action. P11-D4B1
+adds a dormant, source-only supervisor for one schema-2 `docker_local` profile.
+It revalidates the full D4A/D3/profile binding, exact Docker CLI and host Git
+verifier digests, one absolute local Unix endpoint, and one marked disposable
+Git target before launch. The constructed run is environment-cleared,
+pull-disabled, networkless, capability-free, no-new-privileges, non-root,
+read-only, and profile-resource-bounded. Post-spawn anomalies remain
+`outcome_unknown`; cleanup requires a valid private Docker-written container ID,
+and success requires independent host Git consequence inspection plus an exact
+semantic result-digest match. Hermetic tests use a fake Docker
+executable and disposable Unix socket, so no real Docker or image-isolation
+claim exists. No served route, atomic attempt claim, persisted receipt, package,
+deploy, production, or support claim opens. P11-D4B2 owns those served
+attempt/receipt and real-runtime proof gaps.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -873,10 +885,12 @@ CSRF, `request_action`, packet actor/session, immutable packet digest, and
 server-time deterministic policy evidence bind in one transaction. Exact
 replay returns original policy evidence; response withholds canonical packet,
 intent, constraints, and action arguments. P11-D2 permits explicit closed
-Docker-local profile selection and public-safe digest readback only. P11-D3 defines canonical bounded
-adapter-process request/result framing and exact identity binding only. Docker
-endpoint selection, adapter-process launch, dispatch, receipts, and support
-claims remain closed.
+Docker-local profile selection and public-safe digest readback only. P11-D3
+defines canonical bounded adapter-process request/result framing and exact
+identity binding only. P11-D4A supplies the exact approved payload. P11-D4B1
+adds a dormant source-only launch supervisor with fake-runtime tests; no served
+route calls it, no real Docker proof exists, and attempt persistence, receipts,
+restart reconciliation, and support claims remain closed.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit Load/Refresh action performs only relative same-origin GETs with the
