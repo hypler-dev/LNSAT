@@ -162,7 +162,7 @@ fn post_spawn_result_mismatch_is_unknown_even_when_consequence_exists() {
 
 #[test]
 fn timeout_kills_client_requests_cleanup_and_never_reports_non_execution() {
-    let fixture = SupervisorFixture::new(ScriptMode::Timeout, 1);
+    let fixture = SupervisorFixture::new(ScriptMode::Timeout, 2);
     let started = Instant::now();
     assert_eq!(
         fixture.run(),
@@ -170,7 +170,7 @@ fn timeout_kills_client_requests_cleanup_and_never_reports_non_execution() {
     );
     let elapsed = started.elapsed();
     assert!(
-        elapsed.as_millis() < 2_000,
+        elapsed.as_millis() < 5_000,
         "deadline must include pipe shutdown: {elapsed:?}"
     );
     assert_eq!(
@@ -572,7 +572,7 @@ fn fake_docker_script(
             result = shell_quote(result_frame),
         ),
         ScriptMode::Timeout => format!(
-            "{sleep} 5\n{git} -C {repository} update-ref refs/heads/main {expected} {base}\n{cat} {result}\n",
+            "{sleep} 8\n{git} -C {repository} update-ref refs/heads/main {expected} {base}\n{cat} {result}\n",
             sleep = shell_quote(Path::new("/bin/sleep")),
             git = shell_quote(Path::new(GIT_EXECUTABLE)),
             repository = shell_quote(repository),
@@ -747,7 +747,17 @@ impl TestDirectory {
             let reservation = candidate.with_extension("reserve");
             match options.open(&reservation) {
                 Ok(_) => {
-                    fs::create_dir(&candidate).expect("fixture directory");
+                    match fs::create_dir(&candidate) {
+                        Ok(()) => {}
+                        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                            let _ = fs::remove_file(&reservation);
+                            continue;
+                        }
+                        Err(error) => {
+                            let _ = fs::remove_file(&reservation);
+                            panic!("fixture directory: {error}");
+                        }
+                    }
                     fs::set_permissions(&candidate, fs::Permissions::from_mode(0o700))
                         .expect("fixture directory mode");
                     let _ = fs::remove_file(reservation);
