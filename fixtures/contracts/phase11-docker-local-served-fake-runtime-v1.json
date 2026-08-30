@@ -1,0 +1,59 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_served_fake_runtime_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-served-fake-runtime-v1",
+  "packet_id": "P11-D4B2B",
+  "status": "experimental_served_fake_runtime_proof",
+  "phase11_complete": false,
+  "production_supported": false,
+  "served_boundary": {
+    "routes": "existing_phase8_eight_route_contract",
+    "new_routes": [],
+    "public_response_contract": "unchanged_phase8_runtime_composition",
+    "runtime_selection": "crate_test_only_not_daemon_configurable"
+  },
+  "authority_chain": [
+    "p11_d2_loaded_schema2_profile",
+    "p11_d4b2a_atomic_capability_consumption_and_attempt_claim",
+    "p11_d3_canonical_adapter_process_control",
+    "p11_d4a_exact_execution_payload",
+    "p11_d4b1_supervised_fake_runtime",
+    "p11_d4b2a_host_verified_receipt_or_outcome_unknown"
+  ],
+  "runtime_boundary": {
+    "docker_executable": "hermetic_fake_only",
+    "docker_endpoint": "disposable_unix_socket_only",
+    "target": "marked_disposable_git_fixture_only",
+    "result_verifier": "absolute_host_git_executable",
+    "real_docker": false,
+    "docker_daemon": false,
+    "image_pull_build_or_run": false
+  },
+  "required_results": {
+    "atomic_attempt_claim": true,
+    "consequences_maximum": 1,
+    "attempts_maximum": 1,
+    "receipts_maximum": 1,
+    "exact_replay": "metadata_only_no_redispatch",
+    "interrupted_or_ambiguous_dispatch": "restart_safe_outcome_unknown",
+    "reconciliation": "host_git_inspection_only_no_runtime_retry",
+    "unchanged_target": "outcome_unknown_without_receipt"
+  },
+  "adversarial_evidence": [
+    "idempotency_drift_rejected_without_redispatch",
+    "post_consequence_stderr_never_reports_success",
+    "outcome_unknown_survives_daemon_restart",
+    "exact_consequence_reconciles_without_runtime_retry",
+    "unchanged_target_remains_unknown_without_receipt",
+    "capability_and_runtime_paths_never_appear_in_public_response"
+  ],
+  "hard_stops": [
+    "no_real_docker_executable_daemon_or_socket",
+    "no_image_pull_build_run_or_publication",
+    "no_new_route_or_public_response_contract",
+    "no_production_or_user_repository",
+    "no_git_network_push_fetch_remote_hook_or_unrestricted_shell",
+    "no_runtime_retry_from_outcome_unknown",
+    "no_package_release_deploy_production_or_support_claim"
+  ],
+  "next_gate": "separately_authorized_real_disposable_docker_runtime_proof"
+}

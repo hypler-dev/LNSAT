@@ -83,9 +83,18 @@ persist one receipt; interrupted `dispatching` attempts reopen as
 `outcome_unknown`; and reconciliation inspects exact Git evidence without Docker
 or adapter retry. Five hermetic store tests cover concurrent claim, receipt,
 replay, reopen, reconciliation, no-consequence behavior, and the closed contract
-fixture. No served route configures or invokes Docker. P11-D4B2B still owns
-served fake-runtime integration; real Docker/image proof, package, deploy,
-production, and support claims remain separately closed.
+fixture. P11-D4B2B now passes experimental served fake-runtime integration over
+existing Phase 8 loopback routes with hermetic fake executable, disposable Unix
+socket, marked temporary Git target, and host Git verifier. Three adversarial
+served tests confirm: success/replay/idempotency drift rejection; post-consequence
+unknown survives restart and reconciles through host Git inspection only;
+unchanged-target unknown persists without receipt. Exact replay is metadata-only
+with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+-> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
+configures or invokes Docker; no real Docker binary/daemon/socket, image
+pull/build/run, production repository, deployment, release, package, or support
+exists. Real Docker/image proof, package, deploy, production, and support claims
+remain separately closed.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence

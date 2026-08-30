@@ -197,10 +197,18 @@ exact claims converge on one creator and metadata-only replay; independently
 host-verified semantic result evidence may persist one receipt; interrupted
 `dispatching` attempts materialize as `outcome_unknown` after store reopen; and
 reconciliation inspects exact Git consequence without adapter or Docker retry.
-The seam is not wired to a served route and does not configure, open, or invoke
-Docker. Phase 11 remains incomplete. P11-D4B2B owns explicit served fake-runtime
-integration, and a later separately authorized gate owns real disposable Docker
-proof.
+P11-D4B2B now passes experimental served fake-runtime integration over existing
+Phase 8 loopback routes with hermetic fake executable, disposable Unix socket,
+marked temporary Git target, and host Git verifier. Three adversarial served
+tests confirm: success/replay/idempotency drift rejection; post-consequence
+unknown survives restart and reconciles through host Git inspection only;
+unchanged-target unknown persists without receipt. Exact replay is metadata-only
+with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+-> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
+configures or invokes Docker; no real Docker binary/daemon/socket, image
+pull/build/run, production repository, deployment, release, package, or support
+exists. Phase 11 remains incomplete; a later separately authorized gate owns real
+disposable Docker proof.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

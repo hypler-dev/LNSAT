@@ -286,10 +286,18 @@ disposable Unix socket, so they prove command construction and fail-closed
 supervision, not real Docker or image isolation. No served route calls this
 supervisor. P11-D4B2A adds source-only atomic attempt claiming, durable receipts,
 restart materialization to `outcome_unknown`, and inspection-only reconciliation
-without Docker retry. No served route or Docker configuration connects these
-seams, and no package, deploy, production, or support claim opens. Phase 11
-remains incomplete; P11-D4B2B owns served fake-runtime integration, while real
-disposable Docker proof requires a later explicit gate.
+without Docker retry. P11-D4B2B now passes experimental served fake-runtime
+integration over existing Phase 8 loopback routes with hermetic fake executable,
+disposable Unix socket, marked temporary Git target, and host Git verifier. Three
+adversarial served tests confirm: success/replay/idempotency drift rejection;
+post-consequence unknown survives restart and reconciles through host Git
+inspection only; unchanged-target unknown persists without receipt. Exact replay
+is metadata-only with no redispatch. The chain is D2 schema2 loaded profile ->
+D4B2A atomic claim -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown.
+No served route configures or invokes Docker; no real Docker binary/daemon/socket,
+image pull/build/run, production repository, deployment, release, package, or
+support exists. Phase 11 remains incomplete; real disposable Docker proof requires
+a later separately authorized gate.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See

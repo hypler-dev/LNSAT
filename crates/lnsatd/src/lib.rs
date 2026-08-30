@@ -39,14 +39,16 @@ use lnsat_store::{
     LocalSessionActivityVerificationV1, LocalSessionEventV1, LocalSessionFamilyRevocationV1,
     LocalSessionIssueInputV1, LocalSessionIssueResultV1, LocalSessionRecordV1,
     LocalSessionRevocationReasonV1, LocalSessionRotationResultV1,
+    PHASE11_DOCKER_GIT_ADAPTER_REF_V1, PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
     Phase7AuthorizationAttemptPrepareInputV1, Phase7AuthorizationNonceIssueInputV1,
     Phase7CapabilityConsumptionWriteV1, Phase7CapabilityRedemptionInputV1,
     Phase7CapabilitySecretV1, Phase7ExecutionAuthorizationIssueInputV1,
     Phase7ExecutionAuthorizationIssueV1, Phase7ExecutionAuthorizationRecordV1,
     Phase7ExecutionAuthorizationTransitionInputV1, Phase7ExecutionAuthorizationTransitionV1,
     Phase7ExecutionCapabilityWireV1, Phase8OperationAttemptReadbackV1, Phase8OperationReadbackV1,
-    Phase8RuntimeCompositionInputV1, Phase8RuntimeCompositionWriteV1, SQLITE_SCHEMA_VERSION,
-    SqliteStore, SqliteStoreStateV1, acquire_local_daemon_database_lease_v1,
+    Phase8RuntimeCompositionInputV1, Phase8RuntimeCompositionWriteV1,
+    Phase11DockerRuntimeCompositionInputV1, SQLITE_SCHEMA_VERSION, SqliteStore, SqliteStoreStateV1,
+    acquire_local_daemon_database_lease_v1,
 };
 use serde::Deserialize;
 use std::collections::BTreeMap;
@@ -1333,6 +1335,7 @@ pub struct DaemonConfigV1 {
     disposable_git_root: Option<PathBuf>,
     git_executable: Option<PathBuf>,
     docker_local_runtime_profile: Option<Box<runtime_profile::LoadedDockerLocalRuntimeProfileV1>>,
+    phase11_served_fake_docker_executable: Option<Box<PathBuf>>,
     internal_console_root: Option<PathBuf>,
     internal_console_asset_manifest: BTreeMap<String, PathBuf>,
 }
@@ -1382,6 +1385,7 @@ impl DaemonConfigV1 {
             disposable_git_root: None,
             git_executable: None,
             docker_local_runtime_profile: None,
+            phase11_served_fake_docker_executable: None,
             internal_console_root: None,
             internal_console_asset_manifest: BTreeMap::new(),
         })
@@ -1444,6 +1448,30 @@ impl DaemonConfigV1 {
             return Err(DaemonErrorV1::InvalidRuntimeConfiguration);
         }
         self.docker_local_runtime_profile = Some(Box::new(profile));
+        Ok(self)
+    }
+
+    /// Enables the hermetic P11-D4B2B served proof inside crate tests only.
+    ///
+    /// No daemon argument or configuration-file field can select this seam.
+    #[cfg(test)]
+    fn with_phase11_served_fake_docker_runtime(
+        mut self,
+        fake_docker_executable: impl AsRef<Path>,
+    ) -> Result<Self, DaemonErrorV1> {
+        let fake_docker_executable = fake_docker_executable.as_ref();
+        if fake_docker_executable.as_os_str().is_empty()
+            || !fake_docker_executable.is_absolute()
+            || self
+                .docker_local_runtime_profile
+                .as_deref()
+                .and_then(runtime_profile::LoadedDockerLocalRuntimeProfileV1::supervisor)
+                .is_none()
+        {
+            return Err(DaemonErrorV1::InvalidRuntimeConfiguration);
+        }
+        self.phase11_served_fake_docker_executable =
+            Some(Box::new(fake_docker_executable.to_path_buf()));
         Ok(self)
     }
 
@@ -1842,6 +1870,14 @@ fn daemon_run_arguments_present_v1<T>(
 struct Phase8DaemonRuntimeV1 {
     disposable_git_root: PathBuf,
     git_executable: PathBuf,
+    phase11_served_fake_runtime: Option<Phase11ServedFakeRuntimeV1>,
+}
+
+/// Hermetic served-integration input with no CLI or config-file constructor.
+#[derive(Clone, Debug)]
+struct Phase11ServedFakeRuntimeV1 {
+    loaded_profile: runtime_profile::LoadedDockerLocalRuntimeProfileV1,
+    fake_docker_executable: PathBuf,
 }
 
 #[derive(Clone, Debug)]
@@ -2087,6 +2123,16 @@ impl DaemonServerV1 {
                     Arc::new(Phase8DaemonRuntimeV1 {
                         disposable_git_root: disposable_git_root.to_path_buf(),
                         git_executable: git_executable.to_path_buf(),
+                        phase11_served_fake_runtime: config
+                            .phase11_served_fake_docker_executable
+                            .as_deref()
+                            .zip(config.docker_local_runtime_profile())
+                            .map(|(fake_docker_executable, loaded_profile)| {
+                                Phase11ServedFakeRuntimeV1 {
+                                    loaded_profile: loaded_profile.clone(),
+                                    fake_docker_executable: fake_docker_executable.clone(),
+                                }
+                            }),
                     })
                 }),
             phase9_console,
@@ -3414,11 +3460,8 @@ fn classify_phase8_runtime_route_v1(
             let (Ok(transport), Ok(mut input)) = (transport, input) else {
                 return Some(HttpResponseV1::RuntimeCompositionRejected);
             };
-            let Ok(mut store) = store.lock() else {
-                return Some(HttpResponseV1::RuntimeCompositionRejected);
-            };
             match execute_phase8_authorization_route_v1(
-                &mut store,
+                store,
                 &transport,
                 authorization_id,
                 &mut input,
@@ -3558,13 +3601,16 @@ fn derive_phase8_execution_request_v1(
 }
 
 fn execute_phase8_authorization_route_v1(
-    store: &mut SqliteStore,
+    store: &Arc<Mutex<SqliteStore>>,
     request: &LocalBrowserTransportRequestV1<'_>,
     authorization_id: &str,
     input: &mut Phase8ExecuteBodyV1,
     runtime: &Phase8DaemonRuntimeV1,
 ) -> Result<Phase8RuntimeCompositionWriteV1, LocalBrowserTransportErrorV1> {
-    let authorized = authorize_local_browser_transport_request_v1(store, request)?;
+    let mut locked_store = store
+        .lock()
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    let authorized = authorize_local_browser_transport_request_v1(&mut locked_store, request)?;
     if authorized.class != LocalBrowserRequestClassV1::MutationPreflight
         || !authorized
             .session
@@ -3573,7 +3619,7 @@ fn execute_phase8_authorization_route_v1(
     {
         return Err(LocalBrowserTransportErrorV1::Rejected);
     }
-    let authorization = store
+    let authorization = locked_store
         .read_phase7_execution_authorization_v1(
             &input.project_ref,
             &input.resource_ref,
@@ -3584,31 +3630,156 @@ fn execute_phase8_authorization_route_v1(
     if authorization.operation_id != input.operation_id {
         return Err(LocalBrowserTransportErrorV1::Rejected);
     }
-    let derived = derive_phase8_execution_request_v1(store, &authorization)?;
+    let derived = derive_phase8_execution_request_v1(&locked_store, &authorization)?;
+    if let Some(fake_runtime) = runtime.phase11_served_fake_runtime.as_ref() {
+        runtime_profile::validate_docker_local_authority_binding_v1(
+            &fake_runtime.loaded_profile,
+            &derived,
+        )
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    }
     let capability = Phase7CapabilitySecretV1::take_from_canonical_wire_v1(&mut input.capability)
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
     let csrf = request
         .raw_csrf_token()
         .ok_or(LocalBrowserTransportErrorV1::Rejected)?;
-    store
-        .execute_phase8_runtime_composition_v1(
-            &Phase8RuntimeCompositionInputV1 {
-                redemption: Phase7CapabilityRedemptionInputV1 {
-                    project_ref: &input.project_ref,
-                    resource_ref: &input.resource_ref,
-                    authorization_id,
-                    operation_id: &input.operation_id,
-                    idempotency_key: &input.idempotency_key,
+    let Some(fake_runtime) = runtime.phase11_served_fake_runtime.as_ref() else {
+        return locked_store
+            .execute_phase8_runtime_composition_v1(
+                &Phase8RuntimeCompositionInputV1 {
+                    redemption: Phase7CapabilityRedemptionInputV1 {
+                        project_ref: &input.project_ref,
+                        resource_ref: &input.resource_ref,
+                        authorization_id,
+                        operation_id: &input.operation_id,
+                        idempotency_key: &input.idempotency_key,
+                    },
+                    derived_request: &derived,
+                    disposable_root: &runtime.disposable_git_root,
+                    git_executable: &runtime.git_executable,
                 },
-                derived_request: &derived,
-                disposable_root: &runtime.disposable_git_root,
-                git_executable: &runtime.git_executable,
-            },
+                capability,
+                request.raw_session_token(),
+                csrf,
+            )
+            .map_err(|_| LocalBrowserTransportErrorV1::Rejected);
+    };
+    drop(locked_store);
+    execute_phase11_served_fake_runtime_v1(
+        store,
+        request.raw_session_token(),
+        csrf,
+        authorization_id,
+        input,
+        runtime,
+        fake_runtime,
+        &derived,
+        capability,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn execute_phase11_served_fake_runtime_v1(
+    store: &Arc<Mutex<SqliteStore>>,
+    raw_session_token: &str,
+    raw_csrf_token: &str,
+    authorization_id: &str,
+    input: &Phase8ExecuteBodyV1,
+    runtime: &Phase8DaemonRuntimeV1,
+    fake_runtime: &Phase11ServedFakeRuntimeV1,
+    derived: &DerivedExecutionRequestV1,
+    capability: Phase7CapabilitySecretV1,
+) -> Result<Phase8RuntimeCompositionWriteV1, LocalBrowserTransportErrorV1> {
+    let redemption = Phase7CapabilityRedemptionInputV1 {
+        project_ref: &input.project_ref,
+        resource_ref: &input.resource_ref,
+        authorization_id,
+        operation_id: &input.operation_id,
+        idempotency_key: &input.idempotency_key,
+    };
+    let docker_input = Phase11DockerRuntimeCompositionInputV1 {
+        redemption,
+        derived_request: derived,
+        disposable_root: &runtime.disposable_git_root,
+        verifier_git_executable: &runtime.git_executable,
+    };
+    let mut locked_store = store
+        .lock()
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    let claim = locked_store
+        .claim_phase11_docker_runtime_composition_v1(
+            &docker_input,
             capability,
-            request.raw_session_token(),
-            csrf,
+            raw_session_token,
+            raw_csrf_token,
         )
-        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    drop(locked_store);
+
+    if !claim.created {
+        return Ok(Phase8RuntimeCompositionWriteV1 {
+            created: false,
+            consumption: claim.consumption,
+            operation: claim.operation,
+        });
+    }
+    let attempt_sequence = claim
+        .operation
+        .attempt
+        .as_ref()
+        .filter(|attempt| attempt.state == "dispatching")
+        .map(|attempt| attempt.attempt_sequence);
+    let Some(attempt_sequence) = attempt_sequence else {
+        mark_phase11_served_outcome_unknown_v1(store, &input.operation_id);
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    };
+    let Ok(payload) =
+        docker_local_execution_payload::build_docker_local_execution_payload_request_v1(
+            &adapter_process_protocol::DockerLocalAdapterProcessRequestInputV1 {
+                operation_id: &input.operation_id,
+                authorization_id,
+                idempotency_key: &input.idempotency_key,
+                attempt_sequence,
+                loaded_profile: &fake_runtime.loaded_profile,
+                derived_request: derived,
+            },
+        )
+    else {
+        mark_phase11_served_outcome_unknown_v1(store, &input.operation_id);
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    };
+    let Ok(supervised) = docker_local_supervisor::supervise_docker_local_git_execution_v1(
+        &docker_local_supervisor::DockerLocalSupervisorInputV1 {
+            payload: &payload,
+            loaded_profile: &fake_runtime.loaded_profile,
+            docker_executable: &fake_runtime.fake_docker_executable,
+            verifier_git_executable: &runtime.git_executable,
+            disposable_root: &runtime.disposable_git_root,
+        },
+    ) else {
+        mark_phase11_served_outcome_unknown_v1(store, &input.operation_id);
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    };
+    let mut locked_store = store
+        .lock()
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    let Ok(operation) = locked_store
+        .persist_phase11_docker_runtime_result_v1(&docker_input, &supervised.semantic_result)
+    else {
+        let _ = locked_store.mark_phase11_docker_outcome_unknown_v1(&input.operation_id);
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    };
+    Ok(Phase8RuntimeCompositionWriteV1 {
+        created: true,
+        consumption: claim.consumption,
+        operation,
+    })
+}
+
+fn mark_phase11_served_outcome_unknown_v1(store: &Arc<Mutex<SqliteStore>>, operation_id: &str) {
+    if let Ok(mut store) = store.lock() {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
+    }
 }
 
 fn read_phase8_operation_route_v1(
@@ -3685,6 +3856,32 @@ fn reconcile_phase8_operation_route_v1(
         return Err(LocalBrowserTransportErrorV1::Rejected);
     }
     let derived = derive_phase8_execution_request_v1(store, &authorization)?;
+    let docker_attempt = operation.attempt.as_ref().is_some_and(|attempt| {
+        attempt.adapter_ref
+            == format!(
+                "{PHASE11_DOCKER_GIT_ADAPTER_REF_V1}@{PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1}"
+            )
+    });
+    if docker_attempt {
+        return store
+            .reconcile_phase11_docker_runtime_composition_v1(
+                &Phase11DockerRuntimeCompositionInputV1 {
+                    redemption: Phase7CapabilityRedemptionInputV1 {
+                        project_ref: &operation.project_ref,
+                        resource_ref: &operation.resource_ref,
+                        authorization_id: &operation.authorization_id,
+                        operation_id,
+                        // Reconciliation never redeems. Exact dispatch idempotency
+                        // remains verified from persisted consumption evidence.
+                        idempotency_key: &authorization.operation_idempotency_key,
+                    },
+                    derived_request: &derived,
+                    disposable_root: &runtime.disposable_git_root,
+                    verifier_git_executable: &runtime.git_executable,
+                },
+            )
+            .map_err(|_| LocalBrowserTransportErrorV1::Rejected);
+    }
     store
         .reconcile_phase8_runtime_composition_v1(
             operation_id,
@@ -6057,6 +6254,7 @@ mod tests {
     use std::thread;
     use std::time::Instant;
 
+    mod phase11_served_fake_runtime;
     mod phase11_served_reference;
 
     static NEXT_TEST_DIRECTORY: AtomicU64 = AtomicU64::new(1);
