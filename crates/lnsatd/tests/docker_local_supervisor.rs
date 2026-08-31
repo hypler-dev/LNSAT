@@ -116,6 +116,8 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
         "--entrypoint",
         "/usr/local/bin/lnsat-git-reference",
         "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "--repository",
+        "/workspace/repository",
     ] {
         assert!(
             invocations.lines().any(|line| line == required),
@@ -134,6 +136,10 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
             "forbidden argument {forbidden}"
         );
     }
+    assert!(invocations.contains(
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n--repository\n/workspace/repository\n"
+    ));
+    assert_eq!(invocations.matches("--repository\n").count(), 1);
     assert!(invocations.contains(fixture.repository.to_str().expect("UTF-8 path")));
 }
 

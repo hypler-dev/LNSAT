@@ -205,10 +205,16 @@ unknown survives restart and reconciles through host Git inspection only;
 unchanged-target unknown persists without receipt. Exact replay is metadata-only
 with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
-configures or invokes Docker; no real Docker binary/daemon/socket, image
-pull/build/run, production repository, deployment, release, package, or support
-exists. Phase 11 remains incomplete; a later separately authorized gate owns real
-disposable Docker proof.
+configures or invokes Docker. P11-D4C1 adds source-only reference-adapter
+execution: the supervisor supplies one profile-bound mount-path argument;
+`lnsat-git-reference` validates canonical D4A input and its own approved digest,
+requires exact non-path Git identity across host/container path remapping,
+executes fixed bounded Git plumbing, removes its private in-repository index,
+and emits one exact D3 result frame. Hermetic tests launch only the host-built
+binary against marked temporary Git fixtures. No real Docker binary/daemon/socket,
+image pull/build/run, production repository, deployment, release, package, or
+support exists. Phase 11 remains incomplete; a later separately authorized gate
+owns real disposable Docker image/runtime proof.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

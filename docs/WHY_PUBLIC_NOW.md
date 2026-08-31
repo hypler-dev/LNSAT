@@ -86,9 +86,14 @@ atomic claim -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt or
 restart-safe ambiguity, host-Git-only reconciliation, and an unchanged target
 that remains unknown without a receipt.
 
-This proof does not use a real Docker binary, daemon, or socket and does not
-prove image isolation or a supported runtime. Phase 11 remains incomplete; real
-disposable Docker proof is a separate, still-closed gate.
+P11-D4C1 adds a source-only `lnsat-git-reference` executable and hermetic
+host-process tests for exact executable binding, host/container target remapping,
+bounded Git execution, canonical result framing, silent failure, and temporary
+index cleanup. It adds no image or Docker invocation.
+
+These proofs do not use a real Docker binary, daemon, or socket and do not prove
+image isolation or a supported runtime. Phase 11 remains incomplete; real
+disposable Docker image/runtime proof is a separate, still-closed gate.
 
 ## 5. Runtime and Ecosystem Role
 

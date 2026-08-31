@@ -64,8 +64,13 @@ routes. Its internal crate-test-only selector uses a fake Docker executable,
 disposable Unix socket, marked temporary Git target, and host Git verifier.
 Exact replay is metadata-only with no redispatch; ambiguity survives restart;
 reconciliation performs host Git inspection only, never runtime launch or
-consequence retry. Phase 11 remains incomplete. Only the separately authorized
-real disposable Docker proof remains required in this runtime lane.
+consequence retry. P11-D4C1 adds the source-only `lnsat-git-reference`
+executable, profile-bound target-mount argument, host/container path-remap
+validation, self-executable digest check, bounded Git consequence, and exact D3
+result framing under hermetic host-process tests. It uses no Docker binary,
+daemon, socket, or image operation. Phase 11 remains incomplete. Only the
+separately authorized real disposable Docker image/runtime proof remains
+required in this runtime lane.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -604,8 +609,13 @@ D4B1 -> D4B2A chain uses only a fake Docker executable, disposable Unix socket,
 marked temporary Git target, and host Git verifier. Exact replay never
 redispatches; interrupted `outcome_unknown` survives restart; reconciliation
 performs host Git inspection only without runtime launch or consequence retry.
-Phase 11 remains incomplete; only a separately authorized real disposable
-Docker proof remains next in this runtime lane.
+P11-D4C1 now supplies the source-only reference-adapter executable and exact
+profile mount-path handoff. Hermetic host-process tests cover mapped execution,
+self-digest and direct-path rejection, canonical result binding, silent
+pre-output failure, fail-closed partial output, and private-index cleanup
+without Docker access. Phase 11 remains incomplete;
+only a separately authorized real disposable Docker image/runtime proof remains
+next in this runtime lane.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.
@@ -670,9 +680,14 @@ unknown survives restart and reconciles through host Git inspection only;
 unchanged-target unknown persists without receipt. Exact replay is metadata-only
 with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
-configures or invokes Docker; no real Docker binary/daemon/socket, image
-pull/build/run, production repository, deployment, release, package, or support
-exists. A separate real-runtime proof gate remains required.
+configures or invokes Docker. P11-D4C1 adds one source-only
+`lnsat-git-reference` binary: exact D4A stdin, self-executable digest binding,
+one profile-selected repository-mount argument, strict host/container identity
+remap, fixed bounded Git plumbing, and exact D3 result output. Its hermetic
+tests use a host child process and marked temporary Git target only. No real
+Docker binary/daemon/socket, image pull/build/run, production repository,
+deployment, release, package, or support exists. A separate real image/runtime
+proof gate remains required.
 
 Required operation identity before dispatch:
 

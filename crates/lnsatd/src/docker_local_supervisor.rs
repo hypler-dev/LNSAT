@@ -36,6 +36,8 @@ use zeroize::Zeroizing;
 /// Domain identity for one host-revalidated adapter result.
 pub const DOCKER_LOCAL_SUPERVISED_RESULT_CONTRACT_ID_V1: &str =
     "lnsat.docker_local_supervised_git_result.v1";
+/// Sole argument identifying the profile-bound repository mount inside the adapter.
+pub const DOCKER_LOCAL_ADAPTER_REPOSITORY_ARGUMENT_V1: &str = "--repository";
 /// Maximum host executable accepted for digest verification.
 pub const MAX_DOCKER_LOCAL_SUPERVISOR_EXECUTABLE_BYTES_V1: u64 = 512 * 1024 * 1024;
 /// Cleanup command deadline after any ambiguous launched exchange.
@@ -555,6 +557,8 @@ fn docker_run_arguments_v1(
         "--entrypoint".into(),
         profile.entrypoint.clone().into(),
         profile.image_digest.clone().into(),
+        DOCKER_LOCAL_ADAPTER_REPOSITORY_ARGUMENT_V1.into(),
+        filesystem.target_mount_path.clone().into(),
     ])
 }
 
