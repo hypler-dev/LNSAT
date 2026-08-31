@@ -83,9 +83,20 @@ persist one receipt; interrupted `dispatching` attempts reopen as
 `outcome_unknown`; and reconciliation inspects exact Git evidence without Docker
 or adapter retry. Five hermetic store tests cover concurrent claim, receipt,
 replay, reopen, reconciliation, no-consequence behavior, and the closed contract
-fixture. No served route configures or invokes Docker. P11-D4B2B still owns
-served fake-runtime integration; real Docker/image proof, package, deploy,
-production, and support claims remain separately closed.
+fixture. P11-D4B2B now passes experimental served fake-runtime integration over
+existing Phase 8 loopback routes with hermetic fake executable, disposable Unix
+socket, marked temporary Git target, and host Git verifier. The existing eight
+routes and their public-response fields remain unchanged; the internal
+fake-runtime selector is compiled only for crate tests. Three adversarial served
+tests confirm: success/replay/idempotency drift rejection; post-consequence
+unknown survives restart and reconciles through host Git inspection only;
+unchanged-target unknown persists without receipt. Exact replay is metadata-only
+with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+-> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
+configures or invokes Docker; no real Docker binary/daemon/socket, image
+pull/build/run, production repository, deployment, release, package, or support
+exists. Real Docker/image proof, package, deploy, production, and support claims
+remain separately closed. Phase 11 remains incomplete.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -99,29 +110,32 @@ and remote profile lanes. P11-D1 implements its closed profile and digest-
 binding foundation. P11-D2 adds explicit configuration and redacted readback
 only. P11-D3 adds protocol framing and identity binding only. P11-I1 closes
 fixture-only packet/policy seeding through authenticated atomic intake. P11-D4A
-adds canonical approved-payload, target, and Git tool-argument binding only. No
-Docker adapter process launch, image operation, package, runtime dispatch,
-emergency-stop route, or supported deployment exists.
+adds canonical approved-payload, target, and Git tool-argument binding. P11-D4B1
+adds the hermetically tested supervisor, P11-D4B2A adds durable attempt/receipt
+and restart-reconciliation semantics, and P11-D4B2B exercises that chain through
+the unchanged Phase 8 routes only under an internal crate-test-only fake-runtime
+selector. No real Docker adapter process, image operation, package, supported
+runtime, emergency-stop route, or supported deployment exists.
 
 ## Maturity Summary
 
-| Area                 | Status                 | Evidence                                                                                                                                                                                     |
-| -------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                                                                                        |
-| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                                                                                              |
-| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                                                                                    |
-| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                                                                                         |
-| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                                                                                          |
-| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                                                                                        |
-| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                                                                                           |
-| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                                                        |
-| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                                                               |
-| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                                                         |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                                                     |
-| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                                                    |
-| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                                                             |
-| Docker integration   | Source foundation      | Closed P11-D1 profile, P11-D2 config/readback, P11-D3 control protocol, P11-I1 authenticated intake, and P11-D4A executable-payload binding; no launch, image operation, runtime, or support |
-| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                                                                                               |
+| Area                 | Status                 | Evidence                                                                                                                                                                                                                |
+| -------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                                                                                                                   |
+| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                                                                                                                         |
+| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                                                                                                               |
+| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                                                                                                                    |
+| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                                                                                                                     |
+| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                                                                                                                   |
+| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                                                                                                                      |
+| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                                                                                   |
+| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                                                                                          |
+| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                                                                                    |
+| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                                                                                |
+| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                                                                               |
+| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                                                                                        |
+| Docker integration   | Experimental source    | P11-D1 through P11-D4B2B include closed profile/config/protocol/payload, durable lifecycle, and served fake-runtime proof over unchanged Phase 8 routes; no real Docker, image operation, supported runtime, or support |
+| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                                                                                                                          |
 
 “Experimental” means checked-in implementation has automated coverage but no
 stable compatibility or support commitment.
@@ -895,11 +909,18 @@ intent, constraints, and action arguments. P11-D2 permits explicit closed
 Docker-local profile selection and public-safe digest readback only. P11-D3
 defines canonical bounded adapter-process request/result framing and exact
 identity binding only. P11-D4A supplies the exact approved payload. P11-D4B1
-adds a dormant source-only launch supervisor with fake-runtime tests.
-P11-D4B2A adds atomic attempt/receipt persistence and restart-safe,
-inspection-only reconciliation around future Docker dispatch. No served route
-calls either seam, no Docker configuration is opened, no real Docker proof
-exists, and support claims remain closed.
+added a dormant source-only launch supervisor with fake-runtime tests, and
+P11-D4B2A added atomic attempt/receipt persistence plus restart-safe,
+inspection-only reconciliation. At those checkpoints, no served route called
+either seam. P11-D4B2B now exercises the D2 schema-2 profile -> D4B2A atomic
+claim -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt or
+`outcome_unknown` chain over the unchanged existing eight Phase 8 routes only
+under an internal crate-test-only selector. It uses a fake Docker executable,
+disposable Unix socket, marked temporary Git target, and host Git verifier.
+Exact replay is metadata-only with no redispatch; interrupted ambiguity survives
+restart; reconciliation inspects host Git only and never launches the runtime or
+retries the consequence. No real Docker proof or support claim exists, and the
+separate real disposable Docker gate remains closed.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit Load/Refresh action performs only relative same-origin GETs with the

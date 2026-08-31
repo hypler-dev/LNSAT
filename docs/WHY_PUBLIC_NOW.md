@@ -1,81 +1,142 @@
-# Why LNSAT Became Public Now
+# Why LNSAT Is Public
 
-- Status: maintainer publication context
+- Status: maintainer public-core purpose
 - Public cutover: 2026-08-20
 - Product status: pre-release source only
 - Runtime, artifact, and support effect: none
 
-LNSAT did not begin with its August 20 public root. Selected private Git
-milestones show that the current architecture foundation and packet runtime
-foundation existed on May 3, 2026. API-facing and MCP packet-inspection
-primitives were checkpointed by May 6. Later private milestones added local
-authorization, conformance, bounded runtime composition, evidence readback, and
-the daemon and CLI product-surface spine. Exact revisions and current public
-paths are recorded in the root [provenance timeline](../PROVENANCE.md).
+LNSAT is public because an authority boundary governing consequential agent
+actions must be inspectable, portable, independently testable, and shared
+across runtimes rather than hidden inside one product or provider.
 
-## Independent Market Convergence
+## 1. Public Core Purpose
 
-Docker [introduced AI Governance on May 12, 2026](https://www.docker.com/blog/docker-ai-governance-unlock-agent-autonomy-safely/),
-describing runtime enforcement over network, filesystem, credential, and MCP
-access plus policy-decision audit events. On August 3, Docker
-[expanded centralized audit-log and SIEM access](https://www.docker.com/blog/docker-ai-governance-audit-logs-now-where-your-security-team-already-works/).
-On August 12, Docker
-[described Agent Baseline](https://www.docker.com/blog/a-new-security-baseline-for-enterprise-agentic-adoption/),
-a `v1.0-draft` published July 30 with six outcomes: discover, constrain,
-authorize, observe, validate, and respond.
+LNSAT defines how one exact proposed action becomes a policy decision, an
+approval when policy requires one, a narrow execution authorization, and
+durable evidence of the result. Those semantics belong in public source because
+operators, integrators, reviewers, and runtime providers must be able to verify
+what grants authority, what cannot grant it, and how uncertainty is preserved.
 
-Those developments provided visible evidence that agent authorization,
-runtime enforcement, and correlated consequence evidence were becoming
-foundational infrastructure concerns. They do not imply copying, coordination,
-or exclusive priority by either project.
+The Apache-2.0 core keeps canonical contracts, Gateway authority behavior,
+security boundaries, conformance fixtures, and negative cases readable and
+forkable. Optional downstream management products may improve configuration,
+visualization, connector management, or release composition, but they cannot
+create an alternate authority path or weaken a Gateway decision.
 
-## Why Publication Accelerated
+## 2. Consequential-Action Problem
 
-LNSAT had already been developing a broader, runtime-neutral authority model:
-bind exact intent to deterministic policy, require distinct human approval
-when policy demands it, issue narrow one-time authorization, consume it before
-consequence, bind the resulting receipt, and reconcile ambiguous outcomes.
+Tool access is not action authorization. A model, MCP client, browser, CLI, or
+runtime may be able to describe or transport an operation without being allowed
+to cause it. LNSAT separates those concerns and binds the complete lifecycle:
 
-Market convergence made public scrutiny more valuable than continued private
-development. The maintainer therefore published the audited source earlier
-than originally planned, with a fresh public root that excludes the private
-commit ancestry while preserving an exact tracked-tree mapping. Public
-development now lets contributors inspect the contracts, challenge the threat
-model, and build replayable evidence in the same history that must support a
-future release.
+1. exact action intent, arguments, target, scope, and idempotency identity are
+   validated and represented by canonical bytes and digests;
+2. deterministic policy produces replayable allow, deny, or approval-required
+   evidence;
+3. a distinct authenticated human supplies approval when policy requires it;
+4. Gateway issues a narrow, expiring, one-time authorization for the approved
+   action only;
+5. capability consumption and one execution-attempt claim commit atomically
+   before consequence;
+6. bounded adapter execution returns independently checked result evidence;
+7. a receipt binds the authorization, attempt, action, target consequence, and
+   reconciliation result.
 
-## Complement Docker; Do Not Rebuild It
+Requested, approved, authorized, and executed identities must agree. A protocol
+session, runtime process, container endpoint, policy-engine response, or model
+recommendation cannot widen that authority.
 
-Docker can provide container execution, sandboxed agent runtimes, MCP Gateway
-controls, microVM isolation, organization policy, and fleet controls. LNSAT's
-intended job is narrower at each execution point but broader across runtimes:
-authorize one exact consequential action and preserve evidence that the
-requested, approved, authorized, and executed operation matched.
+## 3. What LNSAT Makes Inspectable
 
-The first planned runtime proof is therefore Docker-backed. It must demonstrate
-the authority properties that running a container alone does not establish:
+LNSAT makes both successful execution and uncertainty reviewable. Exact replay
+is metadata-only after an attempt is claimed; it does not redispatch the
+consequence. A receipt is accepted only when its action and consequence
+evidence match the authoritative request. Missing, malformed, substituted,
+timed-out, or ambiguous result evidence does not become success.
 
-- canonical intent digest;
-- deterministic policy evidence;
-- distinct approval evidence when required;
-- exact target and argument binding;
-- one-use authorization and atomic consumption;
-- adapter receipt;
-- executed-target digest equality;
-- explicit `outcome_unknown` handling;
-- reconciliation without blind retry.
+When execution may have crossed the consequence boundary but no valid result is
+available, the state is explicitly `outcome_unknown`. That ambiguity survives
+restart. Reconciliation inspects existing consequence evidence without blindly
+retrying the adapter or launching the runtime again. An unchanged target remains
+unknown without a fabricated receipt. These rules make crash, disconnect,
+timeout, replay, and partial-failure behavior available for threat-model review
+and conformance testing.
 
-That workflow is planned after the remaining core operator gates. No Docker
-adapter, image, installer, or supported Docker deployment exists today. Docker
-is the first reference runtime, not LNSAT's only intended substrate. See the
+Gateway is the sole action-authority boundary. Policy evidence, human approval,
+one-time authorization, atomic consumption, attempt claiming, bounded dispatch,
+receipt binding, audit evidence, and reconciliation remain distinct, inspectable
+steps rather than one opaque tool call.
+
+## 4. Current Implemented Source
+
+Current experimental, source-only implementation includes versioned packet,
+policy, approval, authorization, receipt, audit, and error contracts;
+deterministic TypeScript and Rust behavior; shared cross-language fixtures;
+embedded SQLite authority evidence; loopback Gateway routes; local identity and
+session foundations; read-only API, MCP, CLI, and Control Center evidence
+surfaces; and bounded disposable Git consequence tests.
+
+P11-D4B2B exercises the Docker-local supervisor and durability chain through the
+existing eight Phase 8 loopback routes only under an internal crate-test-only
+fake-runtime selector. No route or public-response field changed. The hermetic
+proof uses a fake Docker executable, disposable Unix socket, marked temporary
+Git target, and host Git verifier. Its chain is D2 schema-2 profile -> D4B2A
+atomic claim -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt or
+`outcome_unknown`. Tests cover metadata-only replay without redispatch,
+restart-safe ambiguity, host-Git-only reconciliation, and an unchanged target
+that remains unknown without a receipt.
+
+This proof does not use a real Docker binary, daemon, or socket and does not
+prove image isolation or a supported runtime. Phase 11 remains incomplete; real
+disposable Docker proof is a separate, still-closed gate.
+
+## 5. Runtime and Ecosystem Role
+
+MCP, A2A, REST, CLI, and browser interfaces are replaceable transports over the
+same authority semantics. Docker, OCI workloads, independently managed VMs and
+microVMs, constrained native services, and authenticated remote connectors are
+replaceable execution profiles. Agent frameworks can orchestrate work, identity
+systems can supply claims, and bounded policy engines can evaluate inputs, but
+none of those systems becomes the source of LNSAT authority.
+
+Docker/OCI is the first technical integration choice, not the reason the core
+is public. LNSAT uses runtime isolation and execution capabilities while keeping
+policy, approval, one-time authorization, receipt binding, and ambiguity
+handling independently inspectable. See the
 [Docker-first runtime decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
-and [technical comparison](reference/DOCKER_AI_TECHNICAL_COMPARISON.md).
+and [Docker AI technical comparison](reference/DOCKER_AI_TECHNICAL_COMPARISON.md)
+for that relationship.
 
-## What Public Means Today
+## 6. What Contributors Can Evaluate and Extend
 
-LNSAT remains source-only pre-release software for evaluation and
-contribution. Public visibility does not create a supported package, container,
-installer, hosted service, production guarantee, or release provenance claim.
-The strict supported-release gate intentionally remains closed until exact
-public-history-native review evidence and later lifecycle, signing, SBOM, and
-provenance requirements pass.
+Public source lets reviewers inspect implementation, tests, schemas, threat
+models, and fail-closed negative cases together. Integrators can build against
+versioned contracts and shared fixtures. Contributors can challenge unsafe
+assumptions, add adversarial evidence, improve interoperability, and propose
+runtime adapters without taking ownership of authorization semantics.
+
+Runtime and connector providers can implement bounded adapters while Gateway
+continues to decide whether one exact action is authorized. Public conformance
+work can compare those implementations against the same replay, substitution,
+ambiguity, and receipt rules. Exact public-history CI and review evidence may
+later support release gates, but source verification by itself does not create
+a release or support commitment.
+
+## 7. Maturity and Support Boundary
+
+LNSAT `0.1.0` remains pre-release source for evaluation and contribution. APIs
+and contracts may change. No supported package, binary, container, image,
+installer, hosted service, deployment, production connector, or production-use
+guarantee exists. Public visibility and passing source checks do not imply
+artifact publication, stable compatibility, operational support, or production
+suitability. [Claims and Maturity](CLAIMS_AND_MATURITY.md) defines the exact
+vocabulary.
+
+## 8. Provenance
+
+Exact cutover chronology, private/public revision identifiers, tracked-tree
+mapping, and verification limits remain in the root
+[provenance timeline](../PROVENANCE.md) and
+[public source launch record](PUBLIC_READINESS.md). Those records preserve
+factual history; this document explains why the authority core and its
+conformance evidence belong in public source.

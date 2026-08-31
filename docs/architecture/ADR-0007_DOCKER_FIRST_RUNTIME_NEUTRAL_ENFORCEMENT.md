@@ -14,9 +14,14 @@
   process observation, fail-closed ambiguity, and host-verified semantic results.
   P11-D4B2A adds atomic Docker-adapter attempt claiming, durable receipt binding,
   startup materialization of interrupted attempts, and inspection-only
-  reconciliation. Tests remain hermetic. No served route configures or invokes
-  Docker, and no real Docker/image proof, package, deploy, or supported runtime
-  exists.
+  reconciliation. P11-D4B2B now passes experimental served fake-runtime
+  integration over existing Phase 8 loopback routes with hermetic fake executable,
+  disposable Unix socket, marked temporary Git target, and host Git verifier.
+  Three adversarial served tests confirm: success/replay/idempotency drift
+  rejection; post-consequence unknown survives restart and reconciles through host
+  Git inspection only; unchanged-target unknown persists without receipt. No
+  real Docker binary/daemon/socket, image pull/build/run, production repository,
+  deployment, release, package, or support exists.
 
 ## Context
 
@@ -351,8 +356,35 @@ Five hermetic store tests cover concurrent claim, single-attempt and
 single-receipt invariants, metadata replay, durable reopen, interrupted-dispatch
 materialization, host-only reconciliation, unchanged-target behavior, and the
 closed contract fixture. No served route or Docker configuration consumes these
-APIs. P11-D4B2B requires separate authority for served fake-runtime integration;
-real Docker remains a later explicit gate.
+APIs.
+
+## P11-D4B2B Served Fake-Runtime Checkpoint
+
+P11-D4B2B now passes experimental served fake-runtime integration over existing
+Phase 8 loopback routes. The chain is D2 schema2 loaded profile -> D4B2A atomic
+claim -> D3/D4A payload -> D4B1 supervisor using hermetic fake executable,
+disposable Unix socket, marked temporary Git target, and host Git verifier ->
+D4B2A receipt/unknown.
+
+Three adversarial served tests confirm:
+
+- success/replay/idempotency drift rejection with metadata-only replay and no
+  redispatch;
+- post-consequence unknown survives daemon restart and reconciles through host Git
+  inspection only, never launching runtime or retries;
+- unchanged-target unknown persists without receipt.
+
+Exact replay is metadata-only; concurrent exact claims converge on one creator.
+Unknown survives restart. Reconcile inspects host Git only, never launches
+runtime/retries.
+
+No real Docker binary/daemon/socket, image pull/build/run, production repository,
+deployment, release, package, or support exists. The fake-runtime selector is
+internal crate-test-only; daemon arguments, configuration, and public callers
+cannot select it.
+
+Phase 11 remains incomplete. Real disposable Docker proof requires a later
+separately authorized gate.
 
 ## Security Boundaries
 
