@@ -24,3 +24,19 @@ This exception supports source visibility, not a supported release. Before any
 supported artifact or `v1.0.0`, maintainers must retire snapshot mode and
 establish publicly replayable review/provenance evidence for exact release
 source.
+
+New public-history review records use the separate
+[`public-history-reviews`](../public-history-reviews/) registry and validator.
+That pre-release source-only lane replays reviewed Git objects, diff bytes,
+protected blobs, direct attestation topology, and descendant immutability. It
+does not authenticate reviewer identity, establish supported-release evidence,
+or open runtime, artifact, deployment, or execution authority. Archived Phase 7
+records and the public snapshot marker remain byte-identical.
+
+Public-history registry entry IDs are registry-local evidence IDs, not Phase or
+runtime packet declarations. `review_subject_ids` names the exact source subject
+under review; canonical Phase packet IDs appear there only when already defined
+by the controlling Phase record. Bootstrap subject
+`public-history-review-bootstrap` opens review evidence plumbing only. Registry
+array order is append-only chronology; entry IDs need uniqueness, not lexical
+ordering.

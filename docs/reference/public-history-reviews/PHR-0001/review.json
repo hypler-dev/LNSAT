@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0001-independent-implementation-review-3c32292e",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["public-history-review-bootstrap"],
+  "base_revision": "439f19a8fcb312570fec43d1ab83c1b779587363",
+  "reviewed_revision": "3c32292ed4e5eec9363fc6af7f55c23eb148d634",
+  "reviewed_tree_oid": "6d28669a03cd5284c523d4b9c3f5b27a842e1c4b",
+  "diff_sha256": "sha256:845e1836f764ebe401ee7acbbb85f9b639cda0583167167f656fe204282ab5c0",
+  "protected_files": [
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:b1231111bf0f66e23f563fb66953b465d39c578c0bb23ce4c725e8e57ab4a98a"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:dbbda9f193040d2e5f04ee5ed9126f28a08ed6544d5190152a4ae7d4fadc1663"
+    },
+    {
+      "path": "docs/reference/security-reviews/README.md",
+      "sha256": "sha256:6af2058a06cb4d70a14ffb880998a6f99c734605f2bb7aa09a3e91877bf6219e"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:dbc667f625996501896bb7a3c2234a911b1360dff4a84f0d7d342a2f6bc41eaa"
+    },
+    {
+      "path": "scripts/check-public-history-review-evidence.mjs",
+      "sha256": "sha256:e5b10d9d3e33be72816a5f2785b3384c4d6228f7540c37933b1589e23c0f3e37"
+    },
+    {
+      "path": "scripts/check-public-history-review-evidence.test.mjs",
+      "sha256": "sha256:542c677fd68e02c438e0259ec1e099e38a899ab0e2992f55e0067592a3028b56"
+    },
+    {
+      "path": "scripts/check-security-review-evidence.mjs",
+      "sha256": "sha256:36446bc52600c56b40e81f97e7deb87e5a26a643d21f76e02881dcc98d636ee9"
+    },
+    {
+      "path": "scripts/public-source-snapshot-provenance.mjs",
+      "sha256": "sha256:b3a1781eb90a31a228dae29bdffc4d408db15d719bc864bda59b2ace26018f61"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/p11_final_native_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex read-only sub-agent review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

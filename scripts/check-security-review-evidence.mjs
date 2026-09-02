@@ -1,13 +1,12 @@
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  createIsolatedGitEnvironment,
   PUBLIC_SOURCE_SNAPSHOT_MARKER_PATH,
   PUBLIC_SOURCE_SNAPSHOT_IMMUTABLE_PATHS,
+  runIsolatedGit as runGit,
   validatePublicSourceSnapshotProvenance,
 } from "./public-source-snapshot-provenance.mjs";
 
@@ -194,23 +193,6 @@ function readJson(path, label, errors) {
   }
 }
 
-function runGit(root, args, { encoding = "utf8", env = {}, input } = {}) {
-  const result = spawnSync("git", args, {
-    cwd: root,
-    encoding,
-    env: createIsolatedGitEnvironment(env),
-    input,
-    maxBuffer: 16 * 1024 * 1024,
-  });
-  return {
-    ok: result.status === 0 && !result.error,
-    status: result.status,
-    stdout: result.stdout ?? (encoding === null ? Buffer.alloc(0) : ""),
-    stderr: result.stderr ?? (encoding === null ? Buffer.alloc(0) : ""),
-    error: result.error,
-  };
-}
-
 function canonicalReviewDiffArgs(baseRevision, reviewedRevision) {
   return [
     "-c",
@@ -257,7 +239,6 @@ function canonicalReviewDiffArgs(baseRevision, reviewedRevision) {
 export function readCanonicalReviewDiff(root, baseRevision, reviewedRevision) {
   const result = runGit(root, canonicalReviewDiffArgs(baseRevision, reviewedRevision), {
     encoding: null,
-    env: { GIT_ATTR_NOSYSTEM: "1" },
   });
   if (!result.ok) {
     throw new Error(gitFailure(result));
