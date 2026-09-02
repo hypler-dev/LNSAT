@@ -12,7 +12,7 @@
       "review_subject_ids": ["public-history-review-bootstrap"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0001/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
