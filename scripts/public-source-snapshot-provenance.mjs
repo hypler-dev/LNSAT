@@ -1,6 +1,14 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync } from "node:fs";
+import {
+  accessSync,
+  constants as fsConstants,
+  existsSync,
+  readFileSync,
+  realpathSync,
+  statSync,
+} from "node:fs";
 import { posix, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parse as parseToml } from "smol-toml";
 
 export const PUBLIC_SOURCE_SNAPSHOT_MARKER_PATH =
@@ -30,49 +38,157 @@ const MARKER_KEYS = [
 ];
 const GIT_OID_PATTERN = /^[0-9a-f]{40}$/u;
 const PRE_RELEASE_VERSION_PATTERN = /^0\.[0-9]+\.[0-9]+(?:[-+].*)?$/u;
-const GIT_REPOSITORY_ENV_KEYS = [
-  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-  "GIT_COMMON_DIR",
-  "GIT_DIR",
-  "GIT_GRAFT_FILE",
-  "GIT_INDEX_FILE",
-  "GIT_OBJECT_DIRECTORY",
-  "GIT_REPLACE_REF_BASE",
-  "GIT_WORK_TREE",
-  "GIT_CONFIG_COUNT",
-  "GIT_CONFIG_GLOBAL",
-  "GIT_CONFIG_NOSYSTEM",
-  "GIT_CONFIG_PARAMETERS",
-  "GIT_CONFIG_SYSTEM",
-  "GIT_NAMESPACE",
-  "GIT_SHALLOW_FILE",
-];
+const NULL_DEVICE = process.platform === "win32" ? "NUL" : "/dev/null";
+const TRUSTED_GIT_CONFIG_ARGS = Object.freeze([
+  "--no-pager",
+  "--no-optional-locks",
+  "-c",
+  "core.fsmonitor=false",
+  "-c",
+  "diff.external=",
+  "-c",
+  "trace2.normalTarget=0",
+  "-c",
+  "trace2.perfTarget=0",
+  "-c",
+  "trace2.eventTarget=0",
+]);
 
-export function createIsolatedGitEnvironment(overrides = {}) {
+function trustedGitSearchPath() {
+  if (process.platform !== "win32") return "/usr/bin:/bin";
+  const systemRootCandidate = process.env.SystemRoot ?? process.env.SYSTEMROOT;
+  const systemRoot = /^[A-Za-z]:\\Windows$/iu.test(systemRootCandidate ?? "")
+    ? systemRootCandidate
+    : "C:\\Windows";
+  return [
+    "C:\\Program Files\\Git\\cmd",
+    "C:\\Program Files\\Git\\bin",
+    `${systemRoot}\\System32`,
+    systemRoot,
+  ].join(";");
+}
+
+export function createIsolatedGitEnvironment() {
   const environment = {
-    ...process.env,
-    ...overrides,
+    GIT_ATTR_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: NULL_DEVICE,
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_SYSTEM: NULL_DEVICE,
+    GIT_NO_LAZY_FETCH: "1",
     GIT_NO_REPLACE_OBJECTS: "1",
+    GIT_OPTIONAL_LOCKS: "0",
+    GIT_PAGER: "cat",
+    GIT_TERMINAL_PROMPT: "0",
+    GIT_TRACE2: "0",
+    GIT_TRACE2_EVENT: "0",
+    GIT_TRACE2_PERF: "0",
+    LANG: "C",
+    LC_ALL: "C",
+    PATH: trustedGitSearchPath(),
+    TZ: "UTC",
   };
-  for (const key of GIT_REPOSITORY_ENV_KEYS) delete environment[key];
-  for (const key of Object.keys(environment)) {
-    if (/^GIT_CONFIG_(?:KEY|VALUE)_\d+$/u.test(key)) delete environment[key];
+  if (process.platform === "win32") {
+    const systemRoot = environment.PATH.split(";").at(-1);
+    environment.ComSpec = `${systemRoot}\\System32\\cmd.exe`;
+    environment.PATHEXT = ".COM;.EXE;.BAT;.CMD";
+    environment.SystemRoot = systemRoot;
+    environment.TEMP = `${systemRoot}\\Temp`;
+    environment.TMP = `${systemRoot}\\Temp`;
+    environment.WINDIR = systemRoot;
+  } else {
+    environment.TMPDIR = "/tmp";
   }
   return environment;
 }
 
-function runGit(root, args, { encoding = "utf8", input } = {}) {
-  const result = spawnSync("git", args, {
+export function resolveTrustedGitExecutable() {
+  const candidates =
+    process.platform === "win32"
+      ? ["C:\\Program Files\\Git\\cmd\\git.exe", "C:\\Program Files\\Git\\bin\\git.exe"]
+      : ["/usr/bin/git", "/bin/git"];
+  const resolvedCandidates = new Set();
+  for (const candidate of candidates) {
+    try {
+      const resolvedCandidate = realpathSync(candidate);
+      if (resolvedCandidates.has(resolvedCandidate)) continue;
+      resolvedCandidates.add(resolvedCandidate);
+      if (!statSync(resolvedCandidate).isFile()) continue;
+      accessSync(resolvedCandidate, fsConstants.X_OK);
+      return resolvedCandidate;
+    } catch {
+      // Try the next fixed, absolute candidate.
+    }
+  }
+  throw new Error("trusted Git executable unavailable");
+}
+
+export function runIsolatedGit(
+  root,
+  args,
+  { encoding = "utf8", input, maxBuffer = 16 * 1024 * 1024 } = {},
+) {
+  let gitExecutable;
+  try {
+    gitExecutable = resolveTrustedGitExecutable();
+  } catch (error) {
+    const emptyOutput = encoding === null ? Buffer.alloc(0) : "";
+    return {
+      ok: false,
+      status: null,
+      stdout: emptyOutput,
+      stderr: emptyOutput,
+      error,
+    };
+  }
+  const result = spawnSync(gitExecutable, [...TRUSTED_GIT_CONFIG_ARGS, ...args], {
     cwd: root,
     encoding,
     env: createIsolatedGitEnvironment(),
     input,
-    maxBuffer: 16 * 1024 * 1024,
+    maxBuffer,
   });
   return {
     ok: result.status === 0 && !result.error,
+    status: result.status,
     stdout: result.stdout ?? (encoding === null ? Buffer.alloc(0) : ""),
+    stderr: result.stderr ?? (encoding === null ? Buffer.alloc(0) : ""),
+    error: result.error,
   };
+}
+
+const runGit = runIsolatedGit;
+
+function isDirectExecution() {
+  if (!process.argv[1]) return false;
+  return resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+}
+
+function runLegacyInventory(mode) {
+  if (!new Set(["--check", "--summary", "--write"]).has(mode)) {
+    process.stderr.write("Legacy inventory wrapper: invalid mode.\n");
+    process.exitCode = 2;
+    return;
+  }
+  const repositoryRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
+  const inventoryScript = resolve(
+    repositoryRoot,
+    "scripts/inventory-legacy-identifiers.mjs",
+  );
+  const result = spawnSync(process.execPath, [inventoryScript, mode], {
+    cwd: repositoryRoot,
+    env: createIsolatedGitEnvironment(),
+    stdio: "inherit",
+  });
+  if (result.error || result.status === null) {
+    process.stderr.write("Legacy inventory wrapper: unable to run validator.\n");
+    process.exitCode = 1;
+    return;
+  }
+  process.exitCode = result.status;
+}
+
+if (isDirectExecution() && process.argv[2] === "--legacy-inventory") {
+  runLegacyInventory(process.argv[3]);
 }
 
 function addError(condition, message, errors) {
