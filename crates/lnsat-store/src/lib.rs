@@ -57,9 +57,10 @@ pub use phase7_git_adapter::{
     Phase7GitRepositoryIdentityV1, Phase8OperationAttemptReadbackV1, Phase8OperationReadbackV1,
     Phase8RuntimeCompositionInputV1, Phase8RuntimeCompositionWriteV1,
     Phase11DockerRuntimeCompositionClaimV1, Phase11DockerRuntimeCompositionInputV1,
-    inspect_phase7_disposable_git_repository_v1, inspect_phase11_disposable_git_result_v1,
-    phase7_git_adapter_configuration_digest_v1, phase7_git_executable_digest_v1,
-    phase7_git_tool_arguments_digest_v1, validate_phase11_disposable_git_target_v1,
+    execute_phase11_mapped_disposable_git_commit_v1, inspect_phase7_disposable_git_repository_v1,
+    inspect_phase11_disposable_git_result_v1, phase7_git_adapter_configuration_digest_v1,
+    phase7_git_executable_digest_v1, phase7_git_tool_arguments_digest_v1,
+    validate_phase11_disposable_git_target_v1,
 };
 pub use phase7_nonce::{
     PHASE7_NONCE_BYTES_V1, PHASE7_NONCE_TTL_SECONDS_V1, Phase7AuthorizationNonceCancelInputV1,

@@ -23,7 +23,7 @@ const PROFILE_FIXTURE: &[u8] =
 const EXPECTED_PROFILE_DIGEST: &str =
     "sha256:eb27aa91cea967ed9686b949011e220bc0085e827c1d97b4a477f267dff548fc";
 const EXPECTED_AUTHORITY_CONFIGURATION_DIGEST: &str =
-    "sha256:076bf61ee91b38010221372b33cf2f47c4dc731667bad90cdbd50145c7ec0cdc";
+    "sha256:e810f05c426b1a7c5987ff02baa3e74250841f5f57ce07f43206efec5ae87d24";
 
 #[test]
 fn exact_profile_fixture_loads_canonical_digest_without_runtime_effects() {

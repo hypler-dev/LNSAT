@@ -14,6 +14,13 @@ Current behavior:
   configuration, requires paired disposable Phase 8 runtime paths, validates
   the profile through the closed P11-D1 loader, and retains its digest-bound
   evidence without opening Docker or invoking an adapter;
+- includes source-only `lnsat-git-reference`, which accepts one canonical D4A
+  frame plus the supervisor's sole repository-mount argument, requires that
+  raw argument to equal the profile path retained in D4A, rehashes its own
+  executable, requires exact non-path Git identity across the host/container
+  path remap, executes bounded fixed Git plumbing with lazy fetch and Trace2
+  disabled, and emits one canonical D3 result frame; hermetic tests invoke it
+  only as a host child process and open no Docker surface or image;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before

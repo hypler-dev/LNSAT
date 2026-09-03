@@ -303,6 +303,8 @@ pub fn phase7_git_adapter_configuration_digest_v1() -> [u8; 32] {
             b"fixed-plumbing-argv",
             b"hooks-signing-credentials-editors-filters-disabled",
             b"no-network-subcommands",
+            b"no-lazy-fetch",
+            b"trace2-disabled",
             b"temporary-marked-repositories-only",
             b"temporary-index",
             b"compare-and-swap-ref-update",
@@ -481,22 +483,29 @@ pub fn inspect_phase7_disposable_git_repository_v1(
     git_executable: &Path,
 ) -> Result<Phase7GitRepositoryIdentityV1, Phase7GitAdapterErrorV1> {
     let repository_path = canonical_disposable_root(repository_path)?;
+    inspect_disposable_git_repository_at_v1(&repository_path, git_executable)
+}
+
+fn inspect_disposable_git_repository_at_v1(
+    repository_path: &Path,
+    git_executable: &Path,
+) -> Result<Phase7GitRepositoryIdentityV1, Phase7GitAdapterErrorV1> {
     let executable = canonical_git_executable(git_executable)?;
     let git_dir = git_text(
         &executable,
-        &repository_path,
+        repository_path,
         &["rev-parse", "--absolute-git-dir"],
         &[],
     )?;
     let git_dir_path =
         fs::canonicalize(git_dir.trim()).map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
-    if !git_dir_path.starts_with(&repository_path) {
+    if !git_dir_path.starts_with(repository_path) {
         return Err(Phase7GitAdapterErrorV1::TargetRejected);
     }
-    validate_git_storage_boundary(&executable, &repository_path, &git_dir_path)?;
+    validate_git_storage_boundary(&executable, repository_path, &git_dir_path)?;
     let top = git_text(
         &executable,
-        &repository_path,
+        repository_path,
         &["rev-parse", "--show-toplevel"],
         &[],
     )?;
@@ -507,7 +516,7 @@ pub fn inspect_phase7_disposable_git_repository_v1(
     }
     let object_format = git_text(
         &executable,
-        &repository_path,
+        repository_path,
         &["rev-parse", "--show-object-format"],
         &[],
     )?;
@@ -517,7 +526,7 @@ pub fn inspect_phase7_disposable_git_repository_v1(
     }
     let head_ref = git_text(
         &executable,
-        &repository_path,
+        repository_path,
         &["symbolic-ref", "-q", "HEAD"],
         &[],
     )?;
@@ -527,7 +536,7 @@ pub fn inspect_phase7_disposable_git_repository_v1(
     }
     let base_commit_oid = git_text(
         &executable,
-        &repository_path,
+        repository_path,
         &["rev-parse", "--verify", "HEAD^{commit}"],
         &[],
     )?;
@@ -546,12 +555,81 @@ pub fn inspect_phase7_disposable_git_repository_v1(
         return Err(Phase7GitAdapterErrorV1::TargetRejected);
     }
     Ok(Phase7GitRepositoryIdentityV1 {
-        repository_path,
+        repository_path: repository_path.to_path_buf(),
         git_dir_path,
         object_format,
         head_ref,
         base_commit_oid,
         fixture_marker_sha256: prefixed_sha256(&marker_bytes),
+    })
+}
+
+/// Executes one exact approved Git consequence through a remapped container mount.
+///
+/// The approval-bound host path must differ from the canonical mounted path. All
+/// non-path repository identity, action, patch, metadata, and tool arguments
+/// remain exact. The temporary index lives inside the already-approved writable
+/// Git storage because the surrounding container root filesystem is read-only.
+/// This function grants no capability, persists no receipt, and performs no
+/// Docker operation.
+///
+/// # Errors
+///
+/// Rejects malformed or drifted authority evidence, direct host-path execution,
+/// mount substitution, dirty state, unsafe paths, Git failure, or ambiguous
+/// consequence evidence.
+pub fn execute_phase11_mapped_disposable_git_commit_v1(
+    derived_request: &DerivedExecutionRequestV1,
+    mounted_repository_path: &Path,
+    git_executable: &Path,
+    operation_id: &str,
+) -> Result<Phase7GitExecutionResultV1, Phase7GitAdapterErrorV1> {
+    verify_derived_execution_request_v1(derived_request)
+        .map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
+    if !valid_prefixed_id(operation_id, "opn_") {
+        return Err(Phase7GitAdapterErrorV1::InvalidInput);
+    }
+    let request = &derived_request.request;
+    let parsed = parse_derived_request_for_adapter(
+        &request.project_ref,
+        &request.resource_ref,
+        derived_request,
+        Some(PHASE11_DOCKER_GIT_ADAPTER_REF_V1),
+    )?;
+    let patch = parsed
+        .approved_patch
+        .as_deref()
+        .ok_or(Phase7GitAdapterErrorV1::InvalidInput)?;
+    let mounted_repository_path = canonical_mapped_repository_v1(mounted_repository_path)?;
+    let actual = inspect_disposable_git_repository_at_v1(&mounted_repository_path, git_executable)?;
+    if actual.repository_path == parsed.identity.repository_path
+        || actual.git_dir_path == parsed.identity.git_dir_path
+        || actual.object_format != parsed.identity.object_format
+        || actual.head_ref != parsed.identity.head_ref
+        || actual.base_commit_oid != parsed.identity.base_commit_oid
+        || actual.fixture_marker_sha256 != parsed.identity.fixture_marker_sha256
+    {
+        return Err(Phase7GitAdapterErrorV1::TargetRejected);
+    }
+    validate_clean_target(git_executable, &actual)?;
+    validate_path_safety(&actual.repository_path, &parsed.allowed_paths)?;
+    if prefixed_sha256(patch) != parsed.patch_sha256 {
+        return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+    }
+    let commit_oid = execute_git_commit_with_index_parent(
+        git_executable,
+        &actual,
+        &parsed,
+        patch,
+        operation_id,
+        &actual.git_dir_path,
+    )?;
+    Ok(Phase7GitExecutionResultV1 {
+        commit_oid,
+        tree_oid: parsed.expected_tree_oid,
+        changed_paths: parsed.allowed_paths,
+        patch_sha256: parsed.patch_sha256,
+        metadata: parsed.metadata,
     })
 }
 
@@ -3319,8 +3397,28 @@ fn execute_git_commit(
     patch: &[u8],
     operation_id: &str,
 ) -> Result<String, Phase7GitAdapterErrorV1> {
+    let temporary_root = fs::canonicalize(std::env::temp_dir())
+        .map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
+    execute_git_commit_with_index_parent(
+        git_executable,
+        identity,
+        parsed,
+        patch,
+        operation_id,
+        &temporary_root,
+    )
+}
+
+fn execute_git_commit_with_index_parent(
+    git_executable: &Path,
+    identity: &Phase7GitRepositoryIdentityV1,
+    parsed: &ParsedGitRequest,
+    patch: &[u8],
+    operation_id: &str,
+    index_parent: &Path,
+) -> Result<String, Phase7GitAdapterErrorV1> {
     let executable = canonical_git_executable(git_executable)?;
-    let index_root = private_temporary_index_directory(operation_id)?;
+    let index_root = private_index_directory_in_v1(index_parent, operation_id)?;
     let index_path = index_root.join("index");
     let index_env = [("GIT_INDEX_FILE", index_path.as_os_str())];
     let result = (|| {
@@ -3396,10 +3494,22 @@ fn execute_git_commit(
         )?;
         inspect_exact_consequence(&executable, identity, parsed, Some(&commit_oid))
     })();
-    let _ = fs::remove_file(&index_path);
-    let _ = fs::remove_file(index_path.with_extension("lock"));
-    let _ = fs::remove_dir(&index_root);
-    result
+    let index_removed = remove_optional_file_v1(&index_path);
+    let lock_removed = remove_optional_file_v1(&index_path.with_extension("lock"));
+    let directory_removed = fs::remove_dir(&index_root).is_ok();
+    match (result, index_removed && lock_removed && directory_removed) {
+        (Ok(commit_oid), true) => Ok(commit_oid),
+        (Ok(_), false) => Err(Phase7GitAdapterErrorV1::OutcomeUnknown),
+        (Err(error), _) => Err(error),
+    }
+}
+
+fn remove_optional_file_v1(path: &Path) -> bool {
+    match fs::remove_file(path) {
+        Ok(()) => true,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => true,
+        Err(_) => false,
+    }
 }
 
 fn inspect_exact_consequence(
@@ -3542,6 +3652,23 @@ fn canonical_disposable_root(path: &Path) -> Result<PathBuf, Phase7GitAdapterErr
     Ok(canonical)
 }
 
+fn canonical_mapped_repository_v1(path: &Path) -> Result<PathBuf, Phase7GitAdapterErrorV1> {
+    if !path.is_absolute() || path.file_name().is_none() {
+        return Err(Phase7GitAdapterErrorV1::TargetRejected);
+    }
+    let metadata =
+        fs::symlink_metadata(path).map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
+    let canonical = fs::canonicalize(path).map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
+    if !metadata.file_type().is_dir()
+        || metadata.file_type().is_symlink()
+        || canonical != path
+        || canonical.parent().is_none()
+    {
+        return Err(Phase7GitAdapterErrorV1::TargetRejected);
+    }
+    Ok(canonical)
+}
+
 fn canonical_git_executable(path: &Path) -> Result<PathBuf, Phase7GitAdapterErrorV1> {
     if !path.is_absolute() {
         return Err(Phase7GitAdapterErrorV1::TargetRejected);
@@ -3677,7 +3804,7 @@ fn git_bytes_with_deadline(
     extra_env: &[(&str, &OsStr)],
     deadline: Duration,
 ) -> Result<Vec<u8>, Phase7GitAdapterErrorV1> {
-    const CONFIG: [&str; 12] = [
+    const CONFIG: [&str; 18] = [
         "-c",
         "core.hooksPath=/dev/null",
         "-c",
@@ -3690,6 +3817,12 @@ fn git_bytes_with_deadline(
         "core.fsmonitor=false",
         "-c",
         "core.untrackedCache=false",
+        "-c",
+        "trace2.normalTarget=0",
+        "-c",
+        "trace2.perfTarget=0",
+        "-c",
+        "trace2.eventTarget=0",
     ];
     let mut command = Command::new(executable);
     command
@@ -3697,7 +3830,11 @@ fn git_bytes_with_deadline(
         .env_clear()
         .env("GIT_CONFIG_NOSYSTEM", "1")
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_NO_LAZY_FETCH", "1")
         .env("GIT_TERMINAL_PROMPT", "0")
+        .env("GIT_TRACE2", "0")
+        .env("GIT_TRACE2_EVENT", "0")
+        .env("GIT_TRACE2_PERF", "0")
         .env("GIT_ASKPASS", "/usr/bin/false")
         .env("SSH_ASKPASS", "/usr/bin/false")
         .env("GIT_EDITOR", "/usr/bin/false")
@@ -3798,16 +3935,19 @@ pub(super) fn read_bounded_stdout_v1(
     }
 }
 
-fn private_temporary_index_directory(
+fn private_index_directory_in_v1(
+    parent: &Path,
     operation_id: &str,
 ) -> Result<PathBuf, Phase7GitAdapterErrorV1> {
-    let temp = fs::canonicalize(std::env::temp_dir())
-        .map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
+    let parent = fs::canonicalize(parent).map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
+    if !parent.is_dir() {
+        return Err(Phase7GitAdapterErrorV1::TargetRejected);
+    }
     for _ in 0..8 {
         let mut entropy = [0_u8; 32];
         getrandom::getrandom(&mut entropy).map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
         let suffix = prefixed_sha256(&entropy);
-        let candidate = temp.join(format!("lnsat-git-index-{operation_id}-{}", &suffix[7..]));
+        let candidate = parent.join(format!("lnsat-git-index-{operation_id}-{}", &suffix[7..]));
         let mut builder = fs::DirBuilder::new();
         #[cfg(unix)]
         builder.mode(0o700);
@@ -3822,7 +3962,7 @@ fn private_temporary_index_directory(
                     .map_err(|_| Phase7GitAdapterErrorV1::TargetRejected)?;
                 if !metadata.file_type().is_dir()
                     || metadata.file_type().is_symlink()
-                    || canonical.parent() != Some(temp.as_path())
+                    || canonical.parent() != Some(parent.as_path())
                 {
                     let _ = fs::remove_dir(&candidate);
                     return Err(Phase7GitAdapterErrorV1::TargetRejected);

@@ -59,6 +59,7 @@ fn exact_payload_fixture_binds_full_request_and_round_trips() {
         .expect("exact payload must parse");
     assert_eq!(parsed.request_digest(), payload.request_digest());
     assert_eq!(parsed.control(), payload.control());
+    assert_eq!(parsed.repository_mount_path(), "/workspace/repository");
     assert_eq!(
         parsed.derived_request().canonical_request,
         payload.derived_request().canonical_request
@@ -67,6 +68,32 @@ fn exact_payload_fixture_binds_full_request_and_round_trips() {
         parsed.tool_arguments_digest(),
         payload.tool_arguments_digest()
     );
+}
+
+#[test]
+fn repository_mount_path_is_retained_bounded_and_payload_digest_bound() {
+    let payload = fixture_payload("bounded payload\n");
+    let value: Value = serde_json::from_slice(payload.frame()).expect("payload value");
+    let substituted = with_value(
+        &value,
+        &["repository_mount_path"],
+        json!("/workspace/alternate-repository"),
+    );
+    let parsed = parse_docker_local_execution_payload_request_v1(&canonical_frame(&substituted))
+        .expect("valid alternate mount path parses for supervisor rebinding");
+    assert_eq!(
+        parsed.repository_mount_path(),
+        "/workspace/alternate-repository"
+    );
+    assert_ne!(parsed.request_digest(), payload.request_digest());
+
+    for invalid in ["workspace/repository", "/workspace/../repository"] {
+        let drifted = with_value(&value, &["repository_mount_path"], json!(invalid));
+        assert_eq!(
+            payload_error(&canonical_frame(&drifted)),
+            DockerLocalExecutionPayloadErrorV1::InputInvalid
+        );
+    }
 }
 
 #[test]

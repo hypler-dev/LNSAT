@@ -22,6 +22,7 @@
     "control.execution_request_digest",
     "control.action_digest",
     "execution_request",
+    "repository_mount_path",
     "target_digest",
     "tool_arguments_digest",
     "control.authority_configuration_digest",
@@ -40,7 +41,7 @@
     "docker_local_execution_payload.canonicalization_failed"
   ],
   "sample": {
-    "expected_payload_request_digest": "sha256:5d5932cc764d06128b06000285f7c6c2b10df421c2f6120a130400375d270d64"
+    "expected_payload_request_digest": "sha256:4f7229f1a489c9fae126d8cc600322c2ece610566a19453a3d0f6b182e1b2cbf"
   },
   "secret_and_reflection_boundary": {
     "payload_retained_for_adapter_stdin": true,
