@@ -1,0 +1,107 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0003-independent-implementation-review-58306ef6",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["phase11-real-docker-proof-readiness-reissue-v2"],
+  "base_revision": "fbf1e33db1aff6eba8117b4e390ad7c00da56172",
+  "reviewed_revision": "58306ef6ff27b52dec17ebd636a8a20b26a37580",
+  "reviewed_tree_oid": "fa024a6e31f3e60fb565142d85c70e380f9b7349",
+  "diff_sha256": "sha256:67732f8e0e5a138e8556eb6d9d116728c3a454f313fde108fcd432cea34927b2",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:c5e87c346d26794de0d6f76a114fd547647f048924c178849db9531cc6aabf53"
+    },
+    {
+      "path": "crates/lnsatd/README.md",
+      "sha256": "sha256:4f3ed9033adb7378fc4688077a9ebc1bcfc64f5ccfaa3cda1e7dc2cfc08ee2f0"
+    },
+    {
+      "path": "crates/lnsatd/src/docker_local_runtime_proof.rs",
+      "sha256": "sha256:66e37909ec412d9a0d5b3c960c095de1a5510826ad76ee90ca0298d59f674bcb"
+    },
+    {
+      "path": "crates/lnsatd/src/docker_local_supervisor.rs",
+      "sha256": "sha256:7ddedcd298cd18c1c90c7a72a26e4f1470cbe670ebf717637fd9e311a9bd1a05"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:6ee86645e646f466dec1c27a67b39fff3d81d25866eb192a94b396d893f55d6e"
+    },
+    {
+      "path": "crates/lnsatd/tests/docker_local_runtime_proof.rs",
+      "sha256": "sha256:ea1cbd0c0e11b02ea989337b67376c7b40bf54e22dee097d387412d1fa92d16c"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:09b387f45370c103391d1c2c165af7057d909633c9f2b1f7a6ec081c1be8a15f"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:fd868bc205e6f4c8dcf5e7e6f189a0b663d60896d484e33ac43bceb6957751c3"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:ae589a900e109dfdf5bd8642df27cf46ac11a38ead5d012dcdc4351375e82ed0"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:52d7a44c0f4d1861027decbe29cc7eeccf8252284c5a998c9311a4bccb18d872"
+    },
+    {
+      "path": "docs/WHY_PUBLIC_NOW.md",
+      "sha256": "sha256:cd16ba87a6869ad917543e6a267af09e81b187ab41119271c710dd0ca6a7e5a2"
+    },
+    {
+      "path": "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md",
+      "sha256": "sha256:efdae7803c8f65bbac66d72095f6d1697779bd4ab764742ca0051628c8906c7b"
+    },
+    {
+      "path": "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
+      "sha256": "sha256:eeb17aff16b066e20b5f6f7ffdb1997262ca693ebb6c1df02207f9dc2fe10e34"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "sha256": "sha256:d0817a6fb14a176309b8ab64fc7ee8034a4f8213ba5af98a6bc4464ce06e8463"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:622aa98eff80d0f7af15b5356278ffe177facdc1d34dd6eea2f65626b3db3042"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:70504778306e25592907fc8704374c443f6da38b53bffa2a9186198f35dfc304"
+    },
+    {
+      "path": "fixtures/contracts/phase11-docker-local-runtime-proof-plan-v1.json",
+      "sha256": "sha256:e67affa7b77e5fb3de25fb39558dc281d9377940cf3515b188be412bbd083bb3"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:bc6b06b2e49bcf078d57e009bae730377d66760cf1d486eb5744250679e9b9d9"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.mjs",
+      "sha256": "sha256:5db4f4b9a30f83bd9050944a1928aaf08db8f03529ef2f0ff7d457d3fb8e7b04"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.test.mjs",
+      "sha256": "sha256:9e9f16e24f8ce51143f6fdbf46f28eef54c0e1b644fc84eccf3630ec83a63003"
+    },
+    {
+      "path": "scripts/check-public-history-review-evidence.test.mjs",
+      "sha256": "sha256:9673a62894a6635b5fda68fb8f0ec7a3820887be42480e94c21621a3132cfbd0"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/source_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex read-only sub-agent review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
