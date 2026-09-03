@@ -120,6 +120,10 @@ Current experimental source includes:
   consumption with one adapter attempt, accepts only independently verified
   result evidence, persists one receipt, and materializes interrupted attempts
   as `outcome_unknown` for inspection-only reconciliation without retry;
+- a source-only Docker-local Git reference-adapter executable with exact
+  payload-bound host/container target remapping, self-executable binding,
+  lazy-fetch- and Trace2-disabled bounded Git plumbing, canonical result
+  framing, and hermetic host-process tests;
 - packet inspection, source diagnostics, and read-only recovery inspection
   through CLI source;
 - authenticated, exact-ID, read-only Control Center evidence views with live
@@ -138,8 +142,9 @@ through an internal crate-test-only fake-runtime selector over the existing
 eight Phase 8 loopback routes. Those routes and their public-response fields are
 unchanged. The proof uses a fake Docker executable, disposable Unix socket,
 marked temporary Git target, and host Git verifier; it configures or invokes no
-real Docker binary, daemon, socket, or image. Real runtime proof and supported
-operation remain separate future gates.
+real Docker binary, daemon, socket, or image. P11-D4C1 adds only the reference
+adapter source and host-process proof; it builds or runs no image. Real runtime
+proof and supported operation remain separate future gates.
 
 ## What We Are Building For v1
 
@@ -302,10 +307,13 @@ post-consequence unknown survives restart and reconciles through host Git
 inspection only; unchanged-target unknown persists without receipt. Exact replay
 is metadata-only with no redispatch. The chain is D2 schema2 loaded profile ->
 D4B2A atomic claim -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown.
-No served route configures or invokes Docker; no real Docker binary/daemon/socket,
-image pull/build/run, production repository, deployment, release, package, or
-support exists. Phase 11 remains incomplete; real disposable Docker proof requires
-a later separately authorized gate.
+No served route configures or invokes Docker. P11-D4C1 adds the source-only
+`lnsat-git-reference` executable, exact profile mount-path handoff, executable
+and remapped target binding, bounded Git consequence, private-index cleanup, and
+canonical result output under hermetic host-process tests. No real Docker
+binary/daemon/socket, image pull/build/run, production repository, deployment,
+release, package, or support exists. Phase 11 remains incomplete; real disposable
+Docker image/runtime proof requires a later separately authorized gate.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See

@@ -93,9 +93,14 @@ unknown survives restart and reconciles through host Git inspection only;
 unchanged-target unknown persists without receipt. Exact replay is metadata-only
 with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
-configures or invokes Docker; no real Docker binary/daemon/socket, image
-pull/build/run, production repository, deployment, release, package, or support
-exists. Real Docker/image proof, package, deploy, production, and support claims
+configures or invokes Docker. P11-D4C1 adds the source-only
+`lnsat-git-reference` executable, exact D4A-retained profile mount-path handoff,
+self-executable binding, strict host/container repository-identity remapping,
+lazy-fetch- and Trace2-disabled bounded Git consequence, private-index cleanup,
+and canonical result framing. Ten hermetic adapter tests use only a host child
+process and marked temporary Git fixtures. No real Docker binary/daemon/socket, image pull/build/run,
+production repository, deployment, release, package, or support exists. Real
+Docker image/runtime proof, package, deploy, production, and support claims
 remain separately closed. Phase 11 remains incomplete.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
@@ -114,28 +119,30 @@ adds canonical approved-payload, target, and Git tool-argument binding. P11-D4B1
 adds the hermetically tested supervisor, P11-D4B2A adds durable attempt/receipt
 and restart-reconciliation semantics, and P11-D4B2B exercises that chain through
 the unchanged Phase 8 routes only under an internal crate-test-only fake-runtime
-selector. No real Docker adapter process, image operation, package, supported
-runtime, emergency-stop route, or supported deployment exists.
+selector. P11-D4C1 supplies a source-only reference-adapter executable and
+hermetic host-process proof without an image or Docker access. No real Docker
+adapter process, image operation, package, supported runtime, emergency-stop
+route, or supported deployment exists.
 
 ## Maturity Summary
 
-| Area                 | Status                 | Evidence                                                                                                                                                                                                                |
-| -------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                                                                                                                   |
-| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                                                                                                                         |
-| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                                                                                                               |
-| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                                                                                                                    |
-| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                                                                                                                     |
-| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                                                                                                                   |
-| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                                                                                                                      |
-| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                                                                                   |
-| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                                                                                          |
-| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                                                                                    |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                                                                                |
-| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                                                                               |
-| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                                                                                        |
-| Docker integration   | Experimental source    | P11-D1 through P11-D4B2B include closed profile/config/protocol/payload, durable lifecycle, and served fake-runtime proof over unchanged Phase 8 routes; no real Docker, image operation, supported runtime, or support |
-| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                                                                                                                          |
+| Area                 | Status                 | Evidence                                                                                                                                                                                                                                      |
+| -------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript contracts | Experimental           | Versioned packet, policy, approval, audit, knowledge, and substrate source with tests                                                                                                                                                         |
+| Policy evaluation    | Experimental           | Deterministic allow, deny, and approval-required decisions in `packages/policy`                                                                                                                                                               |
+| Audit persistence    | Local foundation       | Stable SQLite events, PostgreSQL artifacts, idempotency, disposable tests                                                                                                                                                                     |
+| SQLite durability    | Local foundation       | Ordered authority-chain and audit evidence persistence with rollback                                                                                                                                                                          |
+| Rust daemon          | Local experimental     | Exact loopback routes plus explicit closed config and manifest-only console hosting                                                                                                                                                           |
+| Gateway              | Local experimental     | Shared inspection, bounded runtime evidence, identity, telemetry, and Registry source                                                                                                                                                         |
+| MCP                  | Read-only experimental | Official v2 modern stdio/HTTP handlers plus bounded temporary legacy compatibility                                                                                                                                                            |
+| CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                                                                                                         |
+| Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                                                                                                                |
+| Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                                                                                                          |
+| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                                                                                                      |
+| Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                                                                                                     |
+| Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                                                                                                              |
+| Docker integration   | Experimental source    | P11-D1 through P11-D4C1 include closed profile/config/protocol/payload, durable lifecycle, served fake-runtime proof, and a hermetically tested source-only reference adapter; no real Docker, image operation, supported runtime, or support |
+| Hosted runtime       | Not available          | No production service, customer-data path, or runtime dispatch                                                                                                                                                                                |
 
 “Experimental” means checked-in implementation has automated coverage but no
 stable compatibility or support commitment.
@@ -919,8 +926,14 @@ under an internal crate-test-only selector. It uses a fake Docker executable,
 disposable Unix socket, marked temporary Git target, and host Git verifier.
 Exact replay is metadata-only with no redispatch; interrupted ambiguity survives
 restart; reconciliation inspects host Git only and never launches the runtime or
-retries the consequence. No real Docker proof or support claim exists, and the
-separate real disposable Docker gate remains closed.
+retries the consequence. P11-D4C1 adds a source-only reference-adapter binary
+and D4A-bound exact profile mount-path argument. Host-process tests prove mapped
+disposable Git execution, executable and target binding, wrong-mount rejection,
+disabled promisor lazy fetch and Trace2 targets, silent pre-output failure,
+oversized-input rejection, fail-closed partial output, canonical result output,
+and private-index cleanup after success and failure without Docker access. No
+real Docker proof or support claim exists, and the separate real disposable
+Docker image/runtime gate remains closed.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit Load/Refresh action performs only relative same-origin GETs with the

@@ -16,6 +16,7 @@ use lnsatd::adapter_process_protocol::{
 };
 use lnsatd::docker_local_execution_payload::{
     DockerLocalExecutionPayloadRequestFrameV1, build_docker_local_execution_payload_request_v1,
+    parse_docker_local_execution_payload_request_v1,
 };
 use lnsatd::docker_local_supervisor::{
     DockerLocalSupervisorErrorV1, DockerLocalSupervisorInputV1,
@@ -116,6 +117,8 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
         "--entrypoint",
         "/usr/local/bin/lnsat-git-reference",
         "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "--repository",
+        "/workspace/repository",
     ] {
         assert!(
             invocations.lines().any(|line| line == required),
@@ -134,6 +137,10 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
             "forbidden argument {forbidden}"
         );
     }
+    assert!(invocations.contains(
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n--repository\n/workspace/repository\n"
+    ));
+    assert_eq!(invocations.matches("--repository\n").count(), 1);
     assert!(invocations.contains(fixture.repository.to_str().expect("UTF-8 path")));
 }
 
@@ -227,6 +234,34 @@ fn schema1_and_runtime_identity_drift_reject_before_launch() {
         Err(DockerLocalSupervisorErrorV1::DockerExecutableInvalid)
     );
     assert!(!fixture.invocations.exists());
+}
+
+#[test]
+fn profile_mount_path_drift_rejects_before_launch() {
+    let fixture = SupervisorFixture::new(ScriptMode::Success, 2);
+    let mut value: Value = serde_json::from_slice(fixture.payload.frame()).expect("payload JSON");
+    value["repository_mount_path"] = json!("/workspace/substituted-repository");
+    let mut frame = serde_json::to_vec(&value).expect("canonical payload JSON");
+    frame.push(b'\n');
+    let drifted = parse_docker_local_execution_payload_request_v1(&frame)
+        .expect("valid changed mount path parses");
+
+    let error = supervise_docker_local_git_execution_v1(&DockerLocalSupervisorInputV1 {
+        payload: &drifted,
+        loaded_profile: &fixture.profile,
+        docker_executable: &fixture.docker_executable,
+        verifier_git_executable: Path::new(GIT_EXECUTABLE),
+        disposable_root: fixture.root.path(),
+    });
+    assert_eq!(
+        error,
+        Err(DockerLocalSupervisorErrorV1::ProfileBindingInvalid)
+    );
+    assert!(!fixture.invocations.exists());
+    assert_eq!(
+        git_text(&fixture.repository, &["rev-parse", "HEAD"]),
+        fixture.base_commit
+    );
 }
 
 #[test]

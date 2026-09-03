@@ -467,7 +467,7 @@ fn valid_host_path_v1(value: &str, max_bytes: usize) -> bool {
         && path.file_name().is_some()
 }
 
-fn valid_container_path_v1(value: &str) -> bool {
+pub(crate) fn valid_container_path_v1(value: &str) -> bool {
     if value.is_empty()
         || value.len() > MAX_CONTAINER_PATH_BYTES_V1
         || value.as_bytes().contains(&0)

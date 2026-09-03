@@ -19,7 +19,10 @@
   disposable Unix socket, marked temporary Git target, and host Git verifier.
   Three adversarial served tests confirm: success/replay/idempotency drift
   rejection; post-consequence unknown survives restart and reconciles through host
-  Git inspection only; unchanged-target unknown persists without receipt. No
+  Git inspection only; unchanged-target unknown persists without receipt.
+  P11-D4C1 adds the source-only `lnsat-git-reference` executable, exact
+  host-to-container target remapping, self-executable binding, bounded Git
+  execution, and canonical result framing under hermetic host-process tests. No
   real Docker binary/daemon/socket, image pull/build/run, production repository,
   deployment, release, package, or support exists.
 
@@ -385,6 +388,46 @@ cannot select it.
 
 Phase 11 remains incomplete. Real disposable Docker proof requires a later
 separately authorized gate.
+
+## P11-D4C1 Source-Only Reference Adapter Checkpoint
+
+P11-D4C1 supplies the missing reference-adapter executable source without
+opening Docker. D4A retains the exact target mount path from the loaded profile,
+and the supervisor passes exactly one adapter argument,
+`--repository <profile-bound-target-mount-path>`, after the immutable image
+identity. `lnsat-git-reference` accepts only that exact argument shape, requires
+raw lexical equality with the D4A-retained path, and accepts one canonical D4A
+stdin frame. The supervisor rebuilds that frame from the live loaded profile
+before launch. The adapter rehashes its own executable and requires the digest
+already bound through the profile, approved request, D3 control frame, and D4A
+payload.
+
+The approved host repository path must differ from the canonical container
+mount path. The adapter requires exact marker, object-format, head, base, and
+fixture identity across that remapping, then revalidates clean base state,
+allowed paths, patch, tree, and commit metadata. It invokes only fixed
+`/usr/bin/git` plumbing with a cleared environment, lazy fetch disabled, local
+and ambient Trace2 targets disabled, and the existing no-hook, no-credential,
+no-network-subcommand contract. Because the future container root is read-only,
+the private temporary index is created inside the already-approved writable Git
+storage and must be removed before success. A completed adapter result is one
+canonical P11-D3 frame bound to the exact semantic result digest, which includes
+the full D4A request digest. Every failure exits nonzero without stderr;
+pre-output failures emit no stdout, and any partial output remains an invalid
+frame. The host supervisor retains `outcome_unknown` after every launched
+anomaly.
+
+Hermetic tests execute the binary as a host child process against marked
+temporary Git fixtures. They prove one mapped consequence, direct-host-path,
+same-identity wrong-mount, and self-digest rejection; malformed and oversized
+input rejection; disabled promisor lazy fetch and Trace2 targets; empty stderr;
+canonical result binding; and private-index cleanup after success and
+post-index failure. They do not discover or invoke a Docker executable, open a
+daemon or socket, build/pull/run/inspect an image, or prove container isolation.
+P11-D4C1 adds no daemon configuration
+selector, route, receipt authority, production target, package, deployment,
+publication, or support claim. Real disposable Docker image/runtime proof
+remains a separate authorized gate.
 
 ## Security Boundaries
 

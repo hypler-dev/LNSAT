@@ -13,6 +13,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0001/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0002",
+      "subject_id": "phase11-git-adapter-source",
+      "review_subject_ids": ["P11-D4C1"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0002/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }

@@ -1,9 +1,10 @@
 //! Closed Docker-local executable-payload binding.
 //!
 //! P11-D4A wraps the P11-D3 control frame with the exact canonical approved
-//! execution request plus target and Git tool-argument digests. It closes the
-//! payload gap before any Docker process, image, mount, consequence, receipt,
-//! served route, or runtime support is opened.
+//! execution request, profile-selected repository mount path, and target and
+//! Git tool-argument digests. It closes the payload gap before any Docker
+//! process, image, mount, consequence, receipt, served route, or runtime support
+//! is opened.
 
 use crate::adapter_process_protocol::{
     DockerLocalAdapterProcessRequestFrameV1, DockerLocalAdapterProcessRequestInputV1,
@@ -11,6 +12,7 @@ use crate::adapter_process_protocol::{
     canonical_json_value_v1, parse_docker_local_adapter_process_request_frame_v1,
     parse_unique_canonical_frame_value_v1,
 };
+use crate::runtime_profile::valid_container_path_v1;
 use lnsat_contracts::{
     CONTRACT_VERSION_V1_0, DerivedExecutionRequestV1, parse_canonical_execution_request_v1,
 };
@@ -43,6 +45,7 @@ struct DockerLocalExecutionPayloadWireV1 {
     message_type: String,
     control: DockerLocalAdapterProcessRequestV1,
     execution_request: Value,
+    repository_mount_path: String,
     target_digest: String,
     tool_arguments_digest: String,
 }
@@ -52,6 +55,7 @@ struct DockerLocalExecutionPayloadWireV1 {
 pub struct DockerLocalExecutionPayloadRequestFrameV1 {
     control: DockerLocalAdapterProcessRequestFrameV1,
     derived_request: DerivedExecutionRequestV1,
+    repository_mount_path: String,
     tool_arguments_digest: [u8; 32],
     frame: Zeroizing<Vec<u8>>,
     request_digest: [u8; 32],
@@ -74,6 +78,12 @@ impl DockerLocalExecutionPayloadRequestFrameV1 {
     #[must_use]
     pub const fn derived_request(&self) -> &DerivedExecutionRequestV1 {
         &self.derived_request
+    }
+
+    /// Returns exact profile-bound repository mount path supplied to the adapter.
+    #[must_use]
+    pub fn repository_mount_path(&self) -> &str {
+        &self.repository_mount_path
     }
 
     /// Returns exact shared Git tool-argument digest.
@@ -157,6 +167,12 @@ pub fn build_docker_local_execution_payload_request_v1(
         message_type: DOCKER_LOCAL_EXECUTION_PAYLOAD_REQUEST_TYPE_V1.to_owned(),
         control: control.request().clone(),
         execution_request,
+        repository_mount_path: input
+            .loaded_profile
+            .profile()
+            .filesystem
+            .target_mount_path
+            .clone(),
         target_digest: prefixed_sha256_v1(&input.derived_request.target_digest),
         tool_arguments_digest: prefixed_sha256_v1(&tool_arguments_digest),
     };
@@ -194,6 +210,7 @@ fn encode_and_validate_v1(
         || wire.contract_version != CONTRACT_VERSION_V1_0
         || wire.schema_version != 1
         || wire.message_type != DOCKER_LOCAL_EXECUTION_PAYLOAD_REQUEST_TYPE_V1
+        || !valid_container_path_v1(&wire.repository_mount_path)
     {
         return Err(DockerLocalExecutionPayloadErrorV1::InputInvalid);
     }
@@ -244,6 +261,7 @@ fn encode_and_validate_v1(
     Ok(DockerLocalExecutionPayloadRequestFrameV1 {
         control,
         derived_request,
+        repository_mount_path: wire.repository_mount_path.clone(),
         tool_arguments_digest,
         frame: Zeroizing::new(frame),
         request_digest,

@@ -567,7 +567,7 @@ fn table_count(store: &SqliteStore, table: &str) -> i64 {
 fn phase7_git_adapter_golden_vectors_lock_configuration_and_patch() {
     assert_eq!(
         hex_digest(&phase7_git_adapter_configuration_digest_v1()),
-        "sha256:d8c961bf70af8b467fdb5a53fa665f9eb5240f4610f71d7089c0b934ef4f7b11"
+        "sha256:e9e1497985b08bdad8770962213acfbdc0acbdc3c836a68c6de310cfcbae1d93"
     );
     assert_eq!(
         patch_digest(),

@@ -1,0 +1,49 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_reference_adapter_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-reference-adapter-v1",
+  "packet_id": "P11-D4C1",
+  "status": "experimental_source_only_reference_adapter",
+  "phase11_complete": false,
+  "production_supported": false,
+  "real_docker_proof": false,
+  "adapter_boundary": {
+    "entrypoint": "lnsat-git-reference",
+    "stdin": "one_canonical_p11_d4a_payload",
+    "arguments": ["--repository", "profile_bound_target_mount_path"],
+    "repository_argument_binding": "exact_retained_p11_d4a_profile_mount_path",
+    "git_executable": "/usr/bin/git",
+    "git_lazy_fetch": "disabled",
+    "git_trace2": "disabled",
+    "self_executable_digest": "must_match_approved_profile_binding",
+    "approved_host_path": "must_differ_from_container_mount_path",
+    "repository_identity": "marker_object_format_head_base_exact",
+    "temporary_index": "private_directory_inside_mounted_git_storage",
+    "stdout": "one_bound_p11_d3_completed_frame",
+    "stderr": "always_empty",
+    "failure": "nonzero_without_stderr_and_any_partial_stdout_is_invalid"
+  },
+  "required_results": {
+    "consequences_maximum": 1,
+    "exact_patch_tree_paths_and_metadata": true,
+    "direct_approved_host_path_execution": "rejected",
+    "profile_mount_path_substitution": "rejected_before_git",
+    "mount_identity_substitution": "rejected",
+    "private_index_cleanup": "required",
+    "receipt_persisted_by_adapter": false
+  },
+  "source_proof": {
+    "real_docker_binary_daemon_or_socket": false,
+    "image_pull_build_or_run": false,
+    "host_process_and_disposable_git_fixture_only": true
+  },
+  "hard_stops": [
+    "no_real_docker_executable_daemon_or_socket",
+    "no_image_pull_build_run_or_publication",
+    "no_agent_docker_socket_access",
+    "no_production_or_user_repository",
+    "no_git_network_push_fetch_remote_hook_or_unrestricted_shell",
+    "no_runtime_retry_from_outcome_unknown",
+    "no_package_release_deploy_production_or_support_claim"
+  ],
+  "next_gate": "separately_authorized_real_disposable_docker_image_and_runtime_proof"
+}

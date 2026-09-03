@@ -17,13 +17,140 @@ use serde_json::Value;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::net::{Ipv4Addr, Shutdown, SocketAddr, TcpListener};
-use std::os::unix::fs::{FileTypeExt, PermissionsExt, symlink};
+use std::os::unix::fs::{DirBuilderExt, FileTypeExt, PermissionsExt, symlink};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
-use std::sync::mpsc;
+use std::sync::{Barrier, mpsc};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+#[test]
+fn test_directory_retries_collision_without_touching_occupied_candidate() {
+    let root = TestDirectory::new("fixture-collision");
+    let occupied = root.path.join("occupied");
+    fs::create_dir(&occupied).expect("occupied directory must create");
+    let sentinel = occupied.join("sentinel");
+    fs::write(&sentinel, b"preserve occupied candidate").expect("sentinel must write");
+    fs::set_permissions(&occupied, fs::Permissions::from_mode(0o750))
+        .expect("occupied permissions must configure");
+    let fresh = root.path.join("fresh");
+    let mut attempts = Vec::new();
+    let directory = TestDirectory::create_with_candidates(|attempt| {
+        attempts.push(attempt);
+        match attempt {
+            0 => occupied.clone(),
+            1 => fresh.clone(),
+            _ => panic!("second candidate must succeed"),
+        }
+    })
+    .expect("fresh candidate must create");
+
+    assert_eq!(attempts, vec![0, 1]);
+    assert_eq!(directory.path, fresh);
+    assert_eq!(
+        fs::symlink_metadata(&fresh).unwrap().permissions().mode() & 0o7777,
+        0o700
+    );
+    drop(directory);
+    assert!(
+        !fresh.exists(),
+        "only the owned fresh directory must be removed"
+    );
+    assert_eq!(fs::read(&sentinel).unwrap(), b"preserve occupied candidate");
+    assert_eq!(
+        fs::symlink_metadata(&occupied)
+            .unwrap()
+            .permissions()
+            .mode()
+            & 0o7777,
+        0o750
+    );
+}
+
+#[test]
+fn test_directory_collision_budget_preserves_occupied_candidate() {
+    let occupied = TestDirectory::new("fixture-exhausted");
+    let sentinel = occupied.path.join("sentinel");
+    fs::write(&sentinel, b"preserve exhausted candidate").expect("sentinel must write");
+    let mut attempts = 0;
+    let error = TestDirectory::create_with_candidates(|_| {
+        attempts += 1;
+        occupied.path.clone()
+    })
+    .err()
+    .expect("occupied candidates must exhaust the bounded budget");
+
+    assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
+    assert_eq!(attempts, TestDirectory::MAX_CREATION_ATTEMPTS);
+    assert_eq!(
+        fs::read(&sentinel).unwrap(),
+        b"preserve exhausted candidate"
+    );
+    assert_eq!(
+        fs::symlink_metadata(&occupied.path)
+            .unwrap()
+            .permissions()
+            .mode()
+            & 0o7777,
+        0o700
+    );
+}
+
+#[test]
+fn test_directory_stops_on_non_collision_error() {
+    let root = TestDirectory::new("fixture-missing-parent");
+    let missing = root.path.join("missing");
+    let mut attempts = 0;
+    let error = TestDirectory::create_with_candidates(|_| {
+        attempts += 1;
+        missing.join("candidate")
+    })
+    .err()
+    .expect("missing parent must fail without a collision retry");
+
+    assert_eq!(error.kind(), io::ErrorKind::NotFound);
+    assert_eq!(attempts, 1);
+    assert!(!missing.exists());
+}
+
+#[test]
+fn test_directory_parallel_collisions_allocate_distinct_private_directories() {
+    let root = TestDirectory::new("fixture-parallel");
+    let barrier = Barrier::new(3);
+    let directories = thread::scope(|scope| {
+        let handles: Vec<_> = (0..3)
+            .map(|_| {
+                scope.spawn(|| {
+                    barrier.wait();
+                    TestDirectory::create_with_candidates(|attempt| {
+                        root.path.join(format!("candidate-{attempt}"))
+                    })
+                    .expect("parallel allocation must find a fresh candidate")
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .map(|handle| handle.join().expect("allocation thread must join"))
+            .collect::<Vec<_>>()
+    });
+    let mut paths: Vec<_> = directories
+        .iter()
+        .map(|directory| directory.path.clone())
+        .collect();
+    paths.sort();
+    paths.dedup();
+    assert_eq!(paths.len(), 3);
+    for path in &paths {
+        assert_eq!(
+            fs::symlink_metadata(path).unwrap().permissions().mode() & 0o7777,
+            0o700
+        );
+    }
+    drop(directories);
+    assert_eq!(fs::read_dir(&root.path).unwrap().count(), 0);
+}
 
 #[test]
 fn socket_parent_mode_0700_and_socket_mode_0600_at_bind() {
@@ -558,17 +685,40 @@ struct TestDirectory {
 }
 
 impl TestDirectory {
+    const MAX_CREATION_ATTEMPTS: usize = 32;
+
     fn new(label: &str) -> Self {
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system time must follow epoch")
             .as_nanos();
         let temp_root = fs::canonicalize("/tmp").expect("temporary root must canonicalize");
-        let path = temp_root.join(format!("lnsat-{label}-{}-{nonce}", std::process::id()));
-        fs::create_dir(&path).expect("test directory must be created");
-        fs::set_permissions(&path, fs::Permissions::from_mode(0o700))
-            .expect("test directory must be private");
-        Self { path }
+        Self::create_with_candidates(|attempt| {
+            temp_root.join(format!(
+                "lnsat-{label}-{}-{nonce}-{attempt}",
+                std::process::id()
+            ))
+        })
+        .expect("test directory must be created")
+    }
+
+    fn create_with_candidates(mut candidate: impl FnMut(usize) -> PathBuf) -> io::Result<Self> {
+        for attempt in 0..Self::MAX_CREATION_ATTEMPTS {
+            let path = candidate(attempt);
+            match fs::DirBuilder::new().mode(0o700).create(&path) {
+                Ok(()) => {
+                    let directory = Self { path };
+                    fs::set_permissions(&directory.path, fs::Permissions::from_mode(0o700))?;
+                    return Ok(directory);
+                }
+                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+                Err(error) => return Err(error),
+            }
+        }
+        Err(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "test directory collision budget exhausted",
+        ))
     }
 }
 

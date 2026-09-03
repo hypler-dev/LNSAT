@@ -60,8 +60,8 @@
     "idempotency_key": "idempotency:p11-d3:fixture",
     "attempt_sequence": 1,
     "adapter_result_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "expected_request_digest": "sha256:f4137d1e69b58af713246afa6398956a3628fb61f370553970712ef1eecd5488",
-    "expected_result_frame_sha256": "sha256:53b743adbc69db1721abc01f1658a749568cd260be71b2ece9f49526d3595b97"
+    "expected_request_digest": "sha256:280e4e7709db84dbb2538c1ae0ed468ffbaef63abca397a384bbedba44bbf867",
+    "expected_result_frame_sha256": "sha256:a4ae448af9223d623d03bcf6a36ef97057b918803ddab1f2c29f046b3acea0a5"
   },
   "ambiguous_outcome": {
     "wire_outcome": "outcome_unknown",
