@@ -1,0 +1,135 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0002-independent-implementation-review-6965b7bf",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["P11-D4C1"],
+  "base_revision": "6ddc12fc6ce10c441010cabd5776bfee005b015c",
+  "reviewed_revision": "6965b7bf6113e05d9f70d86b5caf2e6daa85c7d7",
+  "reviewed_tree_oid": "a129e05854a524ed10246053f499c3dcfb3833b3",
+  "diff_sha256": "sha256:942a5004f670b56c058af2e4beaedbb2ff5f22967402121aebe75a28a5e8409a",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:2821403b5b7df6be3b581fb0beb8d6ffe304bd738a0f79c3d39d1cd973a0d6ed"
+    },
+    {
+      "path": "apps/api/package.json",
+      "sha256": "sha256:0cb89722c9676e72bcc35a8c9822344ff882796d206dbecb5f5c8e5cb9fdcb7e"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:e2b2fee34b8262a912d20be1fa294e682db008c2c05506e77e3b00307544d37b"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_git_adapter.rs",
+      "sha256": "sha256:c45f4de207b026ee2c0196470452091ed6159fd96c535e04c49691878a93a14a"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/phase7_git_adapter.rs",
+      "sha256": "sha256:8ff6543afa2dd1d666099b3b03cb902d8ee74121c03c8c8433f7137cd47863ac"
+    },
+    {
+      "path": "crates/lnsatd/README.md",
+      "sha256": "sha256:57ba654ac5290f10a64650cde953e60676c0c36aea6fba0ab23c69421c1de1fe"
+    },
+    {
+      "path": "crates/lnsatd/src/bin/lnsat-git-reference.rs",
+      "sha256": "sha256:66143a6a56f68bb662fd556cb0f273bb016b16dc7ad96228108e0136c76fdc2d"
+    },
+    {
+      "path": "crates/lnsatd/src/docker_local_execution_payload.rs",
+      "sha256": "sha256:5f9e906cf33abbbf87b5d16436fb8ea7f08dd60a0bdfe1e1e73eceb677370043"
+    },
+    {
+      "path": "crates/lnsatd/src/docker_local_supervisor.rs",
+      "sha256": "sha256:c6da40e996018a91890d884fa9bde6e6a550e6c8b979338e7ae32be9eac5cfa4"
+    },
+    {
+      "path": "crates/lnsatd/src/runtime_profile.rs",
+      "sha256": "sha256:79490e77d7c445aa9b7af3e9a662673c081a4be73d7a66d367f760f3569ed5c9"
+    },
+    {
+      "path": "crates/lnsatd/tests/docker_local_execution_payload.rs",
+      "sha256": "sha256:3ee66eb8dcfc78c274747fd107ec969aa910c9e231fb815bfaad5434bf9e312d"
+    },
+    {
+      "path": "crates/lnsatd/tests/docker_local_reference_adapter.rs",
+      "sha256": "sha256:dabf65ce860fa0882318380cd160e5a2f4f7e8334751280b6237ab889ae6c0af"
+    },
+    {
+      "path": "crates/lnsatd/tests/docker_local_runtime_profile.rs",
+      "sha256": "sha256:44a7fe5ba4be70076049022c748c21b21ad31b541b1f19ddcab768ac92e89570"
+    },
+    {
+      "path": "crates/lnsatd/tests/docker_local_supervisor.rs",
+      "sha256": "sha256:2bcc2bc732217ee7e5ea6f2c7fbb41927f389f63518696cdf275f25adb529c4d"
+    },
+    {
+      "path": "crates/lnsatd/tests/product_configuration_cli.rs",
+      "sha256": "sha256:af98f159d82154721fe705fb1fbeaefb8331dc0ec00cad3a4dd7f58b4e69f233"
+    },
+    {
+      "path": "crates/lnsatd/tests/product_status_health_cli.rs",
+      "sha256": "sha256:95c5a28d72746dc3832a6b4c23c05176c05260be87b33679f447f253fc7b272e"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:76763e219a659204808e5d81c02b0f6314450a46719e4c2ae25b64dffd67f719"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:74cf1fea655d48f77d23f84dc7c963e9de07aa0f83fc3705611b587c6e0bf09e"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:cb2b3641024105a041f39c520d9228a0ba45d9a831acf7fc5c43afb17374426f"
+    },
+    {
+      "path": "docs/WHY_PUBLIC_NOW.md",
+      "sha256": "sha256:39fe8fada0d2cd46e89c9793be4c6172e8ad8a0c3d5f81ff570aeadcbd3413c9"
+    },
+    {
+      "path": "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md",
+      "sha256": "sha256:945981b9d1c5cf438827cc6ff6bae012bdcdc8a9dd1617241ea028ecbf7c0743"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:c8305b814b02e6b4e1b9dd00d462e9d0d3bb033e524933693483b3c0d201fc27"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:d2ff403756eb3b1db5acc3100134a5fc69585bef4879cb15d56217710d88b9cd"
+    },
+    {
+      "path": "fixtures/contracts/phase11-docker-local-adapter-process-protocol-v1.json",
+      "sha256": "sha256:7d427d00086aafe4ef84546d646fc2762d1d08db2b123ea5f86a50002ad21526"
+    },
+    {
+      "path": "fixtures/contracts/phase11-docker-local-execution-payload-v1.json",
+      "sha256": "sha256:1b70c1dd94de8b974de4fc12f7ece78cf5830ab3162429dbcd62f51641677c4b"
+    },
+    {
+      "path": "fixtures/contracts/phase11-docker-local-reference-adapter-v1.json",
+      "sha256": "sha256:6172265ffbbaea04ece1748d8f601375f3926f63712b9efd4dd7a34e22984e0e"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:5560572bc634aee57f2c3b2bf7e0ba223b17b47ca35c526c9171407eccc3e6ea"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:5d269c9f5e465080be0eee73f821c368d5dbc44b8e30d7fed06b8a8d4b4c0247"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/source_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex read-only sub-agent review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
