@@ -18,7 +18,7 @@ use lnsat_store::{
     validate_phase11_disposable_git_target_v1,
 };
 use sha2::{Digest, Sha256};
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fs::{self, File, Metadata, OpenOptions};
 use std::io::{Read, Write};
@@ -36,6 +36,8 @@ use zeroize::Zeroizing;
 /// Domain identity for one host-revalidated adapter result.
 pub const DOCKER_LOCAL_SUPERVISED_RESULT_CONTRACT_ID_V1: &str =
     "lnsat.docker_local_supervised_git_result.v1";
+/// Exact contract identity for canonical source-only Docker launch invariants.
+pub const DOCKER_LOCAL_LAUNCH_CONTRACT_ID_V1: &str = "lnsat.docker_local_launch_contract.v1";
 /// Sole argument identifying the profile-bound repository mount inside the adapter.
 pub const DOCKER_LOCAL_ADAPTER_REPOSITORY_ARGUMENT_V1: &str = "--repository";
 /// Maximum host executable accepted for digest verification.
@@ -44,6 +46,20 @@ pub const MAX_DOCKER_LOCAL_SUPERVISOR_EXECUTABLE_BYTES_V1: u64 = 512 * 1024 * 10
 pub const DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1: u64 = 5_000;
 
 const RESULT_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-supervised-git-result.v1";
+const LAUNCH_CONTRACT_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-launch-contract.v1";
+const LAUNCH_TEMPLATE_DOCKER_HOST_V1: &str = "{docker_host}";
+const LAUNCH_TEMPLATE_DOCKER_CONFIG_V1: &str = "{private_docker_config_path}";
+const LAUNCH_TEMPLATE_CID_PATH_V1: &str = "{private_cidfile_path}";
+const LAUNCH_TEMPLATE_REPOSITORY_V1: &str = "{disposable_repository_path}";
+const LAUNCH_TEMPLATE_CONTAINER_NAME_V1: &str = "{container_name}";
+
+/// Exact process invariants outside argv, bound into every launch digest.
+pub const DOCKER_LOCAL_LAUNCH_PROCESS_INVARIANTS_V1: [&str; 4] = [
+    "environment=clear",
+    "stdin=piped",
+    "stdout=piped",
+    "stderr=piped",
+];
 
 /// Exact inputs for one supervised isolated Docker exchange.
 #[derive(Clone, Copy)]
@@ -102,6 +118,83 @@ impl fmt::Display for DockerLocalSupervisorErrorV1 {
 }
 
 impl std::error::Error for DockerLocalSupervisorErrorV1 {}
+
+/// Computes opaque, deterministic launch-contract identity without runtime I/O.
+///
+/// The digest binds one already-loaded schema-2 profile and its supervisor
+/// executable identities. It does not expose the Docker host, inspect files,
+/// open sockets, create configuration, or launch a process.
+///
+/// # Errors
+///
+/// Rejects profiles that are not the exact schema-2 supervisor shape.
+pub fn docker_local_launch_contract_digest_v1(
+    loaded: &LoadedDockerLocalRuntimeProfileV1,
+) -> Result<[u8; 32], DockerLocalSupervisorErrorV1> {
+    let profile = loaded.profile();
+    let supervisor = loaded
+        .supervisor()
+        .filter(|_| profile.schema_version == 2)
+        .ok_or(DockerLocalSupervisorErrorV1::InputInvalid)?;
+    let argv = docker_local_launch_contract_argv_template_v1(loaded)?;
+    let process_invariants = DOCKER_LOCAL_LAUNCH_PROCESS_INVARIANTS_V1
+        .iter()
+        .map(|invariant| invariant.as_bytes())
+        .collect::<Vec<_>>();
+    let profile_digest = loaded.profile_digest();
+    let authority_configuration_digest = loaded.authority_configuration_digest();
+    let mut fields = vec![
+        DOCKER_LOCAL_LAUNCH_CONTRACT_ID_V1.as_bytes(),
+        DOCKER_LOCAL_SUPERVISED_RESULT_CONTRACT_ID_V1.as_bytes(),
+        profile.contract_id.as_bytes(),
+        profile.contract_version.as_bytes(),
+        profile.profile_id.as_bytes(),
+        profile.profile_family.as_bytes(),
+        &profile_digest,
+        &authority_configuration_digest,
+        profile.adapter.adapter_ref.as_bytes(),
+        profile.adapter.version.as_bytes(),
+        profile.adapter_executable_digest.as_bytes(),
+        supervisor.docker_executable_digest.as_bytes(),
+        supervisor.verifier_git_executable_digest.as_bytes(),
+        supervisor.docker_host.as_bytes(),
+    ];
+    fields.extend(process_invariants);
+    fields.extend(argv.iter().map(String::as_bytes));
+    Ok(digest_fields_v1(LAUNCH_CONTRACT_DIGEST_DOMAIN_V1, &fields))
+}
+
+/// Returns exact normalized argv template hashed by the launch contract.
+///
+/// Runtime-only endpoint, private-path, repository, and container values use
+/// fixed placeholders. All fixed security flags and profile-controlled values
+/// come from the same argument builder used by supervised execution.
+///
+/// # Errors
+///
+/// Rejects profiles that are not the exact schema-2 supervisor shape.
+pub fn docker_local_launch_contract_argv_template_v1(
+    loaded: &LoadedDockerLocalRuntimeProfileV1,
+) -> Result<Vec<String>, DockerLocalSupervisorErrorV1> {
+    if loaded.profile().schema_version != 2 || loaded.supervisor().is_none() {
+        return Err(DockerLocalSupervisorErrorV1::InputInvalid);
+    }
+    docker_run_argument_values_v1(
+        loaded,
+        OsStr::new(LAUNCH_TEMPLATE_DOCKER_HOST_V1),
+        OsStr::new(LAUNCH_TEMPLATE_DOCKER_CONFIG_V1),
+        OsStr::new(LAUNCH_TEMPLATE_CID_PATH_V1),
+        LAUNCH_TEMPLATE_REPOSITORY_V1,
+        OsStr::new(LAUNCH_TEMPLATE_CONTAINER_NAME_V1),
+    )
+    .into_iter()
+    .map(|argument| {
+        argument
+            .into_string()
+            .map_err(|_| DockerLocalSupervisorErrorV1::InputInvalid)
+    })
+    .collect()
+}
 
 /// Runs one exact isolated Docker adapter exchange.
 ///
@@ -514,31 +607,49 @@ fn docker_run_arguments_v1(
     repository: &Path,
     container_name: &str,
 ) -> Result<Vec<OsString>, DockerLocalSupervisorErrorV1> {
+    let repository = repository
+        .to_str()
+        .ok_or(DockerLocalSupervisorErrorV1::TargetRejected)?;
+    Ok(docker_run_argument_values_v1(
+        loaded,
+        OsStr::new(docker_host),
+        docker_config.as_os_str(),
+        cid_path.as_os_str(),
+        repository,
+        OsStr::new(container_name),
+    ))
+}
+
+fn docker_run_argument_values_v1(
+    loaded: &LoadedDockerLocalRuntimeProfileV1,
+    docker_host: &OsStr,
+    docker_config: &OsStr,
+    cid_path: &OsStr,
+    repository: &str,
+    container_name: &OsStr,
+) -> Vec<OsString> {
     let profile = loaded.profile();
     let limits = &profile.limits;
     let isolation = &profile.isolation;
     let filesystem = &profile.filesystem;
     let mount = format!(
         "type=bind,source={},target={},rw,bind-propagation=rprivate",
-        repository
-            .to_str()
-            .ok_or(DockerLocalSupervisorErrorV1::TargetRejected)?,
-        filesystem.target_mount_path,
+        repository, filesystem.target_mount_path,
     );
     let cpu_quota = u64::from(limits.cpu_millis) * 100;
-    Ok(vec![
+    vec![
         "--host".into(),
-        docker_host.into(),
+        docker_host.to_owned(),
         "--config".into(),
-        docker_config.as_os_str().to_owned(),
+        docker_config.to_owned(),
         "run".into(),
         "--interactive".into(),
         "--cidfile".into(),
-        cid_path.as_os_str().to_owned(),
+        cid_path.to_owned(),
         "--pull=never".into(),
         "--rm".into(),
         "--name".into(),
-        container_name.into(),
+        container_name.to_owned(),
         "--network=none".into(),
         "--ipc=none".into(),
         "--read-only".into(),
@@ -559,7 +670,7 @@ fn docker_run_arguments_v1(
         profile.image_digest.clone().into(),
         DOCKER_LOCAL_ADAPTER_REPOSITORY_ARGUMENT_V1.into(),
         filesystem.target_mount_path.clone().into(),
-    ])
+    ]
 }
 
 fn container_name_v1(operation_id: &str) -> Option<String> {
@@ -976,4 +1087,44 @@ fn digest_fields_v1(domain: &[u8], fields: &[&[u8]]) -> [u8; 32] {
         hasher.update(field);
     }
     hasher.finalize().into()
+}
+
+#[cfg(all(test, unix))]
+mod launch_argument_tests_v1 {
+    use super::*;
+    use crate::runtime_profile::parse_docker_local_runtime_profile_v1;
+    use serde_json::{Value, json};
+    use std::os::unix::ffi::OsStringExt as _;
+
+    const PROFILE_FIXTURE: &[u8] =
+        include_bytes!("../../../fixtures/contracts/phase11-docker-local-profile-v1.json");
+
+    #[test]
+    fn runtime_argv_preserves_non_utf8_private_paths() {
+        let mut value: Value =
+            serde_json::from_slice(PROFILE_FIXTURE).expect("profile fixture JSON");
+        value["schema_version"] = json!(2);
+        value["supervisor"] = json!({
+            "docker_executable_digest": format!("sha256:{}", "c".repeat(64)),
+            "verifier_git_executable_digest": format!("sha256:{}", "d".repeat(64)),
+            "docker_host": "unix:///private/tmp/lnsat-runtime-proof.sock",
+        });
+        let loaded = parse_docker_local_runtime_profile_v1(
+            &serde_json::to_vec(&value).expect("profile bytes"),
+        )
+        .expect("schema2 profile");
+        let docker_config = OsString::from_vec(b"/private/tmp/config-\x80".to_vec());
+        let cid_path = OsString::from_vec(b"/private/tmp/cid-\x81".to_vec());
+        let args = docker_run_argument_values_v1(
+            &loaded,
+            OsStr::new("unix:///private/tmp/lnsat-runtime-proof.sock"),
+            &docker_config,
+            &cid_path,
+            "/private/tmp/disposable-repository",
+            OsStr::new("lnsat-test-container"),
+        );
+
+        assert_eq!(args[3], docker_config);
+        assert_eq!(args[7], cid_path);
+    }
 }

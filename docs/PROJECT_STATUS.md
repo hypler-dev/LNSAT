@@ -102,6 +102,11 @@ process and marked temporary Git fixtures. No real Docker binary/daemon/socket, 
 production repository, deployment, release, package, or support exists. Real
 Docker image/runtime proof, package, deploy, production, and support claims
 remain separately closed. Phase 11 remains incomplete.
+One real-Docker proof-readiness contract now derives canonical source-only
+profile, authority-configuration, adapter, executable, image, and launch
+identity plus eight future proof cases. Its tests and repository validator use
+no Docker process or socket; no runtime evidence exists. It grants no execution,
+receipt, route, production, package, deployment, or support authority.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -934,6 +939,9 @@ oversized-input rejection, fail-closed partial output, canonical result output,
 and private-index cleanup after success and failure without Docker access. No
 real Docker proof or support claim exists, and the separate real disposable
 Docker image/runtime gate remains closed.
+The proof-readiness plan can now freeze exact future identities and negative
+cases without runtime I/O. This remains source design only; no runtime evidence
+exists and Phase 11 remains incomplete.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit Load/Refresh action performs only relative same-origin GETs with the

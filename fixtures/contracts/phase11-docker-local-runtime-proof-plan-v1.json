@@ -1,0 +1,46 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_runtime_proof_plan_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-runtime-proof-plan-v1",
+  "status": "proposed_source_only_no_runtime_evidence",
+  "phase11_complete": false,
+  "execution_authorized": false,
+  "real_docker_proof": false,
+  "production_supported": false,
+  "contract": {
+    "contract_id": "lnsat.docker_local_runtime_proof_plan.v1",
+    "output": "canonical_source_only_proof_plan_digest",
+    "side_effects": [],
+    "runtime_execution": false
+  },
+  "required_bindings": [
+    "profile_digest",
+    "authority_configuration_digest",
+    "adapter_ref",
+    "adapter_version",
+    "adapter_executable_digest",
+    "image_digest",
+    "launch_contract_digest"
+  ],
+  "required_case_ids": [
+    "real_runtime_one_consequence_and_bound_receipt",
+    "exact_replay_metadata_only_no_redispatch",
+    "post_consequence_unknown_survives_restart",
+    "reconciliation_host_git_inspection_only",
+    "unchanged_target_unknown_without_receipt",
+    "isolation_no_socket_credentials_or_network",
+    "cleanup_verified_container_id_only",
+    "runtime_and_image_identity_stable"
+  ],
+  "hard_stops": [
+    "no_docker_access_or_image_operation_in_readiness_packet",
+    "no_agent_docker_socket_access",
+    "no_production_or_user_repository",
+    "no_git_push_fetch_remote_hook_or_unrestricted_shell",
+    "no_runtime_retry_from_outcome_unknown",
+    "no_route_config_or_public_selector",
+    "no_receipt_or_runtime_result_persistence",
+    "no_package_release_deploy_publication_or_support_claim",
+    "no_phase11_completion_claim"
+  ],
+  "next_gate": "separately_authorized_real_disposable_docker_image_and_runtime_proof"
+}

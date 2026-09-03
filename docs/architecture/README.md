@@ -90,6 +90,7 @@ publication order is controlled by [product build sequence](../PRODUCT_BUILD_SEQ
 - [Phase 9 API-backed Control Center](PHASE_9_API_BACKED_CONTROL_CENTER.md)
 - [Phase 10 product-surface contract spine](PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
 - [Phase 10 product-surface conformance freeze](PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md)
+- [Phase 11 real disposable Docker proof readiness](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 
 These files describe experimental local foundations. Local owner, append-only
 credential rotation, permanent non-owner disablement, hash-only session

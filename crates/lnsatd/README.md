@@ -21,6 +21,10 @@ Current behavior:
   path remap, executes bounded fixed Git plumbing with lazy fetch and Trace2
   disabled, and emits one canonical D3 result frame; hermetic tests invoke it
   only as a host child process and open no Docker surface or image;
+- derives one source-only real-runtime proof plan and opaque launch-contract
+  digest from an already validated schema-2 profile; this metadata opens no
+  process, endpoint, socket, image, repository consequence, receipt, route, or
+  execution authority;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before

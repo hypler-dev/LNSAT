@@ -218,6 +218,14 @@ deployment, release, package, or support exists. Phase 11 remains incomplete;
 a later separately authorized gate owns real disposable Docker image/runtime
 proof.
 
+A source-only proof-readiness plan now defines one canonical, side-effect-free
+identity bundle for the loaded schema-2 profile and freezes eight required
+future proof cases. Repository validation covers parsing, canonicalization,
+binding drift, closed status, security negatives, and documentation alignment.
+It performs no Docker process, socket, daemon, or image operation and carries no
+runtime result, receipt, production, package, deployment, or support authority.
+Only a separately authorized served-chain run can create real runtime evidence.
+
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.
 

@@ -71,6 +71,12 @@ bounded Git consequence, and exact D3 result framing under hermetic host-process
 daemon, socket, or image operation. Phase 11 remains incomplete. Only the
 separately authorized real disposable Docker image/runtime proof remains
 required in this runtime lane.
+The source-only real-Docker proof-readiness contract now freezes exact profile,
+authority-configuration, adapter, executable, image, and launch-contract
+bindings plus eight future proof-case identities. Its parser, fixture, hermetic
+negative tests, and repository check perform no runtime I/O and do not authorize
+execution. This checkpoint does not complete Phase 11; real disposable Docker
+image/runtime evidence remains separately required.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -616,6 +622,9 @@ pre-output failure, fail-closed partial output, and private-index cleanup
 without Docker access. Phase 11 remains incomplete;
 only a separately authorized real disposable Docker image/runtime proof remains
 next in this runtime lane.
+The source-only real-Docker proof-readiness contract may prepare that gate by
+canonicalizing identity bindings and required proof cases, but it does not
+complete Phase 11, access Docker, or establish runtime evidence.
 
 Exit: target-neutral source contracts for commands, configuration, paths,
 version/build manifests, diagnostics, and non-root runtime behavior pass.
@@ -689,6 +698,9 @@ marked temporary Git target only. No real
 Docker binary/daemon/socket, image pull/build/run, production repository,
 deployment, release, package, or support exists. A separate real image/runtime
 proof gate remains required.
+The checked-in proof-readiness plan binds only source metadata and future case
+requirements. It grants no Docker access, target consequence, receipt,
+production authority, or support status.
 
 Required operation identity before dispatch:
 
