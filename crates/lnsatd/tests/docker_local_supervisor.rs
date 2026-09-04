@@ -49,6 +49,31 @@ fn supervisor_fixture_locks_source_only_boundary_and_error_codes() {
     assert_eq!(fixture["phase11_complete"], false);
     assert_eq!(fixture["production_supported"], false);
     assert_eq!(fixture["success_boundary"]["receipt_persisted"], false);
+    assert_eq!(
+        fixture["success_boundary"]["verified_cleanup_required"],
+        true
+    );
+    assert_eq!(
+        fixture["success_boundary"]["cleanup_uncertainty"],
+        "outcome_unknown"
+    );
+    assert_eq!(
+        fixture["launch_boundary"]["automatic_container_remove"],
+        false
+    );
+    assert_eq!(fixture["launch_boundary"]["cleanup_retry"], false);
+    assert_eq!(
+        fixture["launch_boundary"]["daemon_identity"],
+        "bounded_prelaunch_version_info_rootless_posture_baseline_revalidated_postlaunch_before_inspect_remove_and_after_remove"
+    );
+    assert_eq!(
+        fixture["launch_boundary"]["daemon_identity_authority"],
+        "drift_detection_only_later_proof_authority_must_preapprove_initial_fingerprint"
+    );
+    assert_eq!(
+        fixture["launch_boundary"]["cleanup_inspection"],
+        "bounded_exact_cid_name_operation_and_launch_digest_labels"
+    );
     assert_eq!(fixture["profile_requirement"]["schema_version"], 2);
     assert_eq!(
         fixture["profile_requirement"]["schema_version_1_launch_allowed"],
@@ -97,12 +122,13 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
     );
 
     let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
-    assert_eq!(invocations.matches("BEGIN\n").count(), 1);
+    assert_eq!(invocations.matches("BEGIN\n").count(), 13);
     for required in [
         "--interactive",
         "--cidfile",
         "--pull=never",
-        "--rm",
+        "--label",
+        "io.lnsat.phase11.operation-id=opn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "--network=none",
         "--ipc=none",
         "--read-only",
@@ -142,6 +168,31 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
     ));
     assert_eq!(invocations.matches("--repository\n").count(), 1);
     assert!(invocations.contains(fixture.repository.to_str().expect("UTF-8 path")));
+    assert_eq!(invocations.matches("version\n").count(), 5);
+    assert_eq!(invocations.matches("info\n").count(), 5);
+    assert_eq!(invocations.matches("inspect\n").count(), 1);
+    assert_eq!(invocations.matches("rm\n").count(), 1);
+    let calls = invocation_calls(&invocations);
+    assert_eq!(
+        calls
+            .iter()
+            .map(|call| invocation_command(call))
+            .collect::<Vec<_>>(),
+        [
+            "version", "info", "run", "version", "info", "version", "info", "inspect", "version",
+            "info", "rm", "version", "info"
+        ]
+    );
+    assert!(calls[7].contains("inspect\n--type\ncontainer\n--format\n"));
+    assert!(calls[7].contains("io.lnsat.phase11.operation-id"));
+    assert!(calls[7].contains("io.lnsat.phase11.launch-contract-digest"));
+    assert!(
+        calls[7]
+            .ends_with("--\ncccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n")
+    );
+    assert!(calls[10].contains(
+        "rm\n--force\n--volumes\n--\ncccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n"
+    ));
 }
 
 #[test]
@@ -163,7 +214,7 @@ fn post_spawn_result_mismatch_is_unknown_even_when_consequence_exists() {
         fixture.expected_commit
     );
     let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
-    assert_eq!(invocations.matches("BEGIN\n").count(), 2);
+    assert_eq!(invocations.matches("BEGIN\n").count(), 13);
     assert!(invocations.lines().any(|line| line == "rm"));
 }
 
@@ -177,7 +228,7 @@ fn timeout_kills_client_requests_cleanup_and_never_reports_non_execution() {
     );
     let elapsed = started.elapsed();
     assert!(
-        elapsed.as_millis() < 5_000,
+        elapsed.as_millis() < 8_000,
         "deadline must include pipe shutdown: {elapsed:?}"
     );
     assert_eq!(
@@ -185,7 +236,7 @@ fn timeout_kills_client_requests_cleanup_and_never_reports_non_execution() {
         fixture.base_commit
     );
     let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
-    assert_eq!(invocations.matches("BEGIN\n").count(), 2);
+    assert_eq!(invocations.matches("BEGIN\n").count(), 11);
     assert!(invocations.lines().any(|line| line == "rm"));
 }
 
@@ -272,16 +323,245 @@ fn nonzero_without_created_container_id_never_requests_cleanup() {
         Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
     );
     let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
-    assert_eq!(invocations.matches("BEGIN\n").count(), 1);
+    assert_eq!(invocations.matches("BEGIN\n").count(), 5);
     assert!(!invocations.lines().any(|line| line == "rm"));
 }
 
-#[derive(Clone, Copy)]
+#[test]
+fn malformed_stderr_oversize_or_nonzero_daemon_observation_rejects_before_run() {
+    for mode in [
+        ScriptMode::DaemonMalformed,
+        ScriptMode::DaemonStderr,
+        ScriptMode::DaemonOversize,
+        ScriptMode::DaemonNonzero,
+        ScriptMode::DaemonRuntimeDuplicate,
+    ] {
+        let fixture = SupervisorFixture::new(mode, 2);
+        assert_eq!(
+            fixture.run(),
+            Err(DockerLocalSupervisorErrorV1::RuntimeUnavailable),
+            "{mode:?}"
+        );
+        let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+        assert_eq!(invocations.matches("version\n").count(), 1, "{mode:?}");
+        assert_eq!(invocations.matches("info\n").count(), 1, "{mode:?}");
+        assert_eq!(invocations.matches("run\n").count(), 0, "{mode:?}");
+        assert_eq!(invocations.matches("inspect\n").count(), 0, "{mode:?}");
+        assert_eq!(invocations.matches("rm\n").count(), 0, "{mode:?}");
+    }
+}
+
+#[test]
+fn malformed_stderr_oversize_nonzero_or_duplicate_daemon_version_rejects_before_info_or_run() {
+    for mode in [
+        ScriptMode::DaemonVersionMalformed,
+        ScriptMode::DaemonVersionStderr,
+        ScriptMode::DaemonVersionOversize,
+        ScriptMode::DaemonVersionNonzero,
+        ScriptMode::DaemonVersionDuplicate,
+    ] {
+        let fixture = SupervisorFixture::new(mode, 2);
+        assert_eq!(
+            fixture.run(),
+            Err(DockerLocalSupervisorErrorV1::RuntimeUnavailable),
+            "{mode:?}"
+        );
+        let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+        assert_eq!(invocations.matches("version\n").count(), 1, "{mode:?}");
+        assert_eq!(invocations.matches("info\n").count(), 0, "{mode:?}");
+        assert_eq!(invocations.matches("run\n").count(), 0, "{mode:?}");
+        assert_eq!(invocations.matches("inspect\n").count(), 0, "{mode:?}");
+        assert_eq!(invocations.matches("rm\n").count(), 0, "{mode:?}");
+    }
+}
+
+#[test]
+fn daemon_drift_after_run_is_unknown_without_inspection_or_removal() {
+    let fixture = SupervisorFixture::new(ScriptMode::DaemonDrift, 2);
+    assert_eq!(
+        fixture.run(),
+        Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
+    );
+    let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+    assert_eq!(invocations.matches("run\n").count(), 1);
+    assert_eq!(invocations.matches("inspect\n").count(), 0);
+    assert_eq!(invocations.matches("rm\n").count(), 0);
+    assert_eq!(invocations.matches("version\n").count(), 3);
+    assert_eq!(invocations.matches("info\n").count(), 3);
+}
+
+#[test]
+fn daemon_drift_at_each_cleanup_observation_never_retries_removal() {
+    for (mode, expected_inspect, expected_remove) in [
+        (ScriptMode::DaemonDriftBeforeInspect, 0, 0),
+        (ScriptMode::DaemonDriftBeforeRemove, 1, 0),
+        (ScriptMode::DaemonDriftAfterRemove, 1, 1),
+    ] {
+        let fixture = SupervisorFixture::new(mode, 2);
+        assert_eq!(
+            fixture.run(),
+            Err(DockerLocalSupervisorErrorV1::OutcomeUnknown),
+            "{mode:?}"
+        );
+        let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+        assert_eq!(
+            invocations.matches("inspect\n").count(),
+            expected_inspect,
+            "{mode:?}"
+        );
+        assert_eq!(
+            invocations.matches("rm\n").count(),
+            expected_remove,
+            "{mode:?}"
+        );
+    }
+}
+
+#[test]
+fn unbound_or_malformed_cleanup_inspection_never_removes_discovered_cid() {
+    for mode in [
+        ScriptMode::InspectWrongOperation,
+        ScriptMode::InspectWrongCid,
+        ScriptMode::InspectNonzero,
+        ScriptMode::InspectDuplicateJson,
+        ScriptMode::InspectUnknownJson,
+        ScriptMode::InspectReorderedJson,
+        ScriptMode::InspectMultilineJson,
+        ScriptMode::InspectWrongName,
+        ScriptMode::InspectWrongDigest,
+        ScriptMode::InspectMissingLabel,
+        ScriptMode::InspectMalformed,
+        ScriptMode::InspectStderr,
+        ScriptMode::InspectOversize,
+    ] {
+        let fixture = SupervisorFixture::new(mode, 2);
+        assert_eq!(
+            fixture.run(),
+            Err(DockerLocalSupervisorErrorV1::OutcomeUnknown),
+            "{mode:?}"
+        );
+        let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+        assert_eq!(invocations.matches("inspect\n").count(), 1, "{mode:?}");
+        assert_eq!(invocations.matches("rm\n").count(), 0, "{mode:?}");
+    }
+}
+
+#[test]
+fn failed_or_unacknowledged_remove_is_unknown_without_retry() {
+    for mode in [
+        ScriptMode::RemoveFailure,
+        ScriptMode::RemoveBadAcknowledgement,
+    ] {
+        let fixture = SupervisorFixture::new(mode, 2);
+        assert_eq!(
+            fixture.run(),
+            Err(DockerLocalSupervisorErrorV1::OutcomeUnknown),
+            "{mode:?}"
+        );
+        let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+        assert_eq!(invocations.matches("inspect\n").count(), 1, "{mode:?}");
+        assert_eq!(invocations.matches("rm\n").count(), 1, "{mode:?}");
+    }
+}
+
+#[test]
+fn malformed_cid_is_unknown_without_inspection_or_removal() {
+    let fixture = SupervisorFixture::new(ScriptMode::MalformedCid, 2);
+    assert_eq!(
+        fixture.run(),
+        Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
+    );
+    let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+    assert_eq!(invocations.matches("inspect\n").count(), 0);
+    assert_eq!(invocations.matches("rm\n").count(), 0);
+}
+
+#[test]
+fn remove_stderr_overflow_or_timeout_is_unknown_without_retry() {
+    for mode in [
+        ScriptMode::RemoveStderr,
+        ScriptMode::RemoveOversize,
+        ScriptMode::RemoveTimeout,
+    ] {
+        let fixture = SupervisorFixture::new(mode, 2);
+        let started = Instant::now();
+        assert_eq!(
+            fixture.run(),
+            Err(DockerLocalSupervisorErrorV1::OutcomeUnknown),
+            "{mode:?}"
+        );
+        let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+        assert_eq!(invocations.matches("inspect\n").count(), 1, "{mode:?}");
+        assert_eq!(invocations.matches("rm\n").count(), 1, "{mode:?}");
+        if matches!(mode, ScriptMode::RemoveTimeout) {
+            assert!(
+                started.elapsed().as_millis() < 11_000,
+                "cleanup deadline exceeded: {:?}",
+                started.elapsed()
+            );
+        }
+    }
+}
+
+#[test]
+fn target_drift_during_daemon_probe_rejects_before_runtime_launch() {
+    let fixture = SupervisorFixture::new(ScriptMode::TargetDriftDuringDaemonProbe, 2);
+    assert_eq!(
+        fixture.run(),
+        Err(DockerLocalSupervisorErrorV1::TargetRejected)
+    );
+    let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
+    assert_eq!(invocations.matches("version\n").count(), 1);
+    assert_eq!(invocations.matches("info\n").count(), 1);
+    assert!(!invocations.contains("run\n"));
+    assert!(!invocations.contains("inspect\n"));
+    assert!(!invocations.contains("rm\n"));
+    assert_eq!(
+        git_text(&fixture.repository, &["rev-parse", "HEAD"]),
+        fixture.base_commit
+    );
+}
+
+#[derive(Clone, Copy, Debug)]
 enum ScriptMode {
     Success,
+    TargetDriftDuringDaemonProbe,
     Timeout,
     Stderr,
     NonzeroNoCid,
+    MalformedCid,
+    InspectWrongOperation,
+    InspectWrongCid,
+    InspectNonzero,
+    InspectDuplicateJson,
+    InspectUnknownJson,
+    InspectReorderedJson,
+    InspectMultilineJson,
+    InspectWrongName,
+    InspectWrongDigest,
+    InspectMissingLabel,
+    InspectMalformed,
+    InspectStderr,
+    InspectOversize,
+    RemoveFailure,
+    RemoveBadAcknowledgement,
+    RemoveStderr,
+    RemoveOversize,
+    RemoveTimeout,
+    DaemonDrift,
+    DaemonDriftBeforeInspect,
+    DaemonDriftBeforeRemove,
+    DaemonDriftAfterRemove,
+    DaemonMalformed,
+    DaemonStderr,
+    DaemonOversize,
+    DaemonNonzero,
+    DaemonRuntimeDuplicate,
+    DaemonVersionMalformed,
+    DaemonVersionStderr,
+    DaemonVersionOversize,
+    DaemonVersionNonzero,
+    DaemonVersionDuplicate,
 }
 
 struct SupervisorFixture {
@@ -596,25 +876,57 @@ fn fake_docker_script(
     result_frame: &Path,
     invocations: &Path,
 ) -> String {
-    let behavior = match mode {
-        ScriptMode::Success => format!(
-            "{git} -C {repository} update-ref refs/heads/main {expected} {base}\n{cat} {result}\n",
-            git = shell_quote(Path::new(GIT_EXECUTABLE)),
-            repository = shell_quote(repository),
-            expected = expected_commit,
-            base = base_commit,
-            cat = shell_quote(Path::new("/bin/cat")),
-            result = shell_quote(result_frame),
-        ),
+    let state = invocations.with_extension("cleanup-state");
+    let daemon_state = invocations.with_extension("daemon-info-count");
+    let run_behavior =
+        fake_run_behavior(mode, repository, base_commit, expected_commit, result_frame);
+    let run_preamble = fake_run_preamble(mode, &state);
+    let inspect_behavior = fake_inspect_behavior(mode);
+    let remove_behavior = fake_remove_behavior(mode);
+    let version_behavior = fake_version_behavior(mode);
+    let info_behavior = if matches!(mode, ScriptMode::TargetDriftDuringDaemonProbe) {
+        format!(
+            "printf 'changed during daemon observation\\n' > {target}\n{}",
+            fake_info_behavior(mode, &daemon_state),
+            target = shell_quote(&repository.join("fixture.txt")),
+        )
+    } else {
+        fake_info_behavior(mode, &daemon_state)
+    };
+    format!(
+        "#!/bin/sh\nset -eu\nprintf 'BEGIN\\n' >> {invocations}\nfor argument in \"$@\"; do printf '%s\\n' \"$argument\" >> {invocations}; done\ncommand=''\nfor argument in \"$@\"; do case \"$argument\" in version|info|run|inspect|rm) command=$argument ;; esac; done\ncase \"$command\" in\n  version)\n    {version_behavior}    ;;\n  info)\n    {info_behavior}    ;;\n  run)\n    {run_preamble}{cat} >/dev/null\n    {run_behavior}\n    ;;\n  inspect)\n    {{ IFS= read -r name; IFS= read -r operation; IFS= read -r launch_digest; }} < {state}\n    {inspect_behavior}    ;;\n  rm)\n    {remove_behavior}    ;;\n  *) exit 1 ;;\nesac\n",
+        invocations = shell_quote(invocations),
+        cat = shell_quote(Path::new("/bin/cat")),
+        run_preamble = run_preamble,
+        run_behavior = run_behavior,
+        state = shell_quote(&state),
+        inspect_behavior = inspect_behavior,
+        remove_behavior = remove_behavior,
+        version_behavior = version_behavior,
+        info_behavior = info_behavior,
+    )
+}
+
+fn fake_run_behavior(
+    mode: ScriptMode,
+    repository: &Path,
+    base_commit: &str,
+    expected_commit: &str,
+    result_frame: &Path,
+) -> String {
+    let consequence = format!(
+        "{git} -C {repository} update-ref refs/heads/main {expected} {base}\n{cat} {result}\n",
+        git = shell_quote(Path::new(GIT_EXECUTABLE)),
+        repository = shell_quote(repository),
+        expected = expected_commit,
+        base = base_commit,
+        cat = shell_quote(Path::new("/bin/cat")),
+        result = shell_quote(result_frame),
+    );
+    match mode {
         ScriptMode::Timeout => format!(
-            "{sleep} 8\n{git} -C {repository} update-ref refs/heads/main {expected} {base}\n{cat} {result}\n",
+            "{sleep} 8\n{consequence}",
             sleep = shell_quote(Path::new("/bin/sleep")),
-            git = shell_quote(Path::new(GIT_EXECUTABLE)),
-            repository = shell_quote(repository),
-            expected = expected_commit,
-            base = base_commit,
-            cat = shell_quote(Path::new("/bin/cat")),
-            result = shell_quote(result_frame),
         ),
         ScriptMode::Stderr => format!(
             "{git} -C {repository} update-ref refs/heads/main {expected} {base}\nprintf '%s\\n' 'secret adapter diagnostic' >&2\n{cat} {result}\n",
@@ -626,20 +938,130 @@ fn fake_docker_script(
             result = shell_quote(result_frame),
         ),
         ScriptMode::NonzeroNoCid => "exit 1\n".to_owned(),
-    };
-    let cid_setup = if matches!(mode, ScriptMode::NonzeroNoCid) {
-        String::new()
+        _ => consequence,
+    }
+}
+
+fn fake_run_preamble(mode: ScriptMode, state: &Path) -> String {
+    if matches!(mode, ScriptMode::NonzeroNoCid) {
+        return "exit 1\n".to_owned();
+    }
+    let container_id = if matches!(mode, ScriptMode::MalformedCid) {
+        "malformed-cid".to_owned()
     } else {
-        format!(
-            "cidfile=''\nprevious=''\nfor argument in \"$@\"; do if [ \"$previous\" = '--cidfile' ]; then cidfile=$argument; fi; previous=$argument; done\n[ -n \"$cidfile\" ]\nprintf '%s\\n' '{}' > \"$cidfile\"\n",
-            "c".repeat(64),
-        )
+        "c".repeat(64)
     };
     format!(
-        "#!/bin/sh\nset -eu\nprintf 'BEGIN\\n' >> {invocations}\nfor argument in \"$@\"; do printf '%s\\n' \"$argument\" >> {invocations}; done\nfor argument in \"$@\"; do if [ \"$argument\" = 'rm' ]; then exit 0; fi; done\n{cid_setup}{cat} >/dev/null\n{behavior}",
-        invocations = shell_quote(invocations),
-        cat = shell_quote(Path::new("/bin/cat")),
+        "cidfile=''\nname=''\noperation=''\nlaunch_digest=''\nprevious=''\nfor argument in \"$@\"; do\n  if [ \"$previous\" = '--cidfile' ]; then cidfile=$argument; fi\n  if [ \"$previous\" = '--name' ]; then name=$argument; fi\n  case \"$argument\" in\n    io.lnsat.phase11.operation-id=*) operation=${{argument#*=}} ;;\n    io.lnsat.phase11.launch-contract-digest=*) launch_digest=${{argument#*=}} ;;\n  esac\n  previous=$argument\ndone\n[ -n \"$cidfile\" ] && [ -n \"$name\" ] && [ -n \"$operation\" ] && [ -n \"$launch_digest\" ]\nprintf '%s\\n' '{container_id}' > \"$cidfile\"\nprintf '%s\\n%s\\n%s\\n' \"$name\" \"$operation\" \"$launch_digest\" > {state}\n",
+        state = shell_quote(state),
     )
+}
+
+fn fake_inspect_behavior(mode: ScriptMode) -> String {
+    let container_id = "c".repeat(64);
+    let exact = || {
+        format!(
+            "printf '{{\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"%s\"}}\\n' \"$name\" \"$operation\" \"$launch_digest\"\n"
+        )
+    };
+    match mode {
+        ScriptMode::InspectWrongCid => format!(
+            "printf '{{\"container_id\":\"{}\",\"container_name\":\"/%s\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"%s\"}}\\n' \"$name\" \"$operation\" \"$launch_digest\"\n",
+            "d".repeat(64)
+        ),
+        ScriptMode::InspectNonzero => "exit 1\n".to_owned(),
+        ScriptMode::InspectDuplicateJson => format!(
+            "printf '{{\"container_id\":\"{container_id}\",\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"%s\"}}\\n' \"$name\" \"$operation\" \"$launch_digest\"\n"
+        ),
+        ScriptMode::InspectUnknownJson => format!(
+            "printf '{{\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"%s\",\"unknown\":true}}\\n' \"$name\" \"$operation\" \"$launch_digest\"\n"
+        ),
+        ScriptMode::InspectReorderedJson => format!(
+            "printf '{{\"operation_id\":\"%s\",\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"launch_contract_digest\":\"%s\"}}\\n' \"$operation\" \"$name\" \"$launch_digest\"\n"
+        ),
+        ScriptMode::InspectMultilineJson => format!(
+            "printf '{{\\n\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"%s\"}}\\n' \"$name\" \"$operation\" \"$launch_digest\"\n"
+        ),
+        ScriptMode::InspectWrongOperation => format!(
+            "printf '{{\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":\"wrong\",\"launch_contract_digest\":\"%s\"}}\\n' \"$name\" \"$launch_digest\"\n"
+        ),
+        ScriptMode::InspectWrongName => format!(
+            "printf '{{\"container_id\":\"{container_id}\",\"container_name\":\"/foreign\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"%s\"}}\\n' \"$operation\" \"$launch_digest\"\n"
+        ),
+        ScriptMode::InspectWrongDigest => format!(
+            "printf '{{\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"wrong\"}}\\n' \"$name\" \"$operation\"\n"
+        ),
+        ScriptMode::InspectMissingLabel => format!(
+            "printf '{{\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":null,\"launch_contract_digest\":\"%s\"}}\\n' \"$name\" \"$launch_digest\"\n"
+        ),
+        ScriptMode::InspectMalformed => "printf '%s\\n' '{'\n".to_owned(),
+        ScriptMode::InspectStderr => {
+            format!("printf '%s\\n' 'inspect diagnostic' >&2\n{}", exact())
+        }
+        ScriptMode::InspectOversize => "printf '%4097d\\n' 0\n".to_owned(),
+        _ => exact(),
+    }
+}
+
+fn fake_remove_behavior(mode: ScriptMode) -> String {
+    let container_id = "c".repeat(64);
+    match mode {
+        ScriptMode::RemoveFailure => "exit 1\n".to_owned(),
+        ScriptMode::RemoveBadAcknowledgement => "printf '%s\\n' 'wrong-container'\n".to_owned(),
+        ScriptMode::RemoveStderr => {
+            format!("printf '%s\\n' 'remove diagnostic' >&2\nprintf '{container_id}\\n'\n")
+        }
+        ScriptMode::RemoveOversize => "printf '%0257d\\n' 0\n".to_owned(),
+        ScriptMode::RemoveTimeout => {
+            format!("{sleep} 12\n", sleep = shell_quote(Path::new("/bin/sleep")))
+        }
+        _ => format!("printf '{container_id}\\n'\n"),
+    }
+}
+
+fn fake_version_behavior(mode: ScriptMode) -> String {
+    let version = "{\"client_version\":\"27.0.0\",\"client_api_version\":\"1.47\",\"server_version\":\"27.0.0\",\"server_api_version\":\"1.47\",\"server_min_api_version\":\"1.24\",\"server_os\":\"linux\",\"server_architecture\":\"amd64\",\"server_kernel_version\":\"6.10.0\",\"server_experimental\":false}";
+    match mode {
+        ScriptMode::DaemonVersionMalformed => "printf '%s\\n' '{'\n".to_owned(),
+        ScriptMode::DaemonVersionStderr => format!(
+            "printf '%s\\n' 'version diagnostic' >&2\nprintf '%s\\n' '{version}'\n"
+        ),
+        ScriptMode::DaemonVersionOversize => "printf '%08193d\\n' 0\n".to_owned(),
+        ScriptMode::DaemonVersionNonzero => "exit 1\n".to_owned(),
+        ScriptMode::DaemonVersionDuplicate => "printf '%s\\n' '{\"client_version\":\"27.0.0\",\"client_version\":\"27.0.0\",\"client_api_version\":\"1.47\",\"server_version\":\"27.0.0\",\"server_api_version\":\"1.47\",\"server_min_api_version\":\"1.24\",\"server_os\":\"linux\",\"server_architecture\":\"amd64\",\"server_kernel_version\":\"6.10.0\",\"server_experimental\":false}'\n".to_owned(),
+        _ => format!("printf '%s\\n' '{version}'\n"),
+    }
+}
+
+fn fake_info_behavior(mode: ScriptMode, daemon_state: &Path) -> String {
+    let identity = "{\"id\":\"daemon-aaaaaaaaaaaaaaaa\",\"server_version\":\"27.0.0\",\"os_type\":\"linux\",\"architecture\":\"amd64\",\"kernel_version\":\"6.10.0\",\"driver\":\"overlay2\",\"cgroup_driver\":\"systemd\",\"cgroup_version\":\"2\",\"security_options\":[\"name=seccomp\"],\"default_runtime\":\"runc\",\"runtimes\":{\"runc\":{}}}";
+    let drifted = "{\"id\":\"daemon-bbbbbbbbbbbbbbbb\",\"server_version\":\"27.0.0\",\"os_type\":\"linux\",\"architecture\":\"amd64\",\"kernel_version\":\"6.10.0\",\"driver\":\"overlay2\",\"cgroup_driver\":\"systemd\",\"cgroup_version\":\"2\",\"security_options\":[\"name=seccomp\"],\"default_runtime\":\"runc\",\"runtimes\":{\"runc\":{}}}";
+    match mode {
+        ScriptMode::DaemonMalformed => "printf '%s\\n' '{'\n".to_owned(),
+        ScriptMode::DaemonStderr => format!(
+            "printf '%s\\n' 'daemon diagnostic' >&2\nprintf '%s\\n' '{identity}'\n"
+        ),
+        ScriptMode::DaemonOversize => "printf '%08193d\\n' 0\n".to_owned(),
+        ScriptMode::DaemonNonzero => "exit 1\n".to_owned(),
+        ScriptMode::DaemonRuntimeDuplicate => "printf '%s\\n' '{\"id\":\"daemon-aaaaaaaaaaaaaaaa\",\"server_version\":\"27.0.0\",\"os_type\":\"linux\",\"architecture\":\"amd64\",\"kernel_version\":\"6.10.0\",\"driver\":\"overlay2\",\"cgroup_driver\":\"systemd\",\"cgroup_version\":\"2\",\"security_options\":[\"name=seccomp\"],\"default_runtime\":\"runc\",\"runtimes\":{\"runc\":{\"path\":\"/one\",\"path\":\"/two\"}}}'\n".to_owned(),
+        ScriptMode::DaemonDrift
+        | ScriptMode::DaemonDriftBeforeInspect
+        | ScriptMode::DaemonDriftBeforeRemove
+        | ScriptMode::DaemonDriftAfterRemove => {
+            let drift_after = match mode {
+                ScriptMode::DaemonDrift => 2,
+                ScriptMode::DaemonDriftBeforeInspect => 3,
+                ScriptMode::DaemonDriftBeforeRemove => 4,
+                ScriptMode::DaemonDriftAfterRemove => 5,
+                _ => unreachable!("daemon drift mode"),
+            };
+            format!(
+                "count=0\nif [ -f {state} ]; then IFS= read -r count < {state}; fi\ncount=$((count + 1))\nprintf '%s\\n' \"$count\" > {state}\nif [ \"$count\" -ge {drift_after} ]; then\n  printf '%s\\n' '{drifted}'\nelse\n  printf '%s\\n' '{identity}'\nfi\n",
+                state = shell_quote(daemon_state),
+            )
+        }
+        _ => format!("printf '%s\\n' '{identity}'\n"),
+    }
 }
 
 fn fixed_metadata(message: &str) -> Phase7GitCommitMetadataV1 {
@@ -766,6 +1188,18 @@ fn prefixed_sha256(digest: &[u8; 32]) -> String {
 fn shell_quote(path: &Path) -> String {
     let value = path.to_str().expect("fixture path UTF-8");
     format!("'{}'", value.replace('\'', "'\\''"))
+}
+
+fn invocation_calls(log: &str) -> Vec<&str> {
+    log.split("BEGIN\n")
+        .filter(|call| !call.is_empty())
+        .collect()
+}
+
+fn invocation_command(call: &str) -> &str {
+    call.lines()
+        .find(|line| matches!(*line, "version" | "info" | "run" | "inspect" | "rm"))
+        .expect("fake Docker command")
 }
 
 struct TestDirectory {

@@ -6,8 +6,11 @@ use lnsatd::docker_local_runtime_proof::{
     build_docker_local_runtime_proof_plan_v1, parse_docker_local_runtime_proof_plan_v1,
 };
 use lnsatd::docker_local_supervisor::{
-    DOCKER_LOCAL_LAUNCH_CONTRACT_ID_V1, DOCKER_LOCAL_LAUNCH_PROCESS_INVARIANTS_V1,
-    docker_local_launch_contract_argv_template_v1, docker_local_launch_contract_digest_v1,
+    DOCKER_LOCAL_DAEMON_IDENTITY_CONTRACT_ID_V1, DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1,
+    DOCKER_LOCAL_DAEMON_ROOTLESS_SECURITY_OPTION_V1,
+    DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1, DOCKER_LOCAL_LAUNCH_CONTRACT_ID_V1,
+    DOCKER_LOCAL_LAUNCH_PROCESS_INVARIANTS_V1, docker_local_launch_contract_argv_template_v1,
+    docker_local_launch_contract_digest_v1,
 };
 use lnsatd::runtime_profile::{
     LoadedDockerLocalRuntimeProfileV1, parse_docker_local_runtime_profile_v1,
@@ -218,16 +221,35 @@ fn launch_digest_is_deterministic_and_binds_profile_launch_identities() {
             "environment=clear",
             "stdin=piped",
             "stdout=piped",
-            "stderr=piped"
+            "stderr=piped",
+            "daemon_identity=controlled_version_and_info_json",
+            "daemon_identity_revalidation=after_run_before_inspect_before_remove_after_remove"
         ]
+    );
+    assert_eq!(
+        DOCKER_LOCAL_DAEMON_IDENTITY_CONTRACT_ID_V1,
+        "lnsat.docker_local_daemon_identity.v1"
+    );
+    assert!(DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1.contains(".Client.APIVersion"));
+    assert!(DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1.contains(".SecurityOptions"));
+    assert!(DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1.contains(".Runtimes"));
+    assert_eq!(
+        DOCKER_LOCAL_DAEMON_ROOTLESS_SECURITY_OPTION_V1,
+        "name=rootless"
     );
     assert_eq!(
         docker_local_launch_contract_argv_template_v1(&profile).expect("argv template"),
         expected_launch_argv_template()
     );
+    assert!(
+        !docker_local_launch_contract_argv_template_v1(&profile)
+            .expect("argv template")
+            .iter()
+            .any(|argument| argument == "--rm")
+    );
     assert_eq!(
         hex_digest(first),
-        "03c7386371537910bae1f2f3a0b0aa584d178b32cab87de489564eac92427aee"
+        "3e3aea4acfc33a718f361a211a244ae0d17d12ba8f8454c29230cdde90439ca5"
     );
 
     let image_drift = schema2_profile_with(|value| {
@@ -291,7 +313,10 @@ fn expected_launch_argv_template() -> Vec<String> {
         "--cidfile",
         "{private_cidfile_path}",
         "--pull=never",
-        "--rm",
+        "--label",
+        "io.lnsat.phase11.operation-id={operation_id}",
+        "--label",
+        "io.lnsat.phase11.launch-contract-digest={launch_contract_digest}",
         "--name",
         "{container_name}",
         "--network=none",

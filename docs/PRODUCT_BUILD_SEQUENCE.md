@@ -185,11 +185,17 @@ It binds and revalidates exact Docker CLI, host Git verifier, local Unix endpoin
 D4A payload, D3/profile identities, and marked disposable Git target. Its exact
 launch arguments clear ambient environment and credentials, forbid pulls and
 networking, restrict process and filesystem authority, and bind all profile
-limits. Bounded I/O and deadlines fail to `outcome_unknown`; cleanup requires a
-valid private Docker-written container ID. Success requires independent host Git
-consequence inspection and an exact semantic result-digest match. Hermetic
-fake-runtime tests prove construction, limits, safe cleanup requests,
-and ambiguity handling, not real Docker or image isolation. No served route,
+limits. Bounded I/O and deadlines fail to `outcome_unknown`; a private
+Docker-written container ID is discovery only. Cleanup revalidates client and
+endpoint identity plus a canonical daemon/API/platform/security-posture
+fingerprint, then requires bounded inspection to match the exact container name
+plus operation-ID and launch-contract-digest labels before one bounded removal.
+Those identities are checked again around removal. Automatic removal and cleanup
+retry are forbidden, and cleanup is required after semantically valid output
+too. Success requires independent host
+Git consequence inspection and an exact semantic result-digest match. Hermetic
+fake-runtime tests prove construction, limits, label-bound inspect-before-remove
+requests, and ambiguity handling, not real Docker or image isolation. No served route,
 package, deploy, production, or support claim opens. P11-D4B2A now adds the
 source-only durability seam around that future supervisor call: capability
 consumption and one Docker-adapter attempt claim commit atomically; concurrent
@@ -199,11 +205,12 @@ host-verified semantic result evidence may persist one receipt; interrupted
 reconciliation inspects exact Git consequence without adapter or Docker retry.
 P11-D4B2B now passes experimental served fake-runtime integration over existing
 Phase 8 loopback routes with hermetic fake executable, disposable Unix socket,
-marked temporary Git target, and host Git verifier. Three adversarial served
+marked temporary Git target, and host Git verifier. Four adversarial served
 tests confirm: success/replay/idempotency drift rejection; post-consequence
 unknown survives restart and reconciles through host Git inspection only;
-unchanged-target unknown persists without receipt. Exact replay is metadata-only
-with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+unchanged-target unknown persists without receipt; cleanup-removal failure stays
+unknown until host Git reconciliation. Exact replay is metadata-only with no
+redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
 configures or invokes Docker. P11-D4C1 adds source-only reference-adapter
 execution: D4A retains the exact profile mount path and the supervisor supplies

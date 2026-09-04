@@ -8,12 +8,72 @@ const DEFAULT_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-plan-v1.json";
 const DEFAULT_EVIDENCE_REQUIREMENTS_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-evidence-requirements-v1.json";
-const EXPECTED_PACKAGE_SCRIPTS_SHA256 =
-  "3e6a2a1501d0379980d900b3d95f397ceb9174ffc7513e9e5a126cb27a36c583";
+const DEFAULT_SUPERVISOR_FIXTURE_PATH =
+  "fixtures/contracts/phase11-docker-local-supervisor-v1.json";
+const EXPECTED_WORKSPACE_TOPOLOGY_AND_SCRIPTS_SHA256 =
+  "c1afb2be462fffa14385e3d7c1b6ccd1102b051e147c229a27eee0dbc1f08b86";
+const EXPECTED_ROOT_WORKSPACES = ["apps/*", "packages/*"];
+const EXPECTED_WORKSPACE_MANIFEST_PATHS = [
+  "apps/api/package.json",
+  "apps/console/package.json",
+  "packages/audit/package.json",
+  "packages/cli/package.json",
+  "packages/core/package.json",
+  "packages/gateway/package.json",
+  "packages/mcp/package.json",
+  "packages/packets/package.json",
+  "packages/policy/package.json",
+];
 const EXPECTED_SOURCE_CI_SHA256 =
-  "a160337a1bfdfb50b287ff990cd3c489f4784258871501cfe846704a58335005";
+  "472797142ca6bbf8f6320408ef3229e9fbf1e9a8dceb2eb2d7ae2b463a69f126";
+const EXPECTED_SUPERVISOR_SOURCE_SHA256 =
+  "e6506198dab05dbae2011271daedbfd751f14b4929ffd7542b04a77902e49033";
 const MAX_JSON_NESTING = 64;
 export const MAX_READINESS_JSON_BYTES = 64 * 1024;
+
+const EXPECTED_SUPERVISOR_CLEANUP_MARKERS = [
+  'pub const DOCKER_LOCAL_OPERATION_ID_LABEL_V1: &str = "io.lnsat.phase11.operation-id";',
+  '"io.lnsat.phase11.launch-contract-digest";',
+  'const LAUNCH_TEMPLATE_OPERATION_ID_V1: &str = "{operation_id}";',
+  'const LAUNCH_TEMPLATE_DIGEST_V1: &str = "{launch_contract_digest}";',
+  "pub const DOCKER_LOCAL_DAEMON_IDENTITY_CONTRACT_ID_V1",
+  "pub const DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1",
+  "pub const DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1",
+  "observe_docker_daemon_identity_v1(",
+  '"version",',
+  '"info",',
+  "fn remove_bound_container_v1(",
+  '"inspect",',
+  '"--type",',
+  '"container",',
+  '"rm",',
+  '"--force",',
+  '"--volumes",',
+  "DockerLocalSupervisorErrorV1::OutcomeUnknown",
+];
+
+const EXPECTED_SUPERVISOR_ERROR_CODES = [
+  "docker_local_supervisor.input_invalid",
+  "docker_local_supervisor.profile_binding_invalid",
+  "docker_local_supervisor.docker_executable_invalid",
+  "docker_local_supervisor.verifier_executable_invalid",
+  "docker_local_supervisor.docker_endpoint_invalid",
+  "docker_local_supervisor.target_rejected",
+  "docker_local_supervisor.runtime_unavailable",
+  "docker_local_supervisor.outcome_unknown",
+];
+
+const EXPECTED_SUPERVISOR_HARD_STOPS = [
+  "no_real_docker_in_ci",
+  "no_image_pull_build_or_publication",
+  "no_agent_docker_socket_access",
+  "no_ambient_credentials_or_environment",
+  "no_production_or_user_repository",
+  "no_push_or_networked_git_operation",
+  "no_served_route",
+  "no_receipt_persistence",
+  "no_package_release_deploy_or_production_write",
+];
 
 const EXPECTED_BINDINGS = [
   "profile_digest",
@@ -117,6 +177,7 @@ const EXPECTED_DOC_MARKERS = {
     "runtime result, receipt, or support",
     "they do not constitute real runtime evidence or complete Phase 11",
     "source-only evidence-requirements contract",
+    "directory as discovery only",
   ],
   "crates/lnsatd/README.md": [
     "derives one source-only real-runtime proof plan",
@@ -135,6 +196,7 @@ const EXPECTED_DOC_MARKERS = {
     "execution authorization.",
     "Phase 11 remains incomplete.",
     "execution evidence requirements",
+    "ID is never sufficient authority",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md":
     [
@@ -148,21 +210,25 @@ const EXPECTED_DOC_MARKERS = {
     "## Phase 11 Real Disposable Docker Proof Readiness",
     "real Docker proof remains unexecuted",
     "execution evidence requirements",
+    "exact container-name and two-label match",
   ],
   "docs/ROADMAP.md": [
     "source-only real-Docker proof-readiness contract",
     "does not complete Phase 11",
     "source-only execution-evidence requirements contract",
+    "private Docker-written container ID as discovery only",
   ],
   "docs/PRODUCT_BUILD_SEQUENCE.md": [
     "source-only proof-readiness plan",
     "no Docker process, socket, daemon, or image operation",
     "source-only evidence-requirements contract",
+    "label-bound inspect-before-remove",
   ],
   "docs/PROJECT_STATUS.md": [
     "real-Docker proof-readiness contract",
     "no runtime evidence exists",
     "source-only execution-evidence requirements contract",
+    "Docker-written container ID as discovery only",
   ],
   "docs/WHY_PUBLIC_NOW.md": [
     "freezes required identity bindings, proof cases, and fail-closed negatives",
@@ -366,6 +432,54 @@ function readJson(path, label, errors) {
   }
 }
 
+function readWorkspaceTopologyAndScripts(
+  root,
+  rootWorkspaces,
+  errors,
+  workspaceManifestPathOverrides,
+) {
+  if (!same(rootWorkspaces, EXPECTED_ROOT_WORKSPACES)) {
+    errors.push("package.json workspaces: exact workspace topology mismatch");
+  }
+
+  const expectedManifestPaths = new Set(EXPECTED_WORKSPACE_MANIFEST_PATHS);
+  for (const workspaceRoot of ["apps", "packages"]) {
+    const directory = resolve(root, workspaceRoot);
+    let entries;
+    try {
+      const stat = lstatSync(directory);
+      if (!stat.isDirectory() || stat.isSymbolicLink()) {
+        errors.push(`workspace root ${workspaceRoot}: must be a real directory`);
+        continue;
+      }
+      entries = readdirSync(directory, { withFileTypes: true });
+    } catch (error) {
+      errors.push(`workspace root ${workspaceRoot}: unreadable (${String(error)})`);
+      continue;
+    }
+    for (const entry of entries) {
+      const workspacePath = `${workspaceRoot}/${entry.name}`;
+      if (entry.isSymbolicLink()) {
+        errors.push(`${workspacePath}: workspace path must not be a symlink`);
+        continue;
+      }
+      if (!entry.isDirectory()) continue;
+      const manifestPath = `${workspacePath}/package.json`;
+      if (!expectedManifestPaths.has(manifestPath)) {
+        errors.push(`${manifestPath}: unexpected workspace manifest path`);
+      }
+    }
+  }
+
+  const manifests = EXPECTED_WORKSPACE_MANIFEST_PATHS.map((manifestPath) => {
+    const path =
+      workspaceManifestPathOverrides?.[manifestPath] ?? resolve(root, manifestPath);
+    const manifest = readJson(path, `workspace manifest ${manifestPath}`, errors);
+    return { path: manifestPath, scripts: manifest?.scripts };
+  });
+  return { rootWorkspaces, manifests };
+}
+
 function listWorkflowPaths(root, errors) {
   const directory = resolve(root, ".github/workflows");
   try {
@@ -387,7 +501,9 @@ export function validatePhase11DockerProofReadiness({
   root = REPO_ROOT,
   fixturePath = resolve(root, DEFAULT_FIXTURE_PATH),
   evidenceRequirementsPath = resolve(root, DEFAULT_EVIDENCE_REQUIREMENTS_FIXTURE_PATH),
+  supervisorFixturePath = resolve(root, DEFAULT_SUPERVISOR_FIXTURE_PATH),
   packagePath = resolve(root, "package.json"),
+  workspaceManifestPathOverrides,
   workflowPath,
   workflowPaths,
   modulePath = resolve(root, "crates/lnsatd/src/docker_local_runtime_proof.rs"),
@@ -601,13 +717,216 @@ export function validatePhase11DockerProofReadiness({
     }
   }
 
+  const supervisorFixture = readJson(
+    supervisorFixturePath,
+    "Docker supervisor fixture",
+    errors,
+  );
+  if (
+    exactKeys(
+      supervisorFixture,
+      [
+        "schema_id",
+        "fixture_id",
+        "packet_id",
+        "status",
+        "phase11_complete",
+        "production_supported",
+        "contract_id",
+        "profile_requirement",
+        "launch_boundary",
+        "success_boundary",
+        "post_spawn_fail_closed",
+        "error_codes",
+        "hard_stops",
+      ],
+      "Docker supervisor fixture",
+      errors,
+    )
+  ) {
+    if (
+      supervisorFixture.schema_id !==
+        "lnsat.phase11_docker_local_supervisor_fixture.schema.v1_0" ||
+      supervisorFixture.fixture_id !== "phase11-docker-local-supervisor-v1" ||
+      supervisorFixture.packet_id !== "P11-D4B1" ||
+      supervisorFixture.status !== "experimental_source_supervisor_boundary" ||
+      supervisorFixture.contract_id !== "lnsat.docker_local_supervised_git_result.v1"
+    ) {
+      errors.push("Docker supervisor fixture: identity or status mismatch");
+    }
+    if (
+      supervisorFixture.phase11_complete !== false ||
+      supervisorFixture.production_supported !== false
+    ) {
+      errors.push("Docker supervisor fixture: closed status required");
+    }
+    const profileRequirement = supervisorFixture.profile_requirement;
+    if (
+      !exactKeys(
+        profileRequirement,
+        [
+          "contract_id",
+          "schema_version",
+          "schema_version_1_launch_allowed",
+          "required_supervisor_bindings",
+        ],
+        "Docker supervisor fixture.profile_requirement",
+        errors,
+      ) ||
+      profileRequirement.contract_id !== "lnsat.runtime_profile.docker_local.v1" ||
+      profileRequirement.schema_version !== 2 ||
+      profileRequirement.schema_version_1_launch_allowed !== false ||
+      !same(profileRequirement.required_supervisor_bindings, [
+        "docker_executable_digest",
+        "verifier_git_executable_digest",
+        "docker_host",
+      ])
+    ) {
+      errors.push("Docker supervisor fixture: exact profile requirement required");
+    }
+    const launch = supervisorFixture.launch_boundary;
+    if (
+      !exactKeys(
+        launch,
+        [
+          "endpoint",
+          "environment",
+          "docker_config",
+          "stdin_attached",
+          "automatic_container_remove",
+          "cleanup_identity",
+          "cleanup_inspection",
+          "cleanup_retry",
+          "daemon_identity",
+          "daemon_identity_authority",
+          "image_pull",
+          "container_remove",
+          "network",
+          "ipc",
+          "root_filesystem",
+          "run_as_root",
+          "capabilities",
+          "no_new_privileges",
+          "log_driver",
+          "mounts",
+          "stdin",
+          "stdout",
+          "stderr",
+          "deadline",
+          "timeout_cleanup",
+        ],
+        "Docker supervisor fixture.launch_boundary",
+        errors,
+      ) ||
+      launch.endpoint !== "explicit_local_unix_only" ||
+      launch.environment !== "cleared" ||
+      launch.docker_config !== "fresh_private_empty" ||
+      launch.stdin_attached !== true ||
+      launch.automatic_container_remove !== false ||
+      launch.cleanup_identity !==
+        "private_cid_discovery_then_exact_inspect_name_operation_and_launch_digest_binding" ||
+      launch.cleanup_inspection !==
+        "bounded_exact_cid_name_operation_and_launch_digest_labels" ||
+      launch.cleanup_retry !== false ||
+      launch.daemon_identity !==
+        "bounded_prelaunch_version_info_rootless_posture_baseline_revalidated_postlaunch_before_inspect_remove_and_after_remove" ||
+      launch.daemon_identity_authority !==
+        "drift_detection_only_later_proof_authority_must_preapprove_initial_fingerprint" ||
+      launch.image_pull !== "never" ||
+      launch.container_remove !== "one_verified_force_remove_after_exact_binding" ||
+      launch.network !== "none" ||
+      launch.ipc !== "none" ||
+      launch.root_filesystem !== "read_only" ||
+      launch.run_as_root !== false ||
+      launch.capabilities !== "drop_all" ||
+      launch.no_new_privileges !== true ||
+      launch.log_driver !== "none" ||
+      launch.mounts !== "one_marked_disposable_git_target_read_write" ||
+      launch.stdin !== "canonical_p11_d4a_payload" ||
+      launch.stdout !== "bounded_p11_d3_result" ||
+      launch.stderr !== "bounded_and_must_be_empty" ||
+      launch.deadline !== "profile_bound_monotonic" ||
+      launch.timeout_cleanup !==
+        "kill_client_then_revalidate_inspect_bind_and_force_remove_exact_container"
+    ) {
+      errors.push("Docker supervisor fixture: exact cleanup launch boundary required");
+    }
+    const success = supervisorFixture.success_boundary;
+    if (
+      !exactKeys(
+        success,
+        [
+          "adapter_result",
+          "verified_cleanup_required",
+          "cleanup_uncertainty",
+          "host_target_reinspection",
+          "adapter_result_digest_match",
+          "receipt_ready_semantic_result",
+          "receipt_persisted",
+        ],
+        "Docker supervisor fixture.success_boundary",
+        errors,
+      ) ||
+      success.adapter_result !== "completed" ||
+      success.verified_cleanup_required !== true ||
+      success.cleanup_uncertainty !== "outcome_unknown" ||
+      success.host_target_reinspection !==
+        "exact_commit_tree_paths_patch_and_metadata" ||
+      success.adapter_result_digest_match !== true ||
+      success.receipt_ready_semantic_result !== true ||
+      success.receipt_persisted !== false
+    ) {
+      errors.push("Docker supervisor fixture: cleanup-gated success required");
+    }
+    if (
+      !same(supervisorFixture.post_spawn_fail_closed, [
+        "timeout",
+        "stdin_failure",
+        "stdout_overflow",
+        "stderr_nonempty_or_overflow",
+        "nonzero_exit",
+        "missing_or_invalid_container_id",
+        "executable_endpoint_or_daemon_drift_before_inspect_or_remove",
+        "inspect_failure_overflow_stderr_or_unbound_name_or_labels",
+        "remove_failure_or_unacknowledged_container_id",
+        "malformed_or_unbound_result",
+        "target_ambiguity",
+        "semantic_result_digest_mismatch",
+      ])
+    ) {
+      errors.push("Docker supervisor fixture: fail-closed cases mismatch");
+    }
+    if (!same(supervisorFixture.error_codes, EXPECTED_SUPERVISOR_ERROR_CODES)) {
+      errors.push("Docker supervisor fixture: error codes mismatch");
+    }
+    if (!same(supervisorFixture.hard_stops, EXPECTED_SUPERVISOR_HARD_STOPS)) {
+      errors.push("Docker supervisor fixture: hard stops mismatch");
+    }
+  }
+
   const packageJson = readJson(packagePath, "package.json", errors);
   const scripts = packageJson?.scripts;
   if (!isRecord(scripts)) {
     errors.push("package.json scripts: expected object");
   } else {
-    if (sha256(JSON.stringify(scripts)) !== EXPECTED_PACKAGE_SCRIPTS_SHA256) {
-      errors.push("package.json scripts: exact source-gate graph digest mismatch");
+    const workspaceTopologyAndScripts = readWorkspaceTopologyAndScripts(
+      root,
+      packageJson.workspaces,
+      errors,
+      workspaceManifestPathOverrides,
+    );
+    if (
+      sha256(
+        JSON.stringify({
+          rootWorkspaces: workspaceTopologyAndScripts.rootWorkspaces,
+          rootScripts: scripts,
+          manifests: workspaceTopologyAndScripts.manifests,
+        }),
+      ) !== EXPECTED_WORKSPACE_TOPOLOGY_AND_SCRIPTS_SHA256
+    ) {
+      errors.push(
+        "package.json workspaces: exact topology and source-gate graph digest mismatch",
+      );
     }
     if (
       scripts["phase11:docker-proof-readiness:test"] !==
@@ -754,8 +1073,40 @@ export function validatePhase11DockerProofReadiness({
   }
 
   const supervisorSource = readText(supervisorPath, "Docker supervisor", errors);
+  if (sha256(supervisorSource) !== EXPECTED_SUPERVISOR_SOURCE_SHA256) {
+    errors.push("Docker supervisor: exact reviewed source digest mismatch");
+  }
   if (!supervisorSource.includes("docker_local_launch_contract_digest_v1")) {
     errors.push("Docker supervisor: deterministic launch-contract digest missing");
+  }
+  if (supervisorSource.includes('"--rm"')) {
+    errors.push("Docker supervisor: automatic --rm cleanup remains forbidden");
+  }
+  for (const marker of EXPECTED_SUPERVISOR_CLEANUP_MARKERS) {
+    if (!supervisorSource.includes(marker)) {
+      errors.push(`Docker supervisor: missing cleanup-binding marker ${marker}`);
+    }
+  }
+  const inspectCall = supervisorSource.indexOf('"inspect",');
+  const removeCall = supervisorSource.indexOf('"rm",', inspectCall + 1);
+  if (inspectCall < 0 || removeCall < 0 || inspectCall >= removeCall) {
+    errors.push("Docker supervisor: inspect must precede bounded removal");
+  }
+  const cleanupCalls = supervisorSource.match(
+    /remove_bound_container_v1\(&cleanup\)/gu,
+  );
+  if ((cleanupCalls?.length ?? 0) < 3) {
+    errors.push(
+      "Docker supervisor: cleanup must cover launch failure, runtime failure, and validated output",
+    );
+  }
+  if (
+    !supervisorSource.includes(
+      "let cleanup_result = remove_bound_container_v1(&cleanup);",
+    ) ||
+    !supervisorSource.includes("match (validated, cleanup_result)")
+  ) {
+    errors.push("Docker supervisor: validated output must remain cleanup-gated");
   }
 
   for (const [relativePath, markers] of Object.entries(EXPECTED_DOC_MARKERS)) {
