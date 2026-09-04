@@ -1134,6 +1134,8 @@ test("locks package and CI review-check graph", () => {
     "npm run phase7:readiness:check",
     "npm run phase10:exit:test",
     "npm run phase10:exit:check",
+    "npm run phase11:docker-proof-readiness:test",
+    "npm run phase11:docker-proof-readiness:check",
     "npm run typecheck:workspaces",
     "npm run test:workspaces",
     "npm run rust:check",

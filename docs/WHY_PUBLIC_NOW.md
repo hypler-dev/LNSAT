@@ -97,6 +97,12 @@ These proofs do not use a real Docker binary, daemon, or socket and do not prove
 image isolation or a supported runtime. Phase 11 remains incomplete; real
 disposable Docker image/runtime proof is a separate, still-closed gate.
 
+Source can still make that later gate inspectable before it runs. The
+[proof-readiness plan](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
+freezes required identity bindings, proof cases, and fail-closed negatives for
+review without accessing Docker or claiming runtime evidence. Reviewers can
+challenge that proof shape before any separately authorized execution.
+
 ## 5. Runtime and Ecosystem Role
 
 MCP, A2A, REST, CLI, and browser interfaces are replaceable transports over the

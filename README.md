@@ -146,6 +146,13 @@ real Docker binary, daemon, socket, or image. P11-D4C1 adds only the reference
 adapter source and host-process proof; it builds or runs no image. Real runtime
 proof and supported operation remain separate future gates.
 
+The next source checkpoint adds a deterministic proof-plan contract, opaque
+launch-contract digest, hermetic negative tests, and repository-wide readiness
+validation for that future gate. It remains design evidence only: no Docker
+binary, daemon, socket, image operation, runtime result, receipt, or support
+claim is opened. See the
+[Phase 11 real disposable Docker proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md).
+
 ## What We Are Building For v1
 
 The first supported release is planned as an owner-controlled, local or
@@ -314,6 +321,8 @@ canonical result output under hermetic host-process tests. No real Docker
 binary/daemon/socket, image pull/build/run, production repository, deployment,
 release, package, or support exists. Phase 11 remains incomplete; real disposable
 Docker image/runtime proof requires a later separately authorized gate.
+Source-only proof-readiness contracts may freeze identities and required cases,
+but they do not constitute real runtime evidence or complete Phase 11.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See

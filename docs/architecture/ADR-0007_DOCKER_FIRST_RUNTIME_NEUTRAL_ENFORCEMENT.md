@@ -429,6 +429,32 @@ selector, route, receipt authority, production target, package, deployment,
 publication, or support claim. Real disposable Docker image/runtime proof
 remains a separate authorized gate.
 
+## Phase 11 Real Disposable Docker Proof Readiness
+
+The next source-only checkpoint adds
+`lnsat.docker_local_runtime_proof_plan.v1`, a canonical proof-plan digest, and
+an opaque launch-contract digest derived from one already validated schema-2
+profile. The plan binds the profile and authority-configuration digests,
+adapter identity/version, adapter-executable digest, immutable image digest,
+launch-contract digest, and eight future proof-case identities. Unknown,
+duplicate, noncanonical, oversized, reordered, substituted, or widened input
+fails closed.
+
+The contract creates no authorization, dispatch, result, receipt, target path,
+Docker endpoint, Docker configuration, or container identity. Its repository
+gate rejects opened completion, execution, support, package, production, and
+publication claims. Normal source CI receives no Docker service, container, or
+proof-execution command. The real Docker proof remains unexecuted and Phase 11
+remains incomplete.
+
+Future proof must traverse the existing Gateway -> D4B2A attempt claim ->
+D3/D4A payload -> supervisor -> D4B2A receipt or `outcome_unknown` chain. A
+direct adapter or `docker run` invocation outside that chain is not proof.
+Operator acknowledgement is an accidental-run guard only and never execution
+authorization. Exact scope, evidence, isolation, cleanup, ambiguity, and support
+boundaries are frozen in the
+[Phase 11 real disposable Docker proof-readiness plan](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md).
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.
