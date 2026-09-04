@@ -77,6 +77,11 @@ bindings plus eight future proof-case identities. Its parser, fixture, hermetic
 negative tests, and repository check perform no runtime I/O and do not authorize
 execution. This checkpoint does not complete Phase 11; real disposable Docker
 image/runtime evidence remains separately required.
+A source-only execution-evidence requirements contract now defines which
+client, endpoint, daemon, image, adapter, disposable-target, authority-chain,
+lifecycle, cleanup, reconciliation, redaction, and review commitments each of
+those eight cases must later provide. It records no real observation and opens
+no Docker or public runtime selector.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -701,6 +706,9 @@ proof gate remains required.
 The checked-in proof-readiness plan binds only source metadata and future case
 requirements. It grants no Docker access, target consequence, receipt,
 production authority, or support status.
+Its companion source-only execution-evidence requirements define exact
+commitment and redaction gates before any real run. They do not carry runtime
+evidence, configure a daemon, expose a route, or authorize process launch.
 
 Required operation identity before dispatch:
 

@@ -107,6 +107,11 @@ profile, authority-configuration, adapter, executable, image, and launch
 identity plus eight future proof cases. Its tests and repository validator use
 no Docker process or socket; no runtime evidence exists. It grants no execution,
 receipt, route, production, package, deployment, or support authority.
+A source-only execution-evidence requirements contract now freezes the exact
+runtime, image-provenance, disposable-target, served-chain, lifecycle, cleanup,
+redaction, and independent-review commitments for those same eight future
+cases. It contains no actual evidence or execution seam and keeps every runtime,
+completion, production, package, deployment, and support flag closed.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence

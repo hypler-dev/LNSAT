@@ -153,6 +153,12 @@ binary, daemon, socket, image operation, runtime result, receipt, or support
 claim is opened. See the
 [Phase 11 real disposable Docker proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md).
 
+A following source-only evidence-requirements contract freezes the runtime,
+image-provenance, disposable-target, served-chain, lifecycle, cleanup,
+redaction, and independent-review commitments that a later real run must
+satisfy. It records no observation or result and opens no execution harness.
+See the [Phase 11 execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).
+
 ## What We Are Building For v1
 
 The first supported release is planned as an owner-controlled, local or
@@ -323,6 +329,9 @@ release, package, or support exists. Phase 11 remains incomplete; real disposabl
 Docker image/runtime proof requires a later separately authorized gate.
 Source-only proof-readiness contracts may freeze identities and required cases,
 but they do not constitute real runtime evidence or complete Phase 11.
+The source-only execution-evidence requirements additionally reject raw host
+paths, container IDs, process output, source or patch bytes, and credentials;
+they still do not authorize or execute Docker.
 Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
 binaries and packages come only after required product/runtime work and
 release-candidate source freeze. See

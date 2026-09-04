@@ -454,6 +454,13 @@ Operator acknowledgement is an accidental-run guard only and never execution
 authorization. Exact scope, evidence, isolation, cleanup, ambiguity, and support
 boundaries are frozen in the
 [Phase 11 real disposable Docker proof-readiness plan](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md).
+The companion
+[execution evidence requirements](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+freeze secret-free commitments for client, endpoint, daemon, image provenance,
+in-image adapter identity, disposable-target identity, served-chain lifecycle,
+cleanup, reconciliation, and independent review. They contain no runtime
+observation, result, receipt, host path, container ID, process output, or
+execution authority.
 
 ## Security Boundaries
 

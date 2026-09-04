@@ -102,6 +102,11 @@ Source can still make that later gate inspectable before it runs. The
 freezes required identity bindings, proof cases, and fail-closed negatives for
 review without accessing Docker or claiming runtime evidence. Reviewers can
 challenge that proof shape before any separately authorized execution.
+The companion
+[execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+make runtime identity, image provenance, disposable-target identity, lifecycle,
+cleanup, redaction, and independent-review obligations equally inspectable
+without opening a Docker command or recording real runtime evidence.
 
 ## 5. Runtime and Ecosystem Role
 

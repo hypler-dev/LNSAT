@@ -225,6 +225,10 @@ binding drift, closed status, security negatives, and documentation alignment.
 It performs no Docker process, socket, daemon, or image operation and carries no
 runtime result, receipt, production, package, deployment, or support authority.
 Only a separately authorized served-chain run can create real runtime evidence.
+A companion source-only evidence-requirements contract freezes the required
+client, endpoint, daemon, image, adapter, target, authority-chain, lifecycle,
+cleanup, reconciliation, redaction, and independent-review commitments without
+recording runtime evidence or opening an execution selector.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.
