@@ -48,9 +48,13 @@ P11-D4B1 adds a dormant, source-only schema-2 Docker supervisor. It binds and
 revalidates the exact Docker CLI, host Git verifier, local Unix endpoint,
 D4A/D3/profile identities, and marked disposable Git target. Exact isolation and
 resource arguments, bounded I/O, a monotonic deadline, fail-closed unknown
-outcomes, cleanup bound to a private Docker-written container ID, host
-consequence inspection, and semantic result binding are covered by hermetic
-fake-runtime tests. At the P11-D4B1 checkpoint, no served route called the
+outcomes, and host consequence inspection are covered by hermetic fake-runtime
+tests. Cleanup treats the private Docker-written container ID as discovery only;
+a stable bounded daemon/API/platform/security-posture fingerprint plus exact
+name, operation-ID label, and launch-contract-digest label inspection is required
+before one bounded removal, including after semantically valid output. Cleanup
+uncertainty stays `outcome_unknown` without wider removal or retry. At the
+P11-D4B1 checkpoint, no served route called the
 supervisor, and no real Docker proof, package, deploy, production, or support
 claim opened.
 P11-D4B2A adds source-only atomic capability-consumption plus Docker-attempt
@@ -682,17 +686,24 @@ substitution rejects before launch. P11-D4B1 adds a source-only schema-2
 supervisor which revalidates those identities, one exact local Unix endpoint,
 and the marked disposable target immediately before process creation. It builds
 one restricted, environment-cleared, pull-disabled and networkless Docker run,
-bounds I/O and time, treats every post-spawn anomaly as `outcome_unknown`, and
-requires host Git consequence reinspection plus exact semantic result binding.
+binds the operation and launch contract as fixed labels, bounds I/O and time,
+and treats every post-spawn anomaly as `outcome_unknown`. Cleanup omits automatic
+removal, treats the private CID as discovery only, and requires a stable bounded
+daemon/API/platform/security-posture fingerprint plus exact name-and-label
+inspection before one bounded removal on every post-spawn path, including
+semantically valid output. Any cleanup uncertainty remains unknown without wider
+removal or retry. Success also requires host Git consequence reinspection plus
+exact semantic result binding.
 P11-D4B2A adds atomic attempt persistence, one bound receipt, interrupted-dispatch
 materialization, and inspection-only reconciliation using hermetic store tests.
 P11-D4B2B now passes experimental served fake-runtime integration over existing
 Phase 8 loopback routes with hermetic fake executable, disposable Unix socket,
-marked temporary Git target, and host Git verifier. Three adversarial served
+marked temporary Git target, and host Git verifier. Four adversarial served
 tests confirm: success/replay/idempotency drift rejection; post-consequence
 unknown survives restart and reconciles through host Git inspection only;
-unchanged-target unknown persists without receipt. Exact replay is metadata-only
-with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+unchanged-target unknown persists without receipt; cleanup-removal failure stays
+unknown until host Git reconciliation. Exact replay is metadata-only with no
+redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
 configures or invokes Docker. P11-D4C1 adds one source-only
 `lnsat-git-reference` binary: exact D4A stdin, self-executable digest binding,

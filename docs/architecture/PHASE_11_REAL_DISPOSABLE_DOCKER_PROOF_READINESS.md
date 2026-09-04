@@ -72,13 +72,26 @@ unreviewed evidence leaves proof incomplete.
 Proof must use a marked disposable repository and exact image/runtime digests.
 The adapter receives no agent Docker socket, ambient credentials, network, or
 unbounded filesystem access. Pulls and mutable image resolution are forbidden
-inside proof. Cleanup may target only a valid container ID written to the
-private, proof-bound Docker client directory after identity revalidation.
+inside proof. The historical `cleanup_verified_container_id_only` case ID means
+that cleanup may target only the exact valid ID discovered in the private,
+proof-bound Docker client directory; the ID is never sufficient authority by
+itself. After client and endpoint identity revalidation, bounded canonical
+version and system-information probes must reproduce the prelaunch daemon/API/
+platform/security-posture fingerprint. Bounded inspection must then match the
+expected container name, operation-ID label, and launch-contract-digest label
+before one bounded removal; client, endpoint, and daemon identity are checked
+again around that removal. Automatic `--rm`, wider discovery, fallback removal,
+and cleanup retry are forbidden. Cleanup uncertainty after any spawned
+execution, including semantically valid adapter output, is `outcome_unknown`.
+In-call fingerprint equality detects drift; it does not approve the observed
+daemon. A later real-proof authority must separately accept and record that
+fingerprint before execution.
 
 Evidence must include command construction, image provenance, isolation limits,
 adapter and host-Git result binding, receipt/unknown transitions, restart and
-reconciliation records, and independent review references. Evidence must be
-secret-free and must not expose host paths, source bytes, or credentials.
+reconciliation records, label-bound inspect-before-remove cleanup, and
+independent review references. Evidence must be secret-free and must not expose
+host paths, raw container IDs, process output, source bytes, or credentials.
 
 The source-only
 [execution evidence requirements](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
@@ -102,6 +115,14 @@ uncertainty, or result mismatch is `outcome_unknown`. Unknown is never success,
 never silently retried, and never converted to a receipt without independent
 host consequence inspection plus reconciliation evidence. Unchanged target
 means no receipt.
+
+The current experimental store reconciles the Git consequence only. Its
+fake-runtime removal-failure test can reach a completed Git receipt without
+proving container cleanup. That receipt must not be treated as successful
+runtime or cleanup evidence. Before a real runtime selector is enabled, a
+separate source change must durably bind cleanup evidence to the operation and
+preserve cleanup uncertainty across restart and reconciliation. The current
+Git-only reconciliation seam does not satisfy that requirement.
 
 ## Validation gates
 

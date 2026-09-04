@@ -17,9 +17,10 @@
   reconciliation. P11-D4B2B now passes experimental served fake-runtime
   integration over existing Phase 8 loopback routes with hermetic fake executable,
   disposable Unix socket, marked temporary Git target, and host Git verifier.
-  Three adversarial served tests confirm: success/replay/idempotency drift
+  Four adversarial served tests confirm: success/replay/idempotency drift
   rejection; post-consequence unknown survives restart and reconciles through host
-  Git inspection only; unchanged-target unknown persists without receipt.
+  Git inspection only; unchanged-target unknown persists without receipt;
+  cleanup-removal failure stays unknown until host Git reconciliation.
   P11-D4C1 adds the source-only `lnsat-git-reference` executable, exact
   host-to-container target remapping, self-executable binding, bounded Git
   execution, and canonical result framing under hermetic host-process tests. No
@@ -319,21 +320,33 @@ executables, validates the socket and marked disposable Git target, constructs
 the complete argument vector, then repeats runtime and target identity checks.
 
 The child receives no ambient environment. A fresh private Docker config contains
-only `{}`. `docker run` uses `--pull=never`, `--rm`, `--network=none`,
+only `{}`. `docker run` uses `--pull=never`, `--network=none`,
 `--ipc=none`, `--read-only`, `--log-driver=none`, a non-root UID/GID,
 `--cap-drop=ALL`, `no-new-privileges`, PID, memory, no-swap and CPU limits, one
 read-write bind mount for the exact disposable target, and profile-pinned
-workdir, entrypoint, and image digest. Stdin, stdout, stderr, and elapsed time are
-bounded. Any anomaly after spawn returns only `outcome_unknown`; the supervisor
-kills the client and requests forced removal only when the private Docker client
-directory contains a valid Docker-written container ID, and only after rehashing
-the Docker CLI and revalidating the endpoint. Missing or malformed CID evidence
-disables cleanup rather than risking an unrelated container. Success requires
-independent host Git inspection of commit, tree, paths, patch and metadata plus
-an exact semantic result-digest match.
+workdir, entrypoint, image digest, and fixed operation-ID and launch-contract-
+digest labels. Automatic `--rm` is omitted so the supervisor can verify identity
+before removal. Stdin, stdout, stderr, and elapsed time are bounded. Any anomaly
+after spawn returns only `outcome_unknown`; the supervisor kills the client when
+needed and treats the valid ID in its private Docker client directory as
+discovery only. It rehashes the Docker CLI, revalidates the endpoint, and repeats
+bounded canonical `docker version` and `docker info` observations that bind
+client/server API versions, daemon/platform identity, default runtime, cgroup,
+and security posture. Only a stable observation followed by bounded inspection
+of the exact ID and an exact container-name and two-label match permits one
+bounded forced removal. Client, endpoint, and daemon observations are repeated
+immediately before removal and after its acknowledgement.
+Fingerprint equality detects in-call drift only; a later real-proof authority
+must independently accept the initial daemon observation before execution.
+The same verified cleanup is mandatory after semantically valid output. Missing,
+malformed, mismatched, drifting, or uncertain cleanup evidence disables wider
+removal and leaves `outcome_unknown`; cleanup is never retried. Success also
+requires independent host Git inspection of commit, tree, paths, patch and
+metadata plus an exact semantic result-digest match.
 
 Hermetic tests use a fake Docker executable and disposable Unix socket. They
-prove argument construction, identity drift rejection, timeout/cleanup behavior,
+prove argument construction, daemon-observation drift rejection, label-bound
+inspect-before-remove behavior on success and failure, timeout/cleanup behavior,
 bounded output handling, secret-free errors, and unknown-outcome semantics. They
 do not prove a real daemon, image, kernel isolation, or supported runtime. No
 served route calls this API and no package, deploy, or production path exists.
@@ -369,13 +382,15 @@ claim -> D3/D4A payload -> D4B1 supervisor using hermetic fake executable,
 disposable Unix socket, marked temporary Git target, and host Git verifier ->
 D4B2A receipt/unknown.
 
-Three adversarial served tests confirm:
+Four adversarial served tests confirm:
 
 - success/replay/idempotency drift rejection with metadata-only replay and no
   redispatch;
 - post-consequence unknown survives daemon restart and reconciles through host Git
   inspection only, never launching runtime or retries;
 - unchanged-target unknown persists without receipt.
+- cleanup-removal failure stays unknown until host Git reconciliation without
+  redispatch.
 
 Exact replay is metadata-only; concurrent exact claims converge on one creator.
 Unknown survives restart. Reconcile inspects host Git only, never launches

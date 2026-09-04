@@ -17,7 +17,10 @@ use lnsat_store::{
     Phase7GitExecutionResultV1, inspect_phase11_disposable_git_result_v1,
     validate_phase11_disposable_git_target_v1,
 };
+use serde::Deserialize;
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
+use std::collections::HashSet;
 use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fs::{self, File, Metadata, OpenOptions};
@@ -38,6 +41,22 @@ pub const DOCKER_LOCAL_SUPERVISED_RESULT_CONTRACT_ID_V1: &str =
     "lnsat.docker_local_supervised_git_result.v1";
 /// Exact contract identity for canonical source-only Docker launch invariants.
 pub const DOCKER_LOCAL_LAUNCH_CONTRACT_ID_V1: &str = "lnsat.docker_local_launch_contract.v1";
+/// Fixed contract for one bounded Docker daemon identity observation.
+pub const DOCKER_LOCAL_DAEMON_IDENTITY_CONTRACT_ID_V1: &str =
+    "lnsat.docker_local_daemon_identity.v1";
+/// Exact `docker info` security-option marker used to derive rootless posture.
+pub const DOCKER_LOCAL_DAEMON_ROOTLESS_SECURITY_OPTION_V1: &str = "name=rootless";
+/// Controlled Docker CLI template for a non-secret client/server observation.
+///
+/// This exact template is itself part of the launch-contract digest. The
+/// runtime value is parsed as strict canonical JSON before it is hashed.
+pub const DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1: &str = r#"{"client_version":{{json .Client.Version}},"client_api_version":{{json .Client.APIVersion}},"server_version":{{json .Server.Version}},"server_api_version":{{json .Server.APIVersion}},"server_min_api_version":{{json .Server.MinAPIVersion}},"server_os":{{json .Server.Os}},"server_architecture":{{json .Server.Arch}},"server_kernel_version":{{json .Server.KernelVersion}},"server_experimental":{{json .Server.Experimental}}}"#;
+/// Controlled Docker CLI template for a bounded source-selected daemon observation.
+///
+/// `Runtimes` may contain host runtime paths or arguments. Its raw value stays
+/// internal only long enough for bounded canonical parsing and hashing; it is
+/// never logged, returned, or persisted by this source-only supervisor.
+pub const DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1: &str = r#"{"id":{{json .ID}},"server_version":{{json .ServerVersion}},"os_type":{{json .OSType}},"architecture":{{json .Architecture}},"kernel_version":{{json .KernelVersion}},"driver":{{json .Driver}},"cgroup_driver":{{json .CgroupDriver}},"cgroup_version":{{json .CgroupVersion}},"security_options":{{json .SecurityOptions}},"default_runtime":{{json .DefaultRuntime}},"runtimes":{{json .Runtimes}}}"#;
 /// Sole argument identifying the profile-bound repository mount inside the adapter.
 pub const DOCKER_LOCAL_ADAPTER_REPOSITORY_ARGUMENT_V1: &str = "--repository";
 /// Maximum host executable accepted for digest verification.
@@ -47,18 +66,35 @@ pub const DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1: u64 = 5_000;
 
 const RESULT_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-supervised-git-result.v1";
 const LAUNCH_CONTRACT_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-launch-contract.v1";
+const DAEMON_IDENTITY_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-daemon-identity.v1";
 const LAUNCH_TEMPLATE_DOCKER_HOST_V1: &str = "{docker_host}";
 const LAUNCH_TEMPLATE_DOCKER_CONFIG_V1: &str = "{private_docker_config_path}";
 const LAUNCH_TEMPLATE_CID_PATH_V1: &str = "{private_cidfile_path}";
 const LAUNCH_TEMPLATE_REPOSITORY_V1: &str = "{disposable_repository_path}";
 const LAUNCH_TEMPLATE_CONTAINER_NAME_V1: &str = "{container_name}";
+const LAUNCH_TEMPLATE_OPERATION_ID_V1: &str = "{operation_id}";
+const LAUNCH_TEMPLATE_DIGEST_V1: &str = "{launch_contract_digest}";
+/// Exact Docker label key binding one cleanup to its approved operation.
+pub const DOCKER_LOCAL_OPERATION_ID_LABEL_V1: &str = "io.lnsat.phase11.operation-id";
+/// Exact Docker label key binding one cleanup to the frozen launch contract.
+pub const DOCKER_LOCAL_LAUNCH_CONTRACT_DIGEST_LABEL_V1: &str =
+    "io.lnsat.phase11.launch-contract-digest";
+const DOCKER_LOCAL_CLEANUP_INSPECT_STDOUT_BYTES_V1: usize = 4 * 1024;
+const DOCKER_LOCAL_CLEANUP_REMOVE_STDOUT_BYTES_V1: usize = 256;
+const DOCKER_LOCAL_CLEANUP_STDERR_BYTES_V1: usize = 1024;
+const DOCKER_LOCAL_DAEMON_IDENTITY_STDOUT_BYTES_V1: usize = 8 * 1024;
+const DOCKER_LOCAL_DAEMON_IDENTITY_STDERR_BYTES_V1: usize = 1024;
+const DOCKER_LOCAL_OBSERVATION_JSON_MAX_DEPTH_V1: usize = 16;
+const DOCKER_LOCAL_OBSERVATION_STRING_BYTES_V1: usize = 1024;
 
 /// Exact process invariants outside argv, bound into every launch digest.
-pub const DOCKER_LOCAL_LAUNCH_PROCESS_INVARIANTS_V1: [&str; 4] = [
+pub const DOCKER_LOCAL_LAUNCH_PROCESS_INVARIANTS_V1: [&str; 6] = [
     "environment=clear",
     "stdin=piped",
     "stdout=piped",
     "stderr=piped",
+    "daemon_identity=controlled_version_and_info_json",
+    "daemon_identity_revalidation=after_run_before_inspect_before_remove_after_remove",
 ];
 
 /// Exact inputs for one supervised isolated Docker exchange.
@@ -146,6 +182,9 @@ pub fn docker_local_launch_contract_digest_v1(
     let mut fields = vec![
         DOCKER_LOCAL_LAUNCH_CONTRACT_ID_V1.as_bytes(),
         DOCKER_LOCAL_SUPERVISED_RESULT_CONTRACT_ID_V1.as_bytes(),
+        DOCKER_LOCAL_DAEMON_IDENTITY_CONTRACT_ID_V1.as_bytes(),
+        DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1.as_bytes(),
+        DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1.as_bytes(),
         profile.contract_id.as_bytes(),
         profile.contract_version.as_bytes(),
         profile.profile_id.as_bytes(),
@@ -181,11 +220,15 @@ pub fn docker_local_launch_contract_argv_template_v1(
     }
     docker_run_argument_values_v1(
         loaded,
-        OsStr::new(LAUNCH_TEMPLATE_DOCKER_HOST_V1),
-        OsStr::new(LAUNCH_TEMPLATE_DOCKER_CONFIG_V1),
-        OsStr::new(LAUNCH_TEMPLATE_CID_PATH_V1),
-        LAUNCH_TEMPLATE_REPOSITORY_V1,
-        OsStr::new(LAUNCH_TEMPLATE_CONTAINER_NAME_V1),
+        &DockerRunArgumentBindingsV1 {
+            docker_host: OsStr::new(LAUNCH_TEMPLATE_DOCKER_HOST_V1),
+            docker_config: OsStr::new(LAUNCH_TEMPLATE_DOCKER_CONFIG_V1),
+            cid_path: OsStr::new(LAUNCH_TEMPLATE_CID_PATH_V1),
+            repository: LAUNCH_TEMPLATE_REPOSITORY_V1,
+            container_name: OsStr::new(LAUNCH_TEMPLATE_CONTAINER_NAME_V1),
+            operation_id: LAUNCH_TEMPLATE_OPERATION_ID_V1,
+            launch_contract_digest: LAUNCH_TEMPLATE_DIGEST_V1,
+        },
     )
     .into_iter()
     .map(|argument| {
@@ -201,8 +244,10 @@ pub fn docker_local_launch_contract_argv_template_v1(
 /// Every authority, runtime, and target check before `spawn` is read-only; only
 /// a private empty client-config file is created. After process creation, any
 /// timeout, I/O failure, nonzero exit, output anomaly, runtime identity drift,
-/// protocol error, target ambiguity, or semantic-digest mismatch returns only
-/// `outcome_unknown` and triggers best-effort forced container cleanup.
+/// protocol error, target ambiguity, semantic-digest mismatch, or cleanup
+/// binding failure returns only `outcome_unknown`. Cleanup only removes a
+/// container after revalidated executable/endpoint and exact CID/name/label
+/// binding checks; success also requires that verified cleanup.
 ///
 /// # Errors
 ///
@@ -263,25 +308,25 @@ pub fn supervise_docker_local_git_execution_v1(
         .map_err(|()| DockerLocalSupervisorErrorV1::RuntimeUnavailable)?;
     let container_name = container_name_v1(&operation.operation_id)
         .ok_or(DockerLocalSupervisorErrorV1::InputInvalid)?;
-    let args = docker_run_arguments_v1(
+    let launch_contract_digest = prefixed_sha256_v1(&docker_local_launch_contract_digest_v1(
         input.loaded_profile,
-        &supervisor.docker_host,
-        docker_config.path(),
-        docker_config.cid_path(),
-        &repository.repository_path,
-        &container_name,
-    )?;
-    let cleanup = DockerCleanupV1 {
-        docker_executable: input.docker_executable,
-        docker_identity: &docker_identity,
-        expected_docker_digest: &supervisor.docker_executable_digest,
-        endpoint_path: &endpoint_path,
-        endpoint_identity: &endpoint_identity,
-        docker_host: &supervisor.docker_host,
-        docker_config: docker_config.path(),
-        cid_path: docker_config.cid_path(),
-    };
-
+    )?);
+    let repository_path = repository
+        .repository_path
+        .to_str()
+        .ok_or(DockerLocalSupervisorErrorV1::TargetRejected)?;
+    let args = docker_run_argument_values_v1(
+        input.loaded_profile,
+        &DockerRunArgumentBindingsV1 {
+            docker_host: OsStr::new(&supervisor.docker_host),
+            docker_config: docker_config.path().as_os_str(),
+            cid_path: docker_config.cid_path().as_os_str(),
+            repository: repository_path,
+            container_name: OsStr::new(&container_name),
+            operation_id: &operation.operation_id,
+            launch_contract_digest: &launch_contract_digest,
+        },
+    );
     let repository_immediately_before_spawn = validate_phase11_disposable_git_target_v1(
         parsed.derived_request(),
         input.disposable_root,
@@ -313,6 +358,60 @@ pub fn supervise_docker_local_git_execution_v1(
     if endpoint_immediately_before_spawn != endpoint_identity {
         return Err(DockerLocalSupervisorErrorV1::DockerEndpointInvalid);
     }
+    let daemon_identity_digest = observe_docker_daemon_identity_v1(
+        input.docker_executable,
+        &supervisor.docker_host,
+        docker_config.path(),
+        Duration::from_millis(DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1),
+    )
+    .map_err(|()| DockerLocalSupervisorErrorV1::RuntimeUnavailable)?;
+    let docker_after_daemon_observation = validate_executable_v1(
+        input.docker_executable,
+        &supervisor.docker_executable_digest,
+    )
+    .map_err(|()| DockerLocalSupervisorErrorV1::DockerExecutableInvalid)?;
+    let endpoint_after_daemon_observation = validate_endpoint_v1(&endpoint_path)
+        .map_err(|()| DockerLocalSupervisorErrorV1::DockerEndpointInvalid)?;
+    if docker_after_daemon_observation != docker_identity {
+        return Err(DockerLocalSupervisorErrorV1::DockerExecutableInvalid);
+    }
+    if endpoint_after_daemon_observation != endpoint_identity {
+        return Err(DockerLocalSupervisorErrorV1::DockerEndpointInvalid);
+    }
+    // Daemon observations run child processes and may consume their full deadline.
+    // Bind the verifier again before using it to recheck the mount source.
+    let verifier_after_daemon_observation = validate_executable_v1(
+        input.verifier_git_executable,
+        &supervisor.verifier_git_executable_digest,
+    )
+    .map_err(|()| DockerLocalSupervisorErrorV1::VerifierExecutableInvalid)?;
+    if verifier_after_daemon_observation != verifier_identity {
+        return Err(DockerLocalSupervisorErrorV1::VerifierExecutableInvalid);
+    }
+    let repository_after_daemon_observation = validate_phase11_disposable_git_target_v1(
+        parsed.derived_request(),
+        input.disposable_root,
+        input.verifier_git_executable,
+        DOCKER_LOCAL_ADAPTER_REF_V1,
+    )
+    .map_err(|_| DockerLocalSupervisorErrorV1::TargetRejected)?;
+    if repository_after_daemon_observation != repository {
+        return Err(DockerLocalSupervisorErrorV1::TargetRejected);
+    }
+    let cleanup = DockerCleanupV1 {
+        docker_executable: input.docker_executable,
+        docker_identity: &docker_identity,
+        expected_docker_digest: &supervisor.docker_executable_digest,
+        endpoint_path: &endpoint_path,
+        endpoint_identity: &endpoint_identity,
+        docker_host: &supervisor.docker_host,
+        docker_config: docker_config.path(),
+        cid_path: docker_config.cid_path(),
+        container_name: &container_name,
+        operation_id: &operation.operation_id,
+        launch_contract_digest: &launch_contract_digest,
+        daemon_identity_digest,
+    };
 
     let started = Instant::now();
     let mut command = Command::new(input.docker_executable);
@@ -332,13 +431,14 @@ pub fn supervise_docker_local_git_execution_v1(
         Duration::from_millis(parsed.control().request().limits.deadline_millis),
         usize::try_from(parsed.control().request().limits.stdout_bytes)
             .unwrap_or(crate::adapter_process_protocol::MAX_DOCKER_LOCAL_ADAPTER_STDOUT_BYTES_V1),
+        crate::adapter_process_protocol::MAX_DOCKER_LOCAL_ADAPTER_STDERR_BYTES_V1,
     );
     let elapsed = started.elapsed();
 
     let Ok(launched) = launched else {
         let _ = child.kill();
         let _ = child.wait();
-        best_effort_remove_container_v1(&cleanup);
+        let _ = remove_bound_container_v1(&cleanup);
         return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
     };
 
@@ -352,9 +452,15 @@ pub fn supervise_docker_local_git_execution_v1(
             &supervisor.verifier_git_executable_digest,
         )
         .is_ok_and(|current| current == verifier_identity)
-        && validate_endpoint_v1(&endpoint_path).is_ok_and(|current| current == endpoint_identity);
+        && validate_endpoint_v1(&endpoint_path).is_ok_and(|current| current == endpoint_identity)
+        && cleanup_runtime_stable_v1(
+            &cleanup,
+            Instant::now(),
+            Duration::from_millis(DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1),
+        )
+        .is_ok();
     if !runtime_stable || !launched.status.success() {
-        best_effort_remove_container_v1(&cleanup);
+        let _ = remove_bound_container_v1(&cleanup);
         return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
     }
 
@@ -384,10 +490,11 @@ pub fn supervise_docker_local_git_execution_v1(
             elapsed_millis: u64::try_from(elapsed.as_millis()).unwrap_or(u64::MAX),
         })
     })();
-    if validated.is_err() {
-        best_effort_remove_container_v1(&cleanup);
+    let cleanup_result = remove_bound_container_v1(&cleanup);
+    match (validated, cleanup_result) {
+        (Ok(result), Ok(())) => Ok(result),
+        _ => Err(DockerLocalSupervisorErrorV1::OutcomeUnknown),
     }
-    validated
 }
 
 /// Computes exact semantic adapter-result identity for later receipt binding.
@@ -433,8 +540,9 @@ fn run_launched_process_v1(
     started: Instant,
     deadline: Duration,
     stdout_limit: usize,
+    stderr_limit: usize,
 ) -> Result<LaunchedProcessV1, ()> {
-    run_launched_process_unix_v1(child, stdin, started, deadline, stdout_limit)
+    run_launched_process_unix_v1(child, stdin, started, deadline, stdout_limit, stderr_limit)
 }
 
 #[cfg(not(unix))]
@@ -444,8 +552,9 @@ fn run_launched_process_unix_v1(
     started: Instant,
     deadline: Duration,
     stdout_limit: usize,
+    stderr_limit: usize,
 ) -> Result<LaunchedProcessV1, ()> {
-    let _ = (child, stdin, started, deadline, stdout_limit);
+    let _ = (child, stdin, started, deadline, stdout_limit, stderr_limit);
     Err(())
 }
 
@@ -456,11 +565,19 @@ fn run_launched_process_unix_v1(
     started: Instant,
     deadline: Duration,
     stdout_limit: usize,
+    stderr_limit: usize,
 ) -> Result<LaunchedProcessV1, ()> {
-    let mut child_stdin = Some(child.stdin.take().ok_or(())?);
+    let raw_stdin = child.stdin.take().ok_or(())?;
+    let mut child_stdin = if stdin.is_empty() {
+        None
+    } else {
+        Some(raw_stdin)
+    };
     let mut stdout = child.stdout.take().ok_or(())?;
     let mut stderr = child.stderr.take().ok_or(())?;
-    set_nonblocking_v1(child_stdin.as_ref().ok_or(())?)?;
+    if let Some(writer) = child_stdin.as_ref() {
+        set_nonblocking_v1(writer)?;
+    }
     set_nonblocking_v1(&stdout)?;
     set_nonblocking_v1(&stderr)?;
 
@@ -499,11 +616,7 @@ fn run_launched_process_unix_v1(
             stdout_open = !drain_nonblocking_v1(&mut stdout, &mut retained_stdout, stdout_limit)?;
         }
         if stderr_open {
-            stderr_open = !drain_nonblocking_v1(
-                &mut stderr,
-                &mut retained_stderr,
-                crate::adapter_process_protocol::MAX_DOCKER_LOCAL_ADAPTER_STDERR_BYTES_V1,
-            )?;
+            stderr_open = !drain_nonblocking_v1(&mut stderr, &mut retained_stderr, stderr_limit)?;
         }
         if status.is_none() {
             status = child.try_wait().map_err(|_| ())?;
@@ -564,69 +677,19 @@ fn drain_nonblocking_v1(
     }
 }
 
-fn wait_for_child_v1(child: &mut Child, deadline: Duration) -> Result<ExitStatus, ()> {
-    let started = Instant::now();
-    wait_for_child_until_v1(child, started, deadline)
-}
-
-fn wait_for_child_until_v1(
-    child: &mut Child,
-    started: Instant,
-    deadline: Duration,
-) -> Result<ExitStatus, ()> {
-    loop {
-        match child.try_wait() {
-            Ok(Some(status)) => return Ok(status),
-            Ok(None) => {}
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(());
-            }
-        }
-        let elapsed = started.elapsed();
-        if elapsed >= deadline {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err(());
-        }
-        std::thread::sleep(
-            deadline
-                .checked_sub(elapsed)
-                .unwrap_or_default()
-                .min(Duration::from_millis(5)),
-        );
-    }
-}
-
-fn docker_run_arguments_v1(
-    loaded: &LoadedDockerLocalRuntimeProfileV1,
-    docker_host: &str,
-    docker_config: &Path,
-    cid_path: &Path,
-    repository: &Path,
-    container_name: &str,
-) -> Result<Vec<OsString>, DockerLocalSupervisorErrorV1> {
-    let repository = repository
-        .to_str()
-        .ok_or(DockerLocalSupervisorErrorV1::TargetRejected)?;
-    Ok(docker_run_argument_values_v1(
-        loaded,
-        OsStr::new(docker_host),
-        docker_config.as_os_str(),
-        cid_path.as_os_str(),
-        repository,
-        OsStr::new(container_name),
-    ))
+struct DockerRunArgumentBindingsV1<'a> {
+    docker_host: &'a OsStr,
+    docker_config: &'a OsStr,
+    cid_path: &'a OsStr,
+    repository: &'a str,
+    container_name: &'a OsStr,
+    operation_id: &'a str,
+    launch_contract_digest: &'a str,
 }
 
 fn docker_run_argument_values_v1(
     loaded: &LoadedDockerLocalRuntimeProfileV1,
-    docker_host: &OsStr,
-    docker_config: &OsStr,
-    cid_path: &OsStr,
-    repository: &str,
-    container_name: &OsStr,
+    bindings: &DockerRunArgumentBindingsV1<'_>,
 ) -> Vec<OsString> {
     let profile = loaded.profile();
     let limits = &profile.limits;
@@ -634,22 +697,33 @@ fn docker_run_argument_values_v1(
     let filesystem = &profile.filesystem;
     let mount = format!(
         "type=bind,source={},target={},rw,bind-propagation=rprivate",
-        repository, filesystem.target_mount_path,
+        bindings.repository, filesystem.target_mount_path,
     );
     let cpu_quota = u64::from(limits.cpu_millis) * 100;
     vec![
         "--host".into(),
-        docker_host.to_owned(),
+        bindings.docker_host.to_owned(),
         "--config".into(),
-        docker_config.to_owned(),
+        bindings.docker_config.to_owned(),
         "run".into(),
         "--interactive".into(),
         "--cidfile".into(),
-        cid_path.to_owned(),
+        bindings.cid_path.to_owned(),
         "--pull=never".into(),
-        "--rm".into(),
+        "--label".into(),
+        format!(
+            "{DOCKER_LOCAL_OPERATION_ID_LABEL_V1}={}",
+            bindings.operation_id
+        )
+        .into(),
+        "--label".into(),
+        format!(
+            "{DOCKER_LOCAL_LAUNCH_CONTRACT_DIGEST_LABEL_V1}={}",
+            bindings.launch_contract_digest
+        )
+        .into(),
         "--name".into(),
-        container_name.to_owned(),
+        bindings.container_name.to_owned(),
         "--network=none".into(),
         "--ipc=none".into(),
         "--read-only".into(),
@@ -825,41 +899,538 @@ struct DockerCleanupV1<'a> {
     docker_host: &'a str,
     docker_config: &'a Path,
     cid_path: &'a Path,
+    container_name: &'a str,
+    operation_id: &'a str,
+    launch_contract_digest: &'a str,
+    daemon_identity_digest: [u8; 32],
 }
 
-fn best_effort_remove_container_v1(cleanup: &DockerCleanupV1<'_>) {
-    let Some(container_id) = read_container_id_v1(cleanup.cid_path) else {
-        return;
-    };
-    let executable_stable =
-        validate_executable_v1(cleanup.docker_executable, cleanup.expected_docker_digest)
-            .is_ok_and(|identity| identity == *cleanup.docker_identity);
-    let endpoint_stable = validate_endpoint_v1(cleanup.endpoint_path)
-        .is_ok_and(|identity| identity == *cleanup.endpoint_identity);
-    if !executable_stable || !endpoint_stable {
-        return;
+#[derive(Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct DockerDaemonVersionIdentityV1 {
+    client_version: String,
+    client_api_version: String,
+    server_version: String,
+    server_api_version: String,
+    server_min_api_version: String,
+    server_os: String,
+    server_architecture: String,
+    server_kernel_version: String,
+    server_experimental: bool,
+}
+
+#[derive(Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct DockerDaemonIdentityV1 {
+    id: String,
+    server_version: String,
+    os_type: String,
+    architecture: String,
+    kernel_version: String,
+    driver: String,
+    cgroup_driver: String,
+    cgroup_version: String,
+    security_options: Vec<String>,
+    default_runtime: String,
+    runtimes: BTreeMap<String, serde_json::Value>,
+}
+
+#[derive(Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+struct DockerCleanupInspectionV1 {
+    container_id: String,
+    container_name: String,
+    operation_id: String,
+    launch_contract_digest: String,
+}
+
+/// Removes exactly one Docker container only after its private CID and frozen
+/// operation/launch labels have been independently re-bound by `docker inspect`.
+/// A CID is discovery material, never authorization to remove a container.
+fn remove_bound_container_v1(cleanup: &DockerCleanupV1<'_>) -> Result<(), ()> {
+    let started = Instant::now();
+    let deadline = Duration::from_millis(DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1);
+    let container_id = read_container_id_v1(cleanup.cid_path).ok_or(())?;
+    cleanup_runtime_stable_v1(cleanup, started, deadline)?;
+
+    let inspect_format = [
+        r#"{"container_id":{{json .Id}},"container_name":{{json .Name}},"operation_id":{{json (index .Config.Labels "#,
+        DOCKER_LOCAL_OPERATION_ID_LABEL_V1,
+        r#"")}},"launch_contract_digest":{{json (index .Config.Labels "#,
+        DOCKER_LOCAL_LAUNCH_CONTRACT_DIGEST_LABEL_V1,
+        r#"")}}}"#,
+    ]
+    .concat();
+    let inspected = run_cleanup_command_v1(
+        cleanup,
+        [
+            "inspect",
+            "--type",
+            "container",
+            "--format",
+            inspect_format.as_str(),
+            "--",
+            container_id.as_str(),
+        ],
+        DOCKER_LOCAL_CLEANUP_INSPECT_STDOUT_BYTES_V1,
+        cleanup_remaining_deadline_v1(started, deadline)?,
+    )?;
+    if !inspected.status.success() || !inspected.stderr.is_empty() {
+        return Err(());
     }
-    let mut command = Command::new(cleanup.docker_executable);
+    if !json_record_precheck_v1(
+        &inspected.stdout,
+        DOCKER_LOCAL_OBSERVATION_JSON_MAX_DEPTH_V1,
+    ) {
+        return Err(());
+    }
+    let inspection: DockerCleanupInspectionV1 =
+        serde_json::from_slice(&inspected.stdout).map_err(|_| ())?;
+    let canonical = Zeroizing::new(serde_json::to_vec(&inspection).map_err(|_| ())?);
+    if !is_exact_canonical_json_line_v1(&inspected.stdout, &canonical)
+        || inspection.container_id != container_id
+        || inspection.container_name != format!("/{}", cleanup.container_name)
+        || inspection.operation_id != cleanup.operation_id
+        || inspection.launch_contract_digest != cleanup.launch_contract_digest
+    {
+        return Err(());
+    }
+
+    cleanup_runtime_stable_v1(cleanup, started, deadline)?;
+    let removed = run_cleanup_command_v1(
+        cleanup,
+        ["rm", "--force", "--volumes", "--", container_id.as_str()],
+        DOCKER_LOCAL_CLEANUP_REMOVE_STDOUT_BYTES_V1,
+        cleanup_remaining_deadline_v1(started, deadline)?,
+    )?;
+    if !removed.status.success()
+        || !removed.stderr.is_empty()
+        || removed.stdout.as_slice() != format!("{container_id}\n").as_bytes()
+    {
+        return Err(());
+    }
+    cleanup_runtime_stable_v1(cleanup, started, deadline)
+}
+
+fn cleanup_runtime_stable_v1(
+    cleanup: &DockerCleanupV1<'_>,
+    started: Instant,
+    deadline: Duration,
+) -> Result<(), ()> {
+    let executable =
+        validate_executable_v1(cleanup.docker_executable, cleanup.expected_docker_digest)?;
+    let endpoint = validate_endpoint_v1(cleanup.endpoint_path)?;
+    if executable != *cleanup.docker_identity || endpoint != *cleanup.endpoint_identity {
+        return Err(());
+    }
+    if observe_docker_daemon_identity_v1(
+        cleanup.docker_executable,
+        cleanup.docker_host,
+        cleanup.docker_config,
+        cleanup_remaining_deadline_v1(started, deadline)?,
+    )? != cleanup.daemon_identity_digest
+    {
+        return Err(());
+    }
+    let executable_after_observation =
+        validate_executable_v1(cleanup.docker_executable, cleanup.expected_docker_digest)?;
+    let endpoint_after_observation = validate_endpoint_v1(cleanup.endpoint_path)?;
+    if executable_after_observation != *cleanup.docker_identity
+        || endpoint_after_observation != *cleanup.endpoint_identity
+    {
+        return Err(());
+    }
+    let _ = cleanup_remaining_deadline_v1(started, deadline)?;
+    Ok(())
+}
+
+fn cleanup_remaining_deadline_v1(started: Instant, deadline: Duration) -> Result<Duration, ()> {
+    deadline.checked_sub(started.elapsed()).ok_or(())
+}
+
+/// Observes bounded source-selected Docker client/server identity through an
+/// environment-cleared, exact-endpoint CLI. Both records must be canonical
+/// one-line JSON and are combined into one opaque identity digest; raw output
+/// stays internal and is never logged, returned, or persisted.
+fn observe_docker_daemon_identity_v1(
+    docker_executable: &Path,
+    docker_host: &str,
+    docker_config: &Path,
+    deadline: Duration,
+) -> Result<[u8; 32], ()> {
+    let started = Instant::now();
+    let version = run_docker_command_v1(
+        docker_executable,
+        docker_host,
+        docker_config,
+        [
+            "version",
+            "--format",
+            DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1,
+        ],
+        DOCKER_LOCAL_DAEMON_IDENTITY_STDOUT_BYTES_V1,
+        DOCKER_LOCAL_DAEMON_IDENTITY_STDERR_BYTES_V1,
+        deadline,
+    )?;
+    let version =
+        parse_canonical_docker_daemon_record_v1::<DockerDaemonVersionIdentityV1>(&version)?;
+    if !daemon_version_identity_is_bounded_v1(&version) {
+        return Err(());
+    }
+    let remaining = deadline.checked_sub(started.elapsed()).ok_or(())?;
+    let info = run_docker_command_v1(
+        docker_executable,
+        docker_host,
+        docker_config,
+        ["info", "--format", DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1],
+        DOCKER_LOCAL_DAEMON_IDENTITY_STDOUT_BYTES_V1,
+        DOCKER_LOCAL_DAEMON_IDENTITY_STDERR_BYTES_V1,
+        remaining,
+    )?;
+    let info = parse_canonical_docker_daemon_record_v1::<DockerDaemonIdentityV1>(&info)?;
+    if !daemon_identity_is_bounded_v1(&info) {
+        return Err(());
+    }
+    let rootless_marker = if daemon_identity_is_rootless_v1(&info) {
+        "rootless"
+    } else {
+        "not_rootless"
+    };
+    let version = Zeroizing::new(serde_json::to_vec(&version).map_err(|_| ())?);
+    let info = Zeroizing::new(serde_json::to_vec(&info).map_err(|_| ())?);
+    Ok(digest_fields_v1(
+        DAEMON_IDENTITY_DIGEST_DOMAIN_V1,
+        &[
+            DOCKER_LOCAL_DAEMON_IDENTITY_CONTRACT_ID_V1.as_bytes(),
+            DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1.as_bytes(),
+            version.as_slice(),
+            DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1.as_bytes(),
+            info.as_slice(),
+            rootless_marker.as_bytes(),
+        ],
+    ))
+}
+
+fn parse_canonical_docker_daemon_record_v1<T>(launched: &LaunchedProcessV1) -> Result<T, ()>
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    if !launched.status.success() || !launched.stderr.is_empty() {
+        return Err(());
+    }
+    if !json_record_precheck_v1(&launched.stdout, DOCKER_LOCAL_OBSERVATION_JSON_MAX_DEPTH_V1) {
+        return Err(());
+    }
+    let record = serde_json::from_slice(&launched.stdout).map_err(|_| ())?;
+    let canonical = Zeroizing::new(serde_json::to_vec(&record).map_err(|_| ())?);
+    if !is_exact_canonical_json_line_v1(&launched.stdout, &canonical) {
+        return Err(());
+    }
+    Ok(record)
+}
+
+fn is_exact_canonical_json_line_v1(raw: &[u8], canonical: &[u8]) -> bool {
+    raw.len() == canonical.len().saturating_add(1)
+        && raw.starts_with(canonical)
+        && raw.last() == Some(&b'\n')
+}
+
+fn daemon_version_identity_is_bounded_v1(identity: &DockerDaemonVersionIdentityV1) -> bool {
+    [
+        &identity.client_version,
+        &identity.client_api_version,
+        &identity.server_version,
+        &identity.server_api_version,
+        &identity.server_min_api_version,
+        &identity.server_os,
+        &identity.server_architecture,
+        &identity.server_kernel_version,
+    ]
+    .into_iter()
+    .all(|field| !field.is_empty() && field.len() <= DOCKER_LOCAL_OBSERVATION_STRING_BYTES_V1)
+}
+
+fn daemon_identity_is_bounded_v1(identity: &DockerDaemonIdentityV1) -> bool {
+    [
+        &identity.id,
+        &identity.server_version,
+        &identity.os_type,
+        &identity.architecture,
+        &identity.kernel_version,
+        &identity.driver,
+        &identity.cgroup_driver,
+        &identity.cgroup_version,
+        &identity.default_runtime,
+    ]
+    .into_iter()
+    .all(|field| !field.is_empty() && field.len() <= DOCKER_LOCAL_OBSERVATION_STRING_BYTES_V1)
+        && !identity.security_options.is_empty()
+        && identity.security_options.len() <= 32
+        && identity.security_options.iter().all(|option| {
+            !option.is_empty() && option.len() <= DOCKER_LOCAL_OBSERVATION_STRING_BYTES_V1
+        })
+        && !identity.runtimes.is_empty()
+        && identity.runtimes.len() <= 32
+        && identity.runtimes.iter().all(|(name, value)| {
+            !name.is_empty()
+                && name.len() <= DOCKER_LOCAL_OBSERVATION_STRING_BYTES_V1
+                && value.is_object()
+                && json_value_is_bounded_v1(value, DOCKER_LOCAL_OBSERVATION_JSON_MAX_DEPTH_V1)
+        })
+}
+
+fn daemon_identity_is_rootless_v1(identity: &DockerDaemonIdentityV1) -> bool {
+    identity
+        .security_options
+        .iter()
+        .any(|option| option == DOCKER_LOCAL_DAEMON_ROOTLESS_SECURITY_OPTION_V1)
+}
+
+fn json_value_is_bounded_v1(value: &serde_json::Value, remaining_depth: usize) -> bool {
+    if remaining_depth == 0 {
+        return false;
+    }
+    match value {
+        serde_json::Value::Null | serde_json::Value::Bool(_) | serde_json::Value::Number(_) => true,
+        serde_json::Value::String(value) => value.len() <= DOCKER_LOCAL_OBSERVATION_STRING_BYTES_V1,
+        serde_json::Value::Array(values) => {
+            values.len() <= 32
+                && values
+                    .iter()
+                    .all(|value| json_value_is_bounded_v1(value, remaining_depth - 1))
+        }
+        serde_json::Value::Object(values) => {
+            values.len() <= 32
+                && values.iter().all(|(key, value)| {
+                    key.len() <= DOCKER_LOCAL_OBSERVATION_STRING_BYTES_V1
+                        && json_value_is_bounded_v1(value, remaining_depth - 1)
+                })
+        }
+    }
+}
+
+/// Rejects oversized nesting and every duplicate object member before serde
+/// sees a record. Contract member names are ASCII, so escaped keys are denied
+/// fail-closed rather than risking equivalent Unicode escape aliases.
+fn json_record_precheck_v1(bytes: &[u8], maximum_depth: usize) -> bool {
+    let mut scanner = JsonRecordPrecheckV1 { bytes, offset: 0 };
+    scanner.skip_whitespace();
+    scanner.parse_value(maximum_depth) && {
+        scanner.skip_whitespace();
+        scanner.offset == bytes.len()
+    }
+}
+
+struct JsonRecordPrecheckV1<'a> {
+    bytes: &'a [u8],
+    offset: usize,
+}
+
+impl JsonRecordPrecheckV1<'_> {
+    fn skip_whitespace(&mut self) {
+        while self
+            .bytes
+            .get(self.offset)
+            .is_some_and(u8::is_ascii_whitespace)
+        {
+            self.offset += 1;
+        }
+    }
+
+    fn parse_value(&mut self, remaining_depth: usize) -> bool {
+        if remaining_depth == 0 {
+            return false;
+        }
+        self.skip_whitespace();
+        match self.bytes.get(self.offset) {
+            Some(b'{') => self.parse_object(remaining_depth - 1),
+            Some(b'[') => self.parse_array(remaining_depth - 1),
+            Some(b'"') => self.parse_string(false).is_some(),
+            Some(b't') => self.consume_literal(b"true"),
+            Some(b'f') => self.consume_literal(b"false"),
+            Some(b'n') => self.consume_literal(b"null"),
+            Some(b'-' | b'0'..=b'9') => self.parse_number(),
+            _ => false,
+        }
+    }
+
+    fn parse_object(&mut self, remaining_depth: usize) -> bool {
+        self.offset += 1;
+        self.skip_whitespace();
+        let mut members = HashSet::new();
+        if self.consume_byte(b'}') {
+            return true;
+        }
+        loop {
+            let Some(member) = self.parse_string(true) else {
+                return false;
+            };
+            if !members.insert(member) {
+                return false;
+            }
+            self.skip_whitespace();
+            if !self.consume_byte(b':') || !self.parse_value(remaining_depth) {
+                return false;
+            }
+            self.skip_whitespace();
+            if self.consume_byte(b'}') {
+                return true;
+            }
+            if !self.consume_byte(b',') {
+                return false;
+            }
+            self.skip_whitespace();
+        }
+    }
+
+    fn parse_array(&mut self, remaining_depth: usize) -> bool {
+        self.offset += 1;
+        self.skip_whitespace();
+        if self.consume_byte(b']') {
+            return true;
+        }
+        loop {
+            if !self.parse_value(remaining_depth) {
+                return false;
+            }
+            self.skip_whitespace();
+            if self.consume_byte(b']') {
+                return true;
+            }
+            if !self.consume_byte(b',') {
+                return false;
+            }
+            self.skip_whitespace();
+        }
+    }
+
+    fn parse_string(&mut self, reject_escape: bool) -> Option<Vec<u8>> {
+        if !self.consume_byte(b'"') {
+            return None;
+        }
+        let mut value = Vec::new();
+        loop {
+            let byte = *self.bytes.get(self.offset)?;
+            self.offset += 1;
+            match byte {
+                b'"' => return Some(value),
+                b'\\' => {
+                    if reject_escape {
+                        return None;
+                    }
+                    let escaped = *self.bytes.get(self.offset)?;
+                    self.offset += 1;
+                    match escaped {
+                        b'"' | b'\\' | b'/' | b'b' | b'f' | b'n' | b'r' | b't' => {
+                            value.push(escaped);
+                        }
+                        b'u' => {
+                            for _ in 0..4 {
+                                let digit = *self.bytes.get(self.offset)?;
+                                if !digit.is_ascii_hexdigit() {
+                                    return None;
+                                }
+                                self.offset += 1;
+                            }
+                        }
+                        _ => return None,
+                    }
+                }
+                0..=0x1f => return None,
+                _ => value.push(byte),
+            }
+        }
+    }
+
+    fn parse_number(&mut self) -> bool {
+        let start = self.offset;
+        while self
+            .bytes
+            .get(self.offset)
+            .is_some_and(|byte| matches!(*byte, b'-' | b'+' | b'.' | b'e' | b'E' | b'0'..=b'9'))
+        {
+            self.offset += 1;
+        }
+        self.offset > start
+    }
+
+    fn consume_literal(&mut self, literal: &[u8]) -> bool {
+        let Some(candidate) = self.bytes.get(self.offset..self.offset + literal.len()) else {
+            return false;
+        };
+        if candidate != literal {
+            return false;
+        }
+        self.offset += literal.len();
+        true
+    }
+
+    fn consume_byte(&mut self, expected: u8) -> bool {
+        if self.bytes.get(self.offset) != Some(&expected) {
+            return false;
+        }
+        self.offset += 1;
+        true
+    }
+}
+
+fn run_cleanup_command_v1<'a, I>(
+    cleanup: &DockerCleanupV1<'_>,
+    arguments: I,
+    stdout_limit: usize,
+    deadline: Duration,
+) -> Result<LaunchedProcessV1, ()>
+where
+    I: IntoIterator<Item = &'a str>,
+{
+    run_docker_command_v1(
+        cleanup.docker_executable,
+        cleanup.docker_host,
+        cleanup.docker_config,
+        arguments,
+        stdout_limit,
+        DOCKER_LOCAL_CLEANUP_STDERR_BYTES_V1,
+        deadline,
+    )
+}
+
+fn run_docker_command_v1<'a, I>(
+    docker_executable: &Path,
+    docker_host: &str,
+    docker_config: &Path,
+    arguments: I,
+    stdout_limit: usize,
+    stderr_limit: usize,
+    deadline: Duration,
+) -> Result<LaunchedProcessV1, ()>
+where
+    I: IntoIterator<Item = &'a str>,
+{
+    let mut command = Command::new(docker_executable);
     command
         .env_clear()
         .arg("--host")
-        .arg(cleanup.docker_host)
+        .arg(docker_host)
         .arg("--config")
-        .arg(cleanup.docker_config)
-        .arg("rm")
-        .arg("--force")
-        .arg("--volumes")
-        .arg(container_id)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-    let Ok(mut child) = command.spawn() else {
-        return;
-    };
-    let _ = wait_for_child_v1(
+        .arg(docker_config)
+        .args(arguments)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    let mut child = command.spawn().map_err(|_| ())?;
+    let launched = run_launched_process_v1(
         &mut child,
-        Duration::from_millis(DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1),
+        &[],
+        Instant::now(),
+        deadline,
+        stdout_limit,
+        stderr_limit,
     );
+    if launched.is_err() {
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+    launched
 }
 
 struct PrivateDockerConfigV1 {
@@ -1117,11 +1688,15 @@ mod launch_argument_tests_v1 {
         let cid_path = OsString::from_vec(b"/private/tmp/cid-\x81".to_vec());
         let args = docker_run_argument_values_v1(
             &loaded,
-            OsStr::new("unix:///private/tmp/lnsat-runtime-proof.sock"),
-            &docker_config,
-            &cid_path,
-            "/private/tmp/disposable-repository",
-            OsStr::new("lnsat-test-container"),
+            &DockerRunArgumentBindingsV1 {
+                docker_host: OsStr::new("unix:///private/tmp/lnsat-runtime-proof.sock"),
+                docker_config: &docker_config,
+                cid_path: &cid_path,
+                repository: "/private/tmp/disposable-repository",
+                container_name: OsStr::new("lnsat-test-container"),
+                operation_id: "opn_placeholder",
+                launch_contract_digest: "sha256:placeholder",
+            },
         );
 
         assert_eq!(args[3], docker_config);

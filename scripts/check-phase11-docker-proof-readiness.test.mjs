@@ -31,6 +31,20 @@ function mutatedJson(relativePath, mutator) {
   return tempFile("mutated.json", `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function mutatedSupervisor(mutator) {
+  const source = readFileSync(
+    resolve(root, "crates/lnsatd/src/docker_local_supervisor.rs"),
+    "utf8",
+  );
+  return tempFile("docker_local_supervisor.rs", mutator(source));
+}
+
+function mutatedWorkspacePackage(relativePath, mutator) {
+  const value = JSON.parse(readFileSync(resolve(root, relativePath), "utf8"));
+  mutator(value);
+  return tempFile("workspace-package.json", `${JSON.stringify(value, null, 2)}\n`);
+}
+
 test.after(() => {
   for (const directory of tempRoots) {
     rmSync(directory, { recursive: true, force: true });
@@ -283,6 +297,75 @@ test("evidence requirements fixture rejects duplicate, deep, and oversized JSON 
   assert.doesNotMatch(oversized.errors.join("\n"), /invalid strict JSON/u);
 });
 
+test("Docker supervisor fixture rejects weakened cleanup and success bindings", () => {
+  const supervisorFixturePath = mutatedJson(
+    "fixtures/contracts/phase11-docker-local-supervisor-v1.json",
+    (fixture) => {
+      fixture.launch_boundary.automatic_container_remove = true;
+      fixture.launch_boundary.cleanup_retry = true;
+      fixture.launch_boundary.daemon_identity = "initial_observation_only";
+      fixture.launch_boundary.daemon_identity_authority = "self_approved";
+      fixture.success_boundary.verified_cleanup_required = false;
+      fixture.post_spawn_fail_closed.pop();
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    supervisorFixturePath,
+  });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /exact cleanup launch boundary required/u);
+  assert.match(errors, /cleanup-gated success required/u);
+  assert.match(errors, /fail-closed cases mismatch/u);
+});
+
+test("Docker supervisor fixture rejects nested shape and closed-boundary drift", () => {
+  const supervisorFixturePath = mutatedJson(
+    "fixtures/contracts/phase11-docker-local-supervisor-v1.json",
+    (fixture) => {
+      fixture.contract_id = "lnsat.drifted_supervisor_result.v1";
+      fixture.profile_requirement.unreviewed_binding = true;
+      fixture.launch_boundary.unbounded_cleanup = true;
+      fixture.success_boundary.receipt_persisted = true;
+      fixture.error_codes.pop();
+      fixture.hard_stops.pop();
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    supervisorFixturePath,
+  });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /identity or status mismatch/u);
+  assert.match(errors, /profile_requirement: keys or key order mismatch/u);
+  assert.match(errors, /launch_boundary: keys or key order mismatch/u);
+  assert.match(errors, /cleanup-gated success required/u);
+  assert.match(errors, /error codes mismatch/u);
+  assert.match(errors, /hard stops mismatch/u);
+});
+
+test("Docker supervisor fixture rejects duplicate JSON before decoding", () => {
+  const canonical = readFileSync(
+    resolve(root, "fixtures/contracts/phase11-docker-local-supervisor-v1.json"),
+    "utf8",
+  );
+  const supervisorFixturePath = tempFile(
+    "duplicate-supervisor.json",
+    canonical.replace(
+      '  "fixture_id":',
+      '  "fixture_id": "duplicate",\n  "fixture_id":',
+    ),
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    supervisorFixturePath,
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /duplicate JSON member/u);
+});
+
 test("repository-wide check cannot drop Phase 11 readiness gates", () => {
   const packagePath = mutatedJson("package.json", (packageJson) => {
     packageJson.scripts.check = packageJson.scripts.check.replace(
@@ -359,6 +442,89 @@ test("package scripts reject constructed Docker command indirection", () => {
   const result = validatePhase11DockerProofReadiness({ root, packagePath });
   assert.equal(result.ok, false);
   assert.match(result.errors.join("\n"), /source-gate graph digest mismatch/u);
+});
+
+test("workspace build, prebuild, and test scripts are frozen in the source-gate graph", () => {
+  for (const [name, mutator] of [
+    ["build", (scripts) => (scripts.build += ' && D=d; "${D}ocker" run forbidden')],
+    ["prebuild", (scripts) => (scripts.prebuild = 'D=d; "${D}ocker" run forbidden')],
+    ["test", (scripts) => (scripts.test += ' && D=d; "${D}ocker" run forbidden')],
+  ]) {
+    const workspacePackagePath = mutatedWorkspacePackage(
+      "apps/api/package.json",
+      (packageJson) => mutator(packageJson.scripts),
+    );
+    const result = validatePhase11DockerProofReadiness({
+      root,
+      workspaceManifestPathOverrides: {
+        "apps/api/package.json": workspacePackagePath,
+      },
+    });
+    assert.equal(result.ok, false, name);
+    assert.match(
+      result.errors.join("\n"),
+      /exact topology and source-gate graph digest mismatch/u,
+    );
+  }
+});
+
+test("workspace constructed commands fail by frozen graph digest", () => {
+  const workspacePackagePath = mutatedWorkspacePackage(
+    "apps/api/package.json",
+    (packageJson) => {
+      packageJson.scripts.build += ' && D=d; "${D}ocker" run forbidden';
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    workspaceManifestPathOverrides: {
+      "apps/api/package.json": workspacePackagePath,
+    },
+  });
+  assert.equal(result.ok, false);
+  assert.match(
+    result.errors.join("\n"),
+    /exact topology and source-gate graph digest mismatch/u,
+  );
+});
+
+test("workspace script additions, missing manifests, and root workspace drift fail closed", () => {
+  const addedScriptPath = mutatedWorkspacePackage(
+    "apps/api/package.json",
+    (packageJson) => {
+      packageJson.scripts.prebuild = "echo unexpected";
+    },
+  );
+  const addedScript = validatePhase11DockerProofReadiness({
+    root,
+    workspaceManifestPathOverrides: {
+      "apps/api/package.json": addedScriptPath,
+    },
+  });
+  assert.equal(addedScript.ok, false);
+  assert.match(
+    addedScript.errors.join("\n"),
+    /exact topology and source-gate graph digest mismatch/u,
+  );
+
+  const missingManifest = validatePhase11DockerProofReadiness({
+    root,
+    workspaceManifestPathOverrides: {
+      "apps/api/package.json": resolve(root, "apps/api/missing-package.json"),
+    },
+  });
+  assert.equal(missingManifest.ok, false);
+  assert.match(
+    missingManifest.errors.join("\n"),
+    /workspace manifest apps\/api\/package\.json: unreadable/u,
+  );
+
+  const packagePath = mutatedJson("package.json", (packageJson) => {
+    packageJson.workspaces = ["apps/*"];
+  });
+  const workspaceDrift = validatePhase11DockerProofReadiness({ root, packagePath });
+  assert.equal(workspaceDrift.ok, false);
+  assert.match(workspaceDrift.errors.join("\n"), /exact workspace topology mismatch/u);
 });
 
 test("source CI cannot add Docker proof, service, or container execution", () => {
@@ -460,6 +626,81 @@ test("pure evidence requirements module rejects process, filesystem, socket, sto
       ),
     );
   }
+});
+
+test("Docker supervisor rejects automatic removal before bound inspection", () => {
+  const supervisorPath = mutatedSupervisor((source) =>
+    source.replace(
+      '        "--pull=never".into(),',
+      '        "--pull=never".into(),\n        "--rm".into(),',
+    ),
+  );
+  const result = validatePhase11DockerProofReadiness({ root, supervisorPath });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /automatic --rm cleanup remains forbidden/u);
+});
+
+test("Docker supervisor cannot drop exact cleanup label bindings", () => {
+  for (const label of [
+    "io.lnsat.phase11.operation-id",
+    "io.lnsat.phase11.launch-contract-digest",
+  ]) {
+    const supervisorPath = mutatedSupervisor((source) =>
+      source.replace(label, `invalid.${label}`),
+    );
+    const result = validatePhase11DockerProofReadiness({ root, supervisorPath });
+    assert.equal(result.ok, false, label);
+    assert.match(result.errors.join("\n"), /missing cleanup-binding marker/u);
+  }
+});
+
+test("Docker supervisor cannot remove before exact inspection", () => {
+  const supervisorPath = mutatedSupervisor((source) =>
+    source.replace('            "inspect",', '            "inspect-disabled",'),
+  );
+  const result = validatePhase11DockerProofReadiness({ root, supervisorPath });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /missing cleanup-binding marker/u);
+  assert.match(errors, /inspect must precede bounded removal/u);
+});
+
+test("Docker supervisor source digest rejects marker-preserving cleanup spoof", () => {
+  const supervisorPath = mutatedSupervisor((source) => {
+    const mutated = source.replace(
+      '["rm", "--force", "--volumes", "--", container_id.as_str()]',
+      '["not-rm", "--force", "--volumes", "--", container_id.as_str()]',
+    );
+    assert.notEqual(mutated, source, "live removal argv must be mutated");
+    return `${mutated}\n// marker-preserving spoof: "rm",\n`;
+  });
+  const result = validatePhase11DockerProofReadiness({ root, supervisorPath });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /exact reviewed source digest mismatch/u);
+});
+
+test("Docker supervisor cannot bypass cleanup after validated output", () => {
+  const supervisorPath = mutatedSupervisor((source) =>
+    source.replace(
+      "let cleanup_result = remove_bound_container_v1(&cleanup);",
+      "let cleanup_result = Ok(());",
+    ),
+  );
+  const result = validatePhase11DockerProofReadiness({ root, supervisorPath });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /validated output must remain cleanup-gated/u);
+});
+
+test("Docker supervisor retains fail-closed unknown outcome", () => {
+  const supervisorPath = mutatedSupervisor((source) =>
+    source.replaceAll(
+      "DockerLocalSupervisorErrorV1::OutcomeUnknown",
+      "DockerLocalSupervisorErrorV1::InputInvalid",
+    ),
+  );
+  const result = validatePhase11DockerProofReadiness({ root, supervisorPath });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /missing cleanup-binding marker/u);
 });
 
 test("readiness docs cannot lose closed-boundary markers", () => {

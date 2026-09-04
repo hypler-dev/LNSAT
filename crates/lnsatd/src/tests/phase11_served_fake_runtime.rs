@@ -4,7 +4,11 @@ use crate::adapter_process_protocol::{
     encode_docker_local_adapter_process_result_frame_v1,
 };
 use crate::docker_local_execution_payload::build_docker_local_execution_payload_request_v1;
-use crate::docker_local_supervisor::docker_local_supervised_git_result_digest_v1;
+use crate::docker_local_supervisor::{
+    DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1, DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1,
+    DOCKER_LOCAL_LAUNCH_CONTRACT_DIGEST_LABEL_V1, DOCKER_LOCAL_OPERATION_ID_LABEL_V1,
+    docker_local_supervised_git_result_digest_v1,
+};
 use crate::runtime_profile::{
     DOCKER_LOCAL_ADAPTER_REF_V1, DOCKER_LOCAL_ADAPTER_VERSION_V1, DOCKER_LOCAL_AUDIENCE_V1,
     LoadedDockerLocalRuntimeProfileV1, load_docker_local_runtime_profile_v1,
@@ -34,6 +38,7 @@ const COMMIT_MESSAGE: &str = "bounded Phase 11 fake-runtime commit\n";
 enum FakeMode {
     Success,
     ConsequenceThenStderr,
+    RemoveFailure,
     NoConsequence,
 }
 
@@ -498,6 +503,119 @@ impl ServedFakeRuntimeFixture {
             .count()
     }
 
+    fn docker_invocations(&self) -> Vec<Vec<String>> {
+        fs::read_to_string(&self.invocation_log)
+            .unwrap_or_default()
+            .split("BEGIN\n")
+            .filter(|invocation| !invocation.is_empty())
+            .map(|invocation| invocation.lines().map(str::to_owned).collect())
+            .collect()
+    }
+
+    fn assert_one_dispatch_with_bound_cleanup(&self) {
+        assert_eq!(self.run_count(), 1, "one adapter dispatch");
+        let invocations = self.docker_invocations();
+        assert_eq!(
+            invocations
+                .iter()
+                .map(|invocation| {
+                    invocation
+                        .iter()
+                        .find(|argument| {
+                            matches!(
+                                argument.as_str(),
+                                "version" | "info" | "run" | "inspect" | "rm"
+                            )
+                        })
+                        .expect("fake Docker invocation command")
+                        .as_str()
+                })
+                .collect::<Vec<_>>(),
+            [
+                "version", "info", "run", "version", "info", "version", "info", "inspect",
+                "version", "info", "rm", "version", "info",
+            ],
+            "the served fake runtime must exercise prelaunch, postlaunch, pre-inspect, pre-remove, and post-remove daemon checks"
+        );
+        for invocation in &invocations {
+            assert_eq!(invocation[0], "--host");
+            assert_eq!(
+                invocation[1],
+                format!("unix://{}", self.docker_socket.display())
+            );
+            assert_eq!(invocation[2], "--config");
+            assert!(!invocation[3].is_empty(), "private Docker config path");
+        }
+        for index in [0, 3, 5, 8, 11] {
+            assert_eq!(
+                &invocations[index][4..],
+                [
+                    "version",
+                    "--format",
+                    DOCKER_LOCAL_DAEMON_VERSION_IDENTITY_FORMAT_V1
+                ],
+                "bounded daemon-version observation"
+            );
+        }
+        for index in [1, 4, 6, 9, 12] {
+            assert_eq!(
+                &invocations[index][4..],
+                ["info", "--format", DOCKER_LOCAL_DAEMON_IDENTITY_FORMAT_V1],
+                "bounded daemon-info observation"
+            );
+        }
+        assert_eq!(invocations[2][4], "run");
+        assert!(invocations[2].contains(&"--cidfile".to_owned()));
+        assert!(invocations[2].contains(&"--name".to_owned()));
+        assert!(invocations[2].iter().any(|argument| {
+            argument.starts_with(&format!("{DOCKER_LOCAL_OPERATION_ID_LABEL_V1}="))
+        }));
+        assert!(invocations[2].iter().any(|argument| {
+            argument.starts_with(&format!("{DOCKER_LOCAL_LAUNCH_CONTRACT_DIGEST_LABEL_V1}="))
+        }));
+        assert_eq!(&invocations[7][4..7], ["inspect", "--type", "container"]);
+        assert_eq!(invocations[7][7], "--format");
+        assert!(invocations[7][8].contains(DOCKER_LOCAL_OPERATION_ID_LABEL_V1));
+        assert!(invocations[7][8].contains(DOCKER_LOCAL_LAUNCH_CONTRACT_DIGEST_LABEL_V1));
+        assert_eq!(
+            &invocations[10][4..],
+            ["rm", "--force", "--volumes", "--", &"c".repeat(64)],
+            "one bound destructive cleanup command"
+        );
+    }
+
+    fn assert_one_dispatch_with_remove_failure(&self) {
+        assert_eq!(self.run_count(), 1, "one adapter dispatch");
+        let invocations = self.docker_invocations();
+        assert_eq!(
+            invocations
+                .iter()
+                .map(|invocation| {
+                    invocation
+                        .iter()
+                        .find(|argument| {
+                            matches!(
+                                argument.as_str(),
+                                "version" | "info" | "run" | "inspect" | "rm"
+                            )
+                        })
+                        .expect("fake Docker invocation command")
+                        .as_str()
+                })
+                .collect::<Vec<_>>(),
+            [
+                "version", "info", "run", "version", "info", "version", "info", "inspect",
+                "version", "info", "rm",
+            ],
+            "failed removal must stop before a post-remove identity probe"
+        );
+        assert_eq!(
+            &invocations[10][4..],
+            ["rm", "--force", "--volumes", "--", &"c".repeat(64)],
+            "one bound destructive cleanup command"
+        );
+    }
+
     fn assert_public_safe(&self, response: &str) {
         for forbidden in [
             self.capability.as_str(),
@@ -549,7 +667,7 @@ fn phase11_served_fake_runtime_executes_once_and_exact_replay_never_redispatches
         .as_str()
         .expect("receipt id")
         .to_owned();
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     assert_eq!(
         git_text(&fixture.git.repository, &["rev-parse", "HEAD"]),
         fixture.git.expected_commit_oid
@@ -558,7 +676,7 @@ fn phase11_served_fake_runtime_executes_once_and_exact_replay_never_redispatches
 
     let drift_response = fixture.execute(&daemon, "idempotency:phase11:d4b2b-drift");
     response_json(&drift_response, "HTTP/1.1 403 Forbidden\r\n");
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     fixture.assert_public_safe(&drift_response);
 
     let replay_response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
@@ -566,12 +684,12 @@ fn phase11_served_fake_runtime_executes_once_and_exact_replay_never_redispatches
     assert_eq!(replay["created"], false);
     assert_eq!(replay["operation"]["attempt"]["attempt_sequence"], 1);
     assert_eq!(replay["operation"]["receipt"]["receipt_id"], receipt_id);
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     fixture.assert_public_safe(&replay_response);
 
     let reconciled = response_json(&fixture.reconcile(&daemon), "HTTP/1.1 200 OK\r\n");
     assert_eq!(reconciled["operation"]["receipt"]["receipt_id"], receipt_id);
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     daemon.stop();
 }
 
@@ -581,7 +699,7 @@ fn phase11_served_fake_runtime_unknown_survives_restart_and_reconciles_without_r
     let daemon = ServedDaemon::start(&fixture.config);
     let execute_response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
     response_json(&execute_response, "HTTP/1.1 403 Forbidden\r\n");
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     assert_eq!(
         git_text(&fixture.git.repository, &["rev-parse", "HEAD"]),
         fixture.git.expected_commit_oid
@@ -595,7 +713,7 @@ fn phase11_served_fake_runtime_unknown_survives_restart_and_reconciles_without_r
     assert_eq!(unknown["operation"]["state"], "outcome_unknown");
     assert_eq!(unknown["operation"]["attempt"]["state"], "outcome_unknown");
     assert!(unknown["operation"]["receipt"].is_null());
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     fixture.assert_public_safe(&unknown_response);
 
     let reconcile_response = fixture.reconcile(&daemon);
@@ -606,7 +724,7 @@ fn phase11_served_fake_runtime_unknown_survives_restart_and_reconciles_without_r
         reconciled["operation"]["reconciliation"]["status"],
         "matched"
     );
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     fixture.assert_public_safe(&reconcile_response);
 
     let replay = response_json(
@@ -615,7 +733,51 @@ fn phase11_served_fake_runtime_unknown_survives_restart_and_reconciles_without_r
     );
     assert_eq!(replay["created"], false);
     assert_eq!(replay["operation"]["state"], "completed");
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
+    daemon.stop();
+}
+
+#[test]
+fn phase11_served_fake_runtime_remove_failure_stays_unknown_until_reconciliation() {
+    let fixture = ServedFakeRuntimeFixture::new("d4r", FakeMode::RemoveFailure);
+    let daemon = ServedDaemon::start(&fixture.config);
+    let execute_response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+    response_json(&execute_response, "HTTP/1.1 403 Forbidden\r\n");
+    fixture.assert_one_dispatch_with_remove_failure();
+    assert_eq!(
+        git_text(&fixture.git.repository, &["rev-parse", "HEAD"]),
+        fixture.git.expected_commit_oid
+    );
+    fixture.assert_public_safe(&execute_response);
+    daemon.stop();
+
+    let daemon = ServedDaemon::start(&fixture.config);
+    let unknown_response = fixture.operation(&daemon);
+    let unknown = response_json(&unknown_response, "HTTP/1.1 200 OK\r\n");
+    assert_eq!(unknown["operation"]["state"], "outcome_unknown");
+    assert_eq!(unknown["operation"]["attempt"]["state"], "outcome_unknown");
+    assert!(unknown["operation"]["receipt"].is_null());
+    fixture.assert_one_dispatch_with_remove_failure();
+    fixture.assert_public_safe(&unknown_response);
+
+    let reconcile_response = fixture.reconcile(&daemon);
+    let reconciled = response_json(&reconcile_response, "HTTP/1.1 200 OK\r\n");
+    assert_eq!(reconciled["operation"]["state"], "completed");
+    assert_eq!(
+        reconciled["operation"]["reconciliation"]["status"],
+        "matched"
+    );
+    assert!(reconciled["operation"]["receipt"]["receipt_id"].is_string());
+    fixture.assert_one_dispatch_with_remove_failure();
+    fixture.assert_public_safe(&reconcile_response);
+
+    let replay = response_json(
+        &fixture.execute(&daemon, EXECUTE_IDEMPOTENCY),
+        "HTTP/1.1 200 OK\r\n",
+    );
+    assert_eq!(replay["created"], false);
+    assert_eq!(replay["operation"]["state"], "completed");
+    fixture.assert_one_dispatch_with_remove_failure();
     daemon.stop();
 }
 
@@ -625,7 +787,7 @@ fn phase11_served_fake_runtime_unchanged_target_stays_unknown_without_retry_or_r
     let daemon = ServedDaemon::start(&fixture.config);
     let execute_response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
     response_json(&execute_response, "HTTP/1.1 403 Forbidden\r\n");
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     assert_eq!(
         git_text(&fixture.git.repository, &["rev-parse", "HEAD"]),
         fixture.git.identity.base_commit_oid
@@ -635,14 +797,14 @@ fn phase11_served_fake_runtime_unchanged_target_stays_unknown_without_retry_or_r
     let daemon = ServedDaemon::start(&fixture.config);
     let reconcile_response = fixture.reconcile(&daemon);
     response_json(&reconcile_response, "HTTP/1.1 403 Forbidden\r\n");
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     fixture.assert_public_safe(&reconcile_response);
 
     let operation_response = fixture.operation(&daemon);
     let operation = response_json(&operation_response, "HTTP/1.1 200 OK\r\n");
     assert_eq!(operation["operation"]["state"], "outcome_unknown");
     assert!(operation["operation"]["receipt"].is_null());
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
 
     let replay = response_json(
         &fixture.execute(&daemon, EXECUTE_IDEMPOTENCY),
@@ -651,7 +813,7 @@ fn phase11_served_fake_runtime_unchanged_target_stays_unknown_without_retry_or_r
     assert_eq!(replay["created"], false);
     assert_eq!(replay["operation"]["state"], "outcome_unknown");
     assert!(replay["operation"]["receipt"].is_null());
-    assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_dispatch_with_bound_cleanup();
     daemon.stop();
 }
 
@@ -757,7 +919,7 @@ fn fake_docker_script(
     invocation_log: &Path,
 ) -> String {
     let behavior = match mode {
-        FakeMode::Success => format!(
+        FakeMode::Success | FakeMode::RemoveFailure => format!(
             "{git} -C {repository} update-ref refs/heads/main {expected_commit} {base_commit}\n{cat} {result_frame}\n",
             git = shell_quote(Path::new(GIT_EXECUTABLE)),
             repository = shell_quote(repository),
@@ -773,10 +935,21 @@ fn fake_docker_script(
         ),
         FakeMode::NoConsequence => "exit 1\n".to_owned(),
     };
+    let state = invocation_log.with_extension("cleanup-state");
+    let container_id = "c".repeat(64);
+    let remove_failure = matches!(mode, FakeMode::RemoveFailure);
+    let version_identity = "{\"client_version\":\"27.0.0\",\"client_api_version\":\"1.47\",\"server_version\":\"27.0.0\",\"server_api_version\":\"1.47\",\"server_min_api_version\":\"1.24\",\"server_os\":\"linux\",\"server_architecture\":\"amd64\",\"server_kernel_version\":\"6.10.0\",\"server_experimental\":false}";
+    let info_identity = "{\"id\":\"daemon-aaaaaaaaaaaaaaaa\",\"server_version\":\"27.0.0\",\"os_type\":\"linux\",\"architecture\":\"amd64\",\"kernel_version\":\"6.10.0\",\"driver\":\"overlay2\",\"cgroup_driver\":\"systemd\",\"cgroup_version\":\"2\",\"security_options\":[\"name=seccomp\"],\"default_runtime\":\"runc\",\"runtimes\":{\"runc\":{}}}";
     format!(
-        "#!/bin/sh\n# lnsat.hermetic_fake_docker.v1\nset -eu\nprintf 'BEGIN\\n' >> {invocation_log}\nfor argument in \"$@\"; do printf '%s\\n' \"$argument\" >> {invocation_log}; done\nfor argument in \"$@\"; do if [ \"$argument\" = 'rm' ]; then exit 0; fi; done\n{cat} >/dev/null\n{behavior}",
+        "#!/bin/sh\n# lnsat.hermetic_fake_docker.v2\nset -eu\nprintf 'BEGIN\\n' >> {invocation_log}\nfor argument in \"$@\"; do printf '%s\\n' \"$argument\" >> {invocation_log}; done\ncommand=''\nfor argument in \"$@\"; do case \"$argument\" in version|info|run|inspect|rm) command=$argument ;; esac; done\ncase \"$command\" in\n  version)\n    printf '%s\\n' '{version_identity}'\n    ;;\n  info)\n    printf '%s\\n' '{info_identity}'\n    ;;\n  run)\n    cidfile=''\n    name=''\n    operation=''\n    launch_digest=''\n    previous=''\n    for argument in \"$@\"; do\n      if [ \"$previous\" = '--cidfile' ]; then cidfile=$argument; fi\n      if [ \"$previous\" = '--name' ]; then name=$argument; fi\n      case \"$argument\" in\n        io.lnsat.phase11.operation-id=*) operation=${{argument#*=}} ;;\n        io.lnsat.phase11.launch-contract-digest=*) launch_digest=${{argument#*=}} ;;\n      esac\n      previous=$argument\n    done\n    [ -n \"$cidfile\" ] && [ -n \"$name\" ] && [ -n \"$operation\" ] && [ -n \"$launch_digest\" ]\n    printf '%s\\n' '{container_id}' > \"$cidfile\"\n    printf '%s\\n%s\\n%s\\n' \"$name\" \"$operation\" \"$launch_digest\" > {state}\n    {cat} >/dev/null\n    {behavior}\n    ;;\n  inspect)\n    {{ IFS= read -r name; IFS= read -r operation; IFS= read -r launch_digest; }} < {state}\n    printf '{{\"container_id\":\"{container_id}\",\"container_name\":\"/%s\",\"operation_id\":\"%s\",\"launch_contract_digest\":\"%s\"}}\\n' \"$name\" \"$operation\" \"$launch_digest\"\n    ;;\n  rm)\n    if [ \"{remove_failure}\" = 'true' ]; then exit 1; fi\n    [ \"$#\" -ge 5 ]\n    [ \"$1\" = '--host' ] && [ \"$3\" = '--config' ] && [ \"$5\" = 'rm' ]\n    for argument in \"$@\"; do\n      if [ \"$argument\" = '{container_id}' ]; then printf '%s\\n' '{container_id}'; exit 0; fi\n    done\n    exit 1\n    ;;\n  *) exit 1 ;;\nesac\n",
         invocation_log = shell_quote(invocation_log),
+        state = shell_quote(&state),
         cat = shell_quote(Path::new("/bin/cat")),
+        behavior = behavior,
+        container_id = container_id,
+        remove_failure = remove_failure,
+        version_identity = version_identity,
+        info_identity = info_identity,
     )
 }
 

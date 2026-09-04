@@ -72,11 +72,16 @@ verifier digests, one absolute local Unix endpoint, and one marked disposable
 Git target before launch. The constructed run is environment-cleared,
 pull-disabled, networkless, capability-free, no-new-privileges, non-root,
 read-only, and profile-resource-bounded. Post-spawn anomalies remain
-`outcome_unknown`; cleanup requires a valid private Docker-written container ID,
-and success requires independent host Git consequence inspection plus an exact
-semantic result-digest match. Hermetic tests use a fake Docker
-executable and disposable Unix socket, so no real Docker or image-isolation
-claim exists. P11-D4B2A adds source-only durable lifecycle APIs: capability
+`outcome_unknown`. Cleanup omits automatic removal and treats a valid private
+Docker-written container ID as discovery only. A bounded canonical daemon/API/
+platform/security-posture fingerprint must remain stable after launch and around
+cleanup; bounded inspection must then match the exact container name plus the
+operation-ID and launch-contract-digest labels before one bounded removal.
+Verified cleanup is required after semantically valid output too; uncertainty
+never widens removal or permits retry. Success also requires independent host Git
+consequence inspection plus an exact semantic result-digest match. Hermetic tests
+use a fake Docker executable and disposable Unix socket, so no real Docker or
+image-isolation claim exists. P11-D4B2A adds source-only durable lifecycle APIs: capability
 consumption and one Docker-adapter attempt claim are atomic; exact replay never
 creates another attempt; one independently host-verified semantic result may
 persist one receipt; interrupted `dispatching` attempts reopen as
@@ -87,11 +92,12 @@ fixture. P11-D4B2B now passes experimental served fake-runtime integration over
 existing Phase 8 loopback routes with hermetic fake executable, disposable Unix
 socket, marked temporary Git target, and host Git verifier. The existing eight
 routes and their public-response fields remain unchanged; the internal
-fake-runtime selector is compiled only for crate tests. Three adversarial served
+fake-runtime selector is compiled only for crate tests. Four adversarial served
 tests confirm: success/replay/idempotency drift rejection; post-consequence
 unknown survives restart and reconciles through host Git inspection only;
-unchanged-target unknown persists without receipt. Exact replay is metadata-only
-with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+unchanged-target unknown persists without receipt; cleanup-removal failure stays
+unknown until host Git reconciliation. Exact replay is metadata-only with no
+redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
 configures or invokes Docker. P11-D4C1 adds the source-only
 `lnsat-git-reference` executable, exact D4A-retained profile mount-path handoff,

@@ -301,12 +301,21 @@ It clears the environment, uses a fresh private empty Docker config, forbids
 pulls and networking, drops capabilities, enables no-new-privileges, applies
 non-root, read-only, PID, memory, no-swap, CPU, IPC, and logging restrictions,
 and mounts only the approved target. Bounded I/O and a monotonic deadline apply;
-every post-spawn anomaly is `outcome_unknown`. Forced cleanup is attempted only
-for an exact container ID written into the private Docker client directory.
-Success requires independent host Git consequence inspection and an exact
-semantic result-digest match. Hermetic tests use a fake Docker executable and a
-disposable Unix socket, so they prove command construction and fail-closed
-supervision, not real Docker or image isolation. At the P11-D4B1 checkpoint, no
+every post-spawn anomaly is `outcome_unknown`. The launch binds the operation ID
+and launch-contract digest into fixed container labels and deliberately omits
+automatic `--rm`. Cleanup treats a valid ID from the private Docker client
+directory as discovery only: after fresh client, endpoint, and bounded daemon
+identity checks, bounded inspection must prove the exact container name and both
+labels before one bounded forced removal. The daemon fingerprint combines
+canonical client/server API-version and daemon security-posture observations;
+it is compared after launch and around cleanup. Cleanup is required after
+validated output as well as failure; missing, mismatched, drifting, or uncertain
+cleanup evidence remains `outcome_unknown` without a broader removal or retry.
+Success also requires
+independent host Git consequence inspection and an exact semantic result-digest
+match. Hermetic tests use a fake Docker executable and a disposable Unix socket,
+so they prove command construction and fail-closed supervision, not real Docker
+or image isolation. At the P11-D4B1 checkpoint, no
 served route called this supervisor. P11-D4B2A then added source-only atomic
 attempt claiming, durable receipts,
 restart materialization to `outcome_unknown`, and inspection-only reconciliation
@@ -314,10 +323,13 @@ without Docker retry. P11-D4B2B now passes experimental served fake-runtime
 integration over existing Phase 8 loopback routes with hermetic fake executable,
 disposable Unix socket, marked temporary Git target, and host Git verifier. The
 existing eight routes and their public-response fields remain unchanged; an
-internal crate-test-only selector is the only fake-runtime entry point. Three
+internal crate-test-only selector is the only fake-runtime entry point. Four
 adversarial served tests confirm: success/replay/idempotency drift rejection;
 post-consequence unknown survives restart and reconciles through host Git
-inspection only; unchanged-target unknown persists without receipt. Exact replay
+inspection only; unchanged-target unknown persists without receipt; and removal
+failure remains unknown until Git-only reconciliation. A reconciled Git receipt
+does not prove runtime success or container cleanup. Durable cleanup evidence
+remains required before a real runtime selector can be enabled. Exact replay
 is metadata-only with no redispatch. The chain is D2 schema2 loaded profile ->
 D4B2A atomic claim -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown.
 No served route configures or invokes Docker. P11-D4C1 adds the source-only
