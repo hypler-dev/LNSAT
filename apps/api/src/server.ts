@@ -129,6 +129,11 @@ import {
   packetInspectionGatewayContract,
 } from "./packet-inspection.js";
 
+/**
+ * Status of the default gateway built without local control-plane services.
+ * This is not an instance capability report: configured local services may
+ * register state-changing routes guarded by their own authorization checks.
+ */
 export const API_GATEWAY_STATUS = "read_only";
 
 export type ApiGatewayOptions = {
