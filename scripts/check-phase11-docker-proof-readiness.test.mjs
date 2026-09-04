@@ -13,6 +13,8 @@ import {
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const fixtureRelativePath =
   "fixtures/contracts/phase11-docker-local-runtime-proof-plan-v1.json";
+const evidenceRequirementsFixtureRelativePath =
+  "fixtures/contracts/phase11-docker-local-runtime-proof-evidence-requirements-v1.json";
 const tempRoots = [];
 
 function tempFile(name, content) {
@@ -160,6 +162,127 @@ test("readiness fixture rejects weakened hard stops or opened runtime execution"
   assert.match(errors, /runtime_execution: false required/u);
 });
 
+test("evidence requirements fixture rejects opened runtime claims", () => {
+  const evidenceRequirementsPath = mutatedJson(
+    evidenceRequirementsFixtureRelativePath,
+    (fixture) => {
+      fixture.phase11_complete = true;
+      fixture.execution_authorized = true;
+      fixture.real_docker_proof = true;
+      fixture.production_supported = true;
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    evidenceRequirementsPath,
+  });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(
+    errors,
+    /evidence requirements fixture\.phase11_complete: false required/u,
+  );
+  assert.match(
+    errors,
+    /evidence requirements fixture\.execution_authorized: false required/u,
+  );
+  assert.match(
+    errors,
+    /evidence requirements fixture\.real_docker_proof: false required/u,
+  );
+  assert.match(
+    errors,
+    /evidence requirements fixture\.production_supported: false required/u,
+  );
+});
+
+test("evidence requirements fixture rejects invented packet id", () => {
+  const evidenceRequirementsPath = mutatedJson(
+    evidenceRequirementsFixtureRelativePath,
+    (fixture) => {
+      fixture.packet_id = "P11-D4D";
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    evidenceRequirementsPath,
+  });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /canonical packet id is not assigned/u);
+  assert.match(errors, /keys or key order mismatch/u);
+});
+
+test("evidence requirements fixture rejects reordered commitments and weakened failure or redaction sets", () => {
+  const evidenceRequirementsPath = mutatedJson(
+    evidenceRequirementsFixtureRelativePath,
+    (fixture) => {
+      fixture.required_observation_commitment_ids.reverse();
+      fixture.preflight_rejection_ids.pop();
+      fixture.postspawn_outcome_unknown_ids.reverse();
+      fixture.forbidden_public_evidence_fields.shift();
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    evidenceRequirementsPath,
+  });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /required_observation_commitment_ids: ids or order mismatch/u);
+  assert.match(errors, /preflight_rejection_ids: ids or order mismatch/u);
+  assert.match(errors, /postspawn_outcome_unknown_ids: ids or order mismatch/u);
+  assert.match(errors, /forbidden_public_evidence_fields: ids or order mismatch/u);
+});
+
+test("evidence requirements fixture rejects duplicate, deep, and oversized JSON before decoding", () => {
+  const canonical = readFileSync(
+    resolve(root, evidenceRequirementsFixtureRelativePath),
+    "utf8",
+  );
+  const duplicatePath = tempFile(
+    "duplicate-evidence.json",
+    canonical.replace(
+      '  "fixture_id":',
+      '  "fixture_id": "duplicate",\n  "fixture_id":',
+    ),
+  );
+  const duplicate = validatePhase11DockerProofReadiness({
+    root,
+    evidenceRequirementsPath: duplicatePath,
+  });
+  assert.equal(duplicate.ok, false);
+  assert.match(duplicate.errors.join("\n"), /duplicate JSON member/u);
+
+  const deepPath = tempFile(
+    "deep-evidence.json",
+    `${"[".repeat(65)}0${"]".repeat(65)}`,
+  );
+  const deep = validatePhase11DockerProofReadiness({
+    root,
+    evidenceRequirementsPath: deepPath,
+  });
+  assert.equal(deep.ok, false);
+  assert.match(deep.errors.join("\n"), /JSON nesting exceeds 64/u);
+
+  const oversizedPath = tempFile(
+    "oversized-evidence.json",
+    Buffer.alloc(MAX_READINESS_JSON_BYTES + 1, 0x20),
+  );
+  const oversized = validatePhase11DockerProofReadiness({
+    root,
+    evidenceRequirementsPath: oversizedPath,
+  });
+  assert.equal(oversized.ok, false);
+  assert.equal(
+    oversized.errors.includes(
+      `evidence requirements fixture: exceeds ${MAX_READINESS_JSON_BYTES} bytes`,
+    ),
+    true,
+  );
+  assert.doesNotMatch(oversized.errors.join("\n"), /invalid strict JSON/u);
+});
+
 test("repository-wide check cannot drop Phase 11 readiness gates", () => {
   const packagePath = mutatedJson("package.json", (packageJson) => {
     packageJson.scripts.check = packageJson.scripts.check.replace(
@@ -294,6 +417,40 @@ test("pure proof module rejects every process, filesystem, environment, socket, 
       )}\n${forbidden}\n`,
     );
     const result = validatePhase11DockerProofReadiness({ root, modulePath });
+    assert.equal(result.ok, false, forbidden);
+    assert.match(
+      result.errors.join("\n"),
+      new RegExp(
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        "u",
+      ),
+    );
+  }
+});
+
+test("pure evidence requirements module rejects process, filesystem, socket, store, and consequence markers", () => {
+  for (const forbidden of [
+    "std::process",
+    "Command::new",
+    "std::net",
+    "std::fs",
+    "std::env",
+    "std::os::unix",
+    "local_unix_socket",
+    "UnixListener",
+    "UnixStream",
+    "lnsat_store",
+    "supervise_docker_local_git_execution_v1",
+    "execute_phase11_mapped_disposable_git_commit_v1",
+  ]) {
+    const evidenceModulePath = tempFile(
+      "docker_local_runtime_proof_evidence.rs",
+      `${readFileSync(
+        resolve(root, "crates/lnsatd/src/docker_local_runtime_proof_evidence.rs"),
+        "utf8",
+      )}\n${forbidden}\n`,
+    );
+    const result = validatePhase11DockerProofReadiness({ root, evidenceModulePath });
     assert.equal(result.ok, false, forbidden);
     assert.match(
       result.errors.join("\n"),

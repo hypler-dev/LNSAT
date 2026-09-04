@@ -1,0 +1,93 @@
+{
+  "schema_id": "lnsat.phase11_docker_local_runtime_proof_evidence_requirements_fixture.schema.v1_0",
+  "fixture_id": "phase11-docker-local-runtime-proof-evidence-requirements-v1",
+  "status": "proposed_source_only_no_runtime_evidence",
+  "phase11_complete": false,
+  "execution_authorized": false,
+  "real_docker_proof": false,
+  "production_supported": false,
+  "contract": {
+    "contract_id": "lnsat.docker_local_runtime_proof_evidence_requirements.v1",
+    "output": "canonical_source_only_evidence_requirements_digest",
+    "side_effects": [],
+    "runtime_execution": false
+  },
+  "required_plan_binding_ids": [
+    "profile_digest",
+    "authority_configuration_digest",
+    "adapter_ref",
+    "adapter_version",
+    "adapter_executable_digest",
+    "image_digest",
+    "launch_contract_digest"
+  ],
+  "required_case_ids": [
+    "real_runtime_one_consequence_and_bound_receipt",
+    "exact_replay_metadata_only_no_redispatch",
+    "post_consequence_unknown_survives_restart",
+    "reconciliation_host_git_inspection_only",
+    "unchanged_target_unknown_without_receipt",
+    "isolation_no_socket_credentials_or_network",
+    "cleanup_verified_container_id_only",
+    "runtime_and_image_identity_stable"
+  ],
+  "required_observation_commitment_ids": [
+    "proof_plan_digest",
+    "docker_cli_identity",
+    "verifier_git_identity",
+    "endpoint_file_identity",
+    "daemon_version_api_security_posture",
+    "immutable_image_provenance_platform",
+    "in_image_adapter_executable_entrypoint",
+    "disposable_root_repository_git_directory_identity",
+    "gateway_d4b2a_d3_d4a_launch_identity_chain",
+    "runtime_isolation_lifecycle",
+    "host_git_adapter_result_binding",
+    "receipt_or_outcome_unknown_transition",
+    "restart_reconciliation",
+    "operation_bound_cleanup",
+    "independent_review"
+  ],
+  "preflight_rejection_ids": [
+    "endpoint_or_daemon_swap_or_drift",
+    "unsafe_disposable_target_ownership_mode_or_replacement",
+    "image_provenance_or_adapter_mismatch",
+    "gateway_chain_bypass",
+    "security_posture_drift",
+    "cleanup_policy_or_label_contract_invalid",
+    "public_evidence_redaction_failure"
+  ],
+  "postspawn_outcome_unknown_ids": [
+    "timeout_or_disconnect",
+    "output_or_result_anomaly",
+    "runtime_or_target_identity_drift",
+    "adapter_or_host_git_mismatch",
+    "receipt_persistence_uncertainty",
+    "container_identity_or_label_mismatch",
+    "inspection_or_removal_uncertainty",
+    "incomplete_or_redaction_invalid_evidence"
+  ],
+  "forbidden_public_evidence_fields": [
+    "host_path",
+    "socket_path",
+    "docker_config_path",
+    "repository_path",
+    "git_directory_path",
+    "raw_container_id",
+    "raw_command",
+    "raw_arguments",
+    "raw_stdout",
+    "raw_stderr",
+    "canonical_request_frame",
+    "canonical_result_frame",
+    "source_bytes",
+    "patch_bytes",
+    "credential",
+    "capability_value",
+    "session_value",
+    "csrf_value",
+    "environment_value",
+    "private_registry_configuration"
+  ],
+  "next_gate": "separately_authorized_real_disposable_docker_image_and_runtime_proof"
+}

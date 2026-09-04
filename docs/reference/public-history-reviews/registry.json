@@ -29,6 +29,16 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0003/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0004",
+      "subject_id": "phase11-real-docker-proof-execution-evidence-requirements",
+      "review_subject_ids": [
+        "phase11-real-docker-proof-execution-evidence-requirements"
+      ],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0004/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }

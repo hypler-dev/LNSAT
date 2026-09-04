@@ -80,6 +80,13 @@ adapter and host-Git result binding, receipt/unknown transitions, restart and
 reconciliation records, and independent review references. Evidence must be
 secret-free and must not expose host paths, source bytes, or credentials.
 
+The source-only
+[execution evidence requirements](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+freeze the exact runtime, image, target, served-chain, lifecycle, cleanup,
+redaction, and review observation commitments for these cases. That companion
+contract carries no observation or runtime result and grants no execution
+authority.
+
 ## Out-of-repository evidence
 
 Repository source can establish contracts and validators. Real proof additionally

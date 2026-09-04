@@ -25,6 +25,10 @@ Current behavior:
   digest from an already validated schema-2 profile; this metadata opens no
   process, endpoint, socket, image, repository consequence, receipt, route, or
   execution authority;
+- derives one pure source-only evidence-requirements commitment for the same
+  eight future cases, including exact runtime, image, target, lifecycle,
+  cleanup, redaction, and review observations; it carries no observation,
+  result, receipt, host path, container ID, output, or secret;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before
