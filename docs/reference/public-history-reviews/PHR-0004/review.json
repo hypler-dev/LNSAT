@@ -1,0 +1,99 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0004-independent-implementation-review-33264ea1",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["phase11-real-docker-proof-execution-evidence-requirements"],
+  "base_revision": "5dfbd5f2e92c1cc460f3668e16656ef316087312",
+  "reviewed_revision": "33264ea126b2b212d02efef48f9f8a3d8e6e84f0",
+  "reviewed_tree_oid": "f82d3c92c1b0cb34d663e71202877ba25cf5463a",
+  "diff_sha256": "sha256:81014adcdd75747bc2df695fb38507ee84c925b1445f2bf9b07681aeaa22ca09",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:f89371d22edd3624107eaf8afbca7f3b5c8d714e70461039175b11ecf9be3e9c"
+    },
+    {
+      "path": "crates/lnsatd/README.md",
+      "sha256": "sha256:0c40b2e249dae49d7b3e58fdf806bde1962f5f8ce72d71a9e48607b2c8289a04"
+    },
+    {
+      "path": "crates/lnsatd/src/docker_local_runtime_proof_evidence.rs",
+      "sha256": "sha256:29d0292344601bf4e6131f9bf1f0ce2b8f6f8c27026685f7885ab92ada4ce22d"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:c206b3bc43f96a56822421e3ba6e38accebb2b2831704454decdbc742ee05cc0"
+    },
+    {
+      "path": "crates/lnsatd/tests/docker_local_runtime_proof_evidence.rs",
+      "sha256": "sha256:c0faae8a55d62db6b01281ea657c296ab2acdfdf0ae297ea6ba93cf9e94beb79"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:90657e3fa87f682ebcc2b69b8f2a1bb932e3c0a48217f8488713b8554e185cdf"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:a0aaeb04fb7ad4eed635a76d6c689cd633c5de4f12408c73a0a975b68daa1757"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:5ad3a0df0767ce9aee33c194c8d923ab0a8a1c7df29495747a7bf61fdb06df20"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:ceb60e4d5dbbdde1a9a15a224e9166c1f51f99948321a37c24b16a1057070bf7"
+    },
+    {
+      "path": "docs/WHY_PUBLIC_NOW.md",
+      "sha256": "sha256:b4adef79b6a9afaa92d3fa555447615452e848300bfac941c2bbc909b9af4f52"
+    },
+    {
+      "path": "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md",
+      "sha256": "sha256:bc9bdfbf5cbbceaf5f08515dc62390ff128c15653e8bdbf9a36e852da1c10238"
+    },
+    {
+      "path": "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
+      "sha256": "sha256:25c37d05914078f74e03c56bd975501b5815af488a5bd0c0f0e554a6f4de0658"
+    },
+    {
+      "path": "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
+      "sha256": "sha256:8d9454e7272639d61dd8847bdd5603dc08f9b88907ddb767cc11dd17aa2f70bc"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "sha256": "sha256:b280c82b8798e264c1cd135c50164f70a4179bb7feeedfa8cb4182129d88213f"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:a2bd9322e216959322cbf553e0eda5318f9b17bdcdce0cdfb18f313f391529b7"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:5fadb2b522f7c6f1df55d9da4a3b469c5e5d6613ce70f12777a251587de65082"
+    },
+    {
+      "path": "fixtures/contracts/phase11-docker-local-runtime-proof-evidence-requirements-v1.json",
+      "sha256": "sha256:225222514454114be75e7d80d61f1bc713b88f5f87ba458a679fe3b04aca5201"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.mjs",
+      "sha256": "sha256:265da4f0099643e28feeba9d35369c09767621e761dafce6cea20d291f85723d"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.test.mjs",
+      "sha256": "sha256:8072ef81bac69687081958b8932fa189c143dc43de053c3f08ecd7fa910ce627"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/docker_security_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex read-only sub-agent review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
