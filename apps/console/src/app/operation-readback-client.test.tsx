@@ -193,6 +193,138 @@ describe("Phase 9 operation readback client", () => {
     }
   });
 
+  it("bounds a non-settling read, aborts its owned signal, and leaves stale evidence refreshable", async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      const fetch = vi.fn<ControlCenterFetchV1>((_input, init) => {
+        requestSignal = init.signal ?? undefined;
+        return new Promise(() => {});
+      });
+      const pending = loadControlCenterLiveOperationV1(operationId, { fetch, now });
+      await vi.advanceTimersByTimeAsync(10_000);
+      const result = await pending;
+
+      expect(result).toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(requestSignal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      const loaded = await loadControlCenterLiveOperationV1(operationId, {
+        fetch: responseSequence([
+          okJson(operationEnvelope("prepared", null, null)),
+          okJson(authorizationEnvelope("active", true)),
+        ]),
+        now,
+      });
+      if (!loaded.ok) throw new Error("live fixture should load");
+      const stale = applyControlCenterLiveLoadResultV1(
+        { snapshot: loaded.snapshot, last_failure: null },
+        result,
+        operationId,
+      );
+      expect(stale).toMatchObject({
+        snapshot: { observation_status: "stale" },
+        last_failure: "control_center.live.transport_unavailable",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("bounds a non-settling response body and preserves caller cancellation", async () => {
+    vi.useFakeTimers();
+    try {
+      let bodySignal: AbortSignal | undefined;
+      const bodyPending = loadControlCenterLiveOperationV1(operationId, {
+        fetch: vi.fn<ControlCenterFetchV1>((_input, init) => {
+          bodySignal = init.signal ?? undefined;
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => new Promise(() => {}),
+          });
+        }),
+        now,
+      });
+      await vi.advanceTimersByTimeAsync(10_000);
+      await expect(bodyPending).resolves.toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(bodySignal?.aborted).toBe(true);
+
+      const caller = new AbortController();
+      const removeAbortListener = vi.spyOn(caller.signal, "removeEventListener");
+      let callerSignal: AbortSignal | undefined;
+      const callerPending = loadControlCenterLiveOperationV1(operationId, {
+        fetch: vi.fn<ControlCenterFetchV1>((_input, init) => {
+          callerSignal = init.signal ?? undefined;
+          return new Promise(() => {});
+        }),
+        now,
+        signal: caller.signal,
+      });
+      caller.abort();
+      await expect(callerPending).resolves.toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(callerSignal?.aborted).toBe(true);
+      expect(removeAbortListener).toHaveBeenCalledWith("abort", expect.any(Function));
+
+      const preAborted = new AbortController();
+      preAborted.abort();
+      const preAbortedFetch = vi.fn<ControlCenterFetchV1>();
+      await expect(
+        loadControlCenterLiveOperationV1(operationId, {
+          fetch: preAbortedFetch,
+          now,
+          signal: preAborted.signal,
+        }),
+      ).resolves.toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(preAbortedFetch).not.toHaveBeenCalled();
+
+      const successfulCaller = new AbortController();
+      const removeSuccessListener = vi.spyOn(
+        successfulCaller.signal,
+        "removeEventListener",
+      );
+      const success = await loadControlCenterLiveOperationV1(operationId, {
+        fetch: responseSequence([
+          okJson(operationEnvelope("prepared", null, null)),
+          okJson(authorizationEnvelope("active", true)),
+        ]),
+        now,
+        signal: successfulCaller.signal,
+      });
+      expect(success.ok).toBe(true);
+      expect(removeSuccessListener).toHaveBeenCalledWith("abort", expect.any(Function));
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("retains a prior live snapshot as stale and never substitutes fixtures", async () => {
     const loaded = await loadControlCenterLiveOperationV1(operationId, {
       fetch: responseSequence([
@@ -284,7 +416,6 @@ describe("Phase 9 operation readback client", () => {
     for (const forbidden of [
       "useEffect(",
       "setInterval(",
-      "setTimeout(",
       "addEventListener(",
       "visibilitychange",
       "localStorage",
