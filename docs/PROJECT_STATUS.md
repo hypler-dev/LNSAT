@@ -31,6 +31,17 @@ no public/private key input is requested.
 
 ## Current Build Position
 
+Standalone setup wizard and access-management UI are accepted V1 requirements,
+not implemented capabilities. They must distinguish LNSAT's resource access from
+agent action authority, offer customizable least-privilege presets, expose actual
+OS enforcement coverage, and protect configuration changes through Gateway.
+LNSAT remains usable independently of Rangoon; downstream installation or API use
+cannot bypass approval or increase authority implicitly. The
+[standalone setup and access-management requirements](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+own this additional product acceptance scope. Existing P10-X1 source conformance
+does not satisfy it; current Control Center readback remains read-only. No new
+management mutation, runtime, installer, or supported-platform claim is opened.
+
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
 exact-ID Control Center readback and manifest-only source-local console hosting
 are implemented as experimental source. Phase 10 P10-A1 product-surface spine,

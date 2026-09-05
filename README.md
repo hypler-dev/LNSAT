@@ -167,6 +167,9 @@ self-hosted, single-node authority product:
 - Rust security core, daemon, and operator CLI;
 - SQLite as the embedded authority store;
 - TypeScript and React Control Center;
+- standalone setup wizard and access-management UI with customizable presets,
+  separate resource-access and agent-authority controls, and explicit OS
+  enforcement coverage;
 - local identities, deterministic policy, distinct-human approval, one-time
   authorization, bounded execution, receipts, reconciliation, and audit in one
   end-to-end loop;
@@ -178,7 +181,8 @@ self-hosted, single-node authority product:
 Work is ordered around four practical milestones:
 
 1. finish operational configuration, visible precedence, authenticated status,
-   recovery commands, output formats, and non-root product behavior;
+   recovery commands, output formats, non-root product behavior, and the planned
+   standalone setup/access-management gate;
 2. prove one complete consequential workflow through an isolated Docker/OCI
    adapter and disposable target;
 3. harden recovery, limits, updates, rollback, revocation, dependencies, and
@@ -188,6 +192,13 @@ Work is ordered around four practical milestones:
 
 The [Product Build Sequence](docs/PRODUCT_BUILD_SEQUENCE.md) and
 [Roadmap](docs/ROADMAP.md) track that work in detail.
+
+LNSAT is independent of Rangoon and other downstream clients. They may install
+a pinned, verified LNSAT release or use a compatible existing service; LNSAT
+requires neither their installation nor their accounts. The
+[setup and access-management requirements](docs/PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+are pending implementation, not features of today's read-only console. Presets
+never grant authority automatically or bypass Gateway security.
 
 ## Docker And Other Runtimes
 

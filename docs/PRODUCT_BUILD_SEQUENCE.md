@@ -26,6 +26,83 @@ single-node authority product:
 - hosted SaaS, fleet/HA, multi-tenancy, unrestricted infrastructure control,
   and production reference actions remain outside initial v1.
 
+## Standalone Setup And Access Management
+
+Accepted V1 product requirement; implementation and platform proof remain pending.
+Gate: standalone setup and access management. State: pending; blocks Phase 13
+RC freeze regardless of the completed historical P10-X1 source checkpoint.
+LNSAT must provide its own setup wizard and ongoing management UI. It is an
+independent product with its own service, API, CLI, release, and lifecycle; no
+Rangoon installation, account, policy compiler, or service is required. Rangoon
+may independently install a pinned, verified LNSAT GitHub release or connect to
+a compatible existing installation through the same protected versioned
+interfaces. It cannot bypass Gateway or silently increase permissions.
+Installation must verify immutable component digests, signature/provenance trust,
+and revocation state under the [release process](RELEASING.md); verification failure
+blocks installation or update. Trust-root rotation and downgrade denial require
+tests, not trust in a GitHub URL alone.
+
+The wizard must distinguish two independently reviewable boundaries:
+
+- **LNSAT resource access:** exact folders, repositories, services, connectors,
+  runtime profiles, and OS resources the installation may reach.
+- **Agent action authority:** which principals may request which bounded actions
+  within that resource envelope, which require human approval, and which are
+  denied. Resource access alone never authorizes an agent action.
+
+Bind resource grants to canonical identity, not a displayed path alone. Validate
+identity at grant and use; reject symlink/reparse-point, mount, or target
+replacement that escapes scope. Test traversal and revocation/use races on every
+claimed platform; a UI selection is not OS enforcement proof.
+
+Provide inspectable presets for observe-only, approval-required, bounded
+automation, and custom configuration. Presets are versioned starting points,
+not privilege grants. Every supported setting remains individually customizable
+within the selected platform's enforceable capability set and invariant security
+limits. Customization cannot disable authentication, audit, exact authorization,
+or fail-closed enforcement. No preset grants unrestricted shell or infrastructure
+control, direct agent Docker-socket access, or ambient credentials.
+
+Setup must show requested and effective permissions, preset differences, denied
+capabilities, applicable approval rules, and OS-specific enforcement before
+activation. Use least privilege and no implicit service start. Cancellation or
+failed setup must leave no newly activated authority. Initial owner bootstrap
+must have a separately reviewed local ownership proof; there is no unauthenticated
+management exception for subsequent setup changes.
+The implementation packet must define the bootstrap trust root, exact initial
+owner/installation/configuration binding, one-time consumption, and denial of
+forged, substituted, replayed, or interrupted bootstrap activation. Reuse existing
+owner-bootstrap security foundations where applicable rather than inventing a
+second ownership authority.
+
+The management UI must support permission and policy review, scoped changes,
+authenticated approvals, activity/receipt/audit inspection, emergency disablement,
+and recovery. Privilege increases require an explicit authenticated human decision
+bound to the exact configuration change; an agent or downstream client cannot
+self-approve. Apply changes through Gateway, with server-side role/session/CSRF
+checks where applicable, durable audit, concurrency protection, and safe recovery.
+Rollback must not silently restore revoked or broader authority. Explain the
+effect of narrowing or disablement on queued and in-flight work without claiming
+that cancellation proves non-execution.
+
+OS abstraction must map stable capabilities to explicit platform controls and
+show their observed enforcement status. Unsupported or unverifiable restrictions
+must block activation of the affected capability; diagnostic-only visibility may
+remain available with a clear coverage warning. Never silently emulate stronger
+isolation or label unmediated paths as controlled. Exact OS, architecture, runtime,
+and installer rows still require separate compatibility evidence.
+
+This is additional product work beyond the completed P10-X1 source checkpoint,
+not a claim that the current read-only Control Center already administers access.
+Before Phase 13 RC freeze, implement and independently review the wizard,
+protected management contract, and source tests. Phase 13 must cover unauthorized
+changes, self-approval, stale/concurrent updates, preset drift, unsupported controls,
+setup interruption, disablement, rollback, restart, and secret-safe output.
+Phase 14 must prove setup and management lifecycle on each claimed platform,
+including non-root operation, explicit start, update, and uninstall behavior.
+Source implementation needs a separately bounded packet; this documentation
+opens no route, OS permission, runtime, install, or execution authority.
+
 ## Accepted Changes Since Original Plan
 
 Accepted decisions changed sequencing and breadth without changing that goal:
@@ -67,7 +144,7 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 | 7     | P7-X1 source conformance complete                                   | preserve Phase 7 authority-chain and disposable-target invariants                       |
 | 8     | bounded loopback runtime composition merged                         | preserve exact routes, one-attempt evidence, and production-unsupported boundary        |
 | 9     | authenticated exact-ID Control Center readback exists               | preserve live/fixture separation and fail-closed ambiguity mapping                      |
-| 10    | P10-X1 source conformance complete                                  | preserve product-surface compatibility and Phase 14 lifecycle ownership                 |
+| 10    | P10-X1 source conformance complete                                  | standalone setup/access-management gate pending; preserve Phase 14 lifecycle ownership  |
 | 11    | served Git proof plus closed Docker profile/config/process protocol | complete separately gated adapter/runtime proof without production repository authority |
 | 12    | optional post-local-v1 lane                                         | none unless selected support profile requires it                                        |
 | 13    | planned                                                             | complete reliability, security, recovery, update/revocation, and RC-source freeze       |

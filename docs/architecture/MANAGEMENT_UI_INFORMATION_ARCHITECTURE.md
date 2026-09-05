@@ -5,6 +5,15 @@ site and currently renders synthetic public fixtures in read-only mode.
 
 ## Product Routes
 
+The required V1 standalone setup wizard and access-management UI belong to LNSAT,
+not a mandatory downstream product. Their
+[canonical acceptance gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+covers separate resource access and agent authority, customizable presets,
+observed OS enforcement, protected permission changes, and recovery. Implementation
+is pending. The route inventory below describes existing read-only source, not
+permission editing or an implemented wizard; future changes require reviewed
+Gateway contracts and independent security validation.
+
 | Route         | Purpose                                          |
 | ------------- | ------------------------------------------------ |
 | `/dashboard`  | System posture and evidence summary              |

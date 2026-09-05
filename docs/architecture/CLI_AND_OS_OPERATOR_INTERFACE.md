@@ -23,6 +23,14 @@ API.
 
 ## Product Binaries
 
+The pending
+[standalone setup and access-management gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+also requires headless/operator parity: CLI and wizard must expose the same
+effective resource/agent-authority boundaries, preset differences, unsupported
+OS controls, and protected change semantics. Neither client may widen authority
+through configuration precedence or bypass Gateway. This is planned product work,
+not an expansion of the implemented commands listed above.
+
 | Binary     | Audience                           | Responsibility                                                                              |
 | ---------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 | `lnsat`    | users, agents, scripts, developers | primary workflow command and convenience dispatcher                                         |

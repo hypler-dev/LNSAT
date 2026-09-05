@@ -35,6 +35,10 @@ subsystem or proposal.
 
 ## Core Architecture
 
+- [Standalone setup and access management](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+  — required V1 wizard, presets, OS enforcement, and protected management gate;
+  implementation pending.
+
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
