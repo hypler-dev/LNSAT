@@ -560,6 +560,17 @@ success without Gateway-sourced completion evidence.
 
 ### 10. `lnsatd`, `lnsatctl`, and `lnsat` Product Split
 
+Additional accepted V1 scope: LNSAT-owned setup wizard and ongoing access-management
+UI, independent of Rangoon. The
+[standalone setup and access-management requirements](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+define resource access versus agent authority, customizable presets, OS enforcement
+visibility, protected changes, and acceptance tests. P10-X1 remains a completed
+source checkpoint; it does not complete this additional work. Deliver the new
+product behavior before Phase 13 RC freeze, prove its security/recovery in Phase
+13, and validate its installation/service lifecycle per selected Phase 14 row.
+Current read-only surfaces and runtime closures remain unchanged until separately
+reviewed implementation is authorized.
+
 Stabilize daemon, operator CLI, and convenience dispatcher contracts. Bundle
 Control Center assets with server product. Make OS CLI a first-class interface
 for headless, local, recovery, CI, and wrapper use. Freeze safe command

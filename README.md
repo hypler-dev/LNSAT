@@ -4,458 +4,208 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](docs/PROJECT_STATUS.md)
 
-```text
- _      _   _  ____    _  _____
-| |    | \ | |/ ___|  / \|_   _|
-| |    |  \| |\___ \ / _ \ | |
-| |___ | |\  | ___) / ___ \| |
-|_____||_| \_||____/_/   \_\_|
+**Give agents useful access without handing them unrestricted authority.**
 
-       INTENT -> AUTHORITY -> EVIDENCE
-```
-
-**LNSAT** means **Layered Network Substrate for Agent Telemetry**.
+LNSAT is an open-source authorization and evidence layer for AI-agent actions.
+It connects a proposed action to deterministic policy, human approval when
+required, narrowly scoped execution, and a record of what actually happened.
 
 **Execution authorization and evidence for consequential agent actions.**
 
-LNSAT's authority model binds an agent's exact intended action to policy,
-approval, one-time authorization, execution, receipt, and
-reconciliation—independently of the model, protocol, or runtime that performs
-it.
+> **Available today: pre-release source for developers and evaluators.**
+> LNSAT `0.1.0` contains experimental implementations and tests, not a supported
+> production product. No supported installer, package, container, or hosted
+> service is available. The setup wizard, permission-management UI, and real
+> Docker runtime proof remain unfinished. APIs and schemas may change.
+
+[Evaluate from source](#evaluate-from-source) · [Project status](docs/PROJECT_STATUS.md) ·
+[Documentation](docs/DOCS_INDEX.md) · [Contribute](CONTRIBUTING.md)
+
+## Why LNSAT?
+
+A tool connection answers **what an agent can reach**. It does not establish
+whether a particular action should happen, who approved it, or whether it
+actually succeeded.
+
+LNSAT is being built for developers connecting agents to consequential tools,
+operators who need explicit approval controls, and platform builders who need
+an authority service independent of their models and orchestration framework.
+
+Its authority model addresses four questions:
+
+- **Should this action be allowed?** Deterministic policy evaluates the exact
+  actor, action, target, and constraints. Model output is not permission.
+- **Who must approve it?** An authenticated human decision binds to the exact
+  request; approval is distinct from execution authorization.
+- **What may execute?** A bounded adapter receives a short-lived, one-time
+  authorization—not general access to infrastructure.
+- **What happened?** Receipts, audit evidence, and reconciliation distinguish
+  confirmed consequences from uncertain outcomes.
+
+## A Concrete Workflow
+
+Consider an agent proposing a change to a disposable Git repository—the
+reference workflow exercised by current experimental source tests:
 
 ```text
-Intent -> Policy -> Approval -> Authorization
-       -> Execution -> Receipt -> Audit -> Reconciliation
+Agent proposes an exact action
+              ↓
+Gateway checks identity, scope, and policy
+              ↓
+Human approves when required
+              ↓
+One-time authorization permits one bounded attempt
+              ↓
+Adapter acts on the approved target
+              ↓
+Evidence confirms the consequence—or outcome stays unknown
 ```
 
-LNSAT is an open-source authority layer for AI agents. It sits between agents
-and systems capable of real consequences, turning a proposed action into a
-policy decision, a scoped human approval when required, a narrow execution
-authorization, and evidence of what happened.
+The requested, approved, authorized, and executed action must match. Changing
+the target or arguments does not inherit the earlier approval.
 
-Existing systems keep doing the jobs they already do well. MCP exposes tools.
-A2A connects agents. Agent frameworks orchestrate model loops. Docker provides
-runtime and isolation. Identity systems authenticate people and workloads. OPA
-can evaluate policy. LNSAT adds a consistent authority boundary across those
-systems: should this exact action be allowed, under what conditions, and what
-evidence will prove the result?
+If a response is lost, LNSAT must not assume the action failed and blindly retry.
+An uncertain outcome remains `outcome_unknown` until appropriate evidence can
+resolve it. A Git consequence receipt alone is not proof of container cleanup.
 
-> **Project status:** LNSAT `0.1.0` is pre-release source for evaluation and
-> contribution. The repository contains experimental contracts, local and
-> loopback foundations, read-only interfaces, bounded execution tests, and
-> automated conformance and security checks. APIs may change. No supported
-> package, container, installer, hosted service, or production deployment is
-> available yet.
+This is a tested development workflow, not permission to operate on production
+or user repositories. Read the [authority model](docs/architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
+and [threat model](docs/architecture/THREAT_MODEL.md) for the boundaries.
 
-See [Why LNSAT Is Public](docs/WHY_PUBLIC_NOW.md) for the public-core purpose,
-inspectability, interoperability, conformance, and contributor value. See the
-[provenance timeline](PROVENANCE.md) for exact cutover chronology and tracked
-tree mapping.
+## What You Can Evaluate Today
 
-## Why LNSAT
+The repository contains experimental source for:
 
-Giving an agent access to a tool does not answer whether a particular use of
-that tool should be authorized. Consequential actions need a boundary that can
-answer:
+- **Identity and policy:** local identities, scoped roles, sessions, CSRF
+  protection, deterministic decisions, and approval contracts.
+- **Authorization and recovery:** one-time consumption, bounded Git adapter
+  tests, durable attempt evidence, receipts, and restart/reconciliation cases.
+- **Local service foundations:** a Rust loopback daemon, SQLite authority store,
+  operator CLI diagnostics, offline backup, and recovery foundations.
+- **Control Center:** read-only evidence views with an explicit authenticated
+  operation lookup and separately labeled synthetic previews.
+- **Integration contracts:** read-only MCP adapters, SDK/conformance fixtures,
+  and transport-neutral authority interfaces.
 
-1. What action is being requested?
-2. Who requested it, and in which project and environment?
-3. Which policy applies?
-4. Is approval from a distinct authenticated human required?
-5. What exact authorization reaches the executor?
-6. What receipt or evidence proves the outcome?
+These are not all enabled together as a supported runtime. Real Docker
+execution, complete runtime cleanup proof, supported installation, and release
+verification remain separate gates. [Project Status](docs/PROJECT_STATUS.md)
+owns detailed implementation truth; [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md)
+explains the labels.
 
-Packets and Gateway make that lifecycle explicit. A packet describes intent;
-it never grants authority. Gateway validates the
-request, binds identity and scope, evaluates deterministic policy, and creates
-a narrow authorization only when every required condition is satisfied. An
-adapter may redeem that authorization for one exact operation and must return a
-bound receipt or an explicit ambiguous outcome.
+## The Standalone Product We Are Building
 
-LNSAT's version of agent governance is this complete chain. The requested,
-approved, authorized, and executed action must match. If the outcome cannot be
-proven, it remains `outcome_unknown` and must be reconciled instead of being
-reported as success or silently retried.
+LNSAT V1 is planned as an owner-controlled, local or self-hosted, single-node
+service with its own CLI and management UI. It does not require Rangoon or any
+other agent platform.
 
-## How LNSAT Approaches Authority
+The planned setup wizard separates:
 
-- **Transport-neutral:** MCP, A2A, REST, CLI, browser, and framework adapters
-  map into the same authority contract.
-- **Least-authority:** authorization is bound to the exact action, arguments,
-  target, adapter, attempt, expiry, and idempotency identity.
-- **Fail-closed:** unknown contracts, capabilities, evidence, and outcomes do
-  not become permission or success.
-- **Human-authorized:** models may recommend or explain; deterministic policy
-  and authenticated humans authorize consequential work.
-- **Evidence-first:** approvals, authorizations, receipts, recovery, and
-  reconciliation remain reviewable.
-- **Secret-safe:** packets and evidence carry secret references, not secret
-  values.
+1. **LNSAT resource access:** which repositories, folders, services, and OS
+   resources the installation may reach.
+2. **Agent action authority:** what agents may request within that envelope,
+   what requires human approval, and what is denied.
 
-See the [authority layer and reference workflow](docs/architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
-for the complete contract model.
+Observe-only, approval-required, bounded-automation, and custom presets provide
+inspectable starting points. Supported settings remain customizable within
+enforceable security limits. Presets cannot silently grant access, and an
+unverifiable OS restriction cannot be advertised as enforced.
 
-## What Works In Source Today
+The management UI will expose permission changes, approvals, activity evidence,
+emergency disablement, and recovery through protected Gateway interfaces.
+These features are **planned, not implemented in today's read-only console**.
+See the [setup and access-management requirements](docs/PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management).
 
-Current experimental source includes:
-
-- versioned packet, policy, approval, authorization, receipt, audit, and
-  evidence contracts;
-- deterministic allow, deny, and approval-required policy decisions;
-- local identity, role, session, CSRF, approval, and credential-lifecycle
-  foundations;
-- an embedded SQLite authority chain with integrity checks, transactions,
-  backup, inert restore, recovery inspection, and append-oriented audit
-  evidence;
-- a Rust loopback daemon with bounded local routes, strict host and origin
-  handling, session-protected identity and session operations, and graceful
-  shutdown;
-- authenticated owner/operator packet intake that atomically persists exact
-  packet and server-time deterministic policy evidence without granting
-  approval or execution authority;
-- atomic one-time authorization consumption, bounded adapter dispatch, bound
-  receipts, `outcome_unknown`, and reconciliation tests against disposable
-  local Git targets;
-- a source-only Docker-local durability seam that atomically pairs capability
-  consumption with one adapter attempt, accepts only independently verified
-  result evidence, persists one receipt, and materializes interrupted attempts
-  as `outcome_unknown` for inspection-only reconciliation without retry;
-- a source-only Docker-local Git reference-adapter executable with exact
-  payload-bound host/container target remapping, self-executable binding,
-  lazy-fetch- and Trace2-disabled bounded Git plumbing, canonical result
-  framing, and hermetic host-process tests;
-- packet inspection, source diagnostics, and read-only recovery inspection
-  through CLI source;
-- authenticated, exact-ID, read-only Control Center evidence views with live
-  and synthetic data kept separate;
-- read-only MCP stdio and HTTP-handler adapters, modern and temporary legacy
-  negotiation, and official SDK conformance tests;
-- shared TypeScript and Rust fixtures plus fail-closed security,
-  compatibility, recovery, dependency, and release-readiness gates.
-
-Some pieces run together as bounded local experimental flows; others remain
-source-level contracts and conformance tests. [Project Status](docs/PROJECT_STATUS.md)
-tracks the exact implementation state.
-
-P11-D4B2B exercises the Docker-local supervisor and durability chain only
-through an internal crate-test-only fake-runtime selector over the existing
-eight Phase 8 loopback routes. Those routes and their public-response fields are
-unchanged. The proof uses a fake Docker executable, disposable Unix socket,
-marked temporary Git target, and host Git verifier; it configures or invokes no
-real Docker binary, daemon, socket, or image. P11-D4C1 adds only the reference
-adapter source and host-process proof; it builds or runs no image. Real runtime
-proof and supported operation remain separate future gates.
-
-The next source checkpoint adds a deterministic proof-plan contract, opaque
-launch-contract digest, hermetic negative tests, and repository-wide readiness
-validation for that future gate. It remains design evidence only: no Docker
-binary, daemon, socket, image operation, runtime result, receipt, or support
-claim is opened. See the
-[Phase 11 real disposable Docker proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md).
-
-A following source-only evidence-requirements contract freezes the runtime,
-image-provenance, disposable-target, served-chain, lifecycle, cleanup,
-redaction, and independent-review commitments that a later real run must
-satisfy. It records no observation or result and opens no execution harness.
-See the [Phase 11 execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).
-
-## What We Are Building For v1
-
-The first supported release is planned as an owner-controlled, local or
-self-hosted, single-node authority product:
-
-- Rust security core, daemon, and operator CLI;
-- SQLite as the embedded authority store;
-- TypeScript and React Control Center;
-- local identities, deterministic policy, distinct-human approval, one-time
-  authorization, bounded execution, receipts, reconciliation, and audit in one
-  end-to-end loop;
-- non-root operation with loopback-default interfaces and explicit startup;
-- one isolated local Docker/OCI runtime profile for the first real adapter;
-- selected installation artifacts only after their install, update, rollback,
-  uninstall, provenance, and compatibility evidence passes.
-
-Work is ordered around four practical milestones:
-
-1. finish operational configuration, visible precedence, authenticated status,
-   recovery commands, output formats, and non-root product behavior;
-2. prove one complete consequential workflow through an isolated Docker/OCI
-   adapter and disposable target;
-3. harden recovery, limits, updates, rollback, revocation, dependencies, and
-   release-candidate source;
-4. build and verify a small set of selected packages and images from the same
-   canonical components.
-
-The [Product Build Sequence](docs/PRODUCT_BUILD_SEQUENCE.md) and
-[Roadmap](docs/ROADMAP.md) track that work in detail.
-
-## Docker And Other Runtimes
-
-Docker/OCI is the first planned v1 runtime integration because it provides a
-widely available local execution boundary and an existing MCP operations
-layer. LNSAT plans to use Docker's strengths rather than rebuild them:
-
-- Docker Agent can orchestrate agents and act as a client;
-- Docker MCP Gateway can provide MCP catalogs, routing, OAuth, and server
-  lifecycle;
-- Docker Sandboxes can provide a microVM isolation boundary;
-- bounded OCI workloads can execute authorized actions;
-- LNSAT independently owns policy, approval, one-time authorization, receipt
-  binding, and consequence evidence.
-
-The intended first path is:
-
-```text
-agent or MCP client
-  -> LNSAT Gateway
-  -> identity + policy + approval + one-time authorization
-  -> isolated Docker adapter
-  -> Docker MCP Gateway or bounded OCI workload
-  -> receipt + audit + reconciliation
-```
-
-Agents do not receive direct Docker-socket access or ambient infrastructure
-credentials. The adapter receives only a narrow, expiring authorization bound
-to the exact operation and returns a bound result. Docker governance may add
-defense in depth, but an upstream allow does not replace LNSAT authorization.
-
-Docker is the first profile, not the product identity or the only future
-runtime. The same authority contract is intended to support:
-
-- independently managed secure VMs and microVMs;
-- constrained native-host services with appropriately weaker isolation claims;
-- authenticated remote connectors and product-specific adapters.
-
-Bare-metal operation remains a valid future profile, but LNSAT will not claim
-that one binary can harden an arbitrary operating system. Native deployments
-will need OS accounts, mandatory access controls, network policy, process
-isolation, or other controls appropriate to their threat model. Containers and
-VMs remain the preferred high-assurance boundaries.
-
-See the accepted [Docker-first runtime-neutral decision](docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
-and the [Docker AI technical comparison](docs/reference/DOCKER_AI_TECHNICAL_COMPARISON.md).
-
-## How LNSAT Relates To The Agent Stack
-
-LNSAT is designed to work beside existing protocols and runtimes rather than
-replace them.
-
-| System             | Relationship to LNSAT                                                                      | Current source evidence                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| MCP                | Carries tool discovery and requests; never grants action authority                         | Experimental read-only modern stdio/HTTP handlers, temporary legacy compatibility, and official SDK tests |
-| A2A                | Carries delegated agent intent; never grants authority                                     | A2A 1.0 mapping and Gateway contract tests                                                                |
-| OPA                | May evaluate a bounded, versioned policy input                                             | OPA-compatible input contracts; no live OPA runtime connection yet                                        |
-| Identity           | OIDC, OAuth, and SPIFFE may supply human or workload identity claims                       | Local identity/session source plus experimental OAuth and SPIFFE contract tests                           |
-| Telemetry          | OpenTelemetry and CloudEvents carry correlation or evidence-export data, not authorization | OTel correlation contracts and Gateway tests                                                              |
-| Agent frameworks   | Orchestrate models and tools, then propose actions through adapters                        | FastMCP 3.4.5 and FastMCP 4.0.0b1 interoperability harnesses                                              |
-| REST, CLI, browser | Alternative interfaces over the same Gateway semantics                                     | Shared contract and read-only evidence tests                                                              |
-
-Transport, framework, runtime, and policy metadata may inform a decision, but
-none can grant approval or widen authority by itself.
-
-Current build position: Phase 8 bounded runtime composition and Phase 9
-authenticated, exact-ID Control Center readback are implemented as experimental
-source. Phase 10 P10-A1 product-surface spine, P10-A2 explicit configuration,
-and P10-A3 authenticated local health/status transport plus stable operator
-output formats are implemented. P10-A4 adds non-root offline recovery and
-closed API/MCP/UI parity; P10-X1 completes Phase 10 source conformance. Phase 11
-now has one experimental served reference proof over the existing eight Phase 8
-loopback routes and a marked disposable Git fixture. The client discards the
-execute response, restarts the daemon, then resolves the unknown outcome only
-through authenticated evidence readback and reconciliation. It opens no new
-route, production target, or support claim. P11-D1 adds a closed source-only
-`lnsat.runtime_profile.docker_local.v1` profile, strict file/parser validation,
-canonical profile/configuration digests, and an exact pre-dispatch
-execution-request binding check. It does not select or open a Docker endpoint,
-invoke Docker, provide an adapter or image, add a route, or grant execution
-authority. P11-D2 lets one explicit daemon configuration select and validate
-that profile file, retains its closed evidence for later packets, and adds
-public-safe `lnsatctl config inspect` readback of profile identity plus profile
-and authority-configuration digests. It opens no Docker endpoint, socket,
-process, image operation, mount, route, dispatch, receipt, or execution
-authority. P11-D3 adds the closed source-only
-`lnsat.adapter_process_protocol.docker_local.v1` single-frame canonical JSON
-request/result contract. It binds operation, approved action, authorization,
-idempotency, attempt, profile, configuration, adapter, executable, image, and
-audience identities; caps stdin/stdout/stderr observations and deadlines; and
-rejects malformed, duplicate, truncated, oversized, substituted, timed-out,
-or ambiguous results without reflecting paths or source bytes. It launches no
-process, opens no Docker surface, and creates no consequence or receipt.
-P11-I1 adds authenticated same-origin `POST /v1/packets` intake for active
-owner/operator sessions with CSRF and exact actor/session binding. One atomic
-transaction persists immutable packet evidence plus its server-time
-deterministic policy decision; exact replay returns original evidence. It
-creates no approval, execution authorization, adapter dispatch, Docker action,
-repository consequence, or receipt. P11-D4A closes the executable-payload gap
-left by the digest-only D3 control frame. One bounded canonical wrapper now
-carries the exact approved execution request and cross-binds execution,
-action, target, configuration, adapter executable, audience, and shared Git
-tool-argument digests. Payload drift, duplicate/unknown fields, noncanonical
-framing, and oversize input fail with code-only errors. It launches no process,
-opens no Docker endpoint, and creates no consequence or receipt. P11-D4B1 adds a
-dormant, source-only supervisor for one schema-2 `docker_local` profile. The
-profile binds exact Docker CLI and host Git verifier digests plus one absolute
-local Unix endpoint. Before launch, the supervisor revalidates the D4A payload,
-D3/profile identities, executables, endpoint, and marked disposable Git target.
-It clears the environment, uses a fresh private empty Docker config, forbids
-pulls and networking, drops capabilities, enables no-new-privileges, applies
-non-root, read-only, PID, memory, no-swap, CPU, IPC, and logging restrictions,
-and mounts only the approved target. Bounded I/O and a monotonic deadline apply;
-every post-spawn anomaly is `outcome_unknown`. Forced cleanup is attempted only
-for an exact container ID written into the private Docker client directory.
-Success requires independent host Git consequence inspection and an exact
-semantic result-digest match. Hermetic tests use a fake Docker executable and a
-disposable Unix socket, so they prove command construction and fail-closed
-supervision, not real Docker or image isolation. At the P11-D4B1 checkpoint, no
-served route called this supervisor. P11-D4B2A then added source-only atomic
-attempt claiming, durable receipts,
-restart materialization to `outcome_unknown`, and inspection-only reconciliation
-without Docker retry. P11-D4B2B now passes experimental served fake-runtime
-integration over existing Phase 8 loopback routes with hermetic fake executable,
-disposable Unix socket, marked temporary Git target, and host Git verifier. The
-existing eight routes and their public-response fields remain unchanged; an
-internal crate-test-only selector is the only fake-runtime entry point. Three
-adversarial served tests confirm: success/replay/idempotency drift rejection;
-post-consequence unknown survives restart and reconciles through host Git
-inspection only; unchanged-target unknown persists without receipt. Exact replay
-is metadata-only with no redispatch. The chain is D2 schema2 loaded profile ->
-D4B2A atomic claim -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown.
-No served route configures or invokes Docker. P11-D4C1 adds the source-only
-`lnsat-git-reference` executable, exact profile mount-path handoff, executable
-and remapped target binding, bounded Git consequence, private-index cleanup, and
-canonical result output under hermetic host-process tests. No real Docker
-binary/daemon/socket, image pull/build/run, production repository, deployment,
-release, package, or support exists. Phase 11 remains incomplete; real disposable
-Docker image/runtime proof requires a later separately authorized gate.
-Source-only proof-readiness contracts may freeze identities and required cases,
-but they do not constitute real runtime evidence or complete Phase 11.
-The source-only execution-evidence requirements additionally reject raw host
-paths, container IDs, process output, source or patch bytes, and credentials;
-they still do not authorize or execute Docker.
-Required path is Phase 8 -> Phase 9 -> Phase 10 -> Phase 11 -> Phase 13 -> Phase 14. Supported
-binaries and packages come only after required product/runtime work and
-release-candidate source freeze. See
-[product build sequence](docs/PRODUCT_BUILD_SEQUENCE.md).
-
-## Repository Map
-
-```text
-apps/api               Gateway inspection and loopback control-plane source
-apps/console           Read-only live Gateway evidence plus separate synthetic fixtures
-packages/gateway       Transport-neutral inspection, recovery, identity, and interop contracts
-packages/packets       Versioned packet and governance contracts
-packages/policy        Policy decisions and approval gates
-packages/audit         Audit contracts and PostgreSQL writer foundation
-packages/mcp           Read-only dual-era MCP stdio and stateless HTTP-handler source
-packages/cli           Current lnsat dispatcher and packet CLI source
-packages/core          Product identity and shared source constants
-crates/lnsat-contracts Minimal Rust contract crate
-crates/lnsat-auth      Versioned local credential foundation
-crates/lnsat-store     Embedded SQLite durability foundation
-crates/lnsatd          Loopback-only Rust lnsatd plus sibling source-only lnsatctl diagnostics
-fixtures               Synthetic public and cross-language fixtures
-interop                Pinned third-party compatibility harnesses
-docs                   Architecture, SDK, development, and project guidance
-```
-
-Website and management-product source live outside this repository. This
-repository contains LNSAT product source only.
+Docker/OCI is the first planned isolated execution profile. Platform and package
+support will be claimed only for explicitly selected, tested combinations—not
+inferred from a successful build. See the [build sequence](docs/PRODUCT_BUILD_SEQUENCE.md)
+and [compatibility matrix](docs/architecture/COMPATIBILITY_AND_CONFORMANCE_MATRIX.md).
 
 ## Product Ecosystem
 
-This repository contains the Apache-2.0 authority core. Future management
-applications, certified connector packs, governed model profiles, and release
-composition will build on the same public contracts. They may improve how
-people configure, operate, and extend LNSAT, but they cannot create an alternate
-authority path or weaken Gateway decisions.
+LNSAT supplies authority, not a replacement for the rest of the agent stack:
 
-Portable formats, security behavior, compatibility tests, and operator
-conventions remain public-core concerns. See [Open Core and Product Repositories](docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
-and the [CLI and OS Operator Interface](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
-for those boundaries.
+- **MCP and other tool transports** connect clients and tools; a connection is
+  not authorization for a concrete action.
+- **Models and agent frameworks** propose and orchestrate work; they do not
+  approve their own permissions.
+- **Runtime isolation** constrains execution; it does not replace policy,
+  approval, or consequence evidence.
+- **Rangoon and other downstream products** may provide policy intelligence or
+  additional management experiences. They can use a compatible LNSAT service
+  or install a pinned, verified release once available. LNSAT remains independent.
+
+Gateway is the security boundary. Clients, connectors, and UIs cannot create an
+alternate authority path. LNSAT cannot control a bypass path that retains direct
+credentials or unmediated infrastructure access; that coverage must be constrained
+or explicitly identified as missing.
+
+The core is Apache-2.0. See [product boundaries](docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+and [CLI and OS interfaces](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md).
 
 ## Evaluate From Source
 
-### Requirements
-
-- Node.js 22
-- npm `10.9.8` (declared by `packageManager`)
-- Rust `1.97.1` with `rustfmt` and `clippy`
-- PostgreSQL only for optional disposable local-beta integration tests
-
-Repository scripts never install toolchains or start databases implicitly.
+Use a development checkout and disposable fixtures, not production data.
+Requirements: Node.js 22, npm `10.9.8`, and Rust `1.97.1` with `rustfmt` and
+`clippy` for the full source checks. PostgreSQL is needed only for optional
+disposable local-beta integration tests. Scripts do not install toolchains or
+start databases implicitly.
 
 ```sh
+git clone https://github.com/hypler-dev/LNSAT.git
+cd LNSAT
 npm ci
 npm run public:check
 npm run typecheck:workspaces
 npm run test:workspaces
 ```
 
-Run the complete source and dependency gates before proposing a pull request:
+Preview the experimental read-only Control Center:
+
+```sh
+npm run dev -w @lnsat/console
+```
+
+The preview is not the planned setup wizard and does not enable agent execution.
+See [Local Development](docs/LOCAL_DEVELOPMENT.md) for configuration, focused
+tests, and troubleshooting. Before proposing a source change, run:
 
 ```sh
 npm run source:check
 npm run audit:dependencies:check
 ```
 
-Run the experimental, read-only Control Center from the checkout:
+Source checks are not supported-release approval. The separate
+[release process](docs/RELEASING.md) requires runtime, security, and artifact
+lifecycle evidence before publication.
 
-```sh
-npm run dev -w @lnsat/console
-```
+## Learn More And Contribute
 
-See [Local Development](docs/LOCAL_DEVELOPMENT.md) for focused commands and
-troubleshooting.
+- [Architecture](docs/architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md) and
+  [SDK documentation](docs/sdk/README.md) explain the contracts and components.
+- [Roadmap](docs/ROADMAP.md) tracks remaining work;
+  [provenance](PROVENANCE.md) preserves project history and source lineage.
+- [Documentation index](docs/DOCS_INDEX.md) links the complete reference material.
+- [Contributing](CONTRIBUTING.md), [Governance](GOVERNANCE.md), and
+  [Support](SUPPORT.md) describe how to participate.
+- [Open an issue](https://github.com/hypler-dev/LNSAT/issues/new/choose) for a
+  reproducible bug or source-evaluation question. Report vulnerabilities
+  privately through [Security](SECURITY.md).
 
-## Documentation
-
-| Need                       | Start here                                                                                |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| Understand the system      | [Architecture and Developer Guide](docs/architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md) |
-| Check implementation truth | [Project Status](docs/PROJECT_STATUS.md)                                                  |
-| Follow the v1 build order  | [Product Build Sequence](docs/PRODUCT_BUILD_SEQUENCE.md)                                  |
-| Understand maturity claims | [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md)                                        |
-| Use source contracts       | [SDK Documentation](docs/sdk/README.md)                                                   |
-| Review release gates       | [Source Release Process](docs/RELEASING.md)                                               |
-| Find every document        | [Documentation Index](docs/DOCS_INDEX.md)                                                 |
-
-## Community
-
-- Report reproducible bugs through the [issue chooser](https://github.com/hypler-dev/LNSAT/issues/new/choose).
-- Ask source-evaluation, documentation, build, or compatibility questions
-  through the [community support form](https://github.com/hypler-dev/LNSAT/issues/new?template=community_support.yml).
-- Read [Contributing](CONTRIBUTING.md), [Governance](GOVERNANCE.md), and
-  [Support](SUPPORT.md) before proposing larger changes.
-- Report vulnerabilities privately through [Security](SECURITY.md).
-
-Public issues and pull requests must not contain secrets, credentials, customer
-data, private topology, or vulnerability details.
+Do not put credentials, customer data, private infrastructure details, or
+unpublished vulnerability information in public issues or pull requests.
 
 <details>
-<summary>Repository layout</summary>
+<summary>Runtime proof status for contributors</summary>
 
-```text
-apps/api               Gateway inspection and loopback control-plane source
-apps/console           Read-only live Gateway evidence plus synthetic fixtures
-packages/gateway       Transport-neutral authority and interop contracts
-packages/packets       Versioned packet and governance contracts
-packages/policy        Deterministic policy and approval gates
-packages/audit         Audit contracts and PostgreSQL writer foundation
-packages/mcp           Read-only MCP stdio and HTTP-handler source
-packages/cli           Dispatcher and packet CLI source
-packages/core          Product identity and shared source constants
-crates/lnsat-contracts Rust contract primitives
-crates/lnsat-auth      Local authentication primitives
-crates/lnsat-store     Embedded SQLite authority and durability foundation
-crates/lnsatd          Loopback daemon and operator CLI source
-fixtures               Public and cross-language conformance fixtures
-interop                Pinned third-party compatibility harnesses
-docs                   Architecture, SDK, development, and project guidance
-```
+Earlier checkpoint wording described the plan as: “The next source checkpoint adds a deterministic proof-plan contract”.
+It remains design evidence only: the plan grants no runtime result, receipt, or support.
+The source-only evidence-requirements contract and readiness tests are checked in;
+they do not constitute real runtime evidence or complete Phase 11.
+See the [proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
+and [execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).
 
 </details>
 
-## License
-
-Licensed under Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+LNSAT expands to Layered Network Substrate for Agent Telemetry. Licensed under
+Apache License 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).

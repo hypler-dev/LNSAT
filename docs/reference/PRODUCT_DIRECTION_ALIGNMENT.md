@@ -31,6 +31,14 @@ claim because it appears here.
 
 ## Repository and Product Boundaries
 
+Standalone LNSAT setup and access management belong to the public product,
+independent of downstream management products. The
+[canonical pending V1 gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+aligns README, roadmap/status, console/CLI architecture, and release/distribution
+docs. Rangoon may install a verified compatible release or use an existing
+service; dependency flows toward LNSAT, never the reverse. Current console
+readback does not implement that management gate.
+
 | Boundary            | Source role                                                    | Current state                                                 |
 | ------------------- | -------------------------------------------------------------- | ------------------------------------------------------------- |
 | LNSAT               | canonical authority core and public interoperability contracts | public pre-release source from audited fresh-history snapshot |

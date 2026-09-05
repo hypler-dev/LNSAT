@@ -11,6 +11,15 @@ performs runtime dispatch or database mutation.
 
 ## Develop
 
+The planned standalone LNSAT wizard and access-management UI are required V1
+product work beyond these read-only surfaces. They will separate installation
+resource access from agent action authority, expose customizable presets and OS
+enforcement coverage, and route protected changes through Gateway. LNSAT does
+not require Rangoon. See the canonical
+[setup and access-management gate](../../docs/PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+for acceptance and security boundaries; no management mutation is implemented
+or opened by this plan.
+
 Run from repository root:
 
 ```sh

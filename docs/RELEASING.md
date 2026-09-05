@@ -59,6 +59,11 @@ Before a versioned source release:
 ## Normative Release Sequence
 
 1. Complete required product/runtime Phases 8, 9, 10, and 11.
+   This includes the pending
+   [standalone setup and access-management gate](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management),
+   not merely the historical P10-X1 source checkpoint. Each selected platform
+   must later prove its wizard, permission enforcement, and management lifecycle
+   under Phase 14; downstream clients do not supply this standalone requirement.
 2. Pass Phase 13 and freeze one exact release-candidate source identity,
    version, changelog, support profile, and build recipe.
 3. Under explicit Phase 14 candidate-build authorization, select exact rows and

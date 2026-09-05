@@ -38,6 +38,15 @@ value.
 
 ## Upstream Rule
 
+Standalone LNSAT includes its own required V1 setup and access-management
+experience; it does not depend on Rangoon or proprietary management software.
+The [pending setup gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+defines the public baseline. Downstream visual management means additional
+organization, collaboration, or policy-intelligence features, not ownership of
+basic LNSAT permission controls. Rangoon remains a separate project that may
+install a pinned verified release or use compatible protected APIs. No reverse
+dependency, shared release requirement, or authority bypass is introduced.
+
 LNSAT core is universal authority point:
 
 ```text

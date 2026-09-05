@@ -18,6 +18,15 @@ service start, deployment, or live mutation.
 
 ## Canonical-Artifact Invariant
 
+LNSAT distribution must work independently of Rangoon. Its own planned wizard
+and management UI must satisfy the
+[standalone setup gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+before RC freeze, with per-selected-platform lifecycle proof in Phase 14.
+Installing files must not implicitly start the service or activate permissions.
+Rangoon and other downstream installers may consume verified, pinned canonical
+LNSAT components or use a compatible existing installation; they cannot replace
+its ownership proof, approve their own access, or alter core authority behavior.
+
 Canonical CI candidate targets follow. Only explicitly selected rows become
 initial release blockers:
 
