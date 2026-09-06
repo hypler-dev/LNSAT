@@ -1,10 +1,16 @@
 # Self-Contained Installation And Adaptive Setup
 
+> Boundary note: ADR-0008 assigns LNSAT's V1 authority core, API, and
+> headless `lnsatctl` configuration to this repository. Graphical installation,
+> wizard, presets, and rich management UI belong to Rangoon. This document is
+> a future composition plan and does not claim those artifacts exist.
+
 ## Product Decision
 
-LNSAT launches as self-contained, self-deployable packaged software. Installed
-product owns setup, configuration, Control Center, Gateway, policy, evidence,
-and worker enrollment inside deployment-owner systems.
+LNSAT launches as a self-contained embeddable authority core with a versioned
+API and headless configuration. Rangoon may compose graphical setup, Control
+Center, Gateway-facing management, policy presentation, evidence views, and
+worker enrollment around a pinned LNSAT version.
 
 Public documentation and binary distribution are delivery channels only. They
 provide no infrastructure identity, operational endpoint, tenant authority,
@@ -22,13 +28,16 @@ claiming they exist now.
 
 Production runtime language and migration boundary are defined in
 `docs/architecture/RUST_CORE_AND_TYPESCRIPT_CONTROL_CENTER_ARCHITECTURE.md`:
-Rust owns installed security/infrastructure core; TypeScript owns Control Center
-UI and generated clients. Current TypeScript runtime remains transitional until
-conformance passes.
+Rust owns the installed LNSAT security/infrastructure core and generated clients
+must conform to its interface. Where that earlier document assigns a TypeScript
+Control Center to LNSAT, ADR-0008 supersedes it: Rangoon owns the downstream
+graphical UI. Current TypeScript runtime remains transitional until conformance
+passes.
 
 ## Setup Contract
 
-Setup must run from installed product and remain owner-directed. Planned flow:
+Rangoon's downstream graphical setup must run against an installed, pinned LNSAT
+core and remain owner-directed. Planned flow:
 
 1. Detect supported host facts without changing host state.
 2. Show detected capabilities, limitations, and unsupported requirements.
@@ -40,7 +49,7 @@ Setup must run from installed product and remain owner-directed. Planned flow:
    exposure, privileged change, or runtime activation.
 8. Validate resulting deployment and record evidence for every applied step.
 
-Setup must support repeatable review, safe reruns, rollback planning, and
+Rangoon setup must support repeatable review, safe reruns, rollback planning, and
 configuration export without depending on a vendor-operated service.
 
 ## Detection Model
@@ -52,7 +61,7 @@ Read-only detection may identify:
 - CPU, GPU, NPU, accelerator, memory, storage, and thermal capability hints;
 - container, service-manager, virtualization, and local runtime availability;
 - loopback, local-network, and owner-provided private-overlay readiness;
-- existing Control Center, Gateway, worker, and configuration state;
+- existing Rangoon management UI, LNSAT Gateway, worker, and configuration state;
 - device class, including server, workstation, edge device, or mobile client.
 
 Detection reports capability evidence. It does not decide workload eligibility,
@@ -61,10 +70,10 @@ other devices.
 
 ## Owner Choices
 
-Setup must ask rather than assume:
+Rangoon setup must ask rather than assume:
 
 - single-system or multi-system deployment;
-- Control Center placement;
+- Rangoon management UI placement;
 - Gateway and worker placement;
 - local-only, private-network, private-overlay, or owner-managed TLS topology;
 - which agents may connect and which actions each may request;
@@ -106,7 +115,7 @@ references or approved local secret handling.
 
 ## Fail-Closed Rules
 
-Setup must stop before mutation when:
+Rangoon setup must stop before mutation when:
 
 - platform or required capability is unsupported;
 - owner intent is missing or ambiguous;
@@ -125,12 +134,15 @@ performs local detection and produces owner-reviewed configuration. Separate
 packets must authorize package creation, signing, publication, installer
 execution, service changes, network changes, enrollment, and runtime activation.
 
-## Next Source Slices
+## Downstream Rangoon Follow-ups
 
-1. Create Rust workspace and cross-language conformance foundation.
-2. Define strict read-only system capability manifest for setup detection.
-3. Define owner-choice installation profile and topology schema.
-4. Define deterministic setup plan and negative probes.
-5. Add local dry-run rendering in Control Center.
-6. Build platform package and installer slices only after explicit release
-   packets open them.
+1. Consume LNSAT's strict read-only system capability contract for setup
+   detection.
+2. Map owner-choice presets and topology inputs to versioned LNSAT declarative
+   configuration.
+3. Render the core-produced effective-authority result and configuration diff;
+   do not compute either in Rangoon.
+4. Define deterministic setup-plan and negative probes against the same LNSAT
+   integration API used by `lnsatctl`.
+5. Build platform package and installer slices only after separate Rangoon
+   release packets open them.

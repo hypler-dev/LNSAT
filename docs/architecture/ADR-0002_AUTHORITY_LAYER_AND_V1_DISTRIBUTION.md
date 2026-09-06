@@ -17,6 +17,11 @@
   required runtime/product, candidate-build, Phase 14 proof, and publication
   gates remain closed or unmet
 
+> Boundary clarification: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> supersedes this ADR's LNSAT-owned graphical UI, installer, and final distro
+> breadth. LNSAT V1 requires pin-verifiable core identity and selected core
+> conformance only; Rangoon owns downstream composition.
+
 ## Context
 
 LNSAT needs a precise place in the agent stack. Tool and agent transports,
@@ -29,10 +34,10 @@ LNSAT therefore owns the authority lifecycle above transports. It integrates
 with identity, policy, attestation, and evidence systems rather than replacing
 them.
 
-The narrow platform and package exclusions in ADR-0001 no longer match the
-required operator experience. Supported v1 must prove selected thin installers
-consume same signed canonical product artifacts. It need not prove every
-planned package family before supporting one narrow profile.
+The narrow platform exclusions in ADR-0001 no longer match the required
+operator experience. ADR-0008 supersedes this ADR's earlier coupling between
+LNSAT V1 and thin-installer proof: LNSAT must prove selected core targets;
+Rangoon owns final installer and package evidence.
 
 ## Decision
 
@@ -118,11 +123,11 @@ non-production. This decision authorizes design and source contracts only. It
 does not authorize a live adapter, provider call, package build, publication,
 production signing, release, deployment, or service start.
 
-### Staged v1 Distribution
+### Staged v1 Core-Target Evidence
 
-Phase 14 selected-profile proof is a release blocker. After required Phases 8,
+Phase 14 selected-core-target proof is a release blocker. After required Phases 8,
 9, 10, 11, and 13 pass, one explicit candidate-build authorization selects one or two
-exact OS/architecture/package rows. No row is selected by this ADR. Canonical
+exact OS/architecture core-target rows. No row is selected by this ADR. Canonical
 CI candidate targets are:
 
 - `aarch64-apple-darwin`;
@@ -131,10 +136,10 @@ CI candidate targets are:
 - `aarch64-unknown-linux-gnu`.
 
 Each canonical bundle contains `lnsatd`, `lnsatctl`, the `lnsat` convenience
-dispatcher, bundled Control Center assets, configuration templates,
+dispatcher, configuration templates,
 licenses/notices, and a version/build manifest.
 
-Candidate thin distribution, opened separately per selected profile:
+Downstream Rangoon distribution references, opened separately from LNSAT V1:
 
 - dedicated Homebrew tap: `brew install hypler-dev/tap/lnsat`;
 - direct macOS/Linux `.tar.gz` bundles;
@@ -148,22 +153,24 @@ The Cargo package contains only the bootstrap/verifier. An explicit setup
 command downloads and verifies a signed canonical bundle. Cargo never rebuilds
 the product core or creates different product behavior.
 
-Every claimed Homebrew, tarball, install-script, deb, rpm, OCI, or Cargo wrapper
-must consume or wrap same versioned canonical components. Applicable
-cross-wrapper tests compare embedded component digests. Unselected families
-remain unsupported and do not block initial local v1.
+Rangoon owns selection, support, and lifecycle evidence for every Homebrew,
+tarball, install-script, deb, rpm, OCI, or Cargo wrapper. Each claimed wrapper
+must consume or wrap the same versioned canonical LNSAT components, but no
+wrapper family blocks LNSAT V1.
 
-Every selected canonical and claimed wrapper artifact requires SHA-256 checksums,
+Every selected canonical LNSAT core artifact requires SHA-256 checksums,
 a non-production signature rehearsal/verification bundle, SPDX JSON SBOM, SLSA
 v1 provenance, source revision, build recipe, canonical component digest map,
-license/notice references, reproducibility evidence, lifecycle evidence, and
-non-root/no-auto-start proof. Production signing is a later publication gate
-against unchanged Phase 14-proven digests.
+license/notice references, reproducibility evidence, non-root proof, and the
+selected core-target compatibility evidence. Production signing is a later
+publication gate against unchanged Phase 14-proven digests. Rangoon separately
+owns lifecycle evidence for any downstream wrapper it claims.
 
-Homebrew installs service metadata but never starts `lnsatd`. Operator start is
-explicit with `brew services start lnsat`. Linux packages install a non-root
-`lnsat` user and a disabled systemd unit, preserve configuration and data unless
-explicitly purged, and never start the daemon in post-install scripts.
+For downstream Rangoon wrappers, Homebrew service metadata must never start
+`lnsatd`; operator start remains explicit. Linux packages must use a non-root
+runtime identity, install disabled service metadata, preserve configuration and
+data unless explicitly purged, and never start the daemon in post-install
+scripts. These are downstream wrapper requirements, not LNSAT V1 gates.
 
 Compatibility matrix owns exact selected target, architecture, package,
 service, path, security-evidence, and lifecycle rows. Unknown, unselected, or
@@ -194,14 +201,14 @@ blockers:
 
 - Roadmap retains fourteen numbered phases, with explicitly optional
   post-local-v1 lanes.
-- Phase 14 selected-profile compatibility evidence is mandatory before
-  `v1.0.0`; package breadth is not.
+- Phase 14 selected-core-target compatibility evidence is mandatory before
+  `v1.0.0`; downstream package breadth is not.
 - Publication follows Phase 14 through a separate explicit go/no-go gate.
 - ADR-0001 remains the historical source for retained local-first, single-node,
   SQLite, local-auth, non-root, fail-closed, and support-window decisions.
 - ADR-0001 platform/package exclusions no longer control.
-- Distribution proposal documents become normative Phase 14 plans where they
-  implement this decision.
+- Core-target evidence documents become normative Phase 14 plans where they
+  implement this decision; downstream distribution references remain Rangoon-owned.
 - ADR-0003 may add downstream product planes without weakening authority
   semantics or adding them to local-v1 blockers.
 

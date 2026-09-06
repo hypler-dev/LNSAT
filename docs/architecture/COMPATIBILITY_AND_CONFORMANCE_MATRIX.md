@@ -4,6 +4,10 @@
 - Availability: source plan only
 - Current supported rows: none
 
+> Boundary note: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> makes platform/package breadth and graphical installer evidence downstream
+> Rangoon concerns. This matrix is not an LNSAT V1 UI gate.
+
 No row becomes supported because it appears here. Later release packet selects
 one or two exact initial rows. Selected row is supported only when exact release
 candidate records all mandatory evidence and passes tests. Unknown, unselected,
@@ -34,7 +38,7 @@ Every selected OS, architecture, and artifact-family row must record:
 | Platform       | OS/version, architecture, artifact family, install path                       |
 | Runtime        | service mode, runtime user/group, config/data/log paths                       |
 | CLI            | command/schema version, exit-code family, local transport, shell/man evidence |
-| Components     | canonical `lnsatd`, `lnsatctl`, `lnsat`, Control Center digests               |
+| Components     | canonical LNSAT core/API/CLI digests; UI is downstream Rangoon content        |
 | Trust          | SHA-256, signature bundle, SPDX JSON SBOM, SLSA v1 provenance                 |
 | Lifecycle      | clean install, upgrade, rollback, uninstall, purge if applicable              |
 | Service safety | installed state, disabled-by-default, explicit start, no auto-start           |
@@ -50,7 +54,11 @@ Every selected OS, architecture, and artifact-family row must record:
 | `x86_64-unknown-linux-gnu`  | `.tar.gz` with complete component map | unsupported; unbuilt |
 | `aarch64-unknown-linux-gnu` | `.tar.gz` with complete component map | unsupported; unbuilt |
 
-## Candidate Wrapper Rows
+## Downstream Rangoon Wrapper Rows
+
+These rows are retained as downstream compatibility references. Rangoon owns
+their selection, packaging, lifecycle evidence, and support claims; none blocks
+LNSAT V1.
 
 | OS                        | Architecture    | Artifact/install path         | Service mode                    | Current status       |
 | ------------------------- | --------------- | ----------------------------- | ------------------------------- | -------------------- |
@@ -81,19 +89,21 @@ wrapper row unsupported and blocks a broad package-family support claim.
 All paths need ownership, permissions, backup, upgrade, rollback, uninstall,
 and purge semantics.
 
-## Cross-Installer Equality
+## Downstream Cross-Installer Equality
 
-For each release/target:
+For each Rangoon wrapper release/target:
 
 1. verify canonical manifest and trust evidence;
 2. extract or inspect every wrapper;
 3. map product components to canonical manifest;
 4. compare exact component SHA-256 digests;
 5. reject missing, extra-authoritative, rebuilt, or substituted components;
-6. record result in release compatibility evidence.
+6. record result in downstream release compatibility evidence.
 
-Package metadata and service definitions may differ. Product binaries, bundled
-Control Center assets, and version/build identity must not.
+Package metadata and service definitions may differ. Product binaries and
+version/build identity must not. Control Center assets are not LNSAT V1
+components; Rangoon verifies its own downstream composition. This evidence
+gates only Rangoon's wrapper claim and never LNSAT V1.
 
 ## Authority and Security Conformance
 

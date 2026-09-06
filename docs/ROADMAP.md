@@ -560,19 +560,22 @@ success without Gateway-sourced completion evidence.
 
 ### 10. `lnsatd`, `lnsatctl`, and `lnsat` Product Split
 
-Additional accepted V1 scope: LNSAT-owned setup wizard and ongoing access-management
-UI, independent of Rangoon. The
-[standalone setup and access-management requirements](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-define resource access versus agent authority, customizable presets, OS enforcement
-visibility, protected changes, and acceptance tests. P10-X1 remains a completed
+Additional accepted V1 scope: LNSAT-owned headless setup and ongoing
+access-management API/CLI, independent of Rangoon. The
+[headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+define resource access versus agent authority, layered declarative configuration,
+customizable settings, OS enforcement visibility, protected changes, and
+acceptance tests. Rangoon owns graphical setup, presets, and rich management UI.
+P10-X1 remains a completed
 source checkpoint; it does not complete this additional work. Deliver the new
 product behavior before Phase 13 RC freeze, prove its security/recovery in Phase
-13, and validate its installation/service lifecycle per selected Phase 14 row.
+13, and validate selected LNSAT core targets in Phase 14. Rangoon owns final
+installer and service-manager lifecycle proof.
 Current read-only surfaces and runtime closures remain unchanged until separately
 reviewed implementation is authorized.
 
-Stabilize daemon, operator CLI, and convenience dispatcher contracts. Bundle
-Control Center assets with server product. Make OS CLI a first-class interface
+Stabilize the embeddable core, versioned API, operator CLI, and convenience
+dispatcher contracts. Make OS CLI a first-class interface
 for headless, local, recovery, CI, and wrapper use. Freeze safe command
 taxonomy, Gateway-only mutation flow, local socket/loopback transport,
 machine-readable output, stable exit-code families, shell completion, man
@@ -783,51 +786,34 @@ unresolved critical/high blocker.
 ### 14. Canonical Artifacts, Thin Distribution, and Compatibility Evidence
 
 After required Phases 8, 9, 10, 11, and 13 pass, one explicit candidate-build
-packet selects one or two exact OS/architecture/package support rows. No row is
-selected yet. Canonical CI builds immutable candidate components once for each
-selected target. Unselected rows stay unsupported and do not block initial
-local v1. Candidate-build authority grants no artifact publication or production
-signing authority.
+packet selects exact OS/architecture core-target rows. No row is selected yet.
+Canonical CI builds immutable candidate components once for each selected
+target. Unselected rows stay unsupported and do not block LNSAT V1. Candidate
+build authority grants no artifact publication or production signing authority.
 
-Each bundle includes `lnsatd`, `lnsatctl`, `lnsat`, Control Center assets,
-configuration templates, licenses/notices, and version/build manifest.
+Each selected target proves the embeddable core and `lnsatctl`; it may also
+prove `lnsatd` as an optional reference host. Evidence includes source revision,
+build recipe, component digests, license/notices, SHA-256, signature verification
+material, SBOM, provenance, reproducibility, non-root behavior, headless
+configuration, monitoring, recovery, and compatibility results. No graphical
+asset or final installer wrapper is an LNSAT V1 component.
 
-Candidate wrappers, opened separately per selected profile:
+Phase 14 owns lifecycle proof on each later-selected canonical target. That
+marker applies to LNSAT core-target behavior, not Rangoon's downstream installer
+or package lifecycle.
 
-- dedicated Homebrew tap: `brew install hypler-dev/tap/lnsat`;
-- direct macOS/Linux `.tar.gz`;
-- verified install script;
-- `.deb` for Ubuntu 24.04 and Debian 13;
-- `.rpm` for Rocky Linux 9;
-- multi-architecture OCI image;
-- `cargo install lnsat` bootstrap/verifier followed by explicit canonical
-  bundle setup.
-
-Every claimed wrapper consumes exact canonical components. Each selected row
-requires
-SHA-256, signature verification bundle, SPDX JSON SBOM, SLSA v1 provenance,
-source revision, build recipe, component digest map, license/notices,
-reproducibility, install, upgrade, rollback, uninstall, explicit service start,
-non-root runtime, and no-auto-start proof.
+Rangoon owns Homebrew, direct-download, install-script, deb, rpm, MSI, OCI, or
+other final distro composition and lifecycle proof. Each downstream wrapper must
+pin and verify exact LNSAT components and cannot rebuild or alter authority
+behavior. Those wrapper rows may be tracked as downstream reference work, but
+they do not block LNSAT V1.
 
 Phase 14 signature evidence uses non-production rehearsal material. Production
 signing happens only under final publication authorization against unchanged
 proven digests. Any artifact-byte change repeats affected Phase 14 proof.
 
-If selected, Homebrew requires claimed macOS bottles and Linuxbrew proof,
-SHA-256 pins, `brew services` metadata, explicit start, paths, and lifecycle
-tests. If selected, Linux packages require non-root `lnsat`, `/etc/lnsat`,
-`/var/lib/lnsat`, journald or documented log path, disabled systemd unit, no
-post-install start, config preservation, and explicit purge.
-
-If selected, OCI requires claimed architecture manifest, canonical `lnsatd` and Control Center
-digests, non-root UID/GID, read-only-root compatibility, explicit persistent
-data volume, and no credentials/customer state.
-
-Exit: every selected/claimed compatibility row and applicable cross-installer
-digest equality test passes. Phase 14 selected-profile proof is mandatory
-before `v1.0.0`; unselected Homebrew, tarball, install-script, deb, rpm, OCI,
-or Cargo breadth remains later work.
+Exit: every selected LNSAT core-target compatibility row passes and produces
+pin-verifiable identity. Final installer/package breadth remains Rangoon work.
 
 ## Publication Gate
 

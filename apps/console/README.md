@@ -1,6 +1,7 @@
 # `@lnsat/console`
 
-Read-only LNSAT Control Center built with Next.js.
+Read-only experimental LNSAT Control Center built with Next.js. It is not an
+LNSAT V1 exit requirement; graphical setup and rich userland belong to Rangoon.
 
 Current routes cover dashboard, knowledge, packets, agents, approvals, audit,
 operations, substrates, readiness, and settings. Most panels are synthetic
@@ -11,12 +12,10 @@ performs runtime dispatch or database mutation.
 
 ## Develop
 
-The planned standalone LNSAT wizard and access-management UI are required V1
-product work beyond these read-only surfaces. They will separate installation
-resource access from agent action authority, expose customizable presets and OS
-enforcement coverage, and route protected changes through Gateway. LNSAT does
-not require Rangoon. See the canonical
-[setup and access-management gate](../../docs/PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
+Headless setup and access management remain LNSAT V1 work through the versioned
+API and `lnsatctl`; graphical wizard, presets, and rich management UI belong to
+Rangoon. See the canonical
+[headless configuration and control gate](../../docs/PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 for acceptance and security boundaries; no management mutation is implemented
 or opened by this plan.
 

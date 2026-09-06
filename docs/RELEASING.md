@@ -60,10 +60,12 @@ Before a versioned source release:
 
 1. Complete required product/runtime Phases 8, 9, 10, and 11.
    This includes the pending
-   [standalone setup and access-management gate](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management),
-   not merely the historical P10-X1 source checkpoint. Each selected platform
-   must later prove its wizard, permission enforcement, and management lifecycle
-   under Phase 14; downstream clients do not supply this standalone requirement.
+   [headless configuration and control gate](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control),
+   not merely the historical P10-X1 source checkpoint. Each selected LNSAT core
+   target must later prove component identity, trust, headless configuration,
+   permission enforcement, and compatibility under Phase 14. Rangoon owns
+   graphical setup and final distro/package lifecycle; its wrappers cannot
+   replace or bypass LNSAT's versioned API, CLI, or Gateway authority.
 2. Pass Phase 13 and freeze one exact release-candidate source identity,
    version, changelog, support profile, and build recipe.
 3. Under explicit Phase 14 candidate-build authorization, select exact rows and

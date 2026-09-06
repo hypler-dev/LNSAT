@@ -31,15 +31,17 @@ no public/private key input is requested.
 
 ## Current Build Position
 
-Standalone setup wizard and access-management UI are accepted V1 requirements,
-not implemented capabilities. They must distinguish LNSAT's resource access from
-agent action authority, offer customizable least-privilege presets, expose actual
-OS enforcement coverage, and protect configuration changes through Gateway.
+Headless setup and access-management through the versioned API and `lnsatctl`
+are accepted V1 requirements, not implemented capabilities. They must distinguish
+LNSAT's resource access from agent action authority, support layered declarative
+configuration and customizable least-privilege settings, expose actual OS
+enforcement coverage, and protect configuration changes through Gateway.
 LNSAT remains usable independently of Rangoon; downstream installation or API use
 cannot bypass approval or increase authority implicitly. The
-[standalone setup and access-management requirements](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-own this additional product acceptance scope. Existing P10-X1 source conformance
-does not satisfy it; current Control Center readback remains read-only. No new
+[headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+own this additional product acceptance scope. Rangoon owns graphical setup,
+presets, and rich management UI. Existing P10-X1 source conformance does not
+satisfy it; current Control Center readback remains read-only. No new
 management mutation, runtime, installer, or supported-platform claim is opened.
 
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
@@ -1055,17 +1057,20 @@ Before any supported public artifact:
 
 - complete every local-v1-required roadmap phase; hardware attestation and
   other explicitly post-local-v1 phases remain optional;
-- select one or two exact Phase 14 OS/architecture/package support rows and
-  prove every selected row; unselected rows remain unsupported, not blockers;
-- prove canonical component digest equality across every claimed thin wrapper;
+- select one or two exact Phase 14 OS/architecture core-target rows and prove
+  every selected row; unselected rows remain unsupported, not blockers;
+- expose pin-verifiable canonical component identity for downstream consumers;
 - produce reproducible artifacts, checksums, signature bundles, SPDX JSON SBOM,
-  SLSA v1 provenance, and lifecycle evidence;
-- document installation, upgrade, rollback, and revocation;
+  SLSA v1 provenance, and selected core-target compatibility evidence;
+- document headless configuration, recovery, update, rollback, and revocation;
 - complete full-history secret and dependency scans;
 - verify public CI, branch protection, issue intake, and security reporting;
 - complete public-source history/privacy/metadata review and obtain explicit
   repository-visibility authorization;
 - obtain separate later artifact-publication authorization after Phase 14.
+
+Rangoon separately owns graphical assets, final installer/package selection,
+wrapper lifecycle evidence, and downstream support claims; none blocks LNSAT V1.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).
