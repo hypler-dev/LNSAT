@@ -129,8 +129,13 @@ separately owns equivalent evidence for each downstream wrapper it claims:
 - canonical component digest map;
 - license and notice references;
 - reproducibility evidence;
-- install, upgrade, rollback, and uninstall evidence;
-- non-root and no-auto-start proof.
+- core backup/restore, rollback, and revocation evidence;
+- non-root runtime, headless configuration, and explicit-start/no-auto-start
+  `lnsatd` behavior.
+
+Install, package upgrade/rollback, uninstall, and package-managed service
+lifecycle evidence applies only to Rangoon wrapper claims. It does not gate
+LNSAT V1 or replace the core-target evidence above.
 
 Signature metadata must identify algorithm, key identity, trust root, issue
 time, and revocation/rotation path. Checksums alone do not authenticate.

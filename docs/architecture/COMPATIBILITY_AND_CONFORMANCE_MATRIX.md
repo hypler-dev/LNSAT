@@ -30,20 +30,22 @@ See the
 
 ## Mandatory Evidence Columns
 
-Every selected OS, architecture, and artifact-family row must record:
+Every selected LNSAT core OS/architecture row must record the core evidence
+below. Rangoon wrapper rows additionally record package lifecycle and wrapper
+service-safety evidence; those downstream requirements do not gate LNSAT V1.
 
-| Dimension      | Required evidence                                                             |
-| -------------- | ----------------------------------------------------------------------------- |
-| Identity       | release version, source revision, build recipe, target triple                 |
-| Platform       | OS/version, architecture, artifact family, install path                       |
-| Runtime        | service mode, runtime user/group, config/data/log paths                       |
-| CLI            | command/schema version, exit-code family, local transport, shell/man evidence |
-| Components     | canonical LNSAT core/API/CLI digests; UI is downstream Rangoon content        |
-| Trust          | SHA-256, signature bundle, SPDX JSON SBOM, SLSA v1 provenance                 |
-| Lifecycle      | clean install, upgrade, rollback, uninstall, purge if applicable              |
-| Service safety | installed state, disabled-by-default, explicit start, no auto-start           |
-| Recovery       | config/data preservation, backup/restore, revocation/disablement              |
-| Result         | test refs, known limitations, support status                                  |
+| Dimension      | Required evidence                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| Identity       | release version, source revision, build recipe, target triple                            |
+| Platform       | OS/version, architecture, artifact family, install path                                  |
+| Runtime        | service mode, runtime user/group, config/data/log paths                                  |
+| CLI            | command/schema version, exit-code family, local transport, shell/man evidence            |
+| Components     | canonical LNSAT core/API/CLI digests; UI is downstream Rangoon content                   |
+| Trust          | SHA-256, signature bundle, SPDX JSON SBOM, SLSA v1 provenance                            |
+| Core lifecycle | core rollback and revocation; backup/restore and config/data preservation                |
+| Core runtime   | non-root runtime, headless configuration, explicit-start/no-auto-start `lnsatd` behavior |
+| Recovery       | config/data preservation, backup/restore, revocation/disablement                         |
+| Result         | test refs, known limitations, support status                                             |
 
 ## Candidate Canonical Target Rows
 
@@ -146,7 +148,8 @@ outage/recovery results, known limitations, test date, and support owner. See
 
 ## Package Lifecycle Conformance
 
-Each wrapper row tests:
+Rangoon owns these package lifecycle and wrapper service-safety requirements.
+They gate only its selected wrapper claims, not LNSAT V1. Each wrapper row tests:
 
 - clean install from empty host state;
 - upgrade with config/data preservation;

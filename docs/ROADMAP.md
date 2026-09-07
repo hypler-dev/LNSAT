@@ -791,8 +791,9 @@ Canonical CI builds immutable candidate components once for each selected
 target. Unselected rows stay unsupported and do not block LNSAT V1. Candidate
 build authority grants no artifact publication or production signing authority.
 
-Each selected target proves the embeddable core and `lnsatctl`; it may also
-prove `lnsatd` as an optional reference host. Evidence includes source revision,
+Each selected target proves the embeddable core, `lnsatctl`, and the mandatory
+`lnsatd` component in every canonical core-target bundle. Using `lnsatd` as a
+reference host remains optional. Evidence includes source revision,
 build recipe, component digests, license/notices, SHA-256, signature verification
 material, SBOM, provenance, reproducibility, non-root behavior, headless
 configuration, monitoring, recovery, and compatibility results. No graphical

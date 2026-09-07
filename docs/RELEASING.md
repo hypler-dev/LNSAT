@@ -70,9 +70,12 @@ Before a versioned source release:
    version, changelog, support profile, and build recipe.
 3. Under explicit Phase 14 candidate-build authorization, select exact rows and
    build immutable canonical candidate components once per target.
-4. Prove selected candidate artifacts and unchanged wrappers: digests,
-   reproducibility, non-production signature rehearsal, SBOM, provenance,
-   notices, install, start, upgrade, recovery, rollback, and uninstall.
+4. Prove selected core candidate artifacts: digests, reproducibility,
+   non-production signature rehearsal, SBOM, provenance, notices, non-root
+   runtime, headless configuration, backup/restore, core rollback/revocation,
+   and explicit-start/no-auto-start `lnsatd` behavior. Rangoon separately proves
+   package install, upgrade, rollback, uninstall, and package-managed service
+   safety for its wrapper rows; that downstream evidence does not gate LNSAT V1.
 5. After Phase 14 passes, obtain separate final go/no-go authorization.
 6. Production-sign unchanged proven digests, verify them, then create tags,
    releases, uploads, publications, and stable/latest promotion.
@@ -117,12 +120,14 @@ Source verification does not prove a supported platform. Before `v1.0.0`, all
 local-v1-required roadmap phases must pass. Explicitly optional hardware
 attestation, signed-evidence, enterprise, and unselected distribution lanes do
 not block initial local support. Phase 14 requires every selected
-target/package row, canonical component digest parity across wrappers,
-clean-machine install, explicit service start, upgrade, backup/restore,
-rollback, uninstall, non-root/no-auto-start proof, checksums, non-production
+LNSAT core-target row, canonical component digests, backup/restore, core
+rollback and revocation, non-root runtime, headless configuration,
+explicit-start/no-auto-start `lnsatd` behavior, checksums, non-production
 signature rehearsal/verification bundles, SPDX JSON SBOMs, and SLSA v1
-provenance. Missing evidence blocks release; successful source build cannot
-waive it.
+provenance. Missing core evidence blocks release; successful source build cannot
+waive it. Cross-wrapper digest parity, clean-machine package install, package
+upgrade/rollback, uninstall, and package-managed service safety apply only to
+Rangoon wrapper rows and do not gate LNSAT V1.
 
 ## Maintainer Review
 
