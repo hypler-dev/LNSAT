@@ -4,6 +4,10 @@
 - Availability: source plan only
 - Current supported rows: none
 
+> Boundary note: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> makes platform/package breadth and graphical installer evidence downstream
+> Rangoon concerns. This matrix is not an LNSAT V1 UI gate.
+
 No row becomes supported because it appears here. Later release packet selects
 one or two exact initial rows. Selected row is supported only when exact release
 candidate records all mandatory evidence and passes tests. Unknown, unselected,
@@ -26,20 +30,22 @@ See the
 
 ## Mandatory Evidence Columns
 
-Every selected OS, architecture, and artifact-family row must record:
+Every selected LNSAT core OS/architecture row must record the core evidence
+below. Rangoon wrapper rows additionally record package lifecycle and wrapper
+service-safety evidence; those downstream requirements do not gate LNSAT V1.
 
-| Dimension      | Required evidence                                                             |
-| -------------- | ----------------------------------------------------------------------------- |
-| Identity       | release version, source revision, build recipe, target triple                 |
-| Platform       | OS/version, architecture, artifact family, install path                       |
-| Runtime        | service mode, runtime user/group, config/data/log paths                       |
-| CLI            | command/schema version, exit-code family, local transport, shell/man evidence |
-| Components     | canonical `lnsatd`, `lnsatctl`, `lnsat`, Control Center digests               |
-| Trust          | SHA-256, signature bundle, SPDX JSON SBOM, SLSA v1 provenance                 |
-| Lifecycle      | clean install, upgrade, rollback, uninstall, purge if applicable              |
-| Service safety | installed state, disabled-by-default, explicit start, no auto-start           |
-| Recovery       | config/data preservation, backup/restore, revocation/disablement              |
-| Result         | test refs, known limitations, support status                                  |
+| Dimension      | Required evidence                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| Identity       | release version, source revision, build recipe, target triple                            |
+| Platform       | OS/version, architecture, artifact family, install path                                  |
+| Runtime        | service mode, runtime user/group, config/data/log paths                                  |
+| CLI            | command/schema version, exit-code family, local transport, shell/man evidence            |
+| Components     | canonical LNSAT core/API/CLI digests; UI is downstream Rangoon content                   |
+| Trust          | SHA-256, signature bundle, SPDX JSON SBOM, SLSA v1 provenance                            |
+| Core lifecycle | core rollback and revocation; backup/restore and config/data preservation                |
+| Core runtime   | non-root runtime, headless configuration, explicit-start/no-auto-start `lnsatd` behavior |
+| Recovery       | config/data preservation, backup/restore, revocation/disablement                         |
+| Result         | test refs, known limitations, support status                                             |
 
 ## Candidate Canonical Target Rows
 
@@ -50,7 +56,11 @@ Every selected OS, architecture, and artifact-family row must record:
 | `x86_64-unknown-linux-gnu`  | `.tar.gz` with complete component map | unsupported; unbuilt |
 | `aarch64-unknown-linux-gnu` | `.tar.gz` with complete component map | unsupported; unbuilt |
 
-## Candidate Wrapper Rows
+## Downstream Rangoon Wrapper Rows
+
+These rows are retained as downstream compatibility references. Rangoon owns
+their selection, packaging, lifecycle evidence, and support claims; none blocks
+LNSAT V1.
 
 | OS                        | Architecture    | Artifact/install path         | Service mode                    | Current status       |
 | ------------------------- | --------------- | ----------------------------- | ------------------------------- | -------------------- |
@@ -81,19 +91,21 @@ wrapper row unsupported and blocks a broad package-family support claim.
 All paths need ownership, permissions, backup, upgrade, rollback, uninstall,
 and purge semantics.
 
-## Cross-Installer Equality
+## Downstream Cross-Installer Equality
 
-For each release/target:
+For each Rangoon wrapper release/target:
 
 1. verify canonical manifest and trust evidence;
 2. extract or inspect every wrapper;
 3. map product components to canonical manifest;
 4. compare exact component SHA-256 digests;
 5. reject missing, extra-authoritative, rebuilt, or substituted components;
-6. record result in release compatibility evidence.
+6. record result in downstream release compatibility evidence.
 
-Package metadata and service definitions may differ. Product binaries, bundled
-Control Center assets, and version/build identity must not.
+Package metadata and service definitions may differ. Product binaries and
+version/build identity must not. Control Center assets are not LNSAT V1
+components; Rangoon verifies its own downstream composition. This evidence
+gates only Rangoon's wrapper claim and never LNSAT V1.
 
 ## Authority and Security Conformance
 
@@ -136,7 +148,8 @@ outage/recovery results, known limitations, test date, and support owner. See
 
 ## Package Lifecycle Conformance
 
-Each wrapper row tests:
+Rangoon owns these package lifecycle and wrapper service-safety requirements.
+They gate only its selected wrapper claims, not LNSAT V1. Each wrapper row tests:
 
 - clean install from empty host state;
 - upgrade with config/data preservation;

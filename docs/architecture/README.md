@@ -31,6 +31,7 @@ wording; [project status](../PROJECT_STATUS.md) controls merged truth.
 
 ## Accepted Decisions
 
+- [ADR-0008: LNSAT kernel and Rangoon userland boundary](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
 - [ADR-0007: Docker-first runtime-neutral enforcement](ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [ADR-0006: Phase 7 local-v1 trust and optional signed evidence](ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md)
 - [ADR-0004: Phase 7 signed approval evidence](ADR-0004_PHASE_7_SIGNED_APPROVAL_EVIDENCE.md)

@@ -12,37 +12,40 @@ package build from starting before product behavior is complete.
 
 ## Preserved Product Goal
 
-First supported release remains an owner-controlled, local/self-hosted,
-single-node authority product:
+First LNSAT V1 release remains an embeddable, owner-controlled authority
+kernel/library:
 
 - Rust owns security-critical contracts, local persistence, daemon behavior,
   authorization, receipt binding, and stable operator CLI behavior;
-- TypeScript and React own Control Center and client-facing source surfaces;
+- `lnsatctl` owns complete headless configuration and operator operations;
 - SQLite is initial embedded authority store;
 - local identities, scoped roles, secure sessions, CSRF protection, policy,
   distinct-human approval, exact one-time authorization, bounded consequence,
   receipt, reconciliation, and audit form one end-to-end product loop;
 - runtime is non-root, loopback-default, fail-closed, and explicitly started;
 - hosted SaaS, fleet/HA, multi-tenancy, unrestricted infrastructure control,
-  and production reference actions remain outside initial v1.
+  and production reference actions remain outside initial v1; Rangoon owns
+  graphical userland and final distro packaging.
 
-## Standalone Setup And Access Management
+## Headless Configuration And Control
 
 Accepted V1 product requirement; implementation and platform proof remain pending.
-Gate: standalone setup and access management. State: pending; blocks Phase 13
+Gate: headless configuration and control. State: pending; blocks Phase 13
 RC freeze regardless of the completed historical P10-X1 source checkpoint.
-LNSAT must provide its own setup wizard and ongoing management UI. It is an
-independent product with its own service, API, CLI, release, and lifecycle; no
-Rangoon installation, account, policy compiler, or service is required. Rangoon
-may independently install a pinned, verified LNSAT GitHub release or connect to
-a compatible existing installation through the same protected versioned
-interfaces. It cannot bypass Gateway or silently increase permissions.
-Installation must verify immutable component digests, signature/provenance trust,
-and revocation state under the [release process](RELEASING.md); verification failure
-blocks installation or update. Trust-root rotation and downgrade denial require
-tests, not trust in a GitHub URL alone.
+LNSAT must provide complete headless setup and ongoing management through its
+versioned API and `lnsatctl`. Graphical setup, presets, management UI, and final
+distro packaging belong to Rangoon. Rangoon may install a pinned, verified
+LNSAT release or connect to a compatible existing installation through the same
+protected versioned interfaces. It cannot bypass Gateway or silently increase
+permissions.
+Any LNSAT core artifact consumed by Rangoon or another host must expose immutable
+component identity and support signature/provenance and revocation verification
+under the [release process](RELEASING.md). Verification failure blocks downstream
+installation or update. Trust-root rotation and downgrade denial require tests,
+not trust in a GitHub URL alone.
 
-The wizard must distinguish two independently reviewable boundaries:
+The LNSAT core and `lnsatctl` must distinguish two independently reviewable
+boundaries:
 
 - **LNSAT resource access:** exact folders, repositories, services, connectors,
   runtime profiles, and OS resources the installation may reach.
@@ -52,35 +55,35 @@ The wizard must distinguish two independently reviewable boundaries:
 
 Bind resource grants to canonical identity, not a displayed path alone. Validate
 identity at grant and use; reject symlink/reparse-point, mount, or target
-replacement that escapes scope. Test traversal and revocation/use races on every
-claimed platform; a UI selection is not OS enforcement proof.
+replacement that escapes scope. A UI selection is not OS enforcement proof.
 
-Provide inspectable presets for observe-only, approval-required, bounded
-automation, and custom configuration. Presets are versioned starting points,
-not privilege grants. Every supported setting remains individually customizable
-within the selected platform's enforceable capability set and invariant security
-limits. Customization cannot disable authentication, audit, exact authorization,
-or fail-closed enforcement. No preset grants unrestricted shell or infrastructure
-control, direct agent Docker-socket access, or ambient credentials.
+Declarative configuration supports explicit layers and composition, with
+`config schema`, `show`, `validate`, `diff`, `effective`, `apply`, and `export`.
+The core computes effective authority. Rangoon may render presets and forms but
+must consume those results and never compute permissions itself. Unknown fields,
+unsupported capabilities, and invalid composition fail closed.
 
-Setup must show requested and effective permissions, preset differences, denied
-capabilities, applicable approval rules, and OS-specific enforcement before
-activation. Use least privilege and no implicit service start. Cancellation or
-failed setup must leave no newly activated authority. Initial owner bootstrap
-must have a separately reviewed local ownership proof; there is no unauthenticated
-management exception for subsequent setup changes.
+`lnsatctl` provides secure machine-readable monitoring and control for
+`watch`, `status`, `health`, `operations`, approvals, audit, recovery, and
+emergency disablement. Watch uses server-sourced versioned events, cursor/resume,
+deterministic ordering, bounded retention/backpressure, explicit disconnect
+behavior, and JSONL output; transport loss never implies an outcome. Secrets
+remain references and are redacted. Online mutations require authenticated
+Gateway authorization, are applied atomically, and produce durable audit
+evidence. Offline backup, inert restore, owner recovery, and initial bootstrap
+are deliberate local exceptions: no agent, API, MCP, or UI path may invoke
+them; they require explicit host-owner proof, non-root execution, exact targets,
+exclusive daemon-shared lease where applicable, bounded one-time semantics,
+and durable evidence. Initial owner bootstrap additionally requires separately
+reviewed local ownership proof.
 The implementation packet must define the bootstrap trust root, exact initial
 owner/installation/configuration binding, one-time consumption, and denial of
 forged, substituted, replayed, or interrupted bootstrap activation. Reuse existing
 owner-bootstrap security foundations where applicable rather than inventing a
 second ownership authority.
 
-The management UI must support permission and policy review, scoped changes,
-authenticated approvals, activity/receipt/audit inspection, emergency disablement,
-and recovery. Privilege increases require an explicit authenticated human decision
-bound to the exact configuration change; an agent or downstream client cannot
-self-approve. Apply changes through Gateway, with server-side role/session/CSRF
-checks where applicable, durable audit, concurrency protection, and safe recovery.
+Privilege increases require an explicit authenticated human decision bound to the
+exact configuration change; an agent or downstream client cannot self-approve.
 Rollback must not silently restore revoked or broader authority. Explain the
 effect of narrowing or disablement on queued and in-flight work without claiming
 that cancellation proves non-execution.
@@ -89,17 +92,20 @@ OS abstraction must map stable capabilities to explicit platform controls and
 show their observed enforcement status. Unsupported or unverifiable restrictions
 must block activation of the affected capability; diagnostic-only visibility may
 remain available with a clear coverage warning. Never silently emulate stronger
-isolation or label unmediated paths as controlled. Exact OS, architecture, runtime,
-and installer rows still require separate compatibility evidence.
+isolation or label unmediated paths as controlled. Exact OS, architecture,
+runtime, and selected core-target rows still require separate compatibility
+evidence. Rangoon owns final installer-row evidence.
 
 This is additional product work beyond the completed P10-X1 source checkpoint,
 not a claim that the current read-only Control Center already administers access.
-Before Phase 13 RC freeze, implement and independently review the wizard,
-protected management contract, and source tests. Phase 13 must cover unauthorized
-changes, self-approval, stale/concurrent updates, preset drift, unsupported controls,
-setup interruption, disablement, rollback, restart, and secret-safe output.
-Phase 14 must prove setup and management lifecycle on each claimed platform,
-including non-root operation, explicit start, update, and uninstall behavior.
+Before Phase 13 RC freeze, implement and independently review the headless
+configuration contract and source tests. Phase 13 must cover unauthorized
+changes, self-approval, stale/concurrent updates, configuration drift,
+unsupported controls, interruption, disablement, rollback, restart, and
+secret-safe output. Every claimed target must also pass negative and race tests
+for symlink or reparse-point escape, mount substitution, target replacement
+between validation and use, and revocation concurrent with use. Rangoon's
+graphical lifecycle is downstream work.
 Source implementation needs a separately bounded packet; this documentation
 opens no route, OS permission, runtime, install, or execution authority.
 
@@ -121,9 +127,9 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 4. Phase 12 hardware/environment attestation, signed-evidence packets,
    enterprise persistence, fleet/HA, and unselected package rows do not block
    first local support.
-5. Phase 14 requires only explicitly selected target/package rows. Package
-   breadth may follow later, but every claimed row still needs complete
-   artifact, trust, and lifecycle proof.
+5. Phase 14 requires only explicitly selected LNSAT core-target rows. Rangoon
+   owns final installer/package breadth, but every claimed core target still
+   needs artifact identity, trust, runtime, and compatibility proof.
 6. Public core and private downstream products remain separate. Downstream
    management, connectors, models, and release composition cannot fork or
    weaken Gateway authority.
@@ -138,17 +144,17 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 | Phase | Current truth                                                       | Remaining release blocker                                                               |
 | ----- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | 1-3   | source and deterministic-contract foundations complete              | preserve public/source and TS/Rust conformance gates                                    |
-| 4     | source checkpoint complete                                          | packaged lifecycle proof belongs to Phase 14                                            |
+| 4     | source checkpoint complete                                          | selected core-target proof belongs to Phase 14                                          |
 | 5     | source-local exit complete                                          | preserve auth/session/approval security gates                                           |
 | 6     | source exit complete                                                | supported runtime claim remains closed                                                  |
 | 7     | P7-X1 source conformance complete                                   | preserve Phase 7 authority-chain and disposable-target invariants                       |
 | 8     | bounded loopback runtime composition merged                         | preserve exact routes, one-attempt evidence, and production-unsupported boundary        |
 | 9     | authenticated exact-ID Control Center readback exists               | preserve live/fixture separation and fail-closed ambiguity mapping                      |
-| 10    | P10-X1 source conformance complete                                  | standalone setup/access-management gate pending; preserve Phase 14 lifecycle ownership  |
+| 10    | P10-X1 source conformance complete                                  | headless configuration/control gate pending; preserve core authority ownership          |
 | 11    | served Git proof plus closed Docker profile/config/process protocol | complete separately gated adapter/runtime proof without production repository authority |
 | 12    | optional post-local-v1 lane                                         | none unless selected support profile requires it                                        |
 | 13    | planned                                                             | complete reliability, security, recovery, update/revocation, and RC-source freeze       |
-| 14    | blocked; no support row selected; no artifacts                      | build and prove only selected target/package rows after required product phases pass    |
+| 14    | blocked; no core-target row selected; no artifacts                  | build and prove only selected LNSAT core-target rows after required product phases pass |
 
 No current package, binary, container, installer, supported runtime, or
 published release artifact exists.
@@ -192,15 +198,15 @@ support profile makes it required.
    fuzzing, and known-limitation gates. Freeze one exact RC source identity,
    version, changelog, and build recipe.
 7. **Phase 14 candidate-build authorization.** Select one or two exact
-   OS/architecture/package rows. Build immutable canonical candidate components
-   once per selected target and wrap those exact digests. Candidate-build
+   OS/architecture core-target rows. Build immutable canonical candidate components
+   once per selected target. Candidate-build
    authority grants no artifact publication, production signing, install on user hosts,
    service start, deployment, or stable promotion.
 8. **Phase 14 candidate-artifact proof.** Verify reproducibility, component
    parity, SHA-256, non-production signature rehearsal/verification bundle,
-   SPDX JSON SBOM, SLSA v1 provenance, licenses/notices, clean install,
-   explicit start, upgrade, backup/restore, rollback, uninstall, non-root, and
-   no-auto-start behavior in disposable environments. Any changed artifact
+   SPDX JSON SBOM, SLSA v1 provenance, licenses/notices, backup/restore,
+   non-root behavior, headless configuration, and selected core-target
+   compatibility in disposable environments. Any changed artifact
    byte returns work to candidate build and repeats all affected proof.
 9. **Final artifact-publication authorization.** After Phase 14 passes, a separate
    go/no-go may permit production signing of unchanged proven digests, final

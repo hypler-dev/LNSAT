@@ -12,34 +12,54 @@
 
 Product split and extension boundary are accepted by
 [ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
+The LNSAT/Rangoon ownership boundary is defined by
+[ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
 
 ## Decision
 
 OS-level command-line interfaces are mandatory. Browser UI cannot be only
 management surface. Operators, CI, configuration management, recovery
 environments, headless servers, air-gapped systems, and wrappers need stable,
-scriptable commands with same Gateway authority and evidence as UI, MCP, and
-API.
+scriptable commands. Online commands use the same Gateway authority and evidence
+as UI, MCP, and API. The specifically enumerated offline recovery and bootstrap
+commands use the local safeguards defined below instead of a Gateway route.
 
 ## Product Binaries
 
 The pending
-[standalone setup and access-management gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-also requires headless/operator parity: CLI and wizard must expose the same
-effective resource/agent-authority boundaries, preset differences, unsupported
-OS controls, and protected change semantics. Neither client may widen authority
-through configuration precedence or bypass Gateway. This is planned product work,
-not an expansion of the implemented commands listed above.
+[headless configuration and control gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+requires `lnsatctl` to expose secure monitoring/control, machine-readable
+output, headless automation, and complex declarative configuration without a
+UI. Configuration layering/composition, validate/diff/effective/apply,
+watch/status/health/operations/approvals/audit/recovery, and emergency control
+are part of the LNSAT V1 CLI contract. The core computes effective authority;
+for online commands, the CLI is a client and never bypasses Gateway. The bounded
+offline exceptions do not create an agent, API, MCP, or UI authority path.
 
 | Binary     | Audience                           | Responsibility                                                                              |
 | ---------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 | `lnsat`    | users, agents, scripts, developers | primary workflow command and convenience dispatcher                                         |
 | `lnsatctl` | owners and operators               | administration, diagnostics, service, recovery, update, quarantine, and evidence operations |
-| `lnsatd`   | OS/service manager                 | local server daemon and bundled Control Center                                              |
+| `lnsatd`   | optional reference host/sidecar    | local API host for consumers that need a service boundary                                   |
 
-`lnsat` and `lnsatctl` are clients. They do not duplicate policy or bypass
-Gateway. `lnsatd` owns validation, local authentication, policy, approval,
-authorization, receipt, storage, and audit boundaries.
+`lnsat` and `lnsatctl` are clients for online flows. They do not duplicate policy
+or bypass Gateway. `lnsatctl` additionally implements only the bounded offline
+procedures defined below. The LNSAT core owns validation, authentication, policy,
+approval, authorization, receipt, storage, and audit boundaries; `lnsatd` hosts
+that core when a local service is desired.
+
+The complete declarative surface includes `config schema`, `config show`,
+`config validate`, `config diff`, `config effective`, `config apply`, and
+`config export`, with layering and composition resolved by the core. Monitoring
+includes `watch`, `status`, `health`, and `operations`; operational controls
+include approvals, audit, recovery, and emergency disablement. Machine-readable
+JSON/JSONL output is required for automation. `watch` consumes server-sourced,
+versioned events with cursor/resume, deterministic ordering, bounded retention,
+backpressure, and explicit disconnect behavior; it never infers an outcome from
+transport loss or a missing event. Secrets remain references and are redacted.
+Mutations are authenticated, atomically applied, and fail closed on unknown
+fields or unsupported OS capabilities. The current source truth remains limited
+to the documented experimental commands; this is the V1 target contract.
 
 ## Core Command Taxonomy
 
@@ -66,13 +86,15 @@ lnsat completion ...
 Planned `lnsatctl` groups:
 
 ```text
-lnsatctl status|health|doctor
+lnsatctl config schema|show|validate|diff|effective|apply|export
+lnsatctl watch|status|health|operations
+lnsatctl approvals list|show|approve|deny
+lnsatctl audit verify|export
+lnsatctl recovery inspect|backup|restore
+lnsatctl doctor
 lnsatctl identity|role|session|revoke
 lnsatctl policy|connector|module|model
-lnsatctl service install|status|start|stop|restart
-lnsatctl backup|restore|recovery
-lnsatctl update check|verify|apply|rollback
-lnsatctl audit verify|export
+lnsatctl service status|start|stop|restart
 lnsatctl emergency-disable
 ```
 
@@ -126,7 +148,7 @@ registers no recovery tool, and Control Center renders no recovery action.
 
 ## Command Safety Contract
 
-State-changing commands follow:
+Online state-changing commands follow:
 
 ```text
 parse -> resolve exact target -> validate -> show plan/diff
@@ -134,6 +156,12 @@ parse -> resolve exact target -> validate -> show plan/diff
       -> one-time authorization -> execute
       -> receipt -> audit reference
 ```
+
+Offline backup, inert restore, owner recovery, and initial bootstrap are local
+exceptions to that Gateway flow. They have no agent, API, MCP, or UI route and
+must retain their command-specific host-owner proof, non-root execution, exact
+targets, daemon-shared exclusive lease where applicable, one-time semantics,
+and durable evidence.
 
 Requirements:
 
