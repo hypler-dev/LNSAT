@@ -31,6 +31,81 @@ fn three_product_commands_expose_same_source_manifest() {
 }
 
 #[test]
+fn three_product_manifest_selectors_are_exact_and_legacy_compatible() {
+    let daemon_v1 = Command::new(env!("CARGO_BIN_EXE_lnsatd"))
+        .args([
+            "--manifest",
+            "--product-surface-contract",
+            "lnsat.product_surface.v1",
+        ])
+        .output()
+        .expect("selected lnsatd manifest must run");
+    let operator_v1 = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args([
+            "manifest",
+            "--product-surface-contract",
+            "lnsat.product_surface.v1",
+        ])
+        .output()
+        .expect("selected lnsatctl manifest must run");
+    assert!(daemon_v1.status.success());
+    assert!(operator_v1.status.success());
+    assert_eq!(daemon_v1.stdout, operator_v1.stdout);
+    assert_eq!(
+        daemon_v1.stdout,
+        include_bytes!("../../../fixtures/contracts/phase10-product-surface-v1.json")
+    );
+    let daemon_v2 = Command::new(env!("CARGO_BIN_EXE_lnsatd"))
+        .args([
+            "--manifest",
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+        ])
+        .output()
+        .expect("selected v2 lnsatd manifest must run");
+    let operator_v2 = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args([
+            "manifest",
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+        ])
+        .output()
+        .expect("selected v2 lnsatctl manifest must run");
+    assert!(daemon_v2.status.success());
+    assert!(operator_v2.status.success());
+    assert_eq!(daemon_v2.stdout, operator_v2.stdout);
+    assert_eq!(
+        daemon_v2.stdout,
+        include_bytes!("../../../fixtures/contracts/product-surface-v2.json")
+    );
+    for command in [
+        (
+            env!("CARGO_BIN_EXE_lnsatd"),
+            vec![
+                "--manifest",
+                "--product-surface-contract",
+                "lnsat.product_surface.v9",
+            ],
+        ),
+        (
+            env!("CARGO_BIN_EXE_lnsatctl"),
+            vec![
+                "manifest",
+                "--product-surface-contract",
+                "lnsat.product_surface.v9",
+            ],
+        ),
+    ] {
+        let output = Command::new(command.0)
+            .args(command.1)
+            .output()
+            .expect("invalid manifest must run");
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stdout.is_empty());
+    }
+}
+
+#[test]
 fn operator_doctor_is_machine_readable_and_side_effect_free() {
     let output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
         .arg("doctor")
@@ -342,13 +417,13 @@ fn zsh_completion_per_binary_exact_surfaces() {
             "#compdef lnsatctl lnsat lnsatd\n",
             "case \"$service\" in\n",
             "  lnsatctl)\n",
-            "    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+            "    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--product-surface-contract' '--output' '--help' '--version' '*::argument:->args'\n",
             "    ;;\n",
             "  lnsat)\n",
-            "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",
+            "    _arguments '1:command:(packet manifest completion man)' '--product-surface-contract' '--help' '--version' '*::argument:->args'\n",
             "    ;;\n",
             "  lnsatd)\n",
-            "    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n",
+            "    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--product-surface-contract' '--help' '--version'\n",
             "    ;;\n",
             "esac\n",
         )

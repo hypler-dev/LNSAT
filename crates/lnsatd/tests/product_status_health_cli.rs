@@ -306,6 +306,13 @@ fn unix_control_get_and_head_have_equal_auth_and_bodyless_head() {
             .split_once("\r\n\r\n")
             .expect("GET response must contain header boundary");
         serde_json::from_str::<Value>(get_body).expect("GET body must be JSON");
+        if path == "/v1/status" {
+            assert!(
+                get_head.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+            );
+        } else {
+            assert!(!get_head.contains("LNSAT-Product-Surface-Contract:"));
+        }
 
         let head = request_control_socket(&daemon, "HEAD", path);
         assert!(head.starts_with("HTTP/1.1 200 OK\r\n"));
@@ -314,8 +321,212 @@ fn unix_control_get_and_head_have_equal_auth_and_bodyless_head() {
             .expect("HEAD response must contain header boundary");
         assert!(head_body.is_empty());
         assert_eq!(content_length(get_head), content_length(head_head));
+        if path == "/v1/status" {
+            assert!(
+                head_head.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+            );
+        }
     }
     daemon.stop();
+}
+
+#[test]
+fn unix_status_selectors_echo_exact_typed_bodies() {
+    let daemon = TestDaemon::start();
+    let default = request_control_socket(&daemon, "GET", "/v1/status");
+    let explicit = request_control_socket_with_selector(
+        &daemon,
+        "GET",
+        "/v1/status",
+        "lnsat.product_surface.v1",
+    );
+    assert!(explicit.starts_with("HTTP/1.1 200 OK\r\n"));
+    assert!(explicit.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n"));
+    assert_eq!(
+        default.split_once("\r\n\r\n").unwrap().1,
+        explicit.split_once("\r\n\r\n").unwrap().1
+    );
+    let v2 = request_control_socket_with_selector(
+        &daemon,
+        "GET",
+        "/v1/status",
+        "lnsat.product_surface.v2",
+    );
+    assert!(v2.starts_with("HTTP/1.1 200 OK\r\n"));
+    assert!(v2.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v2\r\n"));
+    let v2_body: Value = serde_json::from_str(v2.split_once("\r\n\r\n").unwrap().1)
+        .expect("v2 status body must be JSON");
+    assert_eq!(v2_body["contract"], "lnsat.daemon.status.v2");
+    assert_eq!(
+        v2_body["product_surface"]["implemented"],
+        serde_json::json!([
+            "doctor",
+            "config.inspect",
+            "config.schema",
+            "config.validate",
+            "recovery.inspect",
+            "backup",
+            "restore",
+            "recovery.owner",
+            "health",
+            "status"
+        ])
+    );
+    assert_ne!(
+        default.split_once("\r\n\r\n").unwrap().1,
+        v2_body.to_string()
+    );
+    daemon.stop();
+}
+
+#[test]
+fn unix_selector_rejections_are_public_safe_before_session_authentication() {
+    let daemon = TestDaemon::start();
+    for (path, selector) in [
+        ("/v1/status", "lnsat.product_surface.v9"),
+        ("/v1/status", "lnsat.product_surface.v1 extra"),
+        (
+            "/v1/status",
+            "lnsat.product_surface.v1\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1",
+        ),
+        ("/v1/health", "lnsat.product_surface.v1"),
+    ] {
+        let response = request_control_socket_with_selector(&daemon, "GET", path, selector);
+        assert!(response.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+        let (_, body) = response
+            .split_once("\r\n\r\n")
+            .expect("error body must exist");
+        let body: Value = serde_json::from_str(body).expect("rejection must be JSON");
+        assert_eq!(body["contract"], "lnsat.product_surface.negotiation.v1");
+        assert_eq!(body["contract_version"], CONTRACT_VERSION_V1_0);
+        assert_eq!(body["ok"], false);
+        assert_eq!(
+            body["error"]["code"],
+            "lnsatd.product_surface_contract.rejected"
+        );
+        assert_eq!(body["side_effects"], serde_json::json!([]));
+        assert_eq!(body["mutation_authority"], false);
+        assert!(!response.contains("session_activity_evidence_may_append"));
+    }
+    let valid = request_control_socket(&daemon, "GET", "/v1/status");
+    assert!(valid.starts_with("HTTP/1.1 200 OK\r\n"));
+    daemon.stop();
+}
+
+#[test]
+fn unix_duplicate_selector_defers_to_gateway_contract_validation() {
+    let daemon = TestDaemon::start();
+    for (version_header, expected_code) in [
+        ("", "contract.version.required"),
+        (
+            "LNSAT-Contract-Version: lnsat.contracts.v9_0\r\n",
+            "contract.version.unsupported",
+        ),
+    ] {
+        let request = format!(
+            "GET /v1/status HTTP/1.1\r\nHost: lnsatd\r\n{version_header}LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nSec-Fetch-Site: same-origin\r\nCookie: {LOCAL_SESSION_COOKIE_NAME_V1}={}\r\nConnection: close\r\n\r\n",
+            daemon.session_token
+        );
+        let response = request_control_socket_raw(&daemon, &request);
+        assert!(response.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+        assert!(response.contains(expected_code));
+        assert!(!response.contains("lnsatd.product_surface_contract.rejected"));
+    }
+    daemon.stop();
+}
+
+#[test]
+fn unix_bad_host_rejects_before_product_surface_selection() {
+    let daemon = TestDaemon::start();
+    for selector in [
+        "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n",
+        "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n",
+    ] {
+        let request = format!(
+            "GET /v1/status HTTP/1.1\r\nHost: localhost\r\n{GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1}: {CONTRACT_VERSION_V1_0}\r\n{selector}Sec-Fetch-Site: same-origin\r\nCookie: {LOCAL_SESSION_COOKIE_NAME_V1}={}\r\nConnection: close\r\n\r\n",
+            daemon.session_token
+        );
+        let response = request_control_socket_raw(&daemon, &request);
+        assert!(response.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+        assert!(response.contains("lnsatd.request.invalid"));
+        assert!(!response.contains("lnsatd.product_surface_contract.rejected"));
+        assert!(!response.contains("lnsat.product_surface.negotiation.v1"));
+        assert!(!response.contains("LNSAT-Product-Surface-Contract:"));
+        assert!(!response.contains("LNSAT-Contract-Version:"));
+    }
+    daemon.stop();
+}
+
+#[test]
+fn unix_status_method_denial_echoes_default_and_explicit_contracts() {
+    let daemon = TestDaemon::start();
+    let default_request = format!(
+        "POST /v1/status HTTP/1.1\r\nHost: lnsatd\r\n{GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1}: {CONTRACT_VERSION_V1_0}\r\nContent-Length: 0\r\nSec-Fetch-Site: same-origin\r\nCookie: {LOCAL_SESSION_COOKIE_NAME_V1}={}\r\nConnection: close\r\n\r\n",
+        daemon.session_token
+    );
+    let default_response = request_control_socket_raw(&daemon, &default_request);
+    assert!(default_response.starts_with("HTTP/1.1 405 Method Not Allowed\r\n"));
+    assert!(default_response.contains("Allow: GET, HEAD\r\n"));
+    assert!(default_response.contains("LNSAT-Contract-Version: lnsat.contracts.v1_0\r\n"));
+    assert!(
+        default_response.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+    );
+    assert!(default_response.contains("lnsatd.method.not_allowed"));
+
+    let explicit_response = request_control_socket_raw(
+        &daemon,
+        &default_request.replace(
+            "Content-Length: 0\r\n",
+            "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nContent-Length: 0\r\n",
+        ),
+    );
+    assert!(explicit_response.starts_with("HTTP/1.1 405 Method Not Allowed\r\n"));
+    assert!(explicit_response.contains("lnsatd.method.not_allowed"));
+    assert!(
+        explicit_response.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+    );
+    daemon.stop();
+}
+
+#[test]
+fn explicit_status_selector_rejects_old_daemon_missing_echo_without_stdout() {
+    let directory = TestDirectory::new("old-daemon-selector");
+    let socket_path = directory.path.join("old-daemon.sock");
+    let listener = UnixListener::bind(&socket_path).expect("old daemon socket must bind");
+    fs::set_permissions(&socket_path, fs::Permissions::from_mode(0o600))
+        .expect("old daemon socket chmod must succeed");
+    let server = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("client must connect");
+        let mut request = String::new();
+        stream
+            .read_to_string(&mut request)
+            .expect("request must read");
+        assert!(request.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n"));
+        let body = include_str!("../../../fixtures/contracts/phase10-status-v1.json");
+        let response = format!(
+            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nLNSAT-Contract-Version: lnsat.contracts.v1_0\r\nConnection: close\r\n\r\n{body}",
+            body.len()
+        );
+        stream
+            .write_all(response.as_bytes())
+            .expect("response must write");
+    });
+    let output = run_cli_with_args(
+        &[
+            "status",
+            "--socket",
+            socket_path.to_str().unwrap(),
+            "--session-token-stdin",
+            "--product-surface-contract",
+            "lnsat.product_surface.v1",
+        ],
+        b"opaque-token",
+    );
+    assert_eq!(output.status.code(), Some(5));
+    assert!(output.stdout.is_empty());
+    let stderr = String::from_utf8(output.stderr).expect("stderr must be UTF-8");
+    assert!(stderr.contains("lnsatctl.product_surface_contract.incompatible"));
+    server.join().expect("old daemon thread must join");
 }
 
 #[test]
@@ -563,6 +774,35 @@ fn assert_identity_denied_without_connection(listener: &UnixListener, socket_pat
 }
 
 fn request_control_socket(daemon: &TestDaemon, method: &str, path: &str) -> String {
+    request_control_socket_with_optional_selector(daemon, method, path, None)
+}
+
+fn request_control_socket_with_selector(
+    daemon: &TestDaemon,
+    method: &str,
+    path: &str,
+    selector: &str,
+) -> String {
+    request_control_socket_with_optional_selector(daemon, method, path, Some(selector))
+}
+
+fn request_control_socket_with_optional_selector(
+    daemon: &TestDaemon,
+    method: &str,
+    path: &str,
+    selector: Option<&str>,
+) -> String {
+    let selector = selector.map_or_else(String::new, |value| {
+        format!("LNSAT-Product-Surface-Contract: {value}\r\n")
+    });
+    let request = format!(
+        "{method} {path} HTTP/1.1\r\nHost: lnsatd\r\n{GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1}: {CONTRACT_VERSION_V1_0}\r\n{selector}Sec-Fetch-Site: same-origin\r\nCookie: {LOCAL_SESSION_COOKIE_NAME_V1}={}\r\nConnection: close\r\n\r\n",
+        daemon.session_token
+    );
+    request_control_socket_raw(daemon, &request)
+}
+
+fn request_control_socket_raw(daemon: &TestDaemon, request: &str) -> String {
     let mut stream = UnixStream::connect(&daemon.socket_path).expect("control socket must connect");
     stream
         .set_read_timeout(Some(Duration::from_secs(2)))
@@ -570,16 +810,14 @@ fn request_control_socket(daemon: &TestDaemon, method: &str, path: &str) -> Stri
     stream
         .set_write_timeout(Some(Duration::from_secs(2)))
         .expect("write timeout must configure");
-    let request = format!(
-        "{method} {path} HTTP/1.1\r\nHost: lnsatd\r\n{GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1}: {CONTRACT_VERSION_V1_0}\r\nSec-Fetch-Site: same-origin\r\nCookie: {LOCAL_SESSION_COOKIE_NAME_V1}={}\r\nConnection: close\r\n\r\n",
-        daemon.session_token
-    );
-    stream
-        .write_all(request.as_bytes())
-        .expect("control request must write");
-    stream
-        .shutdown(Shutdown::Write)
-        .expect("control request write side must close");
+    if let Err(error) = stream.write_all(request.as_bytes()) {
+        assert_eq!(
+            error.kind(),
+            io::ErrorKind::BrokenPipe,
+            "control request write must succeed or observe an expected early denial"
+        );
+    }
+    let _ = stream.shutdown(Shutdown::Write);
     let mut response = String::new();
     stream
         .read_to_string(&mut response)

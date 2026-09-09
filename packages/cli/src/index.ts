@@ -19,10 +19,12 @@ export {
   CLI_OUTPUT_SCHEMA,
   PRODUCT_SOURCE_VERSION,
   PRODUCT_SURFACE_CONTRACT_ID,
+  PRODUCT_SURFACE_CONTRACT_ID_V2,
   completionSource,
   lnsatManPage,
   lnsatUsage,
   loadProductSurfaceManifest,
+  loadProductSurfaceManifestRaw,
 } from "./product-surface.js";
 
 export const CLI_STATUS = "source_only";

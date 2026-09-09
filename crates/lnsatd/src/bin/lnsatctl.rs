@@ -11,13 +11,16 @@ use lnsatd::product_recovery::{
 };
 use lnsatd::product_surface::{
     PRODUCT_SOURCE_VERSION_V1, ProductExitCodeV1, completion_source_v1,
-    config_inspection_output_json_v1, doctor_output_json_v1, failure_output_json_v1,
-    lnsatctl_usage_v1, man_page_source_v1, product_surface_manifest_json_v1,
+    config_inspection_output_json_v1, config_schema_output_json_v2,
+    config_validation_output_json_v2, doctor_output_json_v1, failure_output_json_v1,
+    is_supported_product_surface_contract_v1, lnsatctl_usage_v1, man_page_source_v1,
+    product_surface_manifest_json_v1, product_surface_manifest_json_v2,
     recovery_inspection_output_json_v1,
 };
 use lnsatd::product_transport::{
     ProductClientErrorV1, ProductReadCommandV1, UnixSocketEndpointV1, read_session_token_stdin_v1,
     request_authenticated_product_read_v1,
+    request_authenticated_product_read_with_product_surface_contract_v1,
 };
 use std::ffi::{OsStr, OsString};
 use std::io;
@@ -50,6 +53,53 @@ fn main() -> ExitCode {
         [command] if !selection.output_selected && command == OsStr::new("manifest") => {
             print!("{}", product_surface_manifest_json_v1());
             ExitCode::SUCCESS
+        }
+        [command, selector, value]
+            if !selection.output_selected
+                && command == OsStr::new("manifest")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new("lnsat.product_surface.v2") =>
+        {
+            print!("{}", product_surface_manifest_json_v2());
+            ExitCode::SUCCESS
+        }
+        [command, selector, value]
+            if !selection.output_selected
+                && command == OsStr::new("manifest")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new("lnsat.product_surface.v1") =>
+        {
+            print!("{}", product_surface_manifest_json_v1());
+            ExitCode::SUCCESS
+        }
+        [config, schema, selector, value]
+            if config == OsStr::new("config")
+                && schema == OsStr::new("schema")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new("lnsat.product_surface.v2") =>
+        {
+            emit_json_success(&config_schema_output_json_v2(), "config.schema", format)
+        }
+        [config, validate, option, path, selector, value]
+            if config == OsStr::new("config")
+                && validate == OsStr::new("validate")
+                && option == OsStr::new("--config")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new("lnsat.product_surface.v2") =>
+        {
+            match load_daemon_config_v1(PathBuf::from(path)) {
+                Ok(loaded) => emit_json_success(
+                    &config_validation_output_json_v2(&loaded),
+                    "config.validate",
+                    format,
+                ),
+                Err(error) => emit_failure(
+                    "config.validate",
+                    error.code(),
+                    ProductExitCodeV1::UsageOrConfiguration,
+                    format,
+                ),
+            }
         }
         [command] if command == OsStr::new("doctor") => {
             emit_json_success(&doctor_output_json_v1(), "doctor", format)
@@ -190,6 +240,39 @@ fn main() -> ExitCode {
             match request_authenticated_product_read_v1(read_command, &endpoint, &token) {
                 Ok(result) => emit_semantic_success(&result, format),
                 Err(error) => emit_client_failure(read_command.name(), error, format),
+            }
+        }
+        [
+            command,
+            socket_option,
+            socket_path,
+            stdin_option,
+            selector,
+            value,
+        ] if command == OsStr::new("status")
+            && socket_option == OsStr::new("--socket")
+            && stdin_option == OsStr::new("--session-token-stdin")
+            && selector == OsStr::new("--product-surface-contract")
+            && value
+                .to_str()
+                .is_some_and(is_supported_product_surface_contract_v1) =>
+        {
+            let endpoint = match UnixSocketEndpointV1::parse(PathBuf::from(socket_path)) {
+                Ok(endpoint) => endpoint,
+                Err(error) => return emit_client_failure("status", error, format),
+            };
+            let token = match read_session_token_stdin_v1(&mut io::stdin().lock()) {
+                Ok(token) => token,
+                Err(error) => return emit_client_failure("status", error, format),
+            };
+            match request_authenticated_product_read_with_product_surface_contract_v1(
+                ProductReadCommandV1::Status,
+                &endpoint,
+                &token,
+                value.to_str(),
+            ) {
+                Ok(result) => emit_semantic_success(&result, format),
+                Err(error) => emit_client_failure("status", error, format),
             }
         }
         _ => invalid_arguments("usage", format),

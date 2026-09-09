@@ -2,7 +2,7 @@
 
 use lnsatd::product_config::{
     DAEMON_CONFIG_CONTRACT_ID_V1, DAEMON_CONFIG_VERSION_V1, MAX_DAEMON_CONFIG_BYTES_V1,
-    load_daemon_config_v1,
+    daemon_config_schema_json_v1, load_daemon_config_v1,
 };
 use lnsatd::runtime_profile::{
     DOCKER_LOCAL_PROFILE_CONTRACT_ID_V1, DOCKER_LOCAL_PROFILE_FAMILY_V1, DOCKER_LOCAL_PROFILE_ID_V1,
@@ -206,6 +206,15 @@ fn explicit_config_and_legacy_direct_arguments_are_distinct_compatible_modes() {
     assert!(matches!(
         parse_daemon_args_v1(["lnsatd", "--manifest"]),
         Ok(DaemonCliActionV1::Manifest)
+    ));
+    assert!(matches!(
+        parse_daemon_args_v1([
+            "lnsatd",
+            "--manifest",
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+        ]),
+        Ok(DaemonCliActionV1::ManifestV2)
     ));
 }
 
@@ -549,6 +558,184 @@ fn config_inspection_reports_digest_layers_without_paths_or_runtime_effects() {
         json!(["compiled_safe_defaults"])
     );
     assert!(doctor["configuration"]["explicit_config_digest"].is_null());
+}
+
+#[test]
+#[allow(clippy::too_many_lines)] // Selector, parity, and renderer checks form one contract matrix.
+fn v2_headless_configuration_diagnostics_are_loader_parity_and_selector_gated() {
+    let directory = TestDirectory::new("v2-headless-diagnostics");
+    let database = directory.path.join("private-v2-database.sqlite3");
+    let config_path = directory.write_json("private-v2-config.json", &minimal_config(&database));
+
+    let schema = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args([
+            "config",
+            "schema",
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+        ])
+        .output()
+        .expect("v2 schema command must run");
+    assert!(schema.status.success());
+    assert!(schema.stderr.is_empty());
+    let schema_value: Value = serde_json::from_slice(&schema.stdout).expect("schema output JSON");
+    assert_eq!(schema_value["ok"], true);
+    assert_eq!(schema_value["schema"], "lnsat.cli.output.v1");
+    assert_eq!(schema_value["command"], "config.schema");
+    assert_eq!(
+        schema_value["configuration_contract"],
+        DAEMON_CONFIG_CONTRACT_ID_V1
+    );
+    assert_eq!(
+        schema_value["validation_scope"],
+        "explicit_daemon_configuration"
+    );
+    assert_eq!(schema_value["activation_authority"], false);
+    assert_eq!(schema_value["side_effects"], json!([]));
+    assert_eq!(
+        schema_value["configuration_schema"],
+        serde_json::from_str::<Value>(daemon_config_schema_json_v1())
+            .expect("embedded schema must parse")
+    );
+    assert!(schema_value["configuration_schema"].get("$ref").is_none());
+
+    for arguments in [
+        vec!["config", "schema"],
+        vec![
+            "config",
+            "schema",
+            "--product-surface-contract",
+            "lnsat.product_surface.v1",
+        ],
+        vec![
+            "config",
+            "schema",
+            "--product-surface-contract",
+            "lnsat.product_surface.v1,v2",
+        ],
+        vec![
+            "config",
+            "schema",
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+        ],
+    ] {
+        let rejected = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("rejected schema selector command must run");
+        assert_eq!(rejected.status.code(), Some(2));
+        assert!(rejected.stdout.is_empty());
+        let error: Value =
+            serde_json::from_slice(&rejected.stderr).expect("schema rejection must be JSON");
+        assert_eq!(error["error"]["code"], "lnsatctl.arguments.invalid");
+    }
+
+    for format in ["text", "json", "jsonl", "yaml"] {
+        let arguments = [
+            "config",
+            "schema",
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+            "--output",
+            format,
+        ];
+        let first = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("formatted schema must run");
+        let second = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("repeated formatted schema must run");
+        assert!(first.status.success(), "{format}");
+        assert!(first.stderr.is_empty(), "{format}");
+        assert_eq!(first.stdout, second.stdout, "{format} must be byte-stable");
+        assert!(first.stdout.ends_with(b"\n"), "{format}");
+        assert!(!first.stdout.ends_with(b"\n\n"), "{format}");
+    }
+
+    let validation = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "validate", "--config"])
+        .arg(&config_path)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("v2 validation command must run");
+    assert!(validation.status.success());
+    assert!(validation.stderr.is_empty());
+    let validation_value: Value =
+        serde_json::from_slice(&validation.stdout).expect("validation output JSON");
+    assert_eq!(validation_value["command"], "config.validate");
+    assert_eq!(
+        validation_value["configuration_contract"],
+        DAEMON_CONFIG_CONTRACT_ID_V1
+    );
+    assert_eq!(
+        validation_value["validation_scope"],
+        "explicit_daemon_configuration"
+    );
+    assert_eq!(validation_value["activation_authority"], false);
+    assert_eq!(validation_value["side_effects"], json!([]));
+    assert_eq!(
+        validation_value["config_digest"],
+        load_daemon_config_v1(&config_path).unwrap().config_digest()
+    );
+    let text = String::from_utf8(validation.stdout).expect("validation output UTF-8");
+    assert!(!text.contains("private-v2-config"));
+    assert!(!text.contains("private-v2-database"));
+
+    for selector in [
+        None,
+        Some("lnsat.product_surface.v1"),
+        Some("lnsat.product_surface.v9"),
+    ] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_lnsatctl"));
+        command.args(["config", "validate", "--config"]);
+        command.arg(&config_path);
+        if let Some(selector) = selector {
+            command.args(["--product-surface-contract", selector]);
+        }
+        let output = command
+            .output()
+            .expect("rejected selector command must run");
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stdout.is_empty());
+        let stderr = String::from_utf8(output.stderr).expect("public-safe stderr");
+        assert_eq!(
+            serde_json::from_str::<Value>(&stderr)
+                .expect("rejected selector must use public-safe JSON")["error"]["code"],
+            "lnsatctl.arguments.invalid"
+        );
+        assert!(!stderr.contains("private-v2-config"));
+        assert!(!stderr.contains("private-v2-database"));
+    }
+
+    for format in ["text", "json", "jsonl", "yaml"] {
+        let arguments = [
+            "config",
+            "validate",
+            "--config",
+            config_path.to_str().expect("test path UTF-8"),
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+            "--output",
+            format,
+        ];
+        let first = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("formatted validation must run");
+        let second = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("repeated formatted validation must run");
+        assert!(first.status.success(), "{format}");
+        assert_eq!(first.stdout, second.stdout, "{format} must be byte-stable");
+        assert!(first.stdout.ends_with(b"\n"), "{format}");
+        assert!(!first.stdout.ends_with(b"\n\n"), "{format}");
+    }
 }
 
 #[test]

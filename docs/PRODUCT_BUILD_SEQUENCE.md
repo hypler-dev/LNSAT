@@ -32,6 +32,13 @@ kernel/library:
 Accepted V1 product requirement; implementation and platform proof remain pending.
 Gate: headless configuration and control. State: pending; blocks Phase 13
 RC freeze regardless of the completed historical P10-X1 source checkpoint.
+HCFG-0 and HCFG-1 implement source-only diagnostics: exact product-surface
+negotiation keeps legacy v1 status and manifest bytes frozen, while explicitly
+selected `lnsat.product_surface.v2` exposes the v2 manifest/status diagnostic
+shapes and `lnsatctl config schema|validate`. There is no range or fallback.
+`config validate` reads the selected config and any referenced runtime profile,
+but opens no database, listener, process, or action authority. This does not
+satisfy this gate or the separate Phase 11 disposable Docker proof.
 LNSAT must provide complete headless setup and ongoing management through its
 versioned API and `lnsatctl`. Graphical setup, presets, management UI, and final
 distro packaging belong to Rangoon. Rangoon may install a pinned, verified

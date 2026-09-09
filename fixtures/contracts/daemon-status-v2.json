@@ -1,0 +1,42 @@
+{
+  "authenticated_read_scope": {
+    "permission": "read_evidence",
+    "roles": ["owner", "operator", "auditor"]
+  },
+  "contract": "lnsat.daemon.status.v2",
+  "contract_version": "lnsat.contracts.v1_0",
+  "explicit_target": {
+    "ambient_target_used": false,
+    "endpoint_required": true,
+    "remote_transport": false
+  },
+  "mutation_authority": false,
+  "phase10": {
+    "implemented_packets": ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"],
+    "next_packet": "none_authorized",
+    "phase11_open": false,
+    "status": "complete"
+  },
+  "product_surface": {
+    "implemented": [
+      "doctor",
+      "config.inspect",
+      "config.schema",
+      "config.validate",
+      "recovery.inspect",
+      "backup",
+      "restore",
+      "recovery.owner",
+      "health",
+      "status"
+    ],
+    "reserved": ["recovery.activate", "service", "update"]
+  },
+  "readiness": {
+    "daemon_reachable": true,
+    "schema_current": true,
+    "storage_ready": true
+  },
+  "side_effects": ["session_activity_evidence_may_append"],
+  "source_version": "0.1.0"
+}

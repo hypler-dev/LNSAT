@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-use lnsatd::product_surface::product_surface_manifest_json_v1;
+use lnsatd::product_surface::{product_surface_manifest_json_v1, product_surface_manifest_json_v2};
 use lnsatd::{
     DaemonCliActionV1, DaemonServerV1, daemon_source_version_v1, daemon_usage_v1,
     install_os_shutdown_handler_v1, parse_daemon_args_v1,
@@ -27,6 +27,10 @@ fn main() -> ExitCode {
         }
         DaemonCliActionV1::Manifest => {
             print!("{}", product_surface_manifest_json_v1());
+            ExitCode::SUCCESS
+        }
+        DaemonCliActionV1::ManifestV2 => {
+            print!("{}", product_surface_manifest_json_v2());
             ExitCode::SUCCESS
         }
         DaemonCliActionV1::Run(config) => match DaemonServerV1::bind(&config) {

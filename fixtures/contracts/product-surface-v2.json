@@ -1,0 +1,244 @@
+{
+  "contract_id": "lnsat.product_surface.v2",
+  "contract_version": "lnsat.contracts.v1_0",
+  "schema_version": 2,
+  "product_version": "0.1.0",
+  "source_status": "experimental_source",
+  "supported_release": false,
+  "package_or_binary_claim": false,
+  "required_sequence": [10, 11, 13, 14],
+  "optional_phase": 12,
+  "binaries": {
+    "lnsatd": {
+      "audience": "service_manager",
+      "implemented_commands": ["run", "run --config", "help", "version", "manifest"],
+      "authority_boundary": "gateway_only"
+    },
+    "lnsatctl": {
+      "audience": "owner_operator",
+      "implemented_commands": [
+        "doctor",
+        "health",
+        "status",
+        "config inspect",
+        "config schema",
+        "config validate",
+        "recovery inspect",
+        "backup",
+        "restore",
+        "recovery owner",
+        "manifest",
+        "completion",
+        "man",
+        "help",
+        "version"
+      ],
+      "authority_boundary": "read_only_and_offline_recovery_source_commands"
+    },
+    "lnsat": {
+      "audience": "user_agent_script_developer",
+      "implemented_commands": [
+        "packet validate",
+        "packet hash",
+        "packet inspect",
+        "manifest",
+        "completion",
+        "man",
+        "help",
+        "version"
+      ],
+      "authority_boundary": "gateway_client_or_pure_local_read"
+    }
+  },
+  "reserved_command_groups": {
+    "lnsat": [
+      "context",
+      "request",
+      "policy",
+      "approval",
+      "execute",
+      "receipt",
+      "audit",
+      "agent",
+      "profile",
+      "instruction",
+      "skill",
+      "connector",
+      "graph"
+    ],
+    "lnsatctl": [
+      "identity",
+      "role",
+      "session",
+      "revoke",
+      "policy",
+      "connector",
+      "module",
+      "model",
+      "service",
+      "recovery activate",
+      "update",
+      "audit",
+      "emergency-disable"
+    ]
+  },
+  "configuration": {
+    "explicit_config_contract": "lnsat.daemon.config.v1",
+    "precedence": [
+      "compiled_safe_defaults",
+      "system_config",
+      "user_config",
+      "explicit_config_file"
+    ],
+    "current_path_profile": "explicit_only_source",
+    "direct_arguments_compatible": true,
+    "mixed_direct_and_config_input": "rejected",
+    "system_paths_selected": false,
+    "user_paths_selected": false,
+    "target_path_selection_owner": "phase14",
+    "explicit_config_file": {
+      "path": "absolute_only",
+      "format": "closed_json",
+      "encoding": "utf-8",
+      "file_type": "regular_non_symlink",
+      "maximum_bytes": 65536,
+      "duplicate_keys": "rejected",
+      "unknown_fields": "rejected",
+      "digest": "sha256_exact_bytes"
+    },
+    "implemented_fields": [
+      "database_path",
+      "listen_address",
+      "control_socket_path",
+      "phase8_runtime.disposable_git_root",
+      "phase8_runtime.git_executable",
+      "runtime_profile.profile_family",
+      "runtime_profile.profile_path",
+      "console.root",
+      "console.asset_manifest"
+    ],
+    "headless_diagnostics": {
+      "schema": "config.schema",
+      "validate": "config.validate",
+      "product_surface_contract": "lnsat.product_surface.v2",
+      "selector_required": true,
+      "validation_scope": "explicit_daemon_configuration",
+      "activation_authority": false,
+      "side_effects": []
+    },
+    "environment_discovery_used": false,
+    "environment_authority_allowed": false,
+    "environment_secrets_allowed": false,
+    "process_argument_secrets_allowed": false,
+    "config_secret_fields_allowed": false,
+    "secret_inputs": [
+      "protected_stdin",
+      "inherited_file_descriptor",
+      "os_credential_broker",
+      "secret_store_reference"
+    ]
+  },
+  "diagnostics": {
+    "machine_schema": "lnsat.cli.output.v1",
+    "implemented_output_formats": ["text", "json", "jsonl", "yaml"],
+    "reserved_output_formats": [],
+    "stdout": "requested_result",
+    "stderr": "public_safe_diagnostics",
+    "exit_code_families": {
+      "success": 0,
+      "refused": 1,
+      "usage_or_configuration": 2,
+      "authentication": 3,
+      "unavailable": 4,
+      "conflict": 5,
+      "temporary_failure": 6,
+      "outcome_unknown": 7,
+      "internal_failure": 70
+    }
+  },
+  "authenticated_read_transport": {
+    "routes": ["/v1/health", "/v1/status"],
+    "methods": ["GET", "HEAD"],
+    "roles": ["owner", "operator", "auditor"],
+    "permission": "read_evidence",
+    "session_transport": "existing_host_only_cookie_over_authenticated_unix_socket",
+    "csrf_required": false,
+    "supported_targets": ["linux", "macos"],
+    "socket_path_required": true,
+    "socket_path_profile": "absolute_bounded_utf8_no_dot_components",
+    "socket_parent_mode": "0700",
+    "socket_mode": "0600",
+    "path_identity": "non_symlink_socket_stable_device_inode_owner_mode",
+    "peer_identity": "effective_uid_equal",
+    "http_framing_host": "lnsatd",
+    "tcp_bearer_transport": false,
+    "proxy_environment_used": false,
+    "redirects": false,
+    "retries": false,
+    "remote_transport": false,
+    "mutation_authority": false,
+    "side_effects": ["session_activity_evidence_may_append"]
+  },
+  "recovery": {
+    "inspect": "implemented_read_only",
+    "contract": "lnsat.operator_recovery.v1",
+    "backup": "implemented_offline",
+    "restore": "implemented_inert",
+    "owner_recovery": "implemented_offline_protected_stdin",
+    "daemon_quiescence": "exclusive_database_lease",
+    "existing_file_replacement": false,
+    "path_reflection": false,
+    "api": "unavailable",
+    "mcp": "unavailable",
+    "ui_action": "unavailable",
+    "served_mutation": false,
+    "automatic_activation": false
+  },
+  "service_manager": {
+    "metadata_contract_only": true,
+    "install_implemented": false,
+    "start_implemented": false,
+    "automatic_start": false,
+    "sudo_invocation": false,
+    "privileged_helper": false
+  },
+  "operator_assets": {
+    "completion_shells": ["bash", "zsh", "fish"],
+    "man_pages": ["lnsat", "lnsatctl", "lnsatd"],
+    "generated_to_stdout": true,
+    "filesystem_install": false
+  },
+  "build_manifest": {
+    "source_revision_bound": false,
+    "target_selected": false,
+    "artifact_digests_present": false,
+    "phase14_candidate": false
+  },
+  "non_root": {
+    "runtime_required": true,
+    "runtime_enforced": true,
+    "offline_recovery_enforced": true,
+    "effective_uid_zero": "refused",
+    "implemented_targets": ["linux", "macos"],
+    "automatic_privilege_escalation": false,
+    "target_lifecycle_proof_owner": "phase14"
+  },
+  "parity": {
+    "contract": "lnsat.gateway.packet_inspection.v0_1",
+    "cli": true,
+    "api": true,
+    "mcp": true,
+    "ui_projection": true,
+    "side_effects": []
+  },
+  "hard_stops": {
+    "served_recovery_mutation": false,
+    "production_or_user_repository_consequence": false,
+    "migration_0018": false,
+    "key_or_provider_work": false,
+    "install_or_service_start": false,
+    "tag_release_publication_deploy": false,
+    "phase11_or_later_implementation": false,
+    "automatic_promotion": false
+  }
+}

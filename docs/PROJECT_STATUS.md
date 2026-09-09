@@ -44,6 +44,16 @@ presets, and rich management UI. Existing P10-X1 source conformance does not
 satisfy it; current Control Center readback remains read-only. No new
 management mutation, runtime, installer, or supported-platform claim is opened.
 
+HCFG-0/HCFG-1 source diagnostics are implemented: status defaults to and echoes
+exact `lnsat.product_surface.v1`; explicit v1/v2 selection is exact-match only
+and fails before session work when duplicate, malformed, unsupported, or
+wrong-route. Frozen v1 command/status bytes remain unchanged. Explicit
+`lnsat.product_surface.v2` adds source-only v2 manifest/status diagnostics plus
+`lnsatctl config schema|validate`; validation reads a selected config and a
+referenced runtime profile but opens no database, listener, process, or action
+authority. No range or fallback exists. Headless configuration/control and
+Phase 11 real Docker proof remain pending.
+
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
 exact-ID Control Center readback and manifest-only source-local console hosting
 are implemented as experimental source. Phase 10 P10-A1 product-surface spine,

@@ -128,6 +128,9 @@ const GATEWAY_ROOT_PATH_V1: &str = "/v1";
 const GATEWAY_NEGOTIATION_CONTRACT_V1: &str = "lnsat.gateway.negotiation.v1_0";
 /// Exact request and response header carrying stable Gateway wire-contract identity.
 pub const GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1: &str = "LNSAT-Contract-Version";
+const PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1: &str =
+    product_surface::PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1;
+const PRODUCT_SURFACE_CONTRACT_REJECTION_CODE_V1: &str = "lnsatd.product_surface_contract.rejected";
 const LOCAL_SESSION_GATEWAY_PATH_V1: &str = "/v1/session";
 const GATEWAY_SESSION_ISSUE_CONTRACT_V1: &str = "lnsat.gateway.session_issue.v1_0";
 const GATEWAY_SESSION_ISSUE_ERROR_CODE_V1: &str = "gateway.session_issue.denied";
@@ -1580,6 +1583,9 @@ pub enum DaemonCliActionV1 {
     Version,
     /// Print target-neutral Phase 10 source manifest without opening storage or a listener.
     Manifest,
+    /// Print the explicitly selected HCFG-1 v2 source manifest without opening
+    /// storage or a listener.
+    ManifestV2,
     /// Open the validated local daemon configuration.
     Run(DaemonConfigV1),
 }
@@ -1714,6 +1720,11 @@ where
 {
     let mut arguments = arguments.into_iter().map(Into::into);
     let _program = arguments.next();
+    let arguments: Vec<OsString> = arguments.collect();
+    if let Some(action) = parse_daemon_manifest_action_v1(&arguments) {
+        return action;
+    }
+    let mut arguments = arguments.into_iter();
     let mut config_path = None;
     let mut database_path = None;
     let mut listen_address = None;
@@ -1778,15 +1789,7 @@ where
             if listen_address.is_some() {
                 return Err(DaemonErrorV1::InvalidArguments);
             }
-            let value = arguments
-                .next()
-                .ok_or(DaemonErrorV1::ArgumentValueRequired)?;
-            let value = value.to_str().ok_or(DaemonErrorV1::InvalidListenAddress)?;
-            listen_address = Some(
-                value
-                    .parse()
-                    .map_err(|_| DaemonErrorV1::InvalidListenAddress)?,
-            );
+            listen_address = Some(parse_daemon_listen_argument_v1(&mut arguments)?);
             continue;
         }
         if argument == OsStr::new("--disposable-git-root") {
@@ -1815,10 +1818,45 @@ where
     )
 }
 
+fn parse_daemon_manifest_action_v1(
+    arguments: &[OsString],
+) -> Option<Result<DaemonCliActionV1, DaemonErrorV1>> {
+    match arguments {
+        [manifest] if manifest == OsStr::new("--manifest") => Some(Ok(DaemonCliActionV1::Manifest)),
+        [manifest, selector, value]
+            if manifest == OsStr::new("--manifest")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new(product_surface::PRODUCT_SURFACE_CONTRACT_ID_V1) =>
+        {
+            Some(Ok(DaemonCliActionV1::Manifest))
+        }
+        [manifest, selector, value]
+            if manifest == OsStr::new("--manifest")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new(product_surface::PRODUCT_SURFACE_CONTRACT_ID_V2) =>
+        {
+            Some(Ok(DaemonCliActionV1::ManifestV2))
+        }
+        _ => None,
+    }
+}
+
 fn next_daemon_argument_value_v1(
     arguments: &mut impl Iterator<Item = OsString>,
 ) -> Result<OsString, DaemonErrorV1> {
     arguments.next().ok_or(DaemonErrorV1::ArgumentValueRequired)
+}
+
+fn parse_daemon_listen_argument_v1(
+    arguments: &mut impl Iterator<Item = OsString>,
+) -> Result<SocketAddr, DaemonErrorV1> {
+    let value = arguments
+        .next()
+        .ok_or(DaemonErrorV1::ArgumentValueRequired)?;
+    let value = value.to_str().ok_or(DaemonErrorV1::InvalidListenAddress)?;
+    value
+        .parse()
+        .map_err(|_| DaemonErrorV1::InvalidListenAddress)
 }
 
 fn resolve_daemon_run_arguments_v1(
@@ -2448,6 +2486,7 @@ enum HttpResponseV1 {
     },
     AuthenticatedStatus {
         head_only: bool,
+        product_surface_contract: &'static str,
     },
     AuthenticatedProductReadRejected {
         head_only: bool,
@@ -2523,6 +2562,9 @@ enum HttpResponseV1 {
     SessionFamilySignOutRejected,
     IdentityPasswordRotationRejected,
     BadRequest,
+    ProductSurfaceContractRejected {
+        head_only: bool,
+    },
     SessionIssueRejected,
     Forbidden,
     NotFound,
@@ -2537,6 +2579,7 @@ enum HttpResponseV1 {
 struct ClassifiedHttpResponseV1 {
     response: HttpResponseV1,
     accepted_contract_version: Option<ContractVersion>,
+    accepted_product_surface_contract: Option<&'static str>,
 }
 
 impl ClassifiedHttpResponseV1 {
@@ -2544,6 +2587,7 @@ impl ClassifiedHttpResponseV1 {
         Self {
             response,
             accepted_contract_version: None,
+            accepted_product_surface_contract: None,
         }
     }
 
@@ -2551,7 +2595,20 @@ impl ClassifiedHttpResponseV1 {
         Self {
             response,
             accepted_contract_version: Some(version),
+            accepted_product_surface_contract: None,
         }
+    }
+
+    const fn with_product_surface_contract(mut self, contract: &'static str) -> Self {
+        if let HttpResponseV1::AuthenticatedStatus {
+            product_surface_contract,
+            ..
+        } = &mut self.response
+        {
+            *product_surface_contract = contract;
+        }
+        self.accepted_product_surface_contract = Some(contract);
+        self
     }
 }
 
@@ -2609,6 +2666,8 @@ struct ParsedRequestHeadV1<'a> {
     csrf: Option<&'a str>,
     session_issue_intent: Option<&'a str>,
     contract_version: Option<&'a str>,
+    product_surface_contract: Option<&'a str>,
+    product_surface_contract_duplicate: bool,
     forwarded_present: bool,
 }
 
@@ -2622,6 +2681,8 @@ struct ParsedRequestHeadersV1<'a> {
     csrf: Option<&'a str>,
     session_issue_intent: Option<&'a str>,
     contract_version: Option<&'a str>,
+    product_surface_contract: Option<&'a str>,
+    product_surface_contract_duplicate: bool,
     forwarded_present: bool,
 }
 
@@ -2639,6 +2700,8 @@ fn parse_request_headers_v1<'a>(
         csrf: None,
         session_issue_intent: None,
         contract_version: None,
+        product_surface_contract: None,
+        product_surface_contract_duplicate: false,
         forwarded_present: false,
     };
     for (index, line) in lines.enumerate() {
@@ -2646,15 +2709,22 @@ fn parse_request_headers_v1<'a>(
             return Err(());
         }
         let (name, value) = line.split_once(':').ok_or(())?;
+        let duplicate = header_names
+            .iter()
+            .any(|existing: &&str| existing.eq_ignore_ascii_case(name));
         if name.is_empty()
             || !name.bytes().all(is_header_name_byte)
             || value
                 .bytes()
                 .any(|byte| byte != b'\t' && !(b' '..=b'~').contains(&byte))
-            || header_names
-                .iter()
-                .any(|existing: &&str| existing.eq_ignore_ascii_case(name))
         {
+            return Err(());
+        }
+        if duplicate {
+            if name.eq_ignore_ascii_case(PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1) {
+                headers.product_surface_contract_duplicate = true;
+                continue;
+            }
             return Err(());
         }
         header_names.push(name);
@@ -2680,6 +2750,8 @@ fn parse_request_headers_v1<'a>(
             headers.session_issue_intent = Some(value);
         } else if name.eq_ignore_ascii_case(GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1) {
             headers.contract_version = Some(value);
+        } else if name.eq_ignore_ascii_case(PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1) {
+            headers.product_surface_contract = Some(value);
         } else if name.eq_ignore_ascii_case("forwarded")
             || name.eq_ignore_ascii_case("x-forwarded-host")
             || name.eq_ignore_ascii_case("x-forwarded-proto")
@@ -2744,6 +2816,8 @@ fn parse_request_head_v1(request: &[u8]) -> Result<ParsedRequestHeadV1<'_>, ()> 
         csrf: headers.csrf,
         session_issue_intent: headers.session_issue_intent,
         contract_version: headers.contract_version,
+        product_surface_contract: headers.product_surface_contract,
+        product_surface_contract_duplicate: headers.product_surface_contract_duplicate,
         forwarded_present: headers.forwarded_present,
     })
 }
@@ -2811,7 +2885,7 @@ pub fn parse_local_browser_transport_request_v1(
 ) -> Result<LocalBrowserTransportRequestV1<'_>, LocalBrowserTransportErrorV1> {
     let parsed_request =
         parse_http_request_v1(request).map_err(|()| LocalBrowserTransportErrorV1::Rejected)?;
-    if !parsed_request.body.is_empty() {
+    if !parsed_request.body.is_empty() || parsed_request.head.product_surface_contract_duplicate {
         return Err(LocalBrowserTransportErrorV1::Rejected);
     }
     parse_local_browser_transport_head_v1(parsed_request.head, peer_address, bound_address)
@@ -2861,6 +2935,15 @@ fn classify_request(
         return ClassifiedHttpResponseV1::unversioned(HttpResponseV1::BadRequest);
     };
     let request = parsed_request.head;
+    if (request.product_surface_contract.is_some() || request.product_surface_contract_duplicate)
+        && !request.target.starts_with("/v1/")
+    {
+        return ClassifiedHttpResponseV1::unversioned(
+            HttpResponseV1::ProductSurfaceContractRejected {
+                head_only: request.method == "HEAD",
+            },
+        );
+    }
     if let Some(response) = classify_phase9_console_route_v1(
         request,
         parsed_request.body,
@@ -2895,7 +2978,17 @@ fn classify_request(
             );
         }
     };
-    ClassifiedHttpResponseV1::versioned(
+    let Ok(selected_product_surface_contract) = select_product_surface_contract_v1(
+        request.target,
+        request.product_surface_contract,
+        request.product_surface_contract_duplicate,
+    ) else {
+        return ClassifiedHttpResponseV1::versioned(
+            HttpResponseV1::ProductSurfaceContractRejected { head_only },
+            version,
+        );
+    };
+    let classified = ClassifiedHttpResponseV1::versioned(
         classify_versioned_gateway_route_v1(
             request_bytes,
             request,
@@ -2904,7 +2997,14 @@ fn classify_request(
             context,
         ),
         version,
-    )
+    );
+    if request.target == AUTHENTICATED_STATUS_PATH_V1 {
+        classified.with_product_surface_contract(
+            selected_product_surface_contract.expect("status selects product contract"),
+        )
+    } else {
+        classified
+    }
 }
 
 fn classify_phase9_console_route_v1(
@@ -3092,6 +3192,7 @@ fn classify_authenticated_product_read_route_v1(
         },
         AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus {
             head_only: request.method == "HEAD",
+            product_surface_contract: product_surface::PRODUCT_SURFACE_CONTRACT_ID_V1,
         },
         target
             if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
@@ -3145,6 +3246,9 @@ fn classify_control_product_read_request_v1(
     };
     let request = parsed_request.head;
     let head_only = request.method == "HEAD";
+    if request.host != local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1 {
+        return ClassifiedHttpResponseV1::unversioned(HttpResponseV1::BadRequest);
+    }
     let version = match validate_gateway_contract_version_v1(request.contract_version) {
         Ok(version) => version,
         Err(error) => {
@@ -3153,17 +3257,17 @@ fn classify_control_product_read_request_v1(
             );
         }
     };
-    let response = match request.target {
-        AUTHENTICATED_HEALTH_PATH_V1 => HttpResponseV1::AuthenticatedHealth { head_only },
-        AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus { head_only },
-        target
-            if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
-                || target.starts_with(AUTHENTICATED_STATUS_PATH_V1) =>
-        {
-            HttpResponseV1::BadRequest
-        }
-        _ => HttpResponseV1::NotFound,
+    let Ok(selected_product_surface_contract) = select_product_surface_contract_v1(
+        request.target,
+        request.product_surface_contract,
+        request.product_surface_contract_duplicate,
+    ) else {
+        return ClassifiedHttpResponseV1::versioned(
+            HttpResponseV1::ProductSurfaceContractRejected { head_only },
+            version,
+        );
     };
+    let response = classify_control_product_read_route_v1(request.target, head_only);
     if !matches!(
         response,
         HttpResponseV1::AuthenticatedHealth { .. } | HttpResponseV1::AuthenticatedStatus { .. }
@@ -3171,13 +3275,16 @@ fn classify_control_product_read_request_v1(
         return ClassifiedHttpResponseV1::versioned(response, version);
     }
     if !matches!(request.method, "GET" | "HEAD") {
-        return ClassifiedHttpResponseV1::versioned(
-            HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" },
-            version,
+        return selected_product_surface_contract_for_status_v1(
+            ClassifiedHttpResponseV1::versioned(
+                HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" },
+                version,
+            ),
+            request.target,
+            selected_product_surface_contract,
         );
     }
     if !parsed_request.body.is_empty()
-        || request.host != local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1
         || request.origin.is_some()
         || request.fetch_site != Some("same-origin")
         || request.content_length.is_some_and(|length| length != 0)
@@ -3186,9 +3293,14 @@ fn classify_control_product_read_request_v1(
         || request.session_issue_intent.is_some()
         || request.forwarded_present
     {
-        return ClassifiedHttpResponseV1::versioned(
+        let classified = ClassifiedHttpResponseV1::versioned(
             HttpResponseV1::AuthenticatedProductReadRejected { head_only },
             version,
+        );
+        return selected_product_surface_contract_for_status_v1(
+            classified,
+            request.target,
+            selected_product_surface_contract,
         );
     }
     let authorized = parse_local_browser_auth_transport_v1(request.method, request.cookie, None)
@@ -3210,14 +3322,82 @@ fn classify_control_product_read_request_v1(
         Ok(LocalSessionActivityVerificationV1::Verified(ref activity))
             if activity.session.role.allows_control(LocalControlPermissionV1::ReadEvidence)
     );
-    ClassifiedHttpResponseV1::versioned(
+    let classified = ClassifiedHttpResponseV1::versioned(
         if allowed {
             response
         } else {
             HttpResponseV1::AuthenticatedProductReadRejected { head_only }
         },
         version,
+    );
+    selected_product_surface_contract_for_status_v1(
+        classified,
+        request.target,
+        selected_product_surface_contract,
     )
+}
+
+fn selected_product_surface_contract_for_status_v1(
+    response: ClassifiedHttpResponseV1,
+    target: &str,
+    contract: Option<&'static str>,
+) -> ClassifiedHttpResponseV1 {
+    if target == AUTHENTICATED_STATUS_PATH_V1
+        && let Some(contract) = contract
+    {
+        response.with_product_surface_contract(contract)
+    } else {
+        response
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn classify_control_product_read_route_v1(target: &str, head_only: bool) -> HttpResponseV1 {
+    match target {
+        AUTHENTICATED_HEALTH_PATH_V1 => HttpResponseV1::AuthenticatedHealth { head_only },
+        AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus {
+            head_only,
+            product_surface_contract: product_surface::PRODUCT_SURFACE_CONTRACT_ID_V1,
+        },
+        target
+            if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
+                || target.starts_with(AUTHENTICATED_STATUS_PATH_V1) =>
+        {
+            HttpResponseV1::BadRequest
+        }
+        _ => HttpResponseV1::NotFound,
+    }
+}
+
+fn select_product_surface_contract_v1(
+    target: &str,
+    selector: Option<&str>,
+    duplicate: bool,
+) -> Result<Option<&'static str>, ()> {
+    if duplicate {
+        return Err(());
+    }
+    if target == AUTHENTICATED_STATUS_PATH_V1 {
+        return match selector {
+            None => Ok(Some(product_surface::PRODUCT_SURFACE_CONTRACT_ID_V1)),
+            Some(selector)
+                if product_surface::is_supported_product_surface_contract_v1(selector) =>
+            {
+                Ok(Some(
+                    if selector == product_surface::PRODUCT_SURFACE_CONTRACT_ID_V2 {
+                        product_surface::PRODUCT_SURFACE_CONTRACT_ID_V2
+                    } else {
+                        product_surface::PRODUCT_SURFACE_CONTRACT_ID_V1
+                    },
+                ))
+            }
+            Some(_) => Err(()),
+        };
+    }
+    if selector.is_some() {
+        return Err(());
+    }
+    Ok(None)
 }
 
 #[derive(Clone, Copy)]
@@ -4521,6 +4701,7 @@ struct HttpResponsePartsV1 {
     head_only: bool,
     cookie_headers: Option<LocalBrowserSessionCookieHeadersV1>,
     contract_version_header: Option<&'static str>,
+    product_surface_contract_header: bool,
 }
 
 type HttpResponsePartsTupleV1 = (
@@ -4541,6 +4722,7 @@ fn compose_http_response_v1(
     if let Some(parts) = compose_gateway_contract_response_v1(&response) {
         return parts;
     }
+    let product_surface_contract_header = false;
     let (status, body, allow, head_only, cookie_headers) = match response {
         HttpResponseV1::Ready => ("200 OK", readiness_body_v1(state), None, false, None),
         HttpResponseV1::AuthenticatedHealth { head_only } => (
@@ -4551,10 +4733,18 @@ fn compose_http_response_v1(
             head_only,
             None,
         ),
-        HttpResponseV1::AuthenticatedStatus { head_only } => (
+        HttpResponseV1::AuthenticatedStatus {
+            head_only,
+            product_surface_contract,
+        } => (
             "200 OK",
-            serde_json::to_string(&product_surface::daemon_status_v1())
-                .expect("authenticated status evidence must serialize"),
+            if product_surface_contract == product_surface::PRODUCT_SURFACE_CONTRACT_ID_V2 {
+                serde_json::to_string(&product_surface::daemon_status_v2())
+                    .expect("authenticated v2 status evidence must serialize")
+            } else {
+                serde_json::to_string(&product_surface::daemon_status_v1())
+                    .expect("authenticated status evidence must serialize")
+            },
             None,
             head_only,
             None,
@@ -4650,6 +4840,13 @@ fn compose_http_response_v1(
             false,
             None,
         ),
+        HttpResponseV1::ProductSurfaceContractRejected { head_only } => (
+            "400 Bad Request",
+            product_surface_contract_rejected_body_v1(),
+            None,
+            head_only,
+            None,
+        ),
         HttpResponseV1::SessionIssueRejected => session_issue_denied_parts_v1(),
         HttpResponseV1::Forbidden => (
             "403 Forbidden",
@@ -4701,6 +4898,7 @@ fn compose_http_response_v1(
         head_only,
         cookie_headers,
         contract_version_header: None,
+        product_surface_contract_header,
     }
 }
 
@@ -4737,6 +4935,7 @@ fn compose_gateway_contract_response_v1(response: &HttpResponseV1) -> Option<Htt
                 head_only: *head_only,
                 cookie_headers: None,
                 contract_version_header: Some(CONTRACT_VERSION_V1_0),
+                product_surface_contract_header: false,
             })
         }
         HttpResponseV1::GatewayContractVersionRejected { error, head_only } => {
@@ -4750,6 +4949,7 @@ fn compose_gateway_contract_response_v1(response: &HttpResponseV1) -> Option<Htt
                 head_only: *head_only,
                 cookie_headers: None,
                 contract_version_header: None,
+                product_surface_contract_header: false,
             })
         }
         _ => None,
@@ -5034,6 +5234,18 @@ fn authenticated_product_read_denied_body_v1() -> String {
         "contract_version": CONTRACT_VERSION_V1_0,
         "ok": false,
         "error": { "code": AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1 },
+        "side_effects": [],
+        "mutation_authority": false,
+    })
+    .to_string()
+}
+
+fn product_surface_contract_rejected_body_v1() -> String {
+    serde_json::json!({
+        "contract": "lnsat.product_surface.negotiation.v1",
+        "contract_version": CONTRACT_VERSION_V1_0,
+        "ok": false,
+        "error": { "code": PRODUCT_SURFACE_CONTRACT_REJECTION_CODE_V1 },
         "side_effects": [],
         "mutation_authority": false,
     })
@@ -6102,6 +6314,7 @@ fn write_response_with_state(
     let ClassifiedHttpResponseV1 {
         response,
         accepted_contract_version,
+        accepted_product_surface_contract,
     } = response;
     let mut response = match response {
         HttpResponseV1::ConsoleAsset { asset, head_only } => {
@@ -6112,6 +6325,11 @@ fn write_response_with_state(
     if let Some(version) = accepted_contract_version {
         response.contract_version_header = Some(version.as_str());
     }
+    response.product_surface_contract_header = accepted_product_surface_contract.is_some();
+    let product_surface_contract_header = accepted_product_surface_contract
+        .map_or_else(String::new, |contract| {
+            format!("{PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1}: {contract}\r\n")
+        });
     let allow_header = response
         .allow
         .map_or_else(String::new, |value| format!("Allow: {value}\r\n"));
@@ -6140,6 +6358,7 @@ fn write_response_with_state(
             "X-Content-Type-Options: nosniff\r\n",
             "{allow_header}",
             "{contract_version_header}",
+            "{product_surface_contract_header}",
             "{cookie_headers}",
             "Connection: close\r\n\r\n"
         ),
@@ -6147,6 +6366,7 @@ fn write_response_with_state(
         length = response.body.len(),
         allow_header = allow_header,
         contract_version_header = contract_version_header,
+        product_surface_contract_header = product_surface_contract_header,
         cookie_headers = cookie_headers
     );
     let result = stream
@@ -6212,7 +6432,7 @@ pub const fn daemon_usage_v1() -> &'static str {
     concat!(
         "Usage: lnsatd --database <path> [--listen <loopback-ip:port>] [--disposable-git-root <temp-path> --git-executable <absolute-path>]\n",
         "       lnsatd --config <absolute-path>\n",
-        "       lnsatd --manifest\n\n",
+        "       lnsatd --manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n\n",
         "Defaults:\n",
         "  --listen 127.0.0.1:7447\n\n",
         "Stable source contracts:\n",
@@ -7990,6 +8210,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)] // Exact TCP/Unix body, header, role, and fixture parity remain one sequence.
     fn authenticated_health_and_status_get_head_and_roles_match_fixtures() {
         let fixture = ServedSessionGatewayFixture::start("product-health-status-success");
         for (path, expected) in [
@@ -8030,6 +8251,67 @@ mod tests {
                 .find_map(|line| line.strip_prefix("Content-Length: "))
                 .expect("HEAD content length must exist");
             assert_eq!(head_length, get_length);
+            if path == AUTHENTICATED_STATUS_PATH_V1 {
+                assert!(
+                    get.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+                );
+                assert!(
+                    head.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+                );
+                let explicit_request = request.replace(
+                    "Sec-Fetch-Site: same-origin\r\n",
+                    "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nSec-Fetch-Site: same-origin\r\n",
+                );
+                let explicit = request_at(fixture.address, explicit_request.as_bytes());
+                assert!(explicit.starts_with("HTTP/1.1 200 OK\r\n"));
+                assert!(
+                    explicit
+                        .contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+                );
+                assert_eq!(
+                    explicit.split_once("\r\n\r\n").expect("status body").1,
+                    body
+                );
+                let explicit_v2_request = request.replace(
+                    "Sec-Fetch-Site: same-origin\r\n",
+                    "LNSAT-Product-Surface-Contract: lnsat.product_surface.v2\r\nSec-Fetch-Site: same-origin\r\n",
+                );
+                let explicit_v2 = request_at(fixture.address, explicit_v2_request.as_bytes());
+                assert!(explicit_v2.starts_with("HTTP/1.1 200 OK\r\n"));
+                assert!(
+                    explicit_v2
+                        .contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v2\r\n")
+                );
+                assert_eq!(
+                    serde_json::from_str::<serde_json::Value>(
+                        explicit_v2
+                            .split_once("\r\n\r\n")
+                            .expect("v2 status body")
+                            .1,
+                    )
+                    .expect("v2 status must be JSON"),
+                    serde_json::from_str::<serde_json::Value>(include_str!(
+                        "../../../fixtures/contracts/daemon-status-v2.json"
+                    ))
+                    .expect("v2 fixture must be JSON")
+                );
+                let explicit_v2_head = request_at(
+                    fixture.address,
+                    explicit_v2_request.replacen("GET ", "HEAD ", 1).as_bytes(),
+                );
+                assert!(explicit_v2_head.starts_with("HTTP/1.1 200 OK\r\n"));
+                assert!(
+                    explicit_v2_head
+                        .contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v2\r\n")
+                );
+                assert!(
+                    explicit_v2_head
+                        .split_once("\r\n\r\n")
+                        .expect("v2 HEAD boundary")
+                        .1
+                        .is_empty()
+                );
+            }
         }
 
         for (role, identity_ref, display_name, password) in [
@@ -8077,6 +8359,108 @@ mod tests {
     }
 
     #[test]
+    fn tcp_duplicate_product_surface_selector_never_touches_durable_session_activity() {
+        let directory = TestDirectory::new("product-surface-selector-no-touch");
+        let database_path = directory.database_path();
+        let now = SystemTime::now();
+        let issued_at = canonical_system_time_v1(
+            now.checked_sub(Duration::from_mins(2))
+                .expect("issued time must precede now"),
+        )
+        .expect("issued time must canonicalize");
+        let expires_at = canonical_system_time_v1(
+            now.checked_add(Duration::from_mins(10))
+                .expect("expiry must follow now"),
+        )
+        .expect("expiry must canonicalize");
+        let token = {
+            let mut store = SqliteStore::open(&database_path).expect("store must open");
+            store
+                .bootstrap_local_owner_v1(&lnsat_store::LocalOwnerBootstrapInputV1 {
+                    identity_ref: "identity:human:owner",
+                    display_name: "Local Owner",
+                    password: "correct horse battery staple",
+                    created_at: &issued_at,
+                })
+                .expect("owner must bootstrap");
+            store
+                .issue_local_session_v1(&LocalSessionIssueInputV1 {
+                    identity_ref: "identity:human:owner",
+                    password: "correct horse battery staple",
+                    issued_at: &issued_at,
+                    expires_at: &expires_at,
+                })
+                .expect("session must issue")
+                .raw_session_token
+        };
+        let server = DaemonServerV1::bind(&DaemonConfigV1::for_test(&database_path))
+            .expect("server must bind");
+        let address = server.local_addr();
+        let thread = thread::spawn(move || server.serve_one());
+        let request = format!(
+            "GET /v1/status HTTP/1.1\r\nHost: {address}\r\n{GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1}: {CONTRACT_VERSION_V1_0}\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nSec-Fetch-Site: same-origin\r\nCookie: {}={token}\r\n\r\n",
+            lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
+        );
+        let response = request_at(address, request.as_bytes());
+        assert!(response.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+        let rejected: serde_json::Value =
+            serde_json::from_str(response.split_once("\r\n\r\n").expect("body required").1)
+                .expect("selector rejection must be JSON");
+        assert_eq!(rejected["contract"], "lnsat.product_surface.negotiation.v1");
+        assert_eq!(
+            rejected["error"]["code"],
+            PRODUCT_SURFACE_CONTRACT_REJECTION_CODE_V1
+        );
+        assert_eq!(rejected["side_effects"], serde_json::json!([]));
+        thread
+            .join()
+            .expect("server thread must join")
+            .expect("server must finish");
+        let checked_at =
+            canonical_system_time_v1(SystemTime::now()).expect("time must canonicalize");
+        let mut store = SqliteStore::open(&database_path).expect("store must reopen");
+        let verified = store
+            .verify_and_touch_local_session_v1(
+                &token,
+                None,
+                &checked_at,
+                LOCAL_BROWSER_SESSION_IDLE_TIMEOUT_SECONDS_V1,
+            )
+            .expect("session must verify");
+        let LocalSessionActivityVerificationV1::Verified(activity) = verified else {
+            panic!("rejected selector must leave session active");
+        };
+        assert!(
+            activity.touched,
+            "rejected selector must not touch activity first"
+        );
+        assert_eq!(activity.activity_sequence, 2);
+    }
+
+    #[test]
+    fn tcp_duplicate_selector_defers_to_gateway_contract_validation() {
+        let fixture = ServedSessionGatewayFixture::start("duplicate-selector-version-order");
+        for (version_header, expected_code) in [
+            ("", "contract.version.required"),
+            (
+                "LNSAT-Contract-Version: lnsat.contracts.v9_0\r\n",
+                "contract.version.unsupported",
+            ),
+        ] {
+            let request = format!(
+                "GET /v1/status HTTP/1.1\r\nHost: {}\r\n{version_header}LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nSec-Fetch-Site: same-origin\r\n\r\n",
+                fixture.address
+            );
+            let response = request_at(fixture.address, request.as_bytes());
+            assert!(response.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+            assert!(response.contains(expected_code));
+            assert!(!response.contains(PRODUCT_SURFACE_CONTRACT_REJECTION_CODE_V1));
+        }
+        fixture.stop();
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)] // Exact ordered denial cases share one served-session fixture.
     fn authenticated_product_reads_fail_closed_without_oracles_or_ambiguous_framing() {
         let fixture = ServedSessionGatewayFixture::start("product-health-status-denials");
         let missing_cookie = format!(
@@ -8096,6 +8480,48 @@ mod tests {
             .split_once("\r\n\r\n")
             .expect("denial must contain header boundary");
         assert!(denial_body.contains(AUTHENTICATED_PRODUCT_READ_DENIAL_CODE_V1));
+
+        let missing_status = format!(
+            concat!(
+                "GET /v1/status HTTP/1.1\r\n",
+                "Host: {address}\r\n",
+                "{version_name}: {version}\r\n",
+                "Sec-Fetch-Site: same-origin\r\n\r\n"
+            ),
+            address = fixture.address,
+            version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+            version = CONTRACT_VERSION_V1_0,
+        );
+        let missing_status = request_at(fixture.address, missing_status.as_bytes());
+        assert!(missing_status.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert!(
+            missing_status.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+        );
+        let missing_status_v2 = format!(
+            concat!(
+                "GET /v1/status HTTP/1.1\r\n",
+                "Host: {address}\r\n",
+                "{version_name}: {version}\r\n",
+                "LNSAT-Product-Surface-Contract: lnsat.product_surface.v2\r\n",
+                "Sec-Fetch-Site: same-origin\r\n\r\n"
+            ),
+            address = fixture.address,
+            version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+            version = CONTRACT_VERSION_V1_0,
+        );
+        let missing_status_v2 = request_at(fixture.address, missing_status_v2.as_bytes());
+        assert!(missing_status_v2.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert!(
+            missing_status_v2
+                .contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v2\r\n")
+        );
+        assert_eq!(
+            missing_status_v2
+                .split_once("\r\n\r\n")
+                .expect("v2 denial boundary")
+                .1,
+            denial_body
+        );
 
         for token in ["malformed", fixture.expired_session_token.as_str()] {
             let request = fixture.product_read_request("GET", AUTHENTICATED_HEALTH_PATH_V1, token);
@@ -8147,7 +8573,61 @@ mod tests {
                 .is_empty()
         );
 
+        let framed_status = format!(
+            concat!(
+                "GET /v1/status HTTP/1.1\r\n",
+                "Host: {address}\r\n",
+                "{version_name}: {version}\r\n",
+                "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n",
+                "Content-Type: application/json\r\n",
+                "Sec-Fetch-Site: same-origin\r\n\r\n"
+            ),
+            address = fixture.address,
+            version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+            version = CONTRACT_VERSION_V1_0,
+        );
+        let framed_status = request_at(fixture.address, framed_status.as_bytes());
+        assert!(framed_status.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert!(
+            framed_status.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+        );
+
+        for path in ["/v1/session", "/v1", "/healthz", "/"] {
+            let request = format!(
+                "GET {path} HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nSec-Fetch-Site: same-origin\r\n\r\n",
+                fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+            );
+            let rejected = request_at(fixture.address, request.as_bytes());
+            assert!(rejected.starts_with("HTTP/1.1 400 Bad Request\r\n"));
+            let rejected: serde_json::Value =
+                serde_json::from_str(rejected.split_once("\r\n\r\n").expect("body required").1)
+                    .expect("selector rejection must be JSON");
+            assert_eq!(
+                rejected["error"]["code"],
+                PRODUCT_SURFACE_CONTRACT_REJECTION_CODE_V1
+            );
+            assert_eq!(rejected["side_effects"], serde_json::json!([]));
+        }
+
+        let selector_post = format!(
+            "POST /v1/status HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nContent-Length: 0\r\n\r\n",
+            fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+        );
+        let selector_post = request_at(fixture.address, selector_post.as_bytes());
+        assert!(selector_post.starts_with("HTTP/1.1 405 Method Not Allowed\r\n"));
+        assert!(selector_post.contains("lnsatd.method.not_allowed"));
+        assert!(
+            selector_post.contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+        );
+
         for (request, status) in [
+            (
+                format!(
+                    "POST /v1/status HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nContent-Length: 0\r\n\r\n",
+                    fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+                ),
+                "HTTP/1.1 405 Method Not Allowed",
+            ),
             (
                 format!(
                     "POST /v1/health HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nContent-Length: 0\r\n\r\n",
@@ -8179,6 +8659,16 @@ mod tests {
         ] {
             assert!(request_at(fixture.address, request.as_bytes()).starts_with(status));
         }
+        let default_status_method = format!(
+            "POST /v1/status HTTP/1.1\r\nHost: {}\r\n{}: {}\r\nContent-Length: 0\r\n\r\n",
+            fixture.address, GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1, CONTRACT_VERSION_V1_0
+        );
+        let default_status_method = request_at(fixture.address, default_status_method.as_bytes());
+        assert!(default_status_method.starts_with("HTTP/1.1 405 Method Not Allowed\r\n"));
+        assert!(
+            default_status_method
+                .contains("LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n")
+        );
     }
 
     #[test]
@@ -11517,6 +12007,10 @@ mod tests {
             valid.replace(
                 "Host: 127.0.0.1:7447",
                 "Host: 127.0.0.1:7447\r\nHost: 127.0.0.1:7447",
+            ),
+            valid.replace(
+                "Sec-Fetch-Site: same-origin",
+                "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nSec-Fetch-Site: same-origin",
             ),
             valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site"),
             valid.replace("Host: 127.0.0.1:7447", "Host: localhost:7447"),

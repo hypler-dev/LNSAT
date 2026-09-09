@@ -31,6 +31,16 @@ pub const MAX_DAEMON_CONFIG_BYTES_V1: usize = 64 * 1024;
 
 const MAX_CONFIG_PATH_TEXT_BYTES_V1: usize = 4 * 1024;
 
+/// Returns the closed JSON Schema 2020-12 for one daemon configuration.
+///
+/// The schema describes syntax only. `load_daemon_config_v1` remains the sole
+/// authority for file identity, duplicate-key, byte-bound, path, listener, and
+/// dependent-runtime validation.
+#[must_use]
+pub const fn daemon_config_schema_json_v1() -> &'static str {
+    include_str!("../../../fixtures/contracts/headless-config-diagnostics-v1.json")
+}
+
 /// Validated configuration plus public-safe exact-byte evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LoadedDaemonConfigV1 {

@@ -23,6 +23,19 @@
 
 ### Added
 
+- Added source-only exact product-surface negotiation for `GET|HEAD /v1/status`
+  and three manifest commands. `lnsat.product_surface.v1` is selected by
+  default or exact selector and echoed in status responses; malformed,
+  duplicate, unsupported, and wrong-route selectors fail before session work.
+  This preserves frozen v1 manifest/status bytes and opens no runtime, package,
+  release, deployment, or Phase 11 claim.
+
+- Added opt-in `lnsat.product_surface.v2` source diagnostics. Exact v2 selection
+  exposes v2 manifest/status shapes plus `lnsatctl config schema|validate`; the
+  validator reads selected config/profile evidence only and opens no database,
+  listener, process, action authority, runtime, package, release, deployment,
+  or Phase 11 claim. v1 remains frozen; no range or fallback exists.
+
 - Accepted Docker/OCI as first v1 runtime integration while preserving one
   runtime-neutral Gateway authority contract for later secure-VM, native-host,
   and remote profiles. ADR-0007 also fixes monotonic configuration inheritance,

@@ -36,6 +36,16 @@ are part of the LNSAT V1 CLI contract. The core computes effective authority;
 for online commands, the CLI is a client and never bypasses Gateway. The bounded
 offline exceptions do not create an agent, API, MCP, or UI authority path.
 
+HCFG-0/HCFG-1 add exact `--product-surface-contract` selection to the three
+manifest commands and `lnsatctl status`. Omission preserves frozen v1 behavior;
+an explicit v1 or v2 selection requires an exact daemon echo for status. v2
+adds only source diagnostics: `lnsatctl config schema --product-surface-contract
+lnsat.product_surface.v2` and `lnsatctl config validate --config <absolute-path>
+--product-surface-contract lnsat.product_surface.v2`. Validation may read the
+selected config and a referenced runtime profile, but opens no database,
+listener, process, or action authority. No range or fallback exists. This
+negotiation seam does not complete headless configuration/control.
+
 | Binary     | Audience                           | Responsibility                                                                              |
 | ---------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 | `lnsat`    | users, agents, scripts, developers | primary workflow command and convenience dispatcher                                         |
@@ -105,19 +115,34 @@ Current P10-A1/P10-A2/P10-A3/P10-A4 implemented subset:
 
 ```text
 lnsat packet validate|hash|inspect ...
-lnsat manifest|completion|man|--help|--version
+lnsat manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]|completion|man|--help|--version
 lnsatctl doctor
 lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
-lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
+lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]
 lnsatctl config inspect --config <absolute-path>
+lnsatctl config schema --product-surface-contract lnsat.product_surface.v2
+lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2
 lnsatctl recovery inspect --database <path>
 lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]
 lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]
 lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]
-lnsatctl manifest|completion|man|--help|--version
+lnsatctl manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]|completion|man|--help|--version
 lnsatd --config <absolute-path>
-lnsatd --database ... | --manifest | --help | --version
+lnsatd --database ... | --manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] | --help | --version
 ```
+
+Exact v2 manifest output is
+`fixtures/contracts/product-surface-v2.json`; explicit v2 status output has
+`contract: lnsat.daemon.status.v2`. `config schema` returns
+`command: config.schema`, the embedded closed config schema, and
+`activation_authority: false`; `config validate` returns
+`command: config.validate`, its exact config digest, `valid: true`, and
+`side_effects: []`. Missing, range, duplicate, v1, or unsupported selectors for
+the v2 config commands fail with `lnsatctl.arguments.invalid`, exit `2`, and
+empty stdout. Status selector rejection remains the public-safe
+`lnsatd.product_surface_contract.rejected`; a missing or mismatched explicit
+status echo remains `lnsatctl.product_surface_contract.incompatible`, exit `5`,
+and empty stdout.
 
 All other listed groups remain reserved and unavailable. Recovery inspection
 is read-only. Backup creates one non-root offline snapshot. Restore creates one

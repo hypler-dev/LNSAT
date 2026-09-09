@@ -2,7 +2,10 @@
 
 use crate::GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1;
 use crate::product_output::{ProductOutputErrorV1, ProductSemanticResultV1};
-use crate::product_surface::{DaemonHealthV1, DaemonStatusV1, ProductExitCodeV1};
+use crate::product_surface::{
+    DaemonHealthV1, DaemonStatusV1, DaemonStatusV2, PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1,
+    ProductExitCodeV1, is_supported_product_surface_contract_v1,
+};
 use lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1;
 use lnsat_contracts::CONTRACT_VERSION_V1_0;
 use std::fmt;
@@ -121,6 +124,8 @@ pub enum ProductClientErrorV1 {
     Authentication,
     /// Daemon response or contract was incompatible.
     IncompatibleResponse,
+    /// Explicit product-surface contract was not echoed exactly by daemon.
+    ProductSurfaceContractIncompatible,
     /// Local output conversion failed.
     InternalFailure,
 }
@@ -138,6 +143,9 @@ impl ProductClientErrorV1 {
             Self::TemporaryFailure => "lnsatctl.socket.temporary_failure",
             Self::Authentication => "lnsatctl.authentication.denied",
             Self::IncompatibleResponse => "lnsatctl.response.incompatible",
+            Self::ProductSurfaceContractIncompatible => {
+                "lnsatctl.product_surface_contract.incompatible"
+            }
             Self::InternalFailure => "lnsatctl.internal_failure",
         }
     }
@@ -154,7 +162,9 @@ impl ProductClientErrorV1 {
             }
             Self::Unavailable => ProductExitCodeV1::Unavailable,
             Self::TemporaryFailure => ProductExitCodeV1::TemporaryFailure,
-            Self::IncompatibleResponse => ProductExitCodeV1::Conflict,
+            Self::IncompatibleResponse | Self::ProductSurfaceContractIncompatible => {
+                ProductExitCodeV1::Conflict
+            }
             Self::InternalFailure => ProductExitCodeV1::InternalFailure,
         }
     }
@@ -222,12 +232,41 @@ pub fn request_authenticated_product_read_v1(
     endpoint: &UnixSocketEndpointV1,
     session_token: &str,
 ) -> Result<ProductSemanticResultV1, ProductClientErrorV1> {
+    request_authenticated_product_read_with_product_surface_contract_v1(
+        command,
+        endpoint,
+        session_token,
+        None,
+    )
+}
+
+/// Performs one bounded read with one explicit product-surface selector.
+///
+/// The legacy three-argument function remains exact-compatible and sends no
+/// selector. Callers requesting a selector must use this explicit function.
+///
+/// # Errors
+///
+/// Returns a stable local client error when input, socket identity, transport,
+/// response framing, authentication, or explicit contract echo is rejected.
+pub fn request_authenticated_product_read_with_product_surface_contract_v1(
+    command: ProductReadCommandV1,
+    endpoint: &UnixSocketEndpointV1,
+    session_token: &str,
+    product_surface_contract: Option<&str>,
+) -> Result<ProductSemanticResultV1, ProductClientErrorV1> {
     if !valid_session_token_transport_v1(session_token) {
         return Err(ProductClientErrorV1::SessionTokenInputInvalid);
     }
+    if product_surface_contract.is_some()
+        && (command != ProductReadCommandV1::Status
+            || !product_surface_contract.is_some_and(is_supported_product_surface_contract_v1))
+    {
+        return Err(ProductClientErrorV1::ProductSurfaceContractIncompatible);
+    }
     #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     {
-        let _ = (command, endpoint);
+        let _ = (command, endpoint, product_surface_contract);
         return Err(ProductClientErrorV1::PlatformUnsupported);
     }
     #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -247,11 +286,15 @@ pub fn request_authenticated_product_read_v1(
         .and_then(|()| stream.set_read_timeout(Some(PRODUCT_IO_POLL_TIMEOUT_V1)))
         .map_err(|error| map_io_error_v1(&error))?;
     #[cfg(any(target_os = "linux", target_os = "macos"))]
+    let product_surface_header = product_surface_contract.map_or_else(String::new, |value| {
+        format!("{PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1}: {value}\r\n")
+    });
     let mut request = Zeroizing::new(format!(
         concat!(
             "GET {path} HTTP/1.1\r\n",
             "Host: {host}\r\n",
             "{version_name}: {version}\r\n",
+            "{product_surface_header}",
             "Sec-Fetch-Site: same-origin\r\n",
             "Cookie: {cookie_name}={session_token}\r\n",
             "Connection: close\r\n\r\n"
@@ -260,6 +303,7 @@ pub fn request_authenticated_product_read_v1(
         host = crate::local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1,
         version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
         version = CONTRACT_VERSION_V1_0,
+        product_surface_header = product_surface_header,
         cookie_name = LOCAL_SESSION_COOKIE_NAME_V1,
         session_token = session_token,
     ));
@@ -305,7 +349,7 @@ pub fn request_authenticated_product_read_v1(
         }
     }
     #[cfg(any(target_os = "linux", target_os = "macos"))]
-    parse_product_response_v1(command, &response)
+    parse_product_response_v1(command, product_surface_contract, &response)
 }
 
 fn valid_session_token_transport_v1(value: &str) -> bool {
@@ -383,6 +427,7 @@ fn map_io_error_v1(error: &io::Error) -> ProductClientErrorV1 {
 
 fn parse_product_response_v1(
     command: ProductReadCommandV1,
+    product_surface_contract: Option<&str>,
     response: &[u8],
 ) -> Result<ProductSemanticResultV1, ProductClientErrorV1> {
     let head_end = response
@@ -410,11 +455,23 @@ fn parse_product_response_v1(
     let mut content_length = None;
     let mut content_type = None;
     let mut contract_version = None;
+    let mut product_surface_response_contract = None;
     let mut connection = None;
     for (index, line) in lines.enumerate() {
         let (name, value) = line
             .split_once(':')
             .ok_or(ProductClientErrorV1::IncompatibleResponse)?;
+        if names
+            .iter()
+            .any(|existing| existing.eq_ignore_ascii_case(name))
+            && name.eq_ignore_ascii_case(PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1)
+        {
+            return Err(if product_surface_contract.is_some() {
+                ProductClientErrorV1::ProductSurfaceContractIncompatible
+            } else {
+                ProductClientErrorV1::IncompatibleResponse
+            });
+        }
         if index >= MAX_PRODUCT_RESPONSE_HEADER_COUNT_V1
             || name.is_empty()
             || !name.bytes().all(is_header_name_byte_v1)
@@ -438,6 +495,8 @@ fn parse_product_response_v1(
             content_type = Some(value);
         } else if name.eq_ignore_ascii_case(GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1) {
             contract_version = Some(value);
+        } else if name.eq_ignore_ascii_case(PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1) {
+            product_surface_response_contract = Some(value);
         } else if name.eq_ignore_ascii_case("connection") {
             connection = Some(value);
         }
@@ -452,12 +511,39 @@ fn parse_product_response_v1(
     {
         return Err(ProductClientErrorV1::IncompatibleResponse);
     }
+    validate_product_surface_response_contract_v1(
+        command,
+        product_surface_contract,
+        product_surface_response_contract,
+    )?;
     match status {
-        200 => parse_product_success_v1(command, body),
+        200 => parse_product_success_v1(command, product_surface_contract, body),
         401 | 403 => Err(ProductClientErrorV1::Authentication),
         503 => Err(ProductClientErrorV1::TemporaryFailure),
         _ => Err(ProductClientErrorV1::IncompatibleResponse),
     }
+}
+
+fn validate_product_surface_response_contract_v1(
+    command: ProductReadCommandV1,
+    requested: Option<&str>,
+    received: Option<&str>,
+) -> Result<(), ProductClientErrorV1> {
+    if let Some(expected) = requested
+        && (command != ProductReadCommandV1::Status || received != Some(expected))
+    {
+        return Err(ProductClientErrorV1::ProductSurfaceContractIncompatible);
+    }
+    if matches!((command, requested), (ProductReadCommandV1::Status, None))
+        && received
+            .is_some_and(|value| value != crate::product_surface::PRODUCT_SURFACE_CONTRACT_ID_V1)
+    {
+        return Err(ProductClientErrorV1::ProductSurfaceContractIncompatible);
+    }
+    if matches!((command, requested), (ProductReadCommandV1::Health, None)) && received.is_some() {
+        return Err(ProductClientErrorV1::ProductSurfaceContractIncompatible);
+    }
+    Ok(())
 }
 
 const fn is_header_name_byte_v1(byte: u8) -> bool {
@@ -482,6 +568,7 @@ fn parse_content_length_v1(value: &str) -> Result<usize, ProductClientErrorV1> {
 
 fn parse_product_success_v1(
     command: ProductReadCommandV1,
+    product_surface_contract: Option<&str>,
     body: &[u8],
 ) -> Result<ProductSemanticResultV1, ProductClientErrorV1> {
     let value = match command {
@@ -494,10 +581,27 @@ fn parse_product_success_v1(
             serde_json::to_value(health).map_err(|_| ProductClientErrorV1::InternalFailure)?
         }
         ProductReadCommandV1::Status => {
-            let status: DaemonStatusV1 = serde_json::from_slice(body)
-                .map_err(|_| ProductClientErrorV1::IncompatibleResponse)?;
+            let incompatible_status = if product_surface_contract.is_some() {
+                ProductClientErrorV1::ProductSurfaceContractIncompatible
+            } else {
+                ProductClientErrorV1::IncompatibleResponse
+            };
+            if product_surface_contract
+                == Some(crate::product_surface::PRODUCT_SURFACE_CONTRACT_ID_V2)
+            {
+                let status: DaemonStatusV2 = serde_json::from_slice(body)
+                    .map_err(|_| ProductClientErrorV1::ProductSurfaceContractIncompatible)?;
+                if !status.is_compatible_success() {
+                    return Err(ProductClientErrorV1::ProductSurfaceContractIncompatible);
+                }
+                return serde_json::to_value(status)
+                    .map_err(|_| ProductClientErrorV1::InternalFailure)
+                    .and_then(|value| ProductSemanticResultV1::new(value).map_err(Into::into));
+            }
+            let status: DaemonStatusV1 =
+                serde_json::from_slice(body).map_err(|_| incompatible_status)?;
             if !status.is_compatible_success() {
-                return Err(ProductClientErrorV1::IncompatibleResponse);
+                return Err(incompatible_status);
             }
             serde_json::to_value(status).map_err(|_| ProductClientErrorV1::InternalFailure)?
         }
@@ -587,6 +691,109 @@ mod tests {
     }
 
     #[test]
+    fn explicit_status_selector_requires_exact_single_echo() {
+        let status_body = include_str!("../../../fixtures/contracts/phase10-status-v1.json");
+        let response = format!(
+            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nLNSAT-Contract-Version: lnsat.contracts.v1_0\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nConnection: close\r\n\r\n{status_body}",
+            status_body.len()
+        );
+        assert!(
+            parse_product_response_v1(
+                ProductReadCommandV1::Status,
+                Some("lnsat.product_surface.v1"),
+                response.as_bytes(),
+            )
+            .is_ok()
+        );
+        assert!(
+            parse_product_response_v1(ProductReadCommandV1::Status, None, response.as_bytes())
+                .is_ok()
+        );
+        let absent = response.replace(
+            "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\n",
+            "",
+        );
+        assert_eq!(
+            parse_product_response_v1(
+                ProductReadCommandV1::Status,
+                Some("lnsat.product_surface.v1"),
+                absent.as_bytes(),
+            ),
+            Err(ProductClientErrorV1::ProductSurfaceContractIncompatible)
+        );
+        assert!(
+            parse_product_response_v1(ProductReadCommandV1::Status, None, absent.as_bytes())
+                .is_ok()
+        );
+        let v2_echo = response.replace(
+            "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1",
+            "LNSAT-Product-Surface-Contract: lnsat.product_surface.v2",
+        );
+        assert_eq!(
+            parse_product_response_v1(ProductReadCommandV1::Status, None, v2_echo.as_bytes()),
+            Err(ProductClientErrorV1::ProductSurfaceContractIncompatible)
+        );
+        let status_v2_body = include_str!("../../../fixtures/contracts/daemon-status-v2.json");
+        let v1_selector_v2_body = format!(
+            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nLNSAT-Contract-Version: lnsat.contracts.v1_0\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nConnection: close\r\n\r\n{status_v2_body}",
+            status_v2_body.len()
+        );
+        assert_eq!(
+            parse_product_response_v1(
+                ProductReadCommandV1::Status,
+                Some("lnsat.product_surface.v1"),
+                v1_selector_v2_body.as_bytes(),
+            ),
+            Err(ProductClientErrorV1::ProductSurfaceContractIncompatible)
+        );
+        let v2_selector_v1_body = response.replace(
+            "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1",
+            "LNSAT-Product-Surface-Contract: lnsat.product_surface.v2",
+        );
+        assert_eq!(
+            parse_product_response_v1(
+                ProductReadCommandV1::Status,
+                Some("lnsat.product_surface.v2"),
+                v2_selector_v1_body.as_bytes(),
+            ),
+            Err(ProductClientErrorV1::ProductSurfaceContractIncompatible)
+        );
+        let malformed = response.replace(status_body, "{").replace(
+            &format!("Content-Length: {}", status_body.len()),
+            "Content-Length: 1",
+        );
+        assert_eq!(
+            parse_product_response_v1(
+                ProductReadCommandV1::Status,
+                Some("lnsat.product_surface.v1"),
+                malformed.as_bytes(),
+            ),
+            Err(ProductClientErrorV1::ProductSurfaceContractIncompatible)
+        );
+        let denied_without_echo = "HTTP/1.1 403 Forbidden\r\nContent-Type: application/json\r\nContent-Length: 2\r\nLNSAT-Contract-Version: lnsat.contracts.v1_0\r\nConnection: close\r\n\r\n{}";
+        assert_eq!(
+            parse_product_response_v1(
+                ProductReadCommandV1::Status,
+                Some("lnsat.product_surface.v1"),
+                denied_without_echo.as_bytes(),
+            ),
+            Err(ProductClientErrorV1::ProductSurfaceContractIncompatible)
+        );
+        let duplicate = response.replace(
+            "Connection: close",
+            "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nConnection: close",
+        );
+        assert_eq!(
+            parse_product_response_v1(
+                ProductReadCommandV1::Status,
+                Some("lnsat.product_surface.v1"),
+                duplicate.as_bytes(),
+            ),
+            Err(ProductClientErrorV1::ProductSurfaceContractIncompatible)
+        );
+    }
+
+    #[test]
     fn redirects_caps_timeouts_and_read_only_exit_mapping_fail_closed() {
         let redirect = concat!(
             "HTTP/1.1 302 Found\r\n",
@@ -596,7 +803,7 @@ mod tests {
             "Connection: close\r\n\r\n"
         );
         assert_eq!(
-            parse_product_response_v1(ProductReadCommandV1::Health, redirect.as_bytes()),
+            parse_product_response_v1(ProductReadCommandV1::Health, None, redirect.as_bytes()),
             Err(ProductClientErrorV1::IncompatibleResponse)
         );
 
@@ -616,7 +823,7 @@ mod tests {
             b'x',
         );
         assert_eq!(
-            parse_product_response_v1(ProductReadCommandV1::Status, &oversized),
+            parse_product_response_v1(ProductReadCommandV1::Status, None, &oversized),
             Err(ProductClientErrorV1::IncompatibleResponse)
         );
 
