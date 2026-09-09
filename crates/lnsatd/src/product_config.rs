@@ -98,6 +98,81 @@ impl LoadedDaemonConfigV1 {
     }
 }
 
+/// Fixed, redaction-safe semantic comparison for two loaded configurations.
+///
+/// Field groups are compared from normalized loader results, never from a
+/// public projection. Exact configuration-source bytes remain separate because
+/// formatting and semantically equivalent defaults can change their digest.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DaemonConfigComparisonV1 {
+    changed_field_groups: Vec<&'static str>,
+    config_source_bytes_changed: bool,
+}
+
+impl DaemonConfigComparisonV1 {
+    /// Returns fixed changed normalized configuration field-group names.
+    #[must_use]
+    pub fn changed_field_groups(&self) -> &[&'static str] {
+        &self.changed_field_groups
+    }
+
+    /// Returns whether exact accepted top-level configuration bytes changed.
+    #[must_use]
+    pub const fn config_source_bytes_changed(&self) -> bool {
+        self.config_source_bytes_changed
+    }
+}
+
+/// Compares two loaded daemon configurations without reflecting their values.
+///
+/// Runtime profiles compare their normalized loaded profile digest. This keeps
+/// profile-file changes visible even when the selected configuration bytes do
+/// not change.
+#[must_use]
+pub fn compare_loaded_daemon_config_v1(
+    baseline: &LoadedDaemonConfigV1,
+    candidate: &LoadedDaemonConfigV1,
+) -> DaemonConfigComparisonV1 {
+    let baseline_config = baseline.config();
+    let candidate_config = candidate.config();
+    let mut changed_field_groups = Vec::new();
+
+    if baseline_config.database_path() != candidate_config.database_path() {
+        changed_field_groups.push("database_path");
+    }
+    if baseline_config.listen_address() != candidate_config.listen_address() {
+        changed_field_groups.push("listen_address");
+    }
+    if baseline_config.control_socket_path() != candidate_config.control_socket_path() {
+        changed_field_groups.push("control_socket_path");
+    }
+    if baseline_config.disposable_git_root() != candidate_config.disposable_git_root()
+        || baseline_config.git_executable() != candidate_config.git_executable()
+    {
+        changed_field_groups.push("phase8_runtime");
+    }
+    if baseline_config
+        .docker_local_runtime_profile()
+        .map(LoadedDockerLocalRuntimeProfileV1::profile_digest)
+        != candidate_config
+            .docker_local_runtime_profile()
+            .map(LoadedDockerLocalRuntimeProfileV1::profile_digest)
+    {
+        changed_field_groups.push("runtime_profile");
+    }
+    if baseline_config.internal_console_root() != candidate_config.internal_console_root()
+        || baseline_config.internal_console_asset_manifest()
+            != candidate_config.internal_console_asset_manifest()
+    {
+        changed_field_groups.push("console");
+    }
+
+    DaemonConfigComparisonV1 {
+        changed_field_groups,
+        config_source_bytes_changed: baseline.config_digest() != candidate.config_digest(),
+    }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct DaemonConfigContractV1 {

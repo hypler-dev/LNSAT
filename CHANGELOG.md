@@ -21,6 +21,12 @@
 
 ### Added
 
+- Added opt-in v2 `lnsatctl config show` and `config diff` diagnostics using the
+  existing closed explicit-file loader. Output redacts configured values;
+  comparison distinguishes exact source-byte changes from normalized settings
+  and includes referenced runtime-profile evidence. No effective authority,
+  applicable export, configuration mutation, runtime, or release claim opens.
+
 - Added source-only exact product-surface negotiation for `GET|HEAD /v1/status`
   and three manifest commands. `lnsat.product_surface.v1` is selected by
   default or exact selector and echoed in status responses; malformed,

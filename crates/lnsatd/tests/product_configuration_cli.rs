@@ -2,7 +2,7 @@
 
 use lnsatd::product_config::{
     DAEMON_CONFIG_CONTRACT_ID_V1, DAEMON_CONFIG_VERSION_V1, MAX_DAEMON_CONFIG_BYTES_V1,
-    daemon_config_schema_json_v1, load_daemon_config_v1,
+    compare_loaded_daemon_config_v1, daemon_config_schema_json_v1, load_daemon_config_v1,
 };
 use lnsatd::runtime_profile::{
     DOCKER_LOCAL_PROFILE_CONTRACT_ID_V1, DOCKER_LOCAL_PROFILE_FAMILY_V1, DOCKER_LOCAL_PROFILE_ID_V1,
@@ -790,6 +790,436 @@ fn rejected_paths_bytes_arguments_and_environment_are_never_reflected_or_discove
     assert_eq!(stderr.trim(), "lnsatd.database.path_required");
     assert!(!stderr.contains("ambient-config-must-be-ignored"));
     assert!(!stderr.contains("ambient-secret-value"));
+}
+
+#[test]
+#[allow(clippy::too_many_lines)] // HCFG-2 command, redaction, and normalization matrix.
+fn v2_config_show_and_diff_are_redacted_normalized_and_selector_gated() {
+    let directory = TestDirectory::new("hcfg-show-diff");
+    let baseline_database = directory.path.join("private-baseline-database.sqlite3");
+    let candidate_database = directory.path.join("private-candidate-database.sqlite3");
+    let baseline = directory.write_json(
+        "private-baseline-config.json",
+        &minimal_config(&baseline_database),
+    );
+
+    let mut default_normalized = minimal_config(&baseline_database);
+    default_normalized
+        .as_object_mut()
+        .expect("configuration is an object")
+        .remove("listen_address");
+    let normalized = directory.write_json("private-normalized-config.json", &default_normalized);
+
+    let default_diff = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "diff", "--config"])
+        .arg(&baseline)
+        .args(["--against"])
+        .arg(&normalized)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("normalization diff must run");
+    assert!(default_diff.status.success());
+    assert!(default_diff.stderr.is_empty());
+    let default_evidence: Value =
+        serde_json::from_slice(&default_diff.stdout).expect("normalization diff must be JSON");
+    assert_eq!(default_evidence["direction"]["baseline"], "--config");
+    assert_eq!(default_evidence["direction"]["candidate"], "--against");
+    assert_eq!(
+        default_evidence["comparison"]["config_source_bytes_changed"],
+        true
+    );
+    assert_eq!(
+        default_evidence["comparison"]["changed_field_groups"],
+        json!([])
+    );
+    assert_eq!(
+        default_evidence["comparison"]["normalized_configuration_changed"],
+        false
+    );
+
+    let candidate = directory.write_json(
+        "private-candidate-config.json",
+        &minimal_config(&candidate_database),
+    );
+    let changed_diff = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "diff", "--config"])
+        .arg(&baseline)
+        .args(["--against"])
+        .arg(&candidate)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("changed diff must run");
+    assert!(changed_diff.status.success());
+    assert!(changed_diff.stderr.is_empty());
+    let changed_evidence: Value =
+        serde_json::from_slice(&changed_diff.stdout).expect("changed diff must be JSON");
+    assert_eq!(changed_evidence["command"], "config.diff");
+    assert_eq!(
+        changed_evidence["comparison"]["changed_field_groups"],
+        json!(["database_path"])
+    );
+    assert_eq!(
+        changed_evidence["comparison"]["normalized_configuration_changed"],
+        true
+    );
+    assert_eq!(changed_evidence["activation_authority"], false);
+    assert_eq!(changed_evidence["effective_authority_computed"], false);
+    assert_eq!(changed_evidence["runtime_started"], false);
+    assert_eq!(changed_evidence["storage_opened"], false);
+    assert_eq!(changed_evidence["listener_opened"], false);
+    assert_eq!(changed_evidence["process_started"], false);
+    assert_eq!(changed_evidence["side_effects"], json!([]));
+
+    let show_baseline = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "show", "--config"])
+        .arg(&baseline)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("baseline show must run");
+    let show_candidate = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "show", "--config"])
+        .arg(&candidate)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("candidate show must run");
+    assert!(show_baseline.status.success());
+    assert!(show_candidate.status.success());
+    let show_baseline: Value = serde_json::from_slice(&show_baseline.stdout).expect("show JSON");
+    let show_candidate: Value = serde_json::from_slice(&show_candidate.stdout).expect("show JSON");
+    assert_eq!(show_baseline["command"], "config.show");
+    assert_eq!(
+        show_baseline["configuration"]["field_groups"],
+        show_candidate["configuration"]["field_groups"]
+    );
+    assert_ne!(
+        show_baseline["configuration"]["config_digest"],
+        show_candidate["configuration"]["config_digest"]
+    );
+    for text in [
+        String::from_utf8(default_diff.stdout).expect("output UTF-8"),
+        String::from_utf8(changed_diff.stdout).expect("output UTF-8"),
+        show_baseline.to_string(),
+        show_candidate.to_string(),
+    ] {
+        for forbidden in [
+            "private-baseline-config",
+            "private-normalized-config",
+            "private-candidate-config",
+            "private-baseline-database",
+            "private-candidate-database",
+        ] {
+            assert!(!text.contains(forbidden), "{forbidden} must stay redacted");
+        }
+    }
+
+    for format in ["text", "json", "jsonl", "yaml"] {
+        let arguments = [
+            "config",
+            "diff",
+            "--config",
+            baseline.to_str().expect("test path UTF-8"),
+            "--against",
+            candidate.to_str().expect("test path UTF-8"),
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+            "--output",
+            format,
+        ];
+        let first = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("formatted diff must run");
+        let second = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("repeated formatted diff must run");
+        assert!(first.status.success(), "{format}");
+        assert!(first.stderr.is_empty(), "{format}");
+        assert_eq!(first.stdout, second.stdout, "{format} must be stable");
+        assert!(first.stdout.ends_with(b"\n"), "{format}");
+        assert!(!first.stdout.ends_with(b"\n\n"), "{format}");
+    }
+
+    for format in ["text", "json", "jsonl", "yaml"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["config", "show", "--config"])
+            .arg(&baseline)
+            .args([
+                "--product-surface-contract",
+                "lnsat.product_surface.v2",
+                "--output",
+                format,
+            ])
+            .output()
+            .expect("formatted show must run");
+        assert!(output.status.success(), "{format}");
+        assert!(output.stderr.is_empty(), "{format}");
+        assert!(output.stdout.ends_with(b"\n"), "{format}");
+        let text = String::from_utf8(output.stdout).expect("show output UTF-8");
+        assert!(!text.contains("private-baseline-config"), "{format}");
+        assert!(!text.contains("private-baseline-database"), "{format}");
+    }
+    assert!(!baseline_database.exists());
+    assert!(!candidate_database.exists());
+}
+
+#[test]
+fn v2_config_diff_compares_runtime_and_all_fixed_field_groups() {
+    let directory = TestDirectory::new("hcfg-fixed-groups");
+    let baseline_database = directory.path.join("baseline.sqlite3");
+    let candidate_database = directory.path.join("candidate.sqlite3");
+
+    let profile_path = directory.write("private-runtime-profile.json", PROFILE_FIXTURE);
+    let profile_config = directory.write_json(
+        "private-runtime-config.json",
+        &runtime_profile_config(&baseline_database, &profile_path),
+    );
+    let profile_baseline = load_daemon_config_v1(&profile_config).expect("profile baseline loads");
+    let mut changed_profile: Value =
+        serde_json::from_slice(PROFILE_FIXTURE).expect("profile fixture parses");
+    changed_profile["limits"]["cpu_millis"] = json!(999);
+    fs::write(
+        &profile_path,
+        serde_json::to_vec(&changed_profile).expect("changed profile encodes"),
+    )
+    .expect("changed profile writes");
+    let profile_candidate =
+        load_daemon_config_v1(&profile_config).expect("profile candidate loads");
+    let profile_comparison = compare_loaded_daemon_config_v1(&profile_baseline, &profile_candidate);
+    assert!(!profile_comparison.config_source_bytes_changed());
+    assert_eq!(
+        profile_comparison.changed_field_groups(),
+        ["runtime_profile"]
+    );
+
+    let baseline_path =
+        directory.write_json("baseline-groups.json", &minimal_config(&baseline_database));
+    let mut all_groups = minimal_config(&candidate_database);
+    all_groups["listen_address"] = json!("127.0.0.1:7448");
+    all_groups["control_socket_path"] = json!("/tmp/lnsat-hcfg/control.sock");
+    all_groups["phase8_runtime"] = json!({
+        "disposable_git_root": "/tmp/lnsat-hcfg/disposable-git",
+        "git_executable": "/usr/bin/git"
+    });
+    all_groups["runtime_profile"] = json!({
+        "profile_family": DOCKER_LOCAL_PROFILE_FAMILY_V1,
+        "profile_path": profile_path
+    });
+    all_groups["console"] = json!({
+        "root": "/tmp/lnsat-hcfg/console",
+        "asset_manifest": { "/": "index.html" }
+    });
+    let candidate_path = directory.write_json("candidate-groups.json", &all_groups);
+    let baseline_groups = load_daemon_config_v1(baseline_path).expect("baseline groups load");
+    let candidate_groups = load_daemon_config_v1(candidate_path).expect("candidate groups load");
+    let all_group_comparison = compare_loaded_daemon_config_v1(&baseline_groups, &candidate_groups);
+    assert!(all_group_comparison.config_source_bytes_changed());
+    assert_eq!(
+        all_group_comparison.changed_field_groups(),
+        [
+            "database_path",
+            "listen_address",
+            "control_socket_path",
+            "phase8_runtime",
+            "runtime_profile",
+            "console"
+        ]
+    );
+}
+
+#[test]
+fn v2_config_show_and_diff_redact_all_optional_canaries_in_every_format() {
+    let directory = TestDirectory::new("hcfg-redaction-matrix");
+    let baseline_database = directory.path.join("private-database-baseline.sqlite3");
+    let candidate_database = directory.path.join("private-database-candidate.sqlite3");
+    let baseline_socket = PathBuf::from("/tmp/private-control-baseline.sock");
+    let candidate_socket = PathBuf::from("/tmp/private-control-candidate.sock");
+    let baseline_profile = directory.write("private-profile-baseline.json", PROFILE_FIXTURE);
+    let candidate_profile = directory.write("private-profile-candidate.json", PROFILE_FIXTURE);
+    let baseline_git_root = directory.path.join("private-git-root-baseline");
+    let candidate_git_root = directory.path.join("private-git-root-candidate");
+    let baseline_git_executable = directory.path.join("private-git-baseline");
+    let candidate_git_executable = directory.path.join("private-git-candidate");
+    let baseline_console_root = directory.path.join("private-console-baseline");
+    let candidate_console_root = directory.path.join("private-console-candidate");
+
+    let mut baseline_value = minimal_config(&baseline_database);
+    baseline_value["listen_address"] = json!("127.0.0.1:7447");
+    baseline_value["control_socket_path"] = json!(baseline_socket);
+    baseline_value["phase8_runtime"] = json!({
+        "disposable_git_root": baseline_git_root,
+        "git_executable": baseline_git_executable
+    });
+    baseline_value["runtime_profile"] = json!({
+        "profile_family": DOCKER_LOCAL_PROFILE_FAMILY_V1,
+        "profile_path": baseline_profile
+    });
+    baseline_value["console"] = json!({
+        "root": baseline_console_root,
+        "asset_manifest": { "/private-asset-baseline.html": "index.html" }
+    });
+    let baseline = directory.write_json("private-config-baseline.json", &baseline_value);
+
+    let mut candidate_value = minimal_config(&candidate_database);
+    candidate_value["listen_address"] = json!("127.0.0.1:7448");
+    candidate_value["control_socket_path"] = json!(candidate_socket);
+    candidate_value["phase8_runtime"] = json!({
+        "disposable_git_root": candidate_git_root,
+        "git_executable": candidate_git_executable
+    });
+    candidate_value["runtime_profile"] = json!({
+        "profile_family": DOCKER_LOCAL_PROFILE_FAMILY_V1,
+        "profile_path": candidate_profile
+    });
+    candidate_value["console"] = json!({
+        "root": candidate_console_root,
+        "asset_manifest": { "/private-asset-candidate.html": "index.html" }
+    });
+    let candidate = directory.write_json("private-config-candidate.json", &candidate_value);
+
+    let canaries = [
+        "private-config-baseline",
+        "private-config-candidate",
+        "private-database-baseline",
+        "private-database-candidate",
+        "127.0.0.1:7447",
+        "127.0.0.1:7448",
+        "private-control-baseline",
+        "private-control-candidate",
+        "private-git-root-baseline",
+        "private-git-root-candidate",
+        "private-git-baseline",
+        "private-git-candidate",
+        "private-profile-baseline",
+        "private-profile-candidate",
+        "runtime-profile:docker-local:git-reference",
+        "private-console-baseline",
+        "private-console-candidate",
+        "/private-asset-baseline.html",
+        "/private-asset-candidate.html",
+    ];
+    assert_full_config_cli_redaction(&baseline, &candidate, &canaries);
+    for target in [
+        baseline_database,
+        candidate_database,
+        baseline_socket,
+        candidate_socket,
+        baseline_git_root,
+        candidate_git_root,
+        baseline_git_executable,
+        candidate_git_executable,
+        baseline_console_root,
+        candidate_console_root,
+    ] {
+        assert!(
+            !target.exists(),
+            "read-only command must not create {target:?}"
+        );
+    }
+}
+
+fn assert_full_config_cli_redaction(baseline: &Path, candidate: &Path, canaries: &[&str]) {
+    for format in ["text", "json", "jsonl", "yaml"] {
+        let show = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["config", "show", "--config"])
+            .arg(baseline)
+            .args([
+                "--product-surface-contract",
+                "lnsat.product_surface.v2",
+                "--output",
+                format,
+            ])
+            .output()
+            .expect("full redaction show must run");
+        let diff = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["config", "diff", "--config"])
+            .arg(baseline)
+            .args(["--against"])
+            .arg(candidate)
+            .args([
+                "--product-surface-contract",
+                "lnsat.product_surface.v2",
+                "--output",
+                format,
+            ])
+            .output()
+            .expect("full redaction diff must run");
+        for output in [show, diff] {
+            assert!(
+                output.status.success(),
+                "{format}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(output.stderr.is_empty(), "{format}");
+            assert!(output.stdout.ends_with(b"\n"), "{format}");
+            let text = String::from_utf8(output.stdout).expect("redacted output UTF-8");
+            for &canary in canaries {
+                assert!(
+                    !text.contains(canary),
+                    "{format}: {canary} must stay redacted"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn v2_config_show_and_diff_reject_invalid_arguments_without_stdout() {
+    let directory = TestDirectory::new("hcfg-invalid");
+    let database = directory.path.join("private-database.sqlite3");
+    let baseline = directory.write_json("private-baseline.json", &minimal_config(&database));
+    let candidate = directory.write_json("private-candidate.json", &minimal_config(&database));
+
+    for arguments in [
+        vec!["config", "show", "--config", baseline.to_str().unwrap()],
+        vec![
+            "config",
+            "show",
+            "--config",
+            baseline.to_str().unwrap(),
+            "--product-surface-contract",
+            "lnsat.product_surface.v1",
+        ],
+        vec![
+            "config",
+            "diff",
+            "--config",
+            baseline.to_str().unwrap(),
+            "--against",
+            candidate.to_str().unwrap(),
+        ],
+        vec![
+            "config",
+            "diff",
+            "--config",
+            baseline.to_str().unwrap(),
+            "--against",
+            candidate.to_str().unwrap(),
+            "--product-surface-contract",
+            "lnsat.product_surface.v1",
+        ],
+    ] {
+        let rejected = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("invalid HCFG command must run");
+        assert_eq!(rejected.status.code(), Some(2));
+        assert!(rejected.stdout.is_empty());
+        let error: Value = serde_json::from_slice(&rejected.stderr).expect("error JSON");
+        assert_eq!(error["error"]["code"], "lnsatctl.arguments.invalid");
+    }
+
+    let missing = directory.path.join("private-missing.json");
+    let invalid_input = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "show", "--config"])
+        .arg(&missing)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("invalid selected config must run");
+    assert_eq!(invalid_input.status.code(), Some(2));
+    assert!(invalid_input.stdout.is_empty());
+    let stderr = String::from_utf8(invalid_input.stderr).expect("stderr UTF-8");
+    assert!(!stderr.contains("private-missing"));
 }
 
 fn minimal_config(database_path: &Path) -> Value {

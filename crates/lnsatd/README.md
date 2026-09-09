@@ -203,3 +203,10 @@ and no session activity. `lnsatctl config schema|validate` require explicit v2;
 validation reads config/profile evidence only and opens no database, listener,
 process, or action authority. This opens no runtime, package, release,
 deployment, or control authority.
+
+HCFG-2 adds v2-only `lnsatctl config show --config <absolute-path>` and
+`lnsatctl config diff --config <baseline> --against <candidate>`, with the same
+required selector and final output-format option. Show is redacted; diff returns
+fixed field names and distinguishes source-byte changes from validated-setting
+changes. Neither computes effective authority, exports applicable configuration,
+or proves live drift. See the [HCFG-2 packet](../../docs/PROJECT_STATUS.md#hcfg-2-redacted-explicit-configuration-comparison).

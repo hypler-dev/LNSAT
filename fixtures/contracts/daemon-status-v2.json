@@ -23,6 +23,8 @@
       "config.inspect",
       "config.schema",
       "config.validate",
+      "config.show",
+      "config.diff",
       "recovery.inspect",
       "backup",
       "restore",

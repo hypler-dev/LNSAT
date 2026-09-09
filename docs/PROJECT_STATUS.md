@@ -54,6 +54,34 @@ referenced runtime profile but opens no database, listener, process, or action
 authority. No range or fallback exists. Headless configuration/control and
 Phase 11 real Docker proof remain pending.
 
+### HCFG-2: Redacted explicit configuration comparison
+
+Canonical packet record: this section. Accepted scope is bounded source delivery
+under the headless configuration requirement. Implementation adds opt-in v2
+`config show` and `config diff` over the existing explicit-file loader. Review
+and validation are required before this packet is considered ready to merge;
+merge remains a separate owner decision.
+
+`show` reports a fixed redacted configuration summary and exact source evidence.
+`diff --config <baseline> --against <candidate>` compares validated configuration
+values in the core and emits only fixed changed-field names, never old/new
+paths, addresses, console keys, profile identifiers, or source bytes. It
+separates exact source-byte changes from normalized configuration changes;
+formatting alone and an explicit default address do not imply a changed setting.
+Referenced runtime-profile evidence participates in comparison. The two loads
+are sequential observations, not an atomic snapshot or proof of live drift.
+
+Both commands require exact `lnsat.product_surface.v2` selection and support
+text, JSON, JSONL, and YAML. Frozen v1 behavior and configuration schema remain
+unchanged. No storage, listener, process, mutation, activation, or action
+authority opens. Output does not compute effective authority, prove resource
+identity or OS enforcement, or provide an applicable configuration export.
+Layer composition, effective/export, monitoring, and protected control remain
+pending under the [ordered headless sequence](PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order).
+Rollback is a normal reviewed source revert; there is no persistent migration.
+
+### Existing runtime and product foundations
+
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
 exact-ID Control Center readback and manifest-only source-local console hosting
 are implemented as experimental source. Phase 10 P10-A1 product-surface spine,
