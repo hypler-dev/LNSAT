@@ -10,8 +10,8 @@ use lnsatd::product_recovery::{
     restore_inert_backup_output_json_v1,
 };
 use lnsatd::product_surface::{
-    PRODUCT_SOURCE_VERSION_V1, ProductExitCodeV1, completion_source_v1,
-    config_inspection_output_json_v1, config_schema_output_json_v2,
+    PRODUCT_SOURCE_VERSION_V1, ProductExitCodeV1, completion_source_v1, config_diff_output_json_v2,
+    config_inspection_output_json_v1, config_schema_output_json_v2, config_show_output_json_v2,
     config_validation_output_json_v2, doctor_output_json_v1, failure_output_json_v1,
     is_supported_product_surface_contract_v1, lnsatctl_usage_v1, man_page_source_v1,
     product_surface_manifest_json_v1, product_surface_manifest_json_v2,
@@ -100,6 +100,69 @@ fn main() -> ExitCode {
                     format,
                 ),
             }
+        }
+        [config, show, option, path, selector, value]
+            if config == OsStr::new("config")
+                && show == OsStr::new("show")
+                && option == OsStr::new("--config")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new("lnsat.product_surface.v2") =>
+        {
+            match load_daemon_config_v1(PathBuf::from(path)) {
+                Ok(loaded) => {
+                    emit_json_success(&config_show_output_json_v2(&loaded), "config.show", format)
+                }
+                Err(error) => emit_failure(
+                    "config.show",
+                    error.code(),
+                    ProductExitCodeV1::UsageOrConfiguration,
+                    format,
+                ),
+            }
+        }
+        [
+            config,
+            diff,
+            option,
+            baseline_path,
+            against,
+            candidate_path,
+            selector,
+            value,
+        ] if config == OsStr::new("config")
+            && diff == OsStr::new("diff")
+            && option == OsStr::new("--config")
+            && against == OsStr::new("--against")
+            && selector == OsStr::new("--product-surface-contract")
+            && value == OsStr::new("lnsat.product_surface.v2") =>
+        {
+            let baseline = match load_daemon_config_v1(PathBuf::from(baseline_path)) {
+                Ok(loaded) => loaded,
+                Err(error) => {
+                    return emit_failure(
+                        "config.diff",
+                        error.code(),
+                        ProductExitCodeV1::UsageOrConfiguration,
+                        format,
+                    );
+                }
+            };
+            let candidate = match load_daemon_config_v1(PathBuf::from(candidate_path)) {
+                Ok(loaded) => loaded,
+                Err(error) => {
+                    return emit_failure(
+                        "config.diff",
+                        error.code(),
+                        ProductExitCodeV1::UsageOrConfiguration,
+                        format,
+                    );
+                }
+            };
+            emit_json_success(
+                &config_diff_output_json_v2(&baseline, &candidate),
+                "config.diff",
+                format,
+            )
         }
         [command] if command == OsStr::new("doctor") => {
             emit_json_success(&doctor_output_json_v1(), "doctor", format)

@@ -364,6 +364,8 @@ fn unix_status_selectors_echo_exact_typed_bodies() {
             "config.inspect",
             "config.schema",
             "config.validate",
+            "config.show",
+            "config.diff",
             "recovery.inspect",
             "backup",
             "restore",

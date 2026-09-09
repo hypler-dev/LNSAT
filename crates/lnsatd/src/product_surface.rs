@@ -5,7 +5,7 @@
 
 use crate::product_config::{
     DAEMON_CONFIG_CONTRACT_ID_V1, LoadedDaemonConfigV1, MAX_DAEMON_CONFIG_BYTES_V1,
-    daemon_config_schema_json_v1,
+    compare_loaded_daemon_config_v1, daemon_config_schema_json_v1,
 };
 use lnsat_contracts::CONTRACT_VERSION_V1_0;
 use lnsat_store::{SQLITE_SCHEMA_VERSION, SqliteRecoveryErrorV1, SqliteStore, SqliteStoreStateV1};
@@ -272,6 +272,8 @@ impl DaemonStatusV2 {
                     "config.inspect",
                     "config.schema",
                     "config.validate",
+                    "config.show",
+                    "config.diff",
                     "recovery.inspect",
                     "backup",
                     "restore",
@@ -428,6 +430,8 @@ pub fn daemon_status_v2() -> DaemonStatusV2 {
                 "config.inspect",
                 "config.schema",
                 "config.validate",
+                "config.show",
+                "config.diff",
                 "recovery.inspect",
                 "backup",
                 "restore",
@@ -523,6 +527,102 @@ pub fn config_validation_output_json_v2(loaded: &LoadedDaemonConfigV1) -> String
         "config_digest": loaded.config_digest(),
         "validation_scope": "explicit_daemon_configuration",
         "activation_authority": false,
+        "side_effects": []
+    })
+    .to_string()
+}
+
+fn config_redacted_summary_v2(loaded: &LoadedDaemonConfigV1) -> serde_json::Value {
+    let runtime_profile = loaded.docker_local_runtime_profile();
+    json!({
+        "config_digest": loaded.config_digest(),
+        "field_groups": {
+            "database_path": { "configured": true, "value": "redacted" },
+            "listen_address": { "configured": true, "value": "redacted" },
+            "control_socket_path": {
+                "configured": loaded.control_socket_configured(),
+                "value": "redacted"
+            },
+            "phase8_runtime": {
+                "configured": loaded.phase8_runtime_configured(),
+                "value": "redacted"
+            },
+            "runtime_profile": {
+                "configured": loaded.docker_local_runtime_profile_configured(),
+                "value": "redacted",
+                "whole_profile_digest": runtime_profile.map(
+                    crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1::profile_digest_text
+                ),
+                "authority_configuration_digest": runtime_profile.map(
+                    crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1::authority_configuration_digest_text
+                )
+            },
+            "console": {
+                "configured": loaded.console_manifest_configured(),
+                "value": "redacted"
+            }
+        }
+    })
+}
+
+/// Public-safe redacted summary for one loader-validated configuration.
+///
+/// This command reads explicit selected input only. It starts no process,
+/// storage, listener, or runtime.
+#[must_use]
+pub fn config_show_output_json_v2(loaded: &LoadedDaemonConfigV1) -> String {
+    json!({
+        "ok": true,
+        "schema": CLI_OUTPUT_SCHEMA_V1,
+        "command": "config.show",
+        "configuration_contract": DAEMON_CONFIG_CONTRACT_ID_V1,
+        "configuration": config_redacted_summary_v2(loaded),
+        "scope": "explicit_daemon_configuration",
+        "activation_authority": false,
+        "effective_authority_computed": false,
+        "runtime_started": false,
+        "storage_opened": false,
+        "listener_opened": false,
+        "process_started": false,
+        "side_effects": []
+    })
+    .to_string()
+}
+
+/// Public-safe normalized comparison of two loader-validated configurations.
+///
+/// `baseline` is the value supplied to `--config`; `candidate` is the value
+/// supplied to `--against`. Each selected file is observed independently, so
+/// this result makes no atomic-pair or live-drift claim.
+#[must_use]
+pub fn config_diff_output_json_v2(
+    baseline: &LoadedDaemonConfigV1,
+    candidate: &LoadedDaemonConfigV1,
+) -> String {
+    let comparison = compare_loaded_daemon_config_v1(baseline, candidate);
+    json!({
+        "ok": true,
+        "schema": CLI_OUTPUT_SCHEMA_V1,
+        "command": "config.diff",
+        "configuration_contract": DAEMON_CONFIG_CONTRACT_ID_V1,
+        "direction": {
+            "baseline": "--config",
+            "candidate": "--against"
+        },
+        "baseline": config_redacted_summary_v2(baseline),
+        "candidate": config_redacted_summary_v2(candidate),
+        "comparison": {
+            "config_source_bytes_changed": comparison.config_source_bytes_changed(),
+            "changed_field_groups": comparison.changed_field_groups(),
+            "normalized_configuration_changed": !comparison.changed_field_groups().is_empty()
+        },
+        "scope": "explicit_daemon_configuration",
+        "activation_authority": false,
+        "effective_authority_computed": false,
+        "runtime_started": false,
+        "storage_opened": false,
+        "listener_opened": false,
+        "process_started": false,
         "side_effects": []
     })
     .to_string()
@@ -698,7 +798,7 @@ pub fn failure_output_json_v1(
 /// Bounded `lnsatctl` help text.
 #[must_use]
 pub const fn lnsatctl_usage_v1() -> &'static str {
-    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl config schema --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
+    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl config schema --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config show --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config diff --config <absolute-path> --against <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
 }
 
 /// Generated completion source for supported shells.
@@ -726,7 +826,7 @@ pub fn man_page_source_v1(command: &str) -> Option<&'static str> {
             ".TH LNSAT 1\n.SH NAME\nlnsat - source-only LNSAT workflow dispatcher\n.SH SYNOPSIS\nlnsat packet <validate|hash|inspect> <packet.json> [request_id] | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH SAFETY\nNo command grants ambient authority. Current commands are read-only or pure local inspection. Product-surface selection is exact-match only; no range or fallback exists.\n",
         ),
         "lnsatctl" => Some(
-            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics and offline recovery\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] | config inspect --config <absolute-path> | config schema --product-surface-contract lnsat.product_surface.v2 | config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | recovery inspect --database <path> | backup --database <path> --destination <fresh-path> | restore --backup <path> --destination <fresh-path> | recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH OUTPUT\nCommands accept --output text|json|jsonl|yaml in documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Product-surface selection is exact-match only; no range or fallback exists. Config schema and validation are v2-selected diagnostics only: they start no service, open no database, and grant no activation authority. Offline backup and owner recovery prove daemon quiescence through exclusive database lease. Restore creates only one fresh inert file. Owner replacement password is accepted only through protected stdin. Daemon and offline recovery commands refuse root. No API, MCP, UI, service start, automatic activation, or existing-file replacement authority exists.\n",
+            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics and offline recovery\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] | config inspect --config <absolute-path> | config schema --product-surface-contract lnsat.product_surface.v2 | config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config show --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config diff --config <absolute-path> --against <absolute-path> --product-surface-contract lnsat.product_surface.v2 | recovery inspect --database <path> | backup --database <path> --destination <fresh-path> | restore --backup <path> --destination <fresh-path> | recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH OUTPUT\nCommands accept --output text|json|jsonl|yaml in documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Product-surface selection is exact-match only; no range or fallback exists. Config schema, validation, show, and diff are v2-selected diagnostics only: they start no service, open no database, and grant no activation authority. Config diff observes selected inputs sequentially and does not prove an atomic pair or live drift. Offline backup and owner recovery prove daemon quiescence through exclusive database lease. Restore creates only one fresh inert file. Owner replacement password is accepted only through protected stdin. Daemon and offline recovery commands refuse root. No API, MCP, UI, service start, automatic activation, or existing-file replacement authority exists.\n",
         ),
         "lnsatd" => Some(
             ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --config <absolute-path> | --database <path> [--listen <numeric-loopback:port>] | --manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically. Product-surface selection is exact-match only; no range or fallback exists.\n",
@@ -895,6 +995,8 @@ mod tests {
                 "config inspect",
                 "config schema",
                 "config validate",
+                "config show",
+                "config diff",
                 "recovery inspect",
                 "backup",
                 "restore",
@@ -909,6 +1011,14 @@ mod tests {
         assert_eq!(
             v2["configuration"]["headless_diagnostics"]["selector_required"],
             true
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["show"],
+            "config.show"
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["diff"],
+            "config.diff"
         );
         assert_eq!(v2["hard_stops"]["phase11_or_later_implementation"], false);
     }

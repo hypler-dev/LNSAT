@@ -23,6 +23,8 @@
         "config inspect",
         "config schema",
         "config validate",
+        "config show",
+        "config diff",
         "recovery inspect",
         "backup",
         "restore",
@@ -120,10 +122,14 @@
     "headless_diagnostics": {
       "schema": "config.schema",
       "validate": "config.validate",
+      "show": "config.show",
+      "diff": "config.diff",
       "product_surface_contract": "lnsat.product_surface.v2",
       "selector_required": true,
       "validation_scope": "explicit_daemon_configuration",
       "activation_authority": false,
+      "effective_authority_computed": false,
+      "comparison": "normalized_loaded_config_sequential_observation",
       "side_effects": []
     },
     "environment_discovery_used": false,

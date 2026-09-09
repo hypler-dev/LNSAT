@@ -116,6 +116,39 @@ graphical lifecycle is downstream work.
 Source implementation needs a separately bounded packet; this documentation
 opens no route, OS permission, runtime, install, or execution authority.
 
+### Headless source packet order
+
+The accepted headless requirement is implemented in dependency order. Packet
+implementation and acceptance evidence belong to
+[Project Status](PROJECT_STATUS.md#hcfg-2-redacted-explicit-configuration-comparison),
+not this ordering record.
+
+1. **HCFG-2 — redacted explicit inspection/comparison.** Reuse the closed loader
+   for v2 `show` and `diff`; compare validated values before redaction and
+   distinguish source bytes from setting changes. No new configuration fields,
+   layer composition, effective-authority result, or mutation.
+2. **HCFG-3 — declarative composition and effective/export diagnostics.** Define
+   explicit layer inputs and a closed resource-access/action-authority model in
+   the core. Reject unknown capabilities and authority-widening inheritance.
+   Specify redacted export semantics and test defaults, ordering, conflicts,
+   unsupported controls, and secret-safe output before exposing these commands.
+3. **HCFG-4 — monitoring evidence.** Inventory existing authenticated reads;
+   complete operations, approvals/audit readback, then versioned watch with
+   bounded retention, cursor/resume, ordering, disconnect, and backpressure tests.
+4. **HCFG-5 — protected configuration/control.** Prepare exact authorization,
+   ownership, audit, atomicity, rollback, revocation, and race contracts first.
+   Obtain any new authority decision before implementing mutation, bootstrap,
+   permission activation, or emergency controls. Reuse existing Gateway and local
+   owner-proof foundations; never create a second authority path.
+5. **HCFG-6 — enforcement and headless conformance.** Bind observed OS controls
+   to stable capabilities, deny unsupported activation, test target substitution
+   and revocation races, and close source conformance. Actual runtime and selected
+   target proof remain separately authorized Phase 11/14 gates.
+
+This sequence does not preapprove the later mutation contracts or satisfy the
+headless release gate. Each source packet requires focused validation and fresh
+independent review before a separately authorized merge.
+
 ## Accepted Changes Since Original Plan
 
 Accepted decisions changed sequencing and breadth without changing that goal:

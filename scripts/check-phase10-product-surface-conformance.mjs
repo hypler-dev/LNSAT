@@ -141,6 +141,8 @@ function expectedProductSurfaceV2(frozenV1Manifest) {
     0,
     "config schema",
     "config validate",
+    "config show",
+    "config diff",
   );
   expected.configuration.implemented_fields.splice(
     5,
@@ -151,10 +153,14 @@ function expectedProductSurfaceV2(frozenV1Manifest) {
   const headlessDiagnostics = {
     schema: "config.schema",
     validate: "config.validate",
+    show: "config.show",
+    diff: "config.diff",
     product_surface_contract: "lnsat.product_surface.v2",
     selector_required: true,
     validation_scope: "explicit_daemon_configuration",
     activation_authority: false,
+    effective_authority_computed: false,
+    comparison: "normalized_loaded_config_sequential_observation",
     side_effects: [],
   };
   expected.configuration = Object.fromEntries(
@@ -195,6 +201,8 @@ const EXPECTED_DAEMON_STATUS_V2 = {
       "config.inspect",
       "config.schema",
       "config.validate",
+      "config.show",
+      "config.diff",
       "recovery.inspect",
       "backup",
       "restore",

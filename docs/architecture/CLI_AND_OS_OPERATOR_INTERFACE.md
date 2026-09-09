@@ -46,6 +46,20 @@ selected config and a referenced runtime profile, but opens no database,
 listener, process, or action authority. No range or fallback exists. This
 negotiation seam does not complete headless configuration/control.
 
+HCFG-2 adds `config show --config <absolute-path>` and
+`config diff --config <baseline-absolute-path> --against <candidate-absolute-path>`,
+each followed by `--product-surface-contract lnsat.product_surface.v2` and
+optional final `--output <text|json|jsonl|yaml>`. Both use the existing loader.
+`show` emits only fixed redacted setting summaries and whole-source evidence;
+`diff` emits fixed changed-field names after comparing validated values in the
+core. `--config` is the baseline and `--against` is the candidate. Exact-byte
+change is distinct from normalized-setting change. Referenced profile evidence
+is included; loads are sequential, not an atomic pair or live-state inspection.
+No raw paths, addresses, console keys, profile identifiers, or source bytes are
+returned. These diagnostics grant no activation, compute no effective authority,
+and are not round-trippable exports. See the
+[canonical HCFG-2 record](../PROJECT_STATUS.md#hcfg-2-redacted-explicit-configuration-comparison).
+
 | Binary     | Audience                           | Responsibility                                                                              |
 | ---------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 | `lnsat`    | users, agents, scripts, developers | primary workflow command and convenience dispatcher                                         |
@@ -122,6 +136,8 @@ lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surfac
 lnsatctl config inspect --config <absolute-path>
 lnsatctl config schema --product-surface-contract lnsat.product_surface.v2
 lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2
+lnsatctl config show --config <absolute-path> --product-surface-contract lnsat.product_surface.v2
+lnsatctl config diff --config <baseline-absolute-path> --against <candidate-absolute-path> --product-surface-contract lnsat.product_surface.v2
 lnsatctl recovery inspect --database <path>
 lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]
 lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]

@@ -244,3 +244,47 @@ test("P10-X1 rejects removal from repository-wide check", () => {
   assert.equal(result.ok, false);
   assert.match(result.errors.join("\n"), /check must include Phase 10 exit gates/u);
 });
+
+test("HCFG-2 rejects missing diagnostics and invented mutation commands", () => {
+  for (const command of ["config show", "config diff", "config apply"]) {
+    const productSurfaceV2Path = mutatedJson(
+      "fixtures/contracts/product-surface-v2.json",
+      (fixture) => {
+        const commands = fixture.binaries.lnsatctl.implemented_commands;
+        if (command === "config apply") commands.push(command);
+        else commands.splice(commands.indexOf(command), 1);
+      },
+    );
+    const daemonStatusV2Path = mutatedJson(
+      "fixtures/contracts/daemon-status-v2.json",
+      (fixture) => {
+        const commands = fixture.product_surface.implemented;
+        const statusCommand = command.replace(" ", ".");
+        if (command === "config apply") commands.push(statusCommand);
+        else commands.splice(commands.indexOf(statusCommand), 1);
+      },
+    );
+    for (const options of [{ productSurfaceV2Path }, { daemonStatusV2Path }]) {
+      const result = validatePhase10ProductSurfaceConformance({ root, ...options });
+      assert.equal(result.ok, false, command);
+      assert.match(result.errors.join("\n"), /exact contract or authority mismatch/u);
+    }
+  }
+});
+
+test("HCFG-2 rejects activation and effective-authority diagnostic claims", () => {
+  for (const field of ["activation_authority", "effective_authority_computed"]) {
+    const productSurfaceV2Path = mutatedJson(
+      "fixtures/contracts/product-surface-v2.json",
+      (fixture) => {
+        fixture.configuration.headless_diagnostics[field] = true;
+      },
+    );
+    const result = validatePhase10ProductSurfaceConformance({
+      root,
+      productSurfaceV2Path,
+    });
+    assert.equal(result.ok, false, field);
+    assert.match(result.errors.join("\n"), /exact contract or authority mismatch/u);
+  }
+});
