@@ -41,6 +41,8 @@ subsystem or proposal.
   — headless LNSAT configuration requirements; graphical wizard and distro
   packaging belong to Rangoon.
 
+- [Headless declaration composition](architecture/headless-configuration/spec.md)
+  — exact source-only resource/action ceilings and remaining activation boundary.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)

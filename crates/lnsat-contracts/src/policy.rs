@@ -208,7 +208,10 @@ pub fn decide_packet_envelope_policy_v1(
     })
 }
 
-fn classify_capability(capability: &str, profile_supported: bool) -> PolicyCapabilityDecisionV1 {
+pub(crate) fn classify_capability(
+    capability: &str,
+    profile_supported: bool,
+) -> PolicyCapabilityDecisionV1 {
     let (decision, reason) = if !profile_supported {
         (
             PolicyDecisionV1Kind::Deny,

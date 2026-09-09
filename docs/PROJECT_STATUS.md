@@ -29,6 +29,34 @@ no public/private key input is requested.
 [Phase 7 readiness plan](architecture/PHASE_7_READINESS_EXECUTION_PLAN.md) and
 [ledger](reference/phase7-readiness.json) confirm no execution authority opened.
 
+## HCFG-3A Core Declaration Composition
+
+HCFG-3A implements an experimental pure Rust declaration parser and composition
+primitive under the accepted headless configuration requirement. Its sealed
+model separates resource declarations from principal/action ceilings, enforces
+ordered narrowing layers, retains denials, and rejects resource restoration,
+weaker approval, and increased budgets. The
+[source contract](architecture/headless-configuration/spec.md) defines exact
+bounds, canonical content identity, and redacted diagnostic output.
+
+Integrated source validation passed 19 headless tests within 45 core unit and
+13 existing conformance tests, canonical pinned workspace clippy,
+npm run source:check, dependency/signature audits, and independent read-only
+review. Full source validation passed on the combined HCFG-2/HCFG-3A tree;
+source acceptance is complete after the independently reviewed integration
+corrections. OSV and Gitleaks report no findings. Semgrep's sole finding is a
+confirmed false positive on an authored invalid uppercase SHA-256 test digest;
+no rule is suppressed. The implementation adds no package versions and leaves
+existing daemon configuration, packet policy behavior, and product-surface
+manifests unchanged.
+
+Merge remains a separate owner decision. This foundation does not implement
+config effective or config export commands, verify resource identity, or
+grant action/activation authority. Full current policy, authenticated ownership,
+approvals, OS enforcement, and persisted stop/revocation checks remain required
+before future activation. Headless control and the larger V1 goal remain
+incomplete; this packet grants no runtime, artifact, or release authority.
+
 ## Current Build Position
 
 Headless setup and access-management through the versioned API and `lnsatctl`
