@@ -14,12 +14,10 @@
   exact release-source review gate exists.
   `source:check` now owns public CI/development validation; `release:check`
   adds the strict supported-release evidence gate.
-- Updated fixable npm dependency findings for Next.js/PostCSS, Hono,
-  `ip-address`, `fast-uri`, and the conformance SDK. Source verification now
-  rejects every unexpected npm advisory through a tested fail-closed gate. One
-  exact moderate upstream MCP Node/Hono Node Windows `serveStatic` advisory is
-  temporarily accepted because LNSAT imports only `toNodeHandler`; any package,
-  path, severity, range, source, lock-version, or advisory drift fails CI.
+- Updated Vitest to 4.1.11, Next.js to 16.3.4, Hono to 4.13.5, and
+  Sharp to 0.35.4 to resolve reported npm security advisories. The dependency
+  audit gate rejects every vulnerability; no advisory exception remains.
+  Vitest's supported patched major replaces the unmaintained 3.x line.
 
 ### Added
 

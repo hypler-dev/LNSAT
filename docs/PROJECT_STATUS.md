@@ -206,11 +206,10 @@ production listener, state-changing tool, real IdP/SPIRE/HSM/KMS integration,
 signer activation, real key/trust material, execution path, or production
 support exists.
 
-Dependency audit removes all currently fixable high and moderate findings.
-One upstream MCP Node/Hono Node moderate advisory remains: it affects the
-Windows `serveStatic` path, while LNSAT imports only `toNodeHandler`. The audit
-gate accepts only that exact pinned advisory and rejects package, path,
-severity, range, source, lock-version, or additional-advisory drift.
+Dependency remediation pins Vitest 4.1.11, Next.js 16.3.4, Hono 4.13.5,
+and Sharp 0.35.4. The npm audit gate rejects every reported vulnerability;
+no advisory exception remains. This is source dependency maintenance and
+opens no runtime, deployment, package, or supported-release claim.
 
 See [MCP interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md)
 and [Phase 8 adapter authority conformance](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).
