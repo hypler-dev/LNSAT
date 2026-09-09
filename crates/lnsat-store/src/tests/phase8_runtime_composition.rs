@@ -893,24 +893,52 @@ fn phase8_after_commit_ambiguity_is_consumed_claimed_unknown_and_never_runs_git(
 fn phase8_git_supervisor_kills_at_deadline_and_caps_stdout_exactly() {
     assert_eq!(PHASE8_GIT_PROCESS_DEADLINE_SECONDS_V1, 30);
     assert_eq!(PHASE8_GIT_MAX_STDOUT_BYTES_V1, 1_048_576);
-    let mut child = Command::new("/usr/bin/yes")
+
+    let mut child = Command::new("/bin/sh")
+        .args(["-c", "while :; do :; done"])
         .stdin(Stdio::null())
-        .stdout(Stdio::piped())
+        .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-        .expect("bounded-output child must start");
-    let stdout = child.stdout.take().expect("stdout must be piped");
-    let reader = thread::spawn(move || crate::phase7_git_adapter::read_bounded_stdout_v1(stdout));
+        .expect("deadline child must start");
     let error = crate::phase7_git_adapter::wait_for_child_deadline_v1(
         &mut child,
         Duration::from_millis(20),
     )
     .expect_err("deadline must kill running child");
     assert_eq!(error, Phase7GitAdapterErrorV1::OutcomeUnknown);
-    let (stdout, overflowed) = reader
-        .join()
-        .expect("stdout reader must join")
-        .expect("stdout reader must finish");
-    assert!(overflowed);
-    assert_eq!(stdout.len(), PHASE8_GIT_MAX_STDOUT_BYTES_V1);
+    let deadline_status = child
+        .try_wait()
+        .expect("deadline child status must read")
+        .expect("deadline child must be reaped");
+    assert!(!deadline_status.success(), "deadline child must be killed");
+
+    for (output_bytes, expect_overflow) in [
+        (PHASE8_GIT_MAX_STDOUT_BYTES_V1, false),
+        (PHASE8_GIT_MAX_STDOUT_BYTES_V1 + 1, true),
+    ] {
+        let mut child = Command::new("/usr/bin/head")
+            .args(["-c", &output_bytes.to_string(), "/dev/zero"])
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("finite bounded-output child must start");
+        let stdout = child.stdout.take().expect("stdout must be piped");
+        let reader =
+            thread::spawn(move || crate::phase7_git_adapter::read_bounded_stdout_v1(stdout));
+        let status = crate::phase7_git_adapter::wait_for_child_deadline_v1(
+            &mut child,
+            Duration::from_secs(PHASE8_GIT_PROCESS_DEADLINE_SECONDS_V1),
+        )
+        .expect("finite bounded-output child must finish before deadline");
+        assert!(status.success(), "finite bounded-output child must succeed");
+        let (stdout, overflowed) = reader
+            .join()
+            .expect("stdout reader must join")
+            .expect("stdout reader must finish");
+        assert_eq!(stdout.len(), PHASE8_GIT_MAX_STDOUT_BYTES_V1);
+        assert!(stdout.iter().all(|byte| *byte == 0));
+        assert_eq!(overflowed, expect_overflow);
+    }
 }
