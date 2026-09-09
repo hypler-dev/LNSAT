@@ -15,8 +15,9 @@ required, narrowly scoped execution, and a record of what actually happened.
 > **Available today: pre-release source for developers and evaluators.**
 > LNSAT `0.1.0` contains experimental implementations and tests, not a supported
 > production product. No supported installer, package, container, or hosted
-> service is available. The setup wizard, permission-management UI, and real
-> Docker runtime proof remain unfinished. APIs and schemas may change.
+> service is available. Real Docker runtime proof remains unfinished. APIs and
+> schemas may change. Rangoon's graphical installer and management UI are
+> separate downstream work.
 
 [Evaluate from source](#evaluate-from-source) · [Project status](docs/PROJECT_STATUS.md) ·
 [Documentation](docs/DOCS_INDEX.md) · [Contribute](CONTRIBUTING.md)
@@ -93,28 +94,45 @@ verification remain separate gates. [Project Status](docs/PROJECT_STATUS.md)
 owns detailed implementation truth; [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md)
 explains the labels.
 
-## The Standalone Product We Are Building
+## The LNSAT Core and Rangoon Boundary
 
-LNSAT V1 is planned as an owner-controlled, local or self-hosted, single-node
-service with its own CLI and management UI. It does not require Rangoon or any
-other agent platform.
+LNSAT V1 is planned as an embeddable authority kernel/library with a stable
+integration API and complete headless `lnsatctl` configuration and operations.
+The optional `lnsatd` reference host/sidecar provides a local service boundary
+for consumers that need one. LNSAT remains fully usable without Rangoon.
 
-The planned setup wizard separates:
+Rangoon is a separate userland/distro that may provide the graphical installer,
+setup wizard, presets, configuration pages, approvals, audit, recovery, graphs,
+agents, fleets, and final packaging. It installs or bundles a pinned, verified
+LNSAT version and submits requests through LNSAT's versioned interface.
+
+Rangoon recovery surfaces are limited to online Gateway-authorized requests,
+status, evidence, and host-owner instructions. They cannot invoke LNSAT's
+offline backup, inert restore, owner recovery, or initial bootstrap operations,
+which remain local `lnsatctl`-only procedures with no agent, API, MCP, or UI
+route.
+
+Rangoon never edits LNSAT storage, computes effective permissions, or executes
+consequential work outside LNSAT. LNSAT independently validates, authorizes,
+executes, and produces evidence.
+
+The LNSAT headless configuration contract separates:
 
 1. **LNSAT resource access:** which repositories, folders, services, and OS
    resources the installation may reach.
 2. **Agent action authority:** what agents may request within that envelope,
    what requires human approval, and what is denied.
 
-Observe-only, approval-required, bounded-automation, and custom presets provide
-inspectable starting points. Supported settings remain customizable within
-enforceable security limits. Presets cannot silently grant access, and an
-unverifiable OS restriction cannot be advertised as enforced.
+Rangoon may render observe-only, approval-required, bounded-automation, and
+custom presets as a user experience. LNSAT validates the resulting declarative
+configuration and computes effective authority; presets cannot silently grant
+access, and an unverifiable OS restriction cannot be advertised as enforced.
 
-The management UI will expose permission changes, approvals, activity evidence,
-emergency disablement, and recovery through protected Gateway interfaces.
-These features are **planned, not implemented in today's read-only console**.
-See the [setup and access-management requirements](docs/PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management).
+`lnsatctl` will expose permission changes, approvals, activity evidence,
+emergency disablement, recovery, declarative configuration, validation, and
+status through protected interfaces. The existing React console remains an
+experimental read-only source preview; it is not an LNSAT V1 exit requirement.
+See the [kernel and Rangoon boundary](docs/architecture/ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
 
 Docker/OCI is the first planned isolated execution profile. Platform and package
 support will be claimed only for explicitly selected, tested combinations—not
@@ -166,7 +184,8 @@ Preview the experimental read-only Control Center:
 npm run dev -w @lnsat/console
 ```
 
-The preview is not the planned setup wizard and does not enable agent execution.
+The preview is not Rangoon's planned setup wizard and does not enable agent
+execution.
 See [Local Development](docs/LOCAL_DEVELOPMENT.md) for configuration, focused
 tests, and troubleshooting. Before proposing a source change, run:
 

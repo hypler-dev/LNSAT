@@ -1,0 +1,28 @@
+{
+  "contract_id": "lnsat.product_surface.negotiation.v1",
+  "selector": {
+    "header": "LNSAT-Product-Surface-Contract",
+    "supported": ["lnsat.product_surface.v1", "lnsat.product_surface.v2"],
+    "matching": "exact",
+    "fallback": false
+  },
+  "status": {
+    "routes": ["GET /v1/status", "HEAD /v1/status"],
+    "default_response_selector": "lnsat.product_surface.v1",
+    "explicit_response_echo": true,
+    "legacy_body_bytes_unchanged": true
+  },
+  "rejections": {
+    "code": "lnsatd.product_surface_contract.rejected",
+    "duplicate": 400,
+    "malformed": 400,
+    "unsupported": 400,
+    "wrong_route": 400,
+    "side_effects": []
+  },
+  "client": {
+    "explicit_missing_or_mismatched_echo": "lnsatctl.product_surface_contract.incompatible",
+    "exit_code": 5,
+    "stdout": ""
+  }
+}

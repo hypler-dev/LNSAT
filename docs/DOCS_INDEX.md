@@ -35,9 +35,11 @@ subsystem or proposal.
 
 ## Core Architecture
 
-- [Standalone setup and access management](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-  — required V1 wizard, presets, OS enforcement, and protected management gate;
-  implementation pending.
+- [LNSAT kernel and Rangoon boundary](architecture/ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+  — accepted V1 ownership split and headless exit criteria.
+- [Headless configuration and control](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+  — headless LNSAT configuration requirements; graphical wizard and distro
+  packaging belong to Rangoon.
 
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
@@ -143,7 +145,7 @@ security behavior, and conformance remain public-core concerns.
 - [ADR-0003: open core, extensions, and management plane](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)
 - [ADR-0002: authority layer and v1 distribution](architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
 - [ADR-0001: historical v1 product scope](architecture/ADR-0001_V1_SCOPE.md)
-- [Mandatory Phase 14 distribution](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)
+- [Phase 14 core artifacts and downstream installer reference](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)
 - [Source release process](RELEASING.md)
 - [Public-readiness report](PUBLIC_READINESS.md)
 - [Provenance timeline](../PROVENANCE.md)

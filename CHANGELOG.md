@@ -14,14 +14,25 @@
   exact release-source review gate exists.
   `source:check` now owns public CI/development validation; `release:check`
   adds the strict supported-release evidence gate.
-- Updated fixable npm dependency findings for Next.js/PostCSS, Hono,
-  `ip-address`, `fast-uri`, and the conformance SDK. Source verification now
-  rejects every unexpected npm advisory through a tested fail-closed gate. One
-  exact moderate upstream MCP Node/Hono Node Windows `serveStatic` advisory is
-  temporarily accepted because LNSAT imports only `toNodeHandler`; any package,
-  path, severity, range, source, lock-version, or advisory drift fails CI.
+- Updated Vitest to 4.1.11, Next.js to 16.3.4, Hono to 4.13.5, and
+  Sharp to 0.35.4 to resolve reported npm security advisories. The dependency
+  audit gate rejects every vulnerability; no advisory exception remains.
+  Vitest's supported patched major replaces the unmaintained 3.x line.
 
 ### Added
+
+- Added source-only exact product-surface negotiation for `GET|HEAD /v1/status`
+  and three manifest commands. `lnsat.product_surface.v1` is selected by
+  default or exact selector and echoed in status responses; malformed,
+  duplicate, unsupported, and wrong-route selectors fail before session work.
+  This preserves frozen v1 manifest/status bytes and opens no runtime, package,
+  release, deployment, or Phase 11 claim.
+
+- Added opt-in `lnsat.product_surface.v2` source diagnostics. Exact v2 selection
+  exposes v2 manifest/status shapes plus `lnsatctl config schema|validate`; the
+  validator reads selected config/profile evidence only and opens no database,
+  listener, process, action authority, runtime, package, release, deployment,
+  or Phase 11 claim. v1 remains frozen; no range or fallback exists.
 
 - Accepted Docker/OCI as first v1 runtime integration while preserving one
   runtime-neutral Gateway authority contract for later secure-VM, native-host,

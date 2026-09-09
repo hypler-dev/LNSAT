@@ -119,21 +119,21 @@
     "prettier": "^3.5.3",
     "smol-toml": "1.8.0",
     "typescript": "^5.8.3",
-    "vitest": "3.2.7"
+    "vitest": "4.1.11"
   },
   "overrides": {
     "@modelcontextprotocol/sdk": "1.30.0",
     "body-parser": "2.3.0",
     "esbuild": "0.28.1",
     "express-rate-limit": "8.5.2",
-    "hono": "4.12.34",
+    "hono": "4.13.5",
     "ip-address": "10.4.0",
     "qs": "6.16.0",
-    "sharp": "0.35.3",
-    "next@16.3.0": {
-      "sharp": "0.35.3"
-    },
-    "vite": "7.3.6"
+    "sharp": "0.35.4",
+    "vite": "7.3.6",
+    "next@16.3.4": {
+      "sharp": "0.35.4"
+    }
   },
   "license": "Apache-2.0"
 }

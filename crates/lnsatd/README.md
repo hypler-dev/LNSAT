@@ -191,3 +191,15 @@ daemonize, register, or
 automatically start an OS service. See
 [CLI and OS operator interface](../../docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
 and [Phase 14 distribution](../../docs/architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md).
+
+`GET|HEAD /v1/status` defaults to and echoes
+`LNSAT-Product-Surface-Contract: lnsat.product_surface.v1`. Exact v1 or v2 is
+accepted only on that status route before session verification; there is no
+range or fallback. v1 response bytes stay frozen; v2 returns only its explicit
+source diagnostic shape. After status selection succeeds, authenticated denial,
+framing denial, and `HEAD` responses echo the same header; selector rejections
+are public-safe `400` responses with `lnsatd.product_surface_contract.rejected`
+and no session activity. `lnsatctl config schema|validate` require explicit v2;
+validation reads config/profile evidence only and opens no database, listener,
+process, or action authority. This opens no runtime, package, release,
+deployment, or control authority.

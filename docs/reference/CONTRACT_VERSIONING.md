@@ -69,6 +69,29 @@ repeats the accepted version, including route, method, and generic
 authentication denials. Pre-version transport failures and version failures
 do not claim acceptance. `/healthz` remains separate and unversioned.
 
+`GET|HEAD /v1/status` additionally accepts the exact optional
+`LNSAT-Product-Surface-Contract` selector. Missing selects and echoes frozen
+`lnsat.product_surface.v1`; explicit `lnsat.product_surface.v1` or
+`lnsat.product_surface.v2` must be echoed exactly. v2 is an opt-in source
+diagnostic shape; there is no range or fallback. Duplicate, malformed,
+unsupported, or wrong-route selectors return `400` before
+authentication/session activity.
+The selector-rejection envelope has stable code
+`lnsatd.product_surface_contract.rejected`, `side_effects: []`, and no accepted
+product-surface header. After `/v1/status` selection succeeds, every routed
+status response (including authenticated denial, framing denial, and `HEAD`)
+echoes the selected header.
+This family selector never changes `lnsat.contracts.v1_0`, has no range or
+fallback, and preserves legacy v1 status bytes.
+
+The exact v2 selection is limited to source diagnostics: v2 manifest bytes,
+`lnsat.daemon.status.v2`, and `lnsatctl config schema|validate` with explicit
+v2. Local config selector failures use `lnsatctl.arguments.invalid`, exit `2`,
+and empty stdout; explicit status echo incompatibility uses
+`lnsatctl.product_surface_contract.incompatible`, exit `5`, and empty stdout.
+`config validate` may read its selected config and referenced runtime profile,
+but opens no database, listener, process, or action authority.
+
 The first stable authenticated subroute is `GET|HEAD /v1/session`, with
 response contract `lnsat.gateway.session_read.v1_0`. It inherits the exact
 version gate and returns the accepted header on both success and its one generic

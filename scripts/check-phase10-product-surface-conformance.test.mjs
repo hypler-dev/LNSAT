@@ -34,6 +34,18 @@ function mutatedJson(relativePath, mutator) {
   return path;
 }
 
+function mutatedRaw(relativePath, mutator) {
+  const directory = mkdtempSync(resolve(tmpdir(), "lnsat-p10-x1-validator-"));
+  tempRoots.push(directory);
+  const path = resolve(directory, "mutated.json");
+  writeFileSync(
+    path,
+    mutator(readFileSync(resolve(root, relativePath), "utf8")),
+    "utf8",
+  );
+  return path;
+}
+
 test.after(() => {
   for (const directory of tempRoots)
     rmSync(directory, { recursive: true, force: true });
@@ -125,6 +137,100 @@ test("P10-X1 rejects supported manifest or opened hard stop", () => {
   const errors = result.errors.join("\n");
   assert.match(errors, /source-only maturity must remain closed/u);
   assert.match(errors, /phase11_or_later_implementation: false required/u);
+});
+
+test("P10-X1 rejects legacy status or manifest command inventory drift", () => {
+  const statusPath = mutatedJson(
+    "fixtures/contracts/phase10-status-v1.json",
+    (status) => {
+      status.product_surface.implemented.push("config.schema");
+    },
+  );
+  const manifestPath = mutatedJson(
+    "fixtures/contracts/phase10-product-surface-v1.json",
+    (manifest) => {
+      manifest.binaries.lnsatctl.implemented_commands.push("config schema");
+    },
+  );
+  const statusResult = validatePhase10ProductSurfaceConformance({ root, statusPath });
+  const manifestResult = validatePhase10ProductSurfaceConformance({
+    root,
+    manifestPath,
+  });
+  assert.equal(statusResult.ok, false);
+  assert.match(statusResult.errors.join("\n"), /legacy command inventory mismatch/u);
+  assert.equal(manifestResult.ok, false);
+  assert.match(manifestResult.errors.join("\n"), /legacy command inventory mismatch/u);
+});
+
+test("P10-X1 rejects product-surface negotiation fixture drift", () => {
+  const productSurfaceNegotiationPath = mutatedJson(
+    "fixtures/contracts/product-surface-negotiation-v1.json",
+    (fixture) => {
+      fixture.rejections.side_effects.push("session_activity_evidence_may_append");
+    },
+  );
+  const result = validatePhase10ProductSurfaceConformance({
+    root,
+    productSurfaceNegotiationPath,
+  });
+  assert.equal(result.ok, false);
+  assert.match(
+    result.errors.join("\n"),
+    /product-surface negotiation fixture: exact contract mismatch/u,
+  );
+});
+
+test("P10-X1 rejects raw-byte drift in frozen Phase 10 fixtures", () => {
+  const path = mutatedRaw(
+    "fixtures/contracts/phase10-product-surface-v1.json",
+    (raw) => `${raw}\n`,
+  );
+  const result = validatePhase10ProductSurfaceConformance({
+    root,
+    frozenPhase10RawPaths: {
+      "fixtures/contracts/phase10-product-surface-v1.json": path,
+    },
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /sha256 mismatch/u);
+});
+
+test("P10-X1 rejects HCFG-1 product, status, or config authority drift", () => {
+  const productSurfaceV2Path = mutatedJson(
+    "fixtures/contracts/product-surface-v2.json",
+    (fixture) => {
+      fixture.supported_release = true;
+    },
+  );
+  const daemonStatusV2Path = mutatedJson(
+    "fixtures/contracts/daemon-status-v2.json",
+    (fixture) => {
+      fixture.mutation_authority = true;
+    },
+  );
+  const headlessConfigDiagnosticsPath = mutatedJson(
+    "fixtures/contracts/headless-config-diagnostics-v1.json",
+    (fixture) => {
+      fixture.properties.database_path.type = ["string", "null"];
+    },
+  );
+  const productResult = validatePhase10ProductSurfaceConformance({
+    root,
+    productSurfaceV2Path,
+  });
+  const statusResult = validatePhase10ProductSurfaceConformance({
+    root,
+    daemonStatusV2Path,
+  });
+  const configResult = validatePhase10ProductSurfaceConformance({
+    root,
+    headlessConfigDiagnosticsPath,
+  });
+  for (const result of [productResult, statusResult, configResult]) {
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join("\n"), /exact .*authority mismatch/u);
+  }
 });
 
 test("P10-X1 rejects removal from repository-wide check", () => {

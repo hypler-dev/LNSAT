@@ -6,6 +6,9 @@
 
 Accepted by
 [ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
+Earlier LNSAT-owned graphical UI, wizard, and installer wording is superseded
+and clarified by
+[ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
 
 ## Decision
 
@@ -38,12 +41,13 @@ value.
 
 ## Upstream Rule
 
-Standalone LNSAT includes its own required V1 setup and access-management
-experience; it does not depend on Rangoon or proprietary management software.
-The [pending setup gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-defines the public baseline. Downstream visual management means additional
-organization, collaboration, or policy-intelligence features, not ownership of
-basic LNSAT permission controls. Rangoon remains a separate project that may
+Standalone LNSAT includes its required V1 headless API and `lnsatctl`
+configuration/control surface; it does not depend on Rangoon or proprietary
+management software.
+The [pending headless configuration gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+defines the public baseline. Downstream visual management owns graphical setup,
+presets, organization, collaboration, and policy-intelligence features, not
+LNSAT authority or effective-permission computation. Rangoon remains a separate project that may
 install a pinned verified release or use compatible protected APIs. No reverse
 dependency, shared release requirement, or authority bypass is introduced.
 

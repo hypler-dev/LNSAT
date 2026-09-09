@@ -5,7 +5,9 @@
 - Decision owners: LNSAT maintainers
 - Implementation state: not shipped; evidence gates remain open
 
-> Historical decision. [ADR-0002](ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
+> Historical decision. [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> supersedes conflicting UI, wizard, installer, and distro ownership wording.
+> [ADR-0002](ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
 > supersedes this record where platform, architecture, package, installer,
 > service-manager, container, Cargo-bootstrap, and Phase 14 requirements
 > conflict. Local-first single-node, SQLite, local-auth, non-root, fail-closed,

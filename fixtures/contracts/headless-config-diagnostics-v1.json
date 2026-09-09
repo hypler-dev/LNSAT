@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:lnsat:daemon-config:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_id", "contract_version", "schema_version", "database_path"],
+  "properties": {
+    "contract_id": { "const": "lnsat.daemon.config.v1" },
+    "contract_version": { "const": "lnsat.contracts.v1_0" },
+    "schema_version": { "const": 1 },
+    "database_path": { "type": "string" },
+    "listen_address": { "type": ["string", "null"] },
+    "control_socket_path": { "type": ["string", "null"] },
+    "phase8_runtime": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["disposable_git_root", "git_executable"],
+          "properties": {
+            "disposable_git_root": { "type": "string" },
+            "git_executable": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "runtime_profile": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profile_family", "profile_path"],
+          "properties": {
+            "profile_family": { "type": "string" },
+            "profile_path": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "console": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root", "asset_manifest"],
+          "properties": {
+            "root": { "type": "string" },
+            "asset_manifest": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "semantic_checks": [
+    "loader_only_file_identity",
+    "64KiB_utf8_duplicate_unknown_bounds",
+    "exact_byte_digest",
+    "absolute_paths",
+    "loopback_nonzero_listener",
+    "paired_runtime_paths",
+    "profile_validation",
+    "console_validation"
+  ]
+}

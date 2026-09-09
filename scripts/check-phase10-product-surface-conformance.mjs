@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -5,6 +6,15 @@ import { fileURLToPath } from "node:url";
 const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const DEFAULT_EVIDENCE_PATH =
   "fixtures/contracts/phase10-product-surface-conformance-v1.json";
+
+const FROZEN_PHASE10_RAW_SHA256 = {
+  "fixtures/contracts/phase10-product-surface-v1.json":
+    "ec06efca74829ff0d7c13c2b2aa9a2b22222ed7b065833e532c09fe1075f6dfb",
+  "fixtures/contracts/phase10-status-v1.json":
+    "ee3756749f94842a51d510798fea6c11bb8ad0a366c67e7ff140d4a1bafb333d",
+  "fixtures/contracts/phase10-product-surface-conformance-v1.json":
+    "fee1eb3afa477a928386cebf19264efdb60bd22b1011d32abc1e9ed8d7e0275a",
+};
 
 const EXPECTED_EVIDENCE_IDS = [
   "three_command_manifest_equality",
@@ -81,6 +91,199 @@ const EXPECTED_MANIFEST_HARD_STOPS = [
   "automatic_promotion",
 ];
 
+const EXPECTED_LEGACY_COMMAND_INVENTORY = [
+  "doctor",
+  "config.inspect",
+  "recovery.inspect",
+  "backup",
+  "restore",
+  "recovery.owner",
+  "health",
+  "status",
+];
+
+const EXPECTED_PRODUCT_SURFACE_NEGOTIATION = {
+  contract_id: "lnsat.product_surface.negotiation.v1",
+  selector: {
+    header: "LNSAT-Product-Surface-Contract",
+    supported: ["lnsat.product_surface.v1", "lnsat.product_surface.v2"],
+    matching: "exact",
+    fallback: false,
+  },
+  status: {
+    routes: ["GET /v1/status", "HEAD /v1/status"],
+    default_response_selector: "lnsat.product_surface.v1",
+    explicit_response_echo: true,
+    legacy_body_bytes_unchanged: true,
+  },
+  rejections: {
+    code: "lnsatd.product_surface_contract.rejected",
+    duplicate: 400,
+    malformed: 400,
+    unsupported: 400,
+    wrong_route: 400,
+    side_effects: [],
+  },
+  client: {
+    explicit_missing_or_mismatched_echo:
+      "lnsatctl.product_surface_contract.incompatible",
+    exit_code: 5,
+    stdout: "",
+  },
+};
+
+function expectedProductSurfaceV2(frozenV1Manifest) {
+  const expected = JSON.parse(JSON.stringify(frozenV1Manifest));
+  expected.contract_id = "lnsat.product_surface.v2";
+  expected.schema_version = 2;
+  expected.binaries.lnsatctl.implemented_commands.splice(
+    4,
+    0,
+    "config schema",
+    "config validate",
+  );
+  expected.configuration.implemented_fields.splice(
+    5,
+    0,
+    "runtime_profile.profile_family",
+    "runtime_profile.profile_path",
+  );
+  const headlessDiagnostics = {
+    schema: "config.schema",
+    validate: "config.validate",
+    product_surface_contract: "lnsat.product_surface.v2",
+    selector_required: true,
+    validation_scope: "explicit_daemon_configuration",
+    activation_authority: false,
+    side_effects: [],
+  };
+  expected.configuration = Object.fromEntries(
+    Object.entries(expected.configuration).flatMap(([key, value]) =>
+      key === "implemented_fields"
+        ? [
+            [key, value],
+            ["headless_diagnostics", headlessDiagnostics],
+          ]
+        : [[key, value]],
+    ),
+  );
+  return expected;
+}
+
+const EXPECTED_DAEMON_STATUS_V2 = {
+  authenticated_read_scope: {
+    permission: "read_evidence",
+    roles: ["owner", "operator", "auditor"],
+  },
+  contract: "lnsat.daemon.status.v2",
+  contract_version: "lnsat.contracts.v1_0",
+  explicit_target: {
+    ambient_target_used: false,
+    endpoint_required: true,
+    remote_transport: false,
+  },
+  mutation_authority: false,
+  phase10: {
+    implemented_packets: ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"],
+    next_packet: "none_authorized",
+    phase11_open: false,
+    status: "complete",
+  },
+  product_surface: {
+    implemented: [
+      "doctor",
+      "config.inspect",
+      "config.schema",
+      "config.validate",
+      "recovery.inspect",
+      "backup",
+      "restore",
+      "recovery.owner",
+      "health",
+      "status",
+    ],
+    reserved: ["recovery.activate", "service", "update"],
+  },
+  readiness: {
+    daemon_reachable: true,
+    schema_current: true,
+    storage_ready: true,
+  },
+  side_effects: ["session_activity_evidence_may_append"],
+  source_version: "0.1.0",
+};
+
+const EXPECTED_HEADLESS_CONFIG_DIAGNOSTICS_V1 = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "urn:lnsat:daemon-config:v1",
+  type: "object",
+  additionalProperties: false,
+  required: ["contract_id", "contract_version", "schema_version", "database_path"],
+  properties: {
+    contract_id: { const: "lnsat.daemon.config.v1" },
+    contract_version: { const: "lnsat.contracts.v1_0" },
+    schema_version: { const: 1 },
+    database_path: { type: "string" },
+    listen_address: { type: ["string", "null"] },
+    control_socket_path: { type: ["string", "null"] },
+    phase8_runtime: {
+      anyOf: [
+        { type: "null" },
+        {
+          type: "object",
+          additionalProperties: false,
+          required: ["disposable_git_root", "git_executable"],
+          properties: {
+            disposable_git_root: { type: "string" },
+            git_executable: { type: "string" },
+          },
+        },
+      ],
+    },
+    runtime_profile: {
+      anyOf: [
+        { type: "null" },
+        {
+          type: "object",
+          additionalProperties: false,
+          required: ["profile_family", "profile_path"],
+          properties: {
+            profile_family: { type: "string" },
+            profile_path: { type: "string" },
+          },
+        },
+      ],
+    },
+    console: {
+      anyOf: [
+        { type: "null" },
+        {
+          type: "object",
+          additionalProperties: false,
+          required: ["root", "asset_manifest"],
+          properties: {
+            root: { type: "string" },
+            asset_manifest: {
+              type: "object",
+              additionalProperties: { type: "string" },
+            },
+          },
+        },
+      ],
+    },
+  },
+  semantic_checks: [
+    "loader_only_file_identity",
+    "64KiB_utf8_duplicate_unknown_bounds",
+    "exact_byte_digest",
+    "absolute_paths",
+    "loopback_nonzero_listener",
+    "paired_runtime_paths",
+    "profile_validation",
+    "console_validation",
+  ],
+};
+
 function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -120,6 +323,26 @@ function readJson(path, errors) {
   } catch (error) {
     errors.push(`evidence: unable to parse ${path} (${String(error)})`);
     return null;
+  }
+}
+
+function validateFrozenPhase10Raw(root, paths, errors) {
+  for (const [relativePath, expectedHash] of Object.entries(
+    FROZEN_PHASE10_RAW_SHA256,
+  )) {
+    let bytes;
+    try {
+      bytes = readFileSync(paths?.[relativePath] ?? resolve(root, relativePath));
+    } catch (error) {
+      errors.push(
+        `frozen Phase 10 fixture: unreadable ${relativePath} (${String(error)})`,
+      );
+      continue;
+    }
+    const actualHash = createHash("sha256").update(bytes).digest("hex");
+    if (actualHash !== expectedHash) {
+      errors.push(`frozen Phase 10 fixture: sha256 mismatch for ${relativePath}`);
+    }
   }
 }
 
@@ -171,9 +394,21 @@ export function validatePhase10ProductSurfaceConformance({
   packagePath = resolve(root, "package.json"),
   statusPath = resolve(root, "fixtures/contracts/phase10-status-v1.json"),
   manifestPath = resolve(root, "fixtures/contracts/phase10-product-surface-v1.json"),
+  productSurfaceNegotiationPath = resolve(
+    root,
+    "fixtures/contracts/product-surface-negotiation-v1.json",
+  ),
+  productSurfaceV2Path = resolve(root, "fixtures/contracts/product-surface-v2.json"),
+  daemonStatusV2Path = resolve(root, "fixtures/contracts/daemon-status-v2.json"),
+  headlessConfigDiagnosticsPath = resolve(
+    root,
+    "fixtures/contracts/headless-config-diagnostics-v1.json",
+  ),
+  frozenPhase10RawPaths,
   migrationsPath = resolve(root, "crates/lnsat-store/migrations"),
 } = {}) {
   const errors = [];
+  validateFrozenPhase10Raw(root, frozenPhase10RawPaths, errors);
   const evidence = readJson(evidencePath, errors);
   if (
     !exactKeys(
@@ -340,10 +575,55 @@ export function validatePhase10ProductSurfaceConformance({
     if (status.phase10?.phase11_open !== false) {
       errors.push("phase10 status fixture: Phase 11 must remain closed");
     }
+    if (!same(status.product_surface?.implemented, EXPECTED_LEGACY_COMMAND_INVENTORY)) {
+      errors.push("phase10 status fixture: legacy command inventory mismatch");
+    }
   }
 
   const manifest = readJson(manifestPath, errors);
   if (manifest) {
+    const legacyOperatorInventory = [
+      "doctor",
+      "health",
+      "status",
+      "config inspect",
+      "recovery inspect",
+      "backup",
+      "restore",
+      "recovery owner",
+      "manifest",
+      "completion",
+      "man",
+      "help",
+      "version",
+    ];
+    const legacyUserInventory = [
+      "packet validate",
+      "packet hash",
+      "packet inspect",
+      "manifest",
+      "completion",
+      "man",
+      "help",
+      "version",
+    ];
+    const legacyDaemonInventory = [
+      "run",
+      "run --config",
+      "help",
+      "version",
+      "manifest",
+    ];
+    if (
+      !same(
+        manifest.binaries?.lnsatctl?.implemented_commands,
+        legacyOperatorInventory,
+      ) ||
+      !same(manifest.binaries?.lnsat?.implemented_commands, legacyUserInventory) ||
+      !same(manifest.binaries?.lnsatd?.implemented_commands, legacyDaemonInventory)
+    ) {
+      errors.push("product manifest: legacy command inventory mismatch");
+    }
     if (
       manifest.supported_release !== false ||
       manifest.package_or_binary_claim !== false
@@ -401,6 +681,28 @@ export function validatePhase10ProductSurfaceConformance({
         errors.push(`product manifest ${path}: ${JSON.stringify(expected)} required`);
       }
     }
+  }
+
+  const productSurfaceNegotiation = readJson(productSurfaceNegotiationPath, errors);
+  if (!same(productSurfaceNegotiation, EXPECTED_PRODUCT_SURFACE_NEGOTIATION)) {
+    errors.push("product-surface negotiation fixture: exact contract mismatch");
+  }
+
+  const productSurfaceV2 = readJson(productSurfaceV2Path, errors);
+  if (!same(productSurfaceV2, manifest && expectedProductSurfaceV2(manifest))) {
+    errors.push("product-surface v2 fixture: exact contract or authority mismatch");
+  }
+
+  const daemonStatusV2 = readJson(daemonStatusV2Path, errors);
+  if (!same(daemonStatusV2, EXPECTED_DAEMON_STATUS_V2)) {
+    errors.push("daemon status v2 fixture: exact contract or authority mismatch");
+  }
+
+  const headlessConfigDiagnostics = readJson(headlessConfigDiagnosticsPath, errors);
+  if (!same(headlessConfigDiagnostics, EXPECTED_HEADLESS_CONFIG_DIAGNOSTICS_V1)) {
+    errors.push(
+      "headless config diagnostics fixture: exact schema or authority mismatch",
+    );
   }
 
   const migrations = readdirSync(migrationsPath);

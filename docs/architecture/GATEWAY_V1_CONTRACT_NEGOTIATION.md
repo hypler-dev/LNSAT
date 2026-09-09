@@ -42,9 +42,10 @@ The fixed fail-closed order is:
 2. strict HTTP framing and size limits;
 3. exact numeric bound `Host`;
 4. exact Gateway contract version;
-5. route and method;
-6. authentication and authorization;
-7. policy and any bounded mutation.
+5. exact optional product-surface selector for exact `/v1/status`;
+6. route and method;
+7. authentication and authorization;
+8. policy and any bounded mutation.
 
 Missing, malformed, unknown, and deprecated versions therefore cannot reach a
 route handler or session store. After a version is accepted, every routed
@@ -52,6 +53,17 @@ response repeats the accepted version header, including not-found,
 method-denied, and generic authentication denials. This header proves only
 wire-contract acceptance; it grants no route, retry, mutation, approval, or
 execution authority.
+
+`LNSAT-Product-Surface-Contract` is selected only on exact `/v1/status` before
+method dispatch. Missing selects current `lnsat.product_surface.v1`; exact v1 or v2 is
+accepted explicitly, with no range or fallback. v1 remains byte-frozen; v2
+returns only the new source diagnostic status shape. The selected selector is
+echoed on every routed status response after selection, including method-denied,
+authentication-denied, framing-denied, and `HEAD` responses. Only GET and HEAD
+may return the selected representation. Duplicate, malformed, unsupported, or wrong-route use is
+`400` with `lnsatd.product_surface_contract.rejected` and `side_effects: []`
+before authentication/session activity. It does not alter Gateway wire version,
+legacy v1 body bytes, or product authority.
 
 Transport failures before version acceptance and version-error responses do
 not emit an accepted-version header. `/healthz` remains a separate unversioned
@@ -103,8 +115,10 @@ shared `lnsat.error_envelope.v1_0` version-family shape:
 
 Rejected raw values are never reflected. A rejected response does not emit an
 accepted-version header. Duplicate headers fail in the strict HTTP parser
-before version negotiation. Method, body, Host, framing, and size failures
-remain transport errors and grant no retry, fallback, or authority.
+before version negotiation, except the product-surface selector duplicate:
+that exact duplicate is retained only to reject after Host and Gateway-version
+validation, before route or session work. Method, body, Host, framing, and size
+failures remain transport errors and grant no retry, fallback, or authority.
 
 ## Change Gate
 

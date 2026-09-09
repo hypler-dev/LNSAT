@@ -1,10 +1,17 @@
 # Self-Deploy Packaging Plan
 
+> Boundary status: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> supersedes earlier wording that made server installers, graphical setup, or
+> final distro packaging mandatory LNSAT V1 work. LNSAT owns core artifacts,
+> versioned APIs, and complete headless `lnsatctl`; Rangoon owns those downstream
+> installer and userland concerns.
+
 ## Purpose
 
-LNSAT is an independent open source management system. Deployment owners choose
+LNSAT is an independent open source authority core. Deployment owners choose
 where it runs, which integrations are enabled, where credential references live,
-which auth mode is active, and which authorization levels apply.
+which auth mode is active, and which authorization levels apply. Rangoon may
+provide downstream graphical management and distro composition.
 
 This document defines only source contracts for future packaging. It
 does not create packages, installers, service files, Docker images, node-agent
@@ -13,12 +20,13 @@ database connections, or host mutations.
 
 ## Canonical Ownership
 
-This proposal owns the source packaging contract, deployment-mode vocabulary,
-and packaging posture for deployment-owner auth and integrations. The
-vocabulary is broader than supported v1 scope.
+This proposal preserves source-only deployment vocabulary and distinguishes
+LNSAT core artifacts from downstream distribution. The vocabulary is broader
+than supported V1 scope. ADR-0008 owns the current split.
 [ADR-0002](ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md) retains
-`self_hosted_single_node` and selects mandatory v1 distribution;
-[the roadmap](../ROADMAP.md) controls when implementation may begin.
+`self_hosted_single_node` as historical architecture input but does not make
+graphical installation or final distro packaging an LNSAT V1 requirement;
+[the roadmap](../ROADMAP.md) controls when core implementation may begin.
 
 ## Contract
 
@@ -52,7 +60,8 @@ hosting mutation, or live deploy.
 
 ## Future Artifact Refs
 
-The plan names expected artifact families without building them:
+The plan names expected core and downstream artifact references without
+building them:
 
 - `web_app_ref`
 - `gateway_api_ref`
@@ -63,23 +72,26 @@ The plan names expected artifact families without building them:
 - `optional_adapter_package_ref`
 - `optional_node_agent_package_ref`
 
-All artifact refs stay `future_artifact_source_ref_only`. Package creation,
-package publication, installers, binary builds, Docker images, service files,
-launchd/systemd units, and node-agent packages are blocked.
+All artifact refs stay `future_artifact_source_ref_only`. `web_app_ref`,
+installer, wrapper, client, and helper refs are downstream Rangoon/extension
+concerns. Package creation, publication, installers, binary builds, Docker
+images, service files, launchd/systemd units, and node-agent packages are
+blocked.
 
 ## Distribution And Client Installer Follow-Up
 
-Future source-only distribution planning must split artifact families into:
+Future source-only planning must split LNSAT core artifacts from downstream
+Rangoon/extension families:
 
-- source releases;
-- server installers;
-- server runtime bundles;
-- supported-system clients;
-- optional MCP extension packages.
+- LNSAT source releases and selected core-target bundles containing canonical
+  `lnsatd`, `lnsatctl`, contracts, manifests, and docs;
+- Rangoon server installers and final distro wrappers;
+- downstream supported-system clients and helpers;
+- optional downstream MCP and connector extension packages.
 
-Server installers are for setting up LNSAT server on supported systems. Clients
-are for operator or host-side interaction with a deployment. MCP packages are
-extensions and must stay separate from core server/client installers.
+Rangoon server installers may set up a pinned, verified LNSAT core on supported
+systems. Clients remain operator or host-side extensions. MCP packages remain
+adapters and stay separate from LNSAT core artifacts.
 
 This split does not change the boundary: no binary build, package
 publish, installer execution, service install, client enrollment, MCP extension
@@ -106,10 +118,11 @@ live connectors, or call external services.
 ## Runtime And Python Posture
 
 Current MVP evidence is implemented in TypeScript source contracts,
-Gateway/read-only surfaces, and web management routes. Production installed core
+Gateway/read-only surfaces, and experimental console routes. Production core
 targets Rust `lnsatd`, `lnsatctl`, and shared packet/policy/audit/evidence crates;
-TypeScript remains Control Center UI and generated clients. No Rust artifact is
-built yet.
+TypeScript remains experimental console and generated-client source. Rangoon
+owns graphical userland and final distro packaging. No Rust artifact is built
+yet.
 
 Python can appear later only as an optional adapter/helper package. Supported
 Rust binaries and optional OS-specific helpers require separate policy,

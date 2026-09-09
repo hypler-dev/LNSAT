@@ -12,34 +12,64 @@
 
 Product split and extension boundary are accepted by
 [ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
+The LNSAT/Rangoon ownership boundary is defined by
+[ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
 
 ## Decision
 
 OS-level command-line interfaces are mandatory. Browser UI cannot be only
 management surface. Operators, CI, configuration management, recovery
 environments, headless servers, air-gapped systems, and wrappers need stable,
-scriptable commands with same Gateway authority and evidence as UI, MCP, and
-API.
+scriptable commands. Online commands use the same Gateway authority and evidence
+as UI, MCP, and API. The specifically enumerated offline recovery and bootstrap
+commands use the local safeguards defined below instead of a Gateway route.
 
 ## Product Binaries
 
 The pending
-[standalone setup and access-management gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-also requires headless/operator parity: CLI and wizard must expose the same
-effective resource/agent-authority boundaries, preset differences, unsupported
-OS controls, and protected change semantics. Neither client may widen authority
-through configuration precedence or bypass Gateway. This is planned product work,
-not an expansion of the implemented commands listed above.
+[headless configuration and control gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+requires `lnsatctl` to expose secure monitoring/control, machine-readable
+output, headless automation, and complex declarative configuration without a
+UI. Configuration layering/composition, validate/diff/effective/apply,
+watch/status/health/operations/approvals/audit/recovery, and emergency control
+are part of the LNSAT V1 CLI contract. The core computes effective authority;
+for online commands, the CLI is a client and never bypasses Gateway. The bounded
+offline exceptions do not create an agent, API, MCP, or UI authority path.
+
+HCFG-0/HCFG-1 add exact `--product-surface-contract` selection to the three
+manifest commands and `lnsatctl status`. Omission preserves frozen v1 behavior;
+an explicit v1 or v2 selection requires an exact daemon echo for status. v2
+adds only source diagnostics: `lnsatctl config schema --product-surface-contract
+lnsat.product_surface.v2` and `lnsatctl config validate --config <absolute-path>
+--product-surface-contract lnsat.product_surface.v2`. Validation may read the
+selected config and a referenced runtime profile, but opens no database,
+listener, process, or action authority. No range or fallback exists. This
+negotiation seam does not complete headless configuration/control.
 
 | Binary     | Audience                           | Responsibility                                                                              |
 | ---------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 | `lnsat`    | users, agents, scripts, developers | primary workflow command and convenience dispatcher                                         |
 | `lnsatctl` | owners and operators               | administration, diagnostics, service, recovery, update, quarantine, and evidence operations |
-| `lnsatd`   | OS/service manager                 | local server daemon and bundled Control Center                                              |
+| `lnsatd`   | optional reference host/sidecar    | local API host for consumers that need a service boundary                                   |
 
-`lnsat` and `lnsatctl` are clients. They do not duplicate policy or bypass
-Gateway. `lnsatd` owns validation, local authentication, policy, approval,
-authorization, receipt, storage, and audit boundaries.
+`lnsat` and `lnsatctl` are clients for online flows. They do not duplicate policy
+or bypass Gateway. `lnsatctl` additionally implements only the bounded offline
+procedures defined below. The LNSAT core owns validation, authentication, policy,
+approval, authorization, receipt, storage, and audit boundaries; `lnsatd` hosts
+that core when a local service is desired.
+
+The complete declarative surface includes `config schema`, `config show`,
+`config validate`, `config diff`, `config effective`, `config apply`, and
+`config export`, with layering and composition resolved by the core. Monitoring
+includes `watch`, `status`, `health`, and `operations`; operational controls
+include approvals, audit, recovery, and emergency disablement. Machine-readable
+JSON/JSONL output is required for automation. `watch` consumes server-sourced,
+versioned events with cursor/resume, deterministic ordering, bounded retention,
+backpressure, and explicit disconnect behavior; it never infers an outcome from
+transport loss or a missing event. Secrets remain references and are redacted.
+Mutations are authenticated, atomically applied, and fail closed on unknown
+fields or unsupported OS capabilities. The current source truth remains limited
+to the documented experimental commands; this is the V1 target contract.
 
 ## Core Command Taxonomy
 
@@ -66,13 +96,15 @@ lnsat completion ...
 Planned `lnsatctl` groups:
 
 ```text
-lnsatctl status|health|doctor
+lnsatctl config schema|show|validate|diff|effective|apply|export
+lnsatctl watch|status|health|operations
+lnsatctl approvals list|show|approve|deny
+lnsatctl audit verify|export
+lnsatctl recovery inspect|backup|restore
+lnsatctl doctor
 lnsatctl identity|role|session|revoke
 lnsatctl policy|connector|module|model
-lnsatctl service install|status|start|stop|restart
-lnsatctl backup|restore|recovery
-lnsatctl update check|verify|apply|rollback
-lnsatctl audit verify|export
+lnsatctl service status|start|stop|restart
 lnsatctl emergency-disable
 ```
 
@@ -83,19 +115,34 @@ Current P10-A1/P10-A2/P10-A3/P10-A4 implemented subset:
 
 ```text
 lnsat packet validate|hash|inspect ...
-lnsat manifest|completion|man|--help|--version
+lnsat manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]|completion|man|--help|--version
 lnsatctl doctor
 lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
-lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
+lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]
 lnsatctl config inspect --config <absolute-path>
+lnsatctl config schema --product-surface-contract lnsat.product_surface.v2
+lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2
 lnsatctl recovery inspect --database <path>
 lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]
 lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]
 lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]
-lnsatctl manifest|completion|man|--help|--version
+lnsatctl manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]|completion|man|--help|--version
 lnsatd --config <absolute-path>
-lnsatd --database ... | --manifest | --help | --version
+lnsatd --database ... | --manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] | --help | --version
 ```
+
+Exact v2 manifest output is
+`fixtures/contracts/product-surface-v2.json`; explicit v2 status output has
+`contract: lnsat.daemon.status.v2`. `config schema` returns
+`command: config.schema`, the embedded closed config schema, and
+`activation_authority: false`; `config validate` returns
+`command: config.validate`, its exact config digest, `valid: true`, and
+`side_effects: []`. Missing, range, duplicate, v1, or unsupported selectors for
+the v2 config commands fail with `lnsatctl.arguments.invalid`, exit `2`, and
+empty stdout. Status selector rejection remains the public-safe
+`lnsatd.product_surface_contract.rejected`; a missing or mismatched explicit
+status echo remains `lnsatctl.product_surface_contract.incompatible`, exit `5`,
+and empty stdout.
 
 All other listed groups remain reserved and unavailable. Recovery inspection
 is read-only. Backup creates one non-root offline snapshot. Restore creates one
@@ -126,7 +173,7 @@ registers no recovery tool, and Control Center renders no recovery action.
 
 ## Command Safety Contract
 
-State-changing commands follow:
+Online state-changing commands follow:
 
 ```text
 parse -> resolve exact target -> validate -> show plan/diff
@@ -134,6 +181,12 @@ parse -> resolve exact target -> validate -> show plan/diff
       -> one-time authorization -> execute
       -> receipt -> audit reference
 ```
+
+Offline backup, inert restore, owner recovery, and initial bootstrap are local
+exceptions to that Gateway flow. They have no agent, API, MCP, or UI route and
+must retain their command-specific host-owner proof, non-root execution, exact
+targets, daemon-shared exclusive lease where applicable, one-time semantics,
+and durable evidence.
 
 Requirements:
 

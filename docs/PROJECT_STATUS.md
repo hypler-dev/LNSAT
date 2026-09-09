@@ -31,16 +31,28 @@ no public/private key input is requested.
 
 ## Current Build Position
 
-Standalone setup wizard and access-management UI are accepted V1 requirements,
-not implemented capabilities. They must distinguish LNSAT's resource access from
-agent action authority, offer customizable least-privilege presets, expose actual
-OS enforcement coverage, and protect configuration changes through Gateway.
+Headless setup and access-management through the versioned API and `lnsatctl`
+are accepted V1 requirements, not implemented capabilities. They must distinguish
+LNSAT's resource access from agent action authority, support layered declarative
+configuration and customizable least-privilege settings, expose actual OS
+enforcement coverage, and protect configuration changes through Gateway.
 LNSAT remains usable independently of Rangoon; downstream installation or API use
 cannot bypass approval or increase authority implicitly. The
-[standalone setup and access-management requirements](PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-own this additional product acceptance scope. Existing P10-X1 source conformance
-does not satisfy it; current Control Center readback remains read-only. No new
+[headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+own this additional product acceptance scope. Rangoon owns graphical setup,
+presets, and rich management UI. Existing P10-X1 source conformance does not
+satisfy it; current Control Center readback remains read-only. No new
 management mutation, runtime, installer, or supported-platform claim is opened.
+
+HCFG-0/HCFG-1 source diagnostics are implemented: status defaults to and echoes
+exact `lnsat.product_surface.v1`; explicit v1/v2 selection is exact-match only
+and fails before session work when duplicate, malformed, unsupported, or
+wrong-route. Frozen v1 command/status bytes remain unchanged. Explicit
+`lnsat.product_surface.v2` adds source-only v2 manifest/status diagnostics plus
+`lnsatctl config schema|validate`; validation reads a selected config and a
+referenced runtime profile but opens no database, listener, process, or action
+authority. No range or fallback exists. Headless configuration/control and
+Phase 11 real Docker proof remain pending.
 
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
 exact-ID Control Center readback and manifest-only source-local console hosting
@@ -194,11 +206,10 @@ production listener, state-changing tool, real IdP/SPIRE/HSM/KMS integration,
 signer activation, real key/trust material, execution path, or production
 support exists.
 
-Dependency audit removes all currently fixable high and moderate findings.
-One upstream MCP Node/Hono Node moderate advisory remains: it affects the
-Windows `serveStatic` path, while LNSAT imports only `toNodeHandler`. The audit
-gate accepts only that exact pinned advisory and rejects package, path,
-severity, range, source, lock-version, or additional-advisory drift.
+Dependency remediation pins Vitest 4.1.11, Next.js 16.3.4, Hono 4.13.5,
+and Sharp 0.35.4. The npm audit gate rejects every reported vulnerability;
+no advisory exception remains. This is source dependency maintenance and
+opens no runtime, deployment, package, or supported-release claim.
 
 See [MCP interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md)
 and [Phase 8 adapter authority conformance](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).
@@ -1055,17 +1066,20 @@ Before any supported public artifact:
 
 - complete every local-v1-required roadmap phase; hardware attestation and
   other explicitly post-local-v1 phases remain optional;
-- select one or two exact Phase 14 OS/architecture/package support rows and
-  prove every selected row; unselected rows remain unsupported, not blockers;
-- prove canonical component digest equality across every claimed thin wrapper;
+- select one or two exact Phase 14 OS/architecture core-target rows and prove
+  every selected row; unselected rows remain unsupported, not blockers;
+- expose pin-verifiable canonical component identity for downstream consumers;
 - produce reproducible artifacts, checksums, signature bundles, SPDX JSON SBOM,
-  SLSA v1 provenance, and lifecycle evidence;
-- document installation, upgrade, rollback, and revocation;
+  SLSA v1 provenance, and selected core-target compatibility evidence;
+- document headless configuration, recovery, update, rollback, and revocation;
 - complete full-history secret and dependency scans;
 - verify public CI, branch protection, issue intake, and security reporting;
 - complete public-source history/privacy/metadata review and obtain explicit
   repository-visibility authorization;
 - obtain separate later artifact-publication authorization after Phase 14.
+
+Rangoon separately owns graphical assets, final installer/package selection,
+wrapper lifecycle evidence, and downstream support claims; none blocks LNSAT V1.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).

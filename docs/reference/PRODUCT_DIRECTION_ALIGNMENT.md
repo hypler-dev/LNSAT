@@ -1,7 +1,7 @@
 # Product Direction Alignment
 
 - Status: current documentation control
-- Decision sources: ADR-0002, ADR-0003, ADR-0006, and ADR-0007
+- Decision sources: ADR-0002, ADR-0003, ADR-0006, ADR-0007, and ADR-0008
 - Runtime effect: none
 
 This matrix prevents expanded product direction from drifting across public
@@ -23,7 +23,7 @@ claim because it appears here.
 | Agent configuration, skills, instructions, context, and overlays are governed inputs                              | [Management design](../architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)       | context firewall, SDK, UI, onboarding, threat model     |
 | Gatekeeper models advise; deterministic policy and humans authorize                                               | [ADR-0003](../architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)              | auth, agent framework, SDK, threat model                |
 | Node/graph UI and exact source editor serve different tasks                                                       | [Management UI](../architecture/MANAGEMENT_UI_INFORMATION_ARCHITECTURE.md)                     | UI framework, management design, roadmap                |
-| OS CLI is mandatory beside browser UI                                                                             | [CLI and OS interface](../architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)                       | roadmap, package/crate docs, distribution, SDK          |
+| LNSAT API and `lnsatctl` form the complete headless V1 surface; Rangoon owns graphical setup and final packaging  | [ADR-0008](../architecture/ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)             | README, roadmap, status, CLI, UI, release, distribution |
 | Canonical components are built once and wrapped unchanged                                                         | [Distribution plan](../architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)                     | release, compatibility, commercial composition          |
 | Public source visibility is independent from final artifact publication                                           | [Public source readiness](../PUBLIC_READINESS.md)                                              | roadmap, status, release, governance                    |
 | Final artifact publication follows Phase 14 and separate explicit go/no-go authorization                          | [Source release process](../RELEASING.md)                                                      | roadmap, status, release, distribution                  |
@@ -31,13 +31,15 @@ claim because it appears here.
 
 ## Repository and Product Boundaries
 
-Standalone LNSAT setup and access management belong to the public product,
-independent of downstream management products. The
-[canonical pending V1 gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-aligns README, roadmap/status, console/CLI architecture, and release/distribution
-docs. Rangoon may install a verified compatible release or use an existing
+LNSAT's headless setup, access management, versioned API, and `lnsatctl` control
+surface belong to the public core, independent of downstream management products.
+The [canonical pending V1 gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+aligns README, roadmap/status, CLI architecture, and release/distribution docs.
+Rangoon owns graphical installation, presets, management UI, and final distro
+packaging. It may install a verified compatible LNSAT release or use an existing
 service; dependency flows toward LNSAT, never the reverse. Current console
-readback does not implement that management gate.
+readback implements neither the pending headless gate nor Rangoon's graphical
+userland.
 
 | Boundary            | Source role                                                    | Current state                                                 |
 | ------------------- | -------------------------------------------------------------- | ------------------------------------------------------------- |

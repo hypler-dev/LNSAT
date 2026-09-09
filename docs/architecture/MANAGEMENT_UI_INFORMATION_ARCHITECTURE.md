@@ -1,18 +1,21 @@
 # Management Console Information Architecture
 
-`apps/console` is LNSAT's product console. It is separate from the marketing
-site and currently renders synthetic public fixtures in read-only mode.
+`apps/console` is an experimental LNSAT source console. It is separate from the
+marketing site and currently renders synthetic public fixtures in read-only
+mode. It is not an LNSAT V1 exit requirement; Rangoon owns rich userland UI.
 
 ## Product Routes
 
-The required V1 standalone setup wizard and access-management UI belong to LNSAT,
-not a mandatory downstream product. Their
-[canonical acceptance gate](../PRODUCT_BUILD_SEQUENCE.md#standalone-setup-and-access-management)
-covers separate resource access and agent authority, customizable presets,
-observed OS enforcement, protected permission changes, and recovery. Implementation
-is pending. The route inventory below describes existing read-only source, not
-permission editing or an implemented wizard; future changes require reviewed
-Gateway contracts and independent security validation.
+The required V1 standalone setup and access-management capability belongs to
+LNSAT's API and `lnsatctl`, not a mandatory graphical product. Rangoon owns
+the graphical wizard, presets, and management UI. LNSAT's
+[canonical acceptance gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+covers separate resource access and agent authority, layered declarative
+configuration, observed OS enforcement, protected permission changes, and
+recovery. Implementation is pending. The route inventory below describes
+existing read-only source, not permission editing or an implemented wizard;
+future changes require reviewed Gateway contracts and independent security
+validation.
 
 | Route         | Purpose                                          |
 | ------------- | ------------------------------------------------ |

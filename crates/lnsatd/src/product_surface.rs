@@ -5,6 +5,7 @@
 
 use crate::product_config::{
     DAEMON_CONFIG_CONTRACT_ID_V1, LoadedDaemonConfigV1, MAX_DAEMON_CONFIG_BYTES_V1,
+    daemon_config_schema_json_v1,
 };
 use lnsat_contracts::CONTRACT_VERSION_V1_0;
 use lnsat_store::{SQLITE_SCHEMA_VERSION, SqliteRecoveryErrorV1, SqliteStore, SqliteStoreStateV1};
@@ -14,6 +15,20 @@ use std::path::Path;
 
 /// Stable source contract identifier for the Phase 10 product surface.
 pub const PRODUCT_SURFACE_CONTRACT_ID_V1: &str = "lnsat.product_surface.v1";
+/// Exact opt-in HCFG-1 product-surface contract.
+pub const PRODUCT_SURFACE_CONTRACT_ID_V2: &str = "lnsat.product_surface.v2";
+
+/// Exact request and response header for product-surface contract selection.
+pub const PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1: &str = "LNSAT-Product-Surface-Contract";
+
+/// Returns whether one product-surface contract selector is exactly supported.
+#[must_use]
+pub fn is_supported_product_surface_contract_v1(value: &str) -> bool {
+    matches!(
+        value,
+        PRODUCT_SURFACE_CONTRACT_ID_V1 | PRODUCT_SURFACE_CONTRACT_ID_V2
+    )
+}
 
 /// Stable machine-output schema used by Phase 10 source commands.
 pub const CLI_OUTPUT_SCHEMA_V1: &str = "lnsat.cli.output.v1";
@@ -26,6 +41,8 @@ pub const DAEMON_HEALTH_CONTRACT_V1: &str = "lnsat.daemon.health.v1";
 
 /// Stable authenticated daemon-status response contract.
 pub const DAEMON_STATUS_CONTRACT_V1: &str = "lnsat.daemon.status.v1";
+/// Exact opt-in daemon-status contract identity.
+pub const DAEMON_STATUS_CONTRACT_V2: &str = "lnsat.daemon.status.v2";
 
 /// Only bounded evidence change permitted while authenticating a read.
 pub const SESSION_ACTIVITY_SIDE_EFFECT_V1: &str = "session_activity_evidence_may_append";
@@ -193,6 +210,84 @@ pub struct DaemonStatusV1 {
     pub source_version: String,
 }
 
+/// Closed v2 operator-surface posture returned by an explicitly negotiated
+/// daemon-status read.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct DaemonProductSurfacePostureV2 {
+    /// Implemented read-only and offline operator commands.
+    pub implemented: Vec<String>,
+    /// Reserved command families that remain unopened.
+    pub reserved: Vec<String>,
+}
+
+/// Closed authenticated status evidence for the explicitly selected v2 product
+/// surface. It is deliberately distinct from v1 so a strict v1 client never
+/// accepts v2 inventory as its own contract.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct DaemonStatusV2 {
+    /// Exact fixed role/permission posture.
+    pub authenticated_read_scope: DaemonAuthenticatedReadScopeV1,
+    /// Stable response contract.
+    pub contract: String,
+    /// Exact Gateway contract-version identity.
+    pub contract_version: String,
+    /// Explicit local target posture.
+    pub explicit_target: DaemonExplicitTargetV1,
+    /// Read grants no mutation authority.
+    pub mutation_authority: bool,
+    /// Current Phase 10 posture.
+    pub phase10: DaemonPhase10PostureV1,
+    /// Implemented and reserved v2 operator surfaces.
+    pub product_surface: DaemonProductSurfacePostureV2,
+    /// Current daemon readiness.
+    pub readiness: DaemonStatusReadinessV1,
+    /// Exact bounded authentication side effect.
+    pub side_effects: Vec<String>,
+    /// Source package version; not artifact provenance.
+    pub source_version: String,
+}
+
+impl DaemonStatusV2 {
+    /// Validates one daemon response against exact HCFG-1 v2 success invariants.
+    #[must_use]
+    pub fn is_compatible_success(&self) -> bool {
+        self.authenticated_read_scope.permission == "read_evidence"
+            && self.authenticated_read_scope.roles == ["owner", "operator", "auditor"]
+            && self.contract == DAEMON_STATUS_CONTRACT_V2
+            && self.contract_version == CONTRACT_VERSION_V1_0
+            && !self.explicit_target.ambient_target_used
+            && self.explicit_target.endpoint_required
+            && !self.explicit_target.remote_transport
+            && !self.mutation_authority
+            && self.phase10.implemented_packets
+                == ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"]
+            && self.phase10.next_packet == "none_authorized"
+            && !self.phase10.phase11_open
+            && self.phase10.status == "complete"
+            && self.product_surface.implemented
+                == [
+                    "doctor",
+                    "config.inspect",
+                    "config.schema",
+                    "config.validate",
+                    "recovery.inspect",
+                    "backup",
+                    "restore",
+                    "recovery.owner",
+                    "health",
+                    "status",
+                ]
+            && self.product_surface.reserved == ["recovery.activate", "service", "update"]
+            && self.readiness.daemon_reachable
+            && self.readiness.schema_current
+            && self.readiness.storage_ready
+            && self.side_effects == [SESSION_ACTIVITY_SIDE_EFFECT_V1]
+            && self.source_version == PRODUCT_SOURCE_VERSION_V1
+    }
+}
+
 impl DaemonStatusV1 {
     /// Validates one daemon response against exact P10-A3 success invariants.
     #[must_use]
@@ -303,6 +398,59 @@ pub fn daemon_status_v1() -> DaemonStatusV1 {
     }
 }
 
+/// Builds the typed status result for the explicitly selected v2 surface.
+#[must_use]
+pub fn daemon_status_v2() -> DaemonStatusV2 {
+    DaemonStatusV2 {
+        authenticated_read_scope: DaemonAuthenticatedReadScopeV1 {
+            permission: "read_evidence".to_owned(),
+            roles: ["owner", "operator", "auditor"].map(str::to_owned).to_vec(),
+        },
+        contract: DAEMON_STATUS_CONTRACT_V2.to_owned(),
+        contract_version: CONTRACT_VERSION_V1_0.to_owned(),
+        explicit_target: DaemonExplicitTargetV1 {
+            ambient_target_used: false,
+            endpoint_required: true,
+            remote_transport: false,
+        },
+        mutation_authority: false,
+        phase10: DaemonPhase10PostureV1 {
+            implemented_packets: ["P10-A1", "P10-A2", "P10-A3", "P10-A4", "P10-X1"]
+                .map(str::to_owned)
+                .to_vec(),
+            next_packet: "none_authorized".to_owned(),
+            phase11_open: false,
+            status: "complete".to_owned(),
+        },
+        product_surface: DaemonProductSurfacePostureV2 {
+            implemented: [
+                "doctor",
+                "config.inspect",
+                "config.schema",
+                "config.validate",
+                "recovery.inspect",
+                "backup",
+                "restore",
+                "recovery.owner",
+                "health",
+                "status",
+            ]
+            .map(str::to_owned)
+            .to_vec(),
+            reserved: ["recovery.activate", "service", "update"]
+                .map(str::to_owned)
+                .to_vec(),
+        },
+        readiness: DaemonStatusReadinessV1 {
+            daemon_reachable: true,
+            schema_current: true,
+            storage_ready: true,
+        },
+        side_effects: vec![SESSION_ACTIVITY_SIDE_EFFECT_V1.to_owned()],
+        source_version: PRODUCT_SOURCE_VERSION_V1.to_owned(),
+    }
+}
+
 /// Stable Phase 10 exit-code families.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
@@ -355,6 +503,53 @@ impl ProductExitCodeV1 {
 #[must_use]
 pub const fn product_surface_manifest_json_v1() -> &'static str {
     include_str!("../../../fixtures/contracts/phase10-product-surface-v1.json")
+}
+
+/// Exact opt-in HCFG-1 product-surface manifest bytes.
+#[must_use]
+pub const fn product_surface_manifest_json_v2() -> &'static str {
+    include_str!("../../../fixtures/contracts/product-surface-v2.json")
+}
+
+/// Public-safe diagnostic result for one loader-validated configuration.
+#[must_use]
+pub fn config_validation_output_json_v2(loaded: &LoadedDaemonConfigV1) -> String {
+    json!({
+        "ok": true,
+        "schema": CLI_OUTPUT_SCHEMA_V1,
+        "command": "config.validate",
+        "configuration_contract": DAEMON_CONFIG_CONTRACT_ID_V1,
+        "valid": true,
+        "config_digest": loaded.config_digest(),
+        "validation_scope": "explicit_daemon_configuration",
+        "activation_authority": false,
+        "side_effects": []
+    })
+    .to_string()
+}
+
+/// Public-safe diagnostic wrapper around the embedded JSON Schema.
+///
+/// # Panics
+///
+/// Panics only if the source-controlled embedded schema is no longer JSON.
+#[must_use]
+pub fn config_schema_output_json_v2() -> String {
+    let configuration_schema: serde_json::Value =
+        serde_json::from_str(daemon_config_schema_json_v1())
+            .expect("embedded daemon configuration schema must be JSON");
+    json!({
+        "ok": true,
+        "schema": CLI_OUTPUT_SCHEMA_V1,
+        "command": "config.schema",
+        "configuration_contract": DAEMON_CONFIG_CONTRACT_ID_V1,
+        "semantic_checks": configuration_schema["semantic_checks"].clone(),
+        "configuration_schema": configuration_schema,
+        "validation_scope": "explicit_daemon_configuration",
+        "activation_authority": false,
+        "side_effects": []
+    })
+    .to_string()
 }
 
 /// Public-safe read-only `lnsatctl doctor` evidence.
@@ -503,7 +698,7 @@ pub fn failure_output_json_v1(
 /// Bounded `lnsatctl` help text.
 #[must_use]
 pub const fn lnsatctl_usage_v1() -> &'static str {
-    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
+    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl config schema --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
 }
 
 /// Generated completion source for supported shells.
@@ -511,13 +706,13 @@ pub const fn lnsatctl_usage_v1() -> &'static str {
 pub fn completion_source_v1(shell: &str) -> Option<&'static str> {
     match shell {
         "bash" => Some(
-            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor health status config recovery backup restore manifest completion man --database --destination --backup --expected-owner --recovered-at --new-password-stdin --socket --session-token-stdin --output --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --help --version' lnsatd\n",
+            "_lnsatctl(){ COMPREPLY=( $(compgen -W 'doctor health status config recovery backup restore manifest completion man --database --destination --backup --expected-owner --recovered-at --new-password-stdin --socket --session-token-stdin --product-surface-contract --output --help --version' -- \"${COMP_WORDS[COMP_CWORD]}\") ); }\ncomplete -F _lnsatctl lnsatctl\ncomplete -W 'packet manifest completion man --product-surface-contract --help --version' lnsat\ncomplete -W '--config --database --listen --disposable-git-root --git-executable --manifest --product-surface-contract --help --version' lnsatd\n",
         ),
         "zsh" => Some(
-            "#compdef lnsatctl lnsat lnsatd\ncase \"$service\" in\n  lnsatctl)\n    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsat)\n    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsatd)\n    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n    ;;\nesac\n",
+            "#compdef lnsatctl lnsat lnsatd\ncase \"$service\" in\n  lnsatctl)\n    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--product-surface-contract' '--output' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsat)\n    _arguments '1:command:(packet manifest completion man)' '--product-surface-contract' '--help' '--version' '*::argument:->args'\n    ;;\n  lnsatd)\n    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--product-surface-contract' '--help' '--version'\n    ;;\nesac\n",
         ),
         "fish" => Some(
-            "complete -c lnsatctl -f -a 'doctor health status config recovery backup restore manifest completion man'\ncomplete -c lnsatctl -f -l database\ncomplete -c lnsatctl -f -l destination\ncomplete -c lnsatctl -f -l backup\ncomplete -c lnsatctl -f -l expected-owner\ncomplete -c lnsatctl -f -l recovered-at\ncomplete -c lnsatctl -f -l new-password-stdin\ncomplete -c lnsatctl -f -l socket\ncomplete -c lnsatctl -f -l session-token-stdin\ncomplete -c lnsatctl -f -l output -a 'text json jsonl yaml'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest\n",
+            "complete -c lnsatctl -f -a 'doctor health status config recovery backup restore manifest completion man'\ncomplete -c lnsatctl -f -l database\ncomplete -c lnsatctl -f -l destination\ncomplete -c lnsatctl -f -l backup\ncomplete -c lnsatctl -f -l expected-owner\ncomplete -c lnsatctl -f -l recovered-at\ncomplete -c lnsatctl -f -l new-password-stdin\ncomplete -c lnsatctl -f -l socket\ncomplete -c lnsatctl -f -l session-token-stdin\ncomplete -c lnsatctl -f -l product-surface-contract\ncomplete -c lnsatctl -f -l output -a 'text json jsonl yaml'\ncomplete -c lnsat -f -a 'packet manifest completion man'\ncomplete -c lnsat -f -l product-surface-contract\ncomplete -c lnsatd -f -l config -l database -l listen -l disposable-git-root -l git-executable -l manifest -l product-surface-contract\n",
         ),
         _ => None,
     }
@@ -528,13 +723,13 @@ pub fn completion_source_v1(shell: &str) -> Option<&'static str> {
 pub fn man_page_source_v1(command: &str) -> Option<&'static str> {
     match command {
         "lnsat" => Some(
-            ".TH LNSAT 1\n.SH NAME\nlnsat - source-only LNSAT workflow dispatcher\n.SH SYNOPSIS\nlnsat packet <validate|hash|inspect> <packet.json> [request_id]\n.SH SAFETY\nNo command grants ambient authority. Current commands are read-only or pure local inspection.\n",
+            ".TH LNSAT 1\n.SH NAME\nlnsat - source-only LNSAT workflow dispatcher\n.SH SYNOPSIS\nlnsat packet <validate|hash|inspect> <packet.json> [request_id] | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH SAFETY\nNo command grants ambient authority. Current commands are read-only or pure local inspection. Product-surface selection is exact-match only; no range or fallback exists.\n",
         ),
         "lnsatctl" => Some(
-            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics and offline recovery\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin | config inspect --config <absolute-path> | recovery inspect --database <path> | backup --database <path> --destination <fresh-path> | restore --backup <path> --destination <fresh-path> | recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin | manifest\n.SH OUTPUT\nCommands accept --output text|json|jsonl|yaml in documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Offline backup and owner recovery prove daemon quiescence through exclusive database lease. Restore creates only one fresh inert file. Owner replacement password is accepted only through protected stdin. Daemon and offline recovery commands refuse root. No API, MCP, UI, service start, automatic activation, or existing-file replacement authority exists.\n",
+            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics and offline recovery\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] | config inspect --config <absolute-path> | config schema --product-surface-contract lnsat.product_surface.v2 | config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | recovery inspect --database <path> | backup --database <path> --destination <fresh-path> | restore --backup <path> --destination <fresh-path> | recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH OUTPUT\nCommands accept --output text|json|jsonl|yaml in documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Product-surface selection is exact-match only; no range or fallback exists. Config schema and validation are v2-selected diagnostics only: they start no service, open no database, and grant no activation authority. Offline backup and owner recovery prove daemon quiescence through exclusive database lease. Restore creates only one fresh inert file. Owner replacement password is accepted only through protected stdin. Daemon and offline recovery commands refuse root. No API, MCP, UI, service start, automatic activation, or existing-file replacement authority exists.\n",
         ),
         "lnsatd" => Some(
-            ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --config <absolute-path> | --database <path> [--listen <numeric-loopback:port>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically.\n",
+            ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --config <absolute-path> | --database <path> [--listen <numeric-loopback:port>] | --manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically. Product-surface selection is exact-match only; no range or fallback exists.\n",
         ),
         _ => None,
     }
@@ -641,6 +836,16 @@ mod tests {
             serde_json::to_value(status).expect("status must serialize"),
             status_fixture
         );
+        let status_v2_fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../fixtures/contracts/daemon-status-v2.json"
+        ))
+        .expect("v2 status fixture must parse");
+        let status_v2 = daemon_status_v2();
+        assert!(status_v2.is_compatible_success());
+        assert_eq!(
+            serde_json::to_value(status_v2).expect("v2 status must serialize"),
+            status_v2_fixture
+        );
         let combined = format!("{health_fixture}{status_fixture}");
         for forbidden in [
             "/Users/",
@@ -653,6 +858,59 @@ mod tests {
         ] {
             assert!(!combined.contains(forbidden));
         }
+    }
+
+    #[test]
+    fn v2_manifest_adds_only_explicit_headless_configuration_inventory() {
+        let v1: serde_json::Value = serde_json::from_str(product_surface_manifest_json_v1())
+            .expect("v1 manifest must parse");
+        let v2: serde_json::Value = serde_json::from_str(product_surface_manifest_json_v2())
+            .expect("v2 manifest must parse");
+        assert_eq!(v2["contract_id"], PRODUCT_SURFACE_CONTRACT_ID_V2);
+        assert_eq!(v2["schema_version"], 2);
+        for field in [
+            "source_status",
+            "supported_release",
+            "package_or_binary_claim",
+            "required_sequence",
+            "optional_phase",
+            "reserved_command_groups",
+            "authenticated_read_transport",
+            "recovery",
+            "service_manager",
+            "operator_assets",
+            "build_manifest",
+            "non_root",
+            "parity",
+            "hard_stops",
+        ] {
+            assert_eq!(v2[field], v1[field], "v2 must retain {field}");
+        }
+        assert_eq!(
+            v2["binaries"]["lnsatctl"]["implemented_commands"],
+            serde_json::json!([
+                "doctor",
+                "health",
+                "status",
+                "config inspect",
+                "config schema",
+                "config validate",
+                "recovery inspect",
+                "backup",
+                "restore",
+                "recovery owner",
+                "manifest",
+                "completion",
+                "man",
+                "help",
+                "version",
+            ])
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["selector_required"],
+            true
+        );
+        assert_eq!(v2["hard_stops"]["phase11_or_later_implementation"], false);
     }
 
     #[test]
@@ -711,13 +969,13 @@ mod tests {
                 "#compdef lnsatctl lnsat lnsatd\n",
                 "case \"$service\" in\n",
                 "  lnsatctl)\n",
-                "    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--output' '--help' '--version' '*::argument:->args'\n",
+                "    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--product-surface-contract' '--output' '--help' '--version' '*::argument:->args'\n",
                 "    ;;\n",
                 "  lnsat)\n",
-                "    _arguments '1:command:(packet manifest completion man)' '--help' '--version' '*::argument:->args'\n",
+                "    _arguments '1:command:(packet manifest completion man)' '--product-surface-contract' '--help' '--version' '*::argument:->args'\n",
                 "    ;;\n",
                 "  lnsatd)\n",
-                "    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--help' '--version'\n",
+                "    _arguments '--config' '--database' '--listen' '--disposable-git-root' '--git-executable' '--manifest' '--product-surface-contract' '--help' '--version'\n",
                 "    ;;\n",
                 "esac\n",
             ))
@@ -735,6 +993,11 @@ mod tests {
         for command in ["lnsat", "lnsatctl", "lnsatd"] {
             let page = man_page_source_v1(command).expect("supported man page");
             assert!(page.contains(".TH"));
+            assert!(page.contains("lnsat.product_surface.v1"));
+        }
+        for command in ["lnsat", "lnsatctl", "lnsatd"] {
+            let page = man_page_source_v1(command).expect("supported v2 man page");
+            assert!(page.contains("lnsat.product_surface.v2"));
         }
         assert!(completion_source_v1("powershell").is_none());
         assert!(man_page_source_v1("unknown").is_none());
