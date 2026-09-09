@@ -10,6 +10,13 @@ changes, current implementation truth, and remaining build order. It prevents a
 completed source packet from being mistaken for a supported runtime or a
 package build from starting before product behavior is complete.
 
+HCFG-3A independently prepares the core declaration-composition primitive
+needed before effective/export CLI integration. Its bounded source contract
+and acceptance live in [Project Status](PROJECT_STATUS.md#hcfg-3a-core-declaration-composition).
+Complete inspection integration, then composition diagnostics, monitoring,
+separately authorized protected controls, and OS-enforcement conformance before
+closing the headless gate. No source foundation alone satisfies this sequence.
+
 ## Preserved Product Goal
 
 First LNSAT V1 release remains an embeddable, owner-controlled authority

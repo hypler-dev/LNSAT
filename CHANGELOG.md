@@ -21,6 +21,13 @@
 
 ### Added
 
+- Added an experimental Rust headless declaration parser and pure composition
+  primitive, separating resource declarations from agent action ceilings. Ordered
+  layers retain denials and reject wider resource sets, weaker approval, restored
+  actions, or increased budgets. Canonical declaration identity and redacted
+  diagnostics provide no identity verification, activation, or action authority.
+  Existing daemon configuration, policy behavior, and CLI manifests are unchanged.
+
 - Added source-only exact product-surface negotiation for `GET|HEAD /v1/status`
   and three manifest commands. `lnsat.product_surface.v1` is selected by
   default or exact selector and echoed in status responses; malformed,
