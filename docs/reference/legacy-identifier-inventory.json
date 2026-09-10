@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "source_tree_sha256": "6b1fbe6239fa08ba6661bcbabf7b9559d63c561e129a03e01c5c386d006eea14",
+  "source_tree_sha256": "eb35295475a9615f62d667453054566ffe631acc5aecea1bd0e38ca9efd6f0cf",
   "scope": {
     "tracked_text_files_only": true,
     "excluded_inventory_mechanics": [
@@ -17154,7 +17154,7 @@
       "occurrence_id": "legacy-00874",
       "kind": "build_packet_terminology",
       "path": "packages/mcp/README.md",
-      "line": 26,
+      "line": 28,
       "column": 8,
       "match": "build.packet",
       "normalized_match": "build.packet",

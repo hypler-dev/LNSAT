@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   MCP_HTTP_MAX_BODY_BYTES,
   MCP_STDIO_MAX_BUFFER_BYTES,
@@ -7,7 +7,13 @@ import {
   validateMcpHttpHeaderPairs,
 } from "../src/index.js";
 
+const TEST_BODY_READ_TIMEOUT_MS = 5_000;
+const TEST_MAX_BODY_CHUNKS = 4_096;
+
 describe("MCP transport security boundary", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   it("accepts bounded same-origin loopback POST requests", async () => {
     const result = await prepareLnsatMcpHttpRequest(
       request({ headers: { host: "localhost", origin: "http://localhost" } }),
@@ -76,6 +82,110 @@ describe("MCP transport security boundary", () => {
     });
   });
 
+  it("cancels a never-closing body at one absolute deadline", async () => {
+    vi.useFakeTimers();
+    const cancel = vi.fn();
+    const pending = prepareLnsatMcpHttpRequest(
+      streamingRequest(new ReadableStream<Uint8Array>({ cancel })),
+    );
+
+    await vi.advanceTimersByTimeAsync(TEST_BODY_READ_TIMEOUT_MS);
+
+    await expect(pending).resolves.toMatchObject({
+      ok: false,
+      error_code: "mcp.http.body_read_timeout",
+      response: { status: 408 },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it("does not reset the body deadline after partial progress", async () => {
+    vi.useFakeTimers();
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const cancel = vi.fn(() => {
+      if (interval !== undefined) {
+        clearInterval(interval);
+      }
+    });
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        interval = setInterval(() => controller.enqueue(new Uint8Array([120])), 1_000);
+      },
+      cancel,
+    });
+    const pending = prepareLnsatMcpHttpRequest(streamingRequest(body));
+
+    await vi.advanceTimersByTimeAsync(TEST_BODY_READ_TIMEOUT_MS);
+
+    await expect(pending).resolves.toMatchObject({
+      ok: false,
+      error_code: "mcp.http.body_read_timeout",
+      response: { status: 408 },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it("rejects zero-byte chunks without starving the absolute deadline", async () => {
+    const cancel = vi.fn();
+    const pending = prepareLnsatMcpHttpRequest(
+      streamingRequest(
+        new ReadableStream<Uint8Array>({
+          pull(controller) {
+            controller.enqueue(new Uint8Array());
+          },
+          cancel,
+        }),
+      ),
+    );
+
+    await expect(pending).resolves.toMatchObject({
+      ok: false,
+      error_code: "mcp.http.invalid_body_stream",
+      response: { status: 400 },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it("caps body chunk count independently from total bytes", async () => {
+    const cancel = vi.fn();
+    const pending = prepareLnsatMcpHttpRequest(
+      streamingRequest(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            for (let index = 0; index <= TEST_MAX_BODY_CHUNKS; index += 1) {
+              controller.enqueue(new Uint8Array([120]));
+            }
+          },
+          cancel,
+        }),
+      ),
+    );
+
+    await expect(pending).resolves.toMatchObject({
+      ok: false,
+      error_code: "mcp.http.body_too_large",
+      response: { status: 413 },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it("cancels an aborted body read without waiting for the deadline", async () => {
+    const controller = new AbortController();
+    const cancel = vi.fn();
+    const pending = prepareLnsatMcpHttpRequest(
+      streamingRequest(new ReadableStream<Uint8Array>({ cancel }), controller.signal),
+    );
+
+    controller.abort();
+
+    await expect(pending).resolves.toMatchObject({
+      ok: false,
+      error_code: "mcp.http.body_read_aborted",
+      response: { status: 408 },
+    });
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
   it("rejects CRLF, invalid names, and parameter-mirroring MCP headers", () => {
     expect(
       validateMcpHttpHeaderPairs([["mcp-method", "tools/list\r\nInjected: 1"]]),
@@ -113,4 +223,17 @@ function request(
     },
     ...(options.method === "GET" ? {} : { body: options.body ?? '{"jsonrpc":"2.0"}' }),
   });
+}
+
+function streamingRequest(
+  body: ReadableStream<Uint8Array>,
+  signal?: AbortSignal,
+): Request {
+  return new Request("http://localhost/mcp", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body,
+    signal,
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
 }

@@ -6,7 +6,9 @@ MCP is transport and translation, not security authority. Current source uses
 official TypeScript v2 split packages for MCP 2026-07-28 read-only stdio and an
 in-process stateless HTTP handler. Explicit negotiation retains 2025-11-25 as
 temporary legacy compatibility. No network listener or hosted service is
-enabled.
+enabled. HTTP request preparation enforces fixed header/body byte and body-chunk
+ceilings, a five-second absolute body-read deadline, and caller-abort
+cancellation before any tool dispatch.
 
 FastMCP 3.4.5 legacy-profile and FastMCP 4.0.0b1 modern-profile harnesses,
 closed OAuth admission validation, JSON Schema 2020-12 checks, and downgrade

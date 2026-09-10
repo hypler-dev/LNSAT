@@ -114,6 +114,7 @@ pub const PHASE9_MAX_CONSOLE_ASSET_BYTES_V1: usize = 8 * 1024 * 1024;
 
 const MAX_HEADER_COUNT_V1: usize = 64;
 const CONNECTION_TIMEOUT_V1: Duration = Duration::from_secs(5);
+const REQUEST_READ_POLL_INTERVAL_V1: Duration = Duration::from_millis(50);
 const OVERLOAD_TIMEOUT_V1: Duration = Duration::from_millis(100);
 const SHUTDOWN_WAKE_TIMEOUT_V1: Duration = Duration::from_millis(250);
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -2215,6 +2216,7 @@ impl DaemonServerV1 {
                 phase8_runtime: self.phase8_runtime.as_deref(),
                 phase9_console: self.phase9_console.as_deref(),
                 consequential_dispatch_active: &self.consequential_dispatch_active,
+                shutdown: &self.shutdown,
             },
             &self.store_state,
         )
@@ -2286,6 +2288,7 @@ impl DaemonServerV1 {
             let phase9_console = self.phase9_console.clone();
             let consequential_dispatch_active = Arc::clone(&self.consequential_dispatch_active);
             let store_state = self.store_state.clone();
+            let shutdown = self.shutdown.clone();
             match thread::Builder::new()
                 .name("lnsatd-gateway".to_owned())
                 .spawn(move || {
@@ -2299,6 +2302,7 @@ impl DaemonServerV1 {
                             phase8_runtime: phase8_runtime.as_deref(),
                             phase9_console: phase9_console.as_deref(),
                             consequential_dispatch_active: &consequential_dispatch_active,
+                            shutdown: &shutdown,
                         },
                         &store_state,
                     );
@@ -2328,9 +2332,6 @@ impl DaemonServerV1 {
 
 fn configure_connection_timeouts(stream: &TcpStream) -> Result<(), DaemonErrorV1> {
     stream
-        .set_read_timeout(Some(CONNECTION_TIMEOUT_V1))
-        .map_err(|_| DaemonErrorV1::RequestReadFailed)?;
-    stream
         .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
         .map_err(|_| DaemonErrorV1::ResponseWriteFailed)
 }
@@ -2348,7 +2349,7 @@ fn serve_control_listener_v1(
         }
         match listener.accept() {
             Ok((stream, _)) => {
-                let _ = serve_accepted_control_connection_v1(stream, store, store_state);
+                let _ = serve_accepted_control_connection_v1(stream, store, store_state, shutdown);
             }
             Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                 thread::sleep(CONTROL_ACCEPT_POLL_INTERVAL_V1);
@@ -2366,17 +2367,15 @@ fn serve_accepted_control_connection_v1(
     mut stream: std::os::unix::net::UnixStream,
     store: &Arc<Mutex<SqliteStore>>,
     store_state: &SqliteStoreStateV1,
+    shutdown: &DaemonShutdownV1,
 ) -> Result<(), DaemonErrorV1> {
-    stream
-        .set_read_timeout(Some(CONNECTION_TIMEOUT_V1))
-        .map_err(|_| DaemonErrorV1::RequestReadFailed)?;
     stream
         .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
         .map_err(|_| DaemonErrorV1::ResponseWriteFailed)?;
     if local_unix_socket::validate_peer_uid_v1(&stream).is_err() {
         return Ok(());
     }
-    let response = match read_http_request_v1(&mut stream) {
+    let response = match read_http_request_v1(&mut stream, shutdown) {
         Ok(RequestReadV1::Complete(mut request)) => {
             let response = classify_control_product_read_request_v1(&request, store);
             request.zeroize();
@@ -2398,12 +2397,8 @@ fn refuse_capacity(
     store_state: &SqliteStoreStateV1,
 ) -> Result<(), DaemonErrorV1> {
     stream
-        .set_read_timeout(Some(OVERLOAD_TIMEOUT_V1))
-        .map_err(|_| DaemonErrorV1::RequestReadFailed)?;
-    stream
         .set_write_timeout(Some(OVERLOAD_TIMEOUT_V1))
         .map_err(|_| DaemonErrorV1::ResponseWriteFailed)?;
-    let _ = read_http_request_v1(stream);
     write_response_with_state(
         stream,
         ClassifiedHttpResponseV1::unversioned(HttpResponseV1::ServiceUnavailable),
@@ -2419,6 +2414,7 @@ struct GatewayRuntimeContextV1<'a> {
     phase8_runtime: Option<&'a Phase8DaemonRuntimeV1>,
     phase9_console: Option<&'a Phase9ConsoleRuntimeV1>,
     consequential_dispatch_active: &'a Arc<AtomicBool>,
+    shutdown: &'a DaemonShutdownV1,
 }
 
 fn serve_accepted_connection(
@@ -2436,7 +2432,7 @@ fn serve_accepted_connection(
         );
     }
 
-    let response = match read_http_request_v1(&mut stream) {
+    let response = match read_http_request_v1(&mut stream, context.shutdown) {
         Ok(RequestReadV1::Complete(mut request)) => {
             let response = classify_request(&request, peer_address.ip(), context);
             request.zeroize();
@@ -2612,11 +2608,60 @@ impl ClassifiedHttpResponseV1 {
     }
 }
 
-fn read_http_request_v1(stream: &mut impl Read) -> Result<RequestReadV1, ()> {
+trait RequestReadStreamV1: Read {
+    fn set_request_read_timeout_v1(&self, timeout: Duration) -> std::io::Result<()>;
+}
+
+impl RequestReadStreamV1 for TcpStream {
+    fn set_request_read_timeout_v1(&self, timeout: Duration) -> std::io::Result<()> {
+        self.set_read_timeout(Some(timeout))
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+impl RequestReadStreamV1 for std::os::unix::net::UnixStream {
+    fn set_request_read_timeout_v1(&self, timeout: Duration) -> std::io::Result<()> {
+        self.set_read_timeout(Some(timeout))
+    }
+}
+
+fn read_http_request_v1(
+    stream: &mut impl RequestReadStreamV1,
+    shutdown: &DaemonShutdownV1,
+) -> Result<RequestReadV1, ()> {
+    read_http_request_until_v1(stream, shutdown, Instant::now() + CONNECTION_TIMEOUT_V1)
+}
+
+fn read_http_request_until_v1(
+    stream: &mut impl RequestReadStreamV1,
+    shutdown: &DaemonShutdownV1,
+    deadline: Instant,
+) -> Result<RequestReadV1, ()> {
     let mut request = Zeroizing::new(Vec::with_capacity(1024));
     let mut buffer = [0_u8; 512];
     loop {
-        let count = stream.read(&mut buffer).map_err(|_| ())?;
+        if shutdown.is_shutdown_requested() {
+            return Err(());
+        }
+        let remaining = deadline.checked_duration_since(Instant::now()).ok_or(())?;
+        if remaining.is_zero() {
+            return Err(());
+        }
+        stream
+            .set_request_read_timeout_v1(remaining.min(REQUEST_READ_POLL_INTERVAL_V1))
+            .map_err(|_| ())?;
+        let count = match stream.read(&mut buffer) {
+            Ok(count) => count,
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock
+                ) =>
+            {
+                continue;
+            }
+            Err(_) => return Err(()),
+        };
         if count == 0 {
             return Ok(RequestReadV1::Complete(request));
         }
@@ -12753,7 +12798,7 @@ mod tests {
         assert!(response.starts_with("HTTP/1.1 200 OK\r\n"));
         assert!(started.elapsed() < Duration::from_secs(2));
 
-        drop(slow);
+        let shutdown_started = Instant::now();
         shutdown.request_shutdown();
         shutdown.request_shutdown();
         assert!(shutdown.is_shutdown_requested());
@@ -12761,6 +12806,11 @@ mod tests {
             .join()
             .expect("server thread should join")
             .expect("cooperative shutdown should succeed");
+        assert!(
+            shutdown_started.elapsed() < Duration::from_secs(1),
+            "shutdown should interrupt an active partial request"
+        );
+        drop(slow);
 
         let restarted = DaemonServerV1::bind(&DaemonConfigV1::for_test(&database_path))
             .expect("same database should restart cleanly");
@@ -12797,10 +12847,17 @@ mod tests {
         thread::sleep(Duration::from_millis(100));
 
         let started = Instant::now();
-        let response = request_at(address, b"GET /healthz HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
+        let mut overloaded = TcpStream::connect(address).expect("overloaded client should connect");
+        overloaded
+            .set_read_timeout(Some(Duration::from_secs(1)))
+            .expect("overloaded client should have a read timeout");
+        let mut response = String::new();
+        overloaded
+            .read_to_string(&mut response)
+            .expect("overload rejection should arrive without request bytes");
         assert!(response.starts_with("HTTP/1.1 503 Service Unavailable\r\n"));
         assert!(response.contains("lnsatd.connection.capacity_exhausted"));
-        assert!(started.elapsed() < Duration::from_secs(2));
+        assert!(started.elapsed() < Duration::from_millis(500));
 
         drop(slow_clients);
         shutdown.request_shutdown();
@@ -12808,6 +12865,45 @@ mod tests {
             .join()
             .expect("server thread should join")
             .expect("bounded workers should drain cleanly");
+    }
+
+    #[test]
+    fn request_read_deadline_does_not_reset_after_partial_progress() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("test listener should bind");
+        let address = listener
+            .local_addr()
+            .expect("test listener address should inspect");
+        let client = thread::spawn(move || {
+            let mut stream = TcpStream::connect(address).expect("drip client should connect");
+            for _ in 0..50 {
+                if stream.write_all(b"x").is_err() {
+                    break;
+                }
+                thread::sleep(Duration::from_millis(20));
+            }
+        });
+        let (mut stream, _) = listener.accept().expect("drip client should be accepted");
+        let shutdown = DaemonShutdownV1 {
+            requested: Arc::new(AtomicBool::new(false)),
+            wake_address: address,
+        };
+        let started = Instant::now();
+
+        assert!(
+            read_http_request_until_v1(
+                &mut stream,
+                &shutdown,
+                started + Duration::from_millis(150),
+            )
+            .is_err()
+        );
+        assert!(
+            started.elapsed() < Duration::from_millis(500),
+            "partial progress must not reset the absolute deadline"
+        );
+
+        drop(stream);
+        client.join().expect("drip client should join");
     }
 
     #[test]
