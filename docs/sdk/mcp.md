@@ -101,7 +101,11 @@ same registered read-only inspection tools.
 
 Modern stateless HTTP is tested as an in-process handler contract only. This
 guide does not authorize a hosted listener, external service call, network
-exposure, secrets read, or runtime adapter dispatch.
+exposure, secrets read, or runtime adapter dispatch. Request preparation caps
+headers, body bytes, and body chunks; rejects zero-byte chunks; applies one
+five-second absolute body-read deadline that does not reset after partial
+progress; and cancels an aborted body before any tool dispatch. Hosts must still
+bound connections and concurrent requests.
 
 ## Compatibility Matrix
 

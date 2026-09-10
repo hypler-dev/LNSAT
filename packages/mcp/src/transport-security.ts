@@ -1,6 +1,8 @@
 export const MCP_HTTP_MAX_BODY_BYTES = 1_048_576;
+const MCP_HTTP_MAX_BODY_CHUNKS = 4_096;
 export const MCP_HTTP_MAX_HEADER_BYTES = 16_384;
 export const MCP_HTTP_MAX_HEADER_COUNT = 64;
+const MCP_HTTP_BODY_READ_TIMEOUT_MS = 5_000;
 export const MCP_STDIO_MAX_BUFFER_BYTES = 1_048_576;
 export const MCP_STDIO_MAX_SUBSCRIPTIONS = 64;
 
@@ -25,6 +27,9 @@ export type McpHttpPreflightFailure = {
     | "mcp.http.untrusted_host"
     | "mcp.http.untrusted_origin"
     | "mcp.http.body_too_large"
+    | "mcp.http.invalid_body_stream"
+    | "mcp.http.body_read_timeout"
+    | "mcp.http.body_read_aborted"
     | "mcp.http.invalid_utf8";
   side_effects: [];
 };
@@ -179,8 +184,13 @@ async function readBoundedBody(request: Request): Promise<
   | { ok: true; text: string }
   | {
       ok: false;
-      error_code: "mcp.http.body_too_large" | "mcp.http.invalid_utf8";
-      status: 400 | 413;
+      error_code:
+        | "mcp.http.body_too_large"
+        | "mcp.http.invalid_body_stream"
+        | "mcp.http.body_read_timeout"
+        | "mcp.http.body_read_aborted"
+        | "mcp.http.invalid_utf8";
+      status: 400 | 408 | 413;
     }
 > {
   if (request.body === null) {
@@ -189,14 +199,79 @@ async function readBoundedBody(request: Request): Promise<
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
+  let chunkCount = 0;
+  const deadline = performance.now() + MCP_HTTP_BODY_READ_TIMEOUT_MS;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let onAbort: (() => void) | undefined;
+  const interrupted = new Promise<{ kind: "timeout" } | { kind: "aborted" }>(
+    (resolve) => {
+      let settled = false;
+      const finish = (kind: "timeout" | "aborted") => {
+        if (!settled) {
+          settled = true;
+          resolve({ kind });
+        }
+      };
+      timeout = setTimeout(() => finish("timeout"), MCP_HTTP_BODY_READ_TIMEOUT_MS);
+      onAbort = () => finish("aborted");
+      request.signal.addEventListener("abort", onAbort, { once: true });
+      if (request.signal.aborted) {
+        onAbort();
+      }
+    },
+  );
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      if (performance.now() >= deadline) {
+        void reader.cancel("MCP HTTP body read interrupted").catch(() => undefined);
+        return {
+          ok: false,
+          error_code: "mcp.http.body_read_timeout",
+          status: 408,
+        };
+      }
+      const next = reader.read().then(
+        (value) => ({ kind: "read" as const, value }),
+        () => ({ kind: "read_error" as const }),
+      );
+      const outcome = await Promise.race([next, interrupted]);
+      if (outcome.kind === "timeout" || outcome.kind === "aborted") {
+        void reader.cancel("MCP HTTP body read interrupted").catch(() => undefined);
+        return {
+          ok: false,
+          error_code:
+            outcome.kind === "timeout"
+              ? "mcp.http.body_read_timeout"
+              : "mcp.http.body_read_aborted",
+          status: 408,
+        };
+      }
+      if (outcome.kind === "read_error") {
+        return { ok: false, error_code: "mcp.http.invalid_utf8", status: 400 };
+      }
+      const { done, value } = outcome.value;
+      if (performance.now() >= deadline) {
+        void reader.cancel("MCP HTTP body read interrupted").catch(() => undefined);
+        return {
+          ok: false,
+          error_code: "mcp.http.body_read_timeout",
+          status: 408,
+        };
+      }
       if (done) {
         break;
       }
+      if (value.byteLength === 0) {
+        void reader.cancel("MCP HTTP body stream rejected").catch(() => undefined);
+        return {
+          ok: false,
+          error_code: "mcp.http.invalid_body_stream",
+          status: 400,
+        };
+      }
+      chunkCount += 1;
       total += value.byteLength;
-      if (total > MCP_HTTP_MAX_BODY_BYTES) {
+      if (total > MCP_HTTP_MAX_BODY_BYTES || chunkCount > MCP_HTTP_MAX_BODY_CHUNKS) {
         await reader.cancel("MCP HTTP body limit exceeded").catch(() => undefined);
         return {
           ok: false,
@@ -206,10 +281,18 @@ async function readBoundedBody(request: Request): Promise<
       }
       chunks.push(value);
     }
-  } catch {
-    return { ok: false, error_code: "mcp.http.invalid_utf8", status: 400 };
   } finally {
-    reader.releaseLock();
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+    }
+    if (onAbort !== undefined) {
+      request.signal.removeEventListener("abort", onAbort);
+    }
+    try {
+      reader.releaseLock();
+    } catch {
+      // Cancellation may settle one pending read after this function returns.
+    }
   }
 
   const bytes = new Uint8Array(total);
