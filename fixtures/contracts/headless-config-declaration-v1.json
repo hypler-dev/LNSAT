@@ -1,0 +1,39 @@
+{
+  "schema_id": "lnsat.headless_config.declaration.v1",
+  "contract_version": "lnsat.contracts.v1_0",
+  "installation_ref": "installation:example",
+  "resources": [
+    {
+      "resource_ref": "resource:repo-a",
+      "kind": "repository",
+      "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "resource_ref": "resource:repo-b",
+      "kind": "repository",
+      "identity_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "layers": [
+    {
+      "layer_ref": "layer:project",
+      "stage": "project",
+      "resource_allow": ["resource:repo-a", "resource:repo-b"],
+      "action_rules": [
+        {
+          "principal_ref": "identity:alice",
+          "resource_ref": "resource:repo-a",
+          "capability": "repository.read",
+          "mode": "allow",
+          "limits": {
+            "tokens": 100,
+            "runtime_seconds": 100,
+            "cost_microusd": 100,
+            "cpu_millicores": 100,
+            "memory_bytes": 100
+          }
+        }
+      ]
+    }
+  ]
+}

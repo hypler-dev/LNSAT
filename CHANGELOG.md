@@ -27,6 +27,13 @@
 
 ### Added
 
+- Added an experimental Rust headless declaration parser and pure composition
+  primitive, separating resource declarations from agent action ceilings. Ordered
+  layers retain denials and reject wider resource sets, weaker approval, restored
+  actions, or increased budgets. Canonical declaration identity and redacted
+  diagnostics provide no identity verification, activation, or action authority.
+  Existing daemon configuration, policy behavior, and CLI manifests are unchanged.
+
 - Added opt-in v2 `lnsatctl config show` and `config diff` diagnostics using the
   existing closed explicit-file loader. Output redacts configured values;
   comparison distinguishes exact source-byte changes from normalized settings

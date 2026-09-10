@@ -321,7 +321,7 @@ fn validate_canonical_json_value(value: &Value) -> Result<(), PacketEnvelopeV1Er
     }
 }
 
-fn write_canonical_json_value(
+pub(crate) fn write_canonical_json_value(
     value: &Value,
     output: &mut String,
 ) -> Result<(), PacketEnvelopeV1Error> {

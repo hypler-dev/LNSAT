@@ -11,6 +11,7 @@ mod approval;
 mod audit;
 mod error;
 mod execution;
+mod headless_config;
 mod idempotency;
 mod packet;
 mod policy;
@@ -37,6 +38,11 @@ pub use execution::{
     ExecutionRequestV1Input, ExecutionTargetV1, derive_execution_request_v1,
     parse_canonical_execution_request_v1, parse_execution_proposal_v1,
     verify_derived_execution_request_v1,
+};
+pub use headless_config::{
+    ComposedHeadlessConfigV1, HEADLESS_CONFIG_SCHEMA_V1, HeadlessConfigDeclarationV1,
+    HeadlessConfigErrorV1, MAX_HEADLESS_CONFIG_BYTES_V1, compose_headless_config_declaration_v1,
+    parse_headless_config_declaration_v1,
 };
 pub use idempotency::{
     AUDIT_EVENT_IDEMPOTENCY_MAX_PRIOR_ENTRIES, AuditEventIdempotencyDecisionV1,
