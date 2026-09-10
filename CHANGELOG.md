@@ -4,6 +4,12 @@
 
 ### Security
 
+- Bounded daemon and MCP request ingestion with absolute five-second read
+  deadlines that partial progress cannot reset. Cooperative shutdown now
+  interrupts incomplete daemon requests, overload rejection no longer drains
+  attacker-controlled input. MCP body preparation also rejects zero-byte chunks,
+  caps chunk count independently from byte size, and cancels aborted bodies
+  before tool dispatch. Wire authority and mutation scope remain unchanged.
 - Added fail-closed `lnsat.public_source_snapshot.v1` provenance validation for
   fresh public history. Marker enumerates immutable Phase 7 archival records;
   validators reject shallow or multiple-root history, tags, publication state,
