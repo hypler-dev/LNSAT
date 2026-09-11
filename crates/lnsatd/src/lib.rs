@@ -6,6 +6,7 @@ pub mod adapter_process_protocol;
 pub mod docker_local_execution_payload;
 pub mod docker_local_runtime_proof;
 pub mod docker_local_runtime_proof_evidence;
+pub mod docker_local_runtime_proof_execution_harness;
 pub mod docker_local_supervisor;
 pub mod headless_config_loader;
 pub mod product_config;

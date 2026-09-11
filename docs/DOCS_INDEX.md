@@ -92,6 +92,9 @@ subsystem or proposal.
 - [Docker-first runtime-neutral enforcement decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+
+The source-only execution-harness contract binds those proposed records for a
+later authority; it has no runtime evidence and awaits independent source review.
 - [Compatibility and conformance](architecture/COMPATIBILITY_AND_CONFORMANCE_MATRIX.md)
 - [Rust core and TypeScript Control Center](architecture/RUST_CORE_AND_TYPESCRIPT_CONTROL_CENTER_ARCHITECTURE.md)
 - [Full architecture catalog](architecture/README.md)

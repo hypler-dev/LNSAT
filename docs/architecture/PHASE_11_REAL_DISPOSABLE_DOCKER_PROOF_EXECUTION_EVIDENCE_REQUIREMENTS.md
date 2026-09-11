@@ -4,7 +4,7 @@ Status: proposed source-only evidence requirements; no runtime evidence
 
 ## Authority and scope
 
-This document extends the accepted
+This document extends the proposed
 [Phase 11 real disposable Docker proof-readiness plan](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 with the exact evidence commitments required before a separately authorized real
 run. It does not assign a packet ID, authorize execution, or report Docker,
@@ -157,4 +157,6 @@ public route, runtime result, receipt, target mutation, image/package artifact,
 deployment, publication, production authority, or support claim. It does not
 complete Phase 11. Next gate remains the separately authorized real disposable
 Docker image and runtime proof after these requirements and its execution harness
-receive source review.
+receive actual independent source review. The source-only execution-harness
+contract binds the plan and requirements digests, inherited requirements, and
+exact later-authority declarations and stops; it adds no runtime evidence.

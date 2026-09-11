@@ -107,6 +107,9 @@ The companion
 make runtime identity, image provenance, disposable-target identity, lifecycle,
 cleanup, redaction, and independent-review obligations equally inspectable
 without opening a Docker command or recording real runtime evidence.
+The source-only execution-harness contract binds those records and the exact
+later-authority declarations and stops. It awaits independent source review and
+does not authorize execution or complete Phase 11.
 
 ## 5. Runtime and Ecosystem Role
 

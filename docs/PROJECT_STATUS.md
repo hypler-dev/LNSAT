@@ -233,6 +233,10 @@ runtime, image-provenance, disposable-target, served-chain, lifecycle, cleanup,
 redaction, and independent-review commitments for those same eight future
 cases. It contains no actual evidence or execution seam and keeps every runtime,
 completion, production, package, deployment, and support flag closed.
+A source-only execution-harness contract binds the proof plan and evidence
+requirements digests with the same closed lists and later-authority declaration
+and stop IDs. It is metadata only, has no runtime evidence or execution authority,
+and awaits independent source review; Phase 11 remains incomplete.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence

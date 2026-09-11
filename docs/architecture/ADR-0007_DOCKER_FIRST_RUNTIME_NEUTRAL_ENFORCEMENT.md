@@ -461,6 +461,10 @@ in-image adapter identity, disposable-target identity, served-chain lifecycle,
 cleanup, reconciliation, and independent review. They contain no runtime
 observation, result, receipt, host path, container ID, process output, or
 execution authority.
+The source-only execution-harness contract binds the proof-plan and
+evidence-requirements digests, inherited lists, and exact later-authority
+declarations and stops. It awaits actual independent source review and opens no
+Docker operation, runtime result, receipt, or execution authority.
 
 ## Security Boundaries
 

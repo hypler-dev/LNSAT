@@ -15,6 +15,8 @@ const fixtureRelativePath =
   "fixtures/contracts/phase11-docker-local-runtime-proof-plan-v1.json";
 const evidenceRequirementsFixtureRelativePath =
   "fixtures/contracts/phase11-docker-local-runtime-proof-evidence-requirements-v1.json";
+const executionHarnessFixtureRelativePath =
+  "fixtures/contracts/phase11-docker-local-runtime-proof-execution-harness-v1.json";
 const tempRoots = [];
 
 function tempFile(name, content) {
@@ -194,6 +196,47 @@ test("evidence requirements fixture rejects opened runtime claims", () => {
     errors,
     /evidence requirements fixture\.production_supported: false required/u,
   );
+});
+
+test("execution harness fixture rejects opened claims and authority drift", () => {
+  const executionHarnessPath = mutatedJson(
+    executionHarnessFixtureRelativePath,
+    (fixture) => {
+      fixture.phase11_complete = true;
+      fixture.execution_authorized = true;
+      fixture.real_docker_proof = true;
+      fixture.production_supported = true;
+      fixture.required_plan_binding_ids.reverse();
+      fixture.required_case_ids.reverse();
+      fixture.required_observation_commitment_ids.reverse();
+      fixture.preflight_rejection_ids.reverse();
+      fixture.postspawn_outcome_unknown_ids.reverse();
+      fixture.forbidden_public_evidence_fields.reverse();
+      fixture.authority_declaration_ids.reverse();
+      fixture.authority_stop_ids.pop();
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({ root, executionHarnessPath });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /execution harness fixture\.phase11_complete: false required/u);
+  assert.match(
+    errors,
+    /execution harness fixture\.execution_authorized: false required/u,
+  );
+  assert.match(errors, /execution harness fixture\.real_docker_proof: false required/u);
+  assert.match(
+    errors,
+    /execution harness fixture\.production_supported: false required/u,
+  );
+  assert.match(errors, /required_plan_binding_ids: ids or order mismatch/u);
+  assert.match(errors, /required_case_ids: ids or order mismatch/u);
+  assert.match(errors, /required_observation_commitment_ids: ids or order mismatch/u);
+  assert.match(errors, /preflight_rejection_ids: ids or order mismatch/u);
+  assert.match(errors, /postspawn_outcome_unknown_ids: ids or order mismatch/u);
+  assert.match(errors, /forbidden_public_evidence_fields: ids or order mismatch/u);
+  assert.match(errors, /authority_declaration_ids: ids or order mismatch/u);
+  assert.match(errors, /authority_stop_ids: ids or order mismatch/u);
 });
 
 test("evidence requirements fixture rejects invented packet id", () => {
@@ -451,6 +494,46 @@ test("pure evidence requirements module rejects process, filesystem, socket, sto
       )}\n${forbidden}\n`,
     );
     const result = validatePhase11DockerProofReadiness({ root, evidenceModulePath });
+    assert.equal(result.ok, false, forbidden);
+    assert.match(
+      result.errors.join("\n"),
+      new RegExp(
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        "u",
+      ),
+    );
+  }
+});
+
+test("pure execution harness module rejects process, filesystem, socket, store, and consequence markers", () => {
+  for (const forbidden of [
+    "std::process",
+    "Command::new",
+    "std::net",
+    "std::fs",
+    "std::env",
+    "std::os::unix",
+    "local_unix_socket",
+    "UnixListener",
+    "UnixStream",
+    "lnsat_store",
+    "supervise_docker_local_git_execution_v1",
+    "execute_phase11_mapped_disposable_git_commit_v1",
+  ]) {
+    const executionHarnessModulePath = tempFile(
+      "docker_local_runtime_proof_execution_harness.rs",
+      `${readFileSync(
+        resolve(
+          root,
+          "crates/lnsatd/src/docker_local_runtime_proof_execution_harness.rs",
+        ),
+        "utf8",
+      )}\n${forbidden}\n`,
+    );
+    const result = validatePhase11DockerProofReadiness({
+      root,
+      executionHarnessModulePath,
+    });
     assert.equal(result.ok, false, forbidden);
     assert.match(
       result.errors.join("\n"),

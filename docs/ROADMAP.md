@@ -82,6 +82,10 @@ client, endpoint, daemon, image, adapter, disposable-target, authority-chain,
 lifecycle, cleanup, reconciliation, redaction, and review commitments each of
 those eight cases must later provide. It records no real observation and opens
 no Docker or public runtime selector.
+A source-only execution-harness contract now binds the proof-plan and
+evidence-requirements digests, inherited lists, and exact later-authority
+declarations and stops. It remains proposed source-only metadata pending
+independent review; it opens no runtime selector and does not complete Phase 11.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.

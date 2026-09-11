@@ -112,6 +112,10 @@ must run all eight proof cases against a marked disposable target, then receive
 independent review. No source check, fake-runtime test, host-process test, or
 operator acknowledgement substitutes for real runtime evidence.
 
+The source-only execution-harness contract binds this readiness plan and its
+evidence requirements for later authority. It awaits actual independent source
+review and adds no execution or runtime evidence.
+
 ## Support and release boundary
 
 This readiness plan does not complete Phase 11, create a supported runtime,
