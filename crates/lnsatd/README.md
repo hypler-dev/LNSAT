@@ -210,3 +210,13 @@ required selector and final output-format option. Show is redacted; diff returns
 fixed field names and distinguishes source-byte changes from validated-setting
 changes. Neither computes effective authority, exports applicable configuration,
 or proves live drift. See the [HCFG-2 packet](../../docs/PROJECT_STATUS.md#hcfg-2-redacted-explicit-configuration-comparison).
+
+HCFG-3B adds v2-only `lnsatctl config effective --declaration <absolute-path>`
+and `config export --declaration <absolute-path>`. They parse and compose the
+separate headless declaration contract through a bounded, stable regular-file
+read. Effective output is an unverified declared ceiling. Export output is
+redacted, deterministic, non-applicable, and non-reimportable; neither command
+verifies identity or enforcement, starts a runtime, persists state, or grants
+activation or action authority.
+Stable declaration-file identity is currently implemented for Linux and macOS;
+other targets return `headless_config.platform_unsupported`.

@@ -2,10 +2,10 @@
 
 # Specification: Headless configuration declaration composition
 
-Status: proposed
+Status: implemented in experimental source
 Intent: [HCFG-3A work record](../../PROJECT_STATUS.md#hcfg-3a-core-declaration-composition)
 Owner: LNSAT maintainers
-Last updated: 2026-09-09
+Last updated: 2026-09-10
 
 ## Behavior
 
@@ -93,6 +93,28 @@ do change the committed declaration content.
 It excludes installation/principal/resource/layer references, identity digests,
 and raw input. This digest provides content identity, not authenticity.
 
+`lnsatctl config effective --declaration <absolute-path>` and `lnsatctl config
+export --declaration <absolute-path>` require the exact
+`--product-surface-contract lnsat.product_surface.v2` selector. Both read one
+explicit absolute, regular, non-symlink declaration file, verify stable file
+identity across the bounded read, parse and compose it in the core, and emit one
+deterministic result through the existing text, JSON, JSONL, or YAML renderer.
+The declaration input is distinct from `lnsat.daemon.config.v1`; neither command
+loads daemon configuration or selects an active configuration.
+The current stable file-identity loader is enabled only on Linux and macOS.
+Other targets fail with `headless_config.platform_unsupported` until an exact
+platform file identity and reparse-safe open boundary is implemented and proven.
+
+`config effective` reports the redacted composed declaration as an unverified
+declared ceiling. It states that declaration composition completed, while
+identity, enforcement, admission, and activation remain unverified or
+unavailable. `config export` emits the same redacted content identity and counts
+under `lnsat.headless_config.redacted_export.v1`. That export is explicitly
+non-applicable and non-reimportable: it contains no declaration source, resource,
+principal, layer, installation, identity-digest, path, or secret value. It cannot
+be passed to either command as a declaration and cannot be used for backup,
+restore, activation, or authority transfer.
+
 ## States and failure handling
 
 Parsing and composition are synchronous, bounded, and side-effect free. There
@@ -121,10 +143,12 @@ unsupported proof must deny activation/admission.
 
 ## Compatibility and migration
 
-This additive contract does not change daemon configuration, packet policy,
-frozen v1 product-surface bytes, or the v2 CLI manifest. No migration or stored
-state exists. Removing the source module reverts this packet. Merge remains a
-separate owner decision. This packet builds on the merged HCFG-2 source without changing its diagnostics.
+This additive contract does not change daemon configuration, packet policy, or
+frozen v1 product-surface bytes. The explicit v2 CLI manifest adds only the two
+diagnostic commands and their declaration/redaction posture. No migration or
+stored state exists. Removing the source module and command branches reverts
+this packet. Merge remains a separate owner decision. This packet builds on the
+merged HCFG-2 source without changing its diagnostics.
 
 ## Acceptance mapping
 
@@ -135,6 +159,9 @@ separate owner decision. This packet builds on the merged HCFG-2 source without 
   denials, impossible restoration, principal/resource/capability substitution,
   every budget dimension, strongest approval, deterministic lineage identity,
   default deny, and redacted canaries.
+- CLI tests: absolute regular-file and stable-identity loading, exact v2
+  selection, fixed failures, deterministic multi-format output, effective/export
+  separation, non-reimportable export, redacted canaries, and no side effects.
 - Repository gates: pinned Rust tests/format/clippy, `npm run source:check`,
   dependency/signature audits, installed local security scanners, source inventory,
   and `git diff --check`.
@@ -143,10 +170,11 @@ separate owner decision. This packet builds on the merged HCFG-2 source without 
 
 ## Non-goals and open questions
 
-This packet does not complete headless control, `effective`/`export` CLI commands,
-resource enforcement, organization policy distribution, runtime restrictions,
-new evidence obligations, emergency disablement, apply/bootstrap, authenticated
-human configuration decisions, audit/atomic activation, race/revocation/rollback
-semantics, selected-platform proof, or release. Those remain required V1 work;
-this diagnostic model does not substitute for them. New activation authority
-requires its separately reviewed exact contract and owner authorization.
+This packet does not complete headless control, applicable or round-trippable
+configuration export, resource enforcement, organization policy distribution,
+runtime restrictions, new evidence obligations, emergency disablement,
+apply/bootstrap, authenticated human configuration decisions, audit/atomic
+activation, race/revocation/rollback semantics, selected-platform proof, or
+release. Those remain required V1 work; this diagnostic model does not substitute
+for them. New activation authority requires its separately reviewed exact
+contract and owner authorization.

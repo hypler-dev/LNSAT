@@ -3,11 +3,12 @@
 //! This module embeds source contracts only. It installs no files, starts no
 //! service, selects no package target, and grants no mutation authority.
 
+use crate::headless_config_loader::LoadedHeadlessConfigDeclarationV1;
 use crate::product_config::{
     DAEMON_CONFIG_CONTRACT_ID_V1, LoadedDaemonConfigV1, MAX_DAEMON_CONFIG_BYTES_V1,
     compare_loaded_daemon_config_v1, daemon_config_schema_json_v1,
 };
-use lnsat_contracts::CONTRACT_VERSION_V1_0;
+use lnsat_contracts::{CONTRACT_VERSION_V1_0, HEADLESS_CONFIG_SCHEMA_V1};
 use lnsat_store::{SQLITE_SCHEMA_VERSION, SqliteRecoveryErrorV1, SqliteStore, SqliteStoreStateV1};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -274,6 +275,8 @@ impl DaemonStatusV2 {
                     "config.validate",
                     "config.show",
                     "config.diff",
+                    "config.effective",
+                    "config.export",
                     "recovery.inspect",
                     "backup",
                     "restore",
@@ -432,6 +435,8 @@ pub fn daemon_status_v2() -> DaemonStatusV2 {
                 "config.validate",
                 "config.show",
                 "config.diff",
+                "config.effective",
+                "config.export",
                 "recovery.inspect",
                 "backup",
                 "restore",
@@ -652,6 +657,62 @@ pub fn config_schema_output_json_v2() -> String {
     .to_string()
 }
 
+/// Public-safe declared-ceiling diagnostic for one explicit declaration.
+///
+/// This result is composed from an unverified declaration. It has no admission,
+/// activation, identity-verification, enforcement, or action authority.
+#[must_use]
+pub fn config_effective_output_json_v2(loaded: &LoadedHeadlessConfigDeclarationV1) -> String {
+    json!({
+        "ok": true,
+        "schema": CLI_OUTPUT_SCHEMA_V1,
+        "command": "config.effective",
+        "declaration_contract": HEADLESS_CONFIG_SCHEMA_V1,
+        "effective": loaded.composed().redacted_diagnostic(),
+        "declared_effective_ceiling_computed": true,
+        "identity_verified": false,
+        "enforcement_verified": false,
+        "admission_authority_computed": false,
+        "activation_authority": false,
+        "grants_action_authority": false,
+        "runtime_started": false,
+        "storage_opened": false,
+        "listener_opened": false,
+        "process_started": false,
+        "side_effects": []
+    })
+    .to_string()
+}
+
+/// Public-safe non-reimportable diagnostic export for one declaration.
+///
+/// The export retains only the redacted composition diagnostic and is neither
+/// an applicable declaration nor an activation or action request.
+#[must_use]
+pub fn config_export_output_json_v2(loaded: &LoadedHeadlessConfigDeclarationV1) -> String {
+    json!({
+        "ok": true,
+        "schema": CLI_OUTPUT_SCHEMA_V1,
+        "command": "config.export",
+        "declaration_contract": HEADLESS_CONFIG_SCHEMA_V1,
+        "export_contract": "lnsat.headless_config.redacted_export.v1",
+        "export": loaded.composed().redacted_diagnostic(),
+        "applicable": false,
+        "reimportable": false,
+        "identity_verified": false,
+        "enforcement_verified": false,
+        "admission_authority_computed": false,
+        "activation_authority": false,
+        "grants_action_authority": false,
+        "runtime_started": false,
+        "storage_opened": false,
+        "listener_opened": false,
+        "process_started": false,
+        "side_effects": []
+    })
+    .to_string()
+}
+
 /// Public-safe read-only `lnsatctl doctor` evidence.
 #[must_use]
 pub fn doctor_output_json_v1() -> String {
@@ -798,7 +859,7 @@ pub fn failure_output_json_v1(
 /// Bounded `lnsatctl` help text.
 #[must_use]
 pub const fn lnsatctl_usage_v1() -> &'static str {
-    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl config schema --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config show --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config diff --config <absolute-path> --against <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
+    "Usage:\n  lnsatctl doctor [--output <text|json|jsonl|yaml>]\n  lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]\n  lnsatctl config inspect --config <absolute-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl config schema --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config show --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config diff --config <absolute-path> --against <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config effective --declaration <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl config export --declaration <absolute-path> --product-surface-contract lnsat.product_surface.v2 [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery inspect --database <path> [--output <text|json|jsonl|yaml>]\n  lnsatctl backup --database <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl restore --backup <path> --destination <fresh-path> [--output <text|json|jsonl|yaml>]\n  lnsatctl recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin [--output <text|json|jsonl|yaml>]\n  lnsatctl manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n  lnsatctl completion <bash|zsh|fish>\n  lnsatctl man <lnsat|lnsatctl|lnsatd>\n  lnsatctl --help\n  lnsatctl --version\n"
 }
 
 /// Generated completion source for supported shells.
@@ -826,7 +887,7 @@ pub fn man_page_source_v1(command: &str) -> Option<&'static str> {
             ".TH LNSAT 1\n.SH NAME\nlnsat - source-only LNSAT workflow dispatcher\n.SH SYNOPSIS\nlnsat packet <validate|hash|inspect> <packet.json> [request_id] | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH SAFETY\nNo command grants ambient authority. Current commands are read-only or pure local inspection. Product-surface selection is exact-match only; no range or fallback exists.\n",
         ),
         "lnsatctl" => Some(
-            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics and offline recovery\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] | config inspect --config <absolute-path> | config schema --product-surface-contract lnsat.product_surface.v2 | config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config show --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config diff --config <absolute-path> --against <absolute-path> --product-surface-contract lnsat.product_surface.v2 | recovery inspect --database <path> | backup --database <path> --destination <fresh-path> | restore --backup <path> --destination <fresh-path> | recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH OUTPUT\nCommands accept --output text|json|jsonl|yaml in documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Product-surface selection is exact-match only; no range or fallback exists. Config schema, validation, show, and diff are v2-selected diagnostics only: they start no service, open no database, and grant no activation authority. Config diff observes selected inputs sequentially and does not prove an atomic pair or live drift. Offline backup and owner recovery prove daemon quiescence through exclusive database lease. Restore creates only one fresh inert file. Owner replacement password is accepted only through protected stdin. Daemon and offline recovery commands refuse root. No API, MCP, UI, service start, automatic activation, or existing-file replacement authority exists.\n",
+            ".TH LNSATCTL 1\n.SH NAME\nlnsatctl - source-only LNSAT operator diagnostics and offline recovery\n.SH SYNOPSIS\nlnsatctl doctor | health --socket <absolute-path> --session-token-stdin | status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] | config inspect --config <absolute-path> | config schema --product-surface-contract lnsat.product_surface.v2 | config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config show --config <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config diff --config <absolute-path> --against <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config effective --declaration <absolute-path> --product-surface-contract lnsat.product_surface.v2 | config export --declaration <absolute-path> --product-surface-contract lnsat.product_surface.v2 | recovery inspect --database <path> | backup --database <path> --destination <fresh-path> | restore --backup <path> --destination <fresh-path> | recovery owner --database <path> --expected-owner <identity-ref> --recovered-at <timestamp> --new-password-stdin | manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH OUTPUT\nCommands accept --output text|json|jsonl|yaml in documented final position; JSON is default.\n.SH SAFETY\nHealth and status require one explicit owner-controlled Unix socket and one opaque session token from stdin. Product-surface selection is exact-match only; no range or fallback exists. Config schema, validation, show, diff, effective, and export are v2-selected diagnostics only: they start no service, open no database, and grant no activation authority. Effective and export derive only unverified declared ceilings; they do not verify identity or enforcement, compute admission, or grant actions. Export is redacted, non-applicable, and non-reimportable. Config diff observes selected inputs sequentially and does not prove an atomic pair or live drift. Offline backup and owner recovery prove daemon quiescence through exclusive database lease. Restore creates only one fresh inert file. Owner replacement password is accepted only through protected stdin. Daemon and offline recovery commands refuse root. No API, MCP, UI, service start, automatic activation, or existing-file replacement authority exists.\n",
         ),
         "lnsatd" => Some(
             ".TH LNSATD 8\n.SH NAME\nlnsatd - source-only loopback LNSAT daemon\n.SH SYNOPSIS\nlnsatd --config <absolute-path> | --database <path> [--listen <numeric-loopback:port>] | --manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]\n.SH SAFETY\nRuns foreground, requires explicit local storage, installs no service, and starts no service automatically. Product-surface selection is exact-match only; no range or fallback exists.\n",
@@ -997,6 +1058,8 @@ mod tests {
                 "config validate",
                 "config show",
                 "config diff",
+                "config effective",
+                "config export",
                 "recovery inspect",
                 "backup",
                 "restore",
@@ -1019,6 +1082,34 @@ mod tests {
         assert_eq!(
             v2["configuration"]["headless_diagnostics"]["diff"],
             "config.diff"
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["effective"],
+            "config.effective"
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["export"],
+            "config.export"
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["declared_effective_ceiling_computed"],
+            true
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["declaration_scope"],
+            "explicit_headless_declaration"
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["declaration_loader_targets"],
+            serde_json::json!(["linux", "macos"])
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["export_reimportable"],
+            false
+        );
+        assert_eq!(
+            v2["configuration"]["headless_diagnostics"]["admission_authority_computed"],
+            false
         );
         assert_eq!(v2["hard_stops"]["phase11_or_later_implementation"], false);
     }

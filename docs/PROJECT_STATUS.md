@@ -57,10 +57,35 @@ approvals, OS enforcement, and persisted stop/revocation checks remain required
 before future activation. Headless control and the larger V1 goal remain
 incomplete; this packet grants no runtime, artifact, or release authority.
 
+## HCFG-3B Effective And Redacted Export Diagnostics
+
+HCFG-3B exposes the HCFG-3A parser and composition primitive through exact,
+v2-selected `lnsatctl config effective` and `config export` commands. Both read
+one explicit absolute declaration file through a bounded, regular non-symlink,
+stable-identity boundary. The declaration contract remains separate from daemon
+configuration. Parse or composition failure returns no partial result.
+The loader currently supports Linux and macOS file identity only; other targets
+fail closed with `headless_config.platform_unsupported`.
+
+`effective` reports only the composed declared ceiling. `export` emits a
+deterministic `lnsat.headless_config.redacted_export.v1` diagnostic that is
+non-applicable and non-reimportable. Output excludes source bytes, paths,
+installation/principal/resource/layer references, resource identity digests,
+and secrets. It explicitly denies verified identity, OS enforcement, admission,
+activation, and action-authority claims. Text, JSON, JSONL, and YAML render the
+same closed result without side effects.
+
+The exact command contract, redaction, invalid-input behavior, deterministic
+formats, and no-side-effect boundary are covered by focused CLI tests and the
+[headless configuration specification](architecture/headless-configuration/spec.md).
+Merge remains a separate owner decision. HCFG-4 monitoring, HCFG-5 protected
+control, HCFG-6 enforcement/conformance, runtime proof, artifacts, and release
+remain incomplete and separately gated.
+
 ## Current Build Position
 
-Headless setup and access-management through the versioned API and `lnsatctl`
-are accepted V1 requirements, not implemented capabilities. They must distinguish
+Complete headless setup and access-management through the versioned API and
+`lnsatctl` remain accepted V1 requirements. They must distinguish
 LNSAT's resource access from agent action authority, support layered declarative
 configuration and customizable least-privilege settings, expose actual OS
 enforcement coverage, and protect configuration changes through Gateway.

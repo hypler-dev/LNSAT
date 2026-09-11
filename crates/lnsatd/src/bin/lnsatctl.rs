@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+use lnsatd::headless_config_loader::load_headless_config_declaration_v1;
 use lnsatd::product_config::load_daemon_config_v1;
 use lnsatd::product_output::{
     ProductOutputFormatV1, ProductSemanticResultV1, render_product_result_v1,
@@ -11,6 +12,7 @@ use lnsatd::product_recovery::{
 };
 use lnsatd::product_surface::{
     PRODUCT_SOURCE_VERSION_V1, ProductExitCodeV1, completion_source_v1, config_diff_output_json_v2,
+    config_effective_output_json_v2, config_export_output_json_v2,
     config_inspection_output_json_v1, config_schema_output_json_v2, config_show_output_json_v2,
     config_validation_output_json_v2, doctor_output_json_v1, failure_output_json_v1,
     is_supported_product_surface_contract_v1, lnsatctl_usage_v1, man_page_source_v1,
@@ -79,6 +81,48 @@ fn main() -> ExitCode {
                 && value == OsStr::new("lnsat.product_surface.v2") =>
         {
             emit_json_success(&config_schema_output_json_v2(), "config.schema", format)
+        }
+        [config, effective, option, path, selector, value]
+            if config == OsStr::new("config")
+                && effective == OsStr::new("effective")
+                && option == OsStr::new("--declaration")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new("lnsat.product_surface.v2") =>
+        {
+            match load_headless_config_declaration_v1(PathBuf::from(path)) {
+                Ok(loaded) => emit_json_success(
+                    &config_effective_output_json_v2(&loaded),
+                    "config.effective",
+                    format,
+                ),
+                Err(error) => emit_failure(
+                    "config.effective",
+                    error.code(),
+                    ProductExitCodeV1::UsageOrConfiguration,
+                    format,
+                ),
+            }
+        }
+        [config, export, option, path, selector, value]
+            if config == OsStr::new("config")
+                && export == OsStr::new("export")
+                && option == OsStr::new("--declaration")
+                && selector == OsStr::new("--product-surface-contract")
+                && value == OsStr::new("lnsat.product_surface.v2") =>
+        {
+            match load_headless_config_declaration_v1(PathBuf::from(path)) {
+                Ok(loaded) => emit_json_success(
+                    &config_export_output_json_v2(&loaded),
+                    "config.export",
+                    format,
+                ),
+                Err(error) => emit_failure(
+                    "config.export",
+                    error.code(),
+                    ProductExitCodeV1::UsageOrConfiguration,
+                    format,
+                ),
+            }
         }
         [config, validate, option, path, selector, value]
             if config == OsStr::new("config")
