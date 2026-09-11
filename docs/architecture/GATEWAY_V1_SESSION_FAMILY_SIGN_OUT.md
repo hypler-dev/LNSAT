@@ -14,8 +14,8 @@ Origin: http://<exact-bound-loopback>
 Sec-Fetch-Site: same-origin
 Content-Type: application/json
 Content-Length: 0
-Cookie: lnsat_session_v1=<bearer>; lnsat_csrf_v1=<csrf>
-X-LNSAT-CSRF: <same csrf>
+X-LNSAT-Local-Session-Token: <bearer>
+X-LNSAT-Local-Session-Proof: <independent proof>
 ```
 
 Its response contract is
@@ -26,8 +26,8 @@ accepted `LNSAT-Contract-Version`.
 
 The request body is exactly empty. Transfer encoding, missing or nonzero
 content length, trailing bytes, non-JSON media type, cross-site or missing
-Fetch Metadata, Origin drift, missing/duplicate cookies, or
-missing/mismatched double-submit CSRF all fail closed. Owner, operator, and
+Fetch Metadata, Origin drift, missing/duplicate session-secret headers, or
+missing/invalid independent session proof all fail closed. Owner, operator, and
 auditor sessions may revoke only the authenticated identity's session family.
 No request field or path value can select another identity or session.
 
@@ -40,14 +40,13 @@ HTTP `200` returns:
   `scope: "identity_session_family"`;
 - authenticated identity reference, durable family-session count, newly
   revoked count, and server-owned revocation time;
-- fixed loopback, same-origin, CSRF-verified, no-CORS, and cleared-cookie
-  posture evidence;
+- fixed loopback, same-origin, CSRF-verified, no-CORS, and discard-required session-header posture evidence;
 - `replay_semantics: "one_time_active_session_family"`;
 - exact success side effects:
   - `session_activity_evidence_may_append`;
   - `session_family_revocations_appended`;
   - `session_security_events_appended`;
-  - `session_cookies_cleared`;
+  - `session_secret_headers_invalidated`;
 - `session_state_changed: true` and `reauthentication_required: true`;
 - `execution_authority: false` and `mutation_authority: false`.
 
@@ -57,14 +56,14 @@ every active session for that exact identity, and appends immutable security
 events. Other identities and their sessions remain untouched. At least one
 active family session must be newly revoked or transaction rolls back.
 
-Response expires both host-only, `SameSite=Strict` session and CSRF cookies.
-Raw bearer or CSRF secrets never appear in JSON body or durable evidence.
-Reauthentication is required after success.
+The response returns no session-secret headers. The browser must discard both
+volatile values. Raw bearer or proof secrets never appear in the JSON body or
+durable evidence. Reauthentication is required after success.
 
 ## Replay and Failure
 
-Active session family is consumed exactly once. Repeating request with any
-revoked family cookie, using expired/idle evidence, or any transport, CSRF,
+Active session family is consumed exactly once. Repeating a request with any
+revoked family token/proof pair, using expired/idle evidence, or any transport,
 clock, evidence, or persistence failure returns same HTTP `403` contract:
 
 ```json
@@ -91,7 +90,7 @@ clock, evidence, or persistence failure returns same HTTP `403` contract:
 }
 ```
 
-Denial clears no cookies and reveals no identity, family size, session,
+Denial returns no session-secret headers and reveals no identity, family size, session,
 credential, expiry, CSRF, evidence, or internal failure reason. Atomic SQLite
 rollback makes every in-contract denial zero-side-effect. Malformed pre-route
 HTTP framing, size, version, route, and method failures retain their

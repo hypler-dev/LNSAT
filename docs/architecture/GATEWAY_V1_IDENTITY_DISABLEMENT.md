@@ -14,8 +14,8 @@ Origin: http://<exact-bound-loopback>
 Sec-Fetch-Site: same-origin
 Content-Type: application/json
 Content-Length: 0
-Cookie: lnsat_session_v1=<bearer>; lnsat_csrf_v1=<csrf>
-X-LNSAT-CSRF: <same csrf>
+X-LNSAT-Local-Session-Token: <bearer>
+X-LNSAT-Local-Session-Proof: <independent proof>
 ```
 
 Its response contract is `lnsat.gateway.identity_disablement.v1_0`. The route
@@ -33,7 +33,7 @@ route identity reference.
 - scope: `active_non_owner_identity`;
 - actor roles: `owner`;
 - target roles: `operator`, `auditor`;
-- authentication: active owner session and required double-submit CSRF;
+- authentication: active owner session and required independent session proof;
 - replay semantics: `one_time_active_target_identity`;
 - target source: validated route identity reference;
 - caller-supplied idempotency key: forbidden;
@@ -67,7 +67,7 @@ identity's session family. Owner actor-session proof, identity lifecycle
 evidence, target-session revocations, and target-session security events are
 bound in the same SQLite transaction. A zero-session target returns
 `revoked_session_count: 0`; the permanent family closure still applies. Success
-sets no cookies and exposes no credential, bearer, CSRF, hash, display-name, or
+returns no session-secret headers and exposes no credential, bearer, CSRF, hash, display-name, or
 role state. A disabled identity consumes the dummy Argon2id path on future
 login attempts.
 

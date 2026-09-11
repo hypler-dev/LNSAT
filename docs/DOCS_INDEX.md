@@ -46,6 +46,7 @@ subsystem or proposal.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
+- [Loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [Packet model](architecture/PACKET_MODEL.md)
 - [Policy and audit](architecture/POLICY_AND_AUDIT.md)
 - [Data model](architecture/DATA_MODEL.md)

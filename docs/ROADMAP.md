@@ -190,17 +190,17 @@ sessions, and authenticated owner/operator approval persistence are also
 implemented. Approval binds exact identity, local-session reference, CSRF, and
 trusted decision time while retaining `execution_authorized: false`.
 Daemon composition now strictly parses duplicate-refused browser request heads
-and exact bounded bodies, emits host-only strict same-site cookie values, verifies
-anti-CSRF double-submit plus active SQLite session evidence, and returns
+and exact bounded bodies, emits non-ambient session-token/proof response headers, verifies
+independent session proof plus active SQLite session evidence, and returns
 secret-free request evidence. Server-owned UTC supplies issue/verification
 time, a monotonic fixed-window limiter caps authentication attempts, and
 unknown identities consume the same validated Argon2id profile. Active
-bearer/CSRF mutation proof can atomically revoke every active
+token/proof mutation authentication can atomically revoke every active
 same-identity session through immutable revocation rows. Schema v11 adds
 append-only activity evidence with 60-second touch granularity, a 900-second
 default idle timeout, exact-boundary rejection, and a 61-row bound across the
 maximum one-hour absolute lifetime. Existing v10 sessions anchor initially to
-immutable issue time. Atomic session rotation creates fresh bearer/CSRF
+immutable issue time. Atomic session rotation creates fresh token/proof
 material, retains the original absolute expiry, revokes the prior session, and
 persists immutable replacement linkage. Schema v12 permits at most 64
 strictly ordered immutable credential generations, verifies only the latest,
@@ -209,7 +209,7 @@ self-service rotation. Owner-authorized permanent non-owner disablement appends
 actor-session-bound status evidence and atomically revokes the target family.
 Daemon wrappers own time and generic denial. Password rotation is served through
 a closed two-field JSON body, one per-session/process limiter, strict
-same-origin CSRF proof, full session-family revocation, cleared cookies, and
+same-origin CSRF proof, full session-family revocation, invalidated session-secret headers, and
 explicit reauthentication. Owner-only
 `DELETE /v1/identities/{identity_ref}` permanently disables one non-owner,
 atomically revokes the target session family, and returns secret-free evidence
@@ -226,20 +226,21 @@ invented history. Authenticated route-neutral reads use the same evidence-read
 permission and deny mutation transport. Source-local `POST /v1/session`
 requires numeric loopback peer/Host, exact Origin, same-origin Fetch Metadata,
 exact JSON, a non-simple `X-LNSAT-Session-Intent` header, a closed 4 KiB body,
-and one process-wide limiter. Success sets fresh host-only bearer/CSRF cookies
+and one process-wide limiter. Success sets fresh non-ambient bearer/proof headers
 and returns the same secret-free session contract used by authenticated
 `GET|HEAD`; every issue failure is generic. `HEAD` remains bodyless, `OPTIONS`
 is denied, and no CORS allow header is emitted. Authenticated
 `DELETE /v1/session` requires exact zero-length JSON mutation framing plus
-Origin/Fetch Metadata/CSRF proof, atomically revokes the active same-identity
-session family, clears both host-only cookies, and denies replay generically.
+Origin/Fetch Metadata/session proof, atomically revokes the active same-identity
+session family, requires both client-held secrets to be discarded, and denies replay generically.
 Authenticated `PATCH /v1/session` uses the same exact empty mutation framing,
-atomically replaces only the current session's bearer/CSRF material, preserves
-its absolute expiry, sets fresh host-only cookies once, and generically denies
+atomically replaces only the current session's token/proof material, preserves
+its absolute expiry, sets fresh non-ambient session-secret headers once, and generically denies
 prior-token use and replay. Authenticated
 `PATCH /v1/identity/password` reverifies the latest password, appends one
-credential generation, atomically revokes all same-identity sessions, clears
-both cookies, and requires reauthentication. Owner-only `POST /v1/identities`
+credential generation, atomically revokes all same-identity sessions,
+invalidates both client-held secret headers, and requires reauthentication.
+Owner-only `POST /v1/identities`
 accepts only a closed operator/auditor creation schema, uses server-owned time,
 persists immutable credential/audit evidence, and returns no secret. Owner-only
 identity disablement uses exact empty mutation framing and closes the target
@@ -291,49 +292,49 @@ discovery exception requires no session and reveals no stored state.
 Local-password `POST /v1/session` is also promoted with a closed secret-input
 schema, exact same-origin/non-simple intent controls, one generic denial,
 bounded limiter disclosure, fresh-session-per-success replay semantics, and
-explicit session evidence/event/cookie side effects. It creates only local
+explicit session evidence/event/session-secret-header side effects. It creates only local
 authentication state and grants no packet/action or execution authority.
 
 Authenticated `PATCH /v1/session` is promoted with exact empty JSON framing,
-same-origin and double-submit CSRF proof, one generic zero-side-effect denial,
+same-origin and independent session proof, one generic zero-side-effect denial,
 one-time current-session replay semantics, exact prior-to-replacement binding,
 preserved absolute expiry, and explicit
-activity/revocation/replacement/rotation/event/cookie side effects. It mutates
+activity/revocation/replacement/rotation/event/session-secret-header side effects. It mutates
 only the authenticated session state and grants no packet/action or execution
 authority.
 
 Authenticated `DELETE /v1/session` is promoted with exact empty JSON framing,
-same-origin and double-submit CSRF proof, one generic zero-side-effect denial,
+same-origin and independent session proof, one generic zero-side-effect denial,
 one-time active-family replay semantics, atomic same-identity session-family
 revocation, forced reauthentication, and explicit
-activity/revocation/event/cookie effects. It cannot select or affect another
+activity/revocation/event/session-secret-header effects. It cannot select or affect another
 identity and grants no packet/action or execution authority.
 
 Authenticated `PATCH /v1/identity/password` is promoted with a closed
-two-secret schema, same-origin and double-submit CSRF proof, latest-credential
+two-secret schema, same-origin and independent session proof, latest-credential
 reverification, bounded per-session/process limiting, one-time active-family
 replay, append-only credential and identity-event evidence, atomic
-same-identity session-family revocation, cookie clearing, and forced
+same-identity session-family revocation, session-secret-header invalidation, and forced
 reauthentication. One generic denial exposes only possible process-limiter
 advancement; durable credential and session state remain unchanged on failure.
 It cannot select another identity and grants no packet/action or execution
 authority.
 
 Owner-only `POST /v1/identities` is promoted with a closed
-identity/name/role/password schema, same-origin and double-submit CSRF proof,
+identity/name/role/password schema, same-origin and independent session proof,
 bounded per-session/process limiting, operator/auditor-only target roles,
 create-once identity-reference replay semantics, and atomic
 identity/credential/actor-session-bound event evidence. Success is secret-free
-and sets no cookies. One generic denial exposes only possible process-limiter
+and returns no session-secret headers. One generic denial exposes only possible process-limiter
 advancement; failed SQLite transitions roll back durable
 session/identity/credential/event state. It cannot create another owner and
 grants no packet/action or execution authority.
 
 Owner-only `DELETE /v1/identities/{identity_ref}` is promoted with exact empty
-JSON framing, same-origin and double-submit CSRF proof, validated route-only
+JSON framing, same-origin and independent session proof, validated route-only
 target selection, operator/auditor-only target roles, one-time active-target
 replay semantics, and atomic identity-status/actor-session/event evidence plus
-target-session-family closure. Success is secret-free and sets no cookies.
+target-session-family closure. Success is secret-free and returns no session-secret headers.
 One generic zero-side-effect denial covers owner, missing, malformed,
 already-disabled, transport, authorization, CSRF, clock, drift, and persistence
 failures; failed SQLite transitions roll back activity, identity, event,
@@ -365,7 +366,7 @@ mutation authority remain false. Current-session `/v1/session` semantics are
 unchanged and distinct.
 
 Authenticated `POST /v1/approval-requests` is promoted with a closed
-project/policy-reference schema, same-origin and double-submit CSRF proof,
+project/policy-reference schema, same-origin and independent session proof,
 owner/operator-only `request_action` scope, exact persisted approval-required
 policy actor/local-session binding, and server-owned request time. Identical
 derived identity at an identical instant replays exactly; different instants
@@ -379,7 +380,7 @@ consume approval, or dispatch adapters.
 Authenticated
 `POST /v1/approval-requests/{approval_request_id}/decision` is promoted with a
 closed project/outcome/reason schema, path-only request selection,
-same-origin/double-submit CSRF proof, owner/operator-only
+same-origin/independent session proof, owner/operator-only
 `decide_approval` scope, exact request/policy/packet rederivation,
 distinct-human enforcement, and server-owned decision time. One immutable
 terminal decision may be recorded or exactly replayed; different time,

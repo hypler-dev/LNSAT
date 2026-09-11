@@ -48,11 +48,15 @@ pub const LOCAL_SESSION_CSRF_PROFILE_V1: &str = "lnsat.session_csrf.sha256.v1";
 /// Exact host-only session cookie name.
 pub const LOCAL_SESSION_COOKIE_NAME_V1: &str = "lnsat_session_v1";
 
-/// Exact host-only browser anti-CSRF cookie name.
+/// Legacy browser proof-cookie name retained only for explicit rejection and
+/// transition tests. The TCP browser transport never reads or emits it.
 pub const LOCAL_CSRF_COOKIE_NAME_V1: &str = "lnsat_csrf_v1";
 
-/// Exact anti-CSRF request-header name.
-pub const LOCAL_CSRF_HEADER_NAME_V1: &str = "X-LNSAT-CSRF";
+/// Exact browser session-token request and response header name.
+pub const LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1: &str = "X-LNSAT-Local-Session-Token";
+
+/// Exact browser session-proof request and response header name.
+pub const LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1: &str = "X-LNSAT-Local-Session-Proof";
 
 const LOCAL_SESSION_ID_PREFIX: &str = "ses_";
 const LOCAL_SESSION_ID_HEX_BYTES: usize = 16;
@@ -241,18 +245,14 @@ impl std::error::Error for LocalBrowserRequestErrorV1 {}
 pub enum LocalBrowserAuthTransportErrorV1 {
     /// Method is not one exact supported browser API method.
     MethodRejected,
-    /// Cookie header is absent, oversized, or syntactically malformed.
+    /// Control-socket cookie header is absent, oversized, or malformed.
     CookieRejected,
-    /// Session or anti-CSRF cookie occurs more than once.
+    /// Control-socket session cookie occurs more than once.
     DuplicateAuthCookie,
-    /// Session cookie is absent or malformed.
+    /// Browser token header or control-socket session cookie is absent or malformed.
     SessionRejected,
-    /// Mutation anti-CSRF cookie/header proof is absent or malformed.
+    /// Independent browser proof header is absent or malformed.
     CsrfRejected,
-    /// Anti-CSRF header does not equal the independent cookie secret.
-    CsrfMismatch,
-    /// Cookie lifetime is outside the session window contract.
-    LifetimeRejected,
 }
 
 impl LocalBrowserAuthTransportErrorV1 {
@@ -265,8 +265,6 @@ impl LocalBrowserAuthTransportErrorV1 {
             Self::DuplicateAuthCookie => "local_browser_transport.duplicate_auth_cookie",
             Self::SessionRejected => "local_browser_transport.session_rejected",
             Self::CsrfRejected => "local_browser_transport.csrf_rejected",
-            Self::CsrfMismatch => "local_browser_transport.csrf_mismatch",
-            Self::LifetimeRejected => "local_browser_transport.lifetime_rejected",
         }
     }
 }
@@ -288,117 +286,112 @@ pub struct LocalBrowserAuthTransportV1<'a> {
 }
 
 impl<'a> LocalBrowserAuthTransportV1<'a> {
-    /// Exact bearer material supplied by the host-only session cookie.
+    /// Exact bearer material supplied by the non-ambient session-token header.
     #[must_use]
     pub const fn raw_session_token(&self) -> &'a str {
         self.raw_session_token
     }
 
-    /// Independent anti-CSRF material after cookie/header equality.
+    /// Independent exact-origin session proof.
     #[must_use]
     pub const fn raw_csrf_token(&self) -> Option<&'a str> {
         self.raw_csrf_token
     }
 }
 
-/// One-time `Set-Cookie` response fields for an issued local browser session.
+/// One-time exact-origin response fields for an issued local browser session.
 ///
 /// This type intentionally implements neither `Clone` nor `Debug`.
-pub struct LocalBrowserSessionCookieHeadersV1 {
-    session: String,
-    csrf: String,
+pub struct LocalBrowserSessionSecretHeadersV1 {
+    token: String,
+    proof: String,
 }
 
-impl LocalBrowserSessionCookieHeadersV1 {
-    /// Host-only, `HttpOnly`, strict same-site session cookie field value.
+impl LocalBrowserSessionSecretHeadersV1 {
+    /// Raw bearer returned only in the exact session-token response header.
     #[must_use]
-    pub fn session(&self) -> &str {
-        &self.session
+    pub fn token(&self) -> &str {
+        &self.token
     }
 
-    /// Host-only, strict same-site anti-CSRF cookie field value.
+    /// Independent proof returned only in the exact session-proof response header.
     #[must_use]
-    pub fn csrf(&self) -> &str {
-        &self.csrf
+    pub fn proof(&self) -> &str {
+        &self.proof
     }
 }
 
-impl Drop for LocalBrowserSessionCookieHeadersV1 {
+impl Drop for LocalBrowserSessionSecretHeadersV1 {
     fn drop(&mut self) {
-        self.session.zeroize();
-        self.csrf.zeroize();
+        self.token.zeroize();
+        self.proof.zeroize();
     }
 }
 
-/// Builds exact host-only session and anti-CSRF `Set-Cookie` field values.
-///
-/// The loopback v1 listener is plain HTTP, so these values intentionally omit
-/// the `Secure` attribute. They include no `Domain`, use `Path=/`, strict
-/// same-site scope, bounded `Max-Age`, and `HttpOnly` on bearer material.
+/// Builds exact-origin session-token and independent proof response values.
 ///
 /// # Errors
 ///
-/// Rejects malformed raw secrets and lifetimes outside 60 through 3,600
-/// seconds.
-pub fn create_local_browser_session_cookie_headers_v1(
+/// Rejects malformed raw secrets.
+pub fn create_local_browser_session_secret_headers_v1(
     raw_session_token: &str,
     raw_csrf_token: &str,
-    max_age_seconds: u32,
-) -> Result<LocalBrowserSessionCookieHeadersV1, LocalBrowserAuthTransportErrorV1> {
+) -> Result<LocalBrowserSessionSecretHeadersV1, LocalBrowserAuthTransportErrorV1> {
     if local_session_id_from_token_v1(raw_session_token).is_none() {
         return Err(LocalBrowserAuthTransportErrorV1::SessionRejected);
     }
     if !valid_raw_csrf_token_v1(raw_csrf_token) {
         return Err(LocalBrowserAuthTransportErrorV1::CsrfRejected);
     }
-    if !(60..=3_600).contains(&max_age_seconds) {
-        return Err(LocalBrowserAuthTransportErrorV1::LifetimeRejected);
-    }
-    Ok(LocalBrowserSessionCookieHeadersV1 {
-        session: format!(
-            "{LOCAL_SESSION_COOKIE_NAME_V1}={raw_session_token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={max_age_seconds}"
-        ),
-        csrf: format!(
-            "{LOCAL_CSRF_COOKIE_NAME_V1}={raw_csrf_token}; Path=/; SameSite=Strict; Max-Age={max_age_seconds}"
-        ),
+    Ok(LocalBrowserSessionSecretHeadersV1 {
+        token: raw_session_token.to_owned(),
+        proof: raw_csrf_token.to_owned(),
     })
 }
 
-/// Exact clearing `Set-Cookie` values for sign-out and revocation responses.
-#[must_use]
-pub fn clear_local_browser_session_cookie_headers_v1() -> LocalBrowserSessionCookieHeadersV1 {
-    LocalBrowserSessionCookieHeadersV1 {
-        session: format!(
-            "{LOCAL_SESSION_COOKIE_NAME_V1}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
-        ),
-        csrf: format!("{LOCAL_CSRF_COOKIE_NAME_V1}=; Path=/; SameSite=Strict; Max-Age=0"),
-    }
-}
-
-/// Parses one duplicate-refused Cookie field and exact anti-CSRF header.
-///
-/// Reads require a valid session cookie. Mutations additionally require a
-/// valid anti-CSRF cookie and request header with constant-time equality.
-/// Unknown well-formed cookies are ignored; malformed pairs fail closed.
+/// Parses exact non-ambient browser session-token and session-proof headers.
 ///
 /// # Errors
 ///
-/// Rejects unsupported methods, malformed/oversized cookies, duplicate auth
-/// cookies, invalid secrets, and missing/mismatched mutation CSRF proof.
+/// Rejects unsupported methods and missing or malformed credentials.
 pub fn parse_local_browser_auth_transport_v1<'a>(
     method: &str,
-    cookie_header: Option<&'a str>,
-    csrf_header: Option<&'a str>,
+    session_token_header: Option<&'a str>,
+    session_proof_header: Option<&'a str>,
 ) -> Result<LocalBrowserAuthTransportV1<'a>, LocalBrowserAuthTransportErrorV1> {
     if !matches!(method, "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE") {
         return Err(LocalBrowserAuthTransportErrorV1::MethodRejected);
     }
+    let raw_session_token =
+        session_token_header.ok_or(LocalBrowserAuthTransportErrorV1::SessionRejected)?;
+    let raw_csrf_token =
+        session_proof_header.ok_or(LocalBrowserAuthTransportErrorV1::CsrfRejected)?;
+    if local_session_id_from_token_v1(raw_session_token).is_none() {
+        return Err(LocalBrowserAuthTransportErrorV1::SessionRejected);
+    }
+    if !valid_raw_csrf_token_v1(raw_csrf_token) {
+        return Err(LocalBrowserAuthTransportErrorV1::CsrfRejected);
+    }
+    Ok(LocalBrowserAuthTransportV1 {
+        raw_session_token,
+        raw_csrf_token: Some(raw_csrf_token),
+    })
+}
+
+/// Parses the legacy cookie-shaped bearer used only inside the authenticated
+/// Unix control-socket protocol. Browser TCP requests never use this parser.
+///
+/// # Errors
+///
+/// Rejects missing, malformed, oversized, or duplicate session cookies.
+pub fn parse_local_control_session_cookie_v1(
+    cookie_header: Option<&str>,
+) -> Result<&str, LocalBrowserAuthTransportErrorV1> {
     let cookie_header = cookie_header.ok_or(LocalBrowserAuthTransportErrorV1::CookieRejected)?;
     if cookie_header.is_empty() || cookie_header.len() > LOCAL_BROWSER_COOKIE_HEADER_MAX_BYTES_V1 {
         return Err(LocalBrowserAuthTransportErrorV1::CookieRejected);
     }
     let mut session_cookie = None;
-    let mut csrf_cookie = None;
     for pair in cookie_header.split(';') {
         let pair = pair.trim_matches([' ', '\t']);
         let Some((name, value)) = pair.split_once('=') else {
@@ -411,8 +404,7 @@ pub fn parse_local_browser_auth_transport_v1<'a>(
             LOCAL_SESSION_COOKIE_NAME_V1 if session_cookie.is_none() => {
                 session_cookie = Some(value);
             }
-            LOCAL_CSRF_COOKIE_NAME_V1 if csrf_cookie.is_none() => csrf_cookie = Some(value),
-            LOCAL_SESSION_COOKIE_NAME_V1 | LOCAL_CSRF_COOKIE_NAME_V1 => {
+            LOCAL_SESSION_COOKIE_NAME_V1 => {
                 return Err(LocalBrowserAuthTransportErrorV1::DuplicateAuthCookie);
             }
             _ => {}
@@ -423,31 +415,7 @@ pub fn parse_local_browser_auth_transport_v1<'a>(
     if local_session_id_from_token_v1(raw_session_token).is_none() {
         return Err(LocalBrowserAuthTransportErrorV1::SessionRejected);
     }
-
-    if matches!(method, "GET" | "HEAD") {
-        if csrf_cookie.is_some_and(|value| !valid_raw_csrf_token_v1(value))
-            || csrf_header.is_some_and(|value| !valid_raw_csrf_token_v1(value))
-        {
-            return Err(LocalBrowserAuthTransportErrorV1::CsrfRejected);
-        }
-        return Ok(LocalBrowserAuthTransportV1 {
-            raw_session_token,
-            raw_csrf_token: None,
-        });
-    }
-
-    let raw_csrf_token = csrf_cookie.ok_or(LocalBrowserAuthTransportErrorV1::CsrfRejected)?;
-    let csrf_header = csrf_header.ok_or(LocalBrowserAuthTransportErrorV1::CsrfRejected)?;
-    if !valid_raw_csrf_token_v1(raw_csrf_token) || !valid_raw_csrf_token_v1(csrf_header) {
-        return Err(LocalBrowserAuthTransportErrorV1::CsrfRejected);
-    }
-    if !constant_time_str_eq(raw_csrf_token, csrf_header) {
-        return Err(LocalBrowserAuthTransportErrorV1::CsrfMismatch);
-    }
-    Ok(LocalBrowserAuthTransportV1 {
-        raw_session_token,
-        raw_csrf_token: Some(raw_csrf_token),
-    })
+    Ok(raw_session_token)
 }
 
 /// Evaluates strict browser transport facts without opening a route or granting
@@ -735,10 +703,6 @@ fn valid_cookie_value_v1(value: &str) -> bool {
     })
 }
 
-fn constant_time_str_eq(left: &str, right: &str) -> bool {
-    left.len() == right.len() && bool::from(left.as_bytes().ct_eq(right.as_bytes()))
-}
-
 fn encode_lower_hex(bytes: &[u8]) -> String {
     let mut encoded = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
@@ -939,68 +903,34 @@ mod tests {
     }
 
     #[test]
-    fn browser_cookie_headers_are_host_only_bounded_and_clearable() {
+    fn browser_secret_headers_are_exact_and_non_ambient() {
         let secrets = create_local_session_secrets_v1().expect("session secrets must create");
-        let headers = create_local_browser_session_cookie_headers_v1(
+        let headers = create_local_browser_session_secret_headers_v1(
             &secrets.raw_session_token,
             &secrets.raw_csrf_token,
-            300,
         )
-        .expect("cookie headers must create");
-        assert_eq!(
-            headers.session(),
-            format!(
-                "{LOCAL_SESSION_COOKIE_NAME_V1}={}; Path=/; HttpOnly; SameSite=Strict; Max-Age=300",
-                secrets.raw_session_token
-            )
-        );
-        assert_eq!(
-            headers.csrf(),
-            format!(
-                "{LOCAL_CSRF_COOKIE_NAME_V1}={}; Path=/; SameSite=Strict; Max-Age=300",
-                secrets.raw_csrf_token
-            )
-        );
-        for header in [headers.session(), headers.csrf()] {
-            assert!(!header.contains("Domain="));
-            assert!(!header.contains("Secure"));
-        }
-        let cleared = clear_local_browser_session_cookie_headers_v1();
-        assert_eq!(
-            cleared.session(),
-            "lnsat_session_v1=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
-        );
-        assert_eq!(
-            cleared.csrf(),
-            "lnsat_csrf_v1=; Path=/; SameSite=Strict; Max-Age=0"
-        );
-        for invalid_lifetime in [0, 59, 3_601, u32::MAX] {
-            assert!(matches!(
-                create_local_browser_session_cookie_headers_v1(
-                    &secrets.raw_session_token,
-                    &secrets.raw_csrf_token,
-                    invalid_lifetime,
-                ),
-                Err(LocalBrowserAuthTransportErrorV1::LifetimeRejected)
-            ));
-        }
+        .expect("secret headers must create");
+        assert_eq!(headers.token(), secrets.raw_session_token);
+        assert_eq!(headers.proof(), secrets.raw_csrf_token);
+        assert!(!headers.token().contains("lnsat_session_v1="));
+        assert!(!headers.proof().contains("lnsat_csrf_v1="));
     }
 
     #[test]
-    fn browser_auth_transport_parses_reads_and_constant_time_double_submit() {
+    fn browser_auth_transport_requires_both_exact_headers_for_every_method() {
         let secrets = create_local_session_secrets_v1().expect("session secrets must create");
-        let cookie = format!(
-            "theme=dark; empty=; {LOCAL_SESSION_COOKIE_NAME_V1}={}; {LOCAL_CSRF_COOKIE_NAME_V1}={}",
-            secrets.raw_session_token, secrets.raw_csrf_token
-        );
-        let read = parse_local_browser_auth_transport_v1("GET", Some(&cookie), None)
-            .expect("read auth transport must parse");
+        let read = parse_local_browser_auth_transport_v1(
+            "GET",
+            Some(&secrets.raw_session_token),
+            Some(&secrets.raw_csrf_token),
+        )
+        .expect("read auth transport must parse");
         assert_eq!(read.raw_session_token(), secrets.raw_session_token);
-        assert_eq!(read.raw_csrf_token(), None);
+        assert_eq!(read.raw_csrf_token(), Some(secrets.raw_csrf_token.as_str()));
 
         let mutation = parse_local_browser_auth_transport_v1(
             "POST",
-            Some(&cookie),
+            Some(&secrets.raw_session_token),
             Some(&secrets.raw_csrf_token),
         )
         .expect("mutation auth transport must parse");
@@ -1012,74 +942,76 @@ mod tests {
     }
 
     #[test]
-    fn browser_auth_transport_rejects_malformed_duplicate_and_mismatched_evidence() {
+    fn browser_auth_transport_rejects_missing_or_malformed_header_credentials() {
         let secrets = create_local_session_secrets_v1().expect("session secrets must create");
-        let other = create_local_session_secrets_v1().expect("other secrets must create");
-        let valid = format!(
-            "{LOCAL_SESSION_COOKIE_NAME_V1}={}; {LOCAL_CSRF_COOKIE_NAME_V1}={}",
-            secrets.raw_session_token, secrets.raw_csrf_token
-        );
         let cases = [
             (
                 "OPTIONS",
-                Some(valid.as_str()),
+                Some(secrets.raw_session_token.as_str()),
                 Some(secrets.raw_csrf_token.as_str()),
                 LocalBrowserAuthTransportErrorV1::MethodRejected,
             ),
             (
                 "GET",
                 None,
-                None,
-                LocalBrowserAuthTransportErrorV1::CookieRejected,
+                Some(secrets.raw_csrf_token.as_str()),
+                LocalBrowserAuthTransportErrorV1::SessionRejected,
             ),
             (
                 "GET",
-                Some("theme"),
                 None,
-                LocalBrowserAuthTransportErrorV1::CookieRejected,
-            ),
-            (
-                "GET",
-                Some("theme=dark"),
                 None,
                 LocalBrowserAuthTransportErrorV1::SessionRejected,
             ),
             (
                 "GET",
-                Some("lnsat_session_v1=bad"),
-                None,
+                Some("bad"),
+                Some(secrets.raw_csrf_token.as_str()),
                 LocalBrowserAuthTransportErrorV1::SessionRejected,
             ),
             (
                 "POST",
-                Some(valid.as_str()),
+                Some(secrets.raw_session_token.as_str()),
                 None,
                 LocalBrowserAuthTransportErrorV1::CsrfRejected,
             ),
             (
                 "POST",
-                Some(valid.as_str()),
-                Some(other.raw_csrf_token.as_str()),
-                LocalBrowserAuthTransportErrorV1::CsrfMismatch,
+                Some(secrets.raw_session_token.as_str()),
+                Some("not-hex"),
+                LocalBrowserAuthTransportErrorV1::CsrfRejected,
             ),
         ];
-        for (method, cookie, csrf, expected) in cases {
+        for (method, token, proof, expected) in cases {
             assert_eq!(
-                parse_local_browser_auth_transport_v1(method, cookie, csrf).err(),
+                parse_local_browser_auth_transport_v1(method, token, proof).err(),
                 Some(expected)
             );
         }
+    }
+
+    #[test]
+    fn control_cookie_parser_is_separate_and_duplicate_refusing() {
+        let secrets = create_local_session_secrets_v1().expect("session secrets must create");
+        let valid = format!(
+            "theme=dark; {LOCAL_SESSION_COOKIE_NAME_V1}={}",
+            secrets.raw_session_token
+        );
+        assert_eq!(
+            parse_local_control_session_cookie_v1(Some(&valid)),
+            Ok(secrets.raw_session_token.as_str())
+        );
         let duplicate_session = format!(
             "{LOCAL_SESSION_COOKIE_NAME_V1}={}; {LOCAL_SESSION_COOKIE_NAME_V1}={}",
             secrets.raw_session_token, secrets.raw_session_token
         );
         assert!(matches!(
-            parse_local_browser_auth_transport_v1("GET", Some(&duplicate_session), None),
+            parse_local_control_session_cookie_v1(Some(&duplicate_session)),
             Err(LocalBrowserAuthTransportErrorV1::DuplicateAuthCookie)
         ));
         let oversized = "x".repeat(LOCAL_BROWSER_COOKIE_HEADER_MAX_BYTES_V1 + 1);
         assert!(matches!(
-            parse_local_browser_auth_transport_v1("GET", Some(&oversized), None),
+            parse_local_control_session_cookie_v1(Some(&oversized)),
             Err(LocalBrowserAuthTransportErrorV1::CookieRejected)
         ));
     }

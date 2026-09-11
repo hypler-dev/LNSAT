@@ -40,7 +40,8 @@ describe("Control Center browser operation readback", () => {
     ]) {
       expect(html).toContain(`<strong>${state}</strong>`);
     }
-    expect(html.match(/<button disabled=""/g)).toHaveLength(8);
+    expect(html.match(/<button disabled=""/g)).toHaveLength(9);
+    expect(html).toContain("Start local session");
     expect(html).toContain("Timeout and cancellation remain ambiguous");
     expect(html).toContain("Frontend cannot authorize or dispatch");
   });
@@ -58,5 +59,12 @@ describe("Control Center browser operation readback", () => {
         (operation) => operation.retry.runtime_mutation_open === false,
       ),
     ).toBe(true);
+  });
+
+  it("wraps long live evidence IDs inside narrow panels", async () => {
+    const css = await readFile(join(process.cwd(), "src/app/globals.css"), "utf8");
+    expect(css).toMatch(
+      /\.panel dd\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;/s,
+    );
   });
 });

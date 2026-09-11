@@ -94,6 +94,16 @@ verification remain separate gates. [Project Status](docs/PROJECT_STATUS.md)
 owns detailed implementation truth; [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md)
 explains the labels.
 
+### Local browser authentication posture
+
+The pre-release numeric-loopback browser session uses one bearer header plus an
+independent proof header held only in exact-origin volatile memory; it does not
+use browser cookies. Missing, stale, revoked, expired, or mismatched pairs fail
+through the same closed route denial. See the
+[browser session hardening record](docs/architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md).
+These source controls grant no merge, runtime, build, publication, deployment,
+or release authority.
+
 ## The LNSAT Core and Rangoon Boundary
 
 LNSAT V1 is planned as an embeddable authority kernel/library with a stable

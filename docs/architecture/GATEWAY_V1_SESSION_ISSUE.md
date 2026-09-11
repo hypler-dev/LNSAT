@@ -50,20 +50,21 @@ HTTP `201` returns:
 - exact contract and contract-version identities;
 - `ok: true` and `status: "authenticated"`;
 - public session id, identity reference, role, issue time, and expiry;
-- fixed loopback, same-origin, no-CORS, and cookie-posture evidence;
+- fixed loopback, same-origin, no-CORS, and non-ambient session-header posture evidence;
 - `replay_semantics: "fresh_session_per_success"`;
 - exact success side effects:
   - `authentication_limiter_advanced`;
   - `session_evidence_appended`;
   - `session_security_event_appended`;
-  - `session_cookies_set`;
+  - `session_secret_headers_returned`;
 - `session_state_changed: true`;
 - `execution_authority: false` and `mutation_authority: false`.
 
-The response sets a host-only, `HttpOnly`, `SameSite=Strict` bearer cookie and
-an independent host-only, `SameSite=Strict` anti-CSRF cookie. The loopback HTTP
-source contract does not claim a `Secure` cookie. Raw cookie values never
-appear in the JSON body or durable evidence.
+The response returns the bearer only in `X-LNSAT-Local-Session-Token` and the
+independent proof only in `X-LNSAT-Local-Session-Proof`. The browser client must
+keep both values in exact-origin volatile memory, resend both on every
+authenticated request, and never persist them as cookies or web storage. Raw
+secret values never appear in the JSON body or durable evidence.
 
 Session issue is intentionally non-idempotent. Repeating an accepted request
 creates a fresh independent session and consumes another bounded
@@ -97,7 +98,7 @@ clock, evidence, or persistence all return the same HTTP `403` contract:
 
 The possible limiter side effect is explicit because sufficiently valid
 attempts consume bounded process-local rate-limit state before credential
-verification. A denial sets no cookies and creates no usable authenticated
+verification. A denial returns no session-secret headers and creates no usable authenticated
 state. Its public body does not reveal whether the limiter advanced.
 
 Pre-route HTTP framing, size, version, route, and method failures retain their

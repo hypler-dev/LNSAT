@@ -101,12 +101,12 @@ authentication denial. See
 The stable local login subroute is `POST /v1/session`, with response contract
 `lnsat.gateway.session_issue.v1_0`. It inherits the exact version gate, uses
 one generic credential/transport denial, and explicitly identifies
-fresh-session replay plus limiter, evidence, event, and cookie side effects.
+fresh-session replay plus limiter, evidence, event, and session-secret-header side effects.
 See [Gateway v1 session issue](../architecture/GATEWAY_V1_SESSION_ISSUE.md).
 
 The stable authenticated rotation subroute is `PATCH /v1/session`, with
 response contract `lnsat.gateway.session_rotation.v1_0`. It inherits the exact
-version gate, requires empty JSON framing plus same-origin double-submit CSRF,
+version gate, requires empty JSON framing plus same-origin independent session proof,
 consumes the current session once, preserves absolute expiry, and binds the
 prior session to one fresh replacement. Every in-contract failure uses one
 zero-side-effect denial. See
@@ -115,8 +115,8 @@ zero-side-effect denial. See
 The stable authenticated family sign-out subroute is `DELETE /v1/session`, with
 response contract `lnsat.gateway.session_family_sign_out.v1_0`. It inherits
 the exact version gate, requires empty JSON framing plus same-origin
-double-submit CSRF, atomically revokes every active same-identity session, and
-clears both host-only cookies. Every in-contract failure uses one
+independent session proof, atomically revokes every active same-identity session, and
+requires the browser to discard both client-held secrets. Every in-contract failure uses one
 zero-side-effect denial. See
 [Gateway v1 session-family sign-out](../architecture/GATEWAY_V1_SESSION_FAMILY_SIGN_OUT.md).
 
@@ -124,8 +124,8 @@ The stable authenticated identity password-rotation subroute is
 `PATCH /v1/identity/password`, with response contract
 `lnsat.gateway.identity_password_rotation.v1_0`. It inherits the exact version
 gate, requires a closed current/new-password body plus same-origin
-double-submit CSRF, appends one credential generation, atomically revokes the
-same-identity session family, clears both host-only cookies, and forces
+independent session proof, appends one credential generation, atomically revokes the
+same-identity session family, requires both client-held secrets to be discarded, and forces
 reauthentication. Its generic denial declares possible process-limiter
 advancement while durable credential/session state remains unchanged. See
 [Gateway v1 identity password rotation](../architecture/GATEWAY_V1_IDENTITY_PASSWORD_ROTATION.md).
@@ -133,7 +133,7 @@ advancement while durable credential/session state remains unchanged. See
 The stable owner-only identity-creation subroute is `POST /v1/identities`,
 with response contract `lnsat.gateway.identity_creation.v1_0`. It inherits the
 exact version gate, requires a closed identity/name/role/password body plus
-same-origin double-submit CSRF, permits only operator/auditor creation, and
+same-origin independent session proof, permits only operator/auditor creation, and
 atomically binds identity, credential, and identity-event evidence to the
 authenticated owner session. Identity references are create-once; its generic
 denial declares possible process-limiter advancement while durable
@@ -146,7 +146,7 @@ oracle, replay, and side-effect shape changed.
 The stable owner-only identity-disablement subroute is `DELETE /v1/identities/{identity_ref}`
 with response contract `lnsat.gateway.identity_disablement.v1_0`. It inherits
 the exact version gate, requires active owner-session authentication, active
-double-submit CSRF, exact empty framing, and a validated non-owner target.
+independent session proof, exact empty framing, and a validated non-owner target.
 Generic denial keeps `side_effects: []`. See
 [Gateway v1 identity disablement](../architecture/GATEWAY_V1_IDENTITY_DISABLEMENT.md).
 This stable response replaces experimental
@@ -157,7 +157,7 @@ The stable authenticated approval-request subroute is
 `POST /v1/approval-requests`, with response contract
 `lnsat.gateway.approval_request.v1_0`. It inherits the exact version gate,
 accepts only project and persisted-policy references, requires an active
-owner/operator session plus same-origin double-submit CSRF, binds the policy
+owner/operator session plus same-origin independent session proof, binds the policy
 actor and local session exactly, and supplies server-owned request time.
 Created and replayed success have distinct closed outer side-effect/state
 shapes while the nested stable domain request remains unchanged and

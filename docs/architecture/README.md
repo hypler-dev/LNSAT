@@ -16,6 +16,7 @@ wording; [project status](../PROJECT_STATUS.md) controls merged truth.
 - [Architecture and developer guide](ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
 - [Authority layer and reference workflow](AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](THREAT_MODEL.md)
+- [Loopback browser session header hardening](SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [System architecture](SYSTEM_ARCHITECTURE.md)
 - [Packet model](PACKET_MODEL.md)
 - [Policy and audit](POLICY_AND_AUDIT.md)

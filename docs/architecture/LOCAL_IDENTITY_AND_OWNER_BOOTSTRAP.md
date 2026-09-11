@@ -92,8 +92,8 @@ PHC verifier never appear in public results. No replacement session is issued;
 the identity must authenticate again with the new password. Stable
 `PATCH /v1/identity/password` serves this transaction through
 `lnsat.gateway.identity_password_rotation.v1_0`: strict same-origin
-bearer/CSRF proof, a closed secret body, per-session/process limiting, generic
-denial with possible limiter advancement, and host-only cookie clearing.
+bearer/proof headers, a closed secret body, per-session/process limiting, generic
+denial with possible limiter advancement, and required client-side secret discard.
 
 `SqliteStore::disable_local_identity_v1` requires an active owner session and
 CSRF proof, refuses owner, missing, malformed, and already-disabled targets,

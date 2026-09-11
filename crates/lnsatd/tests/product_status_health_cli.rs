@@ -868,12 +868,7 @@ impl TestDaemon {
             )
             .expect("current owner session must issue")
         };
-        let session_cookie = issued.cookie_headers().session();
-        let session_token = session_cookie
-            .strip_prefix(&format!("{LOCAL_SESSION_COOKIE_NAME_V1}="))
-            .and_then(|value| value.split_once(';').map(|(token, _)| token))
-            .expect("session cookie must contain token")
-            .to_owned();
+        let session_token = issued.secret_headers().token().to_owned();
         let socket_path = directory.path.join("control.sock");
         let tcp_address = available_tcp_address();
         let config = DaemonConfigV1::new(&database_path, tcp_address)
