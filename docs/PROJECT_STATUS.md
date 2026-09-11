@@ -3,6 +3,17 @@
 LNSAT `0.1.0` is pre-release, source-only software. Repository is suitable for
 contract evaluation and contributor development, not production operation.
 
+## Active Security Remediation
+
+The owner accepted the
+[loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
+intent on 2026-09-10. The in-review packet removes browser cookies from the
+numeric-loopback authentication path and requires an explicit non-ambient
+session-token plus independent-proof header pair on every authenticated browser
+request. Merge, deployment, publication, and release remain separately gated.
+The same-UID Unix control-socket substitution and global login-limiter lockout
+findings remain open release blockers.
+
 Repository source is public through the independently audited fresh-history
 cutover recorded in [public source readiness](PUBLIC_READINESS.md). Public
 visibility does not change this maturity, publish an artifact, or establish
@@ -548,7 +559,7 @@ wildcard/non-loopback/port-zero configuration, opens and verifies SQLite before
 binding, confirms the operating-system address is loopback, and serves at most
 eight bounded concurrent requests. `GET /healthz` remains readiness-only.
 Authenticated `GET|HEAD /v1/health` and `/v1/status` reuse exact Host,
-contract-version, same-origin fetch metadata, existing session cookie, active
+contract-version, same-origin fetch metadata, existing session-token header, active
 owner/operator/auditor `ReadEvidence`, and one generic denial. They preserve
 bodyless HEAD parity, expose no identity/session/path/host data, grant no
 mutation authority, and declare only bounded session-activity evidence.
@@ -598,8 +609,8 @@ session, independent anti-CSRF proof, canonical session reference, and exact
 trusted decision time; approval still grants no execution authority. Role,
 CSRF, substitution, expiry, reopen, migration, interruption, and tamper
 negatives pass. Route-neutral daemon composition now adds bounded
-duplicate-refusing HTTP/1.1 head parsing, host-only strict same-site cookies,
-constant-time anti-CSRF double-submit, SQLite session/revocation verification,
+duplicate-refusing HTTP/1.1 head parsing, non-ambient browser secret headers,
+independent session-proof verification, SQLite session/revocation verification,
 secret-free authorized request evidence, and one generic denial. Server-owned
 UTC now supplies issue/verification time; served session issue is bounded to
 five attempts per identity and 30 process-wide per monotonic minute, while
@@ -623,7 +634,7 @@ evidence and atomically closes the target family with `owner_revoke`. Disabled
 identities use the dummy Argon2id denial path. Daemon composition owns time and
 generic denial for both operations. Password rotation is served through a
 closed two-field JSON body, per-session/process limiting, strict same-origin
-CSRF proof, full session-family revocation, cleared cookies, and explicit
+CSRF proof, full session-family revocation, invalidated session-secret headers, and explicit
 reauthentication. Owner-only identity disablement is served with exact empty
 framing, permanent status evidence, atomic target-family closure, and no
 re-enable authority.
@@ -655,11 +666,11 @@ The live loopback server now
 serves `POST|GET|HEAD|PATCH|DELETE /v1/session` through strict source parsing. `POST`
 requires exact Origin, same-origin Fetch Metadata, JSON, a custom
 session-intent header, a closed body at most 4 KiB, and the process-wide
-limiter; success sets fresh host-only bearer/CSRF cookies. All issue failures
+limiter; success sets fresh non-ambient bearer/proof headers. All issue failures
 share one stable denial. `POST /v1/session` now publishes the stable
 `lnsat.gateway.session_issue.v1_0` contract with closed secret input,
 fresh-session-per-success replay, possible failure-side limiter advancement,
-and exact success-side limiter/session/event/cookie effects.
+and exact success-side limiter/session/event/session-secret-header effects.
 `GET|HEAD` now emits the stable `lnsat.gateway.session_read.v1_0` secret-free
 contract with exact bodyless `HEAD`, one generic denial, and explicit bounded
 activity-evidence side-effect disclosure. No route emits CORS allow headers.
@@ -667,24 +678,24 @@ Authenticated `PATCH` now emits stable
 `lnsat.gateway.session_rotation.v1_0` success/failure contracts. It requires
 exact zero-length JSON framing plus Origin/Fetch Metadata/CSRF proof, atomically
 replaces only the current session secrets, preserves absolute expiry, binds
-prior and replacement ids in immutable evidence, returns fresh host-only
-cookies once, declares exact activity/revocation/replacement/rotation/event/cookie
+prior and replacement ids in immutable evidence, returns fresh non-ambient
+session-secret headers once, declares exact activity/revocation/replacement/rotation/event/session-secret-header
 effects, and uses one zero-side-effect denial for transport, authentication,
 expiry, replay, clock, evidence, and persistence failure. Authenticated
 `DELETE` uses the same transport proof, atomically revokes every active
-same-identity session, clears both host-only cookies, and emits stable
+same-identity session, requires both client-held secrets to be discarded, and emits stable
 `lnsat.gateway.session_family_sign_out.v1_0` success/failure contracts.
-Success declares exact activity/revocation/event/cookie effects, forces
+Success declares exact activity/revocation/event/session-secret-header effects, forces
 reauthentication, and is one-time per active family. Transport,
 authentication, expiry, replay, clock, evidence, and persistence failures
-collapse into one zero-side-effect denial without cookies or identity/session
+collapse into one zero-side-effect denial without session-secret headers or identity/session
 detail. Authenticated `PATCH /v1/identity/password` accepts only
 `current_password` and `new_password`, applies the shared per-session/process
 limiter, reverifies the latest credential, appends one immutable generation,
-atomically revokes all same-identity sessions, clears both cookies, and requires
+atomically revokes all same-identity sessions, invalidates both session-secret headers, and requires
 reauthentication under stable
 `lnsat.gateway.identity_password_rotation.v1_0`. Success declares exact
-limiter/activity/credential/identity-event/revocation/session-event/cookie
+limiter/activity/credential/identity-event/revocation/session-event/session-secret-header
 effects. Transport, schema, credential, limit, clock, evidence, and persistence
 failures share one denial that exposes only possible process-limiter
 advancement and no durable credential/session change. Packet/action mutation
@@ -915,7 +926,7 @@ Every routed response after acceptance repeats the version header.
 Approval-request creation and approval-decision recording are stable.
 Local-password
 `POST /v1/session` is closed-schema and non-idempotent: every success creates
-fresh authentication state and cookies, while failure discloses only possible
+fresh authentication state and session-secret headers, while failure discloses only possible
 limiter advancement. Authenticated
 `GET|HEAD /v1/session` is current-session-only, returns one generic oracle-free
 denial for every authentication failure, reflects no secret, and declares that
@@ -924,22 +935,24 @@ packet/action or execution mutation authority.
 Authenticated `PATCH /v1/session` is current-session-only and one-time:
 success atomically appends replacement, prior revocation, rotation, and
 security-event evidence while preserving absolute expiry and returning fresh
-strict cookies; every in-contract denial is generic and zero-side-effect.
+session-secret headers; every in-contract denial is generic and zero-side-effect.
 Authenticated `DELETE /v1/session` is same-identity-family-only and one-time:
 success atomically revokes every active family session, appends security-event
-evidence, clears both strict cookies, and forces reauthentication; every
+evidence, invalidates both client-held secret headers, and forces
+reauthentication; every
 in-contract denial is generic and zero-side-effect.
 Authenticated `PATCH /v1/identity/password` is authenticated-identity-only and
 one-time per active family: success reverifies the latest password, appends one
 credential generation and identity event, atomically revokes the family,
-clears both strict cookies, and forces login with the new password. Its generic
+invalidates both client-held secret headers, and forces login with the new
+password. Its generic
 denial discloses possible process-limiter advancement while durable
 credential/session state remains unchanged.
 Owner-only `POST /v1/identities` is create-once per immutable identity
 reference: success appends one operator/auditor identity, initial Argon2id
 credential, and actor-session-bound identity event atomically. Its secret-free
 response declares exact limiter/activity/identity/credential/event effects and
-sets no cookies. Duplicate, non-owner, schema, credential, CSRF, clock, drift,
+returns no session-secret headers. Duplicate, non-owner, schema, credential, CSRF, clock, drift,
 and persistence failures share one generic denial exposing only possible
 process-limiter advancement; durable state rolls back.
 Owner-only `DELETE /v1/identities/{identity_ref}` is one-time per active
@@ -1052,11 +1065,15 @@ cases without runtime I/O. This remains source design only; no runtime evidence
 exists and Phase 11 remains incomplete.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
-explicit Load/Refresh action performs only relative same-origin GETs with the
-stable contract-version header and active host-only session cookie. It reads
-the operation, Gateway-supplied authorization, and an attempt only when the
-operation supplies its exact attempt ID. Closed-shape validation and exact
-project/resource equality precede rendering. `completed` requires canonical
+explicit local login issues the existing bounded session and captures the
+non-ambient token/proof response-header pair in volatile React memory. One
+explicit Load/Refresh action performs only relative same-origin GETs with
+ambient credentials omitted, the stable contract-version header, and both
+session-secret headers. Local forget, page hide, unmount, or HTTP 403 discards
+the pair and live snapshot. It reads the operation, Gateway-supplied
+authorization, and an attempt only when the operation supplies its exact
+attempt ID. Closed-shape validation and exact project/resource equality precede
+rendering. `completed` requires canonical
 Gateway receipt evidence; `outcome_unknown`, failure, timeout, abort, missing
 response, missing receipt, and cancellation remain non-successful and never
 confirm non-execution. Prior valid live evidence survives failed refresh only

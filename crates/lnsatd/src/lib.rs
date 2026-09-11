@@ -18,11 +18,12 @@ pub mod product_transport;
 pub mod runtime_profile;
 
 use lnsat_auth::{
-    LOCAL_CSRF_HEADER_NAME_V1, LocalBrowserAuthTransportV1, LocalBrowserOriginV1,
-    LocalBrowserRequestClassV1, LocalBrowserRequestErrorV1, LocalBrowserRequestV1,
-    LocalBrowserSessionCookieHeadersV1, clear_local_browser_session_cookie_headers_v1,
-    create_local_browser_session_cookie_headers_v1, evaluate_local_browser_request_v1,
+    LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1, LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+    LocalBrowserAuthTransportV1, LocalBrowserOriginV1, LocalBrowserRequestClassV1,
+    LocalBrowserRequestErrorV1, LocalBrowserRequestV1, LocalBrowserSessionSecretHeadersV1,
+    create_local_browser_session_secret_headers_v1, evaluate_local_browser_request_v1,
     local_session_id_from_token_v1, parse_local_browser_auth_transport_v1,
+    parse_local_control_session_cookie_v1,
 };
 use lnsat_contracts::{
     ApprovalDecisionV1Input, ApprovalDecisionV1Kind, ApprovalDecisionV1Reason,
@@ -139,7 +140,7 @@ const GATEWAY_SESSION_ISSUE_ERROR_CODE_V1: &str = "gateway.session_issue.denied"
 const GATEWAY_SESSION_ISSUE_LIMITER_SIDE_EFFECT_V1: &str = "authentication_limiter_advanced";
 const GATEWAY_SESSION_ISSUE_EVIDENCE_SIDE_EFFECT_V1: &str = "session_evidence_appended";
 const GATEWAY_SESSION_ISSUE_EVENT_SIDE_EFFECT_V1: &str = "session_security_event_appended";
-const GATEWAY_SESSION_ISSUE_COOKIE_SIDE_EFFECT_V1: &str = "session_cookies_set";
+const GATEWAY_SESSION_ISSUE_SECRET_HEADER_SIDE_EFFECT_V1: &str = "session_secret_headers_returned";
 const GATEWAY_SESSION_ISSUE_FAILURE_SIDE_EFFECT_V1: &str = "authentication_limiter_may_advance";
 const GATEWAY_SESSION_READ_CONTRACT_V1: &str = "lnsat.gateway.session_read.v1_0";
 const GATEWAY_SESSION_READ_ERROR_CODE_V1: &str = "gateway.session_read.denied";
@@ -152,7 +153,8 @@ const GATEWAY_SESSION_ROTATION_REPLACEMENT_SIDE_EFFECT_V1: &str =
     "replacement_session_evidence_appended";
 const GATEWAY_SESSION_ROTATION_EVIDENCE_SIDE_EFFECT_V1: &str = "session_rotation_evidence_appended";
 const GATEWAY_SESSION_ROTATION_EVENT_SIDE_EFFECT_V1: &str = "session_security_events_appended";
-const GATEWAY_SESSION_ROTATION_COOKIE_SIDE_EFFECT_V1: &str = "session_cookies_set";
+const GATEWAY_SESSION_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1: &str =
+    "session_secret_headers_returned";
 const GATEWAY_SESSION_FAMILY_SIGN_OUT_CONTRACT_V1: &str =
     "lnsat.gateway.session_family_sign_out.v1_0";
 const GATEWAY_SESSION_FAMILY_SIGN_OUT_ERROR_CODE_V1: &str =
@@ -161,7 +163,8 @@ const GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1: &str =
     "session_family_revocations_appended";
 const GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1: &str =
     "session_security_events_appended";
-const GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1: &str = "session_cookies_cleared";
+const GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1: &str =
+    "session_secret_headers_invalidated";
 const LOCAL_PASSWORD_GATEWAY_PATH_V1: &str = "/v1/identity/password";
 const GATEWAY_IDENTITY_PASSWORD_ROTATION_CONTRACT_V1: &str =
     "lnsat.gateway.identity_password_rotation.v1_0";
@@ -422,11 +425,11 @@ struct LocalBrowserApprovalRequestBodyV1 {
 }
 /// Secret-bearing one-time browser session response source.
 ///
-/// Raw secrets exist only inside the returned `Set-Cookie` field values. This
+/// Raw secrets exist only inside the returned browser response headers. This
 /// type intentionally implements neither `Clone` nor `Debug`.
 pub struct LocalBrowserSessionIssueResponseV1 {
     session: LocalSessionRecordV1,
-    cookie_headers: LocalBrowserSessionCookieHeadersV1,
+    secret_headers: LocalBrowserSessionSecretHeadersV1,
 }
 
 impl LocalBrowserSessionIssueResponseV1 {
@@ -436,21 +439,21 @@ impl LocalBrowserSessionIssueResponseV1 {
         &self.session
     }
 
-    /// One-time host-only session and anti-CSRF cookie field values.
+    /// One-time non-ambient session-token and independent proof header values.
     #[must_use]
-    pub const fn cookie_headers(&self) -> &LocalBrowserSessionCookieHeadersV1 {
-        &self.cookie_headers
+    pub const fn secret_headers(&self) -> &LocalBrowserSessionSecretHeadersV1 {
+        &self.secret_headers
     }
 }
 
 /// Secret-bearing one-time browser session-rotation response source.
 ///
-/// Raw replacement secrets exist only inside returned `Set-Cookie` values.
+/// Raw replacement secrets exist only inside returned browser response headers.
 /// This type intentionally implements neither `Clone` nor `Debug`.
 pub struct LocalBrowserSessionRotationResponseV1 {
     prior_session_id: String,
     session: LocalSessionRecordV1,
-    cookie_headers: LocalBrowserSessionCookieHeadersV1,
+    secret_headers: LocalBrowserSessionSecretHeadersV1,
 }
 
 impl LocalBrowserSessionRotationResponseV1 {
@@ -466,10 +469,10 @@ impl LocalBrowserSessionRotationResponseV1 {
         &self.session
     }
 
-    /// One-time replacement session and anti-CSRF cookie field values.
+    /// One-time replacement session-token and independent proof header values.
     #[must_use]
-    pub const fn cookie_headers(&self) -> &LocalBrowserSessionCookieHeadersV1 {
-        &self.cookie_headers
+    pub const fn secret_headers(&self) -> &LocalBrowserSessionSecretHeadersV1 {
+        &self.secret_headers
     }
 }
 
@@ -571,7 +574,7 @@ pub struct AuthorizedLocalBrowserRequestV1<'a> {
 ///
 /// # Errors
 ///
-/// Maps malformed time, missing/expired/revoked sessions, wrong bearer/CSRF,
+/// Maps malformed time, missing/expired/revoked sessions, wrong token/proof,
 /// evidence drift, and browser-preflight failure to one generic public denial.
 pub fn authorize_local_browser_transport_request_v1<'a>(
     store: &mut SqliteStore,
@@ -699,13 +702,13 @@ pub fn issue_local_browser_session_v1(
             expires_at: &expires_at,
         })
         .map_err(|_| LocalBrowserSessionIssueErrorV1::Rejected)?;
-    let cookie_headers = create_local_browser_session_cookie_headers_for_issue_v1(&issued);
+    let secret_headers = create_local_browser_session_secret_headers_for_issue_v1(&issued);
     issued.raw_session_token.zeroize();
     issued.raw_csrf_token.zeroize();
-    let cookie_headers = cookie_headers.map_err(|_| LocalBrowserSessionIssueErrorV1::Rejected)?;
+    let secret_headers = secret_headers.map_err(|_| LocalBrowserSessionIssueErrorV1::Rejected)?;
     Ok(LocalBrowserSessionIssueResponseV1 {
         session: issued.session,
-        cookie_headers,
+        secret_headers,
     })
 }
 
@@ -1200,8 +1203,8 @@ pub fn disable_local_browser_identity_v1(
 /// Rotates one active browser session using strict mutation transport and
 /// server-owned time.
 ///
-/// This opens no route. The prior bearer/CSRF pair is revoked atomically and
-/// replacement secrets are returned only as host-only cookie fields.
+/// This opens no route. The prior token/proof pair is revoked atomically and
+/// replacement secrets are returned only as non-ambient browser headers.
 ///
 /// # Errors
 ///
@@ -1230,18 +1233,18 @@ pub fn rotate_local_browser_session_v1(
         )
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?
         .ok_or(LocalBrowserTransportErrorV1::Rejected)?;
-    let cookie_headers = create_local_browser_session_cookie_headers_for_rotation_v1(&rotated);
+    let secret_headers = create_local_browser_session_secret_headers_for_rotation_v1(&rotated);
     rotated.raw_session_token.zeroize();
     rotated.raw_csrf_token.zeroize();
-    let cookie_headers = cookie_headers?;
+    let secret_headers = secret_headers?;
     Ok(LocalBrowserSessionRotationResponseV1 {
         prior_session_id: rotated.prior_session_id,
         session: rotated.session,
-        cookie_headers,
+        secret_headers,
     })
 }
 
-/// Builds cookie fields whose `Max-Age` never outlives issued session evidence.
+/// Builds browser secret headers only for valid bounded session evidence.
 ///
 /// Fractional remaining milliseconds round down. Exact session issue output
 /// remains secret-bearing and must not be logged or persisted.
@@ -1250,9 +1253,9 @@ pub fn rotate_local_browser_session_v1(
 ///
 /// Rejects malformed/drifted session times, nonpositive windows, out-of-range
 /// lifetimes, or malformed raw session material.
-pub fn create_local_browser_session_cookie_headers_for_issue_v1(
+pub fn create_local_browser_session_secret_headers_for_issue_v1(
     issued: &LocalSessionIssueResultV1,
-) -> Result<LocalBrowserSessionCookieHeadersV1, LocalBrowserTransportErrorV1> {
+) -> Result<LocalBrowserSessionSecretHeadersV1, LocalBrowserTransportErrorV1> {
     let issued_at = canonical_utc_timestamp_millis_v1(&issued.session.issued_at)
         .ok_or(LocalBrowserTransportErrorV1::Rejected)?;
     let expires_at = canonical_utc_timestamp_millis_v1(&issued.session.expires_at)
@@ -1261,19 +1264,21 @@ pub fn create_local_browser_session_cookie_headers_for_issue_v1(
         .checked_sub(issued_at)
         .filter(|value| *value > 0)
         .ok_or(LocalBrowserTransportErrorV1::Rejected)?;
-    let max_age_seconds = u32::try_from(lifetime_millis / 1_000)
+    let lifetime_seconds = u32::try_from(lifetime_millis / 1_000)
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
-    create_local_browser_session_cookie_headers_v1(
+    if !(60..=3_600).contains(&lifetime_seconds) {
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    }
+    create_local_browser_session_secret_headers_v1(
         &issued.raw_session_token,
         &issued.raw_csrf_token,
-        max_age_seconds,
     )
     .map_err(|_| LocalBrowserTransportErrorV1::Rejected)
 }
 
-fn create_local_browser_session_cookie_headers_for_rotation_v1(
+fn create_local_browser_session_secret_headers_for_rotation_v1(
     rotated: &LocalSessionRotationResultV1,
-) -> Result<LocalBrowserSessionCookieHeadersV1, LocalBrowserTransportErrorV1> {
+) -> Result<LocalBrowserSessionSecretHeadersV1, LocalBrowserTransportErrorV1> {
     let rotated_at = canonical_utc_timestamp_millis_v1(&rotated.rotated_at)
         .ok_or(LocalBrowserTransportErrorV1::Rejected)?;
     let expires_at = canonical_utc_timestamp_millis_v1(&rotated.session.expires_at)
@@ -1282,12 +1287,14 @@ fn create_local_browser_session_cookie_headers_for_rotation_v1(
         .checked_sub(rotated_at)
         .filter(|value| *value >= 60_000)
         .ok_or(LocalBrowserTransportErrorV1::Rejected)?;
-    let max_age_seconds = u32::try_from(lifetime_millis / 1_000)
+    let lifetime_seconds = u32::try_from(lifetime_millis / 1_000)
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
-    create_local_browser_session_cookie_headers_v1(
+    if !(60..=3_600).contains(&lifetime_seconds) {
+        return Err(LocalBrowserTransportErrorV1::Rejected);
+    }
+    create_local_browser_session_secret_headers_v1(
         &rotated.raw_session_token,
         &rotated.raw_csrf_token,
-        max_age_seconds,
     )
     .map_err(|_| LocalBrowserTransportErrorV1::Rejected)
 }
@@ -2502,13 +2509,10 @@ enum HttpResponseV1 {
     },
     SessionIssued {
         session: LocalSessionRecordV1,
-        cookie_headers: LocalBrowserSessionCookieHeadersV1,
+        secret_headers: LocalBrowserSessionSecretHeadersV1,
     },
     SessionRotated(LocalBrowserSessionRotationResponseV1),
-    PasswordRotated {
-        rotation: LocalPasswordRotationResultV1,
-        cookie_headers: LocalBrowserSessionCookieHeadersV1,
-    },
+    PasswordRotated(LocalPasswordRotationResultV1),
     IdentityCreated(LocalIdentityCredentialRecordV1),
     IdentityCreationRejected,
     IdentityDisabled(LocalIdentityDisablementResultV1),
@@ -2544,10 +2548,7 @@ enum HttpResponseV1 {
     OperationReconciled(Phase8OperationReadbackV1),
     RuntimeCompositionRejected,
     RuntimeCompositionCapacityRejected,
-    SessionFamilyRevoked {
-        revocation: LocalSessionFamilyRevocationV1,
-        cookie_headers: LocalBrowserSessionCookieHeadersV1,
-    },
+    SessionFamilyRevoked(LocalSessionFamilyRevocationV1),
     AuthenticatedSession {
         session: LocalSessionRecordV1,
         head_only: bool,
@@ -2709,7 +2710,8 @@ struct ParsedRequestHeadV1<'a> {
     content_type: Option<&'a str>,
     content_length: Option<usize>,
     cookie: Option<&'a str>,
-    csrf: Option<&'a str>,
+    session_token: Option<&'a str>,
+    session_proof: Option<&'a str>,
     session_issue_intent: Option<&'a str>,
     contract_version: Option<&'a str>,
     product_surface_contract: Option<&'a str>,
@@ -2724,7 +2726,8 @@ struct ParsedRequestHeadersV1<'a> {
     content_type: Option<&'a str>,
     content_length: Option<usize>,
     cookie: Option<&'a str>,
-    csrf: Option<&'a str>,
+    session_token: Option<&'a str>,
+    session_proof: Option<&'a str>,
     session_issue_intent: Option<&'a str>,
     contract_version: Option<&'a str>,
     product_surface_contract: Option<&'a str>,
@@ -2743,7 +2746,8 @@ fn parse_request_headers_v1<'a>(
         content_type: None,
         content_length: None,
         cookie: None,
-        csrf: None,
+        session_token: None,
+        session_proof: None,
         session_issue_intent: None,
         contract_version: None,
         product_surface_contract: None,
@@ -2790,8 +2794,10 @@ fn parse_request_headers_v1<'a>(
             headers.content_length = Some(parse_content_length_v1(value).ok_or(())?);
         } else if name.eq_ignore_ascii_case("cookie") {
             headers.cookie = Some(value);
-        } else if name.eq_ignore_ascii_case(LOCAL_CSRF_HEADER_NAME_V1) {
-            headers.csrf = Some(value);
+        } else if name.eq_ignore_ascii_case(LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1) {
+            headers.session_token = Some(value);
+        } else if name.eq_ignore_ascii_case(LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1) {
+            headers.session_proof = Some(value);
         } else if name.eq_ignore_ascii_case(LOCAL_SESSION_ISSUE_INTENT_HEADER_NAME_V1) {
             headers.session_issue_intent = Some(value);
         } else if name.eq_ignore_ascii_case(GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1) {
@@ -2859,7 +2865,8 @@ fn parse_request_head_v1(request: &[u8]) -> Result<ParsedRequestHeadV1<'_>, ()> 
         content_type: headers.content_type,
         content_length: headers.content_length,
         cookie: headers.cookie,
-        csrf: headers.csrf,
+        session_token: headers.session_token,
+        session_proof: headers.session_proof,
         session_issue_intent: headers.session_issue_intent,
         contract_version: headers.contract_version,
         product_surface_contract: headers.product_surface_contract,
@@ -2962,8 +2969,12 @@ fn parse_local_browser_transport_head_v1(
             return Err(LocalBrowserTransportErrorV1::Rejected);
         }
     }
-    let auth = parse_local_browser_auth_transport_v1(parsed.method, parsed.cookie, parsed.csrf)
-        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    let auth = parse_local_browser_auth_transport_v1(
+        parsed.method,
+        parsed.session_token,
+        parsed.session_proof,
+    )
+    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
     Ok(LocalBrowserTransportRequestV1 {
         expected_origin,
         request: preflight,
@@ -3335,7 +3346,8 @@ fn classify_control_product_read_request_v1(
         || request.fetch_site != Some("same-origin")
         || request.content_length.is_some_and(|length| length != 0)
         || request.content_type.is_some()
-        || request.csrf.is_some()
+        || request.session_token.is_some()
+        || request.session_proof.is_some()
         || request.session_issue_intent.is_some()
         || request.forwarded_present
     {
@@ -3349,14 +3361,14 @@ fn classify_control_product_read_request_v1(
             selected_product_surface_contract,
         );
     }
-    let authorized = parse_local_browser_auth_transport_v1(request.method, request.cookie, None)
+    let authorized = parse_local_control_session_cookie_v1(request.cookie)
         .map_err(|_| ())
-        .and_then(|auth| {
+        .and_then(|raw_session_token| {
             let checked_at = canonical_system_time_v1(SystemTime::now())?;
             let mut store = store.lock().map_err(|_| ())?;
             store
                 .verify_and_touch_local_session_v1(
-                    auth.raw_session_token(),
+                    raw_session_token,
                     None,
                     &checked_at,
                     LOCAL_BROWSER_SESSION_IDLE_TIMEOUT_SECONDS_V1,
@@ -4287,7 +4299,7 @@ fn classify_local_session_gateway_v1(
         return match issued {
             Ok(issued) => HttpResponseV1::SessionIssued {
                 session: issued.session,
-                cookie_headers: issued.cookie_headers,
+                secret_headers: issued.secret_headers,
             },
             Err(_) => HttpResponseV1::SessionIssueRejected,
         };
@@ -4638,10 +4650,7 @@ fn classify_local_password_rotation_v1(
             )
         });
     match rotated {
-        Ok(rotation) => HttpResponseV1::PasswordRotated {
-            rotation,
-            cookie_headers: clear_local_browser_session_cookie_headers_v1(),
-        },
+        Ok(rotation) => HttpResponseV1::PasswordRotated(rotation),
         Err(_) => HttpResponseV1::IdentityPasswordRotationRejected,
     }
 }
@@ -4689,10 +4698,7 @@ fn classify_local_session_family_sign_out_v1(
                 revoke_all_local_browser_sessions_v1(&mut store, &request)
             });
     match revoked {
-        Ok(revocation) => HttpResponseV1::SessionFamilyRevoked {
-            revocation,
-            cookie_headers: clear_local_browser_session_cookie_headers_v1(),
-        },
+        Ok(revocation) => HttpResponseV1::SessionFamilyRevoked(revocation),
         Err(_) => HttpResponseV1::SessionFamilySignOutRejected,
     }
 }
@@ -4745,7 +4751,7 @@ struct HttpResponsePartsV1 {
     body: String,
     allow: Option<&'static str>,
     head_only: bool,
-    cookie_headers: Option<LocalBrowserSessionCookieHeadersV1>,
+    secret_headers: Option<LocalBrowserSessionSecretHeadersV1>,
     contract_version_header: Option<&'static str>,
     product_surface_contract_header: bool,
 }
@@ -4755,10 +4761,10 @@ type HttpResponsePartsTupleV1 = (
     String,
     Option<&'static str>,
     bool,
-    Option<LocalBrowserSessionCookieHeadersV1>,
+    Option<LocalBrowserSessionSecretHeadersV1>,
 );
 
-// Keep the closed response mapping together so status, cookie, and version
+// Keep the closed response mapping together so status, secret headers, and version
 // behavior remains exhaustively reviewable at one boundary.
 #[allow(clippy::too_many_lines)]
 fn compose_http_response_v1(
@@ -4769,7 +4775,7 @@ fn compose_http_response_v1(
         return parts;
     }
     let product_surface_contract_header = false;
-    let (status, body, allow, head_only, cookie_headers) = match response {
+    let (status, body, allow, head_only, secret_headers) = match response {
         HttpResponseV1::Ready => ("200 OK", readiness_body_v1(state), None, false, None),
         HttpResponseV1::AuthenticatedHealth { head_only } => (
             "200 OK",
@@ -4809,13 +4815,10 @@ fn compose_http_response_v1(
         }
         HttpResponseV1::SessionIssued {
             session,
-            cookie_headers,
-        } => session_issue_response_parts_v1(&session, cookie_headers),
+            secret_headers,
+        } => session_issue_response_parts_v1(&session, secret_headers),
         HttpResponseV1::SessionRotated(rotated) => session_rotation_response_parts_v1(rotated),
-        HttpResponseV1::PasswordRotated {
-            rotation,
-            cookie_headers,
-        } => password_rotation_response_parts_v1(&rotation, cookie_headers),
+        HttpResponseV1::PasswordRotated(rotation) => password_rotation_response_parts_v1(&rotation),
         HttpResponseV1::IdentityCreated(created) => identity_creation_response_parts_v1(&created),
         HttpResponseV1::IdentityCreationRejected => identity_creation_denied_parts_v1(),
         HttpResponseV1::IdentityDisabled(value) => identity_disablement_response_parts_v1(&value),
@@ -4866,10 +4869,9 @@ fn compose_http_response_v1(
         HttpResponseV1::RuntimeCompositionCapacityRejected => {
             runtime_composition_denied_parts_v1(true)
         }
-        HttpResponseV1::SessionFamilyRevoked {
-            revocation,
-            cookie_headers,
-        } => session_family_revocation_response_parts_v1(&revocation, cookie_headers),
+        HttpResponseV1::SessionFamilyRevoked(revocation) => {
+            session_family_revocation_response_parts_v1(&revocation)
+        }
         HttpResponseV1::AuthenticatedSession { session, head_only } => {
             authenticated_session_response_parts_v1(&session, head_only)
         }
@@ -4942,7 +4944,7 @@ fn compose_http_response_v1(
         body,
         allow,
         head_only,
-        cookie_headers,
+        secret_headers,
         contract_version_header: None,
         product_surface_contract_header,
     }
@@ -4979,7 +4981,7 @@ fn compose_gateway_contract_response_v1(response: &HttpResponseV1) -> Option<Htt
                 body: gateway_contract_negotiation_body_v1(*version),
                 allow: None,
                 head_only: *head_only,
-                cookie_headers: None,
+                secret_headers: None,
                 contract_version_header: Some(CONTRACT_VERSION_V1_0),
                 product_surface_contract_header: false,
             })
@@ -4993,7 +4995,7 @@ fn compose_gateway_contract_response_v1(response: &HttpResponseV1) -> Option<Htt
                     .to_string(),
                 allow: None,
                 head_only: *head_only,
-                cookie_headers: None,
+                secret_headers: None,
                 contract_version_header: None,
                 product_surface_contract_header: false,
             })
@@ -5004,14 +5006,13 @@ fn compose_gateway_contract_response_v1(response: &HttpResponseV1) -> Option<Htt
 
 fn session_family_revocation_response_parts_v1(
     revocation: &LocalSessionFamilyRevocationV1,
-    cookie_headers: LocalBrowserSessionCookieHeadersV1,
 ) -> HttpResponsePartsTupleV1 {
     (
         "200 OK",
         session_family_revocation_body_v1(revocation),
         None,
         false,
-        Some(cookie_headers),
+        None,
     )
 }
 
@@ -5027,14 +5028,14 @@ fn session_family_sign_out_denied_parts_v1() -> HttpResponsePartsTupleV1 {
 
 fn session_issue_response_parts_v1(
     session: &LocalSessionRecordV1,
-    cookie_headers: LocalBrowserSessionCookieHeadersV1,
+    secret_headers: LocalBrowserSessionSecretHeadersV1,
 ) -> HttpResponsePartsTupleV1 {
     (
         "201 Created",
         session_issue_body_v1(session),
         None,
         false,
-        Some(cookie_headers),
+        Some(secret_headers),
     )
 }
 
@@ -5056,7 +5057,7 @@ fn session_rotation_response_parts_v1(
         session_rotation_body_v1(&rotated.prior_session_id, &rotated.session),
         None,
         false,
-        Some(rotated.cookie_headers),
+        Some(rotated.secret_headers),
     )
 }
 
@@ -5072,14 +5073,13 @@ fn session_rotation_denied_parts_v1() -> HttpResponsePartsTupleV1 {
 
 fn password_rotation_response_parts_v1(
     rotation: &LocalPasswordRotationResultV1,
-    cookie_headers: LocalBrowserSessionCookieHeadersV1,
 ) -> HttpResponsePartsTupleV1 {
     (
         "200 OK",
         password_rotation_body_v1(rotation),
         None,
         false,
-        Some(cookie_headers),
+        None,
     )
 }
 
@@ -5328,15 +5328,14 @@ fn session_issue_body_v1(session: &LocalSessionRecordV1) -> String {
             "bind_scope": "loopback",
             "same_origin_required": true,
             "cors_enabled": false,
-            "session_cookie": "host_only_http_only_samesite_strict",
-            "csrf_cookie": "host_only_samesite_strict",
+            "session_secret_headers": "returned_once_then_required",
         },
         "replay_semantics": "fresh_session_per_success",
         "side_effects": [
             GATEWAY_SESSION_ISSUE_LIMITER_SIDE_EFFECT_V1,
             GATEWAY_SESSION_ISSUE_EVIDENCE_SIDE_EFFECT_V1,
             GATEWAY_SESSION_ISSUE_EVENT_SIDE_EFFECT_V1,
-            GATEWAY_SESSION_ISSUE_COOKIE_SIDE_EFFECT_V1,
+            GATEWAY_SESSION_ISSUE_SECRET_HEADER_SIDE_EFFECT_V1,
         ],
         "session_state_changed": true,
         "execution_authority": false,
@@ -5382,6 +5381,7 @@ fn gateway_session_read_body_v1(session: &LocalSessionRecordV1) -> String {
             "bind_scope": "loopback",
             "same_origin_required": true,
             "cors_enabled": false,
+            "session_secret_headers": "required",
         },
         "side_effects": [GATEWAY_SESSION_ACTIVITY_SIDE_EFFECT_V1],
         "mutation_authority": false,
@@ -5427,8 +5427,7 @@ fn session_rotation_body_v1(prior_session_id: &str, session: &LocalSessionRecord
             "same_origin_required": true,
             "csrf_verified": true,
             "cors_enabled": false,
-            "session_cookie": "host_only_http_only_samesite_strict",
-            "csrf_cookie": "host_only_samesite_strict",
+            "session_secret_headers": "returned_once_then_required",
         },
         "replay_semantics": "one_time_current_session",
         "absolute_expiry_preserved": true,
@@ -5438,7 +5437,7 @@ fn session_rotation_body_v1(prior_session_id: &str, session: &LocalSessionRecord
             GATEWAY_SESSION_ROTATION_REPLACEMENT_SIDE_EFFECT_V1,
             GATEWAY_SESSION_ROTATION_EVIDENCE_SIDE_EFFECT_V1,
             GATEWAY_SESSION_ROTATION_EVENT_SIDE_EFFECT_V1,
-            GATEWAY_SESSION_ROTATION_COOKIE_SIDE_EFFECT_V1,
+            GATEWAY_SESSION_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1,
         ],
         "session_state_changed": true,
         "execution_authority": false,
@@ -5484,8 +5483,7 @@ fn password_rotation_body_v1(rotation: &LocalPasswordRotationResultV1) -> String
             "same_origin_required": true,
             "csrf_verified": true,
             "cors_enabled": false,
-            "session_cookie": "cleared_host_only_http_only_samesite_strict",
-            "csrf_cookie": "cleared_host_only_samesite_strict",
+            "session_secret_headers": "discard_required",
         },
         "replay_semantics": "one_time_active_session_family",
         "side_effects": [
@@ -5495,7 +5493,7 @@ fn password_rotation_body_v1(rotation: &LocalPasswordRotationResultV1) -> String
             GATEWAY_IDENTITY_PASSWORD_ROTATION_IDENTITY_EVENT_SIDE_EFFECT_V1,
             GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1,
             GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1,
-            GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1,
+            GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1,
         ],
         "credential_state_changed": true,
         "session_state_changed": true,
@@ -6117,15 +6115,14 @@ fn session_family_revocation_body_v1(revocation: &LocalSessionFamilyRevocationV1
             "same_origin_required": true,
             "csrf_verified": true,
             "cors_enabled": false,
-            "session_cookie": "cleared_host_only_http_only_samesite_strict",
-            "csrf_cookie": "cleared_host_only_samesite_strict",
+            "session_secret_headers": "discard_required",
         },
         "replay_semantics": "one_time_active_session_family",
         "side_effects": [
             GATEWAY_SESSION_ACTIVITY_SIDE_EFFECT_V1,
             GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1,
             GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1,
-            GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1,
+            GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1,
         ],
         "session_state_changed": true,
         "reauthentication_required": true,
@@ -6384,11 +6381,13 @@ fn write_response_with_state(
         .map_or_else(String::new, |value| {
             format!("{GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1}: {value}\r\n")
         });
-    let mut cookie_headers = response.cookie_headers.map_or_else(String::new, |cookies| {
+    let mut secret_headers = response.secret_headers.map_or_else(String::new, |secrets| {
         format!(
-            "Set-Cookie: {}\r\nSet-Cookie: {}\r\n",
-            cookies.session(),
-            cookies.csrf()
+            "{token_name}: {}\r\n{proof_name}: {}\r\n",
+            secrets.token(),
+            secrets.proof(),
+            token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+            proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
         )
     });
     let mut head = format!(
@@ -6405,7 +6404,7 @@ fn write_response_with_state(
             "{allow_header}",
             "{contract_version_header}",
             "{product_surface_contract_header}",
-            "{cookie_headers}",
+            "{secret_headers}",
             "Connection: close\r\n\r\n"
         ),
         status = response.status,
@@ -6413,7 +6412,7 @@ fn write_response_with_state(
         allow_header = allow_header,
         contract_version_header = contract_version_header,
         product_surface_contract_header = product_surface_contract_header,
-        cookie_headers = cookie_headers
+        secret_headers = secret_headers
     );
     let result = stream
         .write_all(head.as_bytes())
@@ -6427,7 +6426,7 @@ fn write_response_with_state(
         .and_then(|()| stream.flush())
         .map_err(|_| DaemonErrorV1::ResponseWriteFailed);
     head.zeroize();
-    cookie_headers.zeroize();
+    secret_headers.zeroize();
     response.body.zeroize();
     result
 }
@@ -6789,15 +6788,14 @@ mod tests {
                     "bind_scope": "loopback",
                     "same_origin_required": true,
                     "cors_enabled": false,
-                    "session_cookie": "host_only_http_only_samesite_strict",
-                    "csrf_cookie": "host_only_samesite_strict",
+                    "session_secret_headers": "returned_once_then_required",
                 },
                 "replay_semantics": "fresh_session_per_success",
                 "side_effects": [
                     GATEWAY_SESSION_ISSUE_LIMITER_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_ISSUE_EVIDENCE_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_ISSUE_EVENT_SIDE_EFFECT_V1,
-                    GATEWAY_SESSION_ISSUE_COOKIE_SIDE_EFFECT_V1,
+                    GATEWAY_SESSION_ISSUE_SECRET_HEADER_SIDE_EFFECT_V1,
                 ],
                 "session_state_changed": true,
                 "execution_authority": false,
@@ -6805,6 +6803,39 @@ mod tests {
             })
         );
         value
+    }
+
+    fn browser_session_response_secrets_v1(response: &str) -> (String, String) {
+        assert!(!response.contains("Set-Cookie:"));
+        let response_header = |name: &str| {
+            let prefix = format!("{name}: ");
+            let values = response
+                .lines()
+                .filter_map(|line| line.strip_prefix(&prefix))
+                .collect::<Vec<_>>();
+            assert_eq!(values.len(), 1, "expected one {name} response header");
+            values[0].to_owned()
+        };
+        let token = response_header(LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1);
+        let proof = response_header(LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1);
+        let (_, body) = response
+            .split_once("\r\n\r\n")
+            .expect("response should have one header boundary");
+        assert!(!body.contains(&token));
+        assert!(!body.contains(&proof));
+        (token, proof)
+    }
+
+    fn replace_browser_request_secrets_v1(
+        request: &str,
+        old_token: &str,
+        old_proof: &str,
+        new_token: &str,
+        new_proof: &str,
+    ) -> String {
+        request
+            .replace(old_token, new_token)
+            .replace(old_proof, new_proof)
     }
 
     fn assert_stable_session_rotation_denial(response: &str) {
@@ -6868,8 +6899,7 @@ mod tests {
                     "same_origin_required": true,
                     "csrf_verified": true,
                     "cors_enabled": false,
-                    "session_cookie": "host_only_http_only_samesite_strict",
-                    "csrf_cookie": "host_only_samesite_strict",
+                    "session_secret_headers": "returned_once_then_required",
                 },
                 "replay_semantics": "one_time_current_session",
                 "absolute_expiry_preserved": true,
@@ -6879,7 +6909,7 @@ mod tests {
                     GATEWAY_SESSION_ROTATION_REPLACEMENT_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_ROTATION_EVIDENCE_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_ROTATION_EVENT_SIDE_EFFECT_V1,
-                    GATEWAY_SESSION_ROTATION_COOKIE_SIDE_EFFECT_V1,
+                    GATEWAY_SESSION_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1,
                 ],
                 "session_state_changed": true,
                 "execution_authority": false,
@@ -6962,15 +6992,14 @@ mod tests {
                     "same_origin_required": true,
                     "csrf_verified": true,
                     "cors_enabled": false,
-                    "session_cookie": "cleared_host_only_http_only_samesite_strict",
-                    "csrf_cookie": "cleared_host_only_samesite_strict",
+                    "session_secret_headers": "discard_required",
                 },
                 "replay_semantics": "one_time_active_session_family",
                 "side_effects": [
                     GATEWAY_SESSION_ACTIVITY_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1,
-                    GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1,
+                    GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1,
                 ],
                 "session_state_changed": true,
                 "reauthentication_required": true,
@@ -7055,8 +7084,7 @@ mod tests {
                     "same_origin_required": true,
                     "csrf_verified": true,
                     "cors_enabled": false,
-                    "session_cookie": "cleared_host_only_http_only_samesite_strict",
-                    "csrf_cookie": "cleared_host_only_samesite_strict",
+                    "session_secret_headers": "discard_required",
                 },
                 "replay_semantics": "one_time_active_session_family",
                 "side_effects": [
@@ -7066,7 +7094,7 @@ mod tests {
                     GATEWAY_IDENTITY_PASSWORD_ROTATION_IDENTITY_EVENT_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1,
                     GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1,
-                    GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1,
+                    GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1,
                 ],
                 "credential_state_changed": true,
                 "session_state_changed": true,
@@ -7078,29 +7106,12 @@ mod tests {
         value
     }
 
-    fn local_browser_cookie_secrets_v1(
+    fn local_browser_header_secrets_v1(
         issued: &LocalBrowserSessionIssueResponseV1,
     ) -> (String, String, String) {
-        let session_token = issued
-            .cookie_headers()
-            .session()
-            .split_once('=')
-            .and_then(|(_, value)| value.split(';').next())
-            .expect("session cookie should contain token")
-            .to_owned();
-        let csrf_token = issued
-            .cookie_headers()
-            .csrf()
-            .split_once('=')
-            .and_then(|(_, value)| value.split(';').next())
-            .expect("CSRF cookie should contain token")
-            .to_owned();
-        let cookie = format!(
-            "{}={session_token}; {}={csrf_token}",
-            lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
-            lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
-        );
-        (session_token, csrf_token, cookie)
+        let session_token = issued.secret_headers().token().to_owned();
+        let csrf_token = issued.secret_headers().proof().to_owned();
+        (session_token.clone(), csrf_token, session_token)
     }
 
     struct Phase7LocalGatewayFixture {
@@ -7146,7 +7157,7 @@ mod tests {
                 },
             )
             .expect("owner browser session should issue");
-            let (owner_token, owner_csrf, owner_cookie) = local_browser_cookie_secrets_v1(&owner);
+            let (owner_token, owner_csrf, owner_cookie) = local_browser_header_secrets_v1(&owner);
             let operator_created_at = canonical_system_time_v1(SystemTime::now())
                 .expect("fixture operator time should format");
             store
@@ -7173,7 +7184,7 @@ mod tests {
                 },
             )
             .expect("requester browser session should issue");
-            let (_, requester_csrf, requester_cookie) = local_browser_cookie_secrets_v1(&requester);
+            let (_, requester_csrf, requester_cookie) = local_browser_header_secrets_v1(&requester);
 
             let fixture: serde_json::Value = serde_json::from_str(include_str!(
                 "../../../fixtures/contracts/packet-envelope-v1_0.json"
@@ -7301,10 +7312,12 @@ mod tests {
                     "GET {target} HTTP/1.1\r\n",
                     "Host: 127.0.0.1:7447\r\n",
                     "Sec-Fetch-Site: same-origin\r\n",
-                    "Cookie: {cookie}\r\n\r\n"
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Proof: {proof}\r\n\r\n"
                 ),
                 target = target,
                 cookie = self.requester_cookie,
+                proof = self.requester_csrf,
             )
         }
     }
@@ -7318,8 +7331,8 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {cookie}\r\n",
-                "X-LNSAT-CSRF: {csrf}\r\n\r\n"
+                "X-LNSAT-Local-Session-Token: {cookie}\r\n",
+                "X-LNSAT-Local-Session-Proof: {csrf}\r\n\r\n"
             ),
             target = target,
             cookie = cookie,
@@ -7390,7 +7403,7 @@ mod tests {
             let address = server.local_addr();
             let shutdown = server.shutdown_handle();
             let server_thread = thread::spawn(move || server.serve());
-            let (session_token, csrf_token, cookie) = local_browser_cookie_secrets_v1(&issued);
+            let (session_token, csrf_token, cookie) = local_browser_header_secrets_v1(&issued);
             Self {
                 directory,
                 address,
@@ -7411,23 +7424,34 @@ mod tests {
                     "Host: {address}\r\n",
                     "{version_name}: {version}\r\n",
                     "Sec-Fetch-Site: same-origin\r\n",
-                    "Cookie: {cookie}\r\n\r\n"
+                    "{token_name}: {cookie}\r\n",
+                    "{proof_name}: {proof}\r\n\r\n"
                 ),
                 address = self.address,
                 cookie = self.cookie,
+                proof = self.csrf_token,
+                token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+                proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
                 version = CONTRACT_VERSION_V1_0,
             )
         }
 
-        fn product_read_request(&self, method: &str, path: &str, token: &str) -> String {
+        fn product_read_request(
+            &self,
+            method: &str,
+            path: &str,
+            token: &str,
+            proof: &str,
+        ) -> String {
             format!(
                 concat!(
                     "{method} {path} HTTP/1.1\r\n",
                     "Host: {address}\r\n",
                     "{version_name}: {version}\r\n",
                     "Sec-Fetch-Site: same-origin\r\n",
-                    "Cookie: {cookie_name}={token}\r\n",
+                    "{token_name}: {token}\r\n",
+                    "{proof_name}: {proof}\r\n",
                     "Connection: close\r\n\r\n"
                 ),
                 method = method,
@@ -7435,7 +7459,9 @@ mod tests {
                 address = self.address,
                 version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
                 version = CONTRACT_VERSION_V1_0,
-                cookie_name = lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
+                token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+                proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
+                proof = proof,
                 token = token,
             )
         }
@@ -7473,14 +7499,14 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: 0\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n"
                 ),
                 address = self.address,
                 version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
                 version = CONTRACT_VERSION_V1_0,
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
             )
         }
@@ -7495,14 +7521,14 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: 0\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n"
                 ),
                 address = self.address,
                 version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
                 version = CONTRACT_VERSION_V1_0,
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
             )
         }
@@ -7517,7 +7543,7 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: {content_length}\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n",
                     "{body}"
                 ),
@@ -7526,7 +7552,7 @@ mod tests {
                 version = CONTRACT_VERSION_V1_0,
                 content_length = body.len(),
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
                 body = body,
             )
@@ -7542,7 +7568,7 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: {content_length}\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n",
                     "{body}"
                 ),
@@ -7551,7 +7577,7 @@ mod tests {
                 version = CONTRACT_VERSION_V1_0,
                 content_length = body.len(),
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
                 body = body,
             )
@@ -7567,7 +7593,7 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: {content_length}\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n",
                     "{body}"
                 ),
@@ -7577,7 +7603,7 @@ mod tests {
                 version = CONTRACT_VERSION_V1_0,
                 content_length = body.len(),
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
                 body = body,
             )
@@ -7593,7 +7619,7 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: {content_length}\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n",
                     "{body}"
                 ),
@@ -7602,7 +7628,7 @@ mod tests {
                 version = CONTRACT_VERSION_V1_0,
                 content_length = body.len(),
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
                 body = body,
             )
@@ -7618,7 +7644,7 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: {content_length}\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n",
                     "{body}"
                 ),
@@ -7627,7 +7653,7 @@ mod tests {
                 version = CONTRACT_VERSION_V1_0,
                 content_length = body.len(),
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
                 body = body,
             )
@@ -7736,7 +7762,7 @@ mod tests {
                     "Sec-Fetch-Site: same-origin\r\n",
                     "Content-Type: application/json\r\n",
                     "Content-Length: 0\r\n",
-                    "Cookie: {cookie}\r\n",
+                    "X-LNSAT-Local-Session-Token: {cookie}\r\n",
                     "{csrf_name}: {csrf_token}\r\n\r\n"
                 ),
                 identity_ref = identity_ref,
@@ -7744,7 +7770,7 @@ mod tests {
                 version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
                 version = CONTRACT_VERSION_V1_0,
                 cookie = self.cookie,
-                csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+                csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
                 csrf_token = self.csrf_token,
             )
         }
@@ -7756,7 +7782,8 @@ mod tests {
                     "Host: {address}\r\n",
                     "{version_name}: {version}\r\n",
                     "Sec-Fetch-Site: same-origin\r\n",
-                    "Cookie: {cookie}\r\n\r\n"
+                    "{token_name}: {cookie}\r\n",
+                    "{proof_name}: {proof}\r\n\r\n"
                 ),
                 method = method,
                 identity_ref = identity_ref,
@@ -7764,6 +7791,9 @@ mod tests {
                 version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
                 version = CONTRACT_VERSION_V1_0,
                 cookie = self.cookie,
+                proof = self.csrf_token,
+                token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+                proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
             )
         }
 
@@ -7774,7 +7804,8 @@ mod tests {
                     "Host: {address}\r\n",
                     "{version_name}: {version}\r\n",
                     "Sec-Fetch-Site: same-origin\r\n",
-                    "Cookie: {cookie}\r\n\r\n"
+                    "{token_name}: {cookie}\r\n",
+                    "{proof_name}: {proof}\r\n\r\n"
                 ),
                 method = method,
                 session_id = session_id,
@@ -7782,6 +7813,9 @@ mod tests {
                 version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
                 version = CONTRACT_VERSION_V1_0,
                 cookie = self.cookie,
+                proof = self.csrf_token,
+                token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+                proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
             )
         }
 
@@ -8269,7 +8303,12 @@ mod tests {
                 include_str!("../../../fixtures/contracts/phase10-status-v1.json"),
             ),
         ] {
-            let request = fixture.product_read_request("GET", path, &fixture.session_token);
+            let request = fixture.product_read_request(
+                "GET",
+                path,
+                &fixture.session_token,
+                &fixture.csrf_token,
+            );
             let get = request_at(fixture.address, request.as_bytes());
             assert!(get.starts_with("HTTP/1.1 200 OK\r\n"));
             assert!(get.contains("LNSAT-Contract-Version: lnsat.contracts.v1_0\r\n"));
@@ -8281,7 +8320,12 @@ mod tests {
                 serde_json::from_str::<serde_json::Value>(expected)
                     .expect("frozen fixture must be JSON")
             );
-            let head_request = fixture.product_read_request("HEAD", path, &fixture.session_token);
+            let head_request = fixture.product_read_request(
+                "HEAD",
+                path,
+                &fixture.session_token,
+                &fixture.csrf_token,
+            );
             let head = request_at(fixture.address, head_request.as_bytes());
             assert!(head.starts_with("HTTP/1.1 200 OK\r\n"));
             let (_, head_body) = head
@@ -8383,20 +8427,21 @@ mod tests {
                     .expect("expiry must advance"),
             )
             .expect("expiry must format");
-            let token = {
+            let (token, proof) = {
                 let mut store = SqliteStore::open(fixture.directory.database_path())
                     .expect("fixture store must reopen");
-                store
+                let issued = store
                     .issue_local_session_v1(&LocalSessionIssueInputV1 {
                         identity_ref,
                         password,
                         issued_at: &issued_at,
                         expires_at: &expires_at,
                     })
-                    .expect("non-owner session must issue")
-                    .raw_session_token
+                    .expect("non-owner session must issue");
+                (issued.raw_session_token, issued.raw_csrf_token)
             };
-            let request = fixture.product_read_request("GET", AUTHENTICATED_STATUS_PATH_V1, &token);
+            let request =
+                fixture.product_read_request("GET", AUTHENTICATED_STATUS_PATH_V1, &token, &proof);
             let response = request_at(fixture.address, request.as_bytes());
             assert!(response.starts_with("HTTP/1.1 200 OK\r\n"));
             assert!(!response.contains(identity_ref));
@@ -8570,7 +8615,12 @@ mod tests {
         );
 
         for token in ["malformed", fixture.expired_session_token.as_str()] {
-            let request = fixture.product_read_request("GET", AUTHENTICATED_HEALTH_PATH_V1, token);
+            let request = fixture.product_read_request(
+                "GET",
+                AUTHENTICATED_HEALTH_PATH_V1,
+                token,
+                &fixture.csrf_token,
+            );
             let response = request_at(fixture.address, request.as_bytes());
             assert!(response.starts_with("HTTP/1.1 403 Forbidden\r\n"));
             assert_eq!(
@@ -8589,6 +8639,7 @@ mod tests {
             "GET",
             AUTHENTICATED_STATUS_PATH_V1,
             &fixture.session_token,
+            &fixture.csrf_token,
         );
         let revoked = request_at(fixture.address, revoked.as_bytes());
         assert!(revoked.starts_with("HTTP/1.1 403 Forbidden\r\n"));
@@ -8746,6 +8797,7 @@ mod tests {
                     "bind_scope": "loopback",
                     "same_origin_required": true,
                     "cors_enabled": false,
+                    "session_secret_headers": "required",
                 },
                 "side_effects": [GATEWAY_SESSION_ACTIVITY_SIDE_EFFECT_V1],
                 "mutation_authority": false,
@@ -8776,6 +8828,66 @@ mod tests {
             assert!(!response.contains("Access-Control-Expose-"));
             assert!(response.contains("Cross-Origin-Resource-Policy: same-origin\r\n"));
             assert!(response.contains("Referrer-Policy: no-referrer\r\n"));
+        }
+        fixture.stop();
+    }
+
+    #[test]
+    fn served_session_gateway_rejects_legacy_cookie_replay_for_reads_and_mutations() {
+        let fixture = ServedSessionGatewayFixture::start("served-session-legacy-cookie-replay");
+        let legacy_cookie = format!(
+            "{}={}; {}={}",
+            lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
+            fixture.cookie,
+            lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
+            fixture.csrf_token,
+        );
+        let legacy_get = format!(
+            concat!(
+                "GET /v1/session HTTP/1.1\r\n",
+                "Host: {address}\r\n",
+                "{version_name}: {version}\r\n",
+                "Sec-Fetch-Site: same-origin\r\n",
+                "Cookie: {legacy_cookie}\r\n",
+                "X-LNSAT-CSRF: {proof}\r\n\r\n"
+            ),
+            address = fixture.address,
+            version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+            version = CONTRACT_VERSION_V1_0,
+            legacy_cookie = legacy_cookie,
+            proof = fixture.csrf_token,
+        );
+        let legacy_head = legacy_get.replacen("GET ", "HEAD ", 1);
+        let legacy_patch = fixture
+            .session_rotation_request()
+            .replace(
+                &format!(
+                    "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                    fixture.cookie
+                ),
+                &format!("Cookie: {legacy_cookie}\r\n"),
+            )
+            .replace(
+                &format!(
+                    "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                    fixture.csrf_token
+                ),
+                &format!("X-LNSAT-CSRF: {}\r\n", fixture.csrf_token),
+            );
+
+        let get_response = request_at(fixture.address, legacy_get.as_bytes());
+        let head_response = request_at(fixture.address, legacy_head.as_bytes());
+        let patch_response = request_at(fixture.address, legacy_patch.as_bytes());
+        assert_stable_session_read_denial(&get_response);
+        assert!(head_response.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+        assert!(head_response.ends_with("\r\n\r\n"));
+        assert_stable_session_rotation_denial(&patch_response);
+        for response in [&get_response, &head_response, &patch_response] {
+            assert!(!response.contains(LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1));
+            assert!(!response.contains(LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1));
+            assert!(!response.contains("Set-Cookie:"));
+            assert!(!response.contains(&fixture.session_token));
+            assert!(!response.contains(&fixture.csrf_token));
         }
         fixture.stop();
     }
@@ -8884,7 +8996,7 @@ mod tests {
     }
 
     #[test]
-    fn served_session_issue_sets_host_only_cookies_and_returns_secret_free_evidence() {
+    fn served_session_issue_returns_non_ambient_headers_and_secret_free_evidence() {
         let fixture = ServedSessionGatewayFixture::start("served-session-issue-success");
         let password = "correct horse battery staple";
         let body = serde_json::json!({
@@ -8916,37 +9028,23 @@ mod tests {
         assert!(!response.contains("Access-Control-Expose-"));
         assert!(!response.contains("WWW-Authenticate:"));
 
-        let set_cookie_values = response
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .collect::<Vec<_>>();
-        assert_eq!(set_cookie_values.len(), 2);
-        assert!(set_cookie_values[0].starts_with("lnsat_session_v1="));
-        assert!(set_cookie_values[0].contains("; Path=/; HttpOnly; SameSite=Strict; Max-Age=300"));
-        assert!(set_cookie_values[1].starts_with("lnsat_csrf_v1="));
-        assert!(set_cookie_values[1].contains("; Path=/; SameSite=Strict; Max-Age=300"));
-        for value in &set_cookie_values {
-            assert!(!value.contains("Domain="));
-            assert!(!value.contains("Secure"));
-        }
-
-        let cookie = set_cookie_values
-            .iter()
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>()
-            .join("; ");
+        let (session_token, session_proof) = browser_session_response_secrets_v1(&response);
         let authenticated_get = format!(
             concat!(
                 "GET /v1/session HTTP/1.1\r\n",
                 "Host: {address}\r\n",
                 "{version_name}: {version}\r\n",
                 "Sec-Fetch-Site: same-origin\r\n",
-                "Cookie: {cookie}\r\n\r\n"
+                "{token_name}: {session_token}\r\n",
+                "{proof_name}: {session_proof}\r\n\r\n"
             ),
             address = fixture.address,
             version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
             version = CONTRACT_VERSION_V1_0,
-            cookie = cookie,
+            token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+            proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
+            session_token = session_token,
+            session_proof = session_proof,
         );
         let authenticated_response = request_at(fixture.address, authenticated_get.as_bytes());
         assert!(authenticated_response.starts_with("HTTP/1.1 200 OK\r\n"));
@@ -9196,35 +9294,7 @@ mod tests {
         assert!(!response.contains("Access-Control-Allow-"));
         assert!(!response.contains("WWW-Authenticate:"));
 
-        let set_cookie_values = response
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .collect::<Vec<_>>();
-        assert_eq!(set_cookie_values.len(), 2);
-        assert!(set_cookie_values[0].starts_with("lnsat_session_v1="));
-        assert!(set_cookie_values[0].contains("; Path=/; HttpOnly; SameSite=Strict; Max-Age="));
-        assert!(set_cookie_values[1].starts_with("lnsat_csrf_v1="));
-        assert!(set_cookie_values[1].contains("; Path=/; SameSite=Strict; Max-Age="));
-        for value in &set_cookie_values {
-            assert!(!value.contains("Domain="));
-            assert!(!value.contains("Secure"));
-            let max_age = value
-                .split_once("Max-Age=")
-                .and_then(|(_, value)| value.parse::<u64>().ok())
-                .expect("replacement cookie should carry numeric Max-Age");
-            assert!((1..=300).contains(&max_age));
-        }
-
-        let replacement_cookie = set_cookie_values
-            .iter()
-            .map(|value| {
-                value
-                    .split(';')
-                    .next()
-                    .expect("replacement cookie pair should exist")
-            })
-            .collect::<Vec<_>>()
-            .join("; ");
+        let (replacement_token, replacement_proof) = browser_session_response_secrets_v1(&response);
         let replacement_session_id = response
             .split_once("\"session_id\":\"")
             .and_then(|(_, value)| value.split_once('"'))
@@ -9242,9 +9312,13 @@ mod tests {
             assert!(!denied.contains("Access-Control-Allow-"));
         }
 
-        let replacement_read = fixture
-            .valid_get()
-            .replace(&fixture.cookie, &replacement_cookie);
+        let replacement_read = replace_browser_request_secrets_v1(
+            &fixture.valid_get(),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &replacement_token,
+            &replacement_proof,
+        );
         let replacement_response = request_at(fixture.address, replacement_read.as_bytes());
         assert!(replacement_response.starts_with("HTTP/1.1 200 OK\r\n"));
         assert!(
@@ -9258,7 +9332,10 @@ mod tests {
         let fixture = ServedSessionGatewayFixture::start("served-session-rotation-denials");
         let valid = fixture.session_rotation_request();
         let missing_csrf = valid.replace(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
             "",
         );
         let mut mismatched_csrf = fixture.csrf_token.clone();
@@ -9269,8 +9346,11 @@ mod tests {
         };
         mismatched_csrf.replace_range(mismatched_csrf.len() - 1.., replacement);
         let wrong_csrf = valid.replacen(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {mismatched_csrf}\r\n"),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
+            &format!("{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {mismatched_csrf}\r\n"),
             1,
         );
         let cross_site = valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
@@ -9278,7 +9358,13 @@ mod tests {
         let wrong_media_type =
             valid.replace("Content-Type: application/json", "Content-Type: text/plain");
         let missing_length = valid.replace("Content-Length: 0\r\n", "");
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let nonempty_body = valid
             .replace("Content-Length: 0\r\n", "Content-Length: 1\r\n")
             .replacen("\r\n\r\n", "\r\n\r\nx", 1);
@@ -9314,7 +9400,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::too_many_lines)]
-    fn served_password_rotation_revokes_family_clears_cookies_and_requires_relogin() {
+    fn served_password_rotation_revokes_family_invalidates_headers_and_requires_relogin() {
         let fixture = ServedSessionGatewayFixture::start("served-password-rotation");
         let operator_password = "correct operator battery staple";
         fixture.create_non_owner(
@@ -9334,15 +9420,14 @@ mod tests {
             fixture.session_issue_request(&operator_body).as_bytes(),
         );
         assert!(operator_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let operator_cookie = operator_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>()
-            .join("; ");
-        let operator_get = fixture
-            .valid_get()
-            .replace(&fixture.cookie, &operator_cookie);
+        let (operator_token, operator_proof) = browser_session_response_secrets_v1(&operator_issue);
+        let operator_get = replace_browser_request_secrets_v1(
+            &fixture.valid_get(),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &operator_token,
+            &operator_proof,
+        );
 
         let second_body = serde_json::json!({
             "identity_ref": "identity:human:owner",
@@ -9355,13 +9440,14 @@ mod tests {
             fixture.session_issue_request(&second_body).as_bytes(),
         );
         assert!(second_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let second_cookie = second_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>()
-            .join("; ");
-        let second_get = fixture.valid_get().replace(&fixture.cookie, &second_cookie);
+        let (second_token, second_proof) = browser_session_response_secrets_v1(&second_issue);
+        let second_get = replace_browser_request_secrets_v1(
+            &fixture.valid_get(),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &second_token,
+            &second_proof,
+        );
 
         let current_password = "correct horse battery staple";
         let new_password = "new correct horse battery staple";
@@ -9393,17 +9479,9 @@ mod tests {
         assert!(!response.contains("Access-Control-Allow-"));
         assert!(!response.contains("WWW-Authenticate:"));
 
-        let set_cookie_values = response
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .collect::<Vec<_>>();
-        assert_eq!(
-            set_cookie_values,
-            [
-                "lnsat_session_v1=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
-                "lnsat_csrf_v1=; Path=/; SameSite=Strict; Max-Age=0",
-            ]
-        );
+        assert!(!response.contains("Set-Cookie:"));
+        assert!(!response.contains(LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1));
+        assert!(!response.contains(LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1));
 
         let prior_read = request_at(fixture.address, fixture.valid_get().as_bytes());
         let second_read = request_at(fixture.address, second_get.as_bytes());
@@ -9441,7 +9519,7 @@ mod tests {
             fixture.session_issue_request(&new_login_body).as_bytes(),
         );
         assert!(new_login.starts_with("HTTP/1.1 201 Created\r\n"));
-        assert_eq!(new_login.matches("Set-Cookie: ").count(), 2);
+        browser_session_response_secrets_v1(&new_login);
         fixture.stop();
     }
 
@@ -9480,7 +9558,10 @@ mod tests {
         );
         let malformed_json = fixture.password_rotation_request("{");
         let missing_csrf = valid.replace(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
             "",
         );
         let mut mismatched_csrf = fixture.csrf_token.clone();
@@ -9491,15 +9572,24 @@ mod tests {
         };
         mismatched_csrf.replace_range(mismatched_csrf.len() - 1.., replacement);
         let wrong_csrf = valid.replacen(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {mismatched_csrf}\r\n"),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
+            &format!("{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {mismatched_csrf}\r\n"),
             1,
         );
         let cross_site = valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
         let wrong_origin = valid.replace("Origin: http://", "Origin: http://127.0.0.2:");
         let wrong_media_type =
             valid.replace("Content-Type: application/json", "Content-Type: text/plain");
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let empty_body = fixture.password_rotation_request("");
         let (head, _) = valid
             .split_once("\r\n\r\n")
@@ -9718,7 +9808,10 @@ mod tests {
         let expired_body = serde_json::to_string(&expired).expect("packet should serialize");
 
         let missing_csrf = fixture.packet_intake_request(&valid_body).replace(
-            &format!("{}: {}\r\n", LOCAL_CSRF_HEADER_NAME_V1, fixture.csrf_token),
+            &format!(
+                "{}: {}\r\n",
+                LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1, fixture.csrf_token
+            ),
             "",
         );
         let requests = [
@@ -10011,18 +10104,14 @@ mod tests {
                 .as_bytes(),
         );
         assert!(auditor_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let auditor_pairs = auditor_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>();
-        let auditor_csrf = auditor_pairs
-            .iter()
-            .find_map(|pair| pair.strip_prefix("lnsat_csrf_v1="))
-            .expect("auditor CSRF cookie should exist");
-        let auditor_request = valid
-            .replace(&fixture.cookie, &auditor_pairs.join("; "))
-            .replace(&fixture.csrf_token, auditor_csrf);
+        let (auditor_token, auditor_proof) = browser_session_response_secrets_v1(&auditor_issue);
+        let auditor_request = replace_browser_request_secrets_v1(
+            &valid,
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &auditor_token,
+            &auditor_proof,
+        );
 
         let mut generic_denial = None;
         for denied_request in [
@@ -10087,25 +10176,30 @@ mod tests {
         let empty_body = transport_fixture.approval_request_creation_request("");
         let missing_csrf = transport_valid.replace(
             &format!(
-                "{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n",
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
                 transport_fixture.csrf_token
             ),
             "",
         );
         let wrong_csrf = transport_valid.replace(
             &format!(
-                "{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n",
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
                 transport_fixture.csrf_token
             ),
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: wrong-csrf\r\n"),
+            &format!("{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: wrong-csrf\r\n"),
         );
         let cross_site =
             transport_valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
         let wrong_origin = transport_valid.replace("Origin: http://", "Origin: http://127.0.0.2:");
         let wrong_media_type =
             transport_valid.replace("Content-Type: application/json", "Content-Type: text/plain");
-        let missing_auth =
-            transport_valid.replace(&format!("Cookie: {}\r\n", transport_fixture.cookie), "");
+        let missing_auth = transport_valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                transport_fixture.cookie
+            ),
+            "",
+        );
         let (transport_head, _) = transport_valid
             .split_once("\r\n\r\n")
             .expect("approval request should contain one head boundary");
@@ -10164,15 +10258,7 @@ mod tests {
                 .as_bytes(),
         );
         assert!(operator_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let operator_pairs = operator_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>();
-        let operator_csrf = operator_pairs
-            .iter()
-            .find_map(|pair| pair.strip_prefix("lnsat_csrf_v1="))
-            .expect("operator CSRF cookie should exist");
+        let (operator_token, operator_proof) = browser_session_response_secrets_v1(&operator_issue);
         let body = serde_json::json!({
             "project_ref": "project:lnsat",
             "decision": "approved",
@@ -10181,9 +10267,13 @@ mod tests {
         .to_string();
         let owner_request =
             fixture.approval_decision_request(&approval_request.approval_request_id, &body);
-        let operator_request = owner_request
-            .replace(&fixture.cookie, &operator_pairs.join("; "))
-            .replace(&fixture.csrf_token, operator_csrf);
+        let operator_request = replace_browser_request_secrets_v1(
+            &owner_request,
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &operator_token,
+            &operator_proof,
+        );
         let self_approval = request_at(fixture.address, operator_request.as_bytes());
         assert_stable_approval_decision_denial(&self_approval);
 
@@ -10343,18 +10433,30 @@ mod tests {
         let malformed_json =
             fixture.approval_decision_request(&approval_request.approval_request_id, "{");
         let missing_csrf = valid.replace(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
             "",
         );
         let wrong_csrf = valid.replace(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: wrong-csrf\r\n"),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
+            &format!("{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: wrong-csrf\r\n"),
         );
         let cross_site = valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
         let wrong_origin = valid.replace("Origin: http://", "Origin: http://127.0.0.2:");
         let wrong_media_type =
             valid.replace("Content-Type: application/json", "Content-Type: text/plain");
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let (head, _) = valid
             .split_once("\r\n\r\n")
             .expect("approval decision request should contain one head boundary");
@@ -10403,18 +10505,14 @@ mod tests {
                 .as_bytes(),
         );
         assert!(auditor_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let auditor_pairs = auditor_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>();
-        let auditor_csrf = auditor_pairs
-            .iter()
-            .find_map(|pair| pair.strip_prefix("lnsat_csrf_v1="))
-            .expect("auditor CSRF cookie should exist");
-        let auditor_request = valid
-            .replace(&fixture.cookie, &auditor_pairs.join("; "))
-            .replace(&fixture.csrf_token, auditor_csrf);
+        let (auditor_token, auditor_proof) = browser_session_response_secrets_v1(&auditor_issue);
+        let auditor_request = replace_browser_request_secrets_v1(
+            &valid,
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &auditor_token,
+            &auditor_proof,
+        );
         let auditor_response = request_at(fixture.address, auditor_request.as_bytes());
         assert_stable_approval_decision_denial(&auditor_response);
         assert_eq!(Some(&auditor_response), generic_denial.as_ref());
@@ -10524,7 +10622,7 @@ mod tests {
         );
         assert!(operator_login.starts_with("HTTP/1.1 201 Created\r\n"));
         assert!(operator_login.contains("\"role\":\"operator\""));
-        assert_eq!(operator_login.matches("Set-Cookie: ").count(), 2);
+        browser_session_response_secrets_v1(&operator_login);
 
         let replay = request_at(fixture.address, request.as_bytes());
         assert!(replay.starts_with("HTTP/1.1 403 Forbidden\r\n"));
@@ -10613,14 +10711,23 @@ mod tests {
         let malformed_json = fixture.identity_creation_request("{");
         let empty_body = fixture.identity_creation_request("");
         let missing_csrf = valid.replace(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
             "",
         );
         let cross_site = valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
         let wrong_origin = valid.replace("Origin: http://", "Origin: http://127.0.0.2:");
         let wrong_media_type =
             valid.replace("Content-Type: application/json", "Content-Type: text/plain");
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let (head, _) = valid
             .split_once("\r\n\r\n")
             .expect("identity creation request should contain one head boundary");
@@ -10686,18 +10793,14 @@ mod tests {
             fixture.session_issue_request(&operator_body).as_bytes(),
         );
         assert!(operator_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let cookie_pairs = operator_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>();
-        let operator_csrf = cookie_pairs
-            .iter()
-            .find_map(|pair| pair.strip_prefix("lnsat_csrf_v1="))
-            .expect("CSRF cookie should exist");
-        let operator_request = valid
-            .replace(&fixture.cookie, &cookie_pairs.join("; "))
-            .replace(&fixture.csrf_token, operator_csrf);
+        let (operator_token, operator_proof) = browser_session_response_secrets_v1(&operator_issue);
+        let operator_request = replace_browser_request_secrets_v1(
+            &valid,
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &operator_token,
+            &operator_proof,
+        );
         let non_owner_response = request_at(fixture.address, operator_request.as_bytes());
         assert_eq!(Some(&non_owner_response), generic_denial.as_ref());
 
@@ -10749,13 +10852,14 @@ mod tests {
             assert!(issued.starts_with("HTTP/1.1 201 Created\r\n"));
         }
         let operator_gets = [&first_issue, &second_issue].map(|issued| {
-            let cookie = issued
-                .lines()
-                .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-                .map(|value| value.split(';').next().expect("cookie pair should exist"))
-                .collect::<Vec<_>>()
-                .join("; ");
-            fixture.valid_get().replace(&fixture.cookie, &cookie)
+            let (token, proof) = browser_session_response_secrets_v1(issued);
+            replace_browser_request_secrets_v1(
+                &fixture.valid_get(),
+                &fixture.cookie,
+                &fixture.csrf_token,
+                &token,
+                &proof,
+            )
         });
 
         let request = fixture.identity_disablement_request("identity:human:operator");
@@ -10859,21 +10963,8 @@ mod tests {
         for issued in [&operator_issue, &auditor_issue] {
             assert!(issued.starts_with("HTTP/1.1 201 Created\r\n"));
         }
-        let cookie_and_csrf = |issued: &str| {
-            let pairs = issued
-                .lines()
-                .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-                .map(|value| value.split(';').next().expect("cookie pair should exist"))
-                .collect::<Vec<_>>();
-            let csrf = pairs
-                .iter()
-                .find_map(|pair| pair.strip_prefix("lnsat_csrf_v1="))
-                .expect("CSRF cookie should exist")
-                .to_owned();
-            (pairs.join("; "), csrf)
-        };
-        let (operator_cookie, operator_csrf) = cookie_and_csrf(&operator_issue);
-        let (auditor_cookie, _) = cookie_and_csrf(&auditor_issue);
+        let (operator_cookie, operator_csrf) = browser_session_response_secrets_v1(&operator_issue);
+        let (auditor_cookie, auditor_proof) = browser_session_response_secrets_v1(&auditor_issue);
 
         let valid = fixture.identity_disablement_request("identity:human:operator");
         let owner_target = fixture.identity_disablement_request("identity:human:owner");
@@ -10885,11 +10976,17 @@ mod tests {
             .identity_disablement_request("identity:human:auditor")
             .replace(&fixture.cookie, &operator_cookie)
             .replace(
-                &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}", fixture.csrf_token),
-                &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {operator_csrf}"),
+                &format!(
+                    "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}",
+                    fixture.csrf_token
+                ),
+                &format!("{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {operator_csrf}"),
             );
         let missing_csrf = valid.replace(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
             "",
         );
         let mut wrong_csrf_value = fixture.csrf_token.clone();
@@ -10907,7 +11004,13 @@ mod tests {
         let wrong_media_type =
             valid.replace("Content-Type: application/json", "Content-Type: text/plain");
         let missing_length = valid.replace("Content-Length: 0\r\n", "");
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let nonempty_body = valid
             .replace("Content-Length: 0\r\n", "Content-Length: 1\r\n")
             .replacen("\r\n\r\n", "\r\n\r\nx", 1);
@@ -10971,12 +11074,20 @@ mod tests {
         assert!(get_response.contains("Allow: DELETE\r\n"));
 
         let owner_read = request_at(fixture.address, fixture.valid_get().as_bytes());
-        let operator_get = fixture
-            .valid_get()
-            .replace(&fixture.cookie, &operator_cookie);
-        let auditor_get = fixture
-            .valid_get()
-            .replace(&fixture.cookie, &auditor_cookie);
+        let operator_get = replace_browser_request_secrets_v1(
+            &fixture.valid_get(),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &operator_cookie,
+            &operator_csrf,
+        );
+        let auditor_get = replace_browser_request_secrets_v1(
+            &fixture.valid_get(),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &auditor_cookie,
+            &auditor_proof,
+        );
         for authenticated in [
             owner_read,
             request_at(fixture.address, operator_get.as_bytes()),
@@ -11019,20 +11130,25 @@ mod tests {
         };
         let operator_issue = issue_identity("identity:human:operator", operator_password);
         let auditor_issue = issue_identity("identity:human:auditor", auditor_password);
-        let response_cookie = |response: &str| {
-            response
-                .lines()
-                .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-                .map(|value| value.split(';').next().expect("cookie pair should exist"))
-                .collect::<Vec<_>>()
-                .join("; ")
-        };
-        let operator_cookie = response_cookie(&operator_issue);
-        let auditor_cookie = response_cookie(&auditor_issue);
+        let (operator_cookie, operator_proof) =
+            browser_session_response_secrets_v1(&operator_issue);
+        let (auditor_cookie, auditor_proof) = browser_session_response_secrets_v1(&auditor_issue);
 
         let owner_request = fixture.identity_event_read_request("GET", "identity:human:owner");
-        let operator_request = owner_request.replace(&fixture.cookie, &operator_cookie);
-        let auditor_request = owner_request.replace(&fixture.cookie, &auditor_cookie);
+        let operator_request = replace_browser_request_secrets_v1(
+            &owner_request,
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &operator_cookie,
+            &operator_proof,
+        );
+        let auditor_request = replace_browser_request_secrets_v1(
+            &owner_request,
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &auditor_cookie,
+            &auditor_proof,
+        );
         let mut owner_response = None;
         for request in [owner_request, operator_request, auditor_request] {
             let response = request_at(fixture.address, request.as_bytes());
@@ -11142,7 +11258,13 @@ mod tests {
             assert!(!response.contains("LNSAT-Contract-Version: lnsat.contracts."));
         }
 
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let cross_site = valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
         let unknown = fixture.identity_event_read_request("GET", "identity:human:unknown");
         let empty = fixture.identity_event_read_request("GET", "");
@@ -11247,23 +11369,28 @@ mod tests {
                 fixture.session_issue_request(&body).as_bytes(),
             )
         };
-        let response_cookie = |response: &str| {
-            response
-                .lines()
-                .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-                .map(|value| value.split(';').next().expect("cookie pair should exist"))
-                .collect::<Vec<_>>()
-                .join("; ")
-        };
         let operator_issue = issue_identity("identity:human:operator", operator_password);
         let auditor_issue = issue_identity("identity:human:auditor", auditor_password);
-        let operator_cookie = response_cookie(&operator_issue);
-        let auditor_cookie = response_cookie(&auditor_issue);
+        let (operator_cookie, operator_proof) =
+            browser_session_response_secrets_v1(&operator_issue);
+        let (auditor_cookie, auditor_proof) = browser_session_response_secrets_v1(&auditor_issue);
         let owner_request = fixture.session_event_read_request("GET", &target_session_id);
         for request in [
             owner_request.clone(),
-            owner_request.replace(&fixture.cookie, &operator_cookie),
-            owner_request.replace(&fixture.cookie, &auditor_cookie),
+            replace_browser_request_secrets_v1(
+                &owner_request,
+                &fixture.cookie,
+                &fixture.csrf_token,
+                &operator_cookie,
+                &operator_proof,
+            ),
+            replace_browser_request_secrets_v1(
+                &owner_request,
+                &fixture.cookie,
+                &fixture.csrf_token,
+                &auditor_cookie,
+                &auditor_proof,
+            ),
         ] {
             let response = request_at(fixture.address, request.as_bytes());
             assert!(response.starts_with("HTTP/1.1 200 OK\r\n"));
@@ -11281,16 +11408,21 @@ mod tests {
             fixture.session_rotation_request().as_bytes(),
         );
         assert!(rotation_response.starts_with("HTTP/1.1 200 OK\r\n"));
-        let replacement_cookie = response_cookie(&rotation_response);
+        let (replacement_cookie, replacement_proof) =
+            browser_session_response_secrets_v1(&rotation_response);
         let replacement_session_id = rotation_response
             .split_once("\"session_id\":\"")
             .and_then(|(_, value)| value.split_once('"'))
             .map(|(value, _)| value)
             .expect("rotation should expose replacement session id");
 
-        let get_request = fixture
-            .session_event_read_request("GET", &target_session_id)
-            .replace(&fixture.cookie, &replacement_cookie);
+        let get_request = replace_browser_request_secrets_v1(
+            &fixture.session_event_read_request("GET", &target_session_id),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &replacement_cookie,
+            &replacement_proof,
+        );
         let get_response = request_at(fixture.address, get_request.as_bytes());
         assert!(get_response.starts_with("HTTP/1.1 200 OK\r\n"));
         let (_, get_body) = get_response
@@ -11387,9 +11519,13 @@ mod tests {
             assert!(!get_response.contains(forbidden));
         }
 
-        let head_request = fixture
-            .session_event_read_request("HEAD", &target_session_id)
-            .replace(&fixture.cookie, &replacement_cookie);
+        let head_request = replace_browser_request_secrets_v1(
+            &fixture.session_event_read_request("HEAD", &target_session_id),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &replacement_cookie,
+            &replacement_proof,
+        );
         let head_response = request_at(fixture.address, head_request.as_bytes());
         assert!(head_response.starts_with("HTTP/1.1 200 OK\r\n"));
         let (_, head_body) = head_response
@@ -11430,7 +11566,13 @@ mod tests {
             assert!(!response.contains("LNSAT-Contract-Version: lnsat.contracts."));
         }
 
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let cross_site = valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
         let unknown =
             fixture.session_event_read_request("GET", "ses_00000000000000000000000000000000");
@@ -11520,7 +11662,7 @@ mod tests {
     }
 
     #[test]
-    fn served_session_family_sign_out_revokes_and_clears_host_only_cookies() {
+    fn served_session_family_sign_out_revokes_and_invalidates_header_secrets() {
         let fixture = ServedSessionGatewayFixture::start("served-session-family-sign-out");
         let operator_password = "correct operator battery staple";
         fixture.create_non_owner(
@@ -11540,15 +11682,14 @@ mod tests {
             fixture.session_issue_request(&operator_body).as_bytes(),
         );
         assert!(operator_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let operator_cookie = operator_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>()
-            .join("; ");
-        let operator_get = fixture
-            .valid_get()
-            .replace(&fixture.cookie, &operator_cookie);
+        let (operator_token, operator_proof) = browser_session_response_secrets_v1(&operator_issue);
+        let operator_get = replace_browser_request_secrets_v1(
+            &fixture.valid_get(),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &operator_token,
+            &operator_proof,
+        );
 
         let second_body = serde_json::json!({
             "identity_ref": "identity:human:owner",
@@ -11561,13 +11702,14 @@ mod tests {
             fixture.session_issue_request(&second_body).as_bytes(),
         );
         assert!(second_issue.starts_with("HTTP/1.1 201 Created\r\n"));
-        let second_cookie = second_issue
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .map(|value| value.split(';').next().expect("cookie pair should exist"))
-            .collect::<Vec<_>>()
-            .join("; ");
-        let second_get = fixture.valid_get().replace(&fixture.cookie, &second_cookie);
+        let (second_token, second_proof) = browser_session_response_secrets_v1(&second_issue);
+        let second_get = replace_browser_request_secrets_v1(
+            &fixture.valid_get(),
+            &fixture.cookie,
+            &fixture.csrf_token,
+            &second_token,
+            &second_proof,
+        );
 
         let request = fixture.session_family_sign_out_request();
         let response = request_at(fixture.address, request.as_bytes());
@@ -11590,21 +11732,9 @@ mod tests {
         assert!(!response.contains("Access-Control-Allow-"));
         assert!(!response.contains("WWW-Authenticate:"));
 
-        let set_cookie_values = response
-            .lines()
-            .filter_map(|line| line.strip_prefix("Set-Cookie: "))
-            .collect::<Vec<_>>();
-        assert_eq!(
-            set_cookie_values,
-            [
-                "lnsat_session_v1=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
-                "lnsat_csrf_v1=; Path=/; SameSite=Strict; Max-Age=0",
-            ]
-        );
-        for value in &set_cookie_values {
-            assert!(!value.contains("Domain="));
-            assert!(!value.contains("Secure"));
-        }
+        assert!(!response.contains("Set-Cookie:"));
+        assert!(!response.contains(LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1));
+        assert!(!response.contains(LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1));
 
         let read_after_sign_out = request_at(fixture.address, fixture.valid_get().as_bytes());
         let second_read_after_sign_out = request_at(fixture.address, second_get.as_bytes());
@@ -11627,7 +11757,10 @@ mod tests {
         let fixture = ServedSessionGatewayFixture::start("served-session-sign-out-denials");
         let valid = fixture.session_family_sign_out_request();
         let missing_csrf = valid.replace(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
             "",
         );
         let mut mismatched_csrf = fixture.csrf_token.clone();
@@ -11638,8 +11771,11 @@ mod tests {
         };
         mismatched_csrf.replace_range(mismatched_csrf.len() - 1.., replacement);
         let wrong_csrf = valid.replacen(
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {}\r\n", fixture.csrf_token),
-            &format!("{LOCAL_CSRF_HEADER_NAME_V1}: {mismatched_csrf}\r\n"),
+            &format!(
+                "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                fixture.csrf_token
+            ),
+            &format!("{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {mismatched_csrf}\r\n"),
             1,
         );
         let cross_site = valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site");
@@ -11647,7 +11783,13 @@ mod tests {
         let wrong_media_type =
             valid.replace("Content-Type: application/json", "Content-Type: text/plain");
         let missing_length = valid.replace("Content-Length: 0\r\n", "");
-        let missing_auth = valid.replace(&format!("Cookie: {}\r\n", fixture.cookie), "");
+        let missing_auth = valid.replace(
+            &format!(
+                "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                fixture.cookie
+            ),
+            "",
+        );
         let nonempty_body = valid
             .replace("Content-Length: 0\r\n", "Content-Length: 1\r\n")
             .replacen("\r\n\r\n", "\r\n\r\nx", 1);
@@ -11682,7 +11824,8 @@ mod tests {
     }
 
     #[test]
-    fn route_neutral_browser_transport_binds_headers_cookies_and_store_proof() {
+    #[allow(clippy::too_many_lines)] // Exact read and mutation transport cases share one store.
+    fn route_neutral_browser_transport_binds_non_ambient_headers_and_store_proof() {
         let directory = TestDirectory::new("browser-transport");
         let mut store =
             SqliteStore::open(directory.database_path()).expect("store should bootstrap");
@@ -11702,23 +11845,36 @@ mod tests {
                 expires_at: "2026-07-23T17:06:00Z",
             })
             .expect("owner session should issue");
-        let response_cookies = create_local_browser_session_cookie_headers_for_issue_v1(&issued)
-            .expect("cookie lifetime should derive from session evidence");
-        assert!(response_cookies.session().contains("Max-Age=300"));
-        assert!(response_cookies.csrf().contains("Max-Age=300"));
+        let response_headers = create_local_browser_session_secret_headers_for_issue_v1(&issued)
+            .expect("session secrets should create exact response headers");
+        assert_eq!(response_headers.token(), issued.raw_session_token);
+        assert_eq!(response_headers.proof(), issued.raw_csrf_token);
         let bound_address: SocketAddr = "127.0.0.1:7447"
             .parse()
             .expect("bound address should parse");
         let peer_address: IpAddr = "127.0.0.1".parse().expect("peer should parse");
-        let cookie = format!(
+        let legacy_cookie = format!(
             "{}={}; {}={}",
             lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
             issued.raw_session_token,
             lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
             issued.raw_csrf_token,
         );
+        let legacy_read_head = format!(
+            "GET /v1/session HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nCookie: {legacy_cookie}\r\nX-LNSAT-Local-Session-Proof: {}\r\n\r\n",
+            issued.raw_csrf_token,
+        );
+        assert!(matches!(
+            parse_local_browser_transport_request_v1(
+                legacy_read_head.as_bytes(),
+                peer_address,
+                bound_address,
+            ),
+            Err(LocalBrowserTransportErrorV1::Rejected)
+        ));
         let read_head = format!(
-            "GET /v1/session HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nCookie: {cookie}\r\n\r\n"
+            "GET /v1/session HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\n{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n\r\n",
+            issued.raw_session_token, issued.raw_csrf_token,
         );
         let read = parse_local_browser_transport_request_v1(
             read_head.as_bytes(),
@@ -11728,7 +11884,7 @@ mod tests {
         .expect("strict browser read should parse");
         assert_eq!(read.target(), "/v1/session");
         assert_eq!(read.raw_session_token(), issued.raw_session_token);
-        assert_eq!(read.raw_csrf_token(), None);
+        assert_eq!(read.raw_csrf_token(), Some(issued.raw_csrf_token.as_str()));
         let authorized_read = authorize_local_browser_transport_request_at_v1(
             &mut store,
             &read,
@@ -11746,11 +11902,13 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {cookie}\r\n",
-                "X-LNSAT-CSRF: {csrf}\r\n\r\n"
+                "{token_name}: {token}\r\n",
+                "{proof_name}: {proof}\r\n\r\n"
             ),
-            cookie = cookie,
-            csrf = issued.raw_csrf_token,
+            token = issued.raw_session_token,
+            proof = issued.raw_csrf_token,
+            token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+            proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
         );
         let mutation = parse_local_browser_transport_request_v1(
             mutation_head.as_bytes(),
@@ -12039,15 +12197,9 @@ mod tests {
             .parse()
             .expect("bound address should parse");
         let loopback: IpAddr = "127.0.0.1".parse().expect("loopback should parse");
-        let cookie = format!(
-            "{}={}; {}={}",
-            lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
-            secrets.raw_session_token,
-            lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
-            secrets.raw_csrf_token,
-        );
         let valid = format!(
-            "GET /v1/session HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nCookie: {cookie}\r\n\r\n"
+            "GET /v1/session HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nX-LNSAT-Local-Session-Token: {}\r\nX-LNSAT-Local-Session-Proof: {}\r\n\r\n",
+            secrets.raw_session_token, secrets.raw_csrf_token,
         );
         let cases = [
             valid.replace(
@@ -12065,12 +12217,8 @@ mod tests {
             valid.replace("\r\n\r\n", "\r\nContent-Length: 1\r\n\r\n"),
             format!("{valid}body"),
             valid.replace(
-                &cookie,
-                &format!(
-                    "{cookie}; {}={}",
-                    lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
-                    secrets.raw_session_token
-                ),
+                "X-LNSAT-Local-Session-Token:",
+                "X-LNSAT-Local-Session-Token:\r\nX-LNSAT-Local-Session-Token:",
             ),
             format!(
                 "GET /v1/session HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nX-Fill: {}\r\n\r\n",
@@ -12165,7 +12313,8 @@ mod tests {
         let expires_at = canonical_utc_timestamp_millis_v1(&issued.session().expires_at)
             .expect("expiry should be canonical");
         assert_eq!(expires_at - issued_at, 60_000);
-        assert!(issued.cookie_headers().session().contains("Max-Age=60"));
+        assert!(issued.secret_headers().token().len() > 64);
+        assert_eq!(issued.secret_headers().proof().len(), 64);
         assert_eq!(
             issue_local_browser_session_v1(
                 &mut store,
@@ -12234,31 +12383,14 @@ mod tests {
             },
         )
         .expect("second session should issue");
-        let session_token = second
-            .cookie_headers()
-            .session()
-            .split_once('=')
-            .and_then(|(_, value)| value.split(';').next())
-            .expect("session cookie should contain token")
-            .to_owned();
-        let csrf_token = second
-            .cookie_headers()
-            .csrf()
-            .split_once('=')
-            .and_then(|(_, value)| value.split(';').next())
-            .expect("CSRF cookie should contain token")
-            .to_owned();
-        let cookie = format!(
-            "{}={session_token}; {}={csrf_token}",
-            lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
-            lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
-        );
+        let session_token = second.secret_headers().token().to_owned();
+        let csrf_token = second.secret_headers().proof().to_owned();
         let bound_address: SocketAddr = "127.0.0.1:7447"
             .parse()
             .expect("bound address should parse");
         let peer_address: IpAddr = "127.0.0.1".parse().expect("peer should parse");
         let read_head = format!(
-            "GET /v1/session/revoke-all HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nCookie: {cookie}\r\n\r\n"
+            "GET /v1/session/revoke-all HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nX-LNSAT-Local-Session-Token: {session_token}\r\nX-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
         );
         let read = parse_local_browser_transport_request_v1(
             read_head.as_bytes(),
@@ -12278,10 +12410,10 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {cookie}\r\n",
-                "X-LNSAT-CSRF: {csrf_token}\r\n\r\n"
+                "X-LNSAT-Local-Session-Token: {session_token}\r\n",
+                "X-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
             ),
-            cookie = cookie,
+            session_token = session_token,
             csrf_token = csrf_token,
         );
         let mutation = parse_local_browser_transport_request_v1(
@@ -12306,7 +12438,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::too_many_lines)]
-    fn browser_rotation_requires_mutation_and_replaces_cookie_secrets() {
+    fn browser_rotation_requires_mutation_and_replaces_header_secrets() {
         let directory = TestDirectory::new("browser-rotation");
         let mut store =
             SqliteStore::open(directory.database_path()).expect("store should bootstrap");
@@ -12329,31 +12461,14 @@ mod tests {
             },
         )
         .expect("browser session should issue");
-        let session_token = issued
-            .cookie_headers()
-            .session()
-            .split_once('=')
-            .and_then(|(_, value)| value.split(';').next())
-            .expect("session cookie should contain token")
-            .to_owned();
-        let csrf_token = issued
-            .cookie_headers()
-            .csrf()
-            .split_once('=')
-            .and_then(|(_, value)| value.split(';').next())
-            .expect("CSRF cookie should contain token")
-            .to_owned();
-        let cookie = format!(
-            "{}={session_token}; {}={csrf_token}",
-            lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
-            lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
-        );
+        let session_token = issued.secret_headers().token().to_owned();
+        let csrf_token = issued.secret_headers().proof().to_owned();
         let bound_address: SocketAddr = "127.0.0.1:7447"
             .parse()
             .expect("bound address should parse");
         let peer_address: IpAddr = "127.0.0.1".parse().expect("peer should parse");
         let read_head = format!(
-            "GET /v1/session/rotate HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nCookie: {cookie}\r\n\r\n"
+            "GET /v1/session/rotate HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nX-LNSAT-Local-Session-Token: {session_token}\r\nX-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
         );
         let read = parse_local_browser_transport_request_v1(
             read_head.as_bytes(),
@@ -12373,10 +12488,10 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {cookie}\r\n",
-                "X-LNSAT-CSRF: {csrf_token}\r\n\r\n"
+                "X-LNSAT-Local-Session-Token: {session_token}\r\n",
+                "X-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
             ),
-            cookie = cookie,
+            session_token = session_token,
             csrf_token = csrf_token,
         );
         let mutation = parse_local_browser_transport_request_v1(
@@ -12390,14 +12505,15 @@ mod tests {
         assert_eq!(rotated.prior_session_id(), issued.session().session_id);
         assert_ne!(rotated.session().session_id, issued.session().session_id);
         assert_ne!(
-            rotated.cookie_headers().session(),
-            issued.cookie_headers().session()
+            rotated.secret_headers().token(),
+            issued.secret_headers().token()
         );
         assert_ne!(
-            rotated.cookie_headers().csrf(),
-            issued.cookie_headers().csrf()
+            rotated.secret_headers().proof(),
+            issued.secret_headers().proof()
         );
-        assert!(rotated.cookie_headers().session().contains("Max-Age="));
+        assert!(rotated.secret_headers().token().len() > 64);
+        assert_eq!(rotated.secret_headers().proof().len(), 64);
         let checked_at =
             canonical_system_time_v1(SystemTime::now()).expect("trusted clock should format");
         assert_eq!(
@@ -12438,7 +12554,7 @@ mod tests {
             },
         )
         .expect("browser session should issue");
-        let (session_token, csrf_token, cookie) = local_browser_cookie_secrets_v1(&issued);
+        let (session_token, csrf_token, cookie) = local_browser_header_secrets_v1(&issued);
         let request_head = format!(
             concat!(
                 "POST /unopened/password-rotation HTTP/1.1\r\n",
@@ -12447,8 +12563,8 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {cookie}\r\n",
-                "X-LNSAT-CSRF: {csrf_token}\r\n\r\n"
+                "X-LNSAT-Local-Session-Token: {cookie}\r\n",
+                "X-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
             ),
             cookie = cookie,
             csrf_token = csrf_token,
@@ -12522,7 +12638,7 @@ mod tests {
             },
         )
         .expect("owner browser session should issue");
-        let (owner_token, owner_csrf, owner_cookie) = local_browser_cookie_secrets_v1(&owner);
+        let (owner_token, owner_csrf, owner_cookie) = local_browser_header_secrets_v1(&owner);
         let created_at =
             canonical_system_time_v1(SystemTime::now()).expect("trusted clock should format");
         store
@@ -12549,7 +12665,7 @@ mod tests {
             },
         )
         .expect("operator browser session should issue");
-        let (operator_token, _, _) = local_browser_cookie_secrets_v1(&operator);
+        let (operator_token, _, _) = local_browser_header_secrets_v1(&operator);
         let request_head = format!(
             concat!(
                 "POST /unopened/identity-disablement HTTP/1.1\r\n",
@@ -12558,8 +12674,8 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {owner_cookie}\r\n",
-                "X-LNSAT-CSRF: {owner_csrf}\r\n\r\n"
+                "X-LNSAT-Local-Session-Token: {owner_cookie}\r\n",
+                "X-LNSAT-Local-Session-Proof: {owner_csrf}\r\n\r\n"
             ),
             owner_cookie = owner_cookie,
             owner_csrf = owner_csrf,
@@ -12617,13 +12733,13 @@ mod tests {
             },
         )
         .expect("browser session should issue");
-        let (_, csrf_token, cookie) = local_browser_cookie_secrets_v1(&issued);
+        let (_, csrf_token, cookie) = local_browser_header_secrets_v1(&issued);
         let peer: IpAddr = "127.0.0.1".parse().expect("peer should parse");
         let bound: SocketAddr = "127.0.0.1:7447"
             .parse()
             .expect("bound address should parse");
         let read_head = format!(
-            "GET /unopened/identity-events HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nCookie: {cookie}\r\n\r\n"
+            "GET /unopened/identity-events HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nX-LNSAT-Local-Session-Token: {cookie}\r\nX-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
         );
         let read = parse_local_browser_transport_request_v1(read_head.as_bytes(), peer, bound)
             .expect("read transport should parse");
@@ -12644,8 +12760,8 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {cookie}\r\n",
-                "X-LNSAT-CSRF: {csrf_token}\r\n\r\n"
+                "X-LNSAT-Local-Session-Token: {cookie}\r\n",
+                "X-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
             ),
             cookie = cookie,
             csrf_token = csrf_token,
@@ -12683,13 +12799,13 @@ mod tests {
             },
         )
         .expect("browser session should issue");
-        let (_, csrf_token, cookie) = local_browser_cookie_secrets_v1(&issued);
+        let (_, csrf_token, cookie) = local_browser_header_secrets_v1(&issued);
         let peer: IpAddr = "127.0.0.1".parse().expect("peer should parse");
         let bound: SocketAddr = "127.0.0.1:7447"
             .parse()
             .expect("bound address should parse");
         let read_head = format!(
-            "GET /unopened/session-events HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nCookie: {cookie}\r\n\r\n"
+            "GET /unopened/session-events HTTP/1.1\r\nHost: 127.0.0.1:7447\r\nSec-Fetch-Site: same-origin\r\nX-LNSAT-Local-Session-Token: {cookie}\r\nX-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
         );
         let read = parse_local_browser_transport_request_v1(read_head.as_bytes(), peer, bound)
             .expect("read transport should parse");
@@ -12718,8 +12834,8 @@ mod tests {
                 "Sec-Fetch-Site: same-origin\r\n",
                 "Content-Type: application/json\r\n",
                 "Content-Length: 0\r\n",
-                "Cookie: {cookie}\r\n",
-                "X-LNSAT-CSRF: {csrf_token}\r\n\r\n"
+                "X-LNSAT-Local-Session-Token: {cookie}\r\n",
+                "X-LNSAT-Local-Session-Proof: {csrf_token}\r\n\r\n"
             ),
             cookie = cookie,
             csrf_token = csrf_token,

@@ -49,7 +49,8 @@ describe("@lnsat/packets Gateway approval-decision v1 contract", () => {
       contract_version: "lnsat.contracts.v1_0",
       path: "/v1/approval-requests/{approval_request_id}/decision",
       method: "POST",
-      authentication: "active owner or operator session plus double-submit CSRF",
+      authentication:
+        "active owner or operator session token and independent proof headers",
       actor_roles: ["owner", "operator"],
       permission: "decide_approval",
       request_fields: ["project_ref", "decision", "reason"],

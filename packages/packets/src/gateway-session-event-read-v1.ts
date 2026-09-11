@@ -16,7 +16,7 @@ export const gatewaySessionEventReadV1Contract = {
   contract_version: "lnsat.contracts.v1_0",
   path: "/v1/sessions/{session_id}/events",
   methods: ["GET", "HEAD"],
-  authentication: "active local browser session",
+  authentication: "active local browser session header pair",
   authorization_permission: "read_evidence",
   scope: "validated_target_session",
   roles: ["owner", "operator", "auditor"],

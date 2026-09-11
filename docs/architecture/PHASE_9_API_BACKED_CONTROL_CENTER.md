@@ -1,9 +1,10 @@
 # Phase 9 API-Backed Control Center
 
-- Status: experimental read-only source implementation
+- Status: experimental evidence-read source implementation
 - Gate: `P9_API_BACKED_CONTROL_CENTER_IMPLEMENTATION`
-- Runtime effect: authenticated evidence reads plus optional immutable console assets
-- Mutation effect: none
+- Runtime effect: one bounded local session issue, authenticated evidence reads,
+  plus optional immutable console assets
+- Mutation effect: local authentication/session evidence only
 - Production support: no
 
 Phase 9 connects the read-only Control Center to existing Phase 8 Gateway
@@ -14,21 +15,31 @@ terminal truth from transport behavior.
 
 ## Same-Origin Topology
 
-Console and Gateway API share the exact numeric-loopback `lnsatd` origin. Live
-browser requests use relative paths only, `credentials: same-origin`,
-`Cache-Control: no-store` request behavior, redirect rejection, no referrer, and
-the exact stable header:
+Console and Gateway API share the exact numeric-loopback `lnsatd` origin. The
+operator starts one bounded local session with the existing exact
+`POST /v1/session` contract. That request uses a relative path,
+`credentials: omit`, `Cache-Control: no-store` request behavior, redirect
+rejection, no referrer, exact content type, and these exact headers:
 
 ```text
 LNSAT-Contract-Version: lnsat.contracts.v1_0
+X-LNSAT-Session-Intent: lnsat.session.issue.v1
 ```
 
-The browser supplies no bearer header. Existing host-only strict session cookies
-carry the active local session. Existing daemon transport checks still require
-numeric loopback peer/Host, same-origin Fetch Metadata, exact stable contract
-version, active non-revoked/non-expired local session, and existing
-`read_evidence` permission before store reads. Owner, operator, and auditor role
-semantics are unchanged.
+Successful issue returns one `X-LNSAT-Local-Session-Token` and one independent
+`X-LNSAT-Local-Session-Proof` response header. The client captures them in an
+opaque React ref; it never renders, logs, persists, or places them in a URL.
+Every subsequent relative evidence GET uses `credentials: omit`, the exact
+stable contract-version header, and both session-secret headers. Missing or
+malformed issue headers block all evidence reads. Page hide, component unmount,
+explicit local forget, and authenticated-route HTTP 403 abort active reads and
+discard the client-held pair. JavaScript cannot guarantee string zeroization;
+the client instead removes its reachable references promptly.
+
+Existing daemon transport checks still require numeric loopback peer/Host,
+same-origin Fetch Metadata, exact stable contract version, active
+non-revoked/non-expired local session, and existing `read_evidence` permission
+before store reads. Owner, operator, and auditor role semantics are unchanged.
 
 No CORS, proxy, forwarded-host trust, hostname alias, public listener, remote
 access, direct database connection, or separate TypeScript auth proxy exists.
@@ -131,9 +142,10 @@ HTTP 403/503, daemon failure, missing receipt, and transport loss never imply
 success, safe retry, or confirmed non-execution.
 
 One prior valid live snapshot may remain in React memory after a failed explicit
-refresh. It is marked stale and carries the refresh failure code. No live
-evidence enters local/session storage, cookies, URLs, fixture files, history, or
-another persistence surface.
+refresh other than HTTP 403. It is marked stale and carries the refresh failure
+code. HTTP 403 discards both the session pair and live snapshot. No live evidence
+or session secret enters local/session storage, cookies, URLs, fixture files,
+history, or another persistence surface.
 
 ## Optional Static Console Delivery
 
@@ -170,6 +182,14 @@ Contract fixture:
 
 Focused proof covers:
 
+- exact local-session issue request, closed success envelope, one valid token
+  header plus one valid proof header, and absence of ambient credentials;
+- missing, malformed, duplicate-shaped, or body-reflected session-secret
+  headers blocking every evidence read;
+- both session-secret headers on each operation, authorization, and optional
+  attempt GET, with malformed in-memory session material rejected before fetch;
+- local forget, page-hide/unmount discard, session-epoch late-result rejection,
+  and HTTP 403 session/evidence discard;
 - live projection mappings for prepared, expired, dispatching,
   `outcome_unknown`, reconciling, completed-with-receipt,
   completed-without-receipt, and failed;
@@ -200,8 +220,9 @@ Phase 9 does not authorize:
   history, clipboard access, or live evidence persistence;
 - retry, execute, cancel, revoke, reconcile, receipt submission, capability,
   nonce, adapter selection, or any other mutation/control call;
-- new roles, sessions, permissions, policy, schema, migration, OS-user/process
-  trust, owner bypass, project-isolated ACL claim, or direct database access;
+- new roles, permissions, policy, schema, migration, OS-user/process trust,
+  owner bypass, project-isolated ACL claim, or direct database access beyond
+  the existing bounded local session-issue contract;
 - CORS, proxying, forwarded-host trust, hostname aliases, public/non-loopback
   listeners, remote access, arbitrary file serving, directory listing, or
   symlink/traversal fallback;

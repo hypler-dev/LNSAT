@@ -14,8 +14,8 @@ Origin: http://<exact-bound-loopback>
 Sec-Fetch-Site: same-origin
 Content-Type: application/json
 Content-Length: <exact body length>
-Cookie: lnsat_session_v1=<bearer>; lnsat_csrf_v1=<csrf>
-X-LNSAT-CSRF: <same csrf>
+X-LNSAT-Local-Session-Token: <bearer>
+X-LNSAT-Local-Session-Proof: <independent proof>
 
 {"current_password":"<secret>","new_password":"<secret>"}
 ```
@@ -34,7 +34,7 @@ must differ exactly from current password.
 
 Transfer encoding, missing/zero/ambiguous content length, trailing bytes,
 non-JSON media type, cross-site or missing Fetch Metadata, Origin drift,
-missing/duplicate cookies, or missing/mismatched double-submit CSRF all fail
+missing/duplicate session-secret headers, or missing/invalid independent session proof all fail
 closed. Owner, operator, and auditor sessions may rotate only their
 authenticated identity's latest credential. No request field or path value can
 select another identity.
@@ -48,8 +48,7 @@ HTTP `200` returns:
   `scope: "authenticated_identity"`;
 - authenticated identity reference, new credential version, server-owned
   rotation time, and newly revoked family-session count;
-- fixed loopback, same-origin, CSRF-verified, no-CORS, and cleared-cookie
-  posture evidence;
+- fixed loopback, same-origin, CSRF-verified, no-CORS, and discard-required session-header posture evidence;
 - `replay_semantics: "one_time_active_session_family"`;
 - exact success side effects:
   - `authentication_limiter_advanced`;
@@ -58,7 +57,7 @@ HTTP `200` returns:
   - `identity_security_event_appended`;
   - `session_family_revocations_appended`;
   - `session_security_events_appended`;
-  - `session_cookies_cleared`;
+  - `session_secret_headers_invalidated`;
 - `credential_state_changed: true`, `session_state_changed: true`, and
   `reauthentication_required: true`;
 - `execution_authority: false` and `mutation_authority: false`.
@@ -72,15 +71,15 @@ identity with reason `credential_revoke`, and appends exact identity and
 session security events. Other identities and their sessions remain
 untouched.
 
-The response expires both host-only, `SameSite=Strict` session and CSRF
-cookies. No replacement session is issued. Raw old/new passwords, PHC verifier,
+The response returns no session-secret headers, and the client must discard both
+volatile values. No replacement session is issued. Raw old/new passwords, PHC verifier,
 bearer, and CSRF secrets never appear in the JSON body or public durable
 evidence. Reauthentication with the new password is required after success.
 
 ## Replay and Failure
 
 The active session family is consumed exactly once. Repeating the request with
-revoked family cookies, using an expired/idle session, exhausting the limiter,
+a revoked family header pair, using an expired/idle session, exhausting the limiter,
 or any schema, password, CSRF, clock, evidence, or persistence failure returns
 the same HTTP `403` contract:
 
@@ -112,7 +111,7 @@ the same HTTP `403` contract:
 The possible limiter side effect is explicit because a sufficiently valid
 request consumes bounded process-local limiter state before body schema,
 credential, and durable-state checks finish. The response does not reveal
-whether limiter state advanced. It clears no cookies and reveals no identity,
+whether limiter state advanced. It returns no session-secret headers and reveals no identity,
 credential, session, password, expiry, CSRF, evidence, or internal failure
 reason.
 

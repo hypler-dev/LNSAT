@@ -14,8 +14,8 @@ Origin: http://<exact-bound-loopback>
 Sec-Fetch-Site: same-origin
 Content-Type: application/json
 Content-Length: <exact body length>
-Cookie: lnsat_session_v1=<bearer>; lnsat_csrf_v1=<csrf>
-X-LNSAT-CSRF: <same csrf>
+X-LNSAT-Local-Session-Token: <bearer>
+X-LNSAT-Local-Session-Proof: <independent proof>
 
 {
   "identity_ref": "identity:human:<opaque>",
@@ -47,7 +47,7 @@ bytes, and no NUL.
 
 Transfer encoding, missing/zero/ambiguous content length, trailing bytes,
 non-JSON media type, cross-site or missing Fetch Metadata, Origin drift,
-missing/duplicate cookies, or missing/mismatched double-submit CSRF fail
+missing/duplicate session-secret headers, or missing/invalid independent session proof fail
 closed. Only an active local owner session with `manage_identities` permission
 may create an identity. Operator and auditor sessions receive the same denial
 as invalid input or unknown identity state.
@@ -83,7 +83,7 @@ one `identity_created` security event. That event binds the exact owner actor
 session, credential source digest, and server-owned time.
 
 Raw password, PHC verifier, bearer, and CSRF secrets never appear in the JSON
-body or public durable evidence. Success sets no cookies and does not change
+body or public durable evidence. Success returns no session-secret headers and does not change
 the owner session family.
 
 ## Replay and Failure

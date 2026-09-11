@@ -10,6 +10,8 @@ The authenticated current-session read surface is:
 ```text
 GET|HEAD /v1/session
 LNSAT-Contract-Version: lnsat.contracts.v1_0
+X-LNSAT-Local-Session-Token: <bearer>
+X-LNSAT-Local-Session-Proof: <independent proof>
 ```
 
 Its response contract is `lnsat.gateway.session_read.v1_0`. The route inherits
@@ -17,11 +19,12 @@ the API-wide exact-version gate after loopback peer and numeric bound-Host
 validation and before authentication or SQLite access. Every routed response
 repeats the accepted `LNSAT-Contract-Version`.
 
-The caller must present an active host-only local session cookie from a
-same-origin browser context. Read-only requests do not require an anti-CSRF
-header. Owner, operator, and auditor sessions may read only their own current
-public session evidence. No route parameter or request field can select another
-identity or session.
+The caller must present an active non-ambient
+`X-LNSAT-Local-Session-Token` bearer and independent
+`X-LNSAT-Local-Session-Proof` value from the exact same-origin browser context.
+Both headers are required on reads and mutations. Owner, operator, and auditor
+sessions may read only their own current public session evidence. No route
+parameter or request field can select another identity or session.
 
 ## Success
 
@@ -67,7 +70,7 @@ or otherwise unusable sessions all return the same HTTP `403` contract:
 }
 ```
 
-The failure is one public-safe oracle. It never reflects cookies, anti-CSRF
+The failure is one public-safe oracle. It never reflects session-secret headers, session-proof
 values, rejected input, identity existence, session state, or internal reason.
 A denied `HEAD` is bodyless with the same representation length as the denial
 body.

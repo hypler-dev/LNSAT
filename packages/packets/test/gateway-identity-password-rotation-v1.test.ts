@@ -18,7 +18,7 @@ describe("@lnsat/packets Gateway identity password-rotation v1 contract", () => 
       path: "/v1/identity/password",
       method: "PATCH",
       authentication:
-        "active local browser session plus double-submit CSRF and latest password",
+        "active local browser session token and independent proof headers and latest password",
       scope: "authenticated_identity",
       roles: ["owner", "operator", "auditor"],
       request_fields: ["current_password", "new_password"],
@@ -37,7 +37,7 @@ describe("@lnsat/packets Gateway identity password-rotation v1 contract", () => 
         "identity_security_event_appended",
         "session_family_revocations_appended",
         "session_security_events_appended",
-        "session_cookies_cleared",
+        "session_secret_headers_invalidated",
       ],
       failure_side_effects: ["authentication_limiter_may_advance"],
       execution_authority: false,
@@ -106,6 +106,10 @@ describe("@lnsat/packets Gateway identity password-rotation v1 contract", () => 
     expect(responseSchema).toHaveProperty(
       "$defs.success.properties.replay_semantics.const",
       "one_time_active_session_family",
+    );
+    expect(responseSchema).toHaveProperty(
+      "$defs.transport.properties.session_secret_headers.const",
+      "discard_required",
     );
     expect(responseSchema).toHaveProperty(
       "$defs.failure.properties.side_effects.prefixItems.0.const",

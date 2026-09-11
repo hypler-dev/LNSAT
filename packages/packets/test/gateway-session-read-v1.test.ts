@@ -17,7 +17,7 @@ describe("@lnsat/packets Gateway session-read v1 contract", () => {
       contract_version: "lnsat.contracts.v1_0",
       path: "/v1/session",
       methods: ["GET", "HEAD"],
-      authentication: "active local browser session",
+      authentication: "active local browser session header pair",
       scope: "current_session_only",
       roles: ["owner", "operator", "auditor"],
       failure_oracle: "one generic denial",
@@ -61,6 +61,10 @@ describe("@lnsat/packets Gateway session-read v1 contract", () => {
     expect(schema).toHaveProperty("$defs.success.additionalProperties", false);
     expect(schema).toHaveProperty("$defs.failure.additionalProperties", false);
     expect(schema).toHaveProperty("$defs.session.additionalProperties", false);
+    expect(schema).toHaveProperty(
+      "$defs.transport.properties.session_secret_headers.const",
+      "required",
+    );
     expect(schema).toHaveProperty(
       "$defs.success.properties.side_effects.prefixItems.0.const",
       "session_activity_evidence_may_append",

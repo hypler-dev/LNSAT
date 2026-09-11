@@ -16,7 +16,8 @@ export const GATEWAY_SESSION_ISSUE_EVIDENCE_SIDE_EFFECT_V1 =
   "session_evidence_appended";
 export const GATEWAY_SESSION_ISSUE_EVENT_SIDE_EFFECT_V1 =
   "session_security_event_appended";
-export const GATEWAY_SESSION_ISSUE_COOKIE_SIDE_EFFECT_V1 = "session_cookies_set";
+export const GATEWAY_SESSION_ISSUE_SECRET_HEADER_SIDE_EFFECT_V1 =
+  "session_secret_headers_returned";
 export const GATEWAY_SESSION_ISSUE_FAILURE_SIDE_EFFECT_V1 =
   "authentication_limiter_may_advance";
 
@@ -44,7 +45,7 @@ export const gatewaySessionIssueV1Contract = {
     GATEWAY_SESSION_ISSUE_LIMITER_SIDE_EFFECT_V1,
     GATEWAY_SESSION_ISSUE_EVIDENCE_SIDE_EFFECT_V1,
     GATEWAY_SESSION_ISSUE_EVENT_SIDE_EFFECT_V1,
-    GATEWAY_SESSION_ISSUE_COOKIE_SIDE_EFFECT_V1,
+    GATEWAY_SESSION_ISSUE_SECRET_HEADER_SIDE_EFFECT_V1,
   ],
   failure_side_effects: [GATEWAY_SESSION_ISSUE_FAILURE_SIDE_EFFECT_V1],
   execution_authority: false,
@@ -67,15 +68,14 @@ export type GatewaySessionIssueSuccessV1 = {
     bind_scope: "loopback";
     same_origin_required: true;
     cors_enabled: false;
-    session_cookie: "host_only_http_only_samesite_strict";
-    csrf_cookie: "host_only_samesite_strict";
+    session_secret_headers: "returned_once_then_required";
   };
   replay_semantics: "fresh_session_per_success";
   side_effects: [
     typeof GATEWAY_SESSION_ISSUE_LIMITER_SIDE_EFFECT_V1,
     typeof GATEWAY_SESSION_ISSUE_EVIDENCE_SIDE_EFFECT_V1,
     typeof GATEWAY_SESSION_ISSUE_EVENT_SIDE_EFFECT_V1,
-    typeof GATEWAY_SESSION_ISSUE_COOKIE_SIDE_EFFECT_V1,
+    typeof GATEWAY_SESSION_ISSUE_SECRET_HEADER_SIDE_EFFECT_V1,
   ];
   session_state_changed: true;
   execution_authority: false;

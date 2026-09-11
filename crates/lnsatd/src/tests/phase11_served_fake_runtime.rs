@@ -471,6 +471,7 @@ impl ServedFakeRuntimeFixture {
                 daemon.address,
                 &format!("/v1/operations/{}", self.operation_id),
                 &self.requester_cookie,
+                &self.requester_csrf,
             )
             .as_bytes(),
         )
@@ -788,19 +789,20 @@ fn mutation_request(
     body: &str,
 ) -> String {
     format!(
-        "POST {path} HTTP/1.1\r\nHost: {address}\r\n{version_name}: {version}\r\nOrigin: http://{address}\r\nSec-Fetch-Site: same-origin\r\nContent-Type: application/json\r\nContent-Length: {content_length}\r\nCookie: {cookie}\r\n{csrf_name}: {csrf}\r\nConnection: close\r\n\r\n{body}",
+        "POST {path} HTTP/1.1\r\nHost: {address}\r\n{version_name}: {version}\r\nOrigin: http://{address}\r\nSec-Fetch-Site: same-origin\r\nContent-Type: application/json\r\nContent-Length: {content_length}\r\n{token_name}: {cookie}\r\n{csrf_name}: {csrf}\r\nConnection: close\r\n\r\n{body}",
         version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
         version = CONTRACT_VERSION_V1_0,
         content_length = body.len(),
-        csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+        token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+        csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
     )
 }
 
-fn read_request(address: SocketAddr, path: &str, cookie: &str) -> String {
+fn read_request(address: SocketAddr, path: &str, cookie: &str, proof: &str) -> String {
     let version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1;
     let version = CONTRACT_VERSION_V1_0;
     format!(
-        "GET {path} HTTP/1.1\r\nHost: {address}\r\n{version_name}: {version}\r\nSec-Fetch-Site: same-origin\r\nCookie: {cookie}\r\nConnection: close\r\n\r\n"
+        "GET {path} HTTP/1.1\r\nHost: {address}\r\n{version_name}: {version}\r\nSec-Fetch-Site: same-origin\r\n{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {cookie}\r\n{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {proof}\r\nConnection: close\r\n\r\n",
     )
 }
 
@@ -828,13 +830,7 @@ fn response_json(response: &str, expected_status: &str) -> serde_json::Value {
 }
 
 fn cookie(session: &lnsat_store::LocalSessionIssueResultV1) -> String {
-    format!(
-        "{}={}; {}={}",
-        lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
-        session.raw_session_token,
-        lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
-        session.raw_csrf_token,
-    )
+    session.raw_session_token.clone()
 }
 
 fn timestamp(offset_seconds: i64) -> String {

@@ -14,7 +14,7 @@ export const gatewaySessionReadV1Contract = {
   contract_version: "lnsat.contracts.v1_0",
   path: "/v1/session",
   methods: ["GET", "HEAD"],
-  authentication: "active local browser session",
+  authentication: "active local browser session header pair",
   scope: "current_session_only",
   roles: ["owner", "operator", "auditor"],
   failure_oracle: "one generic denial",
@@ -47,6 +47,7 @@ export type GatewaySessionReadSuccessV1 = {
     bind_scope: "loopback";
     same_origin_required: true;
     cors_enabled: false;
+    session_secret_headers: "required";
   };
   side_effects: [typeof GATEWAY_SESSION_ACTIVITY_SIDE_EFFECT_V1];
   mutation_authority: false;

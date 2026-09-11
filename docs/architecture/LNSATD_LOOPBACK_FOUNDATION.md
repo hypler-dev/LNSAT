@@ -113,8 +113,8 @@ The served route reuses the same parser and SQLite verification boundary:
   `X-LNSAT-Session-Intent: lnsat.session.issue.v1`; because it is a non-simple
   request header, a cross-origin browser must preflight, while this server
   denies `OPTIONS` and emits no CORS permission;
-- one host-only bearer cookie plus independent anti-CSRF cookie/header
-  double-submit are parsed without logging or returning secrets;
+- one non-ambient bearer-token header plus an independent session-proof header
+  are parsed without logging or returning secrets;
 - raw evidence is verified against active SQLite session, revocation, and
   bounded append-only activity state;
 - successful composition returns only target, read/mutation class, and
@@ -132,37 +132,37 @@ revoked, or drifted authentication collapses to the same `403` body without a
 `WWW-Authenticate` oracle.
 
 Successful `POST` returns `201`, stable secret-free session evidence, declared
-limiter/session/event/cookie side effects, fresh-session replay semantics, and
-exactly two new host-only `Set-Cookie` fields. Body schema is closed to
+limiter/session/event/session-secret-header side effects, fresh-session replay semantics, and
+exactly one value for each browser secret header. Body schema is closed to
 `identity_ref`, `password`, and `lifetime_seconds`; 60 through 3,600 seconds are
 accepted. Wrong, missing, disabled, rate-limited, malformed, drifted, or failed
 credential paths all return `gateway.session_issue.denied` without identity or
-limiter detail and without cookies; the body discloses only that process-local
+limiter detail and without session-secret headers; the body discloses only that process-local
 limiter state may advance. Transient request, password, and composed
-cookie buffers plus raw issue/rotation tokens are zeroized after use.
+session-secret header buffers plus raw issue/rotation tokens are zeroized after use.
 
 Authenticated `PATCH` requires exact `Content-Length: 0`, JSON media type,
-Origin, same-origin Fetch Metadata, active bearer proof, and matching CSRF
-cookie/header. It atomically revokes the prior bearer/CSRF pair, preserves the
+Origin, same-origin Fetch Metadata, an active bearer token, and the matching
+independent session proof. It atomically revokes the prior token/proof pair, preserves the
 original absolute expiry, appends immutable replacement linkage and security
 events, and returns the stable `lnsat.gateway.session_rotation.v1_0` contract
-with fresh cookies exactly once. Failure returns one zero-side-effect
+with fresh browser secret headers exactly once. Failure returns one zero-side-effect
 `gateway.session_rotation.denied` oracle.
 `200` with secret-free old/new session identity evidence plus exactly two fresh
-host-only cookies. Prior-token use, replay, evidence drift, clock failure, and
-persistence failure collapse to generic denial without cookies. A response
+client-held session-secret headers. Prior-token use, replay, evidence drift, clock failure, and
+persistence failure collapse to generic denial without session-secret headers. A response
 write failure after durable rotation remains fail-closed and may require a new
 login; it never restores the prior secrets.
 
 Authenticated `DELETE` requires exact `Content-Length: 0`, JSON media type,
-Origin, same-origin Fetch Metadata, active bearer proof, and matching CSRF
-cookie/header. It atomically revokes every active session for the authenticated
-identity, returns secret-free family counts and trusted time, and clears both
-host-only cookies with `Max-Age=0` under stable
+Origin, same-origin Fetch Metadata, an active bearer token, and the matching
+independent session proof. It atomically revokes every active session for the authenticated
+identity, returns secret-free family counts and trusted time, and requires the
+browser to discard both client-held secrets under stable
 `lnsat.gateway.session_family_sign_out.v1_0`. Replay and every in-contract
 transport, authentication, CSRF, clock, evidence, or persistence failure
 returns one zero-side-effect `gateway.session_family_sign_out.denied` oracle
-without clearing cookies or revealing identity/session detail. Malformed
+without returning session-secret headers or revealing identity/session detail. Malformed
 pre-route framing remains a public-safe request error. This self-revocation
 grants no packet, action, approval, adapter, or execution authority.
 
@@ -172,14 +172,14 @@ only `current_password` and `new_password`. A monotonic limiter permits at most
 five attempts per session and 30 authentication attempts process-wide per
 minute. Success reverifies the latest Argon2id credential inside the immediate
 transaction, appends one immutable generation, atomically revokes every active
-same-identity session with `credential_revoke`, clears both cookies, and returns
+same-identity session with `credential_revoke`, invalidates both session-secret headers, and returns
 only identity, credential version, trusted time, revoked count, and
 `reauthentication_required: true` under stable
 `lnsat.gateway.identity_password_rotation.v1_0`. Success declares exact
-limiter/activity/credential/identity-event/revocation/session-event/cookie
+limiter/activity/credential/identity-event/revocation/session-event/session-secret-header
 effects. Wrong/current-equal/invalid credentials, malformed schema, exhausted
 limits, clock failure, drift, and persistence failure share one
-`gateway.identity_password_rotation.denied` oracle without cookies or identity
+`gateway.identity_password_rotation.denied` oracle without session-secret headers or identity
 detail. The denial discloses only that process-local limiter state may advance;
 atomic rollback preserves durable credential/session state. Raw
 request/password buffers are zeroized after response classification. No
@@ -199,7 +199,7 @@ create-once; duplicate, non-owner, role, schema, credential, clock, drift, and
 persistence failures share one `gateway.identity_creation.denied` oracle. The
 denial discloses only possible process-local limiter advancement; atomic
 rollback preserves durable session, identity, credential, and event state.
-Success sets no cookies and grants no packet, action, adapter, or execution
+Success returns no session-secret headers and grants no packet, action, adapter, or execution
 authority.
 
 Authenticated `GET|HEAD /v1/identities/{identity_ref}/events` requires an
@@ -257,11 +257,11 @@ Bounded workers share one verified SQLite connection through a fail-closed
 mutex. Lock failure rejects authentication; it never bypasses verification or
 widens routes.
 
-Cookie response values use no `Domain`, exact `Path=/`, `SameSite=Strict`,
-bounded `Max-Age`, and `HttpOnly` for bearer material. `Secure` is intentionally
-absent because v1 binds plain HTTP to numeric loopback; adding it would make
-this source contract unusable on that listener. Remote/TLS design remains
-closed.
+Session issue and rotation return the bearer token and independent proof in
+exactly one named response header each. The browser client must hold both only
+in volatile exact-origin memory, resend both as named request headers, and
+discard both after sign-out or credential rotation. Browser cookies and web
+storage are outside this source contract. Remote/TLS design remains closed.
 
 Session issue and verification use server-owned canonical UTC rather than
 caller-supplied request time. A process-local monotonic fixed-window limiter
@@ -277,8 +277,8 @@ seconds. Exact idle-boundary checks reject. An authenticated mutation
 composition can atomically replace both browser secrets while preserving the
 original absolute expiry, revoking the prior session with reason `rotation`,
 and persisting immutable linkage evidence. It requires at least 60 seconds of
-remaining lifetime and returns replacement material only as new host-only
-cookie fields through authenticated `PATCH /v1/session`.
+remaining lifetime and returns replacement material only in the two named
+session-secret response headers through authenticated `PATCH /v1/session`.
 
 One authenticated mutation may atomically revoke every active session for its
 own identity. Composition requires exact Origin/JSON/CSRF preflight, supplies
@@ -327,24 +327,24 @@ Rust tests prove:
 - subprocess SIGINT, SIGTERM, and SIGHUP shutdown with clean exit and restart;
 - bounded public-safe responses without request or path reflection.
 - route-neutral strict browser head parsing and generic denial mapping;
-- host-only cookie attributes, duplicate auth-cookie rejection, and
-  constant-time anti-CSRF double-submit;
+- exact browser secret-header issuance, duplicate auth-header rejection, and
+  independent session-proof verification;
 - active/expired SQLite session composition without exposing raw secrets.
 - served same-origin `GET|HEAD /v1/session` response composition with active
   SQLite authentication and secret-free output;
 - served same-origin `POST /v1/session` with exact custom intent, closed bounded
-  JSON, process-wide limiting, generic credential denial, host-only cookie
-  issue, secret zeroization, and immediate authenticated readback;
+  JSON, process-wide limiting, generic credential denial, non-ambient
+  secret-header issue, secret zeroization, and immediate authenticated readback;
 - served same-origin `DELETE /v1/session` with exact zero-length JSON framing,
-  CSRF proof, atomic session-family revocation, cookie clearing, and generic
+  CSRF proof, atomic session-family revocation, session-secret-header invalidation, and generic
   replay/auth denial plus malformed-framing negatives;
 - served same-origin `PATCH /v1/session` with exact zero-length JSON framing,
-  CSRF proof, fresh host-only cookies, unchanged absolute expiry, immediate
+  CSRF proof, fresh non-ambient session-secret headers, unchanged absolute expiry, immediate
   prior-session rejection, replacement readback, generic replay/auth denial,
   and malformed-framing negatives;
 - served same-origin `PATCH /v1/identity/password` with closed schema,
   latest-password reverification, per-session/process limiting, append-only
-  credential generation, atomic family revocation, cookie clearing, forced
+  credential generation, atomic family revocation, session-secret-header invalidation, forced
   reauthentication, old/new credential proof, and generic transport/schema/
   credential/replay denial;
 - served owner-only `POST /v1/identities` with a closed operator/auditor
@@ -373,7 +373,7 @@ Rust tests prove:
   readback, and zero execution authority;
 - `OPTIONS`, cross-site, missing-auth, unknown-route, and no-CORS-header
   negatives plus exact bodyless `HEAD` behavior;
-- bounded activity touch, exact idle rejection, and atomic replacement-cookie
+- bounded activity touch, exact idle rejection, and atomic replacement-secret-header
   rotation with prior-session replay rejection;
 - server-owned epoch/leap-day UTC conversion and session-window derivation;
 - bounded monotonic authentication attempts plus unknown-identity Argon2id

@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { OperationReadbackClient } from "./operation-readback-client.js";
 import {
   applyControlCenterLiveLoadResultV1,
+  discardControlCenterLocalSessionRefsV1,
+  issueControlCenterLocalSessionV1,
   isCurrentControlCenterLiveLoadV1,
   loadControlCenterLiveOperationV1,
   operationIdForExplicitLoadV1,
@@ -16,6 +18,10 @@ const operationId = `opn_${"a".repeat(64)}`;
 const authorizationId = `xau_${"b".repeat(64)}`;
 const attemptId = `opa_${"c".repeat(64)}`;
 const now = () => new Date("2026-08-14T12:00:02.000Z");
+const session = {
+  token: `ses_${"d".repeat(32)}.${"e".repeat(64)}`,
+  proof: "f".repeat(64),
+} as const;
 
 describe("Phase 9 operation readback client", () => {
   it("accepts only exact client-side operation fragments", () => {
@@ -38,12 +44,98 @@ describe("Phase 9 operation readback client", () => {
     }
   });
 
+  it("issues one volatile header-pair session without ambient credentials", async () => {
+    const fetch = responseSequence([
+      okJson(
+        sessionIssueEnvelope("identity:human:owner"),
+        {
+          "X-LNSAT-Local-Session-Token": session.token,
+          "X-LNSAT-Local-Session-Proof": session.proof,
+        },
+        201,
+      ),
+    ]);
+    const result = await issueControlCenterLocalSessionV1(
+      "identity:human:owner",
+      "correct horse battery staple",
+      { fetch },
+    );
+
+    expect(result).toEqual({ ok: true, session });
+    expect(fetch).toHaveBeenCalledOnce();
+    const [path, init] = fetch.mock.calls[0] ?? [];
+    expect(path).toBe("/v1/session");
+    expect(init).toMatchObject({
+      method: "POST",
+      credentials: "omit",
+      cache: "no-store",
+      redirect: "error",
+      referrerPolicy: "no-referrer",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "LNSAT-Contract-Version": "lnsat.contracts.v1_0",
+        "X-LNSAT-Session-Intent": "lnsat.session.issue.v1",
+      },
+    });
+    expect(JSON.parse(String(init?.body))).toEqual({
+      identity_ref: "identity:human:owner",
+      password: "correct horse battery staple",
+      lifetime_seconds: 300,
+    });
+  });
+
+  it("rejects absent, malformed, duplicate-shaped, or body-reflected session secrets", async () => {
+    const cases: Array<{ headers: Record<string, string>; reflected?: boolean }> = [
+      { headers: {} },
+      {
+        headers: {
+          "X-LNSAT-Local-Session-Token": "bad-token",
+          "X-LNSAT-Local-Session-Proof": session.proof,
+        },
+      },
+      {
+        headers: {
+          "X-LNSAT-Local-Session-Token": `${session.token}, ${session.token}`,
+          "X-LNSAT-Local-Session-Proof": session.proof,
+        },
+      },
+      {
+        headers: {
+          "X-LNSAT-Local-Session-Token": session.token,
+          "X-LNSAT-Local-Session-Proof": session.proof,
+        },
+        reflected: true,
+      },
+    ];
+    for (const { headers, reflected = false } of cases) {
+      const body = sessionIssueEnvelope("identity:human:owner") as Record<
+        string,
+        unknown
+      >;
+      if (reflected) body.raw_secret = session.token;
+      const result = await issueControlCenterLocalSessionV1(
+        "identity:human:owner",
+        "correct horse battery staple",
+        { fetch: responseSequence([okJson(body, headers, 201)]) },
+      );
+      expect(result).toEqual({
+        ok: false,
+        code: "control_center.session_issue.denied",
+      });
+    }
+  });
+
   it("loads exact operation then authorization using relative same-origin GETs", async () => {
     const fetch = responseSequence([
       okJson(operationEnvelope("prepared", null, null)),
       okJson(authorizationEnvelope("active", true)),
     ]);
-    const result = await loadControlCenterLiveOperationV1(operationId, { fetch, now });
+    const result = await loadControlCenterLiveOperationV1(operationId, {
+      fetch,
+      now,
+      session,
+    });
     expect(result).toMatchObject({
       ok: true,
       snapshot: {
@@ -65,13 +157,15 @@ describe("Phase 9 operation readback client", () => {
       expect(path).not.toContain("://");
       expect(init).toMatchObject({
         method: "GET",
-        credentials: "same-origin",
+        credentials: "omit",
         cache: "no-store",
         redirect: "error",
         referrerPolicy: "no-referrer",
         headers: {
           Accept: "application/json",
           "LNSAT-Contract-Version": "lnsat.contracts.v1_0",
+          "X-LNSAT-Local-Session-Token": session.token,
+          "X-LNSAT-Local-Session-Proof": session.proof,
         },
       });
     }
@@ -88,7 +182,11 @@ describe("Phase 9 operation readback client", () => {
         attempt,
       }),
     ]);
-    const result = await loadControlCenterLiveOperationV1(operationId, { fetch, now });
+    const result = await loadControlCenterLiveOperationV1(operationId, {
+      fetch,
+      now,
+      session,
+    });
     expect(result).toMatchObject({
       ok: true,
       snapshot: {
@@ -122,7 +220,11 @@ describe("Phase 9 operation readback client", () => {
       }),
     ]);
 
-    const result = await loadControlCenterLiveOperationV1(operationId, { fetch, now });
+    const result = await loadControlCenterLiveOperationV1(operationId, {
+      fetch,
+      now,
+      session,
+    });
 
     expect(result).toMatchObject({
       ok: true,
@@ -144,6 +246,7 @@ describe("Phase 9 operation readback client", () => {
       const result = await loadControlCenterLiveOperationV1(operationId, {
         fetch: responseSequence([okJson(value)]),
         now,
+        session,
       });
       expect(result).toMatchObject({ ok: false, failure: { kind: "degraded" } });
     }
@@ -156,11 +259,30 @@ describe("Phase 9 operation readback client", () => {
         okJson(wrongScope),
       ]),
       now,
+      session,
     });
     expect(scopeResult).toMatchObject({
       ok: false,
       failure: { kind: "degraded", code: "control_center.live.scope_mismatch" },
     });
+
+    const attempt = attemptValue("dispatching");
+    const wrongAdapter = authorizationEnvelope("consumed", false);
+    wrongAdapter.authorization.adapter_ref = "adapter:local:wrong";
+    const adapterFetch = responseSequence([
+      okJson(operationEnvelope("dispatching", attempt, null)),
+      okJson(wrongAdapter),
+    ]);
+    const adapterResult = await loadControlCenterLiveOperationV1(operationId, {
+      fetch: adapterFetch,
+      now,
+      session,
+    });
+    expect(adapterResult).toMatchObject({
+      ok: false,
+      failure: { kind: "degraded", code: "control_center.live.scope_mismatch" },
+    });
+    expect(adapterFetch).toHaveBeenCalledTimes(2);
   });
 
   it("keeps timeout, abort, missing response, invalid JSON, 403, and 503 non-successful", async () => {
@@ -186,11 +308,29 @@ describe("Phase 9 operation readback client", () => {
       const result = await loadControlCenterLiveOperationV1(operationId, {
         fetch,
         now,
+        session,
       });
       expect(result.ok).toBe(false);
       if (result.ok) throw new Error("failure fixture unexpectedly succeeded");
       expect(result.failure.kind).toMatch(/degraded|unavailable/);
     }
+  });
+
+  it("rejects malformed local session material before any evidence read", async () => {
+    const fetch = vi.fn<ControlCenterFetchV1>();
+    const result = await loadControlCenterLiveOperationV1(operationId, {
+      fetch,
+      now,
+      session: { token: "bad", proof: session.proof },
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      failure: {
+        kind: "unavailable",
+        code: "control_center.live.session_invalid",
+      },
+    });
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("retains a prior live snapshot as stale and never substitutes fixtures", async () => {
@@ -200,6 +340,7 @@ describe("Phase 9 operation readback client", () => {
         okJson(authorizationEnvelope("active", true)),
       ]),
       now,
+      session,
     });
     if (!loaded.ok) throw new Error("live fixture should load");
     const failed = {
@@ -256,6 +397,7 @@ describe("Phase 9 operation readback client", () => {
         okJson(authorizationEnvelope("active", true)),
       ]),
       now,
+      session,
     });
     if (!loaded.ok) throw new Error("live fixture should load");
     const previous = { snapshot: loaded.snapshot, last_failure: null };
@@ -272,9 +414,33 @@ describe("Phase 9 operation readback client", () => {
     expect(isCurrentControlCenterLiveLoadV1(operationId, otherOperationId)).toBe(false);
   });
 
+  it("discards session refs and active work for every wired session-loss path", () => {
+    const abort = vi.fn();
+    const sessionRef = { current: session as typeof session | null };
+    const epochRef = { current: 4 };
+    const requestRef = { current: { abort } as { abort(): void } | null };
+
+    discardControlCenterLocalSessionRefsV1(sessionRef, epochRef, requestRef);
+
+    expect(abort).toHaveBeenCalledOnce();
+    expect(sessionRef.current).toBeNull();
+    expect(requestRef.current).toBeNull();
+    expect(epochRef.current).toBe(5);
+
+    const source = OperationReadbackClient.toString();
+    expect(
+      source.match(/discardControlCenterLocalSessionRefsV1/g)?.length,
+    ).toBeGreaterThanOrEqual(3);
+    expect(source).toContain('addEventListener("pagehide"');
+    expect(source).toContain('failure.code === "control_center.live.http_403"');
+  });
+
   it("mounts idle without fetching or automatic refresh behavior", () => {
     const html = renderToStaticMarkup(React.createElement(OperationReadbackClient));
     expect(html).toContain("Live Gateway evidence");
+    expect(html).toContain("Start local session");
+    expect(html).toContain('type="password"');
+    expect(html).toContain('autoComplete="current-password"');
     expect(html).toContain("No live snapshot loaded");
     expect(html).toContain("Manual only");
 
@@ -282,11 +448,10 @@ describe("Phase 9 operation readback client", () => {
       .map((value) => value.toString())
       .join("\n");
     for (const forbidden of [
-      "useEffect(",
       "setInterval(",
       "setTimeout(",
-      "addEventListener(",
       "visibilitychange",
+      "beforeunload",
       "localStorage",
       "sessionStorage",
       "retryExact",
@@ -299,6 +464,7 @@ describe("Phase 9 operation readback client", () => {
     ]) {
       expect(source).not.toContain(forbidden);
     }
+    expect(source).toContain('addEventListener("pagehide"');
   });
 });
 
@@ -310,8 +476,56 @@ function responseSequence(values: Array<ReturnType<typeof okJson>>) {
   });
 }
 
-function okJson(value: unknown) {
-  return { ok: true, status: 200, json: async () => structuredClone(value) };
+function okJson(
+  value: unknown,
+  responseHeaders: Record<string, string> = {},
+  status = 200,
+) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get(name: string) {
+        const match = Object.entries(responseHeaders).find(
+          ([header]) => header.toLowerCase() === name.toLowerCase(),
+        );
+        return match?.[1] ?? null;
+      },
+    },
+    json: async () => structuredClone(value),
+  };
+}
+
+function sessionIssueEnvelope(identity_ref: string) {
+  return {
+    contract: "lnsat.gateway.session_issue.v1_0",
+    contract_version: "lnsat.contracts.v1_0",
+    ok: true,
+    status: "authenticated",
+    session: {
+      session_id: `ses_${"d".repeat(32)}`,
+      identity_ref,
+      role: "owner",
+      issued_at: "2026-08-14T12:00:00.000Z",
+      expires_at: "2026-08-14T12:05:00.000Z",
+    },
+    transport: {
+      bind_scope: "loopback",
+      same_origin_required: true,
+      cors_enabled: false,
+      session_secret_headers: "returned_once_then_required",
+    },
+    replay_semantics: "fresh_session_per_success",
+    side_effects: [
+      "authentication_limiter_advanced",
+      "session_evidence_appended",
+      "session_security_event_appended",
+      "session_secret_headers_returned",
+    ],
+    session_state_changed: true,
+    execution_authority: false,
+    mutation_authority: false,
+  };
 }
 
 function operationEnvelope(

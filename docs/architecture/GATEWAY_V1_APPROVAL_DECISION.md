@@ -14,8 +14,8 @@ Origin: http://<exact-bound-loopback>
 Sec-Fetch-Site: same-origin
 Content-Type: application/json
 Content-Length: <exact body length>
-Cookie: lnsat_session_v1=<bearer>; lnsat_csrf_v1=<csrf>
-X-LNSAT-CSRF: <same csrf>
+X-LNSAT-Local-Session-Token: <bearer>
+X-LNSAT-Local-Session-Proof: <independent proof>
 
 {
   "project_ref": "project:<opaque>",
@@ -60,8 +60,8 @@ idempotency key, execution authority, or mutation authority.
 
 Transfer encoding, missing/zero/ambiguous content length, trailing bytes,
 non-JSON media type, cross-site or missing Fetch Metadata, Origin drift,
-missing/duplicate cookies, invalid route id, or missing/mismatched
-double-submit CSRF fail closed. Unsupported methods retain `405` with
+missing/duplicate session-secret headers, invalid route id, or missing/mismatched
+independent session proof fail closed. Unsupported methods retain `405` with
 `Allow: POST`. No response emits CORS permission headers,
 `WWW-Authenticate`, or `Set-Cookie`.
 

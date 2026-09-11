@@ -36,7 +36,7 @@ describe("@lnsat/packets Gateway session-issue v1 contract", () => {
         "authentication_limiter_advanced",
         "session_evidence_appended",
         "session_security_event_appended",
-        "session_cookies_set",
+        "session_secret_headers_returned",
       ],
       failure_side_effects: ["authentication_limiter_may_advance"],
       execution_authority: false,
@@ -93,6 +93,10 @@ describe("@lnsat/packets Gateway session-issue v1 contract", () => {
     expect(responseSchema).toHaveProperty(
       "$defs.success.properties.replay_semantics.const",
       "fresh_session_per_success",
+    );
+    expect(responseSchema).toHaveProperty(
+      "$defs.transport.properties.session_secret_headers.const",
+      "returned_once_then_required",
     );
     expect(responseSchema).toHaveProperty(
       "$defs.failure.properties.side_effects.prefixItems.0.const",
