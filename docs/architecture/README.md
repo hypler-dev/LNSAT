@@ -92,6 +92,7 @@ publication order is controlled by [product build sequence](../PRODUCT_BUILD_SEQ
 - [Phase 9 API-backed Control Center](PHASE_9_API_BACKED_CONTROL_CENTER.md)
 - [Phase 10 product-surface contract spine](PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
 - [Phase 10 product-surface conformance freeze](PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md)
+- [Local authentication availability and UDS withdrawal](SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
 - [Phase 11 real disposable Docker proof readiness](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
 

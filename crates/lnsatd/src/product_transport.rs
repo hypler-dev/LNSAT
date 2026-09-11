@@ -1,20 +1,21 @@
-//! Explicit server-authenticated Unix-socket transport for P10-A3 reads.
+//! Withdrawn Unix-socket transport compatibility surface.
 
-use crate::GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1;
 use crate::product_output::{ProductOutputErrorV1, ProductSemanticResultV1};
-use crate::product_surface::{
-    DaemonHealthV1, DaemonStatusV1, DaemonStatusV2, PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1,
-    ProductExitCodeV1, is_supported_product_surface_contract_v1,
+use crate::product_surface::ProductExitCodeV1;
+#[cfg(test)]
+use crate::{
+    GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+    product_surface::{
+        DaemonHealthV1, DaemonStatusV1, DaemonStatusV2, PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1,
+    },
 };
-use lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1;
+#[cfg(test)]
 use lnsat_contracts::CONTRACT_VERSION_V1_0;
 use std::fmt;
-use std::io::{self, Read, Write};
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-use std::net::Shutdown;
+use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
-use zeroize::{Zeroize, Zeroizing};
+use std::time::Duration;
+use zeroize::Zeroizing;
 
 /// Maximum opaque session token bytes accepted from protected stdin.
 pub const MAX_SESSION_TOKEN_STDIN_BYTES_V1: usize = 512;
@@ -34,9 +35,6 @@ pub const PRODUCT_CONNECT_TIMEOUT_V1: Duration = Duration::from_secs(2);
 /// Absolute wall-clock deadline for the entire write and read phase after
 /// connection is established. Not a per-operation timeout.
 pub const PRODUCT_IO_TIMEOUT_V1: Duration = Duration::from_secs(2);
-
-/// Fixed socket polling interval used while enforcing the absolute I/O deadline.
-const PRODUCT_IO_POLL_TIMEOUT_V1: Duration = Duration::from_millis(50);
 
 /// Closed authenticated daemon read commands.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -67,35 +65,22 @@ impl ProductReadCommandV1 {
     }
 }
 
-/// Parsed exact macOS/Linux Unix-socket path.
+/// Legacy Unix-socket endpoint type retained for parse-compatible callers.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnixSocketEndpointV1 {
     path: PathBuf,
 }
 
 impl UnixSocketEndpointV1 {
-    /// Parses one explicit absolute, bounded, normalized UTF-8 socket path.
+    /// Rejects every Unix endpoint because live-daemon authentication is absent.
     ///
     /// # Errors
     ///
     /// Rejects relative, oversized, non-UTF-8, dot-component, or trailing
     /// separator paths before secret input or connection.
     pub fn parse(value: impl AsRef<Path>) -> Result<Self, ProductClientErrorV1> {
-        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-        {
-            let _ = value;
-            return Err(ProductClientErrorV1::PlatformUnsupported);
-        }
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        let path = value.as_ref();
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        if !crate::valid_control_socket_path_v1(path) {
-            return Err(ProductClientErrorV1::SocketPathInvalid);
-        }
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        Ok(Self {
-            path: path.to_path_buf(),
-        })
+        let _ = value;
+        Err(ProductClientErrorV1::UnixTransportWithdrawn)
     }
 
     /// Exact validated local socket path.
@@ -108,6 +93,8 @@ impl UnixSocketEndpointV1 {
 /// Stable public-safe client transport failures.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProductClientErrorV1 {
+    /// Authenticated Unix product reads are withdrawn pending mutual authentication.
+    UnixTransportWithdrawn,
     /// Explicit Unix-socket path was absent or outside exact syntax.
     SocketPathInvalid,
     /// Unix-socket CLI transport is closed on this target.
@@ -135,6 +122,7 @@ impl ProductClientErrorV1 {
     #[must_use]
     pub const fn code(self) -> &'static str {
         match self {
+            Self::UnixTransportWithdrawn => "lnsatctl.unix_transport.withdrawn",
             Self::SocketPathInvalid => "lnsatctl.socket.path_invalid",
             Self::PlatformUnsupported => "lnsatctl.socket.unsupported",
             Self::ServerIdentityRejected => "lnsatctl.server_identity.denied",
@@ -154,7 +142,8 @@ impl ProductClientErrorV1 {
     #[must_use]
     pub const fn exit_code(self) -> ProductExitCodeV1 {
         match self {
-            Self::SocketPathInvalid
+            Self::UnixTransportWithdrawn
+            | Self::SocketPathInvalid
             | Self::PlatformUnsupported
             | Self::SessionTokenInputInvalid => ProductExitCodeV1::UsageOrConfiguration,
             Self::ServerIdentityRejected | Self::Authentication => {
@@ -218,15 +207,11 @@ pub fn read_session_token_stdin_v1(
     Ok(Zeroizing::new(token))
 }
 
-/// Performs one bounded authenticated read after proving local server identity.
-///
-/// No environment, proxy, redirect, retry, discovery, DNS, TLS, or hostname
-/// behavior exists in this transport.
+/// Returns the stable withdrawal for the legacy authenticated Unix read.
 ///
 /// # Errors
 ///
-/// Maps transport, authentication, temporary, and incompatible-response
-/// failures to stable read-only exit families.
+/// Returns before inspecting the endpoint or session token.
 pub fn request_authenticated_product_read_v1(
     command: ProductReadCommandV1,
     endpoint: &UnixSocketEndpointV1,
@@ -240,191 +225,22 @@ pub fn request_authenticated_product_read_v1(
     )
 }
 
-/// Performs one bounded read with one explicit product-surface selector.
-///
-/// The legacy three-argument function remains exact-compatible and sends no
-/// selector. Callers requesting a selector must use this explicit function.
+/// Returns the stable withdrawal for the selector-aware legacy Unix read.
 ///
 /// # Errors
 ///
-/// Returns a stable local client error when input, socket identity, transport,
-/// response framing, authentication, or explicit contract echo is rejected.
+/// Returns before inspecting the endpoint, token, or selector.
 pub fn request_authenticated_product_read_with_product_surface_contract_v1(
     command: ProductReadCommandV1,
     endpoint: &UnixSocketEndpointV1,
     session_token: &str,
     product_surface_contract: Option<&str>,
 ) -> Result<ProductSemanticResultV1, ProductClientErrorV1> {
-    if !valid_session_token_transport_v1(session_token) {
-        return Err(ProductClientErrorV1::SessionTokenInputInvalid);
-    }
-    if product_surface_contract.is_some()
-        && (command != ProductReadCommandV1::Status
-            || !product_surface_contract.is_some_and(is_supported_product_surface_contract_v1))
-    {
-        return Err(ProductClientErrorV1::ProductSurfaceContractIncompatible);
-    }
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-    {
-        let _ = (command, endpoint, product_surface_contract);
-        return Err(ProductClientErrorV1::PlatformUnsupported);
-    }
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    let mut stream = crate::local_unix_socket::connect_secure_unix_socket_v1(
-        endpoint.path(),
-        PRODUCT_CONNECT_TIMEOUT_V1,
-    )
-    .map_err(map_local_socket_error_v1)?;
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    let io_deadline = Instant::now()
-        .checked_add(PRODUCT_IO_TIMEOUT_V1)
-        .ok_or(ProductClientErrorV1::TemporaryFailure)?;
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    stream
-        .set_write_timeout(Some(PRODUCT_IO_POLL_TIMEOUT_V1))
-        .and_then(|()| stream.set_read_timeout(Some(PRODUCT_IO_POLL_TIMEOUT_V1)))
-        .map_err(|error| map_io_error_v1(&error))?;
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    let product_surface_header = product_surface_contract.map_or_else(String::new, |value| {
-        format!("{PRODUCT_SURFACE_CONTRACT_HEADER_NAME_V1}: {value}\r\n")
-    });
-    let mut request = Zeroizing::new(format!(
-        concat!(
-            "GET {path} HTTP/1.1\r\n",
-            "Host: {host}\r\n",
-            "{version_name}: {version}\r\n",
-            "{product_surface_header}",
-            "Sec-Fetch-Site: same-origin\r\n",
-            "Cookie: {cookie_name}={session_token}\r\n",
-            "Connection: close\r\n\r\n"
-        ),
-        path = command.path(),
-        host = crate::local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1,
-        version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
-        version = CONTRACT_VERSION_V1_0,
-        product_surface_header = product_surface_header,
-        cookie_name = LOCAL_SESSION_COOKIE_NAME_V1,
-        session_token = session_token,
-    ));
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    let write_result = write_all_until_v1(&mut stream, request.as_bytes(), io_deadline);
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    request.zeroize();
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    write_result?;
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    stream
-        .shutdown(Shutdown::Write)
-        .map_err(|error| map_io_error_v1(&error))?;
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    let response_limit = MAX_PRODUCT_RESPONSE_HEAD_BYTES_V1
-        .checked_add(MAX_PRODUCT_RESPONSE_BODY_BYTES_V1)
-        .and_then(|value| value.checked_add(1))
-        .ok_or(ProductClientErrorV1::InternalFailure)?;
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    let mut response = Vec::with_capacity(4096);
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    let mut buf = [0u8; 8192];
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    loop {
-        if Instant::now() >= io_deadline {
-            return Err(ProductClientErrorV1::TemporaryFailure);
-        }
-        match stream.read(&mut buf) {
-            Ok(0) => break,
-            Ok(n) => {
-                response.extend_from_slice(&buf[..n]);
-                if response.len() >= response_limit {
-                    return Err(ProductClientErrorV1::IncompatibleResponse);
-                }
-            }
-            Err(ref error)
-                if matches!(
-                    error.kind(),
-                    io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
-                ) => {}
-            Err(e) => return Err(map_io_error_v1(&e)),
-        }
-    }
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    parse_product_response_v1(command, product_surface_contract, &response)
+    let _ = (command, endpoint, session_token, product_surface_contract);
+    Err(ProductClientErrorV1::UnixTransportWithdrawn)
 }
 
-fn valid_session_token_transport_v1(value: &str) -> bool {
-    !value.is_empty()
-        && value.len() <= MAX_SESSION_TOKEN_STDIN_BYTES_V1
-        && value.bytes().all(|byte| {
-            (b'!'..=b'~').contains(&byte) && !matches!(byte, b'"' | b',' | b';' | b'\\')
-        })
-}
-
-fn write_all_until_v1(
-    stream: &mut impl Write,
-    mut bytes: &[u8],
-    deadline: Instant,
-) -> Result<(), ProductClientErrorV1> {
-    while !bytes.is_empty() {
-        if Instant::now() >= deadline {
-            return Err(ProductClientErrorV1::TemporaryFailure);
-        }
-        match stream.write(bytes) {
-            Ok(0) => return Err(ProductClientErrorV1::Unavailable),
-            Ok(written) => bytes = &bytes[written..],
-            Err(ref error)
-                if matches!(
-                    error.kind(),
-                    io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
-                ) => {}
-            Err(error) => return Err(map_io_error_v1(&error)),
-        }
-    }
-    loop {
-        if Instant::now() >= deadline {
-            return Err(ProductClientErrorV1::TemporaryFailure);
-        }
-        match stream.flush() {
-            Ok(()) => return Ok(()),
-            Err(ref error)
-                if matches!(
-                    error.kind(),
-                    io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock
-                ) => {}
-            Err(error) => return Err(map_io_error_v1(&error)),
-        }
-    }
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn map_local_socket_error_v1(
-    error: crate::local_unix_socket::LocalUnixSocketErrorV1,
-) -> ProductClientErrorV1 {
-    match error {
-        crate::local_unix_socket::LocalUnixSocketErrorV1::PathInvalid => {
-            ProductClientErrorV1::SocketPathInvalid
-        }
-        crate::local_unix_socket::LocalUnixSocketErrorV1::Unavailable => {
-            ProductClientErrorV1::Unavailable
-        }
-        crate::local_unix_socket::LocalUnixSocketErrorV1::TemporaryFailure => {
-            ProductClientErrorV1::TemporaryFailure
-        }
-        crate::local_unix_socket::LocalUnixSocketErrorV1::IdentityRejected => {
-            ProductClientErrorV1::ServerIdentityRejected
-        }
-    }
-}
-
-fn map_io_error_v1(error: &io::Error) -> ProductClientErrorV1 {
-    match error.kind() {
-        io::ErrorKind::TimedOut | io::ErrorKind::WouldBlock => {
-            ProductClientErrorV1::TemporaryFailure
-        }
-        _ => ProductClientErrorV1::Unavailable,
-    }
-}
-
+#[cfg(test)]
 fn parse_product_response_v1(
     command: ProductReadCommandV1,
     product_surface_contract: Option<&str>,
@@ -524,6 +340,7 @@ fn parse_product_response_v1(
     }
 }
 
+#[cfg(test)]
 fn validate_product_surface_response_contract_v1(
     command: ProductReadCommandV1,
     requested: Option<&str>,
@@ -546,6 +363,7 @@ fn validate_product_surface_response_contract_v1(
     Ok(())
 }
 
+#[cfg(test)]
 const fn is_header_name_byte_v1(byte: u8) -> bool {
     byte.is_ascii_alphanumeric()
         || matches!(
@@ -554,6 +372,7 @@ const fn is_header_name_byte_v1(byte: u8) -> bool {
         )
 }
 
+#[cfg(test)]
 fn parse_content_length_v1(value: &str) -> Result<usize, ProductClientErrorV1> {
     if value.is_empty()
         || (value.len() > 1 && value.starts_with('0'))
@@ -566,6 +385,7 @@ fn parse_content_length_v1(value: &str) -> Result<usize, ProductClientErrorV1> {
         .map_err(|_| ProductClientErrorV1::IncompatibleResponse)
 }
 
+#[cfg(test)]
 fn parse_product_success_v1(
     command: ProductReadCommandV1,
     product_surface_contract: Option<&str>,
@@ -614,30 +434,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn socket_parser_accepts_only_exact_absolute_paths() {
-        assert_eq!(
-            UnixSocketEndpointV1::parse("/tmp/lnsat/control.sock")
-                .expect("absolute socket path must parse")
-                .path(),
-            Path::new("/tmp/lnsat/control.sock")
-        );
-        for invalid in [
-            "",
-            "relative/control.sock",
-            "/tmp/./control.sock",
-            "/tmp/../control.sock",
-            "/tmp/lnsat/",
-        ] {
+    fn unix_transport_is_withdrawn_before_endpoint_or_token_processing() {
+        for path in ["", "relative/control.sock", "/tmp/lnsat/control.sock"] {
             assert_eq!(
-                UnixSocketEndpointV1::parse(invalid),
-                Err(ProductClientErrorV1::SocketPathInvalid),
-                "unexpected accepted socket path: {invalid}"
+                UnixSocketEndpointV1::parse(path),
+                Err(ProductClientErrorV1::UnixTransportWithdrawn)
             );
         }
-        let oversized = format!("/{}", "x".repeat(crate::MAX_CONTROL_SOCKET_PATH_BYTES_V1));
         assert_eq!(
-            UnixSocketEndpointV1::parse(oversized),
-            Err(ProductClientErrorV1::SocketPathInvalid)
+            request_authenticated_product_read_v1(
+                ProductReadCommandV1::Health,
+                &UnixSocketEndpointV1 {
+                    path: PathBuf::from("/tmp/lnsat/control.sock"),
+                },
+                "\u{0}",
+            ),
+            Err(ProductClientErrorV1::UnixTransportWithdrawn)
         );
     }
 
@@ -685,9 +497,6 @@ mod tests {
             read_session_token_stdin_v1(&mut oversized.as_slice()),
             Err(ProductClientErrorV1::SessionTokenInputInvalid)
         );
-        for invalid in ["", "two words", "line\r\nbreak", "cookie;split", "quote\""] {
-            assert!(!valid_session_token_transport_v1(invalid));
-        }
     }
 
     #[test]
@@ -827,14 +636,6 @@ mod tests {
             Err(ProductClientErrorV1::IncompatibleResponse)
         );
 
-        assert_eq!(
-            map_io_error_v1(&io::Error::from(io::ErrorKind::TimedOut)),
-            ProductClientErrorV1::TemporaryFailure
-        );
-        assert_eq!(
-            map_io_error_v1(&io::Error::from(io::ErrorKind::ConnectionRefused)),
-            ProductClientErrorV1::Unavailable
-        );
         for error in [
             ProductClientErrorV1::Unavailable,
             ProductClientErrorV1::TemporaryFailure,

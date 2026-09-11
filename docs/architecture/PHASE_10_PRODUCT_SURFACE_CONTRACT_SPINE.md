@@ -1,12 +1,13 @@
 # Phase 10 Product-Surface Contract Spine
 
-- Status: experimental source implementation; Phase 10 source conformance complete
+- Status: security-corrected experimental source implementation; Phase 10 source
+  conformance complete
 - Gates: `P10_A1_PRODUCT_SURFACE_CONTRACT_SPINE`,
   `P10_A2_EXPLICIT_CONFIGURATION`, `P10_A3_STATUS_HEALTH_OUTPUT`,
   `P10_A4_RECOVERY_NON_ROOT_PARITY`, `P10_X1_PRODUCT_SURFACE_CONFORMANCE`
-- Runtime effect: explicit configuration loading, authenticated read-only local
-  health/status, operator configuration/recovery inspection, and explicit
-  offline local backup, inert restore, and owner-password recovery
+- Runtime effect: explicit configuration loading, withdrawn legacy Unix
+  health/status commands, operator configuration/recovery inspection, and
+  explicit offline local backup, inert restore, and owner-password recovery
 - Mutation effect: local backup or fresh inert restore file creation; offline
   owner credential/audit evidence append and all-owner-session revocation
 - Package, binary, service, or production support claim: none
@@ -28,15 +29,17 @@ Docker-local profile-file selection to this same pre-release contract while
 preserving every P10-A2 path, precedence, secret, and ambient-discovery rule.
 
 P10-A3 adds exact authenticated `GET|HEAD /v1/health` and
-`GET|HEAD /v1/status` routes while preserving unauthenticated `GET /healthz`
-bytes. Authenticated `lnsatctl` reads use one explicit owner-controlled Unix
-socket on macOS/Linux. Client proves private parent, socket type/mode/owner,
-stable device/inode identity, and peer effective UID before transmitting bearer
-material; daemon applies the equal-UID check to accepted clients. Numeric
-loopback HTTP remains the browser/API Gateway transport but is not a CLI bearer
-transport. One shared deterministic `text|json|jsonl|yaml` renderer covers
-`doctor`, config and recovery inspection, health, and status. JSON remains
-default; manifest remains canonical JSON only.
+`GET|HEAD /v1/status` browser/API Gateway routes while preserving
+unauthenticated `GET /healthz` bytes. The accepted
+[local authentication availability and UDS withdrawal](SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
+withdraws authenticated Unix `lnsatctl` reads before the first supported
+release: legacy `health` and `status` forms remain recognized only to return
+`lnsatctl.unix_transport.withdrawn` before protected stdin, Unix connection,
+or request bytes. Numeric-loopback HTTP remains the browser/API Gateway
+transport with its existing header-pair authentication. One shared
+deterministic `text|json|jsonl|yaml` renderer covers `doctor`, config and
+recovery inspection. JSON remains default; manifest remains canonical JSON
+only.
 
 P10-A4 adds three explicit non-root offline commands:
 `lnsatctl backup --database <path> --destination <fresh-path>`,
@@ -77,8 +80,8 @@ stdin, non-root refusal, no-clobber restore, and closed activation/served lanes.
 
 | Surface          | Implemented source                                                                                                                                                                                                                                   | Later separately owned work                                                                         |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `lnsatd`         | direct/config arguments, non-root macOS/Linux bind enforcement, loopback Gateway bind, optional authenticated Unix control socket, preserved `/healthz`, read-only `/v1/health` and `/v1/status`, public-safe errors, help/version/manifest          | selected user/system paths and target lifecycle proof in Phase 14                                   |
-| `lnsatctl`       | `doctor`, server-authenticated Unix-socket `health`/`status`, config/recovery inspection, offline backup, inert restore, offline owner recovery, text/JSON/JSONL/YAML, manifest, completion, man, help, version                                      | service/update/audit commands only after their owning authority gates                               |
+| `lnsatd`         | direct/config arguments, non-root macOS/Linux bind enforcement, loopback Gateway bind, preserved `/healthz`, read-only browser/API `/v1/health` and `/v1/status`, public-safe errors, help/version/manifest; non-null `control_socket_path` fails before bind | mutual daemon authentication design and Phase 14 lifecycle proof                                    |
+| `lnsatctl`       | `doctor`, config/recovery inspection, offline backup, inert restore, offline owner recovery, text/JSON/JSONL/YAML, manifest, completion, man, help, version; legacy Unix `health`/`status` withdrawal error                                            | mutual daemon authentication before any CLI health/status transport; service/update/audit commands  |
 | `lnsat`          | TypeScript dispatcher in `packages/cli/src/index.ts`; packet validate/hash/inspect plus manifest, completion, man, help, and version                                                                                                                 | later Gateway-client workflow groups only when owning phases open them                              |
 | command taxonomy | canonical implemented and reserved groups in Phase 10 manifest                                                                                                                                                                                       | each reserved command needs its owning phase, exact authority, and conformance before exposure      |
 | configuration    | bounded explicit UTF-8 JSON, recursive duplicate/unknown-key rejection, exact-byte digest, visible applied layers, no environment discovery; P11-D2 optionally validates one explicit Docker-local profile file and exposes redacted digest evidence | system/user path selection remains deliberately unimplemented                                       |
@@ -102,16 +105,15 @@ stdin, non-root refusal, no-clobber restore, and closed activation/served lanes.
   duplicate-key rejection, closed-schema parsing, explicit seam mapping, and
   exact-byte SHA-256 evidence.
 - `crates/lnsatd/src/product_surface.rs` owns Rust exit families, manifest,
-  doctor/config/recovery plus authenticated health/status projection, generated
+  doctor/config/recovery projection, withdrawn-command presentation, generated
   completion, and man source.
 - `crates/lnsatd/src/product_output.rs` owns closed deterministic output
   rendering.
-- `crates/lnsatd/src/local_unix_socket.rs` owns bounded connect, private
-  path/metadata identity, exact socket cleanup, and macOS/Linux peer-credential
-  checks through the pinned safe `nix` wrapper.
-- `crates/lnsatd/src/product_transport.rs` owns explicit socket-path parsing,
-  stdin-token intake, bounded HTTP framing, response validation, and read-only
-  exit mapping.
+- the legacy Unix listener and bearer-serving implementation is removed; any
+  future Unix transport requires a new accepted mutual-authentication design.
+- `crates/lnsatd/src/product_transport.rs` owns the fail-closed withdrawn Unix
+  transport result before socket parsing, stdin-token intake, connection, or
+  request framing.
 - `crates/lnsatd/src/product_recovery.rs` owns non-root checks, offline lease
   preflight, backup/restore orchestration, protected password input, and
   secret-free recovery result evidence.
@@ -146,18 +148,14 @@ applicable. Served consequential commands remain unavailable in this packet.
 ## Security Properties
 
 - `lnsat` and `lnsatctl` do not receive direct infrastructure authority.
-- Health/status require one explicit absolute Unix-socket path and an opaque
-  session token supplied only through stdin. No default socket, TCP bearer
-  transport, hostname, DNS, proxy environment, redirect, retry, discovery,
-  remote target, TLS, URL secret, file secret, or secret process argument exists.
-- Client validates parent mode `0700`, socket mode `0600`, owner effective UID,
-  non-symlink socket type, stable device/inode/owner/mode, and connected peer
-  effective UID before request construction or bearer transmission. Daemon
-  rejects unequal peer UID before request bytes are read.
-- Health/status use exact Unix-framing Host `lnsatd`, contract version,
-  same-origin fetch metadata, existing session cookie, active-session
-  verification, and `ReadEvidence`. GET and HEAD require equal auth; HEAD emits
-  no body.
+- No supported CLI health/status transport exists. Legacy command forms fail
+  with `lnsatctl.unix_transport.withdrawn` before protected stdin, Unix
+  connection, or request bytes. They never send a bearer or browser proof to a
+  Unix peer. A future Unix transport needs separately accepted mutual live-daemon
+  authentication; same-UID pathname, inode, or peer-UID evidence is insufficient.
+- Browser/API `GET|HEAD /v1/health` and `GET|HEAD /v1/status` retain their
+  existing exact-origin header-pair, active-session, and `ReadEvidence` checks.
+  GET and HEAD require equal auth; HEAD emits no body.
 - Owner, operator, and auditor may read. Missing, malformed, expired, revoked,
   unreadable, or unauthorized evidence maps to one generic denial. Only
   `session_activity_evidence_may_append` may change during authentication.
@@ -166,8 +164,8 @@ applicable. Served consequential commands remain unavailable in this packet.
 - Explicit configuration accepts no secret fields, reads no environment
   variables, and never reflects rejected paths or bytes.
 - Configuration may select only an absolute database path, numeric-loopback
-  listen address, optional absolute control-socket path, paired Phase 8
-  disposable Git root/executable, an exact existing console-root manifest
+  listen address, paired Phase 8 disposable Git root/executable, an exact
+  existing console-root manifest
   seam, and the P11-D2 optional absolute Docker-local profile path. Profile
   selection requires paired Phase 8 runtime paths and uses the complete P11-D1
   file/schema/isolation/digest boundary. Console filesystem identity checks
@@ -212,9 +210,10 @@ applicable. Served consequential commands remain unavailable in this packet.
   is invalid rather than precedence-dependent.
 - `lnsatctl` is new experimental source. Its contract may change before support,
   but exit families and machine schema now require explicit versioned changes.
-- Earlier experimental `--endpoint <numeric-loopback-http-url>` health/status
-  syntax is intentionally rejected before stdin or connect. Sending a bearer to
-  an unauthenticated loopback listener violated the socket-spoofing threat model.
+- Legacy health/status command forms, including the earlier experimental
+  `--endpoint <numeric-loopback-http-url>` syntax, are recognized only to fail
+  before protected stdin, Unix connection, or request bytes. Sending a bearer
+  to either unauthenticated loopback or a same-UID Unix listener is withdrawn.
 - Existing default JSON for doctor/config/recovery remains compatible. New
   backup, restore, and owner-recovery commands occupy previously invalid
   argument shapes and use the same versioned output envelope.
@@ -241,11 +240,10 @@ applicable. Served consequential commands remain unavailable in this packet.
   mixed-mode, secret-field, environment-discovery, and path-reflection negatives;
 - source-only/package-closed/service-closed hard-stop assertions;
 - `lnsatctl doctor` JSON and stable usage failures;
-- exact health/status GET/HEAD, all fixed local roles, generic auth denial,
-  preserved `/healthz`, secret-free fixtures, authenticated Unix client
-  transport, path/mode/owner/inode/peer negatives, old-TCP-syntax and
-  input-before-connect refusal, exact cleanup, response caps, and timeout/exit
-  mapping;
+- exact browser/API health/status GET/HEAD, all fixed local roles, generic auth
+  denial, preserved `/healthz`, secret-free fixtures, legacy CLI withdrawal
+  before stdin/connect/request bytes, non-null control-socket refusal before
+  bind, and stable withdrawal exit mapping;
 - exact text/JSON/JSONL/YAML golden bytes plus existing default JSON
   compatibility and formatted failures;
 - real read-only recovery inspection with raw-path non-reflection;

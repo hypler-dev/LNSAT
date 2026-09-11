@@ -38,10 +38,6 @@ fn exact_fixture_loads_all_existing_daemon_seams() {
     );
     assert_eq!(config.listen_address().to_string(), "127.0.0.1:7447");
     assert_eq!(
-        config.control_socket_path(),
-        Some(Path::new("/tmp/lnsat-phase10/control/lnsatd.sock"))
-    );
-    assert_eq!(
         config.disposable_git_root(),
         Some(Path::new("/tmp/lnsat-phase10/disposable-git"))
     );
@@ -51,12 +47,8 @@ fn exact_fixture_loads_all_existing_daemon_seams() {
         Some(Path::new("/tmp/lnsat-phase10/console"))
     );
     assert_eq!(config.internal_console_asset_manifest().len(), 2);
-    assert_eq!(
-        loaded.config_digest(),
-        "sha256:d2db022c2bb287396e05b857c0bdb51d78dba7fabdedadc50c32ec94fd4d3c8a"
-    );
     assert!(loaded.phase8_runtime_configured());
-    assert!(loaded.control_socket_configured());
+    assert!(!loaded.control_socket_configured());
     assert!(loaded.console_manifest_configured());
     assert!(!loaded.docker_local_runtime_profile_configured());
     assert!(!String::from_utf8_lossy(CONFIG_FIXTURE).contains("secret"));
@@ -998,7 +990,6 @@ fn v2_config_diff_compares_runtime_and_all_fixed_field_groups() {
         directory.write_json("baseline-groups.json", &minimal_config(&baseline_database));
     let mut all_groups = minimal_config(&candidate_database);
     all_groups["listen_address"] = json!("127.0.0.1:7448");
-    all_groups["control_socket_path"] = json!("/tmp/lnsat-hcfg/control.sock");
     all_groups["phase8_runtime"] = json!({
         "disposable_git_root": "/tmp/lnsat-hcfg/disposable-git",
         "git_executable": "/usr/bin/git"
@@ -1021,7 +1012,6 @@ fn v2_config_diff_compares_runtime_and_all_fixed_field_groups() {
         [
             "database_path",
             "listen_address",
-            "control_socket_path",
             "phase8_runtime",
             "runtime_profile",
             "console"
@@ -1034,8 +1024,6 @@ fn v2_config_show_and_diff_redact_all_optional_canaries_in_every_format() {
     let directory = TestDirectory::new("hcfg-redaction-matrix");
     let baseline_database = directory.path.join("private-database-baseline.sqlite3");
     let candidate_database = directory.path.join("private-database-candidate.sqlite3");
-    let baseline_socket = PathBuf::from("/tmp/private-control-baseline.sock");
-    let candidate_socket = PathBuf::from("/tmp/private-control-candidate.sock");
     let baseline_profile = directory.write("private-profile-baseline.json", PROFILE_FIXTURE);
     let candidate_profile = directory.write("private-profile-candidate.json", PROFILE_FIXTURE);
     let baseline_git_root = directory.path.join("private-git-root-baseline");
@@ -1047,7 +1035,6 @@ fn v2_config_show_and_diff_redact_all_optional_canaries_in_every_format() {
 
     let mut baseline_value = minimal_config(&baseline_database);
     baseline_value["listen_address"] = json!("127.0.0.1:7447");
-    baseline_value["control_socket_path"] = json!(baseline_socket);
     baseline_value["phase8_runtime"] = json!({
         "disposable_git_root": baseline_git_root,
         "git_executable": baseline_git_executable
@@ -1064,7 +1051,6 @@ fn v2_config_show_and_diff_redact_all_optional_canaries_in_every_format() {
 
     let mut candidate_value = minimal_config(&candidate_database);
     candidate_value["listen_address"] = json!("127.0.0.1:7448");
-    candidate_value["control_socket_path"] = json!(candidate_socket);
     candidate_value["phase8_runtime"] = json!({
         "disposable_git_root": candidate_git_root,
         "git_executable": candidate_git_executable
@@ -1086,8 +1072,6 @@ fn v2_config_show_and_diff_redact_all_optional_canaries_in_every_format() {
         "private-database-candidate",
         "127.0.0.1:7447",
         "127.0.0.1:7448",
-        "private-control-baseline",
-        "private-control-candidate",
         "private-git-root-baseline",
         "private-git-root-candidate",
         "private-git-baseline",
@@ -1104,8 +1088,6 @@ fn v2_config_show_and_diff_redact_all_optional_canaries_in_every_format() {
     for target in [
         baseline_database,
         candidate_database,
-        baseline_socket,
-        candidate_socket,
         baseline_git_root,
         candidate_git_root,
         baseline_git_executable,

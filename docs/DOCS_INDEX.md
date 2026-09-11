@@ -88,6 +88,7 @@ subsystem or proposal.
 - [Phase 9 API-backed Control Center](architecture/PHASE_9_API_BACKED_CONTROL_CENTER.md)
 - [Phase 10 product-surface contract spine](architecture/PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
 - [Phase 10 product-surface conformance freeze](architecture/PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md)
+- [Local authentication availability and UDS withdrawal](architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
 - [Docker-first runtime-neutral enforcement decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)

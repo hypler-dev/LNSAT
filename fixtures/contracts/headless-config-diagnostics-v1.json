@@ -65,6 +65,7 @@
     "loopback_nonzero_listener",
     "paired_runtime_paths",
     "profile_validation",
-    "console_validation"
+    "console_validation",
+    "control_socket_path_null_or_absent_only"
   ]
 }

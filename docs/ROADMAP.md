@@ -208,7 +208,7 @@ and atomically revokes every active same-identity session after authenticated
 self-service rotation. Owner-authorized permanent non-owner disablement appends
 actor-session-bound status evidence and atomically revokes the target family.
 Daemon wrappers own time and generic denial. Password rotation is served through
-a closed two-field JSON body, one per-session/process limiter, strict
+a closed two-field JSON body, one post-authentication per-session limiter, strict
 same-origin CSRF proof, full session-family revocation, invalidated session-secret headers, and
 explicit reauthentication. Owner-only
 `DELETE /v1/identities/{identity_ref}` permanently disables one non-owner,
@@ -226,7 +226,8 @@ invented history. Authenticated route-neutral reads use the same evidence-read
 permission and deny mutation transport. Source-local `POST /v1/session`
 requires numeric loopback peer/Host, exact Origin, same-origin Fetch Metadata,
 exact JSON, a non-simple `X-LNSAT-Session-Intent` header, a closed 4 KiB body,
-and one process-wide limiter. Success sets fresh non-ambient bearer/proof headers
+and one per-known-active-identity limiter. Unknown identity churn cannot consume
+known-identity capacity. Success sets fresh non-ambient bearer/proof headers
 and returns the same secret-free session contract used by authenticated
 `GET|HEAD`; every issue failure is generic. `HEAD` remains bodyless, `OPTIONS`
 is denied, and no CORS allow header is emitted. Authenticated
@@ -312,20 +313,20 @@ identity and grants no packet/action or execution authority.
 
 Authenticated `PATCH /v1/identity/password` is promoted with a closed
 two-secret schema, same-origin and independent session proof, latest-credential
-reverification, bounded per-session/process limiting, one-time active-family
+reverification, bounded post-authentication per-session limiting, one-time active-family
 replay, append-only credential and identity-event evidence, atomic
 same-identity session-family revocation, session-secret-header invalidation, and forced
-reauthentication. One generic denial exposes only possible process-limiter
+reauthentication. One generic denial exposes only possible verified-session limiter
 advancement; durable credential and session state remain unchanged on failure.
 It cannot select another identity and grants no packet/action or execution
 authority.
 
 Owner-only `POST /v1/identities` is promoted with a closed
 identity/name/role/password schema, same-origin and independent session proof,
-bounded per-session/process limiting, operator/auditor-only target roles,
+bounded post-authentication per-session limiting, operator/auditor-only target roles,
 create-once identity-reference replay semantics, and atomic
 identity/credential/actor-session-bound event evidence. Success is secret-free
-and returns no session-secret headers. One generic denial exposes only possible process-limiter
+and returns no session-secret headers. One generic denial exposes only possible verified-session limiter
 advancement; failed SQLite transitions roll back durable
 session/identity/credential/event state. It cannot create another owner and
 grants no packet/action or execution authority.
@@ -589,10 +590,12 @@ lower-precedence configuration and survives reload/restart; served stop/resume
 mutation remains unopened.
 
 Status: P10-A1 target-neutral source contract spine, P10-A2 explicit-only
-`lnsat.daemon.config.v1` loading/path evidence, and P10-A3 authenticated local
-health/status over a server-authenticated macOS/Linux Unix socket plus
-deterministic text/JSON/JSONL/YAML are implemented. Numeric-loopback HTTP
-remains browser/API transport and is not a CLI bearer lane.
+`lnsat.daemon.config.v1` loading/path evidence, and P10-A3 browser/API
+health/status with deterministic text/JSON/JSONL/YAML are implemented. The
+accepted local-authentication security correction withdraws Unix CLI health and
+status before the first supported release. Legacy forms fail before protected
+stdin, Unix connection, or request bytes; browser header-pair transport remains
+unchanged. Numeric-loopback HTTP remains browser/API transport.
 P10-A4 non-root offline backup, fresh inert restore, and protected-stdin owner
 recovery are implemented with exclusive-lease preflight, credential/audit
 append, all-owner-session revocation, and exact API/MCP/UI unavailability

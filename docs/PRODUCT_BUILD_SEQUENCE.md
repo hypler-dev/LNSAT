@@ -39,10 +39,12 @@ kernel/library:
 Accepted V1 product requirement; implementation and platform proof remain pending.
 Gate: headless configuration and control. State: pending; blocks Phase 13
 RC freeze regardless of the completed historical P10-X1 source checkpoint.
-HCFG-0 and HCFG-1 implement source-only diagnostics: exact product-surface
-negotiation keeps legacy v1 status and manifest bytes frozen, while explicitly
-selected `lnsat.product_surface.v2` exposes the v2 manifest/status diagnostic
-shapes and `lnsatctl config schema|validate`. There is no range or fallback.
+HCFG-0 and HCFG-1 implement source-only diagnostics. The accepted security
+correction supersedes the prior v1 status and manifest bytes to withdraw the
+unsafe Unix bearer transport; the ledger binds both old and replacement
+digests. Explicitly selected `lnsat.product_surface.v2` exposes the v2
+manifest/status diagnostic shapes and `lnsatctl config schema|validate`. There
+is no range or fallback.
 `config validate` reads the selected config and any referenced runtime profile,
 but opens no database, listener, process, or action authority. This does not
 satisfy this gate or the separate Phase 11 disposable Docker proof.
@@ -269,11 +271,11 @@ diagnostics, operator assets, and packet-inspection parity. P10-A2 adds one
 bounded explicit `lnsat.daemon.config.v1` file, `lnsatd --config`, public-safe
 digest/applied-layer inspection, and exact existing database/listen/Phase 8/
 console seams without selecting system, user, target, or package paths.
-P10-A3 now adds authenticated read-only health/status, explicit macOS/Linux
-Unix-socket client transport with path and peer-UID proof before bearer
-transmission, stdin-only session-token intake, and stable text/JSON/JSONL/YAML.
-Numeric-loopback HTTP remains browser/API transport and is closed for
-`lnsatctl` bearer reads. P10-A4 adds non-root offline backup, fresh inert
+P10-A3 browser/API health/status retains its authenticated header-pair transport
+and stable text/JSON/JSONL/YAML. The accepted local-authentication security
+correction withdraws Unix `lnsatctl` health/status before first support: legacy
+forms fail before protected stdin, Unix connection, or request bytes.
+Numeric-loopback HTTP remains browser/API transport. P10-A4 adds non-root offline backup, fresh inert
 restore, and protected-stdin owner recovery with exclusive-lease preflight,
 credential/audit append, and all-owner-session revocation. Exact parity keeps
 API routes, MCP tools, Control Center actions, served mutation, and activation

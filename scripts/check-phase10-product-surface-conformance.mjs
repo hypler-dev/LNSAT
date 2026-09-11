@@ -9,11 +9,11 @@ const DEFAULT_EVIDENCE_PATH =
 
 const FROZEN_PHASE10_RAW_SHA256 = {
   "fixtures/contracts/phase10-product-surface-v1.json":
-    "ec06efca74829ff0d7c13c2b2aa9a2b22222ed7b065833e532c09fe1075f6dfb",
+    "de0f406eba7b616f74f11b1c5b49a066078fb2b81318df1f5074462e49ed7ab6",
   "fixtures/contracts/phase10-status-v1.json":
-    "ee3756749f94842a51d510798fea6c11bb8ad0a366c67e7ff140d4a1bafb333d",
+    "fdeb7edad8c530ff86629b5c77a5ae098325cca9d8f28e972402c19735ee3505",
   "fixtures/contracts/phase10-product-surface-conformance-v1.json":
-    "fee1eb3afa477a928386cebf19264efdb60bd22b1011d32abc1e9ed8d7e0275a",
+    "78f8c1614b4cf0fefe5d02c96efef85b4c4218302651439cca9ca6d434e754b6",
 };
 
 const EXPECTED_EVIDENCE_IDS = [
@@ -98,9 +98,20 @@ const EXPECTED_LEGACY_COMMAND_INVENTORY = [
   "backup",
   "restore",
   "recovery.owner",
-  "health",
-  "status",
 ];
+
+const SECURITY_CORRECTION_AUTHORITY =
+  "docs/architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md";
+const SECURITY_CORRECTION_FINDINGS = [
+  "same_uid_unix_control_socket_substitution",
+  "global_login_limiter_lockout",
+];
+const SUPERSEDED_PHASE10_MANIFEST_SHA256 =
+  "ec06efca74829ff0d7c13c2b2aa9a2b22222ed7b065833e532c09fe1075f6dfb";
+const SUPERSEDED_PHASE10_STATUS_SHA256 =
+  "ee3756749f94842a51d510798fea6c11bb8ad0a366c67e7ff140d4a1bafb333d";
+const SUPERSEDED_CONFORMANCE_LEDGER_SHA256 =
+  "fee1eb3afa477a928386cebf19264efdb60bd22b1011d32abc1e9ed8d7e0275a";
 
 const EXPECTED_PRODUCT_SURFACE_NEGOTIATION = {
   contract_id: "lnsat.product_surface.negotiation.v1",
@@ -114,7 +125,7 @@ const EXPECTED_PRODUCT_SURFACE_NEGOTIATION = {
     routes: ["GET /v1/status", "HEAD /v1/status"],
     default_response_selector: "lnsat.product_surface.v1",
     explicit_response_echo: true,
-    legacy_body_bytes_unchanged: true,
+    legacy_body_bytes_unchanged: false,
   },
   rejections: {
     code: "lnsatd.product_surface_contract.rejected",
@@ -137,7 +148,7 @@ function expectedProductSurfaceV2(frozenV1Manifest) {
   expected.contract_id = "lnsat.product_surface.v2";
   expected.schema_version = 2;
   expected.binaries.lnsatctl.implemented_commands.splice(
-    4,
+    2,
     0,
     "config schema",
     "config validate",
@@ -147,7 +158,7 @@ function expectedProductSurfaceV2(frozenV1Manifest) {
     "config export",
   );
   expected.configuration.implemented_fields.splice(
-    5,
+    4,
     0,
     "runtime_profile.profile_family",
     "runtime_profile.profile_path",
@@ -223,8 +234,6 @@ const EXPECTED_DAEMON_STATUS_V2 = {
       "backup",
       "restore",
       "recovery.owner",
-      "health",
-      "status",
     ],
     reserved: ["recovery.activate", "service", "update"],
   },
@@ -305,6 +314,7 @@ const EXPECTED_HEADLESS_CONFIG_DIAGNOSTICS_V1 = {
     "paired_runtime_paths",
     "profile_validation",
     "console_validation",
+    "control_socket_path_null_or_absent_only",
   ],
 };
 
@@ -441,6 +451,9 @@ export function validatePhase10ProductSurfaceConformance({
         "schema_version",
         "packet_id",
         "freeze_status",
+        "authority",
+        "finding_ids",
+        "supersedes",
         "scope",
         "status_posture",
         "evidence_rows",
@@ -461,8 +474,23 @@ export function validatePhase10ProductSurfaceConformance({
     errors.push("evidence.schema_version: mismatch");
   }
   if (evidence.packet_id !== "P10-X1") errors.push("evidence.packet_id: mismatch");
-  if (evidence.freeze_status !== "complete") {
-    errors.push("evidence.freeze_status: complete required");
+  if (evidence.freeze_status !== "security_corrected") {
+    errors.push("evidence.freeze_status: security_corrected required");
+  }
+  if (evidence.authority !== SECURITY_CORRECTION_AUTHORITY) {
+    errors.push("evidence.authority: security correction authority mismatch");
+  }
+  if (!same(evidence.finding_ids, SECURITY_CORRECTION_FINDINGS)) {
+    errors.push("evidence.finding_ids: security correction findings mismatch");
+  }
+  if (
+    !same(evidence.supersedes, {
+      phase10_manifest_sha256: SUPERSEDED_PHASE10_MANIFEST_SHA256,
+      phase10_status_sha256: SUPERSEDED_PHASE10_STATUS_SHA256,
+      conformance_ledger_sha256: SUPERSEDED_CONFORMANCE_LEDGER_SHA256,
+    })
+  ) {
+    errors.push("evidence.supersedes: prior frozen hashes mismatch");
   }
 
   if (
@@ -608,8 +636,6 @@ export function validatePhase10ProductSurfaceConformance({
   if (manifest) {
     const legacyOperatorInventory = [
       "doctor",
-      "health",
-      "status",
       "config inspect",
       "recovery inspect",
       "backup",
@@ -647,6 +673,16 @@ export function validatePhase10ProductSurfaceConformance({
       !same(manifest.binaries?.lnsatd?.implemented_commands, legacyDaemonInventory)
     ) {
       errors.push("product manifest: legacy command inventory mismatch");
+    }
+    if (
+      !same(manifest.withdrawn_commands, {
+        lnsatctl: ["health", "status"],
+        reason: "same_uid_unix_socket_cannot_authenticate_live_daemon",
+        fails_before: ["protected_stdin", "unix_connect", "request_bytes"],
+        replacement: "accepted_mutual_daemon_authentication_required",
+      })
+    ) {
+      errors.push("product manifest: withdrawn Unix command contract mismatch");
     }
     if (
       manifest.supported_release !== false ||

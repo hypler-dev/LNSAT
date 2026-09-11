@@ -135,9 +135,11 @@ returns the same HTTP `403` response:
 - `execution_authorized: false`;
 - `mutation_authority: false`.
 
-Possible limiter advancement is explicit because a sufficiently valid request
-consumes bounded process-local limiter state before later schema, policy, and
-durable checks finish. The response does not reveal whether limiter state
+Possible limiter advancement is explicit because a request consumes bounded
+per-session process-local limiter state only after durable bearer/proof
+authentication and closed-body parsing. Unverified session input cannot
+consume limiter capacity. Later policy and durable checks may still fail. The
+response does not reveal whether limiter state
 advanced, whether policy or request evidence exists, or why authorization
 failed.
 

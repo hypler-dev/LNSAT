@@ -8,8 +8,6 @@ pub mod docker_local_runtime_proof;
 pub mod docker_local_runtime_proof_evidence;
 pub mod docker_local_supervisor;
 pub mod headless_config_loader;
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-mod local_unix_socket;
 pub mod product_config;
 pub mod product_output;
 pub mod product_recovery;
@@ -22,8 +20,7 @@ use lnsat_auth::{
     LocalBrowserAuthTransportV1, LocalBrowserOriginV1, LocalBrowserRequestClassV1,
     LocalBrowserRequestErrorV1, LocalBrowserRequestV1, LocalBrowserSessionSecretHeadersV1,
     create_local_browser_session_secret_headers_v1, evaluate_local_browser_request_v1,
-    local_session_id_from_token_v1, parse_local_browser_auth_transport_v1,
-    parse_local_control_session_cookie_v1,
+    parse_local_browser_auth_transport_v1,
 };
 use lnsat_contracts::{
     ApprovalDecisionV1Input, ApprovalDecisionV1Kind, ApprovalDecisionV1Reason,
@@ -39,7 +36,8 @@ use lnsat_store::{
     AuthenticatedPacketIntakeStoreWriteV1, LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1,
     LocalControlPermissionV1, LocalDaemonDatabaseLeaseV1, LocalIdentityCreateInputV1,
     LocalIdentityCredentialRecordV1, LocalIdentityDisablementResultV1, LocalIdentityEventV1,
-    LocalIdentityRoleV1, LocalPasswordRotationInputV1, LocalPasswordRotationResultV1,
+    LocalIdentityRoleV1, LocalIdentityStatusV1, LocalIdentityStoreErrorV1,
+    LocalPasswordRotationInputV1, LocalPasswordRotationResultV1,
     LocalSessionActivityVerificationV1, LocalSessionEventV1, LocalSessionFamilyRevocationV1,
     LocalSessionIssueInputV1, LocalSessionIssueResultV1, LocalSessionRecordV1,
     LocalSessionRevocationReasonV1, LocalSessionRotationResultV1,
@@ -119,8 +117,6 @@ const CONNECTION_TIMEOUT_V1: Duration = Duration::from_secs(5);
 const REQUEST_READ_POLL_INTERVAL_V1: Duration = Duration::from_millis(50);
 const OVERLOAD_TIMEOUT_V1: Duration = Duration::from_millis(100);
 const SHUTDOWN_WAKE_TIMEOUT_V1: Duration = Duration::from_millis(250);
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-const CONTROL_ACCEPT_POLL_INTERVAL_V1: Duration = Duration::from_millis(10);
 const READINESS_PATH_V1: &str = "/healthz";
 const READINESS_CONTRACT_V1: &str = "lnsat.daemon.readiness.v1_0";
 const AUTHENTICATED_HEALTH_PATH_V1: &str = "/v1/health";
@@ -245,7 +241,6 @@ pub const LOCAL_SESSION_ISSUE_INTENT_HEADER_NAME_V1: &str = "X-LNSAT-Session-Int
 pub const LOCAL_SESSION_ISSUE_INTENT_HEADER_VALUE_V1: &str = "lnsat.session.issue.v1";
 const LOCAL_AUTH_WINDOW_V1: Duration = Duration::from_mins(1);
 const LOCAL_AUTH_MAX_ATTEMPTS_PER_IDENTITY_V1: u8 = 5;
-const LOCAL_AUTH_MAX_GLOBAL_ATTEMPTS_V1: u16 = 30;
 const LOCAL_AUTH_MAX_TRACKED_IDENTITIES_V1: usize = 128;
 const LOCAL_AUTH_MAX_IDENTITY_BYTES_V1: usize = 256;
 /// Default bounded idle timeout for local browser sessions.
@@ -300,14 +295,14 @@ impl std::error::Error for LocalBrowserSessionIssueErrorV1 {}
 
 struct LocalAuthenticationLimitStateV1 {
     window_started: Instant,
-    global_attempts: u16,
     identity_attempts: BTreeMap<String, u8>,
 }
 
 /// Bounded process-local authentication-attempt limiter.
 ///
-/// State uses monotonic process time, retains at most 128 identity or session
-/// subjects, and intentionally implements neither `Clone` nor `Debug`.
+/// State uses monotonic process time and retains at most 128 durably known
+/// identity or verified session subjects. Unknown identities and unverifiable
+/// session input never enter this map.
 pub struct LocalAuthenticationLimiterV1 {
     state: Mutex<LocalAuthenticationLimitStateV1>,
 }
@@ -325,19 +320,17 @@ impl LocalAuthenticationLimiterV1 {
         Self {
             state: Mutex::new(LocalAuthenticationLimitStateV1 {
                 window_started: Instant::now(),
-                global_attempts: 0,
                 identity_attempts: BTreeMap::new(),
             }),
         }
     }
 
-    fn admit_identity(&self, identity_ref: &str) -> bool {
+    fn admit_known_identity(&self, identity_ref: &str) -> bool {
         self.admit_at(identity_ref, Instant::now())
     }
 
-    fn admit_session(&self, raw_session_token: &str) -> bool {
-        local_session_id_from_token_v1(raw_session_token)
-            .is_some_and(|session_id| self.admit_at(session_id, Instant::now()))
+    fn admit_verified_session(&self, session_id: &str) -> bool {
+        self.admit_at(session_id, Instant::now())
     }
 
     fn admit_at(&self, identity_ref: &str, now: Instant) -> bool {
@@ -349,13 +342,8 @@ impl LocalAuthenticationLimiterV1 {
         };
         if now.saturating_duration_since(state.window_started) >= LOCAL_AUTH_WINDOW_V1 {
             state.window_started = now;
-            state.global_attempts = 0;
             state.identity_attempts.clear();
         }
-        if state.global_attempts >= LOCAL_AUTH_MAX_GLOBAL_ATTEMPTS_V1 {
-            return false;
-        }
-        state.global_attempts += 1;
         if !state.identity_attempts.contains_key(identity_ref)
             && state.identity_attempts.len() >= LOCAL_AUTH_MAX_TRACKED_IDENTITIES_V1
         {
@@ -681,9 +669,18 @@ pub fn issue_local_browser_session_v1(
     limiter: &LocalAuthenticationLimiterV1,
     request: &LocalBrowserSessionIssueRequestV1<'_>,
 ) -> Result<LocalBrowserSessionIssueResponseV1, LocalBrowserSessionIssueErrorV1> {
-    if !(60..=3_600).contains(&request.lifetime_seconds)
-        || !limiter.admit_identity(request.identity_ref)
-    {
+    if !(60..=3_600).contains(&request.lifetime_seconds) {
+        return Err(LocalBrowserSessionIssueErrorV1::Rejected);
+    }
+    let active_identity = match store.read_local_identity_v1(request.identity_ref) {
+        Ok(Some(identity)) => identity.status == LocalIdentityStatusV1::Active,
+        Ok(None) | Err(LocalIdentityStoreErrorV1::InvalidInput) => false,
+        Err(_) => return Err(LocalBrowserSessionIssueErrorV1::Rejected),
+    };
+    if active_identity && !limiter.admit_known_identity(request.identity_ref) {
+        store
+            .verify_local_password_credential_v1(request.identity_ref, request.password)
+            .map_err(|_| LocalBrowserSessionIssueErrorV1::Rejected)?;
         return Err(LocalBrowserSessionIssueErrorV1::Rejected);
     }
     let issued_time = SystemTime::now();
@@ -1405,22 +1402,21 @@ impl DaemonConfigV1 {
         })
     }
 
-    /// Enables one explicit macOS/Linux Unix socket for authenticated CLI reads.
+    /// Records one legacy Unix control-socket option for a stable withdrawal.
     ///
     /// # Errors
     ///
     /// Rejects empty, relative, oversized, non-UTF-8, dot-component, or
     /// trailing-separator paths without inspecting filesystem state.
     pub fn with_control_socket_path(
-        mut self,
+        self,
         control_socket_path: impl AsRef<Path>,
     ) -> Result<Self, DaemonErrorV1> {
         let control_socket_path = control_socket_path.as_ref();
         if !valid_control_socket_path_v1(control_socket_path) {
             return Err(DaemonErrorV1::InvalidControlSocketPath);
         }
-        self.control_socket_path = Some(control_socket_path.to_path_buf());
-        Ok(self)
+        Err(DaemonErrorV1::ControlSocketWithdrawn)
     }
 
     /// Enables frozen Phase 8 runtime routes for one configured disposable
@@ -1618,11 +1614,13 @@ pub enum DaemonErrorV1 {
     InvalidListenAddress,
     /// Explicit authenticated CLI Unix-socket path was syntactically invalid.
     InvalidControlSocketPath,
-    /// Configured Unix-socket transport is unavailable on this target.
+    /// Legacy code for an unsupported Unix-socket transport.
     ControlSocketUnsupported,
-    /// Unix-socket listener creation failed without exposing its path.
+    /// Authenticated Unix control-socket reads are withdrawn pending daemon authentication.
+    ControlSocketWithdrawn,
+    /// Legacy code retained for compatibility with prior source clients.
     ControlSocketBindFailed,
-    /// Unix-socket path, ownership, mode, or peer identity failed closed.
+    /// Legacy code retained for compatibility with prior source clients.
     ControlSocketIdentityRejected,
     /// Phase 8 runtime paths were incomplete, empty, or non-absolute.
     InvalidRuntimeConfiguration,
@@ -1668,6 +1666,7 @@ impl DaemonErrorV1 {
             Self::InvalidListenAddress => "lnsatd.listen.invalid",
             Self::InvalidControlSocketPath => "lnsatd.control_socket.path_invalid",
             Self::ControlSocketUnsupported => "lnsatd.control_socket.unsupported",
+            Self::ControlSocketWithdrawn => "lnsatd.control_socket.withdrawn",
             Self::ControlSocketBindFailed => "lnsatd.control_socket.bind_failed",
             Self::ControlSocketIdentityRejected => "lnsatd.control_socket.identity_rejected",
             Self::InvalidRuntimeConfiguration => "lnsatd.runtime_configuration.invalid",
@@ -1940,24 +1939,6 @@ struct Phase9ConsoleRuntimeV1 {
     assets: BTreeMap<String, Phase9ConsoleAssetV1>,
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn map_control_socket_bind_error_v1(
-    error: local_unix_socket::LocalUnixSocketErrorV1,
-) -> DaemonErrorV1 {
-    match error {
-        local_unix_socket::LocalUnixSocketErrorV1::PathInvalid => {
-            DaemonErrorV1::InvalidControlSocketPath
-        }
-        local_unix_socket::LocalUnixSocketErrorV1::IdentityRejected => {
-            DaemonErrorV1::ControlSocketIdentityRejected
-        }
-        local_unix_socket::LocalUnixSocketErrorV1::Unavailable
-        | local_unix_socket::LocalUnixSocketErrorV1::TemporaryFailure => {
-            DaemonErrorV1::ControlSocketBindFailed
-        }
-    }
-}
-
 fn valid_console_request_path_v1(value: &str) -> bool {
     if value.is_empty()
         || value.len() > 512
@@ -2060,8 +2041,6 @@ fn load_phase9_console_runtime_v1(
 
 pub struct DaemonServerV1 {
     listener: TcpListener,
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    control_listener: Option<local_unix_socket::SecureUnixListenerV1>,
     bound_address: SocketAddr,
     _database_lease: LocalDaemonDatabaseLeaseV1,
     store: Arc<Mutex<SqliteStore>>,
@@ -2106,6 +2085,9 @@ impl DaemonServerV1 {
     /// Fails closed when storage, listener creation, or bound-address
     /// verification fails.
     pub fn bind(config: &DaemonConfigV1) -> Result<Self, DaemonErrorV1> {
+        if config.control_socket_path().is_some() {
+            return Err(DaemonErrorV1::ControlSocketWithdrawn);
+        }
         if !product_surface::current_process_is_non_root_v1() {
             return Err(DaemonErrorV1::PrivilegedRuntimeForbidden);
         }
@@ -2142,16 +2124,6 @@ impl DaemonServerV1 {
         if !bound_address.ip().is_loopback() {
             return Err(DaemonErrorV1::BoundAddressInvalid);
         }
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        let control_listener = config
-            .control_socket_path()
-            .map(local_unix_socket::SecureUnixListenerV1::bind)
-            .transpose()
-            .map_err(map_control_socket_bind_error_v1)?;
-        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-        if config.control_socket_path().is_some() {
-            return Err(DaemonErrorV1::ControlSocketUnsupported);
-        }
         let shutdown = DaemonShutdownV1 {
             requested: Arc::new(AtomicBool::new(false)),
             wake_address: bound_address,
@@ -2159,8 +2131,6 @@ impl DaemonServerV1 {
 
         Ok(Self {
             listener,
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            control_listener,
             bound_address,
             _database_lease: database_lease,
             store: Arc::new(Mutex::new(store)),
@@ -2230,29 +2200,6 @@ impl DaemonServerV1 {
         )
     }
 
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    fn spawn_control_listener_v1(
-        &self,
-    ) -> Result<Option<JoinHandle<Result<(), DaemonErrorV1>>>, DaemonErrorV1> {
-        let Some(listener) = self.control_listener.as_ref() else {
-            return Ok(None);
-        };
-        let listener = listener
-            .try_clone()
-            .map_err(map_control_socket_bind_error_v1)?;
-        listener
-            .set_nonblocking(true)
-            .map_err(|_| DaemonErrorV1::ControlSocketBindFailed)?;
-        let store = Arc::clone(&self.store);
-        let store_state = self.store_state.clone();
-        let shutdown = self.shutdown.clone();
-        thread::Builder::new()
-            .name("lnsatd-control-unix".to_owned())
-            .spawn(move || serve_control_listener_v1(&listener, &store, &store_state, &shutdown))
-            .map(Some)
-            .map_err(|_| DaemonErrorV1::WorkerFailed)
-    }
-
     /// Serves at most eight bounded local requests concurrently until
     /// cooperative shutdown or listener failure.
     ///
@@ -2263,12 +2210,6 @@ impl DaemonServerV1 {
     /// connection. Shutdown stops accepting, then joins every in-flight bounded
     /// worker before returning.
     pub fn serve(&self) -> Result<(), DaemonErrorV1> {
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        let control_worker = self.spawn_control_listener_v1()?;
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        let tcp_worker_limit =
-            MAX_CONCURRENT_CONNECTIONS_V1 - usize::from(control_worker.is_some());
-        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         let tcp_worker_limit = MAX_CONCURRENT_CONNECTIONS_V1;
         let mut workers = Vec::with_capacity(MAX_CONCURRENT_CONNECTIONS_V1);
         let listener_result = loop {
@@ -2323,17 +2264,6 @@ impl DaemonServerV1 {
             self.shutdown.request_shutdown();
         }
         let join_result = join_workers(workers);
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        let control_result = match control_worker {
-            Some(worker) => worker
-                .join()
-                .map_err(|_| DaemonErrorV1::WorkerFailed)
-                .and_then(|result| result),
-            None => Ok(()),
-        };
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
-        return listener_result.and(join_result).and(control_result);
-        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         listener_result.and(join_result)
     }
 }
@@ -2342,62 +2272,6 @@ fn configure_connection_timeouts(stream: &TcpStream) -> Result<(), DaemonErrorV1
     stream
         .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
         .map_err(|_| DaemonErrorV1::ResponseWriteFailed)
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn serve_control_listener_v1(
-    listener: &std::os::unix::net::UnixListener,
-    store: &Arc<Mutex<SqliteStore>>,
-    store_state: &SqliteStoreStateV1,
-    shutdown: &DaemonShutdownV1,
-) -> Result<(), DaemonErrorV1> {
-    loop {
-        if shutdown.is_shutdown_requested() {
-            return Ok(());
-        }
-        match listener.accept() {
-            Ok((stream, _)) => {
-                let _ = serve_accepted_control_connection_v1(stream, store, store_state, shutdown);
-            }
-            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
-                thread::sleep(CONTROL_ACCEPT_POLL_INTERVAL_V1);
-            }
-            Err(_) => {
-                shutdown.request_shutdown();
-                return Err(DaemonErrorV1::AcceptFailed);
-            }
-        }
-    }
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn serve_accepted_control_connection_v1(
-    mut stream: std::os::unix::net::UnixStream,
-    store: &Arc<Mutex<SqliteStore>>,
-    store_state: &SqliteStoreStateV1,
-    shutdown: &DaemonShutdownV1,
-) -> Result<(), DaemonErrorV1> {
-    stream
-        .set_write_timeout(Some(CONNECTION_TIMEOUT_V1))
-        .map_err(|_| DaemonErrorV1::ResponseWriteFailed)?;
-    if local_unix_socket::validate_peer_uid_v1(&stream).is_err() {
-        return Ok(());
-    }
-    let response = match read_http_request_v1(&mut stream, shutdown) {
-        Ok(RequestReadV1::Complete(mut request)) => {
-            let response = classify_control_product_read_request_v1(&request, store);
-            request.zeroize();
-            response
-        }
-        Ok(RequestReadV1::HeadTooLarge) => {
-            ClassifiedHttpResponseV1::unversioned(HttpResponseV1::RequestHeadTooLarge)
-        }
-        Ok(RequestReadV1::BodyTooLarge) => {
-            ClassifiedHttpResponseV1::unversioned(HttpResponseV1::RequestBodyTooLarge)
-        }
-        Err(()) => return Err(DaemonErrorV1::RequestReadFailed),
-    };
-    write_response_with_state(&mut stream, response, store_state)
 }
 
 fn refuse_capacity(
@@ -2709,7 +2583,6 @@ struct ParsedRequestHeadV1<'a> {
     fetch_site: Option<&'a str>,
     content_type: Option<&'a str>,
     content_length: Option<usize>,
-    cookie: Option<&'a str>,
     session_token: Option<&'a str>,
     session_proof: Option<&'a str>,
     session_issue_intent: Option<&'a str>,
@@ -2864,7 +2737,6 @@ fn parse_request_head_v1(request: &[u8]) -> Result<ParsedRequestHeadV1<'_>, ()> 
         fetch_site: headers.fetch_site,
         content_type: headers.content_type,
         content_length: headers.content_length,
-        cookie: headers.cookie,
         session_token: headers.session_token,
         session_proof: headers.session_proof,
         session_issue_intent: headers.session_issue_intent,
@@ -3290,140 +3162,6 @@ fn classify_authenticated_product_read_route_v1(
             Some(response)
         }
         Ok(_) | Err(_) => Some(HttpResponseV1::AuthenticatedProductReadRejected { head_only }),
-    }
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn classify_control_product_read_request_v1(
-    request_bytes: &[u8],
-    store: &Arc<Mutex<SqliteStore>>,
-) -> ClassifiedHttpResponseV1 {
-    let Ok(parsed_request) = parse_http_request_v1(request_bytes) else {
-        return ClassifiedHttpResponseV1::unversioned(HttpResponseV1::BadRequest);
-    };
-    let request = parsed_request.head;
-    let head_only = request.method == "HEAD";
-    if request.host != local_unix_socket::LOCAL_UNIX_SOCKET_HOST_V1 {
-        return ClassifiedHttpResponseV1::unversioned(HttpResponseV1::BadRequest);
-    }
-    let version = match validate_gateway_contract_version_v1(request.contract_version) {
-        Ok(version) => version,
-        Err(error) => {
-            return ClassifiedHttpResponseV1::unversioned(
-                HttpResponseV1::GatewayContractVersionRejected { error, head_only },
-            );
-        }
-    };
-    let Ok(selected_product_surface_contract) = select_product_surface_contract_v1(
-        request.target,
-        request.product_surface_contract,
-        request.product_surface_contract_duplicate,
-    ) else {
-        return ClassifiedHttpResponseV1::versioned(
-            HttpResponseV1::ProductSurfaceContractRejected { head_only },
-            version,
-        );
-    };
-    let response = classify_control_product_read_route_v1(request.target, head_only);
-    if !matches!(
-        response,
-        HttpResponseV1::AuthenticatedHealth { .. } | HttpResponseV1::AuthenticatedStatus { .. }
-    ) {
-        return ClassifiedHttpResponseV1::versioned(response, version);
-    }
-    if !matches!(request.method, "GET" | "HEAD") {
-        return selected_product_surface_contract_for_status_v1(
-            ClassifiedHttpResponseV1::versioned(
-                HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" },
-                version,
-            ),
-            request.target,
-            selected_product_surface_contract,
-        );
-    }
-    if !parsed_request.body.is_empty()
-        || request.origin.is_some()
-        || request.fetch_site != Some("same-origin")
-        || request.content_length.is_some_and(|length| length != 0)
-        || request.content_type.is_some()
-        || request.session_token.is_some()
-        || request.session_proof.is_some()
-        || request.session_issue_intent.is_some()
-        || request.forwarded_present
-    {
-        let classified = ClassifiedHttpResponseV1::versioned(
-            HttpResponseV1::AuthenticatedProductReadRejected { head_only },
-            version,
-        );
-        return selected_product_surface_contract_for_status_v1(
-            classified,
-            request.target,
-            selected_product_surface_contract,
-        );
-    }
-    let authorized = parse_local_control_session_cookie_v1(request.cookie)
-        .map_err(|_| ())
-        .and_then(|raw_session_token| {
-            let checked_at = canonical_system_time_v1(SystemTime::now())?;
-            let mut store = store.lock().map_err(|_| ())?;
-            store
-                .verify_and_touch_local_session_v1(
-                    raw_session_token,
-                    None,
-                    &checked_at,
-                    LOCAL_BROWSER_SESSION_IDLE_TIMEOUT_SECONDS_V1,
-                )
-                .map_err(|_| ())
-        });
-    let allowed = matches!(
-        authorized,
-        Ok(LocalSessionActivityVerificationV1::Verified(ref activity))
-            if activity.session.role.allows_control(LocalControlPermissionV1::ReadEvidence)
-    );
-    let classified = ClassifiedHttpResponseV1::versioned(
-        if allowed {
-            response
-        } else {
-            HttpResponseV1::AuthenticatedProductReadRejected { head_only }
-        },
-        version,
-    );
-    selected_product_surface_contract_for_status_v1(
-        classified,
-        request.target,
-        selected_product_surface_contract,
-    )
-}
-
-fn selected_product_surface_contract_for_status_v1(
-    response: ClassifiedHttpResponseV1,
-    target: &str,
-    contract: Option<&'static str>,
-) -> ClassifiedHttpResponseV1 {
-    if target == AUTHENTICATED_STATUS_PATH_V1
-        && let Some(contract) = contract
-    {
-        response.with_product_surface_contract(contract)
-    } else {
-        response
-    }
-}
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-fn classify_control_product_read_route_v1(target: &str, head_only: bool) -> HttpResponseV1 {
-    match target {
-        AUTHENTICATED_HEALTH_PATH_V1 => HttpResponseV1::AuthenticatedHealth { head_only },
-        AUTHENTICATED_STATUS_PATH_V1 => HttpResponseV1::AuthenticatedStatus {
-            head_only,
-            product_surface_contract: product_surface::PRODUCT_SURFACE_CONTRACT_ID_V1,
-        },
-        target
-            if target.starts_with(AUTHENTICATED_HEALTH_PATH_V1)
-                || target.starts_with(AUTHENTICATED_STATUS_PATH_V1) =>
-        {
-            HttpResponseV1::BadRequest
-        }
-        _ => HttpResponseV1::NotFound,
     }
 }
 
@@ -4365,12 +4103,15 @@ fn classify_local_packet_intake_v1(
     }
     let intake = parse_local_browser_transport_head_v1(request, peer_address, bound_address)
         .and_then(|request| {
-            if !authentication_limiter.admit_session(request.raw_session_token()) {
-                return Err(LocalBrowserTransportErrorV1::Rejected);
-            }
             let mut store = store
                 .lock()
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let authorized = authorize_local_browser_transport_request_v1(&mut store, &request)?;
+            if authorized.class != LocalBrowserRequestClassV1::MutationPreflight
+                || !authentication_limiter.admit_verified_session(&authorized.session.session_id)
+            {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
             intake_local_browser_packet_v1(&mut store, &request, body)
         });
     match intake {
@@ -4395,14 +4136,17 @@ fn classify_local_approval_request_v1(
     }
     let created = parse_local_browser_transport_head_v1(request, peer_address, bound_address)
         .and_then(|request| {
-            if !authentication_limiter.admit_session(request.raw_session_token()) {
-                return Err(LocalBrowserTransportErrorV1::Rejected);
-            }
             let body = serde_json::from_slice::<LocalBrowserApprovalRequestBodyV1>(body)
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
             let mut store = store
                 .lock()
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let authorized = authorize_local_browser_transport_request_v1(&mut store, &request)?;
+            if authorized.class != LocalBrowserRequestClassV1::MutationPreflight
+                || !authentication_limiter.admit_verified_session(&authorized.session.session_id)
+            {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
             create_local_browser_approval_request_v1(
                 &mut store,
                 &request,
@@ -4435,9 +4179,6 @@ fn classify_local_approval_decision_v1(
     }
     let recorded = parse_local_browser_transport_head_v1(request, peer_address, bound_address)
         .and_then(|request| {
-            if !authentication_limiter.admit_session(request.raw_session_token()) {
-                return Err(LocalBrowserTransportErrorV1::Rejected);
-            }
             let body = serde_json::from_slice::<LocalBrowserApprovalDecisionBodyV1>(body)
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
             let decision = match body.decision.as_str() {
@@ -4456,6 +4197,12 @@ fn classify_local_approval_decision_v1(
             let mut store = store
                 .lock()
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let authorized = authorize_local_browser_transport_request_v1(&mut store, &request)?;
+            if authorized.class != LocalBrowserRequestClassV1::MutationPreflight
+                || !authentication_limiter.admit_verified_session(&authorized.session.session_id)
+            {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
             decide_local_browser_approval_request_v1(
                 &mut store,
                 &request,
@@ -4496,9 +4243,6 @@ fn classify_local_identity_creation_v1(
     }
     let created = parse_local_browser_transport_head_v1(request, peer_address, bound_address)
         .and_then(|request| {
-            if !authentication_limiter.admit_session(request.raw_session_token()) {
-                return Err(LocalBrowserTransportErrorV1::Rejected);
-            }
             let body = serde_json::from_slice::<LocalBrowserIdentityCreationBodyV1>(body)
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
             let role = match body.role.as_str() {
@@ -4509,6 +4253,12 @@ fn classify_local_identity_creation_v1(
             let mut store = store
                 .lock()
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let authorized = authorize_local_browser_transport_request_v1(&mut store, &request)?;
+            if authorized.class != LocalBrowserRequestClassV1::MutationPreflight
+                || !authentication_limiter.admit_verified_session(&authorized.session.session_id)
+            {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
             create_local_browser_identity_v1(
                 &mut store,
                 &request,
@@ -4634,14 +4384,17 @@ fn classify_local_password_rotation_v1(
     }
     let rotated = parse_local_browser_transport_head_v1(request, peer_address, bound_address)
         .and_then(|request| {
-            if !authentication_limiter.admit_session(request.raw_session_token()) {
-                return Err(LocalBrowserTransportErrorV1::Rejected);
-            }
             let body = serde_json::from_slice::<LocalBrowserPasswordRotationBodyV1>(body)
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
             let mut store = store
                 .lock()
                 .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let authorized = authorize_local_browser_transport_request_v1(&mut store, &request)?;
+            if authorized.class != LocalBrowserRequestClassV1::MutationPreflight
+                || !authentication_limiter.admit_verified_session(&authorized.session.session_id)
+            {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
             rotate_local_browser_password_v1(
                 &mut store,
                 &request,
@@ -9233,7 +8986,7 @@ mod tests {
     }
 
     #[test]
-    fn served_session_issue_uses_one_process_wide_rate_limit_across_connections() {
+    fn served_session_issue_rate_limits_wrong_passwords_per_known_identity() {
         let fixture = ServedSessionGatewayFixture::start("served-session-issue-rate-limit");
         let wrong_body = serde_json::json!({
             "identity_ref": "identity:human:owner",
@@ -9262,6 +9015,49 @@ mod tests {
         );
         assert_eq!(Some(&blocked_valid), denial.as_ref());
         assert_stable_session_issue_denial(&blocked_valid);
+        fixture.stop();
+    }
+
+    #[test]
+    fn forged_session_header_flood_cannot_block_owner_login_or_authenticated_mutation() {
+        let fixture = ServedSessionGatewayFixture::start("forged-session-header-flood");
+        let body = fixture.action_intake_packet("forged_session_flood");
+        let forged_token = "a".repeat(fixture.cookie.len());
+        let forged_proof = "0".repeat(fixture.csrf_token.len());
+        let forged_request = fixture
+            .packet_intake_request(&body)
+            .replace(&fixture.cookie, &forged_token)
+            .replace(&fixture.csrf_token, &forged_proof);
+        for _ in 0..=LOCAL_AUTH_MAX_ATTEMPTS_PER_IDENTITY_V1 {
+            let response = request_at(fixture.address, forged_request.as_bytes());
+            assert!(response.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+            assert_eq!(
+                response
+                    .split_once("\r\n\r\n")
+                    .expect("packet intake denial should have one head boundary")
+                    .1,
+                gateway_packet_intake_rejected_body_v1()
+            );
+        }
+
+        let owner_login = serde_json::json!({
+            "identity_ref": "identity:human:owner",
+            "password": "correct horse battery staple",
+            "lifetime_seconds": 300,
+        })
+        .to_string();
+        let owner_login_response = request_at(
+            fixture.address,
+            fixture.session_issue_request(&owner_login).as_bytes(),
+        );
+        assert!(owner_login_response.starts_with("HTTP/1.1 201 Created\r\n"));
+
+        let mutation_body = fixture.action_intake_packet("forged_flood_valid_mutation");
+        let mutation_response = request_at(
+            fixture.address,
+            fixture.packet_intake_request(&mutation_body).as_bytes(),
+        );
+        assert!(mutation_response.starts_with("HTTP/1.1 201 Created\r\n"));
         fixture.stop();
     }
 
@@ -12275,12 +12071,28 @@ mod tests {
         assert!(!limiter.admit_at("identity:human:owner", started));
         assert!(limiter.admit_at("identity:human:owner", started + LOCAL_AUTH_WINDOW_V1));
 
-        let global = LocalAuthenticationLimiterV1::new();
-        for index in 0..LOCAL_AUTH_MAX_GLOBAL_ATTEMPTS_V1 {
-            assert!(global.admit_at(&format!("identity:human:user-{index}"), started));
+        let subjects = LocalAuthenticationLimiterV1::new();
+        for index in 0..LOCAL_AUTH_MAX_TRACKED_IDENTITIES_V1 {
+            assert!(subjects.admit_at(&format!("identity:human:user-{index}"), started));
         }
-        assert!(!global.admit_at("identity:human:overflow", started));
-        assert!(!global.admit_at(&"x".repeat(LOCAL_AUTH_MAX_IDENTITY_BYTES_V1 + 1), started));
+        assert!(!subjects.admit_at("identity:human:overflow", started));
+        assert!(subjects.admit_at("identity:human:user-0", started));
+        assert!(!subjects.admit_at(&"x".repeat(LOCAL_AUTH_MAX_IDENTITY_BYTES_V1 + 1), started));
+    }
+
+    #[test]
+    fn rejected_over_cap_subject_does_not_advance_unrelated_budget() {
+        let limiter = LocalAuthenticationLimiterV1::new();
+        let started = Instant::now();
+        for _ in 0..LOCAL_AUTH_MAX_ATTEMPTS_PER_IDENTITY_V1 {
+            assert!(limiter.admit_at("identity:human:over-cap", started));
+        }
+        for _ in 0..LOCAL_AUTH_MAX_ATTEMPTS_PER_IDENTITY_V1 {
+            assert!(!limiter.admit_at("identity:human:over-cap", started));
+        }
+        for _ in 0..LOCAL_AUTH_MAX_ATTEMPTS_PER_IDENTITY_V1 {
+            assert!(limiter.admit_at("identity:human:unrelated", started));
+        }
     }
 
     #[test]
@@ -12344,6 +12156,56 @@ mod tests {
         assert_eq!(
             LocalBrowserSessionIssueErrorV1::Rejected.code(),
             "lnsatd.local_auth.rejected"
+        );
+    }
+
+    #[test]
+    fn unknown_identity_churn_cannot_consume_verified_identity_budget() {
+        let directory = TestDirectory::new("unknown-identity-churn");
+        let mut store = SqliteStore::open(directory.database_path()).expect("store should open");
+        let password = "correct horse battery staple";
+        store
+            .bootstrap_local_owner_v1(&lnsat_store::LocalOwnerBootstrapInputV1 {
+                identity_ref: "identity:human:owner",
+                display_name: "Local Owner",
+                password,
+                created_at: "2026-07-23T17:00:00Z",
+            })
+            .expect("owner should bootstrap");
+        let limiter = LocalAuthenticationLimiterV1::new();
+        for index in 0..2 {
+            assert!(matches!(
+                issue_local_browser_session_v1(
+                    &mut store,
+                    &limiter,
+                    &LocalBrowserSessionIssueRequestV1 {
+                        identity_ref: &format!("identity:human:unknown-{index}"),
+                        password,
+                        lifetime_seconds: 60,
+                    },
+                ),
+                Err(LocalBrowserSessionIssueErrorV1::Rejected)
+            ));
+        }
+        assert!(
+            limiter
+                .state
+                .lock()
+                .expect("limiter state must remain available")
+                .identity_attempts
+                .is_empty()
+        );
+        assert!(
+            issue_local_browser_session_v1(
+                &mut store,
+                &limiter,
+                &LocalBrowserSessionIssueRequestV1 {
+                    identity_ref: "identity:human:owner",
+                    password,
+                    lifetime_seconds: 60,
+                },
+            )
+            .is_ok()
         );
     }
 
@@ -13312,7 +13174,7 @@ mod tests {
     fn request_at(address: SocketAddr, request: &[u8]) -> String {
         let mut stream = TcpStream::connect(address).expect("client should connect");
         stream
-            .set_read_timeout(Some(Duration::from_secs(2)))
+            .set_read_timeout(Some(Duration::from_secs(10)))
             .expect("timeout should configure");
         stream.write_all(request).expect("request should write");
         let mut response = String::new();
