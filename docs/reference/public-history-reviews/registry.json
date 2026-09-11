@@ -46,7 +46,7 @@
       "review_subject_ids": ["phase11-docker-proof-execution-harness-contract"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0005/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
