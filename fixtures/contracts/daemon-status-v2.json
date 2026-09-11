@@ -25,6 +25,8 @@
       "config.validate",
       "config.show",
       "config.diff",
+      "config.effective",
+      "config.export",
       "recovery.inspect",
       "backup",
       "restore",

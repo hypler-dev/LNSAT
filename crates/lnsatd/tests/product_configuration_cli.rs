@@ -18,6 +18,8 @@ const CONFIG_FIXTURE: &[u8] =
     include_bytes!("../../../fixtures/contracts/phase10-daemon-config-v1.json");
 const PROFILE_FIXTURE: &[u8] =
     include_bytes!("../../../fixtures/contracts/phase11-docker-local-profile-v1.json");
+const DECLARATION_FIXTURE: &[u8] =
+    include_bytes!("../../../fixtures/contracts/headless-config-declaration-v1.json");
 const EXPECTED_PROFILE_DIGEST: &str =
     "sha256:eb27aa91cea967ed9686b949011e220bc0085e827c1d97b4a477f267dff548fc";
 const EXPECTED_AUTHORITY_CONFIGURATION_DIGEST: &str =
@@ -1220,6 +1222,240 @@ fn v2_config_show_and_diff_reject_invalid_arguments_without_stdout() {
     assert!(invalid_input.stdout.is_empty());
     let stderr = String::from_utf8(invalid_input.stderr).expect("stderr UTF-8");
     assert!(!stderr.contains("private-missing"));
+}
+
+#[test]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn v2_config_effective_and_export_are_deterministic_redacted_diagnostics() {
+    let directory = TestDirectory::new("hcfg-declaration-diagnostics");
+    let declaration = directory.write("private-declaration.json", DECLARATION_FIXTURE);
+
+    let effective = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "effective", "--declaration"])
+        .arg(&declaration)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("config effective must run");
+    let export = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "export", "--declaration"])
+        .arg(&declaration)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("config export must run");
+
+    assert!(effective.status.success());
+    assert!(export.status.success());
+    assert!(effective.stderr.is_empty());
+    assert!(export.stderr.is_empty());
+    let effective_value: Value =
+        serde_json::from_slice(&effective.stdout).expect("effective output must be JSON");
+    let export_value: Value =
+        serde_json::from_slice(&export.stdout).expect("export output must be JSON");
+    assert_eq!(effective_value["command"], "config.effective");
+    assert_eq!(
+        effective_value["declaration_contract"],
+        "lnsat.headless_config.declaration.v1"
+    );
+    assert_eq!(effective_value["declared_effective_ceiling_computed"], true);
+    assert_eq!(effective_value["identity_verified"], false);
+    assert_eq!(effective_value["enforcement_verified"], false);
+    assert_eq!(effective_value["admission_authority_computed"], false);
+    assert_eq!(effective_value["activation_authority"], false);
+    assert_eq!(effective_value["grants_action_authority"], false);
+    assert_eq!(effective_value["runtime_started"], false);
+    assert_eq!(effective_value["storage_opened"], false);
+    assert_eq!(effective_value["listener_opened"], false);
+    assert_eq!(effective_value["process_started"], false);
+    assert_eq!(effective_value["side_effects"], json!([]));
+
+    assert_eq!(export_value["command"], "config.export");
+    assert_eq!(
+        export_value["export_contract"],
+        "lnsat.headless_config.redacted_export.v1"
+    );
+    assert_eq!(export_value["applicable"], false);
+    assert_eq!(export_value["reimportable"], false);
+    assert_eq!(export_value["identity_verified"], false);
+    assert_eq!(export_value["enforcement_verified"], false);
+    assert_eq!(export_value["admission_authority_computed"], false);
+    assert_eq!(export_value["activation_authority"], false);
+    assert_eq!(export_value["grants_action_authority"], false);
+    assert_eq!(export_value["runtime_started"], false);
+    assert_eq!(export_value["storage_opened"], false);
+    assert_eq!(export_value["listener_opened"], false);
+    assert_eq!(export_value["process_started"], false);
+    assert_eq!(export_value["side_effects"], json!([]));
+    assert_eq!(
+        effective_value["effective"]["declaration_digest"],
+        export_value["export"]["declaration_digest"]
+    );
+
+    let exported_diagnostic = directory.write_json("redacted-export.json", &export_value["export"]);
+    let reimport = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+        .args(["config", "effective", "--declaration"])
+        .arg(exported_diagnostic)
+        .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+        .output()
+        .expect("redacted export reimport attempt must run");
+    assert_eq!(reimport.status.code(), Some(2));
+    assert!(reimport.stdout.is_empty());
+
+    assert_diagnostic_outputs_are_redacted([&effective.stdout, &export.stdout]);
+    assert_diagnostic_formats_are_deterministic(&declaration);
+}
+
+fn assert_diagnostic_outputs_are_redacted(outputs: [&Vec<u8>; 2]) {
+    for output in outputs {
+        let text = String::from_utf8_lossy(output);
+        for forbidden in [
+            "private-declaration",
+            "installation:example",
+            "identity:alice",
+            "resource:repo-a",
+            "resource:repo-b",
+            "layer:project",
+            "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        ] {
+            assert!(!text.contains(forbidden), "{forbidden} must stay redacted");
+        }
+    }
+}
+
+fn assert_diagnostic_formats_are_deterministic(declaration: &Path) {
+    for command in ["effective", "export"] {
+        for format in ["text", "json", "jsonl", "yaml"] {
+            let arguments = [
+                "config",
+                command,
+                "--declaration",
+                declaration.to_str().expect("test path must be UTF-8"),
+                "--product-surface-contract",
+                "lnsat.product_surface.v2",
+                "--output",
+                format,
+            ];
+            let first = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+                .args(arguments)
+                .output()
+                .expect("formatted declaration diagnostic must run");
+            let second = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+                .args(arguments)
+                .output()
+                .expect("repeated declaration diagnostic must run");
+            assert!(first.status.success(), "{command} {format}");
+            assert!(first.stderr.is_empty(), "{command} {format}");
+            assert_eq!(first.stdout, second.stdout, "{command} {format}");
+            assert!(first.stdout.ends_with(b"\n"), "{command} {format}");
+            assert!(!first.stdout.ends_with(b"\n\n"), "{command} {format}");
+        }
+    }
+}
+
+#[test]
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
+fn v2_config_effective_and_export_reject_unsupported_platforms() {
+    let directory = TestDirectory::new("hcfg-declaration-unsupported-platform");
+    let declaration = directory.write("private-declaration.json", DECLARATION_FIXTURE);
+
+    for command in ["effective", "export"] {
+        let rejected = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["config", command, "--declaration"])
+            .arg(&declaration)
+            .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+            .output()
+            .expect("unsupported declaration command must run");
+        assert_eq!(rejected.status.code(), Some(2));
+        assert!(rejected.stdout.is_empty());
+        let stderr = String::from_utf8(rejected.stderr).expect("failure output must be UTF-8");
+        assert!(!stderr.contains("private-declaration"));
+        let error: Value = serde_json::from_str(&stderr).expect("failure output must be JSON");
+        assert_eq!(
+            error["error"]["code"],
+            "headless_config.platform_unsupported"
+        );
+    }
+}
+
+#[test]
+fn v2_config_effective_and_export_fail_closed_without_reflection() {
+    let directory = TestDirectory::new("hcfg-declaration-failures");
+    let invalid = directory.write("private-invalid-declaration.json", b"{}");
+    let oversized = directory.write("private-oversized-declaration.json", &vec![b' '; 65_537]);
+    let missing = directory.path.join("private-missing-declaration.json");
+
+    for (command, selected_path) in [
+        ("effective", invalid.as_path()),
+        ("export", invalid.as_path()),
+        ("effective", oversized.as_path()),
+        ("export", missing.as_path()),
+    ] {
+        let rejected = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["config", command, "--declaration"])
+            .arg(selected_path)
+            .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+            .output()
+            .expect("invalid declaration command must run");
+        assert_eq!(rejected.status.code(), Some(2));
+        assert!(rejected.stdout.is_empty());
+        let stderr = String::from_utf8(rejected.stderr).expect("failure output must be UTF-8");
+        assert!(!stderr.contains("private-"));
+        let error: Value = serde_json::from_str(&stderr).expect("failure output must be JSON");
+        assert!(error["error"]["code"].as_str().is_some());
+    }
+
+    for arguments in [
+        vec![
+            "config",
+            "effective",
+            "--declaration",
+            invalid.to_str().unwrap(),
+        ],
+        vec![
+            "config",
+            "export",
+            "--declaration",
+            invalid.to_str().unwrap(),
+            "--product-surface-contract",
+            "lnsat.product_surface.v1",
+        ],
+        vec![
+            "config",
+            "effective",
+            "--config",
+            invalid.to_str().unwrap(),
+            "--product-surface-contract",
+            "lnsat.product_surface.v2",
+        ],
+    ] {
+        let rejected = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(arguments)
+            .output()
+            .expect("invalid declaration arguments must run");
+        assert_eq!(rejected.status.code(), Some(2));
+        assert!(rejected.stdout.is_empty());
+        let error: Value =
+            serde_json::from_slice(&rejected.stderr).expect("argument failure must be JSON");
+        assert_eq!(error["error"]["code"], "lnsatctl.arguments.invalid");
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::symlink;
+
+        let target = directory.write("private-target-declaration.json", DECLARATION_FIXTURE);
+        let link = directory.path.join("private-linked-declaration.json");
+        symlink(target, &link).expect("test symlink must create");
+        let rejected = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
+            .args(["config", "effective", "--declaration"])
+            .arg(&link)
+            .args(["--product-surface-contract", "lnsat.product_surface.v2"])
+            .output()
+            .expect("symlink declaration must be rejected");
+        assert_eq!(rejected.status.code(), Some(2));
+        assert!(rejected.stdout.is_empty());
+        assert!(!String::from_utf8_lossy(&rejected.stderr).contains("private-"));
+    }
 }
 
 fn minimal_config(database_path: &Path) -> Value {

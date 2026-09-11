@@ -245,8 +245,14 @@ test("P10-X1 rejects removal from repository-wide check", () => {
   assert.match(result.errors.join("\n"), /check must include Phase 10 exit gates/u);
 });
 
-test("HCFG-2 rejects missing diagnostics and invented mutation commands", () => {
-  for (const command of ["config show", "config diff", "config apply"]) {
+test("HCFG-2/3B rejects missing diagnostics and invented mutation commands", () => {
+  for (const command of [
+    "config show",
+    "config diff",
+    "config effective",
+    "config export",
+    "config apply",
+  ]) {
     const productSurfaceV2Path = mutatedJson(
       "fixtures/contracts/product-surface-v2.json",
       (fixture) => {
@@ -278,6 +284,32 @@ test("HCFG-2 rejects activation and effective-authority diagnostic claims", () =
       "fixtures/contracts/product-surface-v2.json",
       (fixture) => {
         fixture.configuration.headless_diagnostics[field] = true;
+      },
+    );
+    const result = validatePhase10ProductSurfaceConformance({
+      root,
+      productSurfaceV2Path,
+    });
+    assert.equal(result.ok, false, field);
+    assert.match(result.errors.join("\n"), /exact contract or authority mismatch/u);
+  }
+});
+
+test("HCFG-3B rejects declaration diagnostic authority and target drift", () => {
+  for (const [field, value] of [
+    ["declared_effective_ceiling_computed", false],
+    ["identity_verified", true],
+    ["enforcement_verified", true],
+    ["admission_authority_computed", true],
+    ["export_applicable", true],
+    ["export_reimportable", true],
+    ["declaration_loader_targets", ["linux", "macos", "freebsd"]],
+    ["other_targets", "supported"],
+  ]) {
+    const productSurfaceV2Path = mutatedJson(
+      "fixtures/contracts/product-surface-v2.json",
+      (fixture) => {
+        fixture.configuration.headless_diagnostics[field] = value;
       },
     );
     const result = validatePhase10ProductSurfaceConformance({

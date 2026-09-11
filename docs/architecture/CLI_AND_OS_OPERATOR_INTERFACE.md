@@ -60,6 +60,21 @@ returned. These diagnostics grant no activation, compute no effective authority,
 and are not round-trippable exports. See the
 [canonical HCFG-2 record](../PROJECT_STATUS.md#hcfg-2-redacted-explicit-configuration-comparison).
 
+HCFG-3B adds v2-only `config effective --declaration <absolute-path>` and
+`config export --declaration <absolute-path>`. They load the distinct
+`lnsat.headless_config.declaration.v1` contract through a bounded regular-file
+identity boundary and compose its complete narrowing layers in the core.
+`effective` reports an unverified declared ceiling. `export` emits only a
+deterministic redacted content commitment and counts under
+`lnsat.headless_config.redacted_export.v1`; it is non-applicable,
+non-reimportable, and contains no source references, identity digests, raw
+bytes, paths, or secrets. Neither command loads active daemon configuration,
+verifies identity or OS enforcement, grants action authority, or activates,
+persists, or mutates anything.
+The declaration loader currently accepts Linux and macOS only. Other targets
+return `headless_config.platform_unsupported` until their stable file identity
+and reparse-safe open boundary is proven.
+
 | Binary     | Audience                           | Responsibility                                                                              |
 | ---------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 | `lnsat`    | users, agents, scripts, developers | primary workflow command and convenience dispatcher                                         |

@@ -27,6 +27,11 @@
 
 ### Added
 
+- Added v2-only `lnsatctl config effective` and redacted `config export`
+  diagnostics over the experimental headless declaration contract. Inputs use
+  bounded stable regular-file reads; outputs omit source identities and remain
+  unverified, non-applicable, non-reimportable, and side-effect free.
+
 - Added an experimental Rust headless declaration parser and pure composition
   primitive, separating resource declarations from agent action ceilings. Ordered
   layers retain denials and reject wider resource sets, weaker approval, restored

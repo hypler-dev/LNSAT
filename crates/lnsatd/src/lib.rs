@@ -7,6 +7,7 @@ pub mod docker_local_execution_payload;
 pub mod docker_local_runtime_proof;
 pub mod docker_local_runtime_proof_evidence;
 pub mod docker_local_supervisor;
+pub mod headless_config_loader;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 mod local_unix_socket;
 pub mod product_config;
