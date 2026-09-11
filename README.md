@@ -236,8 +236,8 @@ unpublished vulnerability information in public issues or pull requests.
 The source now includes deterministic proof-plan, evidence-requirements, and a
 source-only execution-harness contract. They remain proposed design evidence only: none
 grants a runtime result, receipt, execution, completion, or support claim. The
-execution-harness source awaits actual independent review; checked-in source
-does not constitute real runtime evidence or complete Phase 11.
+execution-harness contract has [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
+but it is not a runnable proof driver. It does not constitute real runtime evidence or complete Phase 11.
 See the [proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 and [execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).
 

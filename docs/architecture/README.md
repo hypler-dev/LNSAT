@@ -97,8 +97,8 @@ publication order is controlled by [product build sequence](../PRODUCT_BUILD_SEQ
 - [Phase 11 real disposable Docker execution evidence requirements](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
 
 The source-only execution-harness contract binds the proposed Phase 11 proof
-records for later authority. It has no runtime evidence and awaits independent
-source review.
+records for later authority. PHR-0005 records independent source review. It is
+not a runnable proof driver and has no runtime evidence.
 
 These files describe experimental local foundations. Local owner, append-only
 credential rotation, permanent non-owner disablement, hash-only session

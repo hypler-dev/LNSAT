@@ -108,8 +108,9 @@ make runtime identity, image provenance, disposable-target identity, lifecycle,
 cleanup, redaction, and independent-review obligations equally inspectable
 without opening a Docker command or recording real runtime evidence.
 The source-only execution-harness contract binds those records and the exact
-later-authority declarations and stops. It awaits independent source review and
-does not authorize execution or complete Phase 11.
+later-authority declarations and stops. PHR-0005 records independent source
+review. The contract is not a runnable proof driver and does not authorize
+execution or complete Phase 11.
 
 ## 5. Runtime and Ecosystem Role
 

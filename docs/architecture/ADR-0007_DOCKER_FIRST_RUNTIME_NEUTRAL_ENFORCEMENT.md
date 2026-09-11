@@ -463,8 +463,9 @@ observation, result, receipt, host path, container ID, process output, or
 execution authority.
 The source-only execution-harness contract binds the proof-plan and
 evidence-requirements digests, inherited lists, and exact later-authority
-declarations and stops. It awaits actual independent source review and opens no
-Docker operation, runtime result, receipt, or execution authority.
+declarations and stops. PHR-0005 records independent source review. The contract
+is not a runnable proof driver and opens no Docker operation, runtime result,
+receipt, or execution authority.
 
 ## Security Boundaries
 

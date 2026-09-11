@@ -94,7 +94,9 @@ subsystem or proposal.
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
 
 The source-only execution-harness contract binds those proposed records for a
-later authority; it has no runtime evidence and awaits independent source review.
+later authority. [PHR-0005](reference/public-history-reviews/PHR-0005/review.json)
+records its independent source review; it has no runnable proof driver or runtime evidence.
+
 - [Compatibility and conformance](architecture/COMPATIBILITY_AND_CONFORMANCE_MATRIX.md)
 - [Rust core and TypeScript Control Center](architecture/RUST_CORE_AND_TYPESCRIPT_CONTROL_CENTER_ARCHITECTURE.md)
 - [Full architecture catalog](architecture/README.md)
