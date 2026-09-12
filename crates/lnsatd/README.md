@@ -29,6 +29,11 @@ Current behavior:
   eight future cases, including exact runtime, image, target, lifecycle,
   cleanup, redaction, and review observations; it carries no observation,
   result, receipt, host path, container ID, output, or secret;
+- derives one pure source-only execution-harness commitment that binds the
+  proof-plan and evidence-requirements digests, all inherited requirement sets,
+  and the exact later-authority declarations and stops; it has no runtime call
+  surface and has independent source review under `PHR-0005`, while a runnable
+  proof driver and real runtime evidence remain separate gates;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before

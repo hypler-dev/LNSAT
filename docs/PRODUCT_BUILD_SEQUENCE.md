@@ -361,6 +361,11 @@ A companion source-only evidence-requirements contract freezes the required
 client, endpoint, daemon, image, adapter, target, authority-chain, lifecycle,
 cleanup, reconciliation, redaction, and independent-review commitments without
 recording runtime evidence or opening an execution selector.
+The source-only execution-harness contract binds that requirements digest to the
+proof-plan digest, inherited lists, and exact later-authority declarations and
+stops. It performs no Docker process, socket, daemon, image, or repository work;
+PHR-0005 records independent source review of that contract. A runnable proof
+driver and real runtime evidence remain separate gates; Phase 11 is incomplete.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

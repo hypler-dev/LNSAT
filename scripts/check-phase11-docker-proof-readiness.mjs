@@ -8,6 +8,8 @@ const DEFAULT_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-plan-v1.json";
 const DEFAULT_EVIDENCE_REQUIREMENTS_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-evidence-requirements-v1.json";
+const DEFAULT_EXECUTION_HARNESS_FIXTURE_PATH =
+  "fixtures/contracts/phase11-docker-local-runtime-proof-execution-harness-v1.json";
 const EXPECTED_PACKAGE_SCRIPTS_SHA256 =
   "3e6a2a1501d0379980d900b3d95f397ceb9174ffc7513e9e5a126cb27a36c583";
 const EXPECTED_SOURCE_CI_SHA256 =
@@ -110,23 +112,48 @@ const EXPECTED_FORBIDDEN_PUBLIC_EVIDENCE_FIELDS = [
   "private_registry_configuration",
 ];
 
+const EXPECTED_AUTHORITY_DECLARATION_IDS = [
+  "execution_host_and_run_window",
+  "docker_client_path_and_digest",
+  "docker_endpoint_local_unix_identity",
+  "expected_daemon_identity_api_version_platform_security_posture",
+  "prepositioned_image_digest_platform_provenance_configuration_entrypoint_adapter_executable_pull_never",
+  "fresh_owner_only_disposable_root_and_marked_repository_identity",
+  "host_git_verifier_path_and_digest",
+  "served_gateway_d4b2a_d3_d4a_supervisor_chain_identity",
+  "case_ids_evidence_location_redaction_cleanup_rollback_reviewer",
+  "named_observation_and_execution_permissions",
+];
+
+const EXPECTED_AUTHORITY_STOP_IDS = [
+  "missing_identity",
+  "base_or_source_movement",
+  "mutable_image_resolution",
+  "unexpected_network_need",
+  "unsafe_target_state",
+  "evidence_custody_ambiguity",
+  "action_outside_named_run",
+];
+
 const EXPECTED_DOC_MARKERS = {
   "README.md": [
-    "The next source checkpoint adds a deterministic proof-plan contract",
-    "It remains design evidence only",
-    "runtime result, receipt, or support",
-    "they do not constitute real runtime evidence or complete Phase 11",
-    "source-only evidence-requirements contract",
+    "The source now includes deterministic proof-plan, evidence-requirements, and a",
+    "They remain proposed design evidence only",
+    "runtime result, receipt, execution, completion, or support claim",
+    "does not constitute real runtime evidence or complete Phase 11",
+    "source-only execution-harness contract",
   ],
   "crates/lnsatd/README.md": [
     "derives one source-only real-runtime proof plan",
     "this metadata opens no",
     "source-only evidence-requirements commitment",
+    "source-only execution-harness commitment",
   ],
   "docs/DOCS_INDEX.md": [
     "Phase 11 real disposable Docker proof readiness",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
+    "execution-harness contract",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md": [
     "Status: proposed source-only readiness; no runtime evidence",
@@ -135,6 +162,7 @@ const EXPECTED_DOC_MARKERS = {
     "execution authorization.",
     "Phase 11 remains incomplete.",
     "execution evidence requirements",
+    "execution-harness contract",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md":
     [
@@ -143,36 +171,43 @@ const EXPECTED_DOC_MARKERS = {
       "accessed by this source packet. Phase 11 remains incomplete.",
       "Before any real Docker access, a later authority must name:",
       "This source contract adds no Docker command",
+      "execution harness",
     ],
   "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md": [
     "## Phase 11 Real Disposable Docker Proof Readiness",
     "real Docker proof remains unexecuted",
     "execution evidence requirements",
+    "execution-harness contract",
   ],
   "docs/ROADMAP.md": [
     "source-only real-Docker proof-readiness contract",
     "does not complete Phase 11",
     "source-only execution-evidence requirements contract",
+    "source-only execution-harness contract",
   ],
   "docs/PRODUCT_BUILD_SEQUENCE.md": [
     "source-only proof-readiness plan",
     "no Docker process, socket, daemon, or image operation",
     "source-only evidence-requirements contract",
+    "source-only execution-harness contract",
   ],
   "docs/PROJECT_STATUS.md": [
     "real-Docker proof-readiness contract",
     "no runtime evidence exists",
     "source-only execution-evidence requirements contract",
+    "source-only execution-harness contract",
   ],
   "docs/WHY_PUBLIC_NOW.md": [
     "freezes required identity bindings, proof cases, and fail-closed negatives",
     "without accessing Docker or claiming runtime evidence",
     "execution evidence requirements",
+    "execution-harness contract",
   ],
   "docs/architecture/README.md": [
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
     "Phase 11 real disposable Docker proof readiness",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
+    "execution-harness contract",
   ],
 };
 
@@ -387,6 +422,7 @@ export function validatePhase11DockerProofReadiness({
   root = REPO_ROOT,
   fixturePath = resolve(root, DEFAULT_FIXTURE_PATH),
   evidenceRequirementsPath = resolve(root, DEFAULT_EVIDENCE_REQUIREMENTS_FIXTURE_PATH),
+  executionHarnessPath = resolve(root, DEFAULT_EXECUTION_HARNESS_FIXTURE_PATH),
   packagePath = resolve(root, "package.json"),
   workflowPath,
   workflowPaths,
@@ -394,6 +430,10 @@ export function validatePhase11DockerProofReadiness({
   evidenceModulePath = resolve(
     root,
     "crates/lnsatd/src/docker_local_runtime_proof_evidence.rs",
+  ),
+  executionHarnessModulePath = resolve(
+    root,
+    "crates/lnsatd/src/docker_local_runtime_proof_execution_harness.rs",
   ),
   supervisorPath = resolve(root, "crates/lnsatd/src/docker_local_supervisor.rs"),
   docPaths = Object.fromEntries(
@@ -601,6 +641,122 @@ export function validatePhase11DockerProofReadiness({
     }
   }
 
+  const executionHarness = readJson(
+    executionHarnessPath,
+    "execution harness fixture",
+    errors,
+  );
+  if (isRecord(executionHarness) && Object.hasOwn(executionHarness, "packet_id")) {
+    errors.push(
+      "execution harness fixture.packet_id: canonical packet id is not assigned",
+    );
+  }
+  if (
+    exactKeys(
+      executionHarness,
+      [
+        "schema_id",
+        "fixture_id",
+        "status",
+        "phase11_complete",
+        "execution_authorized",
+        "real_docker_proof",
+        "production_supported",
+        "contract",
+        "required_plan_binding_ids",
+        "required_case_ids",
+        "required_observation_commitment_ids",
+        "preflight_rejection_ids",
+        "postspawn_outcome_unknown_ids",
+        "forbidden_public_evidence_fields",
+        "authority_declaration_ids",
+        "authority_stop_ids",
+        "next_gate",
+      ],
+      "execution harness fixture",
+      errors,
+    )
+  ) {
+    if (
+      executionHarness.schema_id !==
+      "lnsat.phase11_docker_local_runtime_proof_execution_harness_fixture.schema.v1_0"
+    ) {
+      errors.push("execution harness fixture.schema_id: mismatch");
+    }
+    if (
+      executionHarness.fixture_id !==
+      "phase11-docker-local-runtime-proof-execution-harness-v1"
+    ) {
+      errors.push("execution harness fixture.fixture_id: mismatch");
+    }
+    if (executionHarness.status !== "proposed_source_only_no_runtime_evidence") {
+      errors.push(
+        "execution harness fixture.status: proposed source-only status required",
+      );
+    }
+    for (const field of [
+      "phase11_complete",
+      "execution_authorized",
+      "real_docker_proof",
+      "production_supported",
+    ]) {
+      if (executionHarness[field] !== false) {
+        errors.push(`execution harness fixture.${field}: false required`);
+      }
+    }
+    if (
+      exactKeys(
+        executionHarness.contract,
+        ["contract_id", "output", "side_effects", "runtime_execution"],
+        "execution harness fixture.contract",
+        errors,
+      )
+    ) {
+      if (
+        executionHarness.contract.contract_id !==
+        "lnsat.docker_local_runtime_proof_execution_harness.v1"
+      ) {
+        errors.push("execution harness fixture.contract.contract_id: mismatch");
+      }
+      if (
+        executionHarness.contract.output !==
+        "canonical_source_only_execution_harness_digest"
+      ) {
+        errors.push("execution harness fixture.contract.output: mismatch");
+      }
+      if (!same(executionHarness.contract.side_effects, [])) {
+        errors.push("execution harness fixture.contract.side_effects: [] required");
+      }
+      if (executionHarness.contract.runtime_execution !== false) {
+        errors.push(
+          "execution harness fixture.contract.runtime_execution: false required",
+        );
+      }
+    }
+    for (const [field, expected] of [
+      ["required_plan_binding_ids", EXPECTED_BINDINGS],
+      ["required_case_ids", EXPECTED_CASE_IDS],
+      ["required_observation_commitment_ids", EXPECTED_OBSERVATION_COMMITMENT_IDS],
+      ["preflight_rejection_ids", EXPECTED_PREFLIGHT_REJECTION_IDS],
+      ["postspawn_outcome_unknown_ids", EXPECTED_POSTSPAWN_OUTCOME_UNKNOWN_IDS],
+      ["forbidden_public_evidence_fields", EXPECTED_FORBIDDEN_PUBLIC_EVIDENCE_FIELDS],
+      ["authority_declaration_ids", EXPECTED_AUTHORITY_DECLARATION_IDS],
+      ["authority_stop_ids", EXPECTED_AUTHORITY_STOP_IDS],
+    ]) {
+      if (!same(executionHarness[field], expected)) {
+        errors.push(`execution harness fixture.${field}: ids or order mismatch`);
+      }
+    }
+    if (
+      executionHarness.next_gate !==
+      "separately_authorized_real_disposable_docker_image_and_runtime_proof"
+    ) {
+      errors.push(
+        "execution harness fixture.next_gate: closed real-Docker gate required",
+      );
+    }
+  }
+
   const packageJson = readJson(packagePath, "package.json", errors);
   const scripts = packageJson?.scripts;
   if (!isRecord(scripts)) {
@@ -749,6 +905,43 @@ export function validatePhase11DockerProofReadiness({
     if (evidenceModuleSource.includes(forbidden)) {
       errors.push(
         `runtime proof evidence requirements module: forbidden side-effect marker ${forbidden}`,
+      );
+    }
+  }
+
+  const executionHarnessModuleSource = readText(
+    executionHarnessModulePath,
+    "runtime proof execution harness module",
+    errors,
+  );
+  for (const marker of [
+    "lnsat.docker_local_runtime_proof_execution_harness.v1",
+    "build_docker_local_runtime_proof_execution_harness_v1",
+    "parse_docker_local_runtime_proof_execution_harness_v1",
+    "authority_declaration_ids",
+    "authority_stop_ids",
+  ]) {
+    if (!executionHarnessModuleSource.includes(marker)) {
+      errors.push(`runtime proof execution harness module: missing marker ${marker}`);
+    }
+  }
+  for (const forbidden of [
+    "std::process",
+    "Command::new",
+    "std::net",
+    "std::fs",
+    "std::env",
+    "std::os::unix",
+    "local_unix_socket",
+    "UnixListener",
+    "UnixStream",
+    "lnsat_store",
+    "supervise_docker_local_git_execution_v1",
+    "execute_phase11_mapped_disposable_git_commit_v1",
+  ]) {
+    if (executionHarnessModuleSource.includes(forbidden)) {
+      errors.push(
+        `runtime proof execution harness module: forbidden side-effect marker ${forbidden}`,
       );
     }
   }
