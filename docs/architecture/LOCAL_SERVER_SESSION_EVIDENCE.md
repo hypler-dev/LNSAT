@@ -60,12 +60,13 @@ evidence fails closed.
 The daemon owns production session time. `SystemTime` is converted to canonical
 UTC millisecond evidence, and the same sampled instant derives both issue and
 expiry values. Public browser-request verification no longer accepts a
-caller-supplied timestamp. Session issue first passes a process-local monotonic
-fixed-window limiter: five attempts per identity and 30 process-wide per
-60-second window, with a bounded identity-key set. Unknown, invalid, and
-inactive identities verify against one validated fixed-profile Argon2id dummy
-verifier. All of these failures remain indistinguishable at the public source
-boundary.
+caller-supplied timestamp. Session issue applies a process-local monotonic
+fixed-window limiter only to durably known active identities: five attempts per
+identity per 60-second window, with at most 128 tracked identity keys. Unknown,
+invalid, and inactive identities do not consume limiter capacity, but they
+still verify against one validated fixed-profile Argon2id dummy verifier. A
+rate-limited known identity also performs one Argon2id verification. All of
+these failures remain indistinguishable at the public source boundary.
 
 Served `POST /v1/session` requires an operating-system loopback peer, exact
 numeric bound Host and Origin, `Sec-Fetch-Site: same-origin`, exact
@@ -179,16 +180,16 @@ navigation remains
 separate from authenticated API requests.
 
 Stable `PATCH /v1/identity/password` uses the same strict mutation transport
-with a closed `current_password`/`new_password` JSON body and
-per-session/process attempt limits. The transaction reverifies the latest
+with a closed `current_password`/`new_password` JSON body and a bounded
+per-verified-session attempt limit. The transaction reverifies the latest
 Argon2id credential, appends one immutable generation, revokes every active
 same-identity session with `credential_revoke` and invalidates both
 client-held secret headers. Success returns only secret-free credential version/time/count
 evidence plus `reauthentication_required: true`; no replacement session is
 issued. Transport, schema, credential, limit, clock, drift, and persistence
 failures share stable `gateway.identity_password_rotation.denied` without
-session-secret headers or identity detail. Failure discloses only possible process-limiter
-advancement; durable credential and session state remain unchanged.
+session-secret headers or identity detail. Failure discloses only possible
+verified-session limiter advancement; durable credential and session state remain unchanged.
 
 Stable owner-only `POST /v1/identities` uses the same strict mutation
 transport and a closed `identity_ref`/`display_name`/`role`/`password` JSON
@@ -290,8 +291,9 @@ Tests prove:
   secret-free response, exact bodyless `HEAD`, denied preflight, no CORS allow
   headers, and generic cross-site/missing-auth negatives;
 - served same-origin `POST /v1/session` with exact Origin/Fetch Metadata/custom
-  intent, closed 4 KiB JSON, process-wide rate limits, equal wrong/unknown
-  credential denial, client-held session-secret headers, secret-free readback, secret-buffer
+  intent, closed 4 KiB JSON, per-known-active-identity rate limits,
+  unknown-identity limiter isolation, equal wrong/unknown credential denial,
+  client-held session-secret headers, secret-free readback, secret-buffer
   zeroization, and framing/schema/CORS negatives;
 - served same-origin `DELETE /v1/session` with exact empty framing, active
   bearer/session proof, atomic same-identity family revocation, secret-header
@@ -302,7 +304,7 @@ Tests prove:
   immediate prior-session rejection, replacement readback, generic
   replay/auth denial, malformed-framing rejection, and no-CORS negatives;
 - served same-origin `PATCH /v1/identity/password` with a closed secret body,
-  latest-password reverification, per-session/process limiting, append-only
+  latest-password reverification, post-authentication per-session limiting, append-only
   credential generation, atomic session-family revocation, secret-header
   invalidation, required reauthentication, old/new login proof, and generic
   transport/schema/credential/replay denial;
@@ -320,7 +322,7 @@ Tests prove:
   time, terminal replay closure, auditor/self-approval negatives, unsigned
   evidence, and zero execution authority;
 - exact epoch/leap-day UTC formatting, server-derived 60-second session
-  windows, monotonic per-identity/global rate-limit and reset boundaries;
+  windows, monotonic per-known-identity and per-verified-session rate-limit and reset boundaries;
 - fixed dummy-verifier consumption for unknown identities without per-open or
   per-request Argon2id hashing;
 - append-only sign-out revocation and replay rejection;

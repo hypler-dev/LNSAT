@@ -137,8 +137,9 @@ exactly one value for each browser secret header. Body schema is closed to
 `identity_ref`, `password`, and `lifetime_seconds`; 60 through 3,600 seconds are
 accepted. Wrong, missing, disabled, rate-limited, malformed, drifted, or failed
 credential paths all return `gateway.session_issue.denied` without identity or
-limiter detail and without session-secret headers; the body discloses only that process-local
-limiter state may advance. Transient request, password, and composed
+limiter detail and without session-secret headers; the body discloses only that bounded
+per-known-active-identity limiter state may advance. Unknown, invalid, and
+inactive identities do not consume limiter capacity. Transient request, password, and composed
 session-secret header buffers plus raw issue/rotation tokens are zeroized after use.
 
 Authenticated `PATCH` requires exact `Content-Length: 0`, JSON media type,
@@ -168,9 +169,10 @@ grants no packet, action, approval, adapter, or execution authority.
 
 Authenticated `PATCH /v1/identity/password` requires the same exact
 Origin/Fetch Metadata/JSON/active bearer/CSRF proof plus a closed body containing
-only `current_password` and `new_password`. A monotonic limiter permits at most
-five attempts per session and 30 authentication attempts process-wide per
-minute. Success reverifies the latest Argon2id credential inside the immediate
+only `current_password` and `new_password`. After durable session
+authentication, a monotonic limiter permits at most five attempts per verified
+session per minute. Unverified session input never consumes limiter capacity.
+Success reverifies the latest Argon2id credential inside the immediate
 transaction, appends one immutable generation, atomically revokes every active
 same-identity session with `credential_revoke`, invalidates both session-secret headers, and returns
 only identity, credential version, trusted time, revoked count, and
@@ -180,7 +182,7 @@ limiter/activity/credential/identity-event/revocation/session-event/session-secr
 effects. Wrong/current-equal/invalid credentials, malformed schema, exhausted
 limits, clock failure, drift, and persistence failure share one
 `gateway.identity_password_rotation.denied` oracle without session-secret headers or identity
-detail. The denial discloses only that process-local limiter state may advance;
+detail. The denial discloses only that verified-session process-local limiter state may advance;
 atomic rollback preserves durable credential/session state. Raw
 request/password buffers are zeroized after response classification. No
 replacement session is issued.
@@ -188,8 +190,9 @@ replacement session is issued.
 Owner-only `POST /v1/identities` requires the same exact
 Origin/Fetch Metadata/JSON/active bearer/CSRF proof plus a closed body containing
 `identity_ref`, `display_name`, `role`, and `password`. Only operator or auditor
-roles are accepted. The authentication limiter admits at most five attempts per
-session and 30 process-wide per minute. Success atomically appends one immutable
+roles are accepted. After durable session authentication, the authentication
+limiter admits at most five attempts per verified session per minute. Unverified
+session input never consumes limiter capacity. Success atomically appends one immutable
 identity, initial Argon2id credential, and actor-session-bound
 `identity_created` event under stable
 `lnsat.gateway.identity_creation.v1_0`. It returns only secret-free
@@ -197,7 +200,7 @@ identity/credential/owner-authorization evidence and declares exact
 limiter/activity/identity/credential/event effects. Identity references are
 create-once; duplicate, non-owner, role, schema, credential, clock, drift, and
 persistence failures share one `gateway.identity_creation.denied` oracle. The
-denial discloses only possible process-local limiter advancement; atomic
+denial discloses only possible verified-session process-local limiter advancement; atomic
 rollback preserves durable session, identity, credential, and event state.
 Success returns no session-secret headers and grants no packet, action, adapter, or execution
 authority.
@@ -235,7 +238,7 @@ same immediate transaction that appends or replays pending evidence. Stable
 `lnsat.gateway.approval_request.v1_0` success distinguishes created from exact
 replay and declares limiter/activity/append effects outside the unchanged
 domain request. One `gateway.approval_request.denied` response covers every
-in-contract failure and exposes only possible process-limiter advancement.
+in-contract failure and exposes only possible verified-session limiter advancement.
 Approval, signing, execution authorization, packet/action creation, and adapter
 dispatch remain false.
 
@@ -265,10 +268,11 @@ storage are outside this source contract. Remote/TLS design remains closed.
 
 Session issue and verification use server-owned canonical UTC rather than
 caller-supplied request time. A process-local monotonic fixed-window limiter
-allows at most five attempts per identity and 30 attempts globally per minute,
+allows at most five attempts per durably known active identity per minute,
 retains no more than 128 identity keys, and fails closed if its lock is
-unavailable. Unknown identities consume one validated fixed-profile Argon2id
-verification. Credential, clock, limiter, evidence, and persistence failures
+unavailable. Unknown, invalid, and inactive identities do not consume limiter
+capacity but still consume one validated fixed-profile Argon2id verification.
+Credential, clock, limiter, evidence, and persistence failures
 all map to `gateway.session_issue.denied` at the served stable HTTP boundary.
 
 Every successful route-neutral authorization enforces the store's 900-second
@@ -333,7 +337,8 @@ Rust tests prove:
 - served same-origin `GET|HEAD /v1/session` response composition with active
   SQLite authentication and secret-free output;
 - served same-origin `POST /v1/session` with exact custom intent, closed bounded
-  JSON, process-wide limiting, generic credential denial, non-ambient
+  JSON, per-known-active-identity limiting, unknown-identity limiter isolation,
+  generic credential denial, non-ambient
   secret-header issue, secret zeroization, and immediate authenticated readback;
 - served same-origin `DELETE /v1/session` with exact zero-length JSON framing,
   CSRF proof, atomic session-family revocation, session-secret-header invalidation, and generic
@@ -343,7 +348,7 @@ Rust tests prove:
   prior-session rejection, replacement readback, generic replay/auth denial,
   and malformed-framing negatives;
 - served same-origin `PATCH /v1/identity/password` with closed schema,
-  latest-password reverification, per-session/process limiting, append-only
+  latest-password reverification, post-authentication per-session limiting, append-only
   credential generation, atomic family revocation, session-secret-header invalidation, forced
   reauthentication, old/new credential proof, and generic transport/schema/
   credential/replay denial;

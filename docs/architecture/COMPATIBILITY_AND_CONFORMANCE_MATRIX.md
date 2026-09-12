@@ -17,8 +17,9 @@ claim.
 ## Phase 10 Source Conformance
 
 P10-X1 freezes target-neutral source contracts before any target row is
-selected. Exact manifest/config/status/output fixtures, authenticated local
-health/status, offline recovery, non-root enforcement, completion/man source,
+selected. The accepted local-authentication security correction supersedes the
+prior freeze bytes before first support: exact manifest/config/status/output
+fixtures, withdrawn Unix CLI health/status, browser/API health/status, offline recovery, non-root enforcement, completion/man source,
 packet CLI/API/MCP equality, and recovery API/MCP/UI unavailability pass under
 `npm run phase10:exit:test` and `npm run phase10:exit:check`.
 

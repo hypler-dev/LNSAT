@@ -62,9 +62,9 @@ HTTP `200` returns:
   `reauthentication_required: true`;
 - `execution_authority: false` and `mutation_authority: false`.
 
-A monotonic limiter admits at most five attempts per session and 30
-authentication attempts process-wide per minute. One immediate SQLite
-transaction verifies active bearer/CSRF/activity evidence, derives the target
+A monotonic limiter admits at most five attempts per durably verified session
+per minute. Unverified session input never consumes limiter capacity. One
+immediate SQLite transaction verifies active bearer/CSRF/activity evidence, derives the target
 identity from that session, reverifies the latest Argon2id credential, appends
 one immutable credential generation, revokes every active session for the same
 identity with reason `credential_revoke`, and appends exact identity and
@@ -108,9 +108,10 @@ the same HTTP `403` contract:
 }
 ```
 
-The possible limiter side effect is explicit because a sufficiently valid
-request consumes bounded process-local limiter state before body schema,
-credential, and durable-state checks finish. The response does not reveal
+The possible limiter side effect is explicit because a request consumes
+bounded per-session process-local limiter state only after durable bearer/proof
+authentication and closed-body parsing. Unverified session input cannot
+consume limiter capacity. The response does not reveal
 whether limiter state advanced. It returns no session-secret headers and reveals no identity,
 credential, session, password, expiry, CSRF, evidence, or internal failure
 reason.
@@ -118,7 +119,7 @@ reason.
 Every failed SQLite transition rolls back activity, credential, revocation,
 identity-event, and session-event writes together. Thus
 `credential_state_changed` and `session_state_changed` remain false even when
-process-local limiter state advanced. Malformed pre-route HTTP framing, size,
+verified-session limiter state advanced. Malformed pre-route HTTP framing, size,
 version, route, and method failures retain their transport/version envelopes.
 
 ## Boundary

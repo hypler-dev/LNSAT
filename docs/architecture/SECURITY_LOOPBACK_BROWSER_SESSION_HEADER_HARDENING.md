@@ -41,12 +41,12 @@ No supported artifact or stable external consumer exists. Pre-release clients
 must move atomically from the cookie contract to the header-pair contract. Old
 browser cookie-only requests fail closed; no compatibility alias remains.
 
-This packet does not change the authenticated Unix control-socket protocol. Its
-cookie-shaped internal HTTP framing remains a separate token-only transport.
-The scan finding `same-uid-control-socket-substitution` therefore remains open
-and blocks release. The global login-limiter lockout finding also remains open.
-This packet adds no remote listener, CORS permission, new mutation authority,
-database migration, secret persistence, deployment, or publication authority.
+This packet does not alter the browser header-pair contract. The separately
+accepted [local authentication availability and UDS withdrawal](SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
+withdraws the Unix bearer transport and corrects the global login limiter before
+the first supported release. This packet adds no remote listener, CORS
+permission, new mutation authority, database migration, secret persistence,
+deployment, or publication authority.
 
 ## Acceptance Evidence
 

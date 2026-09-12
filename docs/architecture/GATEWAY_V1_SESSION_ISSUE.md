@@ -96,10 +96,14 @@ clock, evidence, or persistence all return the same HTTP `403` contract:
 }
 ```
 
-The possible limiter side effect is explicit because sufficiently valid
-attempts consume bounded process-local rate-limit state before credential
-verification. A denial returns no session-secret headers and creates no usable authenticated
-state. Its public body does not reveal whether the limiter advanced.
+The possible limiter side effect is explicit because attempts for a durably
+known active identity consume bounded per-identity process-local state before
+credential verification. Unknown, invalid, and inactive identities do not
+enter the limiter, but still perform the fixed-profile dummy Argon2id check.
+Rate-limited known identities also perform one Argon2id verification. A denial
+returns no session-secret headers and creates no usable authenticated state.
+Its public body does not reveal whether the limiter advanced or which identity
+state was observed.
 
 Pre-route HTTP framing, size, version, route, and method failures retain their
 own stable transport/version envelopes; they do not falsely claim session-issue

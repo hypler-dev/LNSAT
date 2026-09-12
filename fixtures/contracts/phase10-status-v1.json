@@ -24,9 +24,7 @@
       "recovery.inspect",
       "backup",
       "restore",
-      "recovery.owner",
-      "health",
-      "status"
+      "recovery.owner"
     ],
     "reserved": ["recovery.activate", "service", "update"]
   },

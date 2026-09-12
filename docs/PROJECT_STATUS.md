@@ -11,8 +11,11 @@ intent on 2026-09-10. The in-review packet removes browser cookies from the
 numeric-loopback authentication path and requires an explicit non-ambient
 session-token plus independent-proof header pair on every authenticated browser
 request. Merge, deployment, publication, and release remain separately gated.
-The same-UID Unix control-socket substitution and global login-limiter lockout
-findings remain open release blockers.
+The accepted [local authentication availability and UDS withdrawal](architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
+applies source remediation for the same-UID Unix control-socket substitution and
+global login-limiter lockout findings. It withdraws Unix bearer reads before the
+first supported release, preserves browser header-pair transport, and still
+requires focused validation and independent review before release judgment.
 
 Repository source is public through the independently audited fresh-history
 cutover recorded in [public source readiness](PUBLIC_READINESS.md). Public
@@ -111,7 +114,9 @@ management mutation, runtime, installer, or supported-platform claim is opened.
 HCFG-0/HCFG-1 source diagnostics are implemented: status defaults to and echoes
 exact `lnsat.product_surface.v1`; explicit v1/v2 selection is exact-match only
 and fails before session work when duplicate, malformed, unsupported, or
-wrong-route. Frozen v1 command/status bytes remain unchanged. Explicit
+wrong-route. The accepted pre-1.0 security correction changes the v1 command
+inventory and status bytes, records the superseded digests, and keeps selector
+matching fail closed. Explicit
 `lnsat.product_surface.v2` adds source-only v2 manifest/status diagnostics plus
 `lnsatctl config schema|validate`; validation reads a selected config and a
 referenced runtime profile but opens no database, listener, process, or action
@@ -149,11 +154,12 @@ Rollback is a normal reviewed source revert; there is no persistent migration.
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
 exact-ID Control Center readback and manifest-only source-local console hosting
 are implemented as experimental source. Phase 10 P10-A1 product-surface spine,
-P10-A2 explicit-only configuration, and P10-A3 authenticated local
-health/status plus stable output contracts are implemented. P10-A4 offline
+P10-A2 explicit-only configuration, and P10-A3 browser/API health/status plus
+withdrawn Unix CLI health/status contracts are implemented. P10-A4 offline
 backup, inert restore, protected owner recovery, non-root enforcement, and
 cross-surface unavailability parity are also implemented. P10-X1 closes Phase
-10 source conformance with a fail-closed evidence/compatibility ledger. P11-R1
+10 source conformance with a security-corrected fail-closed
+evidence/compatibility ledger. P11-R1
 adds one experimental served reference proof over existing Phase 8 loopback
 routes and a marked disposable Git fixture. The execute response is discarded;
 after daemon restart, the requester resolves the unknown outcome only through
@@ -613,8 +619,9 @@ duplicate-refusing HTTP/1.1 head parsing, non-ambient browser secret headers,
 independent session-proof verification, SQLite session/revocation verification,
 secret-free authorized request evidence, and one generic denial. Server-owned
 UTC now supplies issue/verification time; served session issue is bounded to
-five attempts per identity and 30 process-wide per monotonic minute, while
-unknown identities consume a validated fixed-profile Argon2id verification.
+five attempts per durably known active identity per monotonic minute, while
+unknown, invalid, and inactive identities do not consume limiter capacity but
+still consume a validated fixed-profile Argon2id verification.
 Authenticated mutation composition can atomically append revocations
 for every active same-identity session without duplicate or cross-identity
 authority. Schema v11 adds preserve-only append-only activity evidence with a
@@ -633,7 +640,7 @@ permanent non-owner disablement appends immutable actor-session-bound status
 evidence and atomically closes the target family with `owner_revoke`. Disabled
 identities use the dummy Argon2id denial path. Daemon composition owns time and
 generic denial for both operations. Password rotation is served through a
-closed two-field JSON body, per-session/process limiting, strict same-origin
+closed two-field JSON body, post-authentication per-session limiting, strict same-origin
 CSRF proof, full session-family revocation, invalidated session-secret headers, and explicit
 reauthentication. Owner-only identity disablement is served with exact empty
 framing, permanent status evidence, atomic target-family closure, and no
@@ -665,8 +672,9 @@ transaction. It invalidates every active owner session and opens no HTTP route.
 The live loopback server now
 serves `POST|GET|HEAD|PATCH|DELETE /v1/session` through strict source parsing. `POST`
 requires exact Origin, same-origin Fetch Metadata, JSON, a custom
-session-intent header, a closed body at most 4 KiB, and the process-wide
-limiter; success sets fresh non-ambient bearer/proof headers. All issue failures
+session-intent header, a closed body at most 4 KiB, and a per-known-active-identity
+limiter; success sets fresh non-ambient bearer/proof headers. Unknown identity
+churn cannot consume known-identity capacity. All issue failures
 share one stable denial. `POST /v1/session` now publishes the stable
 `lnsat.gateway.session_issue.v1_0` contract with closed secret input,
 fresh-session-per-success replay, possible failure-side limiter advancement,
@@ -690,14 +698,14 @@ reauthentication, and is one-time per active family. Transport,
 authentication, expiry, replay, clock, evidence, and persistence failures
 collapse into one zero-side-effect denial without session-secret headers or identity/session
 detail. Authenticated `PATCH /v1/identity/password` accepts only
-`current_password` and `new_password`, applies the shared per-session/process
-limiter, reverifies the latest credential, appends one immutable generation,
+`current_password` and `new_password`, applies a shared post-authentication
+per-session limiter, reverifies the latest credential, appends one immutable generation,
 atomically revokes all same-identity sessions, invalidates both session-secret headers, and requires
 reauthentication under stable
 `lnsat.gateway.identity_password_rotation.v1_0`. Success declares exact
 limiter/activity/credential/identity-event/revocation/session-event/session-secret-header
 effects. Transport, schema, credential, limit, clock, evidence, and persistence
-failures share one denial that exposes only possible process-limiter
+failures share one denial that exposes only possible verified-session limiter
 advancement and no durable credential/session change. Packet/action mutation
 and identity re-enable remain unserved. Owner-only `POST /v1/identities`
 accepts only identity reference, display name, operator/auditor role, and
@@ -946,7 +954,7 @@ one-time per active family: success reverifies the latest password, appends one
 credential generation and identity event, atomically revokes the family,
 invalidates both client-held secret headers, and forces login with the new
 password. Its generic
-denial discloses possible process-limiter advancement while durable
+denial discloses possible verified-session limiter advancement while durable
 credential/session state remains unchanged.
 Owner-only `POST /v1/identities` is create-once per immutable identity
 reference: success appends one operator/auditor identity, initial Argon2id
@@ -954,7 +962,7 @@ credential, and actor-session-bound identity event atomically. Its secret-free
 response declares exact limiter/activity/identity/credential/event effects and
 returns no session-secret headers. Duplicate, non-owner, schema, credential, CSRF, clock, drift,
 and persistence failures share one generic denial exposing only possible
-process-limiter advancement; durable state rolls back.
+verified-session limiter advancement; durable state rolls back.
 Owner-only `DELETE /v1/identities/{identity_ref}` is one-time per active
 operator or auditor target: success appends permanent identity-status and
 actor-session-bound identity-event evidence, atomically closes the target
@@ -1110,21 +1118,23 @@ P10-A2 adds closed contract `lnsat.daemon.config.v1` and
 `lnsatd --config <absolute-path>`. One explicit file must be regular,
 non-symlinked, UTF-8, at most 64 KiB, duplicate-key-free, and schema-closed. It
 may select only the existing database path, numeric-loopback listen address,
-optional authenticated CLI Unix-socket path, paired disposable Phase 8 Git
+paired disposable Phase 8 Git
 paths, and exact console-root asset manifest. Mixed direct/config input, unsafe
 paths/manifests, secret fields, and environment discovery fail closed. Existing
 direct daemon arguments remain compatible.
 
 Current `lnsatctl` implements source-local `doctor`, public-safe `config
-inspect`, exact read-only `recovery inspect`, authenticated `health`/`status`,
+inspect`, exact read-only `recovery inspect`, withdrawn legacy `health`/`status`
+errors,
 non-root offline `backup`, fresh inert `restore`, protected `recovery owner`,
 stable text/JSON/JSONL/YAML, manifest, completion, man, help, and version.
-Health/status require one explicit macOS/Linux Unix-socket path and one opaque
-session token from stdin. Client proves private parent, socket mode/type/owner,
-stable inode identity, and peer effective UID before bearer transmission;
-daemon applies the equal-UID check to clients. Numeric-loopback HTTP remains
-browser/API transport but is closed for `lnsatctl` bearer reads. No
-default/remote/DNS/proxy/redirect/retry/discovery transport exists. Config
+Legacy health/status forms return `lnsatctl.unix_transport.withdrawn` before
+protected stdin, Unix connection, or request bytes. No bearer or browser proof
+is sent to a Unix peer. Numeric-loopback HTTP remains the browser/API transport
+with unchanged header-pair authentication. A non-null `control_socket_path`
+returns `lnsatd.control_socket.withdrawn` before bind; absent or `null` remains
+schema-compatible. No default/remote/DNS/proxy/redirect/retry/discovery CLI
+transport exists. Config
 inspection returns exact-byte SHA-256 and applied-layer evidence without path,
 address, or source-byte reflection. P11-D2 may additionally open one explicitly
 selected Docker-local profile file through the closed D1 loader and return only

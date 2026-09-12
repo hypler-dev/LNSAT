@@ -166,9 +166,11 @@ terminal-conflict, drift, or persistence failure returns same HTTP `403`:
 - `execution_authorized: false`;
 - `mutation_authority: false`.
 
-Possible limiter advancement is explicit because sufficiently valid requests
-consume bounded process-local limiter state before later checks finish.
-Response reveals neither limiter outcome nor existence/state of request,
+Possible limiter advancement is explicit because requests consume bounded
+per-session process-local limiter state only after durable bearer/proof
+authentication and closed-body parsing. Unverified session input cannot
+consume limiter capacity. Later checks may still fail. Response reveals
+neither limiter outcome nor existence/state of request,
 policy, session, or decision evidence.
 
 Malformed pre-route framing, numeric Host failure, exact-version failure,

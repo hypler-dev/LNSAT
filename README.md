@@ -94,13 +94,19 @@ verification remain separate gates. [Project Status](docs/PROJECT_STATUS.md)
 owns detailed implementation truth; [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md)
 explains the labels.
 
-### Local browser authentication posture
+### Local authentication posture
 
 The pre-release numeric-loopback browser session uses one bearer header plus an
 independent proof header held only in exact-origin volatile memory; it does not
 use browser cookies. Missing, stale, revoked, expired, or mismatched pairs fail
-through the same closed route denial. See the
-[browser session hardening record](docs/architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md).
+through the same closed route denial. Authenticated health/status over the Unix
+control socket is withdrawn and fails before secret input or transport work.
+Login throttling is isolated per known identity, while protected mutations are
+limited per verified session. Unknown-identity denials still perform fixed
+dummy Argon2 work, so a hostile loopback-local peer can consume bounded
+authentication worker capacity. See the
+[browser session hardening record](docs/architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
+and [local authentication availability record](docs/architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md).
 These source controls grant no merge, runtime, build, publication, deployment,
 or release authority.
 

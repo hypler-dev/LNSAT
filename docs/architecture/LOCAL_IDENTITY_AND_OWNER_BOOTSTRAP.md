@@ -67,17 +67,18 @@ fails closed as evidence drift.
 Unknown, invalid, and inactive identity lookups consume password candidates
 against one fixed, non-secret `lnsat.argon2id.v1` dummy verifier. The verifier
 is validated when the store opens and is never regenerated per request. The
-daemon's route-neutral session issuer additionally caps attempts to five per
-identity and 30 process-wide in one monotonic 60-second window, with at most
-128 retained identity keys. Every credential, limiter, clock, and persistence
-failure collapses to one public denial.
+daemon's route-neutral session issuer additionally caps attempts for each
+durably known active identity to five in one monotonic 60-second window, with
+at most 128 retained identity keys. Unknown, invalid, and inactive identities
+do not consume limiter capacity. Every credential, limiter, clock, and
+persistence failure collapses to one public denial.
 
 `SqliteStore::create_local_identity_v1` derives an active owner actor from the
 bearer/CSRF pair, enforces `manage_identities`, and atomically appends one
 immutable operator or auditor identity, initial Argon2id credential, and
 actor-session-bound `identity_created` event. Stable `POST /v1/identities`
 serves this transaction through `lnsat.gateway.identity_creation.v1_0`: strict
-same-origin proof, a closed four-field body, per-session/process limiting,
+same-origin proof, a closed four-field body, post-authentication per-session limiting,
 create-once identity-reference replay semantics, secret-free success evidence,
 and one generic denial exposing only possible limiter advancement. Duplicate or
 failed creation rolls back durable activity, identity, credential, and event
@@ -92,7 +93,7 @@ PHC verifier never appear in public results. No replacement session is issued;
 the identity must authenticate again with the new password. Stable
 `PATCH /v1/identity/password` serves this transaction through
 `lnsat.gateway.identity_password_rotation.v1_0`: strict same-origin
-bearer/proof headers, a closed secret body, per-session/process limiting, generic
+bearer/proof headers, a closed secret body, post-authentication per-session limiting, generic
 denial with possible limiter advancement, and required client-side secret discard.
 
 `SqliteStore::disable_local_identity_v1` requires an active owner session and

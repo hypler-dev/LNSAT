@@ -75,9 +75,9 @@ HTTP `201` returns:
   without changing bearer, expiry, revocation, role, or authority;
 - `execution_authority: false` and `mutation_authority: false`.
 
-A monotonic limiter admits at most five attempts per session and 30
-authentication attempts process-wide per minute. One immediate SQLite
-transaction verifies active bearer/CSRF/activity evidence and owner role,
+A monotonic limiter admits at most five attempts per durably verified session
+per minute. Unverified session input never consumes limiter capacity. One
+immediate SQLite transaction verifies active bearer/CSRF/activity evidence and owner role,
 appends one immutable non-owner identity, its initial Argon2id credential, and
 one `identity_created` security event. That event binds the exact owner actor
 session, credential source digest, and server-owned time.
@@ -118,9 +118,10 @@ contract:
 }
 ```
 
-Possible limiter advancement is explicit because a sufficiently valid request
-consumes bounded process-local limiter state before body schema, role, and
-durable-state checks finish. The response does not reveal whether limiter
+Possible limiter advancement is explicit because a request consumes bounded
+per-session process-local limiter state only after durable bearer/proof
+authentication and closed-body parsing. Unverified session input cannot
+consume limiter capacity. The response does not reveal whether limiter
 state advanced, whether an identity exists, or why authorization failed.
 
 Every failed SQLite transition rolls back activity, identity, credential, and
