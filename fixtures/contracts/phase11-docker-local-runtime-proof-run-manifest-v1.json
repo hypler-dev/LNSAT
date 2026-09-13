@@ -69,13 +69,47 @@
     "incomplete_or_redaction_invalid_evidence"
   ],
   "forbidden_public_evidence_fields": [
-    "host_path", "socket_path", "docker_config_path", "repository_path", "git_directory_path", "raw_container_id", "raw_command", "raw_arguments", "raw_stdout", "raw_stderr", "canonical_request_frame", "canonical_result_frame", "source_bytes", "patch_bytes", "credential", "capability_value", "session_value", "csrf_value", "environment_value", "private_registry_configuration"
+    "host_path",
+    "socket_path",
+    "docker_config_path",
+    "repository_path",
+    "git_directory_path",
+    "raw_container_id",
+    "raw_command",
+    "raw_arguments",
+    "raw_stdout",
+    "raw_stderr",
+    "canonical_request_frame",
+    "canonical_result_frame",
+    "source_bytes",
+    "patch_bytes",
+    "credential",
+    "capability_value",
+    "session_value",
+    "csrf_value",
+    "environment_value",
+    "private_registry_configuration"
   ],
   "authority_declaration_ids": [
-    "execution_host_and_run_window", "docker_client_path_and_digest", "docker_endpoint_local_unix_identity", "expected_daemon_identity_api_version_platform_security_posture", "prepositioned_image_digest_platform_provenance_configuration_entrypoint_adapter_executable_pull_never", "fresh_owner_only_disposable_root_and_marked_repository_identity", "host_git_verifier_path_and_digest", "served_gateway_d4b2a_d3_d4a_supervisor_chain_identity", "case_ids_evidence_location_redaction_cleanup_rollback_reviewer", "named_observation_and_execution_permissions"
+    "execution_host_and_run_window",
+    "docker_client_path_and_digest",
+    "docker_endpoint_local_unix_identity",
+    "expected_daemon_identity_api_version_platform_security_posture",
+    "prepositioned_image_digest_platform_provenance_configuration_entrypoint_adapter_executable_pull_never",
+    "fresh_owner_only_disposable_root_and_marked_repository_identity",
+    "host_git_verifier_path_and_digest",
+    "served_gateway_d4b2a_d3_d4a_supervisor_chain_identity",
+    "case_ids_evidence_location_redaction_cleanup_rollback_reviewer",
+    "named_observation_and_execution_permissions"
   ],
   "authority_stop_ids": [
-    "missing_identity", "base_or_source_movement", "mutable_image_resolution", "unexpected_network_need", "unsafe_target_state", "evidence_custody_ambiguity", "action_outside_named_run"
+    "missing_identity",
+    "base_or_source_movement",
+    "mutable_image_resolution",
+    "unexpected_network_need",
+    "unsafe_target_state",
+    "evidence_custody_ambiguity",
+    "action_outside_named_run"
   ],
   "next_gate": "separately_authorized_real_disposable_docker_image_and_runtime_proof"
 }
