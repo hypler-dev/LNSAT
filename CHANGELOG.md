@@ -27,6 +27,14 @@
 
 ### Added
 
+- Added a source-only private Phase 11 Docker proof run-manifest contract. It
+  canonically binds reviewed proof metadata to exact later-run declarations,
+  including nonce, bounded UTC window, private evidence custody, and named
+  permissions. A separately supplied expected source-root/revision/build identity
+  keeps private evidence outside source. It performs no runtime I/O, does not
+  inspect private filesystem identities, prove human authority, or open Docker,
+  runtime, release, deployment, production, or Phase 11 completion claims.
+
 - Added v2-only `lnsatctl config effective` and redacted `config export`
   diagnostics over the experimental headless declaration contract. Inputs use
   bounded stable regular-file reads; outputs omit source identities and remain

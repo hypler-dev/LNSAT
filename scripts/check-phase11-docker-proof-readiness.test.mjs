@@ -17,6 +17,8 @@ const evidenceRequirementsFixtureRelativePath =
   "fixtures/contracts/phase11-docker-local-runtime-proof-evidence-requirements-v1.json";
 const executionHarnessFixtureRelativePath =
   "fixtures/contracts/phase11-docker-local-runtime-proof-execution-harness-v1.json";
+const runManifestFixtureRelativePath =
+  "fixtures/contracts/phase11-docker-local-runtime-proof-run-manifest-v1.json";
 const tempRoots = [];
 
 function tempFile(name, content) {
@@ -237,6 +239,28 @@ test("execution harness fixture rejects opened claims and authority drift", () =
   assert.match(errors, /forbidden_public_evidence_fields: ids or order mismatch/u);
   assert.match(errors, /authority_declaration_ids: ids or order mismatch/u);
   assert.match(errors, /authority_stop_ids: ids or order mismatch/u);
+});
+
+test("run manifest fixture rejects opened claims and authority drift", () => {
+  const runManifestPath = mutatedJson(runManifestFixtureRelativePath, (fixture) => {
+    fixture.phase11_complete = true;
+    fixture.execution_authorized = true;
+    fixture.real_docker_proof = true;
+    fixture.production_supported = true;
+    fixture.required_case_ids.reverse();
+    fixture.authority_stop_ids.pop();
+    fixture.contract.proves_human_authority = true;
+  });
+  const result = validatePhase11DockerProofReadiness({ root, runManifestPath });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /run manifest fixture\.phase11_complete: false required/u);
+  assert.match(errors, /run manifest fixture\.execution_authorized: false required/u);
+  assert.match(errors, /run manifest fixture\.real_docker_proof: false required/u);
+  assert.match(errors, /run manifest fixture\.production_supported: false required/u);
+  assert.match(errors, /required_case_ids: ids or order mismatch/u);
+  assert.match(errors, /authority_stop_ids: ids or order mismatch/u);
+  assert.match(errors, /proves_human_authority: false required/u);
 });
 
 test("evidence requirements fixture rejects invented packet id", () => {
@@ -541,6 +565,62 @@ test("pure execution harness module rejects process, filesystem, socket, store, 
         `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
         "u",
       ),
+    );
+  }
+});
+
+test("private run manifest module rejects runtime I/O marker surfaces", () => {
+  for (const forbidden of [
+    "std::process",
+    "Command::new",
+    "std::net",
+    "std::fs",
+    "std::env",
+    "std::os::unix",
+    "local_unix_socket",
+    "UnixListener",
+    "UnixStream",
+    "lnsat_store",
+    "supervise_docker_local_git_execution_v1",
+    "execute_phase11_mapped_disposable_git_commit_v1",
+  ]) {
+    const runManifestModulePath = tempFile(
+      "docker_local_runtime_proof_run_manifest.rs",
+      `${readFileSync(
+        resolve(root, "crates/lnsatd/src/docker_local_runtime_proof_run_manifest.rs"),
+        "utf8",
+      )}\n${forbidden}\n`,
+    );
+    const result = validatePhase11DockerProofReadiness({ root, runManifestModulePath });
+    assert.equal(result.ok, false, forbidden);
+    assert.match(
+      result.errors.join("\n"),
+      new RegExp(
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        "u",
+      ),
+    );
+  }
+});
+
+test("private run manifest module requires external source-boundary markers", () => {
+  const source = readFileSync(
+    resolve(root, "crates/lnsatd/src/docker_local_runtime_proof_run_manifest.rs"),
+    "utf8",
+  );
+  for (const marker of [
+    "DockerLocalRuntimeProofRunManifestSourceBindingV1",
+    "source.repository_absolute_path",
+  ]) {
+    const runManifestModulePath = tempFile(
+      "docker_local_runtime_proof_run_manifest.rs",
+      source.replaceAll(marker, "REMOVED_SOURCE_BOUNDARY"),
+    );
+    const result = validatePhase11DockerProofReadiness({ root, runManifestModulePath });
+    assert.equal(result.ok, false, marker);
+    assert.match(
+      result.errors.join("\n"),
+      new RegExp(`missing marker ${marker}`.replaceAll(".", "\\."), "u"),
     );
   }
 });

@@ -96,6 +96,8 @@ subsystem or proposal.
 The source-only execution-harness contract binds those proposed records for a
 later authority. [PHR-0005](reference/public-history-reviews/PHR-0005/review.json)
 records its independent source review; it has no runnable proof driver or runtime evidence.
+The private run-manifest contract binds exact later-run declarations without proving
+human authority, inspecting private filesystem identities, or accessing Docker.
 
 - [Compatibility and conformance](architecture/COMPATIBILITY_AND_CONFORMANCE_MATRIX.md)
 - [Rust core and TypeScript Control Center](architecture/RUST_CORE_AND_TYPESCRIPT_CONTROL_CENTER_ARCHITECTURE.md)

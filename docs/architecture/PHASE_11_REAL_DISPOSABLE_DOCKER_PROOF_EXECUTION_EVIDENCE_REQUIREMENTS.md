@@ -162,3 +162,12 @@ inherited requirements, and exact later-authority declarations and stops. It is
 not a runnable proof driver and adds no runtime evidence. Any later runnable
 execution harness and its exact source revision require review before Docker
 access.
+
+A private run-manifest contract may bind exact declarations for that later run
+to a separately supplied expected source-root/revision/build identity and reject
+private evidence beneath source. It is not authority or evidence: JSON alone
+never grants permission, inspects private filesystem identities, or performs
+runtime I/O. The future driver remains responsible for
+daemon/image/configuration/entrypoint/in-image-adapter preflight, the served
+Gateway -> D4B2A -> D3/D4A -> supervisor chain, and daemon/client/endpoint-
+revalidated, launch-label-bound inspect-before-remove cleanup.

@@ -238,6 +238,14 @@ requirements digests with the same closed lists and later-authority declaration
 and stop IDs. PHR-0005 records independent source review. It is metadata only,
 has no runnable proof driver, runtime evidence, or execution authority; Phase 11
 remains incomplete.
+The private run-manifest contract now binds a nonce, bounded UTC window, exact
+later-run identities, and private evidence custody declarations to a separately
+supplied expected source-root/revision/build identity. It rejects evidence
+beneath source. JSON alone never grants permission. It performs no filesystem
+identity checks or runtime I/O. A later driver must still preflight the daemon,
+image, configuration, entrypoint, and in-image adapter; traverse Gateway ->
+D4B2A -> D3/D4A -> supervisor; and use daemon/client/endpoint-revalidated,
+launch-label-bound inspect-before-remove cleanup.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
