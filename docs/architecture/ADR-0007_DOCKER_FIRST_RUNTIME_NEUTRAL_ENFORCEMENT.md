@@ -467,6 +467,15 @@ declarations and stops. PHR-0005 records independent source review. The contract
 is not a runnable proof driver and opens no Docker operation, runtime result,
 receipt, or execution authority.
 
+The private served-driver admission evaluator is a source-only binding seam for
+that later driver. It admits only a created, dispatching D4B2A claim and binds
+the canonical run manifest, D3/D4A payload, loaded profile, and launch-contract
+digest, including exact profile-derived D3 stdin, stdout, stderr, and deadline
+limits. Replay, ambiguous state/receipt/reconciliation, and binding drift are
+rejected. The evaluator performs no store write, route, filesystem/process/
+Docker I/O, receipt, evidence persistence, runtime selector, or execution, and
+therefore does not advance the Phase 11 real-proof gate.
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.

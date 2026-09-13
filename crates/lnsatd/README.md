@@ -40,6 +40,13 @@ Current behavior:
   identities, private evidence custody, and named permissions; it rejects
   evidence beneath source, does not prove human authority or inspect private
   filesystem identities, and leaves the driver as a separate gate;
+- evaluates one private served-driver admission contract that binds that run
+  manifest to a created, dispatching D4B2A claim, canonical D3/D4A payload,
+  loaded profile, exact profile-derived D3 limits, and launch-contract digest;
+  replay, ambiguous state/receipt/reconciliation, and binding drift fail
+  closed, with no store write, route,
+  filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
+  runtime execution;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before

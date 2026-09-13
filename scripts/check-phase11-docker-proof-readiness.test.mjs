@@ -19,6 +19,8 @@ const executionHarnessFixtureRelativePath =
   "fixtures/contracts/phase11-docker-local-runtime-proof-execution-harness-v1.json";
 const runManifestFixtureRelativePath =
   "fixtures/contracts/phase11-docker-local-runtime-proof-run-manifest-v1.json";
+const driverAdmissionFixtureRelativePath =
+  "fixtures/contracts/phase11-docker-local-runtime-proof-driver-admission-v1.json";
 const tempRoots = [];
 
 function tempFile(name, content) {
@@ -261,6 +263,46 @@ test("run manifest fixture rejects opened claims and authority drift", () => {
   assert.match(errors, /required_case_ids: ids or order mismatch/u);
   assert.match(errors, /authority_stop_ids: ids or order mismatch/u);
   assert.match(errors, /proves_human_authority: false required/u);
+});
+
+test("driver admission fixture rejects opened runtime claims and weakened bindings", () => {
+  const driverAdmissionPath = mutatedJson(
+    driverAdmissionFixtureRelativePath,
+    (fixture) => {
+      fixture.phase11_complete = true;
+      fixture.execution_authorized = true;
+      fixture.runtime_launch_performed = true;
+      fixture.real_docker_proof = true;
+      fixture.receipt_persisted = true;
+      fixture.production_supported = true;
+      fixture.contract.proves_human_authority = true;
+      fixture.required_claim_state.claim_created = false;
+      fixture.required_bindings.reverse();
+      fixture.error_codes.pop();
+    },
+  );
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    driverAdmissionPath,
+  });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  for (const field of [
+    "phase11_complete",
+    "execution_authorized",
+    "runtime_launch_performed",
+    "real_docker_proof",
+    "receipt_persisted",
+    "production_supported",
+  ])
+    assert.match(
+      errors,
+      new RegExp(`driver admission fixture\\.${field}: false required`, "u"),
+    );
+  assert.match(errors, /proves_human_authority: false required/u);
+  assert.match(errors, /required_claim_state: mismatch/u);
+  assert.match(errors, /required_bindings: ids or order mismatch/u);
+  assert.match(errors, /error_codes: ids or order mismatch/u);
 });
 
 test("evidence requirements fixture rejects invented packet id", () => {
@@ -621,6 +663,46 @@ test("private run manifest module requires external source-boundary markers", ()
     assert.match(
       result.errors.join("\n"),
       new RegExp(`missing marker ${marker}`.replaceAll(".", "\\."), "u"),
+    );
+  }
+});
+
+test("private driver admission module rejects runtime, store-write, and consequence markers", () => {
+  const source = readFileSync(
+    resolve(root, "crates/lnsatd/src/docker_local_runtime_proof_driver_admission.rs"),
+    "utf8",
+  );
+  for (const forbidden of [
+    "std::process",
+    "Command::new",
+    "std::net",
+    "std::fs",
+    "std::env",
+    "std::os::unix",
+    "local_unix_socket",
+    "UnixListener",
+    "UnixStream",
+    "claim_phase11_docker_runtime_composition_v1",
+    "persist_phase11_docker_runtime_result_v1",
+    "mark_phase11_docker_outcome_unknown_v1",
+    "supervise_docker_local_git_execution_v1",
+    "execute_phase11_mapped_disposable_git_commit_v1",
+  ]) {
+    const driverAdmissionModulePath = tempFile(
+      "docker_local_runtime_proof_driver_admission.rs",
+      `${source}\n${forbidden}\n`,
+    );
+    const result = validatePhase11DockerProofReadiness({
+      root,
+      driverAdmissionModulePath,
+    });
+    assert.equal(result.ok, false, forbidden);
+    assert.match(
+      result.errors.join("\n"),
+      new RegExp(
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        "u",
+      ),
     );
   }
 });

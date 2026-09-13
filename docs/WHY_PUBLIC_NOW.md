@@ -112,6 +112,15 @@ later-authority declarations and stops. PHR-0005 records independent source
 review. The contract is not a runnable proof driver and does not authorize
 execution or complete Phase 11.
 
+The source also contains a private served-driver admission evaluator for review
+of the next boundary. It binds the canonical run manifest to a created,
+dispatching D4B2A claim, canonical D3/D4A payload, loaded profile, and
+launch-contract digest, while rejecting replay, ambiguous state/receipt/
+reconciliation, and binding drift. It performs no store write, route,
+filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
+runtime execution. Real Docker proof, Phase 13/14 release work, and publication
+remain separate, closed gates.
+
 ## 5. Runtime and Ecosystem Role
 
 MCP, A2A, REST, CLI, and browser interfaces are replaceable transports over the

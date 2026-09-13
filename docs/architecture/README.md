@@ -100,6 +100,12 @@ The source-only execution-harness contract binds the proposed Phase 11 proof
 records for later authority. PHR-0005 records independent source review. It is
 not a runnable proof driver and has no runtime evidence.
 
+The private served-driver admission evaluator binds the canonical run manifest
+to one created, dispatching D4B2A claim, the D3/D4A payload, loaded profile, and
+launch-contract digest. It rejects replay and state or identity drift without
+store writes or runtime I/O. It remains source-only and does not complete Phase
+11 or open real Docker proof.
+
 These files describe experimental local foundations. Local owner, append-only
 credential rotation, permanent non-owner disablement, hash-only session
 evidence, and a source-local offline owner-recovery transition exist.

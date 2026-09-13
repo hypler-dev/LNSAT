@@ -96,6 +96,13 @@ Daemon/image/configuration/entrypoint/in-image-adapter preflight, the served
 Gateway -> D4B2A -> D3/D4A -> supervisor chain, and launch-label-bound cleanup
 remain later driver and real-proof work.
 
+The private served-driver admission seam now binds the
+canonical run manifest to a created, dispatching D4B2A claim, canonical D3/D4A
+payload, loaded profile, and launch-contract digest. Replay, ambiguous
+state/receipt/reconciliation, and binding drift fail closed. It performs no
+store write, route, filesystem/process/Docker I/O, receipt, evidence
+persistence, selector, or runtime execution; Phase 11 remains incomplete.
+
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
 
