@@ -239,8 +239,12 @@ grants a runtime result, receipt, execution, completion, or support claim. The
 execution-harness contract has [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
 but it is not a runnable proof driver. The private run-manifest contract only
 binds syntactically valid later declarations to a separately supplied expected
-source-root/revision/build identity and rejects evidence beneath that source
-root. JSON alone never grants permission or proves filesystem identity.
+source-root/revision/build identity, rejects evidence beneath that source root
+or disposable target root, and rejects declared source/target path overlap
+lexically. JSON alone never grants permission or proves physical filesystem
+identity or disjointness.
+A later driver must resolve and authenticate the physical source and target
+identities and revalidate their disjointness immediately before process creation.
 It does not constitute real runtime evidence or complete Phase 11.
 See the [proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 and [execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).

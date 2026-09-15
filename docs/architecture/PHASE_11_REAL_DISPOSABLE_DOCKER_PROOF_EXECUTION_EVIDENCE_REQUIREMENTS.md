@@ -164,10 +164,14 @@ execution harness and its exact source revision require review before Docker
 access.
 
 A private run-manifest contract may bind exact declarations for that later run
-to a separately supplied expected source-root/revision/build identity and reject
-private evidence beneath source. It is not authority or evidence: JSON alone
-never grants permission, inspects private filesystem identities, or performs
-runtime I/O. The future driver remains responsible for
-daemon/image/configuration/entrypoint/in-image-adapter preflight, the served
-Gateway -> D4B2A -> D3/D4A -> supervisor chain, and daemon/client/endpoint-
-revalidated, launch-label-bound inspect-before-remove cleanup.
+to a separately supplied expected source-root/revision/build identity, reject
+private evidence beneath source or the disposable target root, and reject
+declared source/target path overlap lexically. It is not authority or evidence:
+JSON alone never grants permission, proves physical filesystem disjointness,
+inspects private filesystem identities, or performs runtime I/O. The future
+driver remains responsible for resolving and authenticating the physical source
+and target identities and revalidating their disjointness immediately before
+process creation; other daemon/image/configuration/entrypoint/in-image-adapter
+preflight; the served Gateway -> D4B2A -> D3/D4A -> supervisor chain; and
+daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove
+cleanup.

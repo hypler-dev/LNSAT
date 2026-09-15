@@ -38,8 +38,12 @@ Current behavior:
   evidence requirements, and execution harness to a nonce, separately supplied
   expected source-root/revision/build identity, bounded UTC window, exact future
   identities, private evidence custody, and named permissions; it rejects
-  evidence beneath source, does not prove human authority or inspect private
-  filesystem identities, and leaves the driver as a separate gate;
+  evidence beneath source or the disposable target root and declared
+  source/target path overlap lexically, does not prove human authority or
+  inspect physical filesystem identities or disjointness, and leaves the driver
+  as a separate gate that must resolve and authenticate the physical source and
+  target identities and revalidate their disjointness immediately before process
+  creation;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before

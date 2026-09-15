@@ -90,11 +90,15 @@ and does not complete Phase 11.
 
 A private run-manifest contract binds exact later-run declarations to a
 separately supplied expected source-root/revision/build identity, rejects private
-evidence beneath source, and preserves the closed boundary: JSON alone never
-grants permission or runtime authority.
-Daemon/image/configuration/entrypoint/in-image-adapter preflight, the served
-Gateway -> D4B2A -> D3/D4A -> supervisor chain, and launch-label-bound cleanup
-remain later driver and real-proof work.
+evidence beneath source or the disposable target root and declared source/target
+path overlap lexically, and preserves the closed boundary: JSON alone never
+grants permission, proves physical filesystem disjointness, or creates runtime
+authority.
+Physical source/target identity resolution and authentication plus disjointness
+revalidation immediately before process creation, other daemon/image/
+configuration/entrypoint/in-image-adapter preflight, the served Gateway ->
+D4B2A -> D3/D4A -> supervisor chain, and launch-label-bound cleanup remain later
+driver and real-proof work.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.

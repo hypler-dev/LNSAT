@@ -31,9 +31,14 @@
   canonically binds reviewed proof metadata to exact later-run declarations,
   including nonce, bounded UTC window, private evidence custody, and named
   permissions. A separately supplied expected source-root/revision/build identity
-  keeps private evidence outside source. It performs no runtime I/O, does not
-  inspect private filesystem identities, prove human authority, or open Docker,
-  runtime, release, deployment, production, or Phase 11 completion claims.
+  keeps private evidence outside source and the disposable target root, and
+  rejects declared source/target path overlap lexically. It performs no runtime
+  I/O, does not prove physical filesystem disjointness, inspect private
+  identities, prove human authority, or open Docker, runtime, release,
+  deployment, production, or Phase 11 completion claims.
+  A later driver must resolve and authenticate physical source and target
+  identities and revalidate their disjointness immediately before process
+  creation.
 
 - Added v2-only `lnsatctl config effective` and redacted `config export`
   diagnostics over the experimental headless declaration contract. Inputs use
