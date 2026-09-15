@@ -38,15 +38,18 @@ Current behavior:
   evidence requirements, and execution harness to a nonce, separately supplied
   expected source-root/revision/build identity, bounded UTC window, exact future
   identities, private evidence custody, and named permissions; it rejects
-  evidence beneath source, does not prove human authority or inspect private
-  filesystem identities, and leaves the driver as a separate gate;
+  evidence beneath source or the disposable target root and declared
+  source/target path overlap lexically, does not prove human authority or
+  inspect physical filesystem identities or disjointness, and leaves the driver
+  as a separate gate that must resolve and authenticate the physical source and
+  target identities and revalidate their disjointness immediately before process
+  creation;
 - evaluates one private served-driver admission contract that binds that run
   manifest to a created, dispatching D4B2A claim, canonical D3/D4A payload,
   loaded profile, exact profile-derived D3 limits, and launch-contract digest;
   replay, ambiguous state/receipt/reconciliation, and binding drift fail
-  closed, with no store write, route,
-  filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
-  runtime execution;
+  closed, with no store write, route, filesystem/process/Docker I/O, receipt,
+  evidence persistence, selector, or runtime execution;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before

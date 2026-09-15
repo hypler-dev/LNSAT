@@ -475,6 +475,21 @@ fn validate_manifest_v1(
             != exact(&DOCKER_LOCAL_RUNTIME_PROOF_EXECUTION_HARNESS_STOP_IDS_V1)
         || manifest.next_gate != DOCKER_LOCAL_RUNTIME_PROOF_NEXT_GATE_V1
         || !valid_declarations_v1(d)
+        // This pure contract can reject declared lexical overlap only. A later
+        // driver must resolve and authenticate physical filesystem identities
+        // immediately before launch.
+        || !paths_are_lexically_disjoint_v1(
+            &source.repository_absolute_path,
+            &d.disposable_target.owner_only_disposable_root,
+        )
+        || !paths_are_lexically_disjoint_v1(
+            &source.repository_absolute_path,
+            &d.disposable_target.repository_absolute_path,
+        )
+        || !paths_are_lexically_disjoint_v1(
+            &source.repository_absolute_path,
+            &d.disposable_target.marker_absolute_path,
+        )
         || path_is_within_v1(
             &d.private_evidence.absolute_location,
             &source.repository_absolute_path,
@@ -533,7 +548,7 @@ fn valid_declarations_v1(d: &DockerLocalRuntimeProofRunManifestSourceInputV1) ->
         && valid_absolute_path_v1(&d.private_evidence.absolute_location)
         && !path_is_within_v1(
             &d.private_evidence.absolute_location,
-            &d.disposable_target.repository_absolute_path,
+            &d.disposable_target.owner_only_disposable_root,
         )
         && valid_sha256_v1(&d.private_evidence.custody_digest)
         && valid_sha256_v1(&d.private_evidence.redaction_digest)
@@ -571,6 +586,9 @@ fn path_is_strict_descendant_v1(candidate: &str, parent: &str) -> bool {
 }
 fn path_is_within_v1(candidate: &str, parent: &str) -> bool {
     candidate == parent || path_is_strict_descendant_v1(candidate, parent)
+}
+fn paths_are_lexically_disjoint_v1(left: &str, right: &str) -> bool {
+    !path_is_within_v1(left, right) && !path_is_within_v1(right, left)
 }
 fn valid_bounded_text_v1(value: &str) -> bool {
     !value.trim().is_empty()

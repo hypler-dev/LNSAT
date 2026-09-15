@@ -204,6 +204,10 @@ fn parser_rejects_identity_path_time_digest_and_permission_drift() {
         ),
         (
             "declarations.private_evidence.absolute_location",
+            json!("/private/synthetic/target/private-evidence"),
+        ),
+        (
+            "declarations.private_evidence.absolute_location",
             json!("/private/synthetic/source/private-evidence"),
         ),
         (
@@ -226,6 +230,73 @@ fn parser_rejects_identity_path_time_digest_and_permission_drift() {
             &harness,
             &source,
             &serde_json::to_string(&value_json).expect("drift"),
+        );
+    }
+}
+
+#[test]
+fn builder_and_canonical_parser_reject_source_target_overlap() {
+    let (plan, requirements, harness) = inputs();
+    let source = source();
+    for target_root in [
+        "/private/synthetic/source/target",
+        "/private/synthetic/source",
+        "/private/synthetic",
+    ] {
+        let mut overlapping = declarations();
+        overlapping.disposable_target.owner_only_disposable_root = target_root.to_owned();
+        overlapping.disposable_target.repository_absolute_path =
+            format!("{target_root}/repository");
+        overlapping.disposable_target.marker_absolute_path =
+            format!("{target_root}/repository/marker");
+        assert_eq!(
+            build_docker_local_runtime_proof_run_manifest_v1(
+                &plan,
+                &requirements,
+                &harness,
+                &source,
+                overlapping,
+            ),
+            Err(DockerLocalRuntimeProofRunManifestErrorV1::ManifestInvalid),
+            "overlapping target root {target_root}",
+        );
+    }
+
+    let built = build_docker_local_runtime_proof_run_manifest_v1(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        declarations(),
+    )
+    .expect("manifest");
+    for target_root in [
+        "/private/synthetic/source/target",
+        "/private/synthetic/source",
+        "/private/synthetic",
+    ] {
+        let mut value: Value = serde_json::from_str(built.canonical_json()).expect("canonical");
+        set_value(
+            &mut value,
+            "declarations.disposable_target.owner_only_disposable_root",
+            json!(target_root),
+        );
+        set_value(
+            &mut value,
+            "declarations.disposable_target.repository_absolute_path",
+            json!(format!("{target_root}/repository")),
+        );
+        set_value(
+            &mut value,
+            "declarations.disposable_target.marker_absolute_path",
+            json!(format!("{target_root}/repository/marker")),
+        );
+        reject(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            &serde_json::to_string(&value).expect("canonical source-target overlap"),
         );
     }
 }

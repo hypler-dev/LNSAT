@@ -241,9 +241,13 @@ remains incomplete.
 The private run-manifest contract now binds a nonce, bounded UTC window, exact
 later-run identities, and private evidence custody declarations to a separately
 supplied expected source-root/revision/build identity. It rejects evidence
-beneath source. JSON alone never grants permission. It performs no filesystem
-identity checks or runtime I/O. A later driver must still preflight the daemon,
-image, configuration, entrypoint, and in-image adapter; traverse Gateway ->
+beneath source or the disposable target root and declared source/target path
+overlap lexically. JSON alone never grants permission or proves physical
+filesystem identity or disjointness.
+It performs no filesystem identity checks or runtime I/O. A later driver must
+resolve and authenticate the physical source and target identities and
+revalidate their disjointness immediately before process creation; preflight
+the daemon, image, configuration, entrypoint, and in-image adapter; traverse Gateway ->
 D4B2A -> D3/D4A -> supervisor; and use daemon/client/endpoint-revalidated,
 launch-label-bound inspect-before-remove cleanup.
 

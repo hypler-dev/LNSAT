@@ -530,7 +530,7 @@ test("pure proof module rejects every process, filesystem, environment, socket, 
     assert.match(
       result.errors.join("\n"),
       new RegExp(
-        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\."),
         "u",
       ),
     );
@@ -564,7 +564,7 @@ test("pure evidence requirements module rejects process, filesystem, socket, sto
     assert.match(
       result.errors.join("\n"),
       new RegExp(
-        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\."),
         "u",
       ),
     );
@@ -604,7 +604,7 @@ test("pure execution harness module rejects process, filesystem, socket, store, 
     assert.match(
       result.errors.join("\n"),
       new RegExp(
-        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\."),
         "u",
       ),
     );
@@ -638,7 +638,7 @@ test("private run manifest module rejects runtime I/O marker surfaces", () => {
     assert.match(
       result.errors.join("\n"),
       new RegExp(
-        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\\\."),
+        `forbidden side-effect marker ${forbidden}`.replaceAll(".", "\\."),
         "u",
       ),
     );
