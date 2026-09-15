@@ -176,11 +176,16 @@ preflight; the served Gateway -> D4B2A -> D3/D4A -> supervisor chain; and
 daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove
 cleanup.
 
-The private served-driver admission evaluator adds a source-only preflight
-contract for that future driver. It binds the run-manifest digest to a created,
-dispatching D4B2A claim, the canonical D3/D4A payload, the loaded profile, and
-the launch-contract digest. It also requires exact profile-derived D3 stdin,
-stdout, stderr, and deadline limits. It rejects replay, ambiguous state/receipt/
-reconciliation, and binding drift. It has no store write, route, filesystem,
-process, Docker, receipt, evidence-persistence, selector, or runtime-execution
-surface; real Docker proof remains separately authorized and incomplete.
+The private served-driver admission evaluator adds a source-only structural
+contract for that future driver. It binds the run-manifest digest to fields in a
+caller-supplied claim snapshot, the canonical D3/D4A payload, the loaded
+profile, and the launch-contract digest. It also requires exact profile-derived
+D3 stdin, stdout, stderr, and deadline limits. It rejects replay, ambiguous
+state/receipt/reconciliation, and binding drift, but its digest authenticates no
+snapshot, revalidates no durable state, and grants no launch permission. A later
+runnable driver must perform an authenticated durable-store re-read of the exact
+bound consumption, operation, and attempt immediately before process creation,
+then revalidate created, dispatching, no-receipt, and no-reconciliation state.
+The evaluator has no store write, route, filesystem, process, Docker, receipt,
+evidence-persistence, selector, or runtime-execution surface; real Docker proof
+remains separately authorized and incomplete.

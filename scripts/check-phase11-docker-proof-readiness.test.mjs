@@ -271,6 +271,9 @@ test("driver admission fixture rejects opened runtime claims and weakened bindin
     (fixture) => {
       fixture.phase11_complete = true;
       fixture.execution_authorized = true;
+      fixture.claim_snapshot_authenticated = true;
+      fixture.durable_claim_state_revalidated = true;
+      fixture.launch_permission_granted = true;
       fixture.runtime_launch_performed = true;
       fixture.real_docker_proof = true;
       fixture.receipt_persisted = true;
@@ -279,6 +282,7 @@ test("driver admission fixture rejects opened runtime claims and weakened bindin
       fixture.required_claim_state.claim_created = false;
       fixture.required_bindings.reverse();
       fixture.error_codes.pop();
+      fixture.required_runtime_gate_checks.pop();
     },
   );
   const result = validatePhase11DockerProofReadiness({
@@ -290,6 +294,9 @@ test("driver admission fixture rejects opened runtime claims and weakened bindin
   for (const field of [
     "phase11_complete",
     "execution_authorized",
+    "claim_snapshot_authenticated",
+    "durable_claim_state_revalidated",
+    "launch_permission_granted",
     "runtime_launch_performed",
     "real_docker_proof",
     "receipt_persisted",
@@ -303,6 +310,7 @@ test("driver admission fixture rejects opened runtime claims and weakened bindin
   assert.match(errors, /required_claim_state: mismatch/u);
   assert.match(errors, /required_bindings: ids or order mismatch/u);
   assert.match(errors, /error_codes: ids or order mismatch/u);
+  assert.match(errors, /required_runtime_gate_checks: ids or order mismatch/u);
 });
 
 test("evidence requirements fixture rejects invented packet id", () => {

@@ -1,16 +1,19 @@
 {
   "schema_id": "lnsat.phase11_docker_local_runtime_proof_driver_admission_fixture.schema.v1_0",
   "fixture_id": "phase11-docker-local-runtime-proof-driver-admission-v1",
-  "status": "binding_admitted_private_source_only",
+  "status": "structural_binding_only_private_source_only",
   "phase11_complete": false,
   "execution_authorized": false,
+  "claim_snapshot_authenticated": false,
+  "durable_claim_state_revalidated": false,
+  "launch_permission_granted": false,
   "runtime_launch_performed": false,
   "real_docker_proof": false,
   "receipt_persisted": false,
   "production_supported": false,
   "contract": {
     "contract_id": "lnsat.docker_local_runtime_proof_driver_admission.v1",
-    "output": "canonical_private_driver_admission_digest",
+    "output": "canonical_private_structural_binding_digest",
     "side_effects": [],
     "runtime_execution": false,
     "proves_human_authority": false
@@ -56,6 +59,14 @@
     "docker_local_runtime_proof_driver_admission.runtime_binding_invalid",
     "docker_local_runtime_proof_driver_admission.launch_binding_invalid",
     "docker_local_runtime_proof_driver_admission.canonicalization_failed"
+  ],
+  "required_runtime_gate_checks": [
+    "authenticate_created_claim_result",
+    "re_read_bound_consumption_operation_attempt_from_durable_store_immediately_before_process_creation",
+    "operation_dispatching_immediately_before_process_creation",
+    "attempt_dispatching_immediately_before_process_creation",
+    "receipt_absent_immediately_before_process_creation",
+    "reconciliation_absent_immediately_before_process_creation"
   ],
   "next_gate": "separately_authorized_real_disposable_docker_proof"
 }

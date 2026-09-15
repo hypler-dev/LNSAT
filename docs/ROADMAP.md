@@ -100,11 +100,15 @@ configuration/entrypoint/in-image-adapter preflight, the served Gateway ->
 D4B2A -> D3/D4A -> supervisor chain, and launch-label-bound cleanup remain later
 driver and real-proof work.
 
-The private served-driver admission seam now binds the
-canonical run manifest to a created, dispatching D4B2A claim, canonical D3/D4A
-payload, loaded profile, and launch-contract digest. Replay, ambiguous
-state/receipt/reconciliation, and binding drift fail closed. It performs no
-store write, route, filesystem/process/Docker I/O, receipt, evidence
+The private served-driver admission seam now structurally checks the canonical
+run manifest against fields in a caller-supplied claim snapshot, canonical
+D3/D4A payload, loaded profile, and launch-contract digest. Replay, ambiguous
+state/receipt/reconciliation, and binding drift fail closed, but its digest
+authenticates no snapshot, revalidates no durable state, and grants no launch
+permission. A later runnable driver must perform an authenticated durable-store
+re-read of the exact bound consumption, operation, and attempt immediately
+before process creation and revalidate the required live state. This evaluator
+performs no store write, route, filesystem/process/Docker I/O, receipt, evidence
 persistence, selector, or runtime execution; Phase 11 remains incomplete.
 
 Successful source validation never implies shipped support. Unknown or untested

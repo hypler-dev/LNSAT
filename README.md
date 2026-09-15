@@ -235,13 +235,17 @@ unpublished vulnerability information in public issues or pull requests.
 
 The source now includes deterministic proof-plan, evidence-requirements, a
 source-only execution-harness contract, a private run-manifest contract, and a
-private served-driver admission evaluator. The evaluator binds the canonical
-run manifest to a created, dispatching D4B2A claim, the canonical D3/D4A
-payload, the loaded profile, and the launch-contract digest. It rejects replay,
-profile-derived D3 limit drift, state/receipt/reconciliation ambiguity, and
-binding drift without writing to
-the store or performing route, filesystem, process, Docker, receipt, evidence,
-selector, or runtime work. These remain proposed design evidence only: none
+private served-driver admission evaluator. The evaluator structurally binds the
+canonical run manifest to fields in a caller-supplied claim snapshot, the
+canonical D3/D4A payload, the loaded profile, and the launch-contract digest. It
+rejects replay, profile-derived D3 limit drift, state/receipt/reconciliation
+ambiguity, and binding drift without writing to the store or performing route,
+filesystem, process, Docker, receipt, evidence, selector, or runtime work. Its
+output explicitly authenticates no claim snapshot, revalidates no durable claim
+state, and grants no launch permission. A later runnable driver must perform an
+authenticated durable-store re-read of the exact bound consumption, operation,
+and attempt immediately before process creation, then revalidate created,
+dispatching, no-receipt, and no-reconciliation state. These remain proposed design evidence only: none
 grants a runtime result, receipt, execution, completion, or support claim. The
 execution-harness contract has [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
 but it is not a runnable proof driver. The private run-manifest contract only

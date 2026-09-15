@@ -64,8 +64,19 @@ impl AdmissionFixture {
 }
 
 #[test]
-fn exact_fixture_admits_one_created_dispatching_binding_without_runtime_claims() {
+fn exact_fixture_emits_one_structural_binding_without_runtime_claims() {
     let fixture_json: Value = serde_json::from_str(ADMISSION_FIXTURE).expect("fixture JSON");
+    let expected_runtime_gate_checks = fixture_json["required_runtime_gate_checks"]
+        .as_array()
+        .expect("runtime gate checks")
+        .iter()
+        .map(|value| {
+            value
+                .as_str()
+                .expect("runtime gate check string")
+                .to_owned()
+        })
+        .collect::<Vec<_>>();
     assert_eq!(
         fixture_json["contract"]["contract_id"],
         DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_ADMISSION_CONTRACT_ID_V1
@@ -73,6 +84,9 @@ fn exact_fixture_admits_one_created_dispatching_binding_without_runtime_claims()
     for field in [
         "phase11_complete",
         "execution_authorized",
+        "claim_snapshot_authenticated",
+        "durable_claim_state_revalidated",
+        "launch_permission_granted",
         "runtime_launch_performed",
         "real_docker_proof",
         "receipt_persisted",
@@ -83,7 +97,7 @@ fn exact_fixture_admits_one_created_dispatching_binding_without_runtime_claims()
 
     let fixture = admission_fixture();
     let admitted = admit_docker_local_runtime_proof_driver_v1(&fixture.input())
-        .expect("exact created claim must admit");
+        .expect("exact structural snapshot must bind");
     let repeated = admit_docker_local_runtime_proof_driver_v1(&fixture.input())
         .expect("pure evaluation must be deterministic");
     assert_eq!(admitted, repeated);
@@ -93,6 +107,9 @@ fn exact_fixture_admits_one_created_dispatching_binding_without_runtime_claims()
     );
     assert!(!admitted.admission().phase11_complete);
     assert!(!admitted.admission().execution_authorized);
+    assert!(!admitted.admission().claim_snapshot_authenticated);
+    assert!(!admitted.admission().durable_claim_state_revalidated);
+    assert!(!admitted.admission().launch_permission_granted);
     assert!(!admitted.admission().runtime_launch_performed);
     assert!(!admitted.admission().real_docker_proof);
     assert!(!admitted.admission().receipt_persisted);
@@ -100,6 +117,10 @@ fn exact_fixture_admits_one_created_dispatching_binding_without_runtime_claims()
     assert!(admitted.admission().contract.side_effects.is_empty());
     assert!(!admitted.admission().contract.runtime_execution);
     assert!(!admitted.admission().contract.proves_human_authority);
+    assert_eq!(
+        admitted.admission().required_runtime_gate_checks,
+        expected_runtime_gate_checks
+    );
     assert_eq!(
         admitted.admission().run_manifest_digest,
         fixture.manifest.digest_text()
@@ -117,7 +138,44 @@ fn exact_fixture_admits_one_created_dispatching_binding_without_runtime_claims()
 }
 
 #[test]
-fn replay_unknown_receipt_and_reconciliation_states_fail_closed() {
+fn caller_constructed_claim_snapshot_never_becomes_launch_permission() {
+    let fixture = admission_fixture();
+    let structural = admit_docker_local_runtime_proof_driver_v1(&fixture.input())
+        .expect("caller-constructed structurally valid snapshot must bind");
+
+    assert_eq!(
+        structural.admission().claim.consumption_id,
+        fixture.claim.consumption.consumption_id
+    );
+    assert_eq!(
+        structural.admission().claim.operation_id,
+        fixture.claim.operation.operation_id
+    );
+    assert_eq!(
+        structural.admission().claim.operation_attempt_id,
+        fixture
+            .claim
+            .operation
+            .attempt
+            .as_ref()
+            .expect("attempt")
+            .operation_attempt_id
+    );
+    assert!(!structural.admission().claim_snapshot_authenticated);
+    assert!(!structural.admission().durable_claim_state_revalidated);
+    assert!(!structural.admission().launch_permission_granted);
+    assert!(!structural.admission().execution_authorized);
+    assert!(!structural.admission().runtime_launch_performed);
+}
+
+#[test]
+fn replay_and_later_unknown_receipt_or_reconciliation_snapshots_fail_closed() {
+    let fixture = admission_fixture();
+    let prior = admit_docker_local_runtime_proof_driver_v1(&fixture.input())
+        .expect("initial structural snapshot must bind");
+    assert!(!prior.admission().launch_permission_granted);
+    assert!(!prior.admission().durable_claim_state_revalidated);
+
     let mut fixture = admission_fixture();
     fixture.claim.created = false;
     assert_eq!(

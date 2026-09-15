@@ -131,16 +131,22 @@ traverse Gateway -> D4B2A -> D3/D4A -> supervisor;
 and require daemon/client/endpoint-revalidated, launch-label-bound
 inspect-before-remove cleanup.
 
-The private served-driver admission evaluator is the next source-only seam. It
-accepts only a created, dispatching D4B2A claim and binds the canonical run
-manifest to that claim, the canonical D3/D4A payload, the loaded profile, and
-the recomputed launch-contract digest. Admission requires the D3 stdin, stdout,
-stderr, and deadline limits to equal the loaded profile's exact derived values.
-Replay, ambiguous operation or attempt state, receipt or reconciliation
-presence, and any binding drift fail closed.
-The evaluator performs no store write, route handling, filesystem or process
-I/O, Docker access, receipt or evidence persistence, runtime selector, or
-runtime execution. It prepares a later driver gate; it does not open one.
+The private served-driver admission evaluator is the next source-only structural
+seam. It checks created and dispatching fields in a caller-supplied claim
+snapshot and binds the canonical run manifest to that snapshot, the canonical
+D3/D4A payload, the loaded profile, and the recomputed launch-contract digest.
+The structural check requires the D3 stdin, stdout, stderr, and deadline limits
+to equal the loaded profile's exact derived values. Replay, ambiguous operation
+or attempt state, receipt or reconciliation presence, and any binding drift fail
+closed. Its digest authenticates no snapshot, proves no current durable claim
+state, and grants no launch permission.
+A later runnable driver must perform an authenticated durable-store re-read of
+the exact bound consumption, operation, and attempt immediately before process
+creation, then revalidate created, dispatching, no-receipt, and
+no-reconciliation state. The evaluator performs no store write, route handling,
+filesystem or process I/O, Docker access, receipt or evidence persistence,
+runtime selector, or runtime execution. It prepares a later driver gate; it does
+not open one.
 
 ## Support and release boundary
 

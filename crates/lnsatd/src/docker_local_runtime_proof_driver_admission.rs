@@ -1,9 +1,11 @@
-//! Private source-only admission for a later Phase 11 proof driver.
+//! Private source-only structural binding for a later Phase 11 proof driver.
 //!
-//! This evaluator binds one validated run manifest to one newly created D4B2A
-//! dispatch claim, its D3/D4A payload, and the exact supervisor launch identity.
-//! It performs no store write, route handling, filesystem access, process
-//! launch, Docker access, receipt creation, or evidence persistence.
+//! This evaluator binds one validated run manifest to fields in a caller-supplied
+//! D4B2A claim snapshot, its D3/D4A payload, and the exact supervisor launch
+//! identity. It neither authenticates that snapshot nor proves current durable
+//! store state, and its output is never launch permission. It performs no store
+//! write, route handling, filesystem access, process launch, Docker access,
+//! receipt creation, or evidence persistence.
 
 use crate::adapter_process_protocol::{
     DOCKER_LOCAL_ADAPTER_PROCESS_PROTOCOL_CONTRACT_ID_V1, MAX_DOCKER_LOCAL_ADAPTER_STDIN_BYTES_V1,
@@ -25,17 +27,29 @@ use std::fmt::{self, Write as _};
 /// Exact private proof-driver admission contract.
 pub const DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_ADMISSION_CONTRACT_ID_V1: &str =
     "lnsat.docker_local_runtime_proof_driver_admission.v1";
-/// Closed source-only status emitted after every binding passes.
+/// Closed source-only status emitted after every structural binding passes.
 pub const DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_ADMISSION_STATUS_V1: &str =
-    "binding_admitted_private_source_only";
+    "structural_binding_only_private_source_only";
 /// Next gate remains separately authorized real Docker proof execution.
 pub const DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_ADMISSION_NEXT_GATE_V1: &str =
     "separately_authorized_real_disposable_docker_proof";
+/// Live checks a later runnable driver must complete after this structural seam.
+pub const DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_REQUIRED_RUNTIME_GATE_CHECKS_V1: [&str; 6] = [
+    "authenticate_created_claim_result",
+    "re_read_bound_consumption_operation_attempt_from_durable_store_immediately_before_process_creation",
+    "operation_dispatching_immediately_before_process_creation",
+    "attempt_dispatching_immediately_before_process_creation",
+    "receipt_absent_immediately_before_process_creation",
+    "reconciliation_absent_immediately_before_process_creation",
+];
 
 const DRIVER_ADMISSION_DIGEST_DOMAIN_V1: &[u8] =
     b"lnsat.docker-local-runtime-proof-driver-admission.v1";
 
-/// Typed inputs already validated by their owning boundaries.
+/// Typed inputs for structural evaluation.
+///
+/// The claim remains a caller-supplied snapshot. This type carries no proof of
+/// authenticated store provenance or durable freshness.
 pub struct DockerLocalRuntimeProofDriverAdmissionInputV1<'a> {
     pub run_manifest: &'a DockerLocalRuntimeProofRunManifestOutputV1,
     pub claim: &'a Phase11DockerRuntimeCompositionClaimV1,
@@ -95,6 +109,9 @@ pub struct DockerLocalRuntimeProofDriverAdmissionV1 {
     pub status: String,
     pub phase11_complete: bool,
     pub execution_authorized: bool,
+    pub claim_snapshot_authenticated: bool,
+    pub durable_claim_state_revalidated: bool,
+    pub launch_permission_granted: bool,
     pub runtime_launch_performed: bool,
     pub real_docker_proof: bool,
     pub receipt_persisted: bool,
@@ -106,6 +123,7 @@ pub struct DockerLocalRuntimeProofDriverAdmissionV1 {
     pub claim: DockerLocalRuntimeProofDriverClaimBindingV1,
     pub request: DockerLocalRuntimeProofDriverRequestBindingV1,
     pub runtime: DockerLocalRuntimeProofDriverRuntimeBindingV1,
+    pub required_runtime_gate_checks: Vec<String>,
     pub next_gate: String,
 }
 
@@ -190,11 +208,16 @@ impl fmt::Display for DockerLocalRuntimeProofDriverAdmissionErrorV1 {
 
 impl std::error::Error for DockerLocalRuntimeProofDriverAdmissionErrorV1 {}
 
-/// Admits one exact claim/payload/manifest/launch binding without runtime I/O.
+/// Structurally checks one claim/payload/manifest/launch binding without runtime I/O.
 ///
-/// Only a newly created, still-dispatching D4B2A claim can pass. Metadata replay,
-/// completed or ambiguous state, receipt/reconciliation presence, or identity
-/// substitution fails closed.
+/// Only a snapshot whose fields describe a newly created, still-dispatching
+/// D4B2A claim can pass. Metadata replay, completed or ambiguous state,
+/// receipt/reconciliation presence, or identity substitution fails closed.
+/// Passing never authenticates the snapshot, proves current durable state, or
+/// grants launch permission. A later runnable driver must authenticate and
+/// re-read the exact bound consumption, operation, and attempt from the durable
+/// store immediately before process creation, then revalidate created,
+/// dispatching, no-receipt, and no-reconciliation state.
 ///
 /// # Errors
 ///
@@ -326,13 +349,16 @@ pub fn admit_docker_local_runtime_proof_driver_v1(
         status: DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_ADMISSION_STATUS_V1.to_owned(),
         phase11_complete: false,
         execution_authorized: false,
+        claim_snapshot_authenticated: false,
+        durable_claim_state_revalidated: false,
+        launch_permission_granted: false,
         runtime_launch_performed: false,
         real_docker_proof: false,
         receipt_persisted: false,
         production_supported: false,
         contract: DockerLocalRuntimeProofDriverAdmissionContractV1 {
             contract_id: DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_ADMISSION_CONTRACT_ID_V1.to_owned(),
-            output: "canonical_private_driver_admission_digest".to_owned(),
+            output: "canonical_private_structural_binding_digest".to_owned(),
             side_effects: Vec::new(),
             runtime_execution: false,
             proves_human_authority: false,
@@ -367,6 +393,11 @@ pub fn admit_docker_local_runtime_proof_driver_v1(
             image_digest: runtime.image_digest.clone(),
             launch_contract_digest,
         },
+        required_runtime_gate_checks:
+            DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_REQUIRED_RUNTIME_GATE_CHECKS_V1
+                .iter()
+                .map(|value| (*value).to_owned())
+                .collect(),
         next_gate: DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_ADMISSION_NEXT_GATE_V1.to_owned(),
     };
     let value = serde_json::to_value(&admission)
