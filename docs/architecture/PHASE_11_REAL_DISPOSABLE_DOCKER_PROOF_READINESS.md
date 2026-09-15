@@ -117,6 +117,20 @@ evidence requirements for later authority. PHR-0005 records independent source
 review of that contract. It is not a runnable proof driver and adds no execution
 or runtime evidence.
 
+The private run-manifest contract binds the reviewed plan, evidence requirements,
+and execution harness to exact later-run declarations plus a separately supplied
+expected source-root/revision/build identity. It rejects private evidence beneath
+that source root or the disposable target root and declared source/target path
+overlap lexically. JSON manifest presence never grants permission or proves
+physical filesystem disjointness. It performs no filesystem identity check,
+Docker access, or runtime I/O.
+The later driver must resolve and authenticate the physical source and target
+identities and revalidate their disjointness immediately before process creation;
+preflight daemon, image, configuration, entrypoint, and in-image adapter identity;
+traverse Gateway -> D4B2A -> D3/D4A -> supervisor;
+and require daemon/client/endpoint-revalidated, launch-label-bound
+inspect-before-remove cleanup.
+
 ## Support and release boundary
 
 This readiness plan does not complete Phase 11, create a supported runtime,

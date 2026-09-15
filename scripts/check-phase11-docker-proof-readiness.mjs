@@ -10,6 +10,8 @@ const DEFAULT_EVIDENCE_REQUIREMENTS_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-evidence-requirements-v1.json";
 const DEFAULT_EXECUTION_HARNESS_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-execution-harness-v1.json";
+const DEFAULT_RUN_MANIFEST_FIXTURE_PATH =
+  "fixtures/contracts/phase11-docker-local-runtime-proof-run-manifest-v1.json";
 const EXPECTED_PACKAGE_SCRIPTS_SHA256 =
   "3e6a2a1501d0379980d900b3d95f397ceb9174ffc7513e9e5a126cb27a36c583";
 const EXPECTED_SOURCE_CI_SHA256 =
@@ -137,23 +139,26 @@ const EXPECTED_AUTHORITY_STOP_IDS = [
 
 const EXPECTED_DOC_MARKERS = {
   "README.md": [
-    "The source now includes deterministic proof-plan, evidence-requirements, and a",
+    "The source now includes deterministic proof-plan, evidence-requirements, a",
     "They remain proposed design evidence only",
     "runtime result, receipt, execution, completion, or support claim",
     "does not constitute real runtime evidence or complete Phase 11",
     "source-only execution-harness contract",
+    "private run-manifest contract",
   ],
   "crates/lnsatd/README.md": [
     "derives one source-only real-runtime proof plan",
     "this metadata opens no",
     "source-only evidence-requirements commitment",
     "source-only execution-harness commitment",
+    "pure private run-manifest contract",
   ],
   "docs/DOCS_INDEX.md": [
     "Phase 11 real disposable Docker proof readiness",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
     "execution-harness contract",
+    "run-manifest contract",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md": [
     "Status: proposed source-only readiness; no runtime evidence",
@@ -163,6 +168,7 @@ const EXPECTED_DOC_MARKERS = {
     "Phase 11 remains incomplete.",
     "execution evidence requirements",
     "execution-harness contract",
+    "run-manifest contract",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md":
     [
@@ -423,6 +429,7 @@ export function validatePhase11DockerProofReadiness({
   fixturePath = resolve(root, DEFAULT_FIXTURE_PATH),
   evidenceRequirementsPath = resolve(root, DEFAULT_EVIDENCE_REQUIREMENTS_FIXTURE_PATH),
   executionHarnessPath = resolve(root, DEFAULT_EXECUTION_HARNESS_FIXTURE_PATH),
+  runManifestPath = resolve(root, DEFAULT_RUN_MANIFEST_FIXTURE_PATH),
   packagePath = resolve(root, "package.json"),
   workflowPath,
   workflowPaths,
@@ -434,6 +441,10 @@ export function validatePhase11DockerProofReadiness({
   executionHarnessModulePath = resolve(
     root,
     "crates/lnsatd/src/docker_local_runtime_proof_execution_harness.rs",
+  ),
+  runManifestModulePath = resolve(
+    root,
+    "crates/lnsatd/src/docker_local_runtime_proof_run_manifest.rs",
   ),
   supervisorPath = resolve(root, "crates/lnsatd/src/docker_local_supervisor.rs"),
   docPaths = Object.fromEntries(
@@ -650,6 +661,102 @@ export function validatePhase11DockerProofReadiness({
     errors.push(
       "execution harness fixture.packet_id: canonical packet id is not assigned",
     );
+  }
+
+  const runManifest = readJson(runManifestPath, "run manifest fixture", errors);
+  if (isRecord(runManifest) && Object.hasOwn(runManifest, "packet_id")) {
+    errors.push("run manifest fixture.packet_id: canonical packet id is not assigned");
+  }
+  if (
+    exactKeys(
+      runManifest,
+      [
+        "schema_id",
+        "fixture_id",
+        "status",
+        "phase11_complete",
+        "execution_authorized",
+        "real_docker_proof",
+        "production_supported",
+        "contract",
+        "required_plan_binding_ids",
+        "required_case_ids",
+        "required_observation_commitment_ids",
+        "preflight_rejection_ids",
+        "postspawn_outcome_unknown_ids",
+        "forbidden_public_evidence_fields",
+        "authority_declaration_ids",
+        "authority_stop_ids",
+        "next_gate",
+      ],
+      "run manifest fixture",
+      errors,
+    )
+  ) {
+    if (
+      runManifest.schema_id !==
+      "lnsat.phase11_docker_local_runtime_proof_run_manifest_fixture.schema.v1_0"
+    )
+      errors.push("run manifest fixture.schema_id: mismatch");
+    if (runManifest.fixture_id !== "phase11-docker-local-runtime-proof-run-manifest-v1")
+      errors.push("run manifest fixture.fixture_id: mismatch");
+    if (runManifest.status !== "proposed_source_only_no_runtime_evidence")
+      errors.push("run manifest fixture.status: proposed source-only status required");
+    for (const field of [
+      "phase11_complete",
+      "execution_authorized",
+      "real_docker_proof",
+      "production_supported",
+    ])
+      if (runManifest[field] !== false)
+        errors.push(`run manifest fixture.${field}: false required`);
+    if (
+      exactKeys(
+        runManifest.contract,
+        [
+          "contract_id",
+          "output",
+          "side_effects",
+          "runtime_execution",
+          "proves_human_authority",
+        ],
+        "run manifest fixture.contract",
+        errors,
+      )
+    ) {
+      if (
+        runManifest.contract.contract_id !==
+        "lnsat.docker_local_runtime_proof_run_manifest.v1"
+      )
+        errors.push("run manifest fixture.contract.contract_id: mismatch");
+      if (runManifest.contract.output !== "canonical_private_run_manifest_digest")
+        errors.push("run manifest fixture.contract.output: mismatch");
+      if (!same(runManifest.contract.side_effects, []))
+        errors.push("run manifest fixture.contract.side_effects: [] required");
+      if (runManifest.contract.runtime_execution !== false)
+        errors.push("run manifest fixture.contract.runtime_execution: false required");
+      if (runManifest.contract.proves_human_authority !== false)
+        errors.push(
+          "run manifest fixture.contract.proves_human_authority: false required",
+        );
+    }
+    for (const [field, expected] of [
+      ["required_plan_binding_ids", EXPECTED_BINDINGS],
+      ["required_case_ids", EXPECTED_CASE_IDS],
+      ["required_observation_commitment_ids", EXPECTED_OBSERVATION_COMMITMENT_IDS],
+      ["preflight_rejection_ids", EXPECTED_PREFLIGHT_REJECTION_IDS],
+      ["postspawn_outcome_unknown_ids", EXPECTED_POSTSPAWN_OUTCOME_UNKNOWN_IDS],
+      ["forbidden_public_evidence_fields", EXPECTED_FORBIDDEN_PUBLIC_EVIDENCE_FIELDS],
+      ["authority_declaration_ids", EXPECTED_AUTHORITY_DECLARATION_IDS],
+      ["authority_stop_ids", EXPECTED_AUTHORITY_STOP_IDS],
+    ])
+      if (!same(runManifest[field], expected))
+        errors.push(`run manifest fixture.${field}: ids or order mismatch`);
+    if (
+      runManifest.next_gate !==
+      "separately_authorized_real_disposable_docker_image_and_runtime_proof"
+    )
+      errors.push("run manifest fixture.next_gate: closed real-Docker gate required");
   }
   if (
     exactKeys(
@@ -870,6 +977,44 @@ export function validatePhase11DockerProofReadiness({
     if (moduleSource.includes(forbidden)) {
       errors.push(`runtime proof module: forbidden side-effect marker ${forbidden}`);
     }
+  }
+
+  const runManifestModuleSource = readText(
+    runManifestModulePath,
+    "runtime proof run manifest module",
+    errors,
+  );
+  for (const marker of [
+    "lnsat.docker_local_runtime_proof_run_manifest.v1",
+    "build_docker_local_runtime_proof_run_manifest_v1",
+    "parse_docker_local_runtime_proof_run_manifest_v1",
+    "DockerLocalRuntimeProofRunManifestSourceBindingV1",
+    "source.repository_absolute_path",
+    "run_nonce",
+    "proof_driver_executable_digest",
+    "proves_human_authority: false",
+  ]) {
+    if (!runManifestModuleSource.includes(marker))
+      errors.push(`runtime proof run manifest module: missing marker ${marker}`);
+  }
+  for (const forbidden of [
+    "std::process",
+    "Command::new",
+    "std::net",
+    "std::fs",
+    "std::env",
+    "std::os::unix",
+    "local_unix_socket",
+    "UnixListener",
+    "UnixStream",
+    "lnsat_store",
+    "supervise_docker_local_git_execution_v1",
+    "execute_phase11_mapped_disposable_git_commit_v1",
+  ]) {
+    if (runManifestModuleSource.includes(forbidden))
+      errors.push(
+        `runtime proof run manifest module: forbidden side-effect marker ${forbidden}`,
+      );
   }
 
   const evidenceModuleSource = readText(
