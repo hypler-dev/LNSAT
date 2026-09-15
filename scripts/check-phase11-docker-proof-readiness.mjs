@@ -936,6 +936,7 @@ export function validatePhase11DockerProofReadiness({
       !same(driverAdmission.required_claim_state, {
         claim_created: true,
         operation_state: "dispatching",
+        operation_state_sequence: 2,
         attempt_state: "dispatching",
         attempt_sequence: 1,
         receipt_present: false,
@@ -1213,6 +1214,7 @@ export function validatePhase11DockerProofReadiness({
     "admit_docker_local_runtime_proof_driver_v1",
     "Phase11DockerRuntimeCompositionClaimV1",
     "ReplayRejected",
+    "operation.state_sequence != 2",
     'attempt.state != "dispatching"',
     "limits.deadline_millis",
     "docker_local_launch_contract_digest_v1",

@@ -251,6 +251,7 @@ pub fn admit_docker_local_runtime_proof_driver_v1(
         return Err(DockerLocalRuntimeProofDriverAdmissionErrorV1::AttemptStateInvalid);
     };
     if operation.state != "dispatching"
+        || operation.state_sequence != 2
         || attempt.state != "dispatching"
         || attempt.attempt_sequence != 1
         || attempt.state_sequence != 1

@@ -183,6 +183,16 @@ fn replay_and_later_unknown_receipt_or_reconciliation_snapshots_fail_closed() {
         DockerLocalRuntimeProofDriverAdmissionErrorV1::ReplayRejected
     );
 
+    for invalid_sequence in [1, 3] {
+        let mut fixture = admission_fixture();
+        fixture.claim.operation.state_sequence = invalid_sequence;
+        assert_eq!(
+            admission_error(&fixture),
+            DockerLocalRuntimeProofDriverAdmissionErrorV1::AttemptStateInvalid,
+            "operation state sequence {invalid_sequence} must fail closed"
+        );
+    }
+
     let mut fixture = admission_fixture();
     fixture.claim.operation.state = "outcome_unknown".to_owned();
     assert_eq!(

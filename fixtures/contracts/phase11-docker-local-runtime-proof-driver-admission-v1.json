@@ -21,6 +21,7 @@
   "required_claim_state": {
     "claim_created": true,
     "operation_state": "dispatching",
+    "operation_state_sequence": 2,
     "attempt_state": "dispatching",
     "attempt_sequence": 1,
     "receipt_present": false,
