@@ -95,6 +95,7 @@ publication order is controlled by [product build sequence](../PRODUCT_BUILD_SEQ
 - [Local authentication availability and UDS withdrawal](SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
 - [Phase 11 real disposable Docker proof readiness](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+- [Phase 11 real disposable Docker proof operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
 
 The source-only execution-harness contract binds the proposed Phase 11 proof
 records for later authority. PHR-0005 records independent source review. It is
@@ -109,6 +110,11 @@ later runnable driver must perform an authenticated durable-store re-read of the
 exact bound consumption, operation, and attempt immediately before process
 creation. It remains source-only and does not complete Phase 11 or open real
 Docker proof.
+
+The source-only operator packet locks the prepared proof source and enumerates
+the later identity, admission, case, limit, evidence, cleanup, redaction, and
+pass/fail gates. Live runtime identities and the runnable authenticated-store
+boundary remain blocking; the record grants no Docker or execution authority.
 
 These files describe experimental local foundations. Local owner, append-only
 credential rotation, permanent non-owner disablement, hash-only session

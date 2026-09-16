@@ -148,6 +148,17 @@ filesystem or process I/O, Docker access, receipt or evidence persistence,
 runtime selector, or runtime execution. It prepares a later driver gate; it does
 not open one.
 
+The source-only
+[operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+locks preparation to the reconciled public source revision and turns this plan
+into one reviewable operator checklist: exact identity slots, private
+declarations, admission/live-store inputs, profile-derived D3 limits, all eight
+positive cases, required rejections, receipt/reconciliation behavior,
+`outcome_unknown`, cleanup, evidence custody and retention, redaction, and
+pass/fail criteria. Its runnable-driver boundary and live runtime identity slots
+remain blocking. It neither finalizes a private run manifest nor authorizes
+Docker access.
+
 ## Support and release boundary
 
 This readiness plan does not complete Phase 11, create a supported runtime,

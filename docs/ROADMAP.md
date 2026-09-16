@@ -111,6 +111,16 @@ before process creation and revalidate the required live state. This evaluator
 performs no store write, route, filesystem/process/Docker I/O, receipt, evidence
 persistence, selector, or runtime execution; Phase 11 remains incomplete.
 
+The source-only operator run packet now fixes the prepared proof source at
+public revision `b41aa756bccd85843ac540abfd927e8c5693d5fe` and collects the
+later-run identity register, private declarations, admission/live-store gate,
+D3 limits, eight positive cases, preflight rejections, durable ambiguity,
+cleanup, evidence custody, retention, redaction, and pass/fail rules in one
+reviewable record. It remains not execution-ready: the runnable authenticated
+durable-state re-read and all live runtime identity values are blocking. A new
+exact owner authorization is still required before any Docker observation or
+execution.
+
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
 

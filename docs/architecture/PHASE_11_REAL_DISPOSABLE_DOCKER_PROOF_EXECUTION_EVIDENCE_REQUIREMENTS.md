@@ -189,3 +189,13 @@ then revalidate created, dispatching, no-receipt, and no-reconciliation state.
 The evaluator has no store write, route, filesystem, process, Docker, receipt,
 evidence-persistence, selector, or runtime-execution surface; real Docker proof
 remains separately authorized and incomplete.
+
+The source-only
+[operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+maps these requirements to the reconciled public source revision, an exact
+identity register, private declaration inputs, D3 limits, positive and rejection
+cases, receipt/reconciliation expectations, ambiguity, cleanup, evidence
+destinations and retention, redaction, and pass/fail criteria. All live runtime
+identities and the runnable authenticated durable-store boundary remain
+blocking. The packet contains no runtime evidence and grants no execution
+authority.

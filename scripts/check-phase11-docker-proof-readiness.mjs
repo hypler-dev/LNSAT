@@ -15,7 +15,7 @@ const DEFAULT_RUN_MANIFEST_FIXTURE_PATH =
 const DEFAULT_DRIVER_ADMISSION_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-driver-admission-v1.json";
 const EXPECTED_PACKAGE_SCRIPTS_SHA256 =
-  "3e6a2a1501d0379980d900b3d95f397ceb9174ffc7513e9e5a126cb27a36c583";
+  "ed5f4ede3980afc0469b3191b1eb7eb7700a7c009444736be4c7bd1507c41f59";
 const EXPECTED_SOURCE_CI_SHA256 =
   "a160337a1bfdfb50b287ff990cd3c489f4784258871501cfe846704a58335005";
 const MAX_JSON_NESTING = 64;
@@ -208,6 +208,7 @@ const EXPECTED_DOC_MARKERS = {
     "Phase 11 real disposable Docker proof readiness",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
+    "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md",
     "execution-harness contract",
     "run-manifest contract",
     "private Phase 11 served-driver admission evaluator",
@@ -236,6 +237,30 @@ const EXPECTED_DOC_MARKERS = {
       "private served-driver admission evaluator",
       "caller-supplied claim",
     ],
+  "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md": [
+    "Status: source-only operator preparation; not execution-ready or authorized",
+    "b41aa756bccd85843ac540abfd927e8c5693d5fe",
+    "fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c",
+    "d93b3f5c9b040fa5ba0051881574f59cf4ee92ea",
+    "914da579f28c98dd59cb5303eba5d7fa3c68664e",
+    "PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY",
+    "UNSET_BLOCKING",
+    "adapter:docker-local:git-commit",
+    "exact adapter version `v1`",
+    "min(profile limits.stdout_bytes, 65,536)",
+    "real_runtime_one_consequence_and_bound_receipt",
+    "exact_replay_metadata_only_no_redispatch",
+    "post_consequence_unknown_survives_restart",
+    "reconciliation_host_git_inspection_only",
+    "unchanged_target_unknown_without_receipt",
+    "isolation_no_socket_credentials_or_network",
+    "cleanup_verified_container_id_only",
+    "runtime_and_image_identity_stable",
+    "Those public claim structs remain non-authoritative.",
+    "No runnable proof driver currently authenticates and",
+    "Before any Docker access, the owner must issue a new explicit authorization",
+    "and support authority remain separate",
+  ],
   "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md": [
     "## Phase 11 Real Disposable Docker Proof Readiness",
     "real Docker proof remains unexecuted",
@@ -280,6 +305,7 @@ const EXPECTED_DOC_MARKERS = {
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
     "Phase 11 real disposable Docker proof readiness",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
+    "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md",
     "execution-harness contract",
     "private served-driver admission evaluator",
     "caller-supplied claim",
@@ -1089,6 +1115,18 @@ export function validatePhase11DockerProofReadiness({
       "node scripts/check-phase11-docker-proof-readiness.mjs"
     ) {
       errors.push("package.json: Phase 11 readiness check command mismatch");
+    }
+    if (
+      scripts["test:phase11-readiness"] !==
+      "npm run phase11:docker-proof-readiness:test"
+    ) {
+      errors.push("package.json: Phase 11 readiness test alias mismatch");
+    }
+    if (
+      scripts["check:phase11-readiness"] !==
+      "npm run phase11:docker-proof-readiness:check"
+    ) {
+      errors.push("package.json: Phase 11 readiness check alias mismatch");
     }
     if (
       scripts["source:check"] !==
