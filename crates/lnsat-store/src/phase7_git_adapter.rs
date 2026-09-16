@@ -15,6 +15,8 @@ use lnsat_contracts::{
 };
 use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior, params};
 use sha2::{Digest, Sha256};
+#[cfg(test)]
+use std::cell::Cell;
 use std::ffi::OsStr;
 use std::fmt;
 use std::fs;
@@ -61,6 +63,40 @@ const STATE_AUDIT_ID_DOMAIN: &str = "lnsat.phase7.git-state-audit-id.v1";
 const STATE_DIGEST_DOMAIN: &str = "lnsat.phase7.git-state.v1";
 const STATE_RECORD_DIGEST_DOMAIN: &str = "lnsat.phase7.git-state-record.v1";
 const LOWER_HEX: &[u8; 16] = b"0123456789abcdef";
+
+#[cfg(test)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum Phase11DockerPostClaimReadFaultV1 {
+    OperationRead,
+    HandleBindingRead,
+}
+
+#[cfg(test)]
+thread_local! {
+    static PHASE11_DOCKER_POST_CLAIM_READ_FAULT: Cell<Option<Phase11DockerPostClaimReadFaultV1>> = const { Cell::new(None) };
+}
+
+#[cfg(test)]
+pub(crate) fn inject_phase11_docker_post_claim_read_fault_v1(
+    fault: Phase11DockerPostClaimReadFaultV1,
+) {
+    PHASE11_DOCKER_POST_CLAIM_READ_FAULT.with(|slot| slot.set(Some(fault)));
+}
+
+#[cfg(test)]
+fn take_phase11_docker_post_claim_read_fault_v1(
+    expected: Phase11DockerPostClaimReadFaultV1,
+) -> bool {
+    PHASE11_DOCKER_POST_CLAIM_READ_FAULT.with(|slot| {
+        let current = slot.take();
+        if current == Some(expected) {
+            true
+        } else {
+            slot.set(current);
+            false
+        }
+    })
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Phase7GitCommitMetadataV1 {
@@ -163,8 +199,61 @@ pub struct Phase11DockerRuntimeCompositionInputV1<'a> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Phase11DockerRuntimeCompositionClaimV1 {
     pub created: bool,
+    /// Caller-visible structural value only. A claim snapshot remains
+    /// non-authoritative until consumed through the private handle below.
+    pub execution_request_digest: [u8; 32],
     pub consumption: Phase7CapabilityConsumptionRecordV1,
     pub operation: Phase8OperationReadbackV1,
+}
+
+/// One created Docker claim retained only until its immediate durable re-read.
+///
+/// This handle intentionally has no clone, serialization, or public fields.
+/// A caller may expose its claim to the structural admission evaluator, but may
+/// not manufacture a handle from a caller-supplied snapshot or replay result.
+pub struct Phase11DockerRuntimeCompositionClaimHandleV1 {
+    claim: Phase11DockerRuntimeCompositionClaimV1,
+    execution_request_digest: [u8; 32],
+    action_digest: [u8; 32],
+    target_digest: [u8; 32],
+    configuration_digest: [u8; 32],
+    executable_digest: [u8; 32],
+    adapter_ref: String,
+    operation_idempotency_key: String,
+}
+
+impl Phase11DockerRuntimeCompositionClaimHandleV1 {
+    /// Returns the original created-claim snapshot for structural admission
+    /// only. It carries no store-freshness or launch permission.
+    #[must_use]
+    pub fn claim(&self) -> &Phase11DockerRuntimeCompositionClaimV1 {
+        &self.claim
+    }
+}
+
+/// Exact caller recomputation values checked against durable operation and
+/// attempt evidence in the pre-supervisor transaction.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Phase11DockerPreSupervisorBindingV1 {
+    pub execution_request_digest: [u8; 32],
+    pub tool_arguments_digest: [u8; 32],
+}
+
+/// One authenticated, fresh durable re-read for a created Docker claim.
+///
+/// This proof is opaque, one-way, and has no launch or runtime capability.
+/// The daemon must bind it to its separately revalidated admission evidence
+/// before any later process-creation decision.
+pub struct Phase11DockerPreSupervisorProofV1 {
+    claim: Phase11DockerRuntimeCompositionClaimV1,
+}
+
+impl Phase11DockerPreSupervisorProofV1 {
+    /// Returns the exact durable binding re-read by this proof.
+    #[must_use]
+    pub fn claim(&self) -> &Phase11DockerRuntimeCompositionClaimV1 {
+        &self.claim
+    }
 }
 
 /// Secret-free operation-attempt readback.
@@ -1217,6 +1306,8 @@ impl SqliteStore {
             input.derived_request,
             Some(PHASE11_DOCKER_GIT_ADAPTER_REF_V1),
         )?;
+        let payload_tool_arguments_digest =
+            phase7_git_tool_arguments_digest_v1(input.derived_request)?;
         let patch = parsed
             .approved_patch
             .as_deref()
@@ -1259,6 +1350,7 @@ impl SqliteStore {
                             transaction,
                             &dispatch,
                             &parsed,
+                            payload_tool_arguments_digest,
                             consumed_at,
                         )
                         .map_err(map_claim_to_persistence)
@@ -1285,6 +1377,7 @@ impl SqliteStore {
                 .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
             return Ok(Phase11DockerRuntimeCompositionClaimV1 {
                 created: false,
+                execution_request_digest: input.derived_request.request_digest,
                 consumption: consumption.record,
                 operation,
             });
@@ -1301,14 +1394,192 @@ impl SqliteStore {
             let _ = self.mark_phase7_git_outcome_unknown_v1(&attempt, &claimed_at);
             return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
         }
-        let operation = self
-            .read_phase8_operation_v1(redemption.operation_id)?
-            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        self.finish_phase11_docker_runtime_composition_claim_v1(
+            input,
+            consumption.record,
+            redemption.operation_id,
+        )
+    }
+
+    fn finish_phase11_docker_runtime_composition_claim_v1(
+        &mut self,
+        input: &Phase11DockerRuntimeCompositionInputV1<'_>,
+        consumption: Phase7CapabilityConsumptionRecordV1,
+        operation_id: &str,
+    ) -> Result<Phase11DockerRuntimeCompositionClaimV1, Phase7GitAdapterErrorV1> {
+        let Ok(Some(operation)) = read_phase11_claimed_operation_v1(&self.connection, operation_id)
+        else {
+            let _ = self.mark_phase11_docker_outcome_unknown_v1(operation_id);
+            return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+        };
         Ok(Phase11DockerRuntimeCompositionClaimV1 {
             created: true,
-            consumption: consumption.record,
+            execution_request_digest: input.derived_request.request_digest,
+            consumption,
             operation,
         })
+    }
+
+    /// Atomically claims one Docker attempt, then returns a one-shot handle
+    /// for the mandatory pre-supervisor durable re-read.
+    ///
+    /// Replay intentionally returns no handle. A public claim snapshot cannot
+    /// be converted into this private created-claim provenance.
+    ///
+    /// # Errors
+    ///
+    /// Returns the closed claim error for invalid source/authentication,
+    /// replay, post-claim binding drift, or ambiguous durable state.
+    pub fn claim_phase11_docker_runtime_composition_handle_v1(
+        &mut self,
+        input: &Phase11DockerRuntimeCompositionInputV1<'_>,
+        capability: Phase7CapabilitySecretV1,
+        raw_session_token: &str,
+        raw_csrf_token: &str,
+    ) -> Result<Phase11DockerRuntimeCompositionClaimHandleV1, Phase7GitAdapterErrorV1> {
+        let claim = self.claim_phase11_docker_runtime_composition_v1(
+            input,
+            capability,
+            raw_session_token,
+            raw_csrf_token,
+        )?;
+        if !claim.created {
+            return Err(Phase7GitAdapterErrorV1::DispatchAlreadyClaimed);
+        }
+        let Ok(durable_binding) = read_phase11_handle_creation_binding_v1(
+            &self.connection,
+            &claim.operation.operation_id,
+        ) else {
+            let _ = self.mark_phase11_docker_outcome_unknown_v1(&claim.operation.operation_id);
+            return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+        };
+        if durable_binding.action_digest != input.derived_request.action_digest
+            || durable_binding.target_digest != input.derived_request.target_digest
+            || durable_binding.configuration_digest != input.derived_request.configuration_digest
+            || durable_binding.executable_digest != input.derived_request.executable_digest
+            || durable_binding.adapter_ref
+                != format!(
+                    "{}@{}",
+                    input.derived_request.request.adapter.adapter_ref,
+                    input.derived_request.request.adapter.version
+                )
+        {
+            let _ = self.mark_phase11_docker_outcome_unknown_v1(&claim.operation.operation_id);
+            return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+        }
+        Ok(Phase11DockerRuntimeCompositionClaimHandleV1 {
+            claim,
+            execution_request_digest: input.derived_request.request_digest,
+            action_digest: input.derived_request.action_digest,
+            target_digest: input.derived_request.target_digest,
+            configuration_digest: input.derived_request.configuration_digest,
+            executable_digest: input.derived_request.executable_digest,
+            adapter_ref: format!(
+                "{}@{}",
+                input.derived_request.request.adapter.adapter_ref,
+                input.derived_request.request.adapter.version
+            ),
+            operation_idempotency_key: durable_binding.idempotency_key,
+        })
+    }
+
+    /// Authenticates the original requester and performs one fresh immediate
+    /// durable re-read before a later supervisor may be considered.
+    ///
+    /// Any post-claim read, binding, session, or CSRF failure marks (or
+    /// preserves) the attempt as `outcome_unknown`. This method neither grants
+    /// launch permission nor invokes a runtime, Docker, or adapter process.
+    ///
+    /// # Errors
+    ///
+    /// Returns `OutcomeUnknown` after any post-claim authentication, durable
+    /// read, binding, or state failure.
+    pub fn verify_phase11_docker_pre_supervisor_v1(
+        &mut self,
+        handle: Phase11DockerRuntimeCompositionClaimHandleV1,
+        raw_session_token: &str,
+        raw_csrf_token: &str,
+        expected: &Phase11DockerPreSupervisorBindingV1,
+    ) -> Result<Phase11DockerPreSupervisorProofV1, Phase7GitAdapterErrorV1> {
+        let Phase11DockerRuntimeCompositionClaimHandleV1 {
+            claim: original,
+            execution_request_digest,
+            action_digest,
+            target_digest,
+            configuration_digest,
+            executable_digest,
+            adapter_ref,
+            operation_idempotency_key,
+        } = handle;
+        let operation_id = original.operation.operation_id.clone();
+        if !original.created {
+            let _ = self.mark_phase11_docker_outcome_unknown_v1(&operation_id);
+            return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
+        }
+        let checked = self.with_authenticated_phase11_claim_consumption_v1(
+            &original.consumption,
+            raw_session_token,
+            raw_csrf_token,
+            |transaction, fresh_consumption| {
+                let operation = read_phase8_operation_v1(transaction, &operation_id)
+                    .map_err(map_claim_to_persistence)?
+                    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+                let durable_binding = read_phase11_operation_binding_v1(transaction, &operation_id)
+                .map_err(map_claim_to_persistence)?;
+                let attempt = operation
+                    .attempt
+                    .as_ref()
+                    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+                if operation != original.operation
+                    || operation.operation_id != fresh_consumption.operation_id
+                    || operation.authorization_id != fresh_consumption.authorization_id
+                    || operation.consumption_id.as_deref()
+                        != Some(fresh_consumption.consumption_id.as_str())
+                    || operation.project_ref != fresh_consumption.project_ref
+                    || operation.resource_ref != fresh_consumption.resource_ref
+                    || durable_binding.idempotency_key != operation_idempotency_key
+                    || execution_request_digest != expected.execution_request_digest
+                    || durable_binding.action_digest != action_digest
+                    || durable_binding.target_digest != target_digest
+                    || durable_binding.configuration_digest != configuration_digest
+                    || durable_binding.executable_digest != executable_digest
+                    || durable_binding.adapter_ref != adapter_ref
+                    || operation.state != "dispatching"
+                    || operation.state_sequence != 2
+                    || operation.receipt_id.is_some()
+                    || operation.receipt_received_at.is_some()
+                    || operation.reconciliation_id.is_some()
+                    || operation.reconciliation_status.is_some()
+                    || operation.reconciliation_recorded_at.is_some()
+                    || attempt.operation_id != operation.operation_id
+                    || attempt.project_ref != operation.project_ref
+                    || attempt.resource_ref != operation.resource_ref
+                    || attempt.attempt_sequence != 1
+                    || attempt.state != "dispatching"
+                    || attempt.state_sequence != 1
+                    || attempt.adapter_ref
+                        != format!(
+                            "{PHASE11_DOCKER_GIT_ADAPTER_REF_V1}@{PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1}"
+                        )
+                    || attempt.protocol_version != PHASE11_DOCKER_PROTOCOL_VERSION_V1
+                    || attempt.tool_arguments_digest != expected.tool_arguments_digest
+                {
+                    return Err(Phase7PersistenceErrorV1::EvidenceDrift);
+                }
+                Ok(Phase11DockerRuntimeCompositionClaimV1 {
+                    created: true,
+                    execution_request_digest,
+                    consumption: fresh_consumption.clone(),
+                    operation,
+                })
+            },
+        );
+        if let Ok(claim) = checked {
+            Ok(Phase11DockerPreSupervisorProofV1 { claim })
+        } else {
+            let _ = self.mark_phase11_docker_outcome_unknown_v1(&operation_id);
+            Err(Phase7GitAdapterErrorV1::OutcomeUnknown)
+        }
     }
 
     /// Persists one independently host-verified Docker result as canonical
@@ -1707,6 +1978,7 @@ fn claim_phase8_git_dispatch_in_transaction_v1(
         PHASE7_GIT_ADAPTER_REF_V1,
         PHASE7_GIT_ADAPTER_VERSION_V1,
         PROTOCOL_VERSION_V1,
+        None,
     )
 }
 
@@ -1714,6 +1986,7 @@ fn claim_phase11_docker_dispatch_in_transaction_v1(
     transaction: &Transaction<'_>,
     input: &Phase7GitCommitDispatchInputV1<'_>,
     parsed: &ParsedGitRequest,
+    tool_arguments_digest: [u8; 32],
     claimed_at: &str,
 ) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
     claim_dispatch_in_transaction_for_adapter_v1(
@@ -1724,6 +1997,7 @@ fn claim_phase11_docker_dispatch_in_transaction_v1(
         PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
         PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
         PHASE11_DOCKER_PROTOCOL_VERSION_V1,
+        Some(tool_arguments_digest),
     )
 }
 
@@ -1736,6 +2010,7 @@ fn claim_dispatch_in_transaction_for_adapter_v1(
     adapter_ref: &str,
     adapter_version: &str,
     protocol_version: &str,
+    supplied_tool_arguments_digest: Option<[u8; 32]>,
 ) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
     let context = read_dispatch_context(transaction, input)?;
     verify_dispatch_context_for_adapter(input, &context, adapter_ref, adapter_version)?;
@@ -1745,7 +2020,8 @@ fn claim_dispatch_in_transaction_for_adapter_v1(
     if context.operation_state != "prepared" {
         return Err(Phase7GitAdapterErrorV1::AuthorizationNotConsumed);
     }
-    let tool_arguments_digest = tool_arguments_digest(parsed);
+    let tool_arguments_digest =
+        supplied_tool_arguments_digest.unwrap_or_else(|| tool_arguments_digest(parsed));
     let operation_attempt_id = identifier(
         "opa_",
         ATTEMPT_ID_DOMAIN,
@@ -2121,6 +2397,66 @@ fn read_phase8_operation_v1(
         reconciliation_status: reconciliation.as_ref().map(|(_, status, _)| status.clone()),
         reconciliation_recorded_at: reconciliation.map(|(_, _, recorded_at)| recorded_at),
     }))
+}
+
+fn read_phase11_claimed_operation_v1(
+    connection: &Connection,
+    operation_id: &str,
+) -> Result<Option<Phase8OperationReadbackV1>, Phase7GitAdapterErrorV1> {
+    #[cfg(test)]
+    if take_phase11_docker_post_claim_read_fault_v1(
+        Phase11DockerPostClaimReadFaultV1::OperationRead,
+    ) {
+        return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+    }
+    read_phase8_operation_v1(connection, operation_id)
+}
+
+fn read_phase11_handle_creation_binding_v1(
+    connection: &Connection,
+    operation_id: &str,
+) -> Result<Phase11DurableOperationBindingV1, Phase7GitAdapterErrorV1> {
+    #[cfg(test)]
+    if take_phase11_docker_post_claim_read_fault_v1(
+        Phase11DockerPostClaimReadFaultV1::HandleBindingRead,
+    ) {
+        return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+    }
+    read_phase11_operation_binding_v1(connection, operation_id)
+}
+
+struct Phase11DurableOperationBindingV1 {
+    idempotency_key: String,
+    action_digest: [u8; 32],
+    target_digest: [u8; 32],
+    configuration_digest: [u8; 32],
+    executable_digest: [u8; 32],
+    adapter_ref: String,
+}
+
+fn read_phase11_operation_binding_v1(
+    connection: &Connection,
+    operation_id: &str,
+) -> Result<Phase11DurableOperationBindingV1, Phase7GitAdapterErrorV1> {
+    connection
+        .query_row(
+            "SELECT idempotency_key, authorized_action_digest, target_digest,
+                    configuration_digest, executable_digest, adapter_ref
+             FROM lnsat_operations
+             WHERE operation_id = ?1",
+            [operation_id],
+            |row| {
+                Ok(Phase11DurableOperationBindingV1 {
+                    idempotency_key: row.get(0)?,
+                    action_digest: blob_32(row.get(1)?)?,
+                    target_digest: blob_32(row.get(2)?)?,
+                    configuration_digest: blob_32(row.get(3)?)?,
+                    executable_digest: blob_32(row.get(4)?)?,
+                    adapter_ref: row.get(5)?,
+                })
+            },
+        )
+        .map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)
 }
 
 fn select_dispatching_attempts_v1(

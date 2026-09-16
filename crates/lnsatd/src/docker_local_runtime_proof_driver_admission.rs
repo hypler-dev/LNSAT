@@ -277,7 +277,7 @@ pub fn admit_docker_local_runtime_proof_driver_v1(
         || consumption.operation_id != control_request.operation.operation_id
         || consumption.authorization_id != control_request.operation.authorization_id
         || consumption.idempotency_key != control_request.operation.idempotency_key
-        || consumption.request_digest != derived.request_digest
+        || input.claim.execution_request_digest != derived.request_digest
         || operation.project_ref != derived.request.project_ref
         || operation.resource_ref != derived.request.resource_ref
         || attempt.operation_id != operation.operation_id
@@ -416,7 +416,7 @@ pub fn admit_docker_local_runtime_proof_driver_v1(
     })
 }
 
-fn prefixed_sha256_v1(digest: &[u8; 32]) -> String {
+pub(crate) fn prefixed_sha256_v1(digest: &[u8; 32]) -> String {
     let mut output = String::from("sha256:");
     for byte in digest {
         let _ = write!(output, "{byte:02x}");

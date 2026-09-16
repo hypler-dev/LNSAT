@@ -252,6 +252,10 @@ fn claim_payload_and_runtime_substitution_fail_closed() {
 
     let mut fixture = admission_fixture();
     fixture.claim.consumption.request_digest = [8_u8; 32];
+    assert!(admit_docker_local_runtime_proof_driver_v1(&fixture.input()).is_ok());
+
+    let mut fixture = admission_fixture();
+    fixture.claim.execution_request_digest = [8_u8; 32];
     assert_eq!(
         admission_error(&fixture),
         DockerLocalRuntimeProofDriverAdmissionErrorV1::ClaimBindingInvalid
@@ -511,6 +515,7 @@ fn claim(
     };
     Phase11DockerRuntimeCompositionClaimV1 {
         created: true,
+        execution_request_digest: derived.request_digest,
         consumption: Phase7CapabilityConsumptionRecordV1 {
             consumption_id: consumption_id.clone(),
             audit_binding_id: format!("p7c_{}", "b".repeat(64)),
@@ -520,7 +525,7 @@ fn claim(
             operation_id: operation_id.to_owned(),
             binding_digest: [1_u8; 32],
             idempotency_key: idempotency_key.to_owned(),
-            request_digest: derived.request_digest,
+            request_digest: [1_u8; 32],
             consumed_at: "2026-09-13T07:00:00.000Z".to_owned(),
             authorization_state_event_id: format!("ste_{}", "c".repeat(64)),
             authorization_state_audit_binding_id: format!("sta_{}", "d".repeat(64)),
