@@ -77,6 +77,7 @@ manifest. Values must remain private and use references in any public summary.
 - one fresh owner-only disposable root, marked repository, Git directory,
   marker, base revision, ownership/mode identity, and target identity;
 - one exact host Git verifier path, stable file identity, and digest;
+- one exact served `Gateway -> D4B2A -> D3/D4A -> supervisor` chain identity;
 - one private evidence directory outside both the source and disposable target;
 - one redaction procedure, cleanup contract, rollback/stop contract, retention
   decision, and independent reviewer; and
@@ -101,7 +102,8 @@ loaded schema-2 profile. It must bind:
   digests;
 - profile, authority-configuration, adapter reference, adapter version,
   adapter-executable, image, and launch-contract identities; and
-- `operation_state = dispatching`, `operation_state_sequence = 2`,
+- `claim_created = true`, `operation_state = dispatching`,
+  `operation_state_sequence = 2`,
   `attempt_state = dispatching`, `attempt_sequence = 1`, no receipt, and no
   reconciliation.
 
@@ -165,9 +167,10 @@ ID and at least these concrete substitutions:
   platform, wrong provenance, or in-image adapter mismatch;
 - source/target/evidence overlap, symlink, foreign ownership, group/world
   writable target, missing marker, changed base, or target replacement;
-- Gateway-chain bypass, replayed or unauthenticated claim snapshot, stale or
-  non-dispatching durable state, existing receipt/reconciliation, attempt
-  sequence other than one, or operation state sequence other than two;
+- Gateway-chain bypass, `claim_created != true`, replayed or unauthenticated
+  claim snapshot, stale or non-dispatching durable state, existing
+  receipt/reconciliation, attempt sequence other than one, or operation state
+  sequence other than two;
 - D3/D4A payload, profile-derived limit, tool-argument, or launch binding drift;
 - network, ambient environment or credentials, Docker-socket mount, extra
   mount, elevated privilege, writable root, host namespace, device, or
@@ -247,8 +250,10 @@ reviewed revision, canonical private run-manifest digest, proof-driver
 executable digest, schema-2 profile and authority-configuration digests,
 exact adapter reference `adapter:docker-local:git-commit`, exact adapter version
 `v1`, adapter-executable/image/launch digests, execution host and UTC window,
-local Unix endpoint, disposable root and marked repository, evidence location
-and retention, all eight cases, cleanup limits, and independent reviewer.
+local Unix endpoint, exact served-chain authorization identity
+`Gateway -> D4B2A -> D3/D4A -> supervisor`, disposable root and marked
+repository, evidence location and retention, all eight cases, cleanup limits,
+and independent reviewer.
 
 This record is not yet eligible for that authorization: the runnable driver and
 all `UNSET_BLOCKING` values remain absent. Merge, runtime, build-candidate,
