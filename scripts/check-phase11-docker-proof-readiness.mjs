@@ -12,6 +12,8 @@ const DEFAULT_EXECUTION_HARNESS_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-execution-harness-v1.json";
 const DEFAULT_RUN_MANIFEST_FIXTURE_PATH =
   "fixtures/contracts/phase11-docker-local-runtime-proof-run-manifest-v1.json";
+const DEFAULT_DRIVER_ADMISSION_FIXTURE_PATH =
+  "fixtures/contracts/phase11-docker-local-runtime-proof-driver-admission-v1.json";
 const EXPECTED_PACKAGE_SCRIPTS_SHA256 =
   "3e6a2a1501d0379980d900b3d95f397ceb9174ffc7513e9e5a126cb27a36c583";
 const EXPECTED_SOURCE_CI_SHA256 =
@@ -137,14 +139,61 @@ const EXPECTED_AUTHORITY_STOP_IDS = [
   "action_outside_named_run",
 ];
 
+const EXPECTED_DRIVER_ADMISSION_BINDINGS = [
+  "run_manifest_digest",
+  "source_revision",
+  "proof_driver_executable_digest",
+  "consumption_id",
+  "operation_id",
+  "operation_attempt_id",
+  "authorization_id",
+  "idempotency_key",
+  "payload_digest",
+  "control_digest",
+  "profile_derived_control_limits",
+  "execution_request_digest",
+  "action_digest",
+  "target_digest",
+  "tool_arguments_digest",
+  "profile_digest",
+  "authority_configuration_digest",
+  "adapter_ref",
+  "adapter_version",
+  "adapter_executable_digest",
+  "image_digest",
+  "launch_contract_digest",
+];
+
+const EXPECTED_DRIVER_ADMISSION_ERRORS = [
+  "docker_local_runtime_proof_driver_admission.manifest_binding_invalid",
+  "docker_local_runtime_proof_driver_admission.replay_rejected",
+  "docker_local_runtime_proof_driver_admission.claim_binding_invalid",
+  "docker_local_runtime_proof_driver_admission.attempt_state_invalid",
+  "docker_local_runtime_proof_driver_admission.payload_binding_invalid",
+  "docker_local_runtime_proof_driver_admission.runtime_binding_invalid",
+  "docker_local_runtime_proof_driver_admission.launch_binding_invalid",
+  "docker_local_runtime_proof_driver_admission.canonicalization_failed",
+];
+
+const EXPECTED_DRIVER_RUNTIME_GATE_CHECKS = [
+  "authenticate_created_claim_result",
+  "re_read_bound_consumption_operation_attempt_from_durable_store_immediately_before_process_creation",
+  "operation_dispatching_immediately_before_process_creation",
+  "attempt_dispatching_immediately_before_process_creation",
+  "receipt_absent_immediately_before_process_creation",
+  "reconciliation_absent_immediately_before_process_creation",
+];
+
 const EXPECTED_DOC_MARKERS = {
   "README.md": [
     "The source now includes deterministic proof-plan, evidence-requirements, a",
-    "They remain proposed design evidence only",
+    "These remain proposed design evidence only",
     "runtime result, receipt, execution, completion, or support claim",
     "does not constitute real runtime evidence or complete Phase 11",
     "source-only execution-harness contract",
     "private run-manifest contract",
+    "private served-driver admission evaluator",
+    "caller-supplied claim",
   ],
   "crates/lnsatd/README.md": [
     "derives one source-only real-runtime proof plan",
@@ -152,6 +201,8 @@ const EXPECTED_DOC_MARKERS = {
     "source-only evidence-requirements commitment",
     "source-only execution-harness commitment",
     "pure private run-manifest contract",
+    "private served-driver admission contract",
+    "caller-supplied claim",
   ],
   "docs/DOCS_INDEX.md": [
     "Phase 11 real disposable Docker proof readiness",
@@ -159,6 +210,8 @@ const EXPECTED_DOC_MARKERS = {
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
     "execution-harness contract",
     "run-manifest contract",
+    "private Phase 11 served-driver admission evaluator",
+    "caller-supplied claim",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md": [
     "Status: proposed source-only readiness; no runtime evidence",
@@ -169,6 +222,8 @@ const EXPECTED_DOC_MARKERS = {
     "execution evidence requirements",
     "execution-harness contract",
     "run-manifest contract",
+    "private served-driver admission evaluator",
+    "caller-supplied claim",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md":
     [
@@ -178,42 +233,56 @@ const EXPECTED_DOC_MARKERS = {
       "Before any real Docker access, a later authority must name:",
       "This source contract adds no Docker command",
       "execution harness",
+      "private served-driver admission evaluator",
+      "caller-supplied claim",
     ],
   "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md": [
     "## Phase 11 Real Disposable Docker Proof Readiness",
     "real Docker proof remains unexecuted",
     "execution evidence requirements",
     "execution-harness contract",
+    "private served-driver admission evaluator",
+    "caller-supplied claim",
   ],
   "docs/ROADMAP.md": [
     "source-only real-Docker proof-readiness contract",
     "does not complete Phase 11",
     "source-only execution-evidence requirements contract",
     "source-only execution-harness contract",
+    "private served-driver admission seam",
+    "caller-supplied claim",
   ],
   "docs/PRODUCT_BUILD_SEQUENCE.md": [
     "source-only proof-readiness plan",
     "no Docker process, socket, daemon, or image operation",
     "source-only evidence-requirements contract",
     "source-only execution-harness contract",
+    "private served-driver admission seam",
+    "caller-supplied claim",
   ],
   "docs/PROJECT_STATUS.md": [
     "real-Docker proof-readiness contract",
     "no runtime evidence exists",
     "source-only execution-evidence requirements contract",
     "source-only execution-harness contract",
+    "private served-driver admission evaluator",
+    "caller-supplied claim",
   ],
   "docs/WHY_PUBLIC_NOW.md": [
     "freezes required identity bindings, proof cases, and fail-closed negatives",
     "without accessing Docker or claiming runtime evidence",
     "execution evidence requirements",
     "execution-harness contract",
+    "private served-driver admission evaluator",
+    "caller-supplied claim",
   ],
   "docs/architecture/README.md": [
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
     "Phase 11 real disposable Docker proof readiness",
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
     "execution-harness contract",
+    "private served-driver admission evaluator",
+    "caller-supplied claim",
   ],
 };
 
@@ -430,6 +499,7 @@ export function validatePhase11DockerProofReadiness({
   evidenceRequirementsPath = resolve(root, DEFAULT_EVIDENCE_REQUIREMENTS_FIXTURE_PATH),
   executionHarnessPath = resolve(root, DEFAULT_EXECUTION_HARNESS_FIXTURE_PATH),
   runManifestPath = resolve(root, DEFAULT_RUN_MANIFEST_FIXTURE_PATH),
+  driverAdmissionPath = resolve(root, DEFAULT_DRIVER_ADMISSION_FIXTURE_PATH),
   packagePath = resolve(root, "package.json"),
   workflowPath,
   workflowPaths,
@@ -445,6 +515,10 @@ export function validatePhase11DockerProofReadiness({
   runManifestModulePath = resolve(
     root,
     "crates/lnsatd/src/docker_local_runtime_proof_run_manifest.rs",
+  ),
+  driverAdmissionModulePath = resolve(
+    root,
+    "crates/lnsatd/src/docker_local_runtime_proof_driver_admission.rs",
   ),
   supervisorPath = resolve(root, "crates/lnsatd/src/docker_local_supervisor.rs"),
   docPaths = Object.fromEntries(
@@ -758,6 +832,138 @@ export function validatePhase11DockerProofReadiness({
     )
       errors.push("run manifest fixture.next_gate: closed real-Docker gate required");
   }
+
+  const driverAdmission = readJson(
+    driverAdmissionPath,
+    "driver admission fixture",
+    errors,
+  );
+  if (isRecord(driverAdmission) && Object.hasOwn(driverAdmission, "packet_id")) {
+    errors.push(
+      "driver admission fixture.packet_id: canonical packet id is not assigned",
+    );
+  }
+  if (
+    exactKeys(
+      driverAdmission,
+      [
+        "schema_id",
+        "fixture_id",
+        "status",
+        "phase11_complete",
+        "execution_authorized",
+        "claim_snapshot_authenticated",
+        "durable_claim_state_revalidated",
+        "launch_permission_granted",
+        "runtime_launch_performed",
+        "real_docker_proof",
+        "receipt_persisted",
+        "production_supported",
+        "contract",
+        "required_claim_state",
+        "required_bindings",
+        "error_codes",
+        "required_runtime_gate_checks",
+        "next_gate",
+      ],
+      "driver admission fixture",
+      errors,
+    )
+  ) {
+    if (
+      driverAdmission.schema_id !==
+      "lnsat.phase11_docker_local_runtime_proof_driver_admission_fixture.schema.v1_0"
+    )
+      errors.push("driver admission fixture.schema_id: mismatch");
+    if (
+      driverAdmission.fixture_id !==
+      "phase11-docker-local-runtime-proof-driver-admission-v1"
+    )
+      errors.push("driver admission fixture.fixture_id: mismatch");
+    if (driverAdmission.status !== "structural_binding_only_private_source_only")
+      errors.push(
+        "driver admission fixture.status: structural private source-only status required",
+      );
+    for (const field of [
+      "phase11_complete",
+      "execution_authorized",
+      "claim_snapshot_authenticated",
+      "durable_claim_state_revalidated",
+      "launch_permission_granted",
+      "runtime_launch_performed",
+      "real_docker_proof",
+      "receipt_persisted",
+      "production_supported",
+    ])
+      if (driverAdmission[field] !== false)
+        errors.push(`driver admission fixture.${field}: false required`);
+    if (
+      exactKeys(
+        driverAdmission.contract,
+        [
+          "contract_id",
+          "output",
+          "side_effects",
+          "runtime_execution",
+          "proves_human_authority",
+        ],
+        "driver admission fixture.contract",
+        errors,
+      )
+    ) {
+      if (
+        driverAdmission.contract.contract_id !==
+        "lnsat.docker_local_runtime_proof_driver_admission.v1"
+      )
+        errors.push("driver admission fixture.contract.contract_id: mismatch");
+      if (
+        driverAdmission.contract.output !==
+        "canonical_private_structural_binding_digest"
+      )
+        errors.push("driver admission fixture.contract.output: mismatch");
+      if (!same(driverAdmission.contract.side_effects, []))
+        errors.push("driver admission fixture.contract.side_effects: [] required");
+      if (driverAdmission.contract.runtime_execution !== false)
+        errors.push(
+          "driver admission fixture.contract.runtime_execution: false required",
+        );
+      if (driverAdmission.contract.proves_human_authority !== false)
+        errors.push(
+          "driver admission fixture.contract.proves_human_authority: false required",
+        );
+    }
+    if (
+      !same(driverAdmission.required_claim_state, {
+        claim_created: true,
+        operation_state: "dispatching",
+        operation_state_sequence: 2,
+        attempt_state: "dispatching",
+        attempt_sequence: 1,
+        receipt_present: false,
+        reconciliation_present: false,
+      })
+    )
+      errors.push("driver admission fixture.required_claim_state: mismatch");
+    if (!same(driverAdmission.required_bindings, EXPECTED_DRIVER_ADMISSION_BINDINGS))
+      errors.push("driver admission fixture.required_bindings: ids or order mismatch");
+    if (!same(driverAdmission.error_codes, EXPECTED_DRIVER_ADMISSION_ERRORS))
+      errors.push("driver admission fixture.error_codes: ids or order mismatch");
+    if (
+      !same(
+        driverAdmission.required_runtime_gate_checks,
+        EXPECTED_DRIVER_RUNTIME_GATE_CHECKS,
+      )
+    )
+      errors.push(
+        "driver admission fixture.required_runtime_gate_checks: ids or order mismatch",
+      );
+    if (
+      driverAdmission.next_gate !== "separately_authorized_real_disposable_docker_proof"
+    )
+      errors.push(
+        "driver admission fixture.next_gate: closed real-Docker gate required",
+      );
+  }
   if (
     exactKeys(
       executionHarness,
@@ -996,6 +1202,53 @@ export function validatePhase11DockerProofReadiness({
   ]) {
     if (!runManifestModuleSource.includes(marker))
       errors.push(`runtime proof run manifest module: missing marker ${marker}`);
+  }
+
+  const driverAdmissionModuleSource = readText(
+    driverAdmissionModulePath,
+    "runtime proof driver admission module",
+    errors,
+  );
+  for (const marker of [
+    "lnsat.docker_local_runtime_proof_driver_admission.v1",
+    "admit_docker_local_runtime_proof_driver_v1",
+    "Phase11DockerRuntimeCompositionClaimV1",
+    "ReplayRejected",
+    "operation.state_sequence != 2",
+    'attempt.state != "dispatching"',
+    "limits.deadline_millis",
+    "docker_local_launch_contract_digest_v1",
+    "claim_snapshot_authenticated: false",
+    "durable_claim_state_revalidated: false",
+    "launch_permission_granted: false",
+    "DOCKER_LOCAL_RUNTIME_PROOF_DRIVER_REQUIRED_RUNTIME_GATE_CHECKS_V1",
+    "runtime_launch_performed: false",
+    "receipt_persisted: false",
+    "proves_human_authority: false",
+  ]) {
+    if (!driverAdmissionModuleSource.includes(marker))
+      errors.push(`runtime proof driver admission module: missing marker ${marker}`);
+  }
+  for (const forbidden of [
+    "std::process",
+    "Command::new",
+    "std::net",
+    "std::fs",
+    "std::env",
+    "std::os::unix",
+    "local_unix_socket",
+    "UnixListener",
+    "UnixStream",
+    "claim_phase11_docker_runtime_composition_v1",
+    "persist_phase11_docker_runtime_result_v1",
+    "mark_phase11_docker_outcome_unknown_v1",
+    "supervise_docker_local_git_execution_v1",
+    "execute_phase11_mapped_disposable_git_commit_v1",
+  ]) {
+    if (driverAdmissionModuleSource.includes(forbidden))
+      errors.push(
+        `runtime proof driver admission module: forbidden side-effect marker ${forbidden}`,
+      );
   }
   for (const forbidden of [
     "std::process",

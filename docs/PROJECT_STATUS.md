@@ -250,6 +250,19 @@ revalidate their disjointness immediately before process creation; preflight
 the daemon, image, configuration, entrypoint, and in-image adapter; traverse Gateway ->
 D4B2A -> D3/D4A -> supervisor; and use daemon/client/endpoint-revalidated,
 launch-label-bound inspect-before-remove cleanup.
+
+The private served-driver admission evaluator now adds a source-only structural
+boundary: canonical run manifest -> fields in a caller-supplied claim snapshot
+-> D3/D4A payload -> loaded profile -> launch-contract digest. Replay, ambiguous
+state/receipt/reconciliation, and binding drift fail closed, but its digest
+authenticates no snapshot, revalidates no durable state, and grants no launch
+permission. A later runnable driver must perform an authenticated durable-store
+re-read of the exact bound consumption, operation, and attempt immediately
+before process creation and revalidate created, dispatching, no-receipt, and
+no-reconciliation state. This evaluator performs no store write, route,
+filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
+runtime execution. Phase 11 remains incomplete; real Docker proof and later
+Phase 13/14 release gates remain separately closed.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence

@@ -93,6 +93,15 @@ subsystem or proposal.
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
 
+The private Phase 11 served-driver admission evaluator is documented by those
+two readiness records. It structurally checks a caller-supplied claim snapshot
+against the canonical run manifest, D3/D4A payload, loaded profile, and
+launch-contract digest while remaining source-only and side-effect free. Its
+digest authenticates no snapshot, proves no current durable state, and grants no
+launch permission; a later runnable driver must perform an authenticated
+durable-store re-read of the exact bound consumption, operation, and attempt
+immediately before process creation.
+
 The source-only execution-harness contract binds those proposed records for a
 later authority. [PHR-0005](reference/public-history-reviews/PHR-0005/review.json)
 records its independent source review; it has no runnable proof driver or runtime evidence.

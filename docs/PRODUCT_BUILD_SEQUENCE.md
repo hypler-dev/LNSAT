@@ -350,6 +350,18 @@ deployment, release, package, or support exists. Phase 11 remains incomplete;
 a later separately authorized gate owns real disposable Docker image/runtime
 proof.
 
+The private served-driver admission seam now provides a source-only structural
+check for that later chain. It binds the run manifest to fields in a
+caller-supplied claim snapshot, canonical D3/D4A payload, loaded profile, and
+launch-contract digest. Replay, ambiguous state/receipt/reconciliation, and
+binding drift fail closed, but its digest authenticates no snapshot, revalidates
+no durable state, and grants no launch permission. A later runnable driver must
+perform an authenticated durable-store re-read of the exact bound consumption,
+operation, and attempt immediately before process creation and revalidate the
+required live state. This evaluator performs no store write, route,
+filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
+runtime execution.
+
 A source-only proof-readiness plan now defines one canonical, side-effect-free
 identity bundle for the loaded schema-2 profile and freezes eight required
 future proof cases. Repository validation covers parsing, canonicalization,
