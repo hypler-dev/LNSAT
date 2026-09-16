@@ -795,6 +795,31 @@ test("operator run packet locks source, cases, adapter, and D3 derivation one ma
   }
 });
 
+test("status summaries name the runnable driver and authenticated durable-store boundary", () => {
+  for (const relativePath of [
+    "README.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/ROADMAP.md",
+  ]) {
+    const source = readFileSync(resolve(root, relativePath), "utf8");
+    for (const marker of [
+      "authenticate the created-claim result",
+      "through the durable-store boundary",
+    ]) {
+      const docPath = tempFile(
+        relativePath.replaceAll("/", "-"),
+        source.replaceAll(marker, "REMOVED_DURABLE_STORE_BOUNDARY"),
+      );
+      const result = validatePhase11DockerProofReadiness({
+        root,
+        docPaths: { [relativePath]: docPath },
+      });
+      assert.equal(result.ok, false, `${relativePath}: ${marker}`);
+      assert.ok(result.errors.join("\n").includes(`missing marker ${marker}`));
+    }
+  }
+});
+
 test("source CI rejects quoted, absolute, and compose Docker commands", () => {
   for (const command of [
     '"/usr/bin/docker" run forbidden',

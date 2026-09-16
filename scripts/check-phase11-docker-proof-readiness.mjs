@@ -194,6 +194,8 @@ const EXPECTED_DOC_MARKERS = {
     "private run-manifest contract",
     "private served-driver admission evaluator",
     "caller-supplied claim",
+    "authenticate the created-claim result",
+    "through the durable-store boundary",
   ],
   "crates/lnsatd/README.md": [
     "derives one source-only real-runtime proof plan",
@@ -280,6 +282,8 @@ const EXPECTED_DOC_MARKERS = {
     "source-only execution-harness contract",
     "private served-driver admission seam",
     "caller-supplied claim",
+    "authenticate the created-claim result",
+    "through the durable-store boundary",
   ],
   "docs/PRODUCT_BUILD_SEQUENCE.md": [
     "source-only proof-readiness plan",
@@ -296,6 +300,8 @@ const EXPECTED_DOC_MARKERS = {
     "source-only execution-harness contract",
     "private served-driver admission evaluator",
     "caller-supplied claim",
+    "authenticate the created-claim result",
+    "through the durable-store boundary",
   ],
   "docs/WHY_PUBLIC_NOW.md": [
     "freezes required identity bindings, proof cases, and fail-closed negatives",

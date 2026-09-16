@@ -269,11 +269,12 @@ now locks proof preparation to public source revision
 `b41aa756bccd85843ac540abfd927e8c5693d5fe` and its exact public tree. It
 enumerates later executable, image, profile, launch, manifest, target,
 admission, case, D3-limit, receipt, reconciliation, ambiguity, cleanup,
-evidence, retention, redaction, and pass/fail requirements. All live identities
-remain explicitly blocking, and no runnable driver yet performs the required
-authenticated durable-state re-read immediately before process creation. The
-packet grants no Docker, execution, build-candidate, release, deploy,
-publication, production, or support authority.
+evidence, retention, redaction, and pass/fail requirements. A later runnable
+driver must authenticate the created-claim result and re-read the exact bound
+consumption, operation, and attempt through the durable-store boundary
+immediately before process creation. All live identities remain explicitly
+blocking. The packet grants no Docker, execution, build-candidate, release,
+deploy, publication, production, or support authority.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence

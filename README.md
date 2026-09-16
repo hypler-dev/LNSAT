@@ -262,10 +262,12 @@ and [execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE
 The [operator run packet](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
 locks the merged public source revision and makes every later identity,
 admission, case, limit, evidence, cleanup, and pass/fail requirement explicit.
-It is source-only and not execution-ready: no runnable driver performs the
-required authenticated durable-state re-read, and all live executable, image,
-profile, launch, and manifest identities remain blocking until a separately
-reviewed and explicitly authorized run.
+It is source-only and not execution-ready: a later runnable driver must
+authenticate the created-claim result and re-read the exact bound consumption,
+operation, and attempt through the durable-store boundary immediately before
+process creation. All live executable, image, profile, launch, and manifest
+identities remain blocking until a separately reviewed and explicitly
+authorized run.
 
 </details>
 
