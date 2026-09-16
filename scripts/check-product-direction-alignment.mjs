@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { collectBuildSequenceErrors } from "./product-direction-invariants.mjs";
+import {
+  collectBuildSequenceErrors,
+  collectCurrentVersionSnapshotErrors,
+} from "./product-direction-invariants.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const projectMarkdown = execFileSync(
@@ -153,14 +156,7 @@ const requiredMarkers = {
     "## Documentation Coverage",
     "## Executable Check",
   ],
-  "docs/reference/CONTRACT_VERSIONING.md": [
-    "## Current Pre-Release Version Snapshot",
-    "Product/source SemVer",
-    "0.1.0",
-    "lnsat.contracts.v1_0",
-    "SQLite schema `17`",
-    "does not increment product SemVer",
-  ],
+  "docs/reference/CONTRACT_VERSIONING.md": ["# Contract Versioning And Negotiation"],
 };
 
 for (const [path, markers] of Object.entries(requiredMarkers)) {
@@ -168,6 +164,11 @@ for (const [path, markers] of Object.entries(requiredMarkers)) {
 }
 
 errors.push(...collectBuildSequenceErrors(source));
+errors.push(
+  ...collectCurrentVersionSnapshotErrors(
+    source("docs/reference/CONTRACT_VERSIONING.md"),
+  ),
+);
 
 const phaseNumbers = [...source("docs/ROADMAP.md").matchAll(/^### ([0-9]+)\. /gmu)].map(
   (match) => Number(match[1]),

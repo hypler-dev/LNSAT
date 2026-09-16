@@ -2,6 +2,69 @@ function compact(value) {
   return value.replace(/\s+/gu, " ").trim();
 }
 
+const currentVersionSnapshotRows = [
+  [
+    "Product/source SemVer",
+    "`0.1.0`",
+    "Pre-release source; npm workspaces private and Rust crates unpublished",
+  ],
+  [
+    "Gateway wire contract",
+    "`lnsat.contracts.v1_0`",
+    "Stable source contract target; no supported product artifact exists",
+  ],
+  [
+    "Deprecated wire compatibility",
+    "`lnsat.contracts.v0_1`",
+    "Accepted only on explicitly documented compatibility surfaces",
+  ],
+  [
+    "Product-surface selector",
+    "`lnsat.product_surface.v1` default; `lnsat.product_surface.v2` explicit",
+    "v2 is opt-in source diagnostics; no range or fallback",
+  ],
+  [
+    "Local persistence schema",
+    "SQLite schema `17`",
+    "Source implementation only; not a release or migration service",
+  ],
+];
+
+export function collectCurrentVersionSnapshotErrors(document) {
+  const lines = document.split(/\r?\n/u);
+  const heading = "## Current Pre-Release Version Snapshot";
+  const starts = lines.flatMap((line, index) => (line === heading ? [index] : []));
+  if (starts.length !== 1) {
+    return ["current version snapshot heading must occur exactly once"];
+  }
+
+  const end = lines.findIndex(
+    (line, index) => index > starts[0] && line.startsWith("## "),
+  );
+  const snapshotLines = lines.slice(starts[0] + 1, end < 0 ? undefined : end);
+  const rows = snapshotLines
+    .filter((line) => /^\|/u.test(line))
+    .map((line) => line.split("|").slice(1, -1).map(compact));
+  const errors = [];
+  for (const [surface, identity, state] of currentVersionSnapshotRows) {
+    const matches = rows.filter((row) => row[0] === surface);
+    if (
+      matches.length !== 1 ||
+      matches[0].length !== 3 ||
+      matches[0][1] !== identity ||
+      matches[0][2] !== state
+    ) {
+      errors.push(`current version snapshot mismatch: ${surface}`);
+    }
+  }
+  const noIncrementClaim =
+    "That merge does not increment product SemVer, promote a wire or family schema, create a tag, or publish an artifact.";
+  if (compact(snapshotLines.join(" ")).split(noIncrementClaim).length !== 2) {
+    errors.push("current version snapshot must retain the no-increment claim");
+  }
+  return errors;
+}
+
 function splitSentences(value) {
   return compact(value).split(/(?<=[.!?;])\s+/u);
 }
