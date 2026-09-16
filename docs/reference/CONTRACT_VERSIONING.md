@@ -17,6 +17,28 @@ LNSAT uses separate version layers:
 Changing one layer does not silently change another. Every serialized value
 names the version needed to interpret it.
 
+## Current Pre-Release Version Snapshot
+
+| Surface                       | Current identity                                                             | Current state                                                          |
+| ----------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Product/source SemVer         | `0.1.0`                                                                      | Pre-release source; npm workspaces private and Rust crates unpublished |
+| Gateway wire contract         | `lnsat.contracts.v1_0`                                                       | Stable source contract target; no supported product artifact exists    |
+| Deprecated wire compatibility | `lnsat.contracts.v0_1`                                                       | Accepted only on explicitly documented compatibility surfaces          |
+| Product-surface selector      | `lnsat.product_surface.v1` default; `lnsat.product_surface.v2` explicit      | v2 is opt-in source diagnostics; no range or fallback                  |
+| Local persistence schema      | SQLite schema `17`                                                           | Source implementation only; not a release or migration service         |
+| Phase 11 proof preparation    | proof source `b41aa756bccd85843ac540abfd927e8c5693d5fe`; packet PR #39 merge | Source-only operator preparation; not execution-ready                  |
+
+PR #39 integrated the operator packet at merge
+`190ab32443f60a2a1bc78f990e8ea5571c28f96f`; its exact packet-integration
+record lives in the
+[operator run packet](../architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md).
+That merge does not increment product SemVer, promote a wire or family schema,
+create a tag, or publish an artifact. A future versioned source release must
+move every npm workspace, the Cargo workspace, both lockfiles, changelog, and
+compatibility notes together under the separately authorized
+[release process](../RELEASING.md). Until then, the changelog remains
+`Unreleased` and product/source version remains `0.1.0`.
+
 ## Canonical Contract Versions
 
 `lnsat.contracts.v1_0` is the stable v1 target.

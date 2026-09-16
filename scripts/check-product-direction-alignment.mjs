@@ -153,6 +153,14 @@ const requiredMarkers = {
     "## Documentation Coverage",
     "## Executable Check",
   ],
+  "docs/reference/CONTRACT_VERSIONING.md": [
+    "## Current Pre-Release Version Snapshot",
+    "Product/source SemVer",
+    "0.1.0",
+    "lnsat.contracts.v1_0",
+    "SQLite schema `17`",
+    "does not increment product SemVer",
+  ],
 };
 
 for (const [path, markers] of Object.entries(requiredMarkers)) {

@@ -355,10 +355,14 @@ check for that later chain. It binds the run manifest to fields in a
 caller-supplied claim snapshot, canonical D3/D4A payload, loaded profile, and
 launch-contract digest. Replay, ambiguous state/receipt/reconciliation, and
 binding drift fail closed, but its digest authenticates no snapshot, revalidates
-no durable state, and grants no launch permission. A later runnable driver must
-perform an authenticated durable-store re-read of the exact bound consumption,
-operation, and attempt immediately before process creation and revalidate the
-required live state. This evaluator performs no store write, route,
+no durable state, and grants no launch permission. After the successful D4B2A
+claim commit, a later runnable driver must authenticate the created-claim result
+and call a private store-owned verifier in a fresh authenticated store
+transaction. The verifier must re-read and cross-check the exact durable
+consumption, operation, and attempt through the durable-store boundary
+immediately before process creation. Only exact live state may return a bound
+pre-supervisor guard; a post-claim failure preserves or marks `outcome_unknown`
+and cannot redispatch. This evaluator performs no store write, route,
 filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
 runtime execution.
 
@@ -378,13 +382,16 @@ proof-plan digest, inherited lists, and exact later-authority declarations and
 stops. It performs no Docker process, socket, daemon, image, or repository work;
 PHR-0005 records independent source review of that contract. A runnable proof
 driver and real runtime evidence remain separate gates; Phase 11 is incomplete.
-The source-only operator run packet locks the prepared proof source to public
-revision `b41aa756bccd85843ac540abfd927e8c5693d5fe` and consolidates later
-identity, target, admission, D3-limit, proof-case, ambiguity, cleanup, evidence,
-redaction, and terminal criteria. Its runnable-driver boundary and all live
-runtime identities remain blocking. A new exact authority decision is required
-before Docker observation or execution, and later release gates remain
-unchanged.
+The source-only operator run packet locks the proof-implementation source to
+public revision `b41aa756bccd85843ac540abfd927e8c5693d5fe` and separately
+records PR #39 packet integration at public merge
+`190ab32443f60a2a1bc78f990e8ea5571c28f96f`. It consolidates later identity,
+target, admission, D3-limit, proof-case, ambiguity, cleanup, evidence,
+redaction, and terminal criteria. That packet integration identity moves neither
+the proof source nor product/source version `0.1.0`. Its runnable-driver
+boundary and all live runtime identities remain blocking. A new exact authority
+decision is required before Docker observation or execution, and later release
+gates remain unchanged.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

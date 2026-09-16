@@ -105,16 +105,19 @@ The private served-driver admission evaluator structurally checks the canonical
 run manifest against fields in a caller-supplied claim snapshot, the D3/D4A
 payload, loaded profile, and launch-contract digest. It rejects replay and state
 or identity drift without store writes or runtime I/O. Its digest authenticates
-no snapshot, proves no current durable state, and grants no launch permission; a
-later runnable driver must perform an authenticated durable-store re-read of the
-exact bound consumption, operation, and attempt immediately before process
-creation. It remains source-only and does not complete Phase 11 or open real
-Docker proof.
+no snapshot, proves no current durable state, and grants no launch permission.
+After the D4B2A claim commits, a later runnable driver must use a private
+store-owned verifier and a fresh authenticated store transaction to re-read the
+exact durable consumption, operation, and attempt immediately before process
+creation. Exact success returns a bound pre-supervisor guard. It remains
+source-only and does not complete Phase 11 or open real Docker proof.
 
-The source-only operator packet locks the prepared proof source and enumerates
-the later identity, admission, case, limit, evidence, cleanup, redaction, and
-pass/fail gates. Live runtime identities and the runnable authenticated-store
-boundary remain blocking; the record grants no Docker or execution authority.
+The source-only operator packet locks the reviewed proof-implementation source
+and separately records PR #39's packet integration identity. It enumerates the
+later identity, admission, case, limit, evidence, cleanup, redaction, and
+pass/fail gates without moving product/source `0.1.0`. Live runtime identities
+and the runnable authenticated-store boundary remain blocking; the record
+grants no Docker or execution authority.
 
 These files describe experimental local foundations. Local owner, append-only
 credential rotation, permanent non-owner disablement, hash-only session
