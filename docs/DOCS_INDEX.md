@@ -92,6 +92,7 @@ subsystem or proposal.
 - [Docker-first runtime-neutral enforcement decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+- [Phase 11 real disposable Docker proof operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
 
 The private Phase 11 served-driver admission evaluator is documented by those
 two readiness records. It structurally checks a caller-supplied claim snapshot
@@ -101,6 +102,12 @@ digest authenticates no snapshot, proves no current durable state, and grants no
 launch permission; a later runnable driver must perform an authenticated
 durable-store re-read of the exact bound consumption, operation, and attempt
 immediately before process creation.
+
+The source-only operator run packet locks the reconciled public source revision
+and enumerates the exact later-run identities, driver-admission inputs, D3
+limits, positive and rejection cases, ambiguity, cleanup, evidence, redaction,
+and pass/fail gates. Its live runtime identities are deliberately
+`UNSET_BLOCKING`; it is not a runnable driver or execution authority.
 
 The source-only execution-harness contract binds those proposed records for a
 later authority. [PHR-0005](reference/public-history-reviews/PHR-0005/review.json)
@@ -160,6 +167,7 @@ security behavior, and conformance remain public-core concerns.
 - [ADR-0007: Docker-first runtime-neutral enforcement](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+- [Phase 11 real disposable Docker proof operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
 - [ADR-0005: Phase 7d enterprise local persistence](architecture/ADR-0005_PHASE_7D_ENTERPRISE_LOCAL_PERSISTENCE.md)
 - [ADR-0004: Phase 7 signed approval evidence](architecture/ADR-0004_PHASE_7_SIGNED_APPROVAL_EVIDENCE.md)
 - [ADR-0003: open core, extensions, and management plane](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)

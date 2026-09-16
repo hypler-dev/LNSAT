@@ -259,6 +259,15 @@ identities and revalidate their disjointness immediately before process creation
 It does not constitute real runtime evidence or complete Phase 11.
 See the [proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 and [execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).
+The [operator run packet](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+locks the merged public source revision and makes every later identity,
+admission, case, limit, evidence, cleanup, and pass/fail requirement explicit.
+It is source-only and not execution-ready: a later runnable driver must
+authenticate the created-claim result and re-read the exact bound consumption,
+operation, and attempt through the durable-store boundary immediately before
+process creation. All live executable, image, profile, launch, and manifest
+identities remain blocking until a separately reviewed and explicitly
+authorized run.
 
 </details>
 

@@ -481,6 +481,16 @@ no-reconciliation state. The evaluator performs no store write, route,
 filesystem/process/Docker I/O, receipt, evidence persistence, runtime selector,
 or execution, and therefore does not advance the Phase 11 real-proof gate.
 
+The source-only
+[operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+locks preparation to the reconciled public source revision and enumerates every
+later executable, image, profile, launch, manifest, disposable-target,
+admission, D3-limit, proof-case, cleanup, evidence, redaction, and terminal
+criterion. It intentionally leaves live runtime identities blocking and records
+that no runnable driver yet authenticates and re-reads durable claim state
+immediately before process creation. The packet is reviewable preparation, not
+runtime authority or evidence.
+
 ## Security Boundaries
 
 - Gateway remains sole action-authority boundary.

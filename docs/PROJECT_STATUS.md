@@ -263,6 +263,18 @@ no-reconciliation state. This evaluator performs no store write, route,
 filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
 runtime execution. Phase 11 remains incomplete; real Docker proof and later
 Phase 13/14 release gates remain separately closed.
+The source-only
+[operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+now locks proof preparation to public source revision
+`b41aa756bccd85843ac540abfd927e8c5693d5fe` and its exact public tree. It
+enumerates later executable, image, profile, launch, manifest, target,
+admission, case, D3-limit, receipt, reconciliation, ambiguity, cleanup,
+evidence, retention, redaction, and pass/fail requirements. A later runnable
+driver must authenticate the created-claim result and re-read the exact bound
+consumption, operation, and attempt through the durable-store boundary
+immediately before process creation. All live identities remain explicitly
+blocking. The packet grants no Docker, execution, build-candidate, release,
+deploy, publication, production, or support authority.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence

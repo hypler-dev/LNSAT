@@ -415,6 +415,18 @@ test("repository-wide check cannot drop Phase 11 readiness gates", () => {
   );
 });
 
+test("named Phase 11 readiness aliases cannot drift", () => {
+  const packagePath = mutatedJson("package.json", (packageJson) => {
+    packageJson.scripts["test:phase11-readiness"] = "true";
+    packageJson.scripts["check:phase11-readiness"] = "true";
+  });
+  const result = validatePhase11DockerProofReadiness({ root, packagePath });
+  assert.equal(result.ok, false);
+  const errors = result.errors.join("\n");
+  assert.match(errors, /Phase 11 readiness test alias mismatch/u);
+  assert.match(errors, /Phase 11 readiness check alias mismatch/u);
+});
+
 test("repository-wide check cannot spoof readiness gates inside shell text", () => {
   const packagePath = mutatedJson("package.json", (packageJson) => {
     packageJson.scripts.check =
@@ -728,6 +740,84 @@ test("readiness docs cannot lose closed-boundary markers", () => {
     result.errors.join("\n"),
     /PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS\.md: missing marker/u,
   );
+});
+
+test("operator run packet cannot lose blocking authority markers", () => {
+  const relativePath =
+    "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md";
+  const docPath = tempFile("operator-run-packet.md", "# Incomplete document\n");
+  const result = validatePhase11DockerProofReadiness({
+    root,
+    docPaths: { [relativePath]: docPath },
+  });
+  assert.equal(result.ok, false);
+  assert.match(
+    result.errors.join("\n"),
+    /PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET\.md: missing marker/u,
+  );
+});
+
+test("operator run packet locks source, cases, adapter, and D3 derivation one marker at a time", () => {
+  const relativePath =
+    "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md";
+  const source = readFileSync(resolve(root, relativePath), "utf8");
+  for (const marker of [
+    "b41aa756bccd85843ac540abfd927e8c5693d5fe",
+    "fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c",
+    "d93b3f5c9b040fa5ba0051881574f59cf4ee92ea",
+    "914da579f28c98dd59cb5303eba5d7fa3c68664e",
+    "adapter:docker-local:git-commit",
+    "exact adapter version `v1`",
+    "min(profile limits.stdout_bytes, 65,536)",
+    "claim_created = true",
+    "claim_created != true",
+    "one exact served `Gateway -> D4B2A -> D3/D4A -> supervisor` chain identity",
+    "exact served-chain authorization identity",
+    "real_runtime_one_consequence_and_bound_receipt",
+    "exact_replay_metadata_only_no_redispatch",
+    "post_consequence_unknown_survives_restart",
+    "reconciliation_host_git_inspection_only",
+    "unchanged_target_unknown_without_receipt",
+    "isolation_no_socket_credentials_or_network",
+    "cleanup_verified_container_id_only",
+    "runtime_and_image_identity_stable",
+  ]) {
+    const docPath = tempFile(
+      "operator-run-packet.md",
+      source.replaceAll(marker, "REMOVED_LOCKED_MARKER"),
+    );
+    const result = validatePhase11DockerProofReadiness({
+      root,
+      docPaths: { [relativePath]: docPath },
+    });
+    assert.equal(result.ok, false, marker);
+    assert.ok(result.errors.join("\n").includes(`missing marker ${marker}`), marker);
+  }
+});
+
+test("status summaries name the runnable driver and authenticated durable-store boundary", () => {
+  for (const relativePath of [
+    "README.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/ROADMAP.md",
+  ]) {
+    const source = readFileSync(resolve(root, relativePath), "utf8");
+    for (const marker of [
+      "authenticate the created-claim result",
+      "through the durable-store boundary",
+    ]) {
+      const docPath = tempFile(
+        relativePath.replaceAll("/", "-"),
+        source.replaceAll(marker, "REMOVED_DURABLE_STORE_BOUNDARY"),
+      );
+      const result = validatePhase11DockerProofReadiness({
+        root,
+        docPaths: { [relativePath]: docPath },
+      });
+      assert.equal(result.ok, false, `${relativePath}: ${marker}`);
+      assert.ok(result.errors.join("\n").includes(`missing marker ${marker}`));
+    }
+  }
 });
 
 test("source CI rejects quoted, absolute, and compose Docker commands", () => {
