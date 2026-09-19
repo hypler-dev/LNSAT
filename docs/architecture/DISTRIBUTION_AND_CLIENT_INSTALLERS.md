@@ -1,32 +1,29 @@
-# Phase 14 Core Artifacts and Downstream Installer Reference
+# Phase 14 Core Artifacts and Installer Plan
 
-- Status: accepted core-artifact plan; downstream installer reference
+- Status: accepted core-artifact plan
 - Availability: source contract only
 - Current artifacts: none
 
 This plan implements [ADR-0002](ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md).
-Downstream composition follows
-[ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
 Cross-phase order follows [product build sequence](../PRODUCT_BUILD_SEQUENCE.md).
 Phase 14 proof for any selected LNSAT core target is required before a supported
-core release; downstream installer/platform breadth is outside LNSAT V1.
+core release; unselected installer/platform breadth is outside LNSAT V1.
 Only after required Phases 8, 9, 10, 11, and 13 pass may one explicit
 candidate-build authorization select exact LNSAT core OS/architecture rows.
-Unselected rows stay unsupported and do not block LNSAT V1. Downstream
-distributors separately select any final package/installer rows. This plan
+Unselected rows stay unsupported and do not block LNSAT V1. LNSAT selects any
+final package/installer rows through an explicit release packet. This plan
 authorizes planning and tests, not binary builds, package creation, production
 signing, publication, installation, service start, deployment, or live mutation.
 
 ## Canonical-Artifact Invariant
 
 LNSAT distribution must work independently through its core, API, and `lnsatctl`;
-graphical wizard and management UI are downstream responsibilities.
+graphical surfaces are optional and must not be required for headless operation.
 The headless setup gate
 [headless configuration gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 must pass before RC freeze, with per-selected-core-target proof in Phase 14.
 Installing files must not implicitly start the service or activate permissions.
-Downstream installers may consume verified, pinned canonical
-LNSAT components or use a compatible existing installation; they cannot replace
+Installers consume verified, pinned canonical LNSAT components; they cannot replace
 its ownership proof, approve their own access, or alter core authority behavior.
 
 Canonical CI candidate targets follow. Only explicitly selected rows become
@@ -44,21 +41,21 @@ Every canonical `.tar.gz` bundle contains:
 - `lnsatd`;
 - `lnsatctl`;
 - `lnsat` convenience dispatcher;
-- no required graphical console assets (downstream hosts may bundle their own UI);
+- no required graphical console assets;
 - empty configuration templates;
 - licenses and notices;
 - version/build manifest with source revision, target, recipe, and canonical
   component digests.
 
-Downstream-owned Homebrew, direct tarball, install-script, deb, rpm, OCI, MSI, or
-Cargo wrappers may consume those exact versioned components, but none is an
-LNSAT V1 exit blocker. Any future wrapper must not rebuild product behavior and
-must verify the LNSAT core identity against its canonical manifest.
+Homebrew, direct tarball, install-script, deb, rpm, OCI, MSI, or Cargo formats
+may consume those exact versioned components, but none is an LNSAT V1 exit
+blocker until selected. Any future package must not rebuild product behavior and
+must verify core identity against its canonical manifest.
 
-## Downstream Candidate Distribution Matrix
+## Candidate Distribution Matrix
 
-No family below is selected yet. Downstream distributors may later name exact rows and one
-install path per claimed target. These rows are not LNSAT V1 exit requirements.
+No family below is selected yet. A future release packet may name exact rows and
+one install path per target. These rows are not LNSAT V1 exit requirements.
 
 | Family         | v1 contract                                                         |
 | -------------- | ------------------------------------------------------------------- |
@@ -108,7 +105,7 @@ core.
 ## OCI Contract
 
 - amd64 and arm64 manifest;
-- same canonical LNSAT core component digests; any downstream UI digest is separate;
+- same canonical LNSAT core component digests; optional UI digests are separate;
 - non-root UID/GID;
 - read-only root filesystem compatibility;
 - explicit persistent data volume;
@@ -118,8 +115,7 @@ core.
 
 ## Trust Evidence
 
-Every selected canonical core artifact requires the evidence below. Downstream
-distributors separately own equivalent evidence for each wrapper they claim:
+Every selected canonical core artifact requires the evidence below:
 
 - SHA-256 checksum;
 - non-production signature rehearsal and verification bundle;
@@ -134,8 +130,9 @@ distributors separately own equivalent evidence for each wrapper they claim:
   `lnsatd` behavior.
 
 Install, package upgrade/rollback, uninstall, and package-managed service
-lifecycle evidence applies only to downstream wrapper claims. It does not gate
-LNSAT V1 or replace the core-target evidence above.
+lifecycle evidence applies to each selected LNSAT V1 package target and gates
+its support claim. Unselected installer formats do not gate LNSAT V1. Package
+lifecycle proof does not replace the core-target evidence above.
 
 Signature metadata must identify algorithm, key identity, trust root, issue
 time, and revocation/rotation path. Checksums alone do not authenticate.
@@ -162,16 +159,16 @@ defined in [CLI and OS operator interface](CLI_AND_OS_OPERATOR_INTERFACE.md).
 MCP extensions, host helpers, SDK packages, and integrations remain separate
 artifacts and never become installer trust shortcuts.
 
-## Downstream Composition
+## Package composition
 
-Official commercial editions pin exact canonical public-core components plus
+Future package variants must pin exact canonical core components plus
 separately signed module, connector, UI, policy-pack, or model-package digests.
-Edition manifests record compatibility, license/notice, SBOM, provenance,
+Package manifests record compatibility, license/notice, SBOM, provenance,
 support, entitlement, update, rollback, and revocation evidence.
 
-Downstream edition may wrap canonical core but cannot rebuild different
+Package composition may wrap canonical core but cannot rebuild different
 authority behavior. Module installation, enablement, capability grant, and
-service start remain separate. Public core release and commercial publication
+service start remain separate. Core release and publication
 have independent go/no-go gates.
 
 ## Later Platform Lanes
@@ -185,7 +182,7 @@ All selected LNSAT core-target compatibility rows, required trust evidence,
 canonical component digest parity, non-root checks, headless configuration,
 monitoring, docs, recovery, rollback, and revocation evidence pass. Unknown,
 unselected, or untested core-target rows stay unsupported. Cross-wrapper digest
-parity and lifecycle tests gate only downstream support claims; they
-do not gate LNSAT V1.
+parity and lifecycle tests gate every selected LNSAT V1 package target. Optional
+wrappers and unselected installer formats do not gate LNSAT V1.
 
 Publication remains a separate explicit go/no-go gate after Phase 14.

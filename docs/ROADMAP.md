@@ -6,8 +6,8 @@ ordered; explicitly post-local-v1 lanes do not block first local support.
 [ADR-0002](architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
 controls positioning, authority boundaries, and expanded v1 distribution.
 [ADR-0003](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)
-controls open-core/downstream boundaries, governed agent content, advisory
-models, extension isolation, management views, and OS CLI direction.
+controls governed agent content, advisory models, extension isolation,
+management views, and OS CLI direction.
 [ADR-0006](architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md)
 controls local-v1 trust, optional signed approval, online one-time
 authorization, revised Phase 7 lanes, and staged release breadth.
@@ -551,7 +551,7 @@ no adapter bypasses Gateway validation, and stable conformance artifacts map:
 - cancellation ambiguity
 - task completion with application error
 
-Portable extension contracts remain independent of commercial implementation.
+Portable extension contracts remain independent of any implementation.
 
 ### 9. API-Backed Control Center and Ambiguity Recovery
 
@@ -600,20 +600,20 @@ Exit: browser security and cross-surface conformance pass; management state
 remains consistent under disconnect/reconnect; no route claims execution
 success without Gateway-sourced completion evidence.
 
-### 10. `lnsatd`, `lnsatctl`, and `lnsat` Product Split
+### 10. `lnsatd`, `lnsatctl`, and LNSAT Product Surface
 
 Additional accepted V1 scope: LNSAT-owned headless setup and ongoing
-access-management API/CLI, independent of downstream products. The
+access-management API/CLI as one LNSAT product surface. The
 [headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 define resource access versus agent authority, layered declarative configuration,
 customizable settings, OS enforcement visibility, protected changes, and
-acceptance tests. Downstream products own graphical setup, presets, and rich
-management UI.
-P10-X1 remains a completed
-source checkpoint; it does not complete this additional work. Deliver the new
+acceptance tests. LNSAT may add graphical setup, presets, and rich management UI
+after the headless V1 contracts are proven; these are not V1 exit requirements.
+P10-X1 remains a completed source checkpoint; it does not complete this
+additional work. Deliver the new
 product behavior before Phase 13 RC freeze, prove its security/recovery in Phase
-13, and validate selected LNSAT core targets in Phase 14. Downstream
-distributors own final installer and service-manager lifecycle proof.
+13, and validate selected LNSAT core targets in Phase 14. LNSAT owns final
+package and service-manager lifecycle proof for selected targets.
 Current read-only surfaces and runtime closures remain unchanged until separately
 reviewed implementation is authorized.
 
@@ -844,23 +844,18 @@ material, SBOM, provenance, reproducibility, non-root behavior, headless
 configuration, monitoring, recovery, and compatibility results. No graphical
 asset or final installer wrapper is an LNSAT V1 component.
 
-Phase 14 owns lifecycle proof on each later-selected canonical target. That
-marker applies to LNSAT core-target behavior, not a downstream installer's
-or package lifecycle.
-
-Downstream distributors own Homebrew, direct-download, install-script, deb, rpm,
-MSI, OCI, or
-other final distro composition and lifecycle proof. Each downstream wrapper must
-pin and verify exact LNSAT components and cannot rebuild or alter authority
-behavior. Those wrapper rows may be tracked as downstream reference work, but
-they do not block LNSAT V1.
+Phase 14 owns lifecycle proof on each later-selected canonical target, including
+Homebrew, direct-download, install-script, deb, rpm, MSI, and OCI rows when
+selected. Each package must pin and verify exact LNSAT components and cannot
+rebuild or alter authority behavior. Unselected formats remain unsupported.
 
 Phase 14 signature evidence uses non-production rehearsal material. Production
 signing happens only under final publication authorization against unchanged
 proven digests. Any artifact-byte change repeats affected Phase 14 proof.
 
 Exit: every selected LNSAT core-target compatibility row passes and produces
-pin-verifiable identity. Final installer/package breadth remains downstream work.
+pin-verifiable identity. Final package breadth follows the selected Phase 14
+rows.
 
 ## Publication Gate
 
@@ -880,25 +875,23 @@ production deployment, or stable compatibility.
 Winget, Scoop, MSI, Chocolatey, and signed/notarized macOS `.pkg` are later
 lanes, not v1 blockers.
 
-## Downstream Product Sequence
+## LNSAT Runtime and Package Sequence
 
-Separate commercial repositories do not expand the fourteen-phase v1 core
-release gate. After relevant public contracts stabilize, downstream work may
-proceed in this order:
+After the core contracts stabilize, LNSAT product work proceeds in this order:
 
 1. public portable manifests and conformance for modules, connectors, agent
    profiles, skills, instructions, context objects, and model overlays;
-2. private visual and CLI management of immutable content, assignments,
+2. visual and CLI management of immutable content, assignments,
    history, sharing, graphs, and request-context grouping;
 3. isolated certified connector packs with exact authorization/receipt binding;
 4. advisory delegator-model profiles with provenance, compatibility, evaluation,
    uncertainty, and deterministic deny/escalate fallback;
-5. official commercial edition manifests that compose exact public core and
-   module digests without private authority forks;
+5. versioned LNSAT package manifests that compose exact core and module
+   digests without authority forks;
 6. hosted, hybrid, fleet, or multi-tenant work only after separate identity,
    isolation, data, reliability, security, and publication decisions.
 
-See [open core and product repositories](architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md),
+See [extension boundaries](architecture/OPEN_CORE_AND_EXTENSION_BOUNDARIES.md),
 [agent configuration management](architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md),
 and [CLI and OS operator interface](architecture/CLI_AND_OS_OPERATOR_INTERFACE.md).
 

@@ -11,43 +11,40 @@ claim because it appears here.
 
 ## Canonical Decisions
 
-| Decision                                                                                                                    | Canonical source                                                                               | Required aligned surfaces                               |
-| --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Execution authorization and evidence is primary position                                                                    | [ADR-0002](../architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)                    | README, architecture guide, roadmap, project status     |
-| Gateway owns authority above MCP/A2A/API/CLI/UI                                                                             | [Authority layer](../architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)                   | security, SDK, adapters, CLI, UI                        |
-| MCP 2026-07-28 is canonical experimental source; legacy and framework lanes stay bounded                                    | [MCP interoperability](../architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md) | MCP, SDK, roadmap, status, conformance                  |
-| Required path is Phase 8 -> 9 -> 10 -> 11 -> 13 -> 14; Phase 12 and signed lanes stay nonblocking unless selected           | [Product build sequence](../PRODUCT_BUILD_SEQUENCE.md)                                         | roadmap, status, release, compatibility, distribution   |
-| Public core plus separately versioned downstream products                                                                   | [ADR-0003](../architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)              | governance, contributor, SDK, release, public readiness |
-| Docker/OCI is first v1 runtime profile; Gateway authority remains runtime-neutral                                           | [ADR-0007](../architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)               | README, roadmap, status, runtime adapters, distribution |
-| Configuration layers only narrow; authority-managed emergency stop dominates                                                | [ADR-0007](../architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)               | config, CLI, UI, policy, adapters, recovery             |
-| Agent configuration, skills, instructions, context, and overlays are governed inputs                                        | [Management design](../architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)       | context firewall, SDK, UI, onboarding, threat model     |
-| Gatekeeper models advise; deterministic policy and humans authorize                                                         | [ADR-0003](../architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)              | auth, agent framework, SDK, threat model                |
-| Node/graph UI and exact source editor serve different tasks                                                                 | [Management UI](../architecture/MANAGEMENT_UI_INFORMATION_ARCHITECTURE.md)                     | UI framework, management design, roadmap                |
-| LNSAT API and `lnsatctl` form the complete headless V1 surface; downstream products own graphical setup and final packaging | [ADR-0008](../architecture/ADR-0008_LNSAT_KERNEL_AND_DOWNSTREAM_USERLAND_BOUNDARY.md)          | README, roadmap, status, CLI, UI, release, distribution |
-| Canonical components are built once and wrapped unchanged                                                                   | [Distribution plan](../architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)                     | release, compatibility, commercial composition          |
-| Public source visibility is independent from final artifact publication                                                     | [Public source readiness](../PUBLIC_READINESS.md)                                              | roadmap, status, release, governance                    |
-| Final artifact publication follows Phase 14 and separate explicit go/no-go authorization                                    | [Source release process](../RELEASING.md)                                                      | roadmap, status, release, distribution                  |
-| Entitlement controls features, never authority                                                                              | [Open-core boundary](../architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)                    | governance, security, downstream docs                   |
+| Decision                                                                                                          | Canonical source                                                                               | Required aligned surfaces                               |
+| ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Execution authorization and evidence is primary position                                                          | [ADR-0002](../architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)                    | README, architecture guide, roadmap, project status     |
+| Gateway owns authority above MCP/A2A/API/CLI/UI                                                                   | [Authority layer](../architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)                   | security, SDK, adapters, CLI, UI                        |
+| MCP 2026-07-28 is canonical experimental source; legacy and framework lanes stay bounded                          | [MCP interoperability](../architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md) | MCP, SDK, roadmap, status, conformance                  |
+| Required path is Phase 8 -> 9 -> 10 -> 11 -> 13 -> 14; Phase 12 and signed lanes stay nonblocking unless selected | [Product build sequence](../PRODUCT_BUILD_SEQUENCE.md)                                         | roadmap, status, release, compatibility, distribution   |
+| LNSAT is a standalone product with versioned authority and interoperability contracts                             | [ADR-0003](../architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)              | governance, contributor, SDK, release, public readiness |
+| Docker/OCI is first v1 runtime profile; Gateway authority remains runtime-neutral                                 | [ADR-0007](../architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)               | README, roadmap, status, runtime adapters, distribution |
+| Configuration layers only narrow; authority-managed emergency stop dominates                                      | [ADR-0007](../architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)               | config, CLI, UI, policy, adapters, recovery             |
+| Agent configuration, skills, instructions, context, and overlays are governed inputs                              | [Management design](../architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)       | context firewall, SDK, UI, onboarding, threat model     |
+| Gatekeeper models advise; deterministic policy and humans authorize                                               | [ADR-0003](../architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)              | auth, agent framework, SDK, threat model                |
+| Node/graph UI and exact source editor serve different tasks                                                       | [Management UI](../architecture/MANAGEMENT_UI_INFORMATION_ARCHITECTURE.md)                     | UI framework, management design, roadmap                |
+| LNSAT API and `lnsatctl` form the complete headless V1 surface; LNSAT owns graphical setup and final packaging    | [ADR-0008](../architecture/ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)                              | README, roadmap, status, CLI, UI, release, distribution |
+| Canonical components are built once and wrapped unchanged                                                         | [Distribution plan](../architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)                     | release, compatibility, package composition             |
+| Public source visibility is independent from final artifact publication                                           | [Public source readiness](../PUBLIC_READINESS.md)                                              | roadmap, status, release, governance                    |
+| Final artifact publication follows Phase 14 and separate explicit go/no-go authorization                          | [Source release process](../RELEASING.md)                                                      | roadmap, status, release, distribution                  |
+| Entitlement controls features, never authority                                                                    | [Extension boundary](../architecture/OPEN_CORE_AND_EXTENSION_BOUNDARIES.md)                    | governance, security, product docs                      |
 
 ## Repository and Product Boundaries
 
-LNSAT's headless setup, access management, versioned API, and `lnsatctl` control
-surface belong to the public core, independent of downstream management products.
+LNSAT's headless setup, access management, versioned API, `lnsatctl` control
+surface, graphical surface, and package lifecycle are one product boundary.
 The [canonical pending V1 gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 aligns README, roadmap/status, CLI architecture, and release/distribution docs.
-Downstream products own graphical installation, presets, management UI, and final distro
-packaging. It may install a verified compatible LNSAT release or use an existing
-service; dependency flows toward LNSAT, never the reverse. Current console
-readback implements neither the pending headless gate nor a downstream product's graphical
-userland.
+Current console readback implements neither the pending headless gate nor a
+mutation-capable graphical surface.
 
 | Boundary            | Source role                                                    | Current state                                                 |
 | ------------------- | -------------------------------------------------------------- | ------------------------------------------------------------- |
 | LNSAT               | canonical authority core and public interoperability contracts | public pre-release source from audited fresh-history snapshot |
-| Management products | visual and organization management                             | planned outside this repository                               |
-| Connector packs     | product-specific adapters                                      | public contracts only; certified implementations unavailable  |
-| Model packs         | advisory profiles, overlays, evaluation, packaging             | planned outside this repository                               |
-| Release composition | exact component and trust assembly                             | planned outside this repository                               |
+| Control Center      | visual and organization management                             | experimental read-only source preview                         |
+| Protocol adapters   | MCP, A2A, SDK, REST, and CLI interoperability                  | public contracts; certified implementations unavailable       |
+| Advisory profiles   | overlays, evaluation, and governed agent context               | planned; authority remains deterministic                      |
+| Release composition | exact component and trust assembly                             | planned; Phase 14 gated                                       |
 
 Marketing source remains separate. No boundary above currently supplies a
 supported package, hosted runtime, production connector, model deployment, or
@@ -81,7 +78,7 @@ broader product claim.
 2. Historical ADR-0001 conflicts remain visibly superseded by ADR-0002.
 3. ADR-0003 extends product topology but does not expand v1 runtime claims.
 4. Public core security and interoperability cannot move behind entitlement.
-5. Downstream modules cannot fork Gateway authority.
+5. Modules and adapters cannot fork Gateway authority.
 6. Model output cannot become approval or execution authority.
 7. UI, CLI, MCP, REST, A2A, and SDK paths map to same Gateway contracts.
 8. Managed content uses immutable identity, provenance, assignment, and

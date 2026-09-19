@@ -1,17 +1,15 @@
 # Self-Deploy Packaging Plan
 
-> Boundary status: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_DOWNSTREAM_USERLAND_BOUNDARY.md)
-> supersedes earlier wording that made server installers, graphical setup, or
-> final distro packaging mandatory LNSAT V1 work. LNSAT owns core artifacts,
-> versioned APIs, and complete headless `lnsatctl`; downstream hosts own those
-> installer and userland concerns.
+> Boundary status: [ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)
+> supersedes earlier wording that made graphical setup or broad distro packaging
+> mandatory LNSAT V1 work. LNSAT owns core artifacts, versioned APIs, and
+> complete headless `lnsatctl`.
 
 ## Purpose
 
 LNSAT is an independent open source authority core. Deployment owners choose
 where it runs, which integrations are enabled, where credential references live,
-which auth mode is active, and which authorization levels apply. Downstream hosts may
-provide graphical management and distro composition.
+which auth mode is active, and which authorization levels apply.
 
 This document defines only source contracts for future packaging. It
 does not create packages, installers, service files, Docker images, node-agent
@@ -21,8 +19,8 @@ database connections, or host mutations.
 ## Canonical Ownership
 
 This proposal preserves source-only deployment vocabulary and distinguishes
-LNSAT core artifacts from downstream distribution. The vocabulary is broader
-than supported V1 scope. ADR-0008 owns the current split.
+candidate LNSAT artifacts from current support. The vocabulary is broader than
+supported V1 scope. ADR-0008 owns the current boundary.
 [ADR-0002](ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md) retains
 `self_hosted_single_node` as historical architecture input but does not make
 graphical installation or final distro packaging an LNSAT V1 requirement;
@@ -60,8 +58,7 @@ hosting mutation, or live deploy.
 
 ## Future Artifact Refs
 
-The plan names expected core and downstream artifact references without
-building them:
+The plan names expected LNSAT artifact references without building them:
 
 - `web_app_ref`
 - `gateway_api_ref`
@@ -72,32 +69,21 @@ building them:
 - `optional_adapter_package_ref`
 - `optional_node_agent_package_ref`
 
-All artifact refs stay `future_artifact_source_ref_only`. `web_app_ref`,
-installer, wrapper, client, and helper refs are downstream/extension
-concerns. Package creation, publication, installers, binary builds, Docker
-images, service files, launchd/systemd units, and node-agent packages are
-blocked.
+All artifact refs stay `future_artifact_source_ref_only`. Package creation,
+publication, installers, binary builds, Docker images, service files,
+launchd/systemd units, and node-agent packages remain blocked until an explicit
+artifact packet opens them.
 
-## Distribution And Client Installer Follow-Up
+## Distribution And Installer Follow-Up
 
-Future source-only planning must split LNSAT core artifacts from downstream
-downstream/extension families:
+Future source-only planning covers LNSAT core artifacts and selected package
+formats:
 
 - LNSAT source releases and selected core-target bundles containing canonical
   `lnsatd`, `lnsatctl`, contracts, manifests, and docs;
-- downstream server installers and final distro wrappers;
-- downstream supported-system clients and helpers;
-- optional downstream MCP and connector extension packages.
-
-Downstream server installers may set up a pinned, verified LNSAT core on supported
-systems. Clients remain operator or host-side extensions. MCP packages remain
-adapters and stay separate from LNSAT core artifacts.
-
-This split does not change the boundary: no binary build, package
-publish, installer execution, service install, client enrollment, MCP extension
-installation, auth provider wiring, integration setup write, runtime/live
-behavior, DNS/Cloudflare mutation, secret value, Python core requirement, or
-OS-specific binary core requirement is opened.
+  No binary build, package publication, installer execution, service install,
+  auth provider wiring, integration setup write, live behavior, secret value,
+  Python core requirement, or OS-specific binary core requirement is opened.
 
 ## Auth And Integration Posture
 
@@ -120,9 +106,8 @@ live connectors, or call external services.
 Current MVP evidence is implemented in TypeScript source contracts,
 Gateway/read-only surfaces, and experimental console routes. Production core
 targets Rust `lnsatd`, `lnsatctl`, and shared packet/policy/audit/evidence crates;
-TypeScript remains experimental console and generated-client source. Downstream
-hosts own graphical userland and final distro packaging. No Rust artifact is built
-yet.
+TypeScript remains experimental console and generated-client source. No Rust
+artifact is built yet.
 
 Python can appear later only as an optional adapter/helper package. Supported
 Rust binaries and optional OS-specific helpers require separate policy,

@@ -1,8 +1,7 @@
 # `@lnsat/console`
 
 Read-only experimental LNSAT Control Center built with Next.js. It is not an
-LNSAT V1 exit requirement; graphical setup and rich userland belong to
-downstream products.
+LNSAT V1 exit requirement while the headless control surface is completed.
 
 Current routes cover dashboard, knowledge, packets, agents, approvals, audit,
 operations, substrates, readiness, and settings. Most panels are synthetic
@@ -14,8 +13,8 @@ performs runtime dispatch or database mutation.
 ## Develop
 
 Headless setup and access management remain LNSAT V1 work through the versioned
-API and `lnsatctl`; graphical wizard, presets, and rich management UI belong to
-downstream products. See the canonical
+API and `lnsatctl`; graphical wizard, presets, and rich management UI are
+implemented only through the Gateway contracts. See the canonical
 [headless configuration and control gate](../../docs/PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 for acceptance and security boundaries; no management mutation is implemented
 or opened by this plan.

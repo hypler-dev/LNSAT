@@ -4,9 +4,9 @@
 - Availability: source plan only
 - Current supported rows: none
 
-> Boundary note: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_DOWNSTREAM_USERLAND_BOUNDARY.md)
-> makes platform/package breadth and graphical installer evidence downstream
-> concerns for downstream hosts. This matrix is not an LNSAT V1 UI gate.
+> Boundary note: [ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md) makes
+> platform/package breadth and graphical installer evidence explicit Phase 14
+> evidence for LNSAT. This matrix is not a graphical UI gate.
 
 No row becomes supported because it appears here. Later release packet selects
 one or two exact initial rows. Selected row is supported only when exact release
@@ -32,8 +32,8 @@ See the
 ## Mandatory Evidence Columns
 
 Every selected LNSAT core OS/architecture row must record the core evidence
-below. Downstream wrapper rows additionally record package lifecycle and wrapper
-service-safety evidence; those downstream requirements do not gate LNSAT V1.
+below. Selected package rows additionally record package lifecycle and service
+safety evidence.
 
 | Dimension      | Required evidence                                                                        |
 | -------------- | ---------------------------------------------------------------------------------------- |
@@ -41,7 +41,7 @@ service-safety evidence; those downstream requirements do not gate LNSAT V1.
 | Platform       | OS/version, architecture, artifact family, install path                                  |
 | Runtime        | service mode, runtime user/group, config/data/log paths                                  |
 | CLI            | command/schema version, exit-code family, local transport, shell/man evidence            |
-| Components     | canonical LNSAT core/API/CLI digests; UI is downstream content                           |
+| Components     | canonical LNSAT core/API/CLI digests; optional UI content is separately identified       |
 | Trust          | SHA-256, signature bundle, SPDX JSON SBOM, SLSA v1 provenance                            |
 | Core lifecycle | core rollback and revocation; backup/restore and config/data preservation                |
 | Core runtime   | non-root runtime, headless configuration, explicit-start/no-auto-start `lnsatd` behavior |
@@ -57,11 +57,10 @@ service-safety evidence; those downstream requirements do not gate LNSAT V1.
 | `x86_64-unknown-linux-gnu`  | `.tar.gz` with complete component map | unsupported; unbuilt |
 | `aarch64-unknown-linux-gnu` | `.tar.gz` with complete component map | unsupported; unbuilt |
 
-## Downstream Wrapper Rows
+## Additional artifact rows
 
-These rows are retained as downstream compatibility references. Downstream hosts own
-their selection, packaging, lifecycle evidence, and support claims; none blocks
-LNSAT V1.
+Additional package formats remain unsupported until LNSAT selects an exact row
+and records complete build, trust, lifecycle, and recovery evidence.
 
 | OS                        | Architecture    | Artifact/install path         | Service mode                    | Current status       |
 | ------------------------- | --------------- | ----------------------------- | ------------------------------- | -------------------- |
@@ -92,20 +91,20 @@ wrapper row unsupported and blocks a broad package-family support claim.
 All paths need ownership, permissions, backup, upgrade, rollback, uninstall,
 and purge semantics.
 
-## Downstream Cross-Installer Equality
+## Artifact equality
 
-For each downstream wrapper release/target:
+For each LNSAT artifact release/target:
 
 1. verify canonical manifest and trust evidence;
 2. extract or inspect every wrapper;
 3. map product components to canonical manifest;
 4. compare exact component SHA-256 digests;
 5. reject missing, extra-authoritative, rebuilt, or substituted components;
-6. record result in downstream release compatibility evidence.
+6. record result in release compatibility evidence.
 
 Package metadata and service definitions may differ. Product binaries and
 version/build identity must not. Control Center assets are not LNSAT V1
-components; downstream hosts verify their own composition. This evidence
+components; LNSAT verifies its own composition. This evidence
 gates only the wrapper claim and never LNSAT V1.
 
 ## Authority and Security Conformance
@@ -147,10 +146,9 @@ authentication profile, Gateway fixture equality, downgrade negatives,
 outage/recovery results, known limitations, test date, and support owner. See
 [Phase 8 adapter authority conformance](PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).
 
-## Package Lifecycle Conformance
+## Package lifecycle conformance
 
-Downstream hosts own these package lifecycle and wrapper service-safety requirements.
-They gate only its selected wrapper claims, not LNSAT V1. Each wrapper row tests:
+Each selected LNSAT package row tests:
 
 - clean install from empty host state;
 - upgrade with config/data preservation;
@@ -162,23 +160,6 @@ They gate only its selected wrapper claims, not LNSAT V1. Each wrapper row tests
 - no install/post-install/upgrade auto-start;
 - non-root runtime and least-privilege ownership;
 - offline verification and revoked/tampered artifact denial.
-
-## Downstream Compatibility Evidence
-
-Downstream modules, connectors, models, and editions do not become v1 core
-rows. Before their own support claim, each records:
-
-- exact public core and contract versions;
-- module/connector/model/edition version and component digests;
-- capability, data, egress, secret-reference, and authority boundaries;
-- universal and model-specific profile compatibility where relevant;
-- CLI/API/UI/MCP mapping and canonical proposal/receipt parity;
-- signature, SBOM, provenance, license, vulnerability, and publisher identity;
-- install, enable, grant, execute, quarantine, update, rollback, remove, and
-  revocation evidence;
-- support owner, support window, known limitations, and test date.
-
-Entitlement does not replace any compatibility or authority evidence.
 
 ## Later-Only Rows
 

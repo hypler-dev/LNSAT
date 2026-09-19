@@ -20,7 +20,7 @@ closing the headless gate. No source foundation alone satisfies this sequence.
 ## Preserved Product Goal
 
 First LNSAT V1 release remains an embeddable, owner-controlled authority
-kernel/library:
+runtime and package:
 
 - Rust owns security-critical contracts, local persistence, daemon behavior,
   authorization, receipt binding, and stable operator CLI behavior;
@@ -31,8 +31,8 @@ kernel/library:
   receipt, reconciliation, and audit form one end-to-end product loop;
 - runtime is non-root, loopback-default, fail-closed, and explicitly started;
 - hosted SaaS, fleet/HA, multi-tenancy, unrestricted infrastructure control,
-  and production reference actions remain outside initial v1; downstream
-  products own graphical userland and final distro packaging.
+  and production reference actions remain outside initial v1; selected core
+  package lifecycle proof remains part of the staged V1 build.
 
 ## Headless Configuration And Control
 
@@ -49,17 +49,14 @@ is no range or fallback.
 but opens no database, listener, process, or action authority. This does not
 satisfy this gate or the separate Phase 11 disposable Docker proof.
 LNSAT must provide complete headless setup and ongoing management through its
-versioned API and `lnsatctl`. Graphical setup, presets, management UI, and final
-distro packaging belong to downstream products. A downstream product may install
-a pinned, verified LNSAT release or connect to a compatible existing
-installation through the same protected versioned interfaces. It cannot bypass
-Gateway or silently increase permissions.
-Any LNSAT core artifact consumed by a downstream product or another host must
-expose immutable component identity and support signature/provenance and
-revocation verification
-under the [release process](RELEASING.md). Verification failure blocks downstream
-installation or update. Trust-root rotation and downgrade denial require tests,
-not trust in a GitHub URL alone.
+versioned API and `lnsatctl`. Graphical setup, presets, and management UI are
+later LNSAT surfaces built on those protected versioned interfaces; they are
+not V1 exit requirements. Selected core package lifecycle is a V1 requirement.
+Gateway cannot be bypassed or silently grant additional permissions. Every LNSAT
+artifact must expose immutable component
+identity and support signature, provenance, and revocation verification under
+the [release process](RELEASING.md). Trust-root rotation and downgrade denial
+require tests, not trust in a GitHub URL alone.
 
 The LNSAT core and `lnsatctl` must distinguish two independently reviewable
 boundaries:
@@ -76,10 +73,9 @@ replacement that escapes scope. A UI selection is not OS enforcement proof.
 
 Declarative configuration supports explicit layers and composition, with
 `config schema`, `show`, `validate`, `diff`, `effective`, `apply`, and `export`.
-The core computes effective authority. A downstream product may render presets
-and forms but must consume those results and never compute permissions itself.
-Unknown fields,
-unsupported capabilities, and invalid composition fail closed.
+The core computes effective authority. Product surfaces may render presets and
+forms but must consume those results and never compute permissions themselves.
+Unknown fields, unsupported capabilities, and invalid composition fail closed.
 
 `lnsatctl` provides secure machine-readable monitoring and control for
 `watch`, `status`, `health`, `operations`, approvals, audit, recovery, and
@@ -101,7 +97,7 @@ owner-bootstrap security foundations where applicable rather than inventing a
 second ownership authority.
 
 Privilege increases require an explicit authenticated human decision bound to the
-exact configuration change; an agent or downstream client cannot self-approve.
+exact configuration change; an agent or client cannot self-approve.
 Rollback must not silently restore revoked or broader authority. Explain the
 effect of narrowing or disablement on queued and in-flight work without claiming
 that cancellation proves non-execution.
@@ -112,7 +108,7 @@ must block activation of the affected capability; diagnostic-only visibility may
 remain available with a clear coverage warning. Never silently emulate stronger
 isolation or label unmediated paths as controlled. Exact OS, architecture,
 runtime, and selected core-target rows still require separate compatibility
-evidence. Downstream distributors own final installer-row evidence.
+evidence. LNSAT owns final package-row evidence for every selected target.
 
 This is additional product work beyond the completed P10-X1 source checkpoint,
 not a claim that the current read-only Control Center already administers access.
@@ -122,8 +118,8 @@ changes, self-approval, stale/concurrent updates, configuration drift,
 unsupported controls, interruption, disablement, rollback, restart, and
 secret-safe output. Every claimed target must also pass negative and race tests
 for symlink or reparse-point escape, mount substitution, target replacement
-between validation and use, and revocation concurrent with use. A downstream
-product's graphical lifecycle is downstream work.
+between validation and use, and revocation concurrent with use. Graphical
+lifecycle remains staged LNSAT product work.
 Source implementation needs a separately bounded packet; this documentation
 opens no route, OS permission, runtime, install, or execution authority.
 
@@ -178,17 +174,15 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 4. Phase 12 hardware/environment attestation, signed-evidence packets,
    enterprise persistence, fleet/HA, and unselected package rows do not block
    first local support.
-5. Phase 14 requires only explicitly selected LNSAT core-target rows. Downstream
-   distributors own final installer/package breadth, but every claimed core
-   target still needs artifact identity, trust, runtime, and compatibility proof.
-6. Public core and private downstream products remain separate. Downstream
-   management, connectors, models, and release composition cannot fork or
+5. Phase 14 requires only explicitly selected LNSAT core-target rows. Every
+   claimed core target still needs artifact identity, trust, runtime,
+   compatibility, and package lifecycle proof.
+6. LNSAT extensions, connectors, models, and release composition cannot fork or
    weaken Gateway authority.
 7. ADR-0007 selects one local Docker/OCI profile as first v1 runtime
-   integration. Docker Agent, Docker MCP Gateway, and Docker Sandboxes may be
-   composed as replaceable adjacent systems; Gateway remains sole authority and
-   same contracts must support later secure-VM, native-host, and remote
-   profiles.
+   integration. Docker/OCI runtime components remain replaceable integration
+   surfaces; Gateway remains sole authority and the same contracts must support
+   later secure-VM, native-host, and remote profiles.
 
 ## Current Build Position
 

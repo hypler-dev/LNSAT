@@ -2,13 +2,15 @@
 
 `apps/console` is an experimental LNSAT source console. It is separate from the
 marketing site and currently renders synthetic public fixtures in read-only
-mode. It is not an LNSAT V1 exit requirement; downstream hosts own rich userland UI.
+mode. It is not an LNSAT V1 exit requirement; headless CLI/API operation remains
+the supported control path until a graphical surface passes its own evidence.
 
 ## Product Routes
 
 The required V1 standalone setup and access-management capability belongs to
-LNSAT's API and `lnsatctl`, not a mandatory graphical product. Downstream hosts own
-the graphical wizard, presets, and management UI. LNSAT's
+LNSAT's API and `lnsatctl`, not a mandatory graphical product. Any future
+graphical wizard, preset, or management UI must use the versioned Gateway
+interfaces and cannot compute authority. LNSAT's
 [canonical acceptance gate](../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 covers separate resource access and agent authority, layered declarative
 configuration, observed OS enforcement, protected permission changes, and
@@ -43,16 +45,16 @@ fixture models in `apps/console/src` are authoritative.
 
 ADR-0003 adds future management-plane needs without claiming current routes:
 
-| Surface                   | Purpose                                                                                 | Product placement                                           |
-| ------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Work contexts             | Detect, group, split, merge, move, and correct requests with evidence                   | public context contract; rich management downstream         |
-| Profiles                  | Compose universal, role, workspace, provider, and model overlays                        | portable contract public; collaborative editor downstream   |
-| Instructions and skills   | Version, diff, review, assign, share, revoke, and roll back agent content               | portable identity/conformance public; registry downstream   |
-| Delegation                | Show agent chain, role ceilings, allowed delegation, and escalation                     | Gateway policy public; organization workflows downstream    |
-| Graphs                    | Compose and inspect workflow, inheritance, policy, context, and connector relationships | portable graph contract public; visual authoring downstream |
-| Connectors/modules/models | Inventory manifest, compatibility, evaluation, health, quarantine, and revocation       | public contract/conformance; certified packs downstream     |
-| Organization              | Projects, environments, identity mappings, separation of duties, evidence export        | local core baseline; enterprise depth downstream            |
-| Adapter operations        | Protocol era, server/adapter identity, attempt, outage, reconciliation, receipt, expiry | public read model; runtime control separately gated         |
+| Surface                   | Purpose                                                                                 | Product placement                                   |
+| ------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Work contexts             | Detect, group, split, merge, move, and correct requests with evidence                   | public context contract; optional local view        |
+| Profiles                  | Compose universal, role, workspace, provider, and model overlays                        | portable contract; optional local editor            |
+| Instructions and skills   | Version, diff, review, assign, share, revoke, and roll back agent content               | portable identity and conformance                   |
+| Delegation                | Show agent chain, role ceilings, allowed delegation, and escalation                     | Gateway policy and audit                            |
+| Graphs                    | Compose and inspect workflow, inheritance, policy, context, and connector relationships | portable graph contract; optional local view        |
+| Connectors/modules/models | Inventory manifest, compatibility, evaluation, health, quarantine, and revocation       | public contract and conformance                     |
+| Organization              | Projects, environments, identity mappings, separation of duties, evidence export        | local core baseline                                 |
+| Adapter operations        | Protocol era, server/adapter identity, attempt, outage, reconciliation, receipt, expiry | public read model; runtime control separately gated |
 
 Small shops should operate useful safe defaults through one owner/operator
 without constructing every policy manually. Power users need exact source,

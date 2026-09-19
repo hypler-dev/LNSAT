@@ -47,23 +47,17 @@ cross-language vectors live under `fixtures/contracts`.
 
 ## Product Planes
 
-Public LNSAT scope owns authority semantics, portable contracts, OS interfaces,
-conformance, and canonical artifact rules. Planned downstream products may add:
+LNSAT owns authority semantics, portable contracts, OS interfaces, protocol
+adapters, conformance, and canonical artifact rules in one product boundary.
+Its runtime may be embedded, operated as a local service, or integrated through
+its supported interfaces. Managed instructions, skills, profiles, context,
+graphs, and model overlays remain versioned inputs; they never become
+authority.
 
-- commercial visual management, shared libraries, collaboration, and
-  enterprise operations;
-- proprietary and certified connectors;
-- advisory delegator profiles, model overlays, and evaluation;
-- commercial composition and release promotion.
-
-Managed instructions, skills, profiles, context, graphs, and model overlays are
-versioned inputs. They never become authority. Downstream code calls public
-Gateway contracts and cannot fork policy, approval, authorization, receipt, or
-audit behavior.
-
-These downstream capabilities are not current product claims. See
-[ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md) and
-[open core and product repositories](OPEN_CORE_AND_PRODUCT_REPOSITORIES.md).
+Clients and integrations call versioned Gateway contracts and cannot fork
+policy, approval, authorization, receipt, or audit behavior. MCP, A2A, REST,
+CLI, browser, and Docker/OCI integration are protocol or execution surfaces;
+each remains subject to the same Gateway boundary and fail-closed checks.
 
 ## Current Maturity
 
@@ -146,7 +140,7 @@ not load arbitrary native code or accept ambient authority.
 - [Console information architecture](MANAGEMENT_UI_INFORMATION_ARCHITECTURE.md)
 - [Agent configuration and skill management](AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)
 - [CLI and OS operator interface](CLI_AND_OS_OPERATOR_INTERFACE.md)
-- [Open core and product repositories](OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+- [Standalone v1 scope](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)
 - [Release process](../RELEASING.md)
 - [SDK guide](../sdk/README.md)
 - [Product direction alignment](../reference/PRODUCT_DIRECTION_ALIGNMENT.md)

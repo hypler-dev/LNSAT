@@ -17,11 +17,11 @@ durable evidence of the result. Those semantics belong in public source because
 operators, integrators, reviewers, and runtime providers must be able to verify
 what grants authority, what cannot grant it, and how uncertainty is preserved.
 
-The Apache-2.0 core keeps canonical contracts, Gateway authority behavior,
+The Apache-2.0 license keeps canonical contracts, Gateway authority behavior,
 security boundaries, conformance fixtures, and negative cases readable and
-forkable. Optional downstream management products may improve configuration,
-visualization, connector management, or release composition, but they cannot
-create an alternate authority path or weaken a Gateway decision.
+forkable. LNSAT can grow configuration, visualization, connector management,
+and release composition while preserving one authority path and Gateway
+decisions.
 
 ## 2. Consequential-Action Problem
 
@@ -138,7 +138,6 @@ is public. LNSAT uses runtime isolation and execution capabilities while keeping
 policy, approval, one-time authorization, receipt binding, and ambiguity
 handling independently inspectable. See the
 [Docker-first runtime decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
-and [Docker AI technical comparison](reference/DOCKER_AI_TECHNICAL_COMPARISON.md)
 for that relationship.
 
 ## 6. What Contributors Can Evaluate and Extend

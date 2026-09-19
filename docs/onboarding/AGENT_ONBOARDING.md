@@ -5,7 +5,7 @@
 Agent profiles bind identity, provider kind, role, project scope, capabilities,
 budgets, session TTL, approval rules, and output contract.
 
-## Expanded Product Boundary
+## Agent Profile Boundary
 
 Every agent in a chain should eventually bind:
 

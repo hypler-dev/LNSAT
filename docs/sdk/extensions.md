@@ -17,8 +17,7 @@ storage/network state, refresh lockfiles, or open live side effects.
 - `docs/sdk/conformance.md`
 - `docs/architecture/SDK_INFORMATION_ARCHITECTURE.md`
 - `docs/architecture/SDK_DOCUMENTATION_EXPANSION_PLAN.md`
-- `docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md`
-- `docs/architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md`
+- `docs/architecture/ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md`
 
 ## Authority Model
 
@@ -40,13 +39,12 @@ Connectors shell areas and states:
 | `Review and export`          | Advanced Evidence | `Review And Export`          | `source_only_preview` | JSON manifest, schema, descriptors, and snippets are review output. |
 | `Command-center handoff`     | Overview          | `Start Control Panel`        | `source_only_preview` | Handoff lands on command-center preview, not live controls.         |
 
-## Open-Core and Downstream Boundary
+## Extension Boundary
 
-Public LNSAT owns portable extension identity, capability, authority, receipt,
-audit, compatibility, signature, provenance, quarantine, and conformance
-contracts. Private downstream repositories may implement certified
-product-specific connectors, commercial modules, model packs, and official
-composition.
+LNSAT owns portable extension identity, capability, authority, receipt, audit,
+compatibility, signature, provenance, quarantine, and conformance contracts.
+Connectors, modules, model packs, and composition features integrate through
+these contracts and remain subject to the same Gateway authority boundary.
 
 Extensions cannot fork Gateway authority or load arbitrary native code into
 `lnsatd`. Preferred forms are authenticated out-of-process services, sandboxed
