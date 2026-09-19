@@ -1,15 +1,15 @@
 # Distribution Reality And Secure Installer Plan
 
-> Boundary status: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> Boundary status: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_DOWNSTREAM_USERLAND_BOUNDARY.md)
 > supersedes this plan wherever earlier wording assigned graphical installation,
 > setup UI, management UI, or final distro/package families to LNSAT. LNSAT owns
 > verified core artifacts, its versioned API, and complete headless `lnsatctl`;
-> Rangoon owns those downstream userland and distribution concerns.
+> downstream hosts own those userland and distribution concerns.
 
 ## Purpose
 
 LNSAT must ship as a usable headless authority core, not only a source contract
-collection. Rangoon may compose that verified core into a graphical,
+collection. Downstream hosts may compose that verified core into a graphical,
 self-deploying management distro. This plan preserves practical downstream
 install, UI, permission-tier, service-boundary, and packaging requirements
 without making them LNSAT V1 exit requirements.
@@ -22,10 +22,10 @@ external services, or open runtime/live scope.
 ## Canonical Ownership
 
 ADR-0008 is canonical for ownership. LNSAT owns core-target artifacts, authority
-semantics, protected APIs, and headless configuration. Rangoon owns install
+semantics, protected APIs, and headless configuration. Downstream hosts own install
 tiers, setup UX, graphical management, final package families, and any future
 privileged-helper rules. [ADR-0002](ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
-remains historical architecture input; it does not select Rangoon package rows.
+remains historical architecture input; it does not select downstream package rows.
 [Phase 14 distribution](DISTRIBUTION_AND_CLIENT_INSTALLERS.md) owns LNSAT core
 artifact requirements and provides a downstream wrapper reference;
 [the roadmap](../ROADMAP.md) controls order.
@@ -38,47 +38,47 @@ below is subordinate to those documents.
 
 ## Product Distribution Model
 
-LNSAT core artifacts and Rangoon/downstream packages remain separate,
+LNSAT core artifacts and downstream packages remain separate,
 permissioned families.
 
-| Family                          | Ships to user as                        | Runs where                         | Security posture                                      |
-| ------------------------------- | --------------------------------------- | ---------------------------------- | ----------------------------------------------------- |
-| LNSAT source release            | GitHub source archive, signed tag later | Build/review machine               | canonical audit source, no data, no credentials       |
-| LNSAT core bundle               | Rust binary or core archive             | deployment-owner server            | unprivileged service, Gateway boundary                |
-| Rangoon server installer        | OS package or guided setup wrapper      | deployment-owner server            | thin installer, no root unless unavoidable            |
-| Rangoon setup UI                | local web UI started by setup           | browser against local/server setup | guided onboarding, verbose install log, no secrets    |
-| Rangoon management UI           | web app                                 | Rangoon userland                   | role/policy/approval requests through LNSAT           |
-| LNSAT operator CLI              | Rust `lnsatctl`                         | operator workstation               | scoped token, no host mutation by default             |
-| Rangoon/extension client helper | per-OS service or app                   | managed host                       | least-privilege capabilities, no arbitrary shell      |
-| Rangoon desktop/tray client     | optional per-OS app                     | operator or managed host           | UX wrapper over Gateway/client helper                 |
-| Downstream mobile policy SDK    | embedded iOS/iPadOS or Android library  | owner-approved application         | local policy verification, no independent authority   |
-| Downstream mobile edge worker   | explicit opt-in mobile application      | owner-bound phone or tablet        | signed bounded leases, OS lifecycle and consent       |
-| Downstream MCP extension        | separate extension artifact             | agent/MCP runtime boundary         | adapter only; Gateway remains security boundary       |
-| Downstream connector SDK        | generated TypeScript client first       | developer workspace                | manifest, schema, tests, simulator, no secret values  |
-| Optional downstream adapters    | Python package later                    | user-selected adapter runtime      | optional ecosystem bridge, never base server required |
+| Family                             | Ships to user as                        | Runs where                         | Security posture                                      |
+| ---------------------------------- | --------------------------------------- | ---------------------------------- | ----------------------------------------------------- |
+| LNSAT source release               | GitHub source archive, signed tag later | Build/review machine               | canonical audit source, no data, no credentials       |
+| LNSAT core bundle                  | Rust binary or core archive             | deployment-owner server            | unprivileged service, Gateway boundary                |
+| Downstream server installer        | OS package or guided setup wrapper      | deployment-owner server            | thin installer, no root unless unavoidable            |
+| Downstream setup UI                | local web UI started by setup           | browser against local/server setup | guided onboarding, verbose install log, no secrets    |
+| Downstream management UI           | web app                                 | downstream userland                | role/policy/approval requests through LNSAT           |
+| LNSAT operator CLI                 | Rust `lnsatctl`                         | operator workstation               | scoped token, no host mutation by default             |
+| Downstream/extension client helper | per-OS service or app                   | managed host                       | least-privilege capabilities, no arbitrary shell      |
+| Downstream desktop/tray client     | optional per-OS app                     | operator or managed host           | UX wrapper over Gateway/client helper                 |
+| Downstream mobile policy SDK       | embedded iOS/iPadOS or Android library  | owner-approved application         | local policy verification, no independent authority   |
+| Downstream mobile edge worker      | explicit opt-in mobile application      | owner-bound phone or tablet        | signed bounded leases, OS lifecycle and consent       |
+| Downstream MCP extension           | separate extension artifact             | agent/MCP runtime boundary         | adapter only; Gateway remains security boundary       |
+| Downstream connector SDK           | generated TypeScript client first       | developer workspace                | manifest, schema, tests, simulator, no secret values  |
+| Optional downstream adapters       | Python package later                    | user-selected adapter runtime      | optional ecosystem bridge, never base server required |
 
 Production core server targets Rust `lnsatd`; Control Center remains
 experimental TypeScript/React source and is not a required core artifact.
-Rangoon may ship its own graphical assets beside a pinned daemon. Current
+Downstream hosts may ship graphical assets beside a pinned daemon. Current
 Node/TypeScript server code is transitional conformance evidence, not final
 runtime ownership. Python remains optional downstream adapter scope only.
 
 ## Installed Product Topology
 
-A Rangoon-composed installation may have one owner-controlled LNSAT server plus
-Rangoon management UI. LNSAT owns identity, policy, approvals, authorization,
-revocation, consequence evidence, and effective authority. Rangoon may present
+A downstream-composed installation may have one owner-controlled LNSAT server plus
+downstream management UI. LNSAT owns identity, policy, approvals, authorization,
+revocation, consequence evidence, and effective authority. Downstream hosts may present
 inventory and proposals through protected LNSAT interfaces. Separate downstream
 clients/workers may run on servers, workstations, accelerator nodes, and opt-in
 mobile devices. They advertise capability and accept only Gateway-authorized
 work; they never become policy or approval authority.
 
 LNSAT core support begins only with exact OS/architecture core-target rows
-selected by a future release packet; no row is selected yet. Rangoon separately
+selected by a future release packet; no row is selected yet. Downstream distributors separately
 owns any final installer/package rows. Runtime eligibility is dynamic:
 capability manifests describe OS,
 architecture/SoC, CPU/GPU/NPU, runtime/model compatibility, memory, storage,
-power, thermal, network, trust, and current availability. Rangoon's downstream
+power, thermal, network, trust, and current availability. Downstream
 management UI only renders LNSAT-produced capability facts and effective
 authority; it never owns, recomputes, or substitutes policy. Unsupported or
 stale capability fails closed.
@@ -90,7 +90,7 @@ Control Center, host worker, mobile app, enrollment, networking, or inference.
 ## Install Tiers
 
 Tier 0 and verified LNSAT core artifacts are public-core concerns. Tiers 1-4
-below are downstream Rangoon composition examples, not LNSAT V1 requirements.
+below are downstream composition examples, not LNSAT V1 requirements.
 
 ### Tier 0: Source Review
 
@@ -199,7 +199,7 @@ Security:
 - hosted service never bypasses Gateway policy;
 - remote client actions remain approval/audit gated.
 
-## Rangoon Setup UI Requirements
+## Downstream Setup UI Requirements
 
 The installer should feel like a professional IT setup app, not a build log.
 Style direction: modern, clean, soft color system, light shadows, high contrast,
@@ -243,9 +243,9 @@ Accessibility:
 - responsive desktop/tablet layout;
 - screen-reader labels for progress, warnings, blocked steps, and approvals.
 
-## Rangoon Management Information Architecture
+## Downstream Management Information Architecture
 
-Rangoon's installed management UI should put operational workflow first.
+Downstream installed management UI should put operational workflow first.
 
 Primary navigation:
 
@@ -333,7 +333,7 @@ Server process:
 - talks to DB only through scoped roles later;
 - treats clients/connectors as untrusted callers.
 
-Rangoon installer:
+Downstream installer:
 
 - verifies package and platform;
 - places files;
@@ -402,17 +402,17 @@ Install must verify:
 
 ## Component Build Order
 
-This is downstream Rangoon dependency order, not LNSAT product roadmap. Items
-remain deferred until Rangoon accepts and authorizes them.
+This is downstream dependency order, not LNSAT product roadmap. Items remain
+deferred until a downstream owner accepts and authorizes them.
 
 Possible downstream sequence after compatible LNSAT core artifacts exist:
 
 1. Package-family and server/worker capability manifests.
 2. Permission tiers, installer UX flow, and setup UI prototype.
-3. Read-only Rangoon management UI package, fleet, and permission previews.
+3. Read-only downstream management UI package, fleet, and permission previews.
 4. Deterministic worker/fleet simulators using synthetic fixtures.
 5. Connector SDK and MCP extension manifest contracts.
-6. Local unsigned server/Rangoon management UI package rehearsal in container.
+6. Local unsigned server/downstream management UI package rehearsal in container.
 7. OS-specific installer wrappers and host/client helper MVP.
 8. Mobile simulator and read-only fleet views before native worker packages.
 9. Signed package pipeline.
@@ -452,8 +452,8 @@ Possible downstream sequence after compatible LNSAT core artifacts exist:
 Earlier distribution planning remains design foundation, not release authority.
 Source now includes mobile-edge capability, policy, lease, and result contracts,
 plus local-beta control-plane proof. LNSAT distribution work remains limited to
-core-target identity, trust, compatibility, and headless operation. Rangoon may
-later begin downstream package-family manifests, secure setup UX, and
+core-target identity, trust, compatibility, and headless operation. Downstream
+owners may later begin package-family manifests, secure setup UX, and
 deterministic simulation before its distro binaries.
 
 No documentation claim opens binary build, installer execution, service

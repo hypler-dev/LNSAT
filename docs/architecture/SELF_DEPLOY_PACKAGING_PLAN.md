@@ -1,17 +1,17 @@
 # Self-Deploy Packaging Plan
 
-> Boundary status: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> Boundary status: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_DOWNSTREAM_USERLAND_BOUNDARY.md)
 > supersedes earlier wording that made server installers, graphical setup, or
 > final distro packaging mandatory LNSAT V1 work. LNSAT owns core artifacts,
-> versioned APIs, and complete headless `lnsatctl`; Rangoon owns those downstream
+> versioned APIs, and complete headless `lnsatctl`; downstream hosts own those
 > installer and userland concerns.
 
 ## Purpose
 
 LNSAT is an independent open source authority core. Deployment owners choose
 where it runs, which integrations are enabled, where credential references live,
-which auth mode is active, and which authorization levels apply. Rangoon may
-provide downstream graphical management and distro composition.
+which auth mode is active, and which authorization levels apply. Downstream hosts may
+provide graphical management and distro composition.
 
 This document defines only source contracts for future packaging. It
 does not create packages, installers, service files, Docker images, node-agent
@@ -73,7 +73,7 @@ building them:
 - `optional_node_agent_package_ref`
 
 All artifact refs stay `future_artifact_source_ref_only`. `web_app_ref`,
-installer, wrapper, client, and helper refs are downstream Rangoon/extension
+installer, wrapper, client, and helper refs are downstream/extension
 concerns. Package creation, publication, installers, binary builds, Docker
 images, service files, launchd/systemd units, and node-agent packages are
 blocked.
@@ -81,15 +81,15 @@ blocked.
 ## Distribution And Client Installer Follow-Up
 
 Future source-only planning must split LNSAT core artifacts from downstream
-Rangoon/extension families:
+downstream/extension families:
 
 - LNSAT source releases and selected core-target bundles containing canonical
   `lnsatd`, `lnsatctl`, contracts, manifests, and docs;
-- Rangoon server installers and final distro wrappers;
+- downstream server installers and final distro wrappers;
 - downstream supported-system clients and helpers;
 - optional downstream MCP and connector extension packages.
 
-Rangoon server installers may set up a pinned, verified LNSAT core on supported
+Downstream server installers may set up a pinned, verified LNSAT core on supported
 systems. Clients remain operator or host-side extensions. MCP packages remain
 adapters and stay separate from LNSAT core artifacts.
 
@@ -120,8 +120,8 @@ live connectors, or call external services.
 Current MVP evidence is implemented in TypeScript source contracts,
 Gateway/read-only surfaces, and experimental console routes. Production core
 targets Rust `lnsatd`, `lnsatctl`, and shared packet/policy/audit/evidence crates;
-TypeScript remains experimental console and generated-client source. Rangoon
-owns graphical userland and final distro packaging. No Rust artifact is built
+TypeScript remains experimental console and generated-client source. Downstream
+hosts own graphical userland and final distro packaging. No Rust artifact is built
 yet.
 
 Python can appear later only as an optional adapter/helper package. Supported

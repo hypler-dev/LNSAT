@@ -63,8 +63,8 @@ Before a versioned source release:
    [headless configuration and control gate](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control),
    not merely the historical P10-X1 source checkpoint. Each selected LNSAT core
    target must later prove component identity, trust, headless configuration,
-   permission enforcement, and compatibility under Phase 14. Rangoon owns
-   graphical setup and final distro/package lifecycle; its wrappers cannot
+   permission enforcement, and compatibility under Phase 14. Downstream products
+   own graphical setup and final distro/package lifecycle; their wrappers cannot
    replace or bypass LNSAT's versioned API, CLI, or Gateway authority.
 2. Pass Phase 13 and freeze one exact release-candidate source identity,
    version, changelog, support profile, and build recipe.
@@ -73,7 +73,8 @@ Before a versioned source release:
 4. Prove selected core candidate artifacts: digests, reproducibility,
    non-production signature rehearsal, SBOM, provenance, notices, non-root
    runtime, headless configuration, backup/restore, core rollback/revocation,
-   and explicit-start/no-auto-start `lnsatd` behavior. Rangoon separately proves
+   and explicit-start/no-auto-start `lnsatd` behavior. Downstream products separately
+   prove
    package install, upgrade, rollback, uninstall, and package-managed service
    safety for its wrapper rows; that downstream evidence does not gate LNSAT V1.
 5. After Phase 14 passes, obtain separate final go/no-go authorization.
@@ -127,7 +128,7 @@ signature rehearsal/verification bundles, SPDX JSON SBOMs, and SLSA v1
 provenance. Missing core evidence blocks release; successful source build cannot
 waive it. Cross-wrapper digest parity, clean-machine package install, package
 upgrade/rollback, uninstall, and package-managed service safety apply only to
-Rangoon wrapper rows and do not gate LNSAT V1.
+Downstream wrapper rows and do not gate LNSAT V1.
 
 ## Maintainer Review
 

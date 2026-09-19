@@ -35,11 +35,11 @@ subsystem or proposal.
 
 ## Core Architecture
 
-- [LNSAT kernel and Rangoon boundary](architecture/ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+- [LNSAT kernel and downstream userland boundary](architecture/ADR-0008_LNSAT_KERNEL_AND_DOWNSTREAM_USERLAND_BOUNDARY.md)
   — accepted V1 ownership split and headless exit criteria.
 - [Headless configuration and control](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
   — headless LNSAT configuration requirements; graphical wizard and distro
-  packaging belong to Rangoon.
+  packaging belong to downstream products.
 
 - [Headless declaration composition](architecture/headless-configuration/spec.md)
   — exact source-only resource/action ceilings and remaining activation boundary.

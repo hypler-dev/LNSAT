@@ -31,8 +31,8 @@ kernel/library:
   receipt, reconciliation, and audit form one end-to-end product loop;
 - runtime is non-root, loopback-default, fail-closed, and explicitly started;
 - hosted SaaS, fleet/HA, multi-tenancy, unrestricted infrastructure control,
-  and production reference actions remain outside initial v1; Rangoon owns
-  graphical userland and final distro packaging.
+  and production reference actions remain outside initial v1; downstream
+  products own graphical userland and final distro packaging.
 
 ## Headless Configuration And Control
 
@@ -50,12 +50,13 @@ but opens no database, listener, process, or action authority. This does not
 satisfy this gate or the separate Phase 11 disposable Docker proof.
 LNSAT must provide complete headless setup and ongoing management through its
 versioned API and `lnsatctl`. Graphical setup, presets, management UI, and final
-distro packaging belong to Rangoon. Rangoon may install a pinned, verified
-LNSAT release or connect to a compatible existing installation through the same
-protected versioned interfaces. It cannot bypass Gateway or silently increase
-permissions.
-Any LNSAT core artifact consumed by Rangoon or another host must expose immutable
-component identity and support signature/provenance and revocation verification
+distro packaging belong to downstream products. A downstream product may install
+a pinned, verified LNSAT release or connect to a compatible existing
+installation through the same protected versioned interfaces. It cannot bypass
+Gateway or silently increase permissions.
+Any LNSAT core artifact consumed by a downstream product or another host must
+expose immutable component identity and support signature/provenance and
+revocation verification
 under the [release process](RELEASING.md). Verification failure blocks downstream
 installation or update. Trust-root rotation and downgrade denial require tests,
 not trust in a GitHub URL alone.
@@ -75,8 +76,9 @@ replacement that escapes scope. A UI selection is not OS enforcement proof.
 
 Declarative configuration supports explicit layers and composition, with
 `config schema`, `show`, `validate`, `diff`, `effective`, `apply`, and `export`.
-The core computes effective authority. Rangoon may render presets and forms but
-must consume those results and never compute permissions itself. Unknown fields,
+The core computes effective authority. A downstream product may render presets
+and forms but must consume those results and never compute permissions itself.
+Unknown fields,
 unsupported capabilities, and invalid composition fail closed.
 
 `lnsatctl` provides secure machine-readable monitoring and control for
@@ -110,7 +112,7 @@ must block activation of the affected capability; diagnostic-only visibility may
 remain available with a clear coverage warning. Never silently emulate stronger
 isolation or label unmediated paths as controlled. Exact OS, architecture,
 runtime, and selected core-target rows still require separate compatibility
-evidence. Rangoon owns final installer-row evidence.
+evidence. Downstream distributors own final installer-row evidence.
 
 This is additional product work beyond the completed P10-X1 source checkpoint,
 not a claim that the current read-only Control Center already administers access.
@@ -120,8 +122,8 @@ changes, self-approval, stale/concurrent updates, configuration drift,
 unsupported controls, interruption, disablement, rollback, restart, and
 secret-safe output. Every claimed target must also pass negative and race tests
 for symlink or reparse-point escape, mount substitution, target replacement
-between validation and use, and revocation concurrent with use. Rangoon's
-graphical lifecycle is downstream work.
+between validation and use, and revocation concurrent with use. A downstream
+product's graphical lifecycle is downstream work.
 Source implementation needs a separately bounded packet; this documentation
 opens no route, OS permission, runtime, install, or execution authority.
 
@@ -176,9 +178,9 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 4. Phase 12 hardware/environment attestation, signed-evidence packets,
    enterprise persistence, fleet/HA, and unselected package rows do not block
    first local support.
-5. Phase 14 requires only explicitly selected LNSAT core-target rows. Rangoon
-   owns final installer/package breadth, but every claimed core target still
-   needs artifact identity, trust, runtime, and compatibility proof.
+5. Phase 14 requires only explicitly selected LNSAT core-target rows. Downstream
+   distributors own final installer/package breadth, but every claimed core
+   target still needs artifact identity, trust, runtime, and compatibility proof.
 6. Public core and private downstream products remain separate. Downstream
    management, connectors, models, and release composition cannot fork or
    weaken Gateway authority.

@@ -603,16 +603,17 @@ success without Gateway-sourced completion evidence.
 ### 10. `lnsatd`, `lnsatctl`, and `lnsat` Product Split
 
 Additional accepted V1 scope: LNSAT-owned headless setup and ongoing
-access-management API/CLI, independent of Rangoon. The
+access-management API/CLI, independent of downstream products. The
 [headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 define resource access versus agent authority, layered declarative configuration,
 customizable settings, OS enforcement visibility, protected changes, and
-acceptance tests. Rangoon owns graphical setup, presets, and rich management UI.
+acceptance tests. Downstream products own graphical setup, presets, and rich
+management UI.
 P10-X1 remains a completed
 source checkpoint; it does not complete this additional work. Deliver the new
 product behavior before Phase 13 RC freeze, prove its security/recovery in Phase
-13, and validate selected LNSAT core targets in Phase 14. Rangoon owns final
-installer and service-manager lifecycle proof.
+13, and validate selected LNSAT core targets in Phase 14. Downstream
+distributors own final installer and service-manager lifecycle proof.
 Current read-only surfaces and runtime closures remain unchanged until separately
 reviewed implementation is authorized.
 
@@ -844,10 +845,11 @@ configuration, monitoring, recovery, and compatibility results. No graphical
 asset or final installer wrapper is an LNSAT V1 component.
 
 Phase 14 owns lifecycle proof on each later-selected canonical target. That
-marker applies to LNSAT core-target behavior, not Rangoon's downstream installer
+marker applies to LNSAT core-target behavior, not a downstream installer's
 or package lifecycle.
 
-Rangoon owns Homebrew, direct-download, install-script, deb, rpm, MSI, OCI, or
+Downstream distributors own Homebrew, direct-download, install-script, deb, rpm,
+MSI, OCI, or
 other final distro composition and lifecycle proof. Each downstream wrapper must
 pin and verify exact LNSAT components and cannot rebuild or alter authority
 behavior. Those wrapper rows may be tracked as downstream reference work, but
@@ -858,7 +860,7 @@ signing happens only under final publication authorization against unchanged
 proven digests. Any artifact-byte change repeats affected Phase 14 proof.
 
 Exit: every selected LNSAT core-target compatibility row passes and produces
-pin-verifiable identity. Final installer/package breadth remains Rangoon work.
+pin-verifiable identity. Final installer/package breadth remains downstream work.
 
 ## Publication Gate
 

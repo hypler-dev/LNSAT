@@ -2,13 +2,13 @@
 
 > Boundary note: ADR-0008 assigns LNSAT's V1 authority core, API, and
 > headless `lnsatctl` configuration to this repository. Graphical installation,
-> wizard, presets, and rich management UI belong to Rangoon. This document is
+> wizard, presets, and rich management UI belong to downstream hosts. This document is
 > a future composition plan and does not claim those artifacts exist.
 
 ## Product Decision
 
 LNSAT launches as a self-contained embeddable authority core with a versioned
-API and headless configuration. Rangoon may compose graphical setup, Control
+API and headless configuration. Downstream hosts may compose graphical setup, Control
 Center, Gateway-facing management, policy presentation, evidence views, and
 worker enrollment around a pinned LNSAT version.
 
@@ -30,13 +30,13 @@ Production runtime language and migration boundary are defined in
 `docs/architecture/RUST_CORE_AND_TYPESCRIPT_CONTROL_CENTER_ARCHITECTURE.md`:
 Rust owns the installed LNSAT security/infrastructure core and generated clients
 must conform to its interface. Where that earlier document assigns a TypeScript
-Control Center to LNSAT, ADR-0008 supersedes it: Rangoon owns the downstream
+Control Center to LNSAT, ADR-0008 supersedes it: downstream hosts own the downstream
 graphical UI. Current TypeScript runtime remains transitional until conformance
 passes.
 
 ## Setup Contract
 
-Rangoon's downstream graphical setup must run against an installed, pinned LNSAT
+Downstream graphical setup must run against an installed, pinned LNSAT
 core and remain owner-directed. Planned flow:
 
 1. Detect supported host facts without changing host state.
@@ -49,7 +49,7 @@ core and remain owner-directed. Planned flow:
    exposure, privileged change, or runtime activation.
 8. Validate resulting deployment and record evidence for every applied step.
 
-Rangoon setup must support repeatable review, safe reruns, rollback planning, and
+Downstream setup must support repeatable review, safe reruns, rollback planning, and
 configuration export without depending on a vendor-operated service.
 
 ## Detection Model
@@ -61,7 +61,7 @@ Read-only detection may identify:
 - CPU, GPU, NPU, accelerator, memory, storage, and thermal capability hints;
 - container, service-manager, virtualization, and local runtime availability;
 - loopback, local-network, and owner-provided private-overlay readiness;
-- existing Rangoon management UI, LNSAT Gateway, worker, and configuration state;
+- existing downstream management UI, LNSAT Gateway, worker, and configuration state;
 - device class, including server, workstation, edge device, or mobile client.
 
 Detection reports capability evidence. It does not decide workload eligibility,
@@ -70,10 +70,10 @@ other devices.
 
 ## Owner Choices
 
-Rangoon setup must ask rather than assume:
+Downstream setup must ask rather than assume:
 
 - single-system or multi-system deployment;
-- Rangoon management UI placement;
+- downstream management UI placement;
 - Gateway and worker placement;
 - local-only, private-network, private-overlay, or owner-managed TLS topology;
 - which agents may connect and which actions each may request;
@@ -115,7 +115,7 @@ references or approved local secret handling.
 
 ## Fail-Closed Rules
 
-Rangoon setup must stop before mutation when:
+Downstream setup must stop before mutation when:
 
 - platform or required capability is unsupported;
 - owner intent is missing or ambiguous;
@@ -134,15 +134,15 @@ performs local detection and produces owner-reviewed configuration. Separate
 packets must authorize package creation, signing, publication, installer
 execution, service changes, network changes, enrollment, and runtime activation.
 
-## Downstream Rangoon Follow-ups
+## Downstream Follow-ups
 
 1. Consume LNSAT's strict read-only system capability contract for setup
    detection.
 2. Map owner-choice presets and topology inputs to versioned LNSAT declarative
    configuration.
 3. Render the core-produced effective-authority result and configuration diff;
-   do not compute either in Rangoon.
+   do not compute either in downstream UI.
 4. Define deterministic setup-plan and negative probes against the same LNSAT
    integration API used by `lnsatctl`.
-5. Build platform package and installer slices only after separate Rangoon
+5. Build platform package and installer slices only after separate downstream
    release packets open them.

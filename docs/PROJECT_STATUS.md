@@ -103,11 +103,11 @@ Complete headless setup and access-management through the versioned API and
 LNSAT's resource access from agent action authority, support layered declarative
 configuration and customizable least-privilege settings, expose actual OS
 enforcement coverage, and protect configuration changes through Gateway.
-LNSAT remains usable independently of Rangoon; downstream installation or API use
-cannot bypass approval or increase authority implicitly. The
+LNSAT remains usable independently of downstream products; downstream
+installation or API use cannot bypass approval or increase authority implicitly. The
 [headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
-own this additional product acceptance scope. Rangoon owns graphical setup,
-presets, and rich management UI. Existing P10-X1 source conformance does not
+own this additional product acceptance scope. Downstream products own graphical
+setup, presets, and rich management UI. Existing P10-X1 source conformance does not
 satisfy it; current Control Center readback remains read-only. No new
 management mutation, runtime, installer, or supported-platform claim is opened.
 
@@ -1228,8 +1228,9 @@ Before any supported public artifact:
   repository-visibility authorization;
 - obtain separate later artifact-publication authorization after Phase 14.
 
-Rangoon separately owns graphical assets, final installer/package selection,
-wrapper lifecycle evidence, and downstream support claims; none blocks LNSAT V1.
+Downstream products separately own graphical assets, final installer/package
+selection, wrapper lifecycle evidence, and downstream support claims; none
+blocks LNSAT V1.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).

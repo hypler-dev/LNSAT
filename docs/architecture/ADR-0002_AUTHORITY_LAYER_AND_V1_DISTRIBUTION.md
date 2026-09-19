@@ -17,10 +17,10 @@
   required runtime/product, candidate-build, Phase 14 proof, and publication
   gates remain closed or unmet
 
-> Boundary clarification: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> Boundary clarification: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_DOWNSTREAM_USERLAND_BOUNDARY.md)
 > supersedes this ADR's LNSAT-owned graphical UI, installer, and final distro
 > breadth. LNSAT V1 requires pin-verifiable core identity and selected core
-> conformance only; Rangoon owns downstream composition.
+> conformance only; downstream hosts own composition.
 
 ## Context
 
@@ -37,7 +37,7 @@ them.
 The narrow platform exclusions in ADR-0001 no longer match the required
 operator experience. ADR-0008 supersedes this ADR's earlier coupling between
 LNSAT V1 and thin-installer proof: LNSAT must prove selected core targets;
-Rangoon owns final installer and package evidence.
+Downstream hosts own final installer and package evidence.
 
 ## Decision
 
@@ -139,7 +139,7 @@ Each canonical bundle contains `lnsatd`, `lnsatctl`, the `lnsat` convenience
 dispatcher, configuration templates,
 licenses/notices, and a version/build manifest.
 
-Downstream Rangoon distribution references, opened separately from LNSAT V1:
+Downstream distribution references, opened separately from LNSAT V1:
 
 - dedicated Homebrew tap: `brew install hypler-dev/tap/lnsat`;
 - direct macOS/Linux `.tar.gz` bundles;
@@ -153,7 +153,7 @@ The Cargo package contains only the bootstrap/verifier. An explicit setup
 command downloads and verifies a signed canonical bundle. Cargo never rebuilds
 the product core or creates different product behavior.
 
-Rangoon owns selection, support, and lifecycle evidence for every Homebrew,
+Downstream distributors own selection, support, and lifecycle evidence for every Homebrew,
 tarball, install-script, deb, rpm, OCI, or Cargo wrapper. Each claimed wrapper
 must consume or wrap the same versioned canonical LNSAT components, but no
 wrapper family blocks LNSAT V1.
@@ -163,10 +163,10 @@ a non-production signature rehearsal/verification bundle, SPDX JSON SBOM, SLSA
 v1 provenance, source revision, build recipe, canonical component digest map,
 license/notice references, reproducibility evidence, non-root proof, and the
 selected core-target compatibility evidence. Production signing is a later
-publication gate against unchanged Phase 14-proven digests. Rangoon separately
+publication gate against unchanged Phase 14-proven digests. Downstream distributors separately
 owns lifecycle evidence for any downstream wrapper it claims.
 
-For downstream Rangoon wrappers, Homebrew service metadata must never start
+For downstream wrappers, Homebrew service metadata must never start
 `lnsatd`; operator start remains explicit. Linux packages must use a non-root
 runtime identity, install disabled service metadata, preserve configuration and
 data unless explicitly purged, and never start the daemon in post-install
@@ -208,7 +208,7 @@ blockers:
   SQLite, local-auth, non-root, fail-closed, and support-window decisions.
 - ADR-0001 platform/package exclusions no longer control.
 - Core-target evidence documents become normative Phase 14 plans where they
-  implement this decision; downstream distribution references remain Rangoon-owned.
+  implement this decision; downstream distribution references remain downstream-owned.
 - ADR-0003 may add downstream product planes without weakening authority
   semantics or adding them to local-v1 blockers.
 
