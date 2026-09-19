@@ -99,15 +99,23 @@ two readiness records. It structurally checks a caller-supplied claim snapshot
 against the canonical run manifest, D3/D4A payload, loaded profile, and
 launch-contract digest while remaining source-only and side-effect free. Its
 digest authenticates no snapshot, proves no current durable state, and grants no
-launch permission; a later runnable driver must perform an authenticated
-durable-store re-read of the exact bound consumption, operation, and attempt
-immediately before process creation.
+launch permission. After a successful D4B2A claim commit, a later runnable
+driver must use a private store-owned verifier and a fresh authenticated store
+transaction to re-read the exact bound consumption, operation, and attempt
+immediately before process creation. Exact success returns a bound
+pre-supervisor guard; a caller-supplied snapshot, public read API, or admission
+digest never does.
 
-The source-only operator run packet locks the reconciled public source revision
-and enumerates the exact later-run identities, driver-admission inputs, D3
-limits, positive and rejection cases, ambiguity, cleanup, evidence, redaction,
-and pass/fail gates. Its live runtime identities are deliberately
-`UNSET_BLOCKING`; it is not a runnable driver or execution authority.
+The source-only operator run packet locks the reviewed proof-implementation
+source and enumerates the exact later-run identities, driver-admission inputs,
+D3 limits, positive and rejection cases, ambiguity, cleanup, evidence,
+redaction, and pass/fail gates. Its public integration record separately binds
+PR #39 head `2c918bc59b82ffabc378b47e66137733cf24a6d7`, merge
+`190ab32443f60a2a1bc78f990e8ea5571c28f96f`, and integration tree
+`17247c9c194f6a332e99ee32ae5052620349896b`; those identities do not move the
+proof-source lock or change product version `0.1.0`. Live runtime identities
+remain `UNSET_BLOCKING`; the packet is not a runnable driver or execution
+authority. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
 The source-only execution-harness contract binds those proposed records for a
 later authority. [PHR-0005](reference/public-history-reviews/PHR-0005/review.json)

@@ -140,18 +140,28 @@ to equal the loaded profile's exact derived values. Replay, ambiguous operation
 or attempt state, receipt or reconciliation presence, and any binding drift fail
 closed. Its digest authenticates no snapshot, proves no current durable claim
 state, and grants no launch permission.
-A later runnable driver must perform an authenticated durable-store re-read of
-the exact bound consumption, operation, and attempt immediately before process
-creation, then revalidate created, dispatching, no-receipt, and
-no-reconciliation state. The evaluator performs no store write, route handling,
-filesystem or process I/O, Docker access, receipt or evidence persistence,
-runtime selector, or runtime execution. It prepares a later driver gate; it does
-not open one.
+A later runnable driver must, after the successful D4B2A claim commit,
+authenticate the created-claim result and call a private store-owned verifier.
+That verifier must use the live session and CSRF proof in a fresh authenticated
+store transaction to re-read and cross-check the exact durable consumption,
+operation, and attempt immediately before process creation. It must bind every
+admission, authority, request, payload, profile, adapter, image, protocol, and
+launch identity; require created and exact dispatching sequence state; and
+require no receipt or reconciliation. Only exact success may return a bound
+pre-supervisor guard. A caller-supplied claim snapshot, public read API, or
+structural admission digest cannot satisfy this gate. A post-claim mismatch or
+read failure rejects before spawn, preserves or marks `outcome_unknown`, and
+never redispatches; a post-spawn anomaly remains inspection-only and never
+permits a blind Docker retry. The evaluator performs no store write, route
+handling, filesystem or process I/O, Docker access, receipt or evidence
+persistence, runtime selector, or runtime execution. It prepares a later driver
+gate; it does not open one.
 
 The source-only
 [operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-locks preparation to the reconciled public source revision and turns this plan
-into one reviewable operator checklist: exact identity slots, private
+locks the reviewed proof-implementation source and separately records the
+public packet integration identity. It turns this plan into one reviewable
+operator checklist: exact identity slots, private
 declarations, admission/live-store inputs, profile-derived D3 limits, all eight
 positive cases, required rejections, receipt/reconciliation behavior,
 `outcome_unknown`, cleanup, evidence custody and retention, redaction, and

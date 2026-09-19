@@ -182,17 +182,27 @@ caller-supplied claim snapshot, the canonical D3/D4A payload, the loaded
 profile, and the launch-contract digest. It also requires exact profile-derived
 D3 stdin, stdout, stderr, and deadline limits. It rejects replay, ambiguous
 state/receipt/reconciliation, and binding drift, but its digest authenticates no
-snapshot, revalidates no durable state, and grants no launch permission. A later
-runnable driver must perform an authenticated durable-store re-read of the exact
-bound consumption, operation, and attempt immediately before process creation,
-then revalidate created, dispatching, no-receipt, and no-reconciliation state.
-The evaluator has no store write, route, filesystem, process, Docker, receipt,
-evidence-persistence, selector, or runtime-execution surface; real Docker proof
-remains separately authorized and incomplete.
+snapshot, revalidates no durable state, and grants no launch permission. After
+the successful D4B2A claim commit, a later runnable driver must authenticate the
+created-claim result and call a private store-owned verifier using the live
+session and CSRF proof in a fresh authenticated store transaction. That verifier
+must re-read and cross-check the exact durable consumption, operation, and
+attempt immediately before process creation; bind the exact admission,
+authority, request, payload, profile, adapter, image, protocol, and launch
+identities; require created and exact dispatching sequence state; and require no
+receipt or reconciliation. Only exact success may return a bound pre-supervisor
+guard. A caller-supplied claim snapshot, public read API, or structural admission
+digest cannot satisfy the gate. Any post-claim mismatch or read failure rejects
+before spawn, preserves or marks `outcome_unknown`, and never redispatches. Any
+post-spawn anomaly remains inspection-only and never permits a blind Docker
+retry. The evaluator has no store write, route, filesystem, process, Docker,
+receipt, evidence-persistence, selector, or runtime-execution surface; real
+Docker proof remains separately authorized and incomplete.
 
 The source-only
 [operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-maps these requirements to the reconciled public source revision, an exact
+maps these requirements to the reviewed proof-implementation source and
+separately records the public packet integration identity. It supplies an exact
 identity register, private declaration inputs, D3 limits, positive and rejection
 cases, receipt/reconciliation expectations, ambiguity, cleanup, evidence
 destinations and retention, redaction, and pass/fail criteria. All live runtime

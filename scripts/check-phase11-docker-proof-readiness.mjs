@@ -184,11 +184,19 @@ const EXPECTED_DRIVER_RUNTIME_GATE_CHECKS = [
   "reconciliation_absent_immediately_before_process_creation",
 ];
 
+const OPERATOR_PACKET_PROVENANCE_ROWS = [
+  ["Proof-implementation source", "b41aa756bccd85843ac540abfd927e8c5693d5fe"],
+  ["Proof-implementation source tree", "fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c"],
+  ["Reviewed packet head", "2c918bc59b82ffabc378b47e66137733cf24a6d7"],
+  ["Public packet merge", "190ab32443f60a2a1bc78f990e8ea5571c28f96f"],
+  ["Packet integration tree", "17247c9c194f6a332e99ee32ae5052620349896b"],
+];
+
 const EXPECTED_DOC_MARKERS = {
   "README.md": [
     "The source now includes deterministic proof-plan, evidence-requirements, a",
-    "These remain proposed design evidence only",
-    "runtime result, receipt, execution, completion, or support claim",
+    "proof steps remain proposed design evidence only",
+    "none grants a runtime result, receipt, execution, completion, or support claim",
     "does not constitute real runtime evidence or complete Phase 11",
     "source-only execution-harness contract",
     "private run-manifest contract",
@@ -196,6 +204,10 @@ const EXPECTED_DOC_MARKERS = {
     "caller-supplied claim",
     "authenticate the created-claim result",
     "through the durable-store boundary",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
+    "preserves or marks `outcome_unknown`",
+    "packet integration identity",
   ],
   "crates/lnsatd/README.md": [
     "derives one source-only real-runtime proof plan",
@@ -215,6 +227,8 @@ const EXPECTED_DOC_MARKERS = {
     "run-manifest contract",
     "private Phase 11 served-driver admission evaluator",
     "caller-supplied claim",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md": [
     "Status: proposed source-only readiness; no runtime evidence",
@@ -227,6 +241,8 @@ const EXPECTED_DOC_MARKERS = {
     "run-manifest contract",
     "private served-driver admission evaluator",
     "caller-supplied claim",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
   ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md":
     [
@@ -238,11 +254,17 @@ const EXPECTED_DOC_MARKERS = {
       "execution harness",
       "private served-driver admission evaluator",
       "caller-supplied claim",
+      "fresh authenticated store transaction",
+      "bound pre-supervisor guard",
     ],
   "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md": [
     "Status: source-only operator preparation; not execution-ready or authorized",
     "b41aa756bccd85843ac540abfd927e8c5693d5fe",
     "fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c",
+    "proof-implementation source lock",
+    "2c918bc59b82ffabc378b47e66137733cf24a6d7",
+    "190ab32443f60a2a1bc78f990e8ea5571c28f96f",
+    "17247c9c194f6a332e99ee32ae5052620349896b",
     "d93b3f5c9b040fa5ba0051881574f59cf4ee92ea",
     "914da579f28c98dd59cb5303eba5d7fa3c68664e",
     "PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY",
@@ -264,6 +286,8 @@ const EXPECTED_DOC_MARKERS = {
     "runtime_and_image_identity_stable",
     "Those public claim structs remain non-authoritative.",
     "No runnable proof driver currently authenticates and",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
     "Before any Docker access, the owner must issue a new explicit authorization",
     "and support authority remain separate",
   ],
@@ -274,6 +298,8 @@ const EXPECTED_DOC_MARKERS = {
     "execution-harness contract",
     "private served-driver admission evaluator",
     "caller-supplied claim",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
   ],
   "docs/ROADMAP.md": [
     "source-only real-Docker proof-readiness contract",
@@ -284,6 +310,9 @@ const EXPECTED_DOC_MARKERS = {
     "caller-supplied claim",
     "authenticate the created-claim result",
     "through the durable-store boundary",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
+    "preserves or marks `outcome_unknown`",
   ],
   "docs/PRODUCT_BUILD_SEQUENCE.md": [
     "source-only proof-readiness plan",
@@ -292,6 +321,8 @@ const EXPECTED_DOC_MARKERS = {
     "source-only execution-harness contract",
     "private served-driver admission seam",
     "caller-supplied claim",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
   ],
   "docs/PROJECT_STATUS.md": [
     "real-Docker proof-readiness contract",
@@ -302,6 +333,10 @@ const EXPECTED_DOC_MARKERS = {
     "caller-supplied claim",
     "authenticate the created-claim result",
     "through the durable-store boundary",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
+    "preserves or marks `outcome_unknown`",
+    "packet integration identity",
   ],
   "docs/WHY_PUBLIC_NOW.md": [
     "freezes required identity bindings, proof cases, and fail-closed negatives",
@@ -310,6 +345,13 @@ const EXPECTED_DOC_MARKERS = {
     "execution-harness contract",
     "private served-driver admission evaluator",
     "caller-supplied claim",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
+  ],
+  "docs/RELEASING.md": [
+    "## Version Contract",
+    "Current product/source SemVer remains unpublished `0.1.0`.",
+    "does not open a version transition",
   ],
   "docs/architecture/README.md": [
     "PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
@@ -319,6 +361,9 @@ const EXPECTED_DOC_MARKERS = {
     "execution-harness contract",
     "private served-driver admission evaluator",
     "caller-supplied claim",
+    "fresh authenticated store transaction",
+    "bound pre-supervisor guard",
+    "packet integration identity",
   ],
 };
 
@@ -355,6 +400,19 @@ function containsForbiddenPackageDockerToken(command) {
     remaining = remaining.replaceAll(allowed, "");
   }
   return /docker/iu.test(remaining);
+}
+
+function includesDocumentMarker(source, marker) {
+  return source.replaceAll(/\s+/gu, " ").includes(marker.replaceAll(/\s+/gu, " "));
+}
+
+function hasOperatorPacketProvenanceRow(source, label, value) {
+  const normalized = source.replaceAll(/\s+/gu, " ");
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return new RegExp(
+    `\\|\\s*${escapedLabel}\\s*\\|\\s*\\x60${value}\\x60\\s*\\|`,
+    "u",
+  ).test(normalized);
 }
 
 function exactKeys(value, expected, path, errors) {
@@ -1404,7 +1462,7 @@ export function validatePhase11DockerProofReadiness({
       errors,
     );
     for (const marker of markers) {
-      if (!source.includes(marker)) {
+      if (!includesDocumentMarker(source, marker)) {
         errors.push(`${relativePath}: missing marker ${marker}`);
       }
     }
@@ -1413,6 +1471,16 @@ export function validatePhase11DockerProofReadiness({
         errors.push(
           `${relativePath}: forbidden runtime, completion, or support claim ${forbidden.source}`,
         );
+      }
+    }
+    if (
+      relativePath ===
+      "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md"
+    ) {
+      for (const [label, value] of OPERATOR_PACKET_PROVENANCE_ROWS) {
+        if (!hasOperatorPacketProvenanceRow(source, label, value)) {
+          errors.push(`${relativePath}: missing provenance row ${label} -> ${value}`);
+        }
       }
     }
   }

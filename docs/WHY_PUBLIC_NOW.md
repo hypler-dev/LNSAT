@@ -117,12 +117,20 @@ of the next boundary. It structurally checks the canonical run manifest against
 fields in a caller-supplied claim snapshot, canonical D3/D4A payload, loaded
 profile, and launch-contract digest, while rejecting replay, ambiguous
 state/receipt/reconciliation, and binding drift. Its digest authenticates no
-snapshot, revalidates no durable state, and grants no launch permission. A later
-runnable driver must perform an authenticated durable-store re-read of the exact
-bound consumption, operation, and attempt immediately before process creation.
+snapshot, revalidates no durable state, and grants no launch permission. After
+the successful D4B2A claim commit, a later runnable driver must authenticate the
+created-claim result and call a private store-owned verifier in a fresh
+authenticated store transaction. The verifier must re-read and cross-check the
+exact durable consumption, operation, and attempt immediately before process
+creation. Only exact live state may return a bound pre-supervisor guard; a
+post-claim failure preserves or marks `outcome_unknown` and cannot redispatch.
 This evaluator performs no store write, route, filesystem/process/Docker I/O,
 receipt, evidence persistence, selector, or runtime execution. Real Docker
 proof, Phase 13/14 release work, and publication remain separate, closed gates.
+The source-only operator packet distinguishes the reviewed proof-implementation
+source lock from PR #39's public packet integration identity. That integration
+changes neither product/source version `0.1.0` nor any runtime, release, or
+support gate.
 
 ## 5. Runtime and Ecosystem Role
 

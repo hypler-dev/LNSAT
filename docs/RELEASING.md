@@ -48,6 +48,12 @@ private commit topology, exact diffs, tree IDs, or protected blobs.
 
 ## Version Contract
 
+Current product/source SemVer remains unpublished `0.1.0`. Source-only Phase 11
+operator preparation, including PR #39, does not open a version transition,
+tag, artifact, or release. The separate current product, wire, family-schema,
+persistence, and evidence identities are recorded in
+[contract versioning and negotiation](reference/CONTRACT_VERSIONING.md).
+
 Before a versioned source release:
 
 1. Align root npm version, every workspace version, and Cargo workspace version.

@@ -37,6 +37,22 @@ function mutatedJson(relativePath, mutator) {
   return tempFile("mutated.json", `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function removeWhitespaceFlexibleMarker(source, marker) {
+  const pattern = marker
+    .replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")
+    .replaceAll(" ", "\\s+");
+  return source.replace(new RegExp(pattern, "gu"), "REMOVED_DURABLE_REREAD_GUARD");
+}
+
+function replaceProvenanceRowValue(source, label, from, to) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const pattern = new RegExp(
+    `(\\|\\s*${escapedLabel}\\s*\\|\\s*)\\x60${from}\\x60`,
+    "u",
+  );
+  return source.replace(pattern, "$1`" + to + "`");
+}
+
 test.after(() => {
   for (const directory of tempRoots) {
     rmSync(directory, { recursive: true, force: true });
@@ -764,6 +780,10 @@ test("operator run packet locks source, cases, adapter, and D3 derivation one ma
   for (const marker of [
     "b41aa756bccd85843ac540abfd927e8c5693d5fe",
     "fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c",
+    "proof-implementation source lock",
+    "2c918bc59b82ffabc378b47e66137733cf24a6d7",
+    "190ab32443f60a2a1bc78f990e8ea5571c28f96f",
+    "17247c9c194f6a332e99ee32ae5052620349896b",
     "d93b3f5c9b040fa5ba0051881574f59cf4ee92ea",
     "914da579f28c98dd59cb5303eba5d7fa3c68664e",
     "adapter:docker-local:git-commit",
@@ -782,16 +802,75 @@ test("operator run packet locks source, cases, adapter, and D3 derivation one ma
     "cleanup_verified_container_id_only",
     "runtime_and_image_identity_stable",
   ]) {
-    const docPath = tempFile(
-      "operator-run-packet.md",
-      source.replaceAll(marker, "REMOVED_LOCKED_MARKER"),
-    );
+    const mutated = removeWhitespaceFlexibleMarker(source, marker);
+    assert.notEqual(mutated, source, marker);
+    const docPath = tempFile("operator-run-packet.md", mutated);
     const result = validatePhase11DockerProofReadiness({
       root,
       docPaths: { [relativePath]: docPath },
     });
     assert.equal(result.ok, false, marker);
     assert.ok(result.errors.join("\n").includes(`missing marker ${marker}`), marker);
+  }
+});
+
+test("operator run packet provenance binds each labeled row to its exact identity", () => {
+  const relativePath =
+    "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md";
+  const source = readFileSync(resolve(root, relativePath), "utf8");
+  const identities = [
+    "b41aa756bccd85843ac540abfd927e8c5693d5fe",
+    "fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c",
+    "2c918bc59b82ffabc378b47e66137733cf24a6d7",
+    "190ab32443f60a2a1bc78f990e8ea5571c28f96f",
+    "17247c9c194f6a332e99ee32ae5052620349896b",
+  ];
+  const cases = [
+    {
+      name: "source revision and public merge swapped",
+      mutate: (value) =>
+        replaceProvenanceRowValue(
+          replaceProvenanceRowValue(
+            value,
+            "Proof-implementation source",
+            identities[0],
+            identities[3],
+          ),
+          "Public packet merge",
+          identities[3],
+          identities[0],
+        ),
+      expected: `missing provenance row Proof-implementation source -> ${identities[0]}`,
+    },
+    {
+      name: "packet head relocated into integration-tree row",
+      mutate: (value) =>
+        replaceProvenanceRowValue(
+          replaceProvenanceRowValue(
+            value,
+            "Reviewed packet head",
+            identities[2],
+            identities[4],
+          ),
+          "Packet integration tree",
+          identities[4],
+          identities[2],
+        ),
+      expected: `missing provenance row Reviewed packet head -> ${identities[2]}`,
+    },
+  ];
+  for (const { name, mutate, expected } of cases) {
+    const mutated = mutate(source);
+    for (const identity of identities) {
+      assert.ok(mutated.includes(identity), `${name}: ${identity}`);
+    }
+    const docPath = tempFile("operator-run-packet.md", mutated);
+    const result = validatePhase11DockerProofReadiness({
+      root,
+      docPaths: { [relativePath]: docPath },
+    });
+    assert.equal(result.ok, false, name);
+    assert.ok(result.errors.join("\n").includes(expected), name);
   }
 });
 
@@ -806,10 +885,9 @@ test("status summaries name the runnable driver and authenticated durable-store 
       "authenticate the created-claim result",
       "through the durable-store boundary",
     ]) {
-      const docPath = tempFile(
-        relativePath.replaceAll("/", "-"),
-        source.replaceAll(marker, "REMOVED_DURABLE_STORE_BOUNDARY"),
-      );
+      const mutated = removeWhitespaceFlexibleMarker(source, marker);
+      assert.notEqual(mutated, source, `${relativePath}: ${marker}`);
+      const docPath = tempFile(relativePath.replaceAll("/", "-"), mutated);
       const result = validatePhase11DockerProofReadiness({
         root,
         docPaths: { [relativePath]: docPath },
@@ -817,6 +895,57 @@ test("status summaries name the runnable driver and authenticated durable-store 
       assert.equal(result.ok, false, `${relativePath}: ${marker}`);
       assert.ok(result.errors.join("\n").includes(`missing marker ${marker}`));
     }
+  }
+});
+
+test("core readiness docs cannot lose the fresh durable reread or bound guard", () => {
+  for (const relativePath of [
+    "README.md",
+    "docs/DOCS_INDEX.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/ROADMAP.md",
+    "docs/PRODUCT_BUILD_SEQUENCE.md",
+    "docs/WHY_PUBLIC_NOW.md",
+    "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md",
+    "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
+    "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
+    "docs/architecture/README.md",
+  ]) {
+    const source = readFileSync(resolve(root, relativePath), "utf8");
+    for (const marker of [
+      "fresh authenticated store transaction",
+      "bound pre-supervisor guard",
+    ]) {
+      const mutated = removeWhitespaceFlexibleMarker(source, marker);
+      assert.notEqual(mutated, source, `${relativePath}: ${marker}`);
+      const docPath = tempFile(relativePath.replaceAll("/", "-"), mutated);
+      const result = validatePhase11DockerProofReadiness({
+        root,
+        docPaths: { [relativePath]: docPath },
+      });
+      assert.equal(result.ok, false, `${relativePath}: ${marker}`);
+      assert.ok(result.errors.join("\n").includes(`missing marker ${marker}`));
+    }
+  }
+});
+
+test("status summaries cannot weaken post-claim outcome-unknown handling", () => {
+  const marker = "preserves or marks `outcome_unknown`";
+  for (const relativePath of [
+    "README.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/ROADMAP.md",
+  ]) {
+    const source = readFileSync(resolve(root, relativePath), "utf8");
+    const mutated = removeWhitespaceFlexibleMarker(source, marker);
+    assert.notEqual(mutated, source, `${relativePath}: ${marker}`);
+    const docPath = tempFile(relativePath.replaceAll("/", "-"), mutated);
+    const result = validatePhase11DockerProofReadiness({
+      root,
+      docPaths: { [relativePath]: docPath },
+    });
+    assert.equal(result.ok, false, relativePath);
+    assert.ok(result.errors.join("\n").includes(`missing marker ${marker}`));
   }
 });
 

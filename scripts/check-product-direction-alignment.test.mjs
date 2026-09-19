@@ -4,7 +4,10 @@ import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { collectBuildSequenceErrors } from "./product-direction-invariants.mjs";
+import {
+  collectBuildSequenceErrors,
+  collectCurrentVersionSnapshotErrors,
+} from "./product-direction-invariants.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const paths = [
@@ -31,6 +34,82 @@ function errors(values) {
 
 test("current product/build direction passes", () => {
   assert.deepEqual(errors(documents()), []);
+});
+
+test("current version snapshot binds complete table assertions", () => {
+  const value = readFileSync(
+    resolve(root, "docs/reference/CONTRACT_VERSIONING.md"),
+    "utf8",
+  );
+  assert.deepEqual(collectCurrentVersionSnapshotErrors(value), []);
+
+  const mutations = [
+    ["| `0.1.0`", "| `0.2.0`", "Product/source SemVer"],
+    ["| `lnsat.contracts.v1_0`", "| `lnsat.contracts.v1_1`", "Gateway wire contract"],
+    ["| SQLite schema `17`", "| SQLite schema `18`", "Local persistence schema"],
+    [
+      "| proof source `b41aa756bccd85843ac540abfd927e8c5693d5fe`; packet PR #39 merge",
+      "| proof source `0000000000000000000000000000000000000000`; packet PR #39 merge",
+      "Phase 11 proof preparation",
+    ],
+    [
+      "| Source-only operator preparation; not execution-ready",
+      "| Execution-ready and authorized",
+      "Phase 11 proof preparation",
+    ],
+    [
+      "| Pre-release source; npm workspaces private and Rust crates unpublished |",
+      "| Supported release artifacts are published |",
+      "Product/source SemVer",
+    ],
+  ];
+  for (const [before, after, surface] of mutations) {
+    assert.ok(value.includes(before), before);
+    assert.match(
+      collectCurrentVersionSnapshotErrors(value.replace(before, after)).join("\n"),
+      new RegExp(`current version snapshot mismatch: ${surface}`, "u"),
+      surface,
+    );
+  }
+});
+
+test("historical tokens and duplicate rows cannot satisfy current snapshot", () => {
+  const value = readFileSync(
+    resolve(root, "docs/reference/CONTRACT_VERSIONING.md"),
+    "utf8",
+  );
+  const row = value
+    .split("\n")
+    .find((line) => line.startsWith("| Product/source SemVer"));
+  assert.ok(row);
+  const altered = value.replace(row, row.replace("`0.1.0`", "`0.2.0`"));
+  assert.match(
+    collectCurrentVersionSnapshotErrors(`${altered}\nHistorical: ${row}\n`).join("\n"),
+    /current version snapshot mismatch: Product\/source SemVer/u,
+  );
+  assert.match(
+    collectCurrentVersionSnapshotErrors(value.replace(row, `${row}\n${row}`)).join(
+      "\n",
+    ),
+    /current version snapshot mismatch: Product\/source SemVer/u,
+  );
+});
+
+test("historical no-increment prose cannot mask changed current claim", () => {
+  const value = readFileSync(
+    resolve(root, "docs/reference/CONTRACT_VERSIONING.md"),
+    "utf8",
+  );
+  const claim =
+    "That merge does not increment product SemVer, promote a wire or family schema,\ncreate a tag, or publish an artifact.";
+  assert.ok(value.includes(claim));
+  const altered = value.replace(claim, claim.replace("does not", "does"));
+  assert.match(
+    collectCurrentVersionSnapshotErrors(`${altered}\nHistorical: ${claim}\n`).join(
+      "\n",
+    ),
+    /current version snapshot must retain the no-increment claim/u,
+  );
 });
 
 test("public source and supported release remain separate", () => {
