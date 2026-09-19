@@ -28,17 +28,15 @@
 
 ## Context
 
-LNSAT must become usable soon without rebuilding agent runtimes, MCP lifecycle
-management, container isolation, or VM orchestration. Docker Agent, Docker MCP
-Gateway, and Docker Sandboxes already cover substantial parts of those adjacent
-problems. LNSAT should integrate with them while retaining its distinct
+LNSAT must become usable without rebuilding agent runtimes, MCP lifecycle
+management, container isolation, or VM orchestration. It integrates with
+versioned protocol and runtime interfaces while retaining its authority
 boundary: deterministic authorization and durable evidence for consequential
 actions.
 
 Docker is a practical first integration because it provides a widely available
-OCI execution boundary and an existing MCP operations layer. Docker must not
-become the source of LNSAT authority, a required paid governance dependency, or
-the only future execution substrate.
+OCI execution boundary. Docker must not become the source of LNSAT authority
+or the only future execution substrate.
 
 Current LNSAT source remains one local loopback authority cell with SQLite and
 bounded local foundations. Runtime-target contracts and adapter manifests are
@@ -56,14 +54,13 @@ agent or MCP client
   -> LNSAT Gateway authority facade
   -> identity + policy + distinct approval + one-time authorization
   -> isolated Docker adapter
-  -> Docker MCP Gateway or bounded OCI workload
+  -> bounded OCI workload or MCP adapter
   -> bound receipt + audit + reconciliation
 ```
 
-Docker Agent may act as a client. Docker MCP Gateway may provide upstream MCP
-catalog, routing, OAuth, and server lifecycle. Docker Sandboxes may provide a
-microVM boundary. Each remains replaceable. Possession of a Docker socket,
-container endpoint, MCP session, runtime process, or governance decision never
+An MCP client may request an action through Gateway; an OCI adapter may execute
+the approved bounded workload. Possession of a Docker socket, container
+endpoint, MCP session, runtime process, or external governance decision never
 grants LNSAT action authority.
 
 Agents do not receive direct Docker-socket access, upstream infrastructure
@@ -526,7 +523,8 @@ Docker support cannot be claimed until checked-in evidence proves:
 ## Consequences
 
 - Docker becomes build priority, not product identity.
-- LNSAT reuses Docker runtime and MCP strengths instead of duplicating them.
+- LNSAT uses Docker/OCI runtime and MCP protocol interfaces without duplicating
+  their lifecycle responsibilities.
 - Secure VM, native-host, and remote connectors reuse one authority contract
   later, with profile-specific isolation claims.
 - Phase 10 source conformance remains prerequisite to runtime work. P11-D1

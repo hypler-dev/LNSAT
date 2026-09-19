@@ -19,7 +19,7 @@ npm run build -w @lnsat/cli
 CLI remains thin over `@lnsat/packets` validators and does not grant execution
 authority.
 
-## Planned Product Split
+## Planned LNSAT Interfaces
 
 Phase 10 separates:
 

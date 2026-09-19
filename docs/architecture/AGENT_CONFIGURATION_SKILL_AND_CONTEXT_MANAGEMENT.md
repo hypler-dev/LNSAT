@@ -1,13 +1,13 @@
 # Agent Configuration, Skill, and Context Management
 
-- Status: proposal and product-boundary decision
+- Status: proposal within the standalone LNSAT product boundary
 - Availability: not implemented
 - v1 core requirement: identity, evidence, policy hooks, and CLI design only;
-  full management product is downstream
+  full management surface remains proposal scope
 
-Product placement and non-negotiable boundaries are accepted by
-[ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md). Detailed
-schemas and runtime remain proposal scope.
+Product placement and non-negotiable boundaries are defined by
+[ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md). Detailed schemas and
+runtime remain proposal scope.
 
 ## Why It Is Useful
 
@@ -16,9 +16,9 @@ project context across repositories and model-specific directories. Duplicate
 copies drift, hide provenance, waste space, and make it difficult to prove what
 an agent received.
 
-LNSAT should govern these assets as versioned inputs to agent action, while a
-commercial management module can provide rich authoring, synchronization,
-sharing, graph editing, and enterprise operations.
+LNSAT should govern these assets as versioned inputs to agent action. Authoring,
+synchronization, sharing, graph editing, and operational views remain LNSAT
+management capabilities and must preserve the same authority boundary.
 
 This is related to authority but not identical:
 
@@ -214,9 +214,9 @@ Required controls:
 
 ## Product Placement
 
-Public LNSAT should own portable schemas, digest rules, evidence hooks,
-authorization boundaries, CLI conventions, and conformance tests. Rich
-registry, graph editor, collaborative authoring, enterprise sync, analytics,
-and managed distribution are candidates for `LNSAT-Commercial`.
-Model evaluation and overlays belong in `LNSAT-Models`; product-specific
-rendering and execution belong in `LNSAT-Connectors`.
+LNSAT owns portable schemas, digest rules, evidence hooks, authorization
+boundaries, CLI conventions, conformance tests, registry and graph surfaces,
+content management, model evaluation interfaces, rendering, and execution
+integration. These capabilities may be delivered as local packages, services,
+or protocol adapters, but all remain inside the LNSAT product boundary and
+cannot bypass Gateway policy, approval, authorization, receipt, or audit.

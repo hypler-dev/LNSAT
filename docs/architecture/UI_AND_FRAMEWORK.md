@@ -75,10 +75,10 @@ Initial routes:
 /settings      install mode, trust boundary, local/SaaS/hybrid posture
 ```
 
-Expanded downstream routes may add work contexts, profiles, skills,
+Future LNSAT management routes may add work contexts, profiles, skills,
 instructions, graphs, connectors, modules, models, libraries, and organization
-administration. Portable contracts and evidence remain public; rich
-collaborative implementation may live in `LNSAT-Commercial`.
+administration. Each route needs an accepted contract, authority review, and
+conformance evidence before it becomes product behavior.
 
 ## Relationship Views
 
