@@ -58,14 +58,14 @@ See [CLI and OS operator interface](CLI_AND_OS_OPERATOR_INTERFACE.md). Current
 source does not provide stable operator, service, recovery, update, connector,
 profile, or skill commands.
 
-## Downstream Product Layers
+## Integration and Extension Layers
 
-Separate repositories may provide commercial management, certified connectors,
-governed model packs, and official commercial composition. They consume public
-contracts and exact core releases:
+LNSAT remains the complete product boundary. Clients, protocol adapters,
+connectors, model integrations, and packaging surfaces consume its versioned
+contracts and exact release artifacts:
 
 ```text
-commercial UI / connector / model assistant / third-party wrapper
+client / connector / model assistant / protocol adapter
                               |
                               v
                  versioned public interfaces
@@ -74,9 +74,10 @@ commercial UI / connector / model assistant / third-party wrapper
                   LNSAT Gateway authority
 ```
 
-Downstream code cannot mint approval or execution authority, weaken fail-closed
-behavior, replace core evidence, or maintain a different private authority
-implementation. See [open core and product repositories](OPEN_CORE_AND_PRODUCT_REPOSITORIES.md).
+Integrated code cannot mint approval or execution authority, weaken fail-closed
+behavior, replace core evidence, or maintain a second authority
+implementation. Docker/OCI, MCP, A2A, REST, CLI, and browser surfaces all
+remain adapters or execution substrates behind Gateway validation.
 
 ## Trust Boundaries
 

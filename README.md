@@ -16,8 +16,8 @@ required, narrowly scoped execution, and a record of what actually happened.
 > LNSAT `0.1.0` contains experimental implementations and tests, not a supported
 > production product. No supported installer, package, container, or hosted
 > service is available. Real Docker runtime proof remains unfinished. APIs and
-> schemas may change. Rangoon's graphical installer and management UI are
-> separate downstream work.
+> schemas may change. The Control Center remains an experimental read-only
+> preview while the headless V1 control surface is completed.
 
 Current version layers remain separate: product/source SemVer is unpublished
 `0.1.0`, the stable Gateway wire target is `lnsat.contracts.v1_0`, and the
@@ -116,27 +116,18 @@ and [local authentication availability record](docs/architecture/SECURITY_LOCAL_
 These source controls grant no merge, runtime, build, publication, deployment,
 or release authority.
 
-## The LNSAT Core and Rangoon Boundary
+## LNSAT V1 Product Surface
 
-LNSAT V1 is planned as an embeddable authority kernel/library with a stable
+LNSAT V1 is an embeddable authority runtime and package with a stable
 integration API and complete headless `lnsatctl` configuration and operations.
 The optional `lnsatd` reference host/sidecar provides a local service boundary
-for consumers that need one. LNSAT remains fully usable without Rangoon.
-
-Rangoon is a separate userland/distro that may provide the graphical installer,
-setup wizard, presets, configuration pages, approvals, audit, recovery, graphs,
-agents, fleets, and final packaging. It installs or bundles a pinned, verified
-LNSAT version and submits requests through LNSAT's versioned interface.
-
-Rangoon recovery surfaces are limited to online Gateway-authorized requests,
-status, evidence, and host-owner instructions. They cannot invoke LNSAT's
-offline backup, inert restore, owner recovery, or initial bootstrap operations,
-which remain local `lnsatctl`-only procedures with no agent, API, MCP, or UI
-route.
-
-Rangoon never edits LNSAT storage, computes effective permissions, or executes
-consequential work outside LNSAT. LNSAT independently validates, authorizes,
+when a process boundary is useful. LNSAT independently validates, authorizes,
 executes, and produces evidence.
+
+The LNSAT product surface includes policy, approval, execution authorization,
+evidence, recovery, configuration, status, and interoperability contracts. The
+Control Center may present these contracts as read-only or mutation-capable
+experiences only through the Gateway and its versioned interfaces.
 
 The LNSAT headless configuration contract separates:
 
@@ -145,23 +136,24 @@ The LNSAT headless configuration contract separates:
 2. **Agent action authority:** what agents may request within that envelope,
    what requires human approval, and what is denied.
 
-Rangoon may render observe-only, approval-required, bounded-automation, and
-custom presets as a user experience. LNSAT validates the resulting declarative
-configuration and computes effective authority; presets cannot silently grant
-access, and an unverifiable OS restriction cannot be advertised as enforced.
+The Control Center may render observe-only, approval-required,
+bounded-automation, and custom presets as a user experience. LNSAT validates
+the resulting declarative configuration and computes effective authority;
+presets cannot silently grant access, and an unverifiable OS restriction cannot
+be advertised as enforced.
 
 `lnsatctl` will expose permission changes, approvals, activity evidence,
 emergency disablement, recovery, declarative configuration, validation, and
 status through protected interfaces. The existing React console remains an
 experimental read-only source preview; it is not an LNSAT V1 exit requirement.
-See the [kernel and Rangoon boundary](docs/architecture/ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
+See the [standalone V1 scope](docs/architecture/ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md).
 
 Docker/OCI is the first planned isolated execution profile. Platform and package
 support will be claimed only for explicitly selected, tested combinations—not
 inferred from a successful build. See the [build sequence](docs/PRODUCT_BUILD_SEQUENCE.md)
 and [compatibility matrix](docs/architecture/COMPATIBILITY_AND_CONFORMANCE_MATRIX.md).
 
-## Product Ecosystem
+## Interoperability
 
 LNSAT supplies authority, not a replacement for the rest of the agent stack:
 
@@ -171,16 +163,12 @@ LNSAT supplies authority, not a replacement for the rest of the agent stack:
   approve their own permissions.
 - **Runtime isolation** constrains execution; it does not replace policy,
   approval, or consequence evidence.
-- **Rangoon and other downstream products** may provide policy intelligence or
-  additional management experiences. They can use a compatible LNSAT service
-  or install a pinned, verified release once available. LNSAT remains independent.
+  Gateway is the security boundary. Clients, connectors, and UIs cannot create an
+  alternate authority path. LNSAT cannot control a bypass path that retains direct
+  credentials or unmediated infrastructure access; that coverage must be constrained
+  or explicitly identified as missing.
 
-Gateway is the security boundary. Clients, connectors, and UIs cannot create an
-alternate authority path. LNSAT cannot control a bypass path that retains direct
-credentials or unmediated infrastructure access; that coverage must be constrained
-or explicitly identified as missing.
-
-The core is Apache-2.0. See [product boundaries](docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+The core is Apache-2.0. See [extension boundaries](docs/architecture/OPEN_CORE_AND_EXTENSION_BOUNDARIES.md)
 and [CLI and OS interfaces](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md).
 
 ## Evaluate From Source
@@ -206,8 +194,7 @@ Preview the experimental read-only Control Center:
 npm run dev -w @lnsat/console
 ```
 
-The preview is not Rangoon's planned setup wizard and does not enable agent
-execution.
+The preview does not enable agent execution.
 See [Local Development](docs/LOCAL_DEVELOPMENT.md) for configuration, focused
 tests, and troubleshooting. Before proposing a source change, run:
 
