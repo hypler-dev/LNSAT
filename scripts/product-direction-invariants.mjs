@@ -28,6 +28,11 @@ const currentVersionSnapshotRows = [
     "SQLite schema `17`",
     "Source implementation only; not a release or migration service",
   ],
+  [
+    "Phase 11 proof preparation",
+    "proof source `b41aa756bccd85843ac540abfd927e8c5693d5fe`; packet PR #39 merge",
+    "Source-only operator preparation; not execution-ready",
+  ],
 ];
 
 export function collectCurrentVersionSnapshotErrors(document) {

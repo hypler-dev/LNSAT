@@ -48,6 +48,16 @@ test("current version snapshot binds complete table assertions", () => {
     ["| `lnsat.contracts.v1_0`", "| `lnsat.contracts.v1_1`", "Gateway wire contract"],
     ["| SQLite schema `17`", "| SQLite schema `18`", "Local persistence schema"],
     [
+      "| proof source `b41aa756bccd85843ac540abfd927e8c5693d5fe`; packet PR #39 merge",
+      "| proof source `0000000000000000000000000000000000000000`; packet PR #39 merge",
+      "Phase 11 proof preparation",
+    ],
+    [
+      "| Source-only operator preparation; not execution-ready",
+      "| Execution-ready and authorized",
+      "Phase 11 proof preparation",
+    ],
+    [
       "| Pre-release source; npm workspaces private and Rust crates unpublished |",
       "| Supported release artifacts are published |",
       "Product/source SemVer",
