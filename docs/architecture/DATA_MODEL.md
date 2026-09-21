@@ -95,7 +95,7 @@ Read-only bounded planning reports zero candidates and takes no action.
 Recovery-inspection rows preserve deployment/target-scoped structural evidence,
 OS-local path fingerprints, deterministic identity/idempotency, quarantine
 recommendations, and false action/activation fields. Raw paths are absent.
-Future removable-family cleanup, other product-domain tables, quarantine
+Future removable-family cleanup, unrelated domain tables, quarantine
 mutation, recovery activation, and authenticated runtime composition remain
 design targets, not claims about a deployed database.
 

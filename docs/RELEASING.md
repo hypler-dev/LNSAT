@@ -36,7 +36,7 @@ private commit topology, exact diffs, tree IDs, or protected blobs.
 - Clean checkout of intended source revision.
 - Scope, target, package, support, and release criteria from
   [ADR-0002](architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md),
-  downstream/interface boundaries from
+  extension/interface boundaries from
   [ADR-0003](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md),
   with retained local-first boundaries from
   [ADR-0001](architecture/ADR-0001_V1_SCOPE.md).
@@ -47,6 +47,12 @@ private commit topology, exact diffs, tree IDs, or protected blobs.
   impact.
 
 ## Version Contract
+
+Current product/source SemVer remains unpublished `0.1.0`. Source-only Phase 11
+operator preparation, including PR #39, does not open a version transition,
+tag, artifact, or release. The separate current product, wire, family-schema,
+persistence, and evidence identities are recorded in
+[contract versioning and negotiation](reference/CONTRACT_VERSIONING.md).
 
 Before a versioned source release:
 
@@ -63,9 +69,9 @@ Before a versioned source release:
    [headless configuration and control gate](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control),
    not merely the historical P10-X1 source checkpoint. Each selected LNSAT core
    target must later prove component identity, trust, headless configuration,
-   permission enforcement, and compatibility under Phase 14. Rangoon owns
-   graphical setup and final distro/package lifecycle; its wrappers cannot
-   replace or bypass LNSAT's versioned API, CLI, or Gateway authority.
+   permission enforcement, package lifecycle, and compatibility under Phase 14.
+   Product surfaces cannot replace or bypass LNSAT's versioned API, CLI, or
+   Gateway authority.
 2. Pass Phase 13 and freeze one exact release-candidate source identity,
    version, changelog, support profile, and build recipe.
 3. Under explicit Phase 14 candidate-build authorization, select exact rows and
@@ -73,9 +79,9 @@ Before a versioned source release:
 4. Prove selected core candidate artifacts: digests, reproducibility,
    non-production signature rehearsal, SBOM, provenance, notices, non-root
    runtime, headless configuration, backup/restore, core rollback/revocation,
-   and explicit-start/no-auto-start `lnsatd` behavior. Rangoon separately proves
+   and explicit-start/no-auto-start `lnsatd` behavior. LNSAT separately proves
    package install, upgrade, rollback, uninstall, and package-managed service
-   safety for its wrapper rows; that downstream evidence does not gate LNSAT V1.
+   safety for each selected row.
 5. After Phase 14 passes, obtain separate final go/no-go authorization.
 6. Production-sign unchanged proven digests, verify them, then create tags,
    releases, uploads, publications, and stable/latest promotion.
@@ -125,9 +131,9 @@ rollback and revocation, non-root runtime, headless configuration,
 explicit-start/no-auto-start `lnsatd` behavior, checksums, non-production
 signature rehearsal/verification bundles, SPDX JSON SBOMs, and SLSA v1
 provenance. Missing core evidence blocks release; successful source build cannot
-waive it. Cross-wrapper digest parity, clean-machine package install, package
-upgrade/rollback, uninstall, and package-managed service safety apply only to
-Rangoon wrapper rows and do not gate LNSAT V1.
+waive it. Cross-component digest parity, clean-machine package install,
+package upgrade/rollback, uninstall, and package-managed service safety apply
+to every selected LNSAT V1 row.
 
 ## Maintainer Review
 
@@ -150,17 +156,13 @@ Phase 14-proven digests. Failed or partial verification may preserve quarantined
 candidate artifacts as evidence, but must not produce a final, publishable, or
 promoted release.
 
-## Downstream Release Separation
+## Package and Extension Release
 
-Commercial edition, connector, module, or model publication is separate from
-public core release. Downstream manifest must pin exact public core version and
-canonical component digests plus extension versions, trust evidence,
-compatibility, lifecycle, entitlement, and support state.
-
-Downstream packaging cannot rebuild alternate core authority behavior or delay
-an upstream critical security fix. Public core success does not authorize
-commercial publication; commercial success does not authorize public tag,
-artifact release, or stable promotion.
+Every package and extension manifest must pin exact LNSAT versions and
+canonical component digests plus trust evidence, compatibility, lifecycle,
+entitlement, and support state. Packaging cannot rebuild alternate authority
+behavior or delay a critical security fix. Package readiness does not authorize
+public tag, artifact release, or stable promotion.
 
 ## Post-Release
 

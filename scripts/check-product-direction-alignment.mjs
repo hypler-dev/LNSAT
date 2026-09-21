@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { collectBuildSequenceErrors } from "./product-direction-invariants.mjs";
+import {
+  collectBuildSequenceErrors,
+  collectCurrentVersionSnapshotErrors,
+} from "./product-direction-invariants.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const projectMarkdown = execFileSync(
@@ -47,7 +50,7 @@ if (projectMarkdown.length < 100) {
 const requiredMarkers = {
   "README.md": [
     "Execution authorization and evidence for consequential agent actions.",
-    "## Product Ecosystem",
+    "## LNSAT V1 Product Surface",
     "docs/CLAIMS_AND_MATURITY.md",
     "CLI_AND_OS_OPERATOR_INTERFACE.md",
     "docs/PRODUCT_BUILD_SEQUENCE.md",
@@ -62,7 +65,7 @@ const requiredMarkers = {
   "docs/ROADMAP.md": [
     "ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md",
     "ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
-    "## Downstream Product Sequence",
+    "## LNSAT Runtime and Package Sequence",
     "PRODUCT_BUILD_SEQUENCE.md",
   ],
   "docs/PROJECT_STATUS.md": [
@@ -86,11 +89,10 @@ const requiredMarkers = {
     "ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md",
   ],
   "docs/architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md": [
-    "### Public Core",
+    "### Core Authority",
     "### Managed Agent Content",
-    "### Gatekeeper Models",
-    "### Management Interfaces",
-    "### Module and Connector Isolation",
+    "### Advisory Models",
+    "### Interfaces and Extensions",
   ],
   "docs/architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md": [
     "local_session_and_external_signature",
@@ -124,12 +126,12 @@ const requiredMarkers = {
   "docs/architecture/AGENT_FRAMEWORK_ADAPTER_INCLUSION.md": [
     "## Universal and Model-Specific Configuration",
   ],
-  "docs/sdk/README.md": ["## Product Expansion Contracts"],
+  "docs/sdk/README.md": ["## Product Contracts"],
   "docs/sdk/agent.md": ["## Managed Configuration Boundary"],
-  "docs/sdk/extensions.md": ["## Open-Core and Downstream Boundary"],
+  "docs/sdk/extensions.md": ["## Extension Boundary"],
   "docs/onboarding/PROJECT_ONBOARDING.md": ["## Product Direction"],
-  "docs/onboarding/AGENT_ONBOARDING.md": ["## Expanded Product Boundary"],
-  "packages/cli/README.md": ["## Planned Product Split"],
+  "docs/onboarding/AGENT_ONBOARDING.md": ["## Agent Profile Boundary"],
+  "packages/cli/README.md": ["## Planned LNSAT Interfaces"],
   "crates/lnsatd/README.md": ["CLI_AND_OS_OPERATOR_INTERFACE.md"],
   "CONTRIBUTING.md": ["## Upstream and Downstream Changes"],
   "GOVERNANCE.md": [
@@ -146,13 +148,14 @@ const requiredMarkers = {
     "ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md",
     "## Public Source Cutover",
     "## Normative Release Sequence",
-    "## Downstream Release Separation",
+    "## Package and Extension Release",
   ],
   "docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md": [
     "## Canonical Decisions",
     "## Documentation Coverage",
     "## Executable Check",
   ],
+  "docs/reference/CONTRACT_VERSIONING.md": ["# Contract Versioning And Negotiation"],
 };
 
 for (const [path, markers] of Object.entries(requiredMarkers)) {
@@ -160,6 +163,11 @@ for (const [path, markers] of Object.entries(requiredMarkers)) {
 }
 
 errors.push(...collectBuildSequenceErrors(source));
+errors.push(
+  ...collectCurrentVersionSnapshotErrors(
+    source("docs/reference/CONTRACT_VERSIONING.md"),
+  ),
+);
 
 const phaseNumbers = [...source("docs/ROADMAP.md").matchAll(/^### ([0-9]+)\. /gmu)].map(
   (match) => Number(match[1]),

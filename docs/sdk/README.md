@@ -24,12 +24,12 @@ marketplace-listed, or stable public SDK packages.
 | `@lnsat/core`    | Product/version/build-phase constants                                                    | Unpublished workspace package |
 | `@lnsat/cli`     | Local packet validate/hash command source                                                | Unpublished workspace package |
 
-## Product Expansion Contracts
+## Product Contracts
 
-ADR-0003 reserves public SDK responsibility for portable module, connector,
-profile, skill, instruction, context, graph, assignment, and model-overlay
-contracts plus conformance. Rich registry, visual authoring, certified packs,
-enterprise collaboration, and commercial composition may live downstream.
+LNSAT owns portable module, connector, profile, skill, instruction, context,
+graph, assignment, and model-overlay contracts plus conformance. Registry,
+visual authoring, content management, evaluation, and execution integration
+remain LNSAT capabilities and must use the same Gateway authority boundary.
 
 These formats are planned unless current source reference names them. No
 planned format is stable or installable because it appears here.
@@ -89,4 +89,5 @@ Read the sections by audience:
   creation, external calls, workflow execution, package install/update, lockfile
   refresh, and side effects remain closed.
 - Do not add package-manager install commands or public SDK availability claims
-  until approved artifacts exist.
+  until approved artifacts exist. Protocol support claims must name the tested
+  MCP, A2A, REST, CLI, browser, or Docker/OCI contract and its maturity.

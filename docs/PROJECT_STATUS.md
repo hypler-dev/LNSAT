@@ -3,6 +3,17 @@
 LNSAT `0.1.0` is pre-release, source-only software. Repository is suitable for
 contract evaluation and contributor development, not production operation.
 
+## Version Posture
+
+Product/source SemVer remains unpublished `0.1.0` across the root npm package,
+every private npm workspace, and the unpublished Cargo workspace. The stable
+Gateway wire target is `lnsat.contracts.v1_0`; the default product surface is
+`lnsat.product_surface.v1` with explicit source-diagnostic v2 selection; local
+SQLite schema is `17`. These layers are independent. PR #39 merged Phase 11
+operator preparation into public `main`, but changed no product, wire, family,
+persistence, runtime-profile, or adapter-protocol version and created no tag or
+release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
+
 ## Active Security Remediation
 
 The owner accepted the
@@ -103,12 +114,13 @@ Complete headless setup and access-management through the versioned API and
 LNSAT's resource access from agent action authority, support layered declarative
 configuration and customizable least-privilege settings, expose actual OS
 enforcement coverage, and protect configuration changes through Gateway.
-LNSAT remains usable independently of Rangoon; downstream installation or API use
-cannot bypass approval or increase authority implicitly. The
+LNSAT remains a standalone product; installation or API use cannot bypass
+approval or increase authority implicitly. The
 [headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
-own this additional product acceptance scope. Rangoon owns graphical setup,
-presets, and rich management UI. Existing P10-X1 source conformance does not
-satisfy it; current Control Center readback remains read-only. No new
+own this additional product acceptance scope. Graphical setup, presets, and rich
+management UI are later LNSAT surfaces, not V1 exit requirements. Existing
+P10-X1 source conformance does not satisfy it; current Control Center readback
+remains read-only. No new
 management mutation, runtime, installer, or supported-platform claim is opened.
 
 HCFG-0/HCFG-1 source diagnostics are implemented: status defaults to and echoes
@@ -256,25 +268,32 @@ boundary: canonical run manifest -> fields in a caller-supplied claim snapshot
 -> D3/D4A payload -> loaded profile -> launch-contract digest. Replay, ambiguous
 state/receipt/reconciliation, and binding drift fail closed, but its digest
 authenticates no snapshot, revalidates no durable state, and grants no launch
-permission. A later runnable driver must perform an authenticated durable-store
-re-read of the exact bound consumption, operation, and attempt immediately
-before process creation and revalidate created, dispatching, no-receipt, and
-no-reconciliation state. This evaluator performs no store write, route,
+permission. It is implemented source-only, verification-only structural
+binding, not a runtime gate. After a successful D4B2A claim commit, a later
+runnable driver must authenticate the created-claim result, call a private
+store-owned verifier in a fresh authenticated store transaction, and re-read
+the exact durable consumption, operation, and attempt through the durable-store
+boundary. Only exact created, dispatching, no-receipt, and no-reconciliation
+state returns a bound pre-supervisor guard. Failure after claim commit rejects
+before spawn, preserves or marks `outcome_unknown`, and never redispatches. This
+evaluator performs no store write, route,
 filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
 runtime execution. Phase 11 remains incomplete; real Docker proof and later
 Phase 13/14 release gates remain separately closed.
 The source-only
 [operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-now locks proof preparation to public source revision
-`b41aa756bccd85843ac540abfd927e8c5693d5fe` and its exact public tree. It
-enumerates later executable, image, profile, launch, manifest, target,
-admission, case, D3-limit, receipt, reconciliation, ambiguity, cleanup,
-evidence, retention, redaction, and pass/fail requirements. A later runnable
-driver must authenticate the created-claim result and re-read the exact bound
-consumption, operation, and attempt through the durable-store boundary
-immediately before process creation. All live identities remain explicitly
-blocking. The packet grants no Docker, execution, build-candidate, release,
-deploy, publication, production, or support authority.
+locks the proof-implementation source at public revision
+`b41aa756bccd85843ac540abfd927e8c5693d5fe` and tree
+`fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c`. Separately, PR #39 integrated
+the reviewed packet head `2c918bc59b82ffabc378b47e66137733cf24a6d7`
+into public `main` as merge `190ab32443f60a2a1bc78f990e8ea5571c28f96f`
+with tree `17247c9c194f6a332e99ee32ae5052620349896b`. That packet integration
+identity does not move the proof-source lock. The record enumerates later
+executable, image, profile, launch, manifest, target, admission, case, D3-limit,
+receipt, reconciliation, ambiguity, cleanup, evidence, retention, redaction,
+and pass/fail requirements. All live identities remain explicitly blocking.
+The packet grants no Docker, execution, build-candidate, release, deploy,
+publication, production, or support authority.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -311,7 +330,7 @@ route, or supported deployment exists.
 | CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                                                                                                         |
 | Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                                                                                                                |
 | Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                                                                                                          |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                                                                                                      |
+| Optional modules     | Product boundary       | Versioned extension contracts only; no implementation                                                                                                                                                                                         |
 | Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                                                                                                     |
 | Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                                                                                                              |
 | Docker integration   | Experimental source    | P11-D1 through P11-D4C1 include closed profile/config/protocol/payload, durable lifecycle, served fake-runtime proof, and a hermetically tested source-only reference adapter; no real Docker, image operation, supported runtime, or support |
@@ -360,13 +379,11 @@ ADR-0003 and ADR-0007 now fix repository, product, and first-integration
 boundaries:
 
 - `LNSAT` remains canonical open authority core;
-- `LNSAT-Commercial`, `LNSAT-Connectors`, `LNSAT-Models`, and `LNSAT-Release`
-  exist as private documentation bootstraps;
 - managed instructions, skills, profiles, context, graphs, and model overlays
   are planned governed inputs;
 - gatekeeper models remain advisory;
 - rich registry, graph editing, collaboration, certified adapters, model packs,
-  and commercial composition remain downstream;
+  and package composition remain staged LNSAT work;
 - portable formats, Gateway authority, essential security, OS CLI conventions,
   and conformance remain public-core concerns;
 - Docker/OCI is first planned v1 runtime profile, but Docker remains a
@@ -375,7 +392,7 @@ boundaries:
   authority-managed emergency stop dominates lower-precedence configuration.
 
 This direction adds no live module runtime, model deployment, connector,
-registry install/enable authority, entitlement, hosted service, or commercial
+registry install/enable authority, entitlement, hosted service, or unpublished
 artifact. See
 [ADR-0003](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md),
 [ADR-0007](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md),
@@ -386,7 +403,7 @@ and [product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md).
 Current workspace packages are private and unpublished. Source exports may
 change before first supported release. Contract changes should still use
 explicit schema versions, migration notes, fixtures, conformance tests, and
-changelog entries so downstream evaluation remains reviewable.
+changelog entries so evaluation remains reviewable.
 
 Exact-match contract-version validation now identifies
 `lnsat.contracts.v1_0` as the stable v1 target and retains `v0_1` as deprecated
@@ -777,7 +794,7 @@ No approval signer, one-time execution issuer, sandbox adapter, hardware
 attester, package, binary, image, installer, release, or update channel exists.
 No stable OS operator CLI, module runtime, connector, model gatekeeper,
 configuration registry, shared skill library, graph editor, entitlement
-service, commercial artifact, or hosted management system exists.
+service, unpublished artifact, or hosted management system exists.
 
 Provider-neutral signer readiness source now models software-vault,
 PKCS#11 3.2, and cloud KMS/HSM boundaries using key references and public
@@ -1218,7 +1235,7 @@ Before any supported public artifact:
   other explicitly post-local-v1 phases remain optional;
 - select one or two exact Phase 14 OS/architecture core-target rows and prove
   every selected row; unselected rows remain unsupported, not blockers;
-- expose pin-verifiable canonical component identity for downstream consumers;
+- expose pin-verifiable canonical component identity for LNSAT packages and consumers;
 - produce reproducible artifacts, checksums, signature bundles, SPDX JSON SBOM,
   SLSA v1 provenance, and selected core-target compatibility evidence;
 - document headless configuration, recovery, update, rollback, and revocation;
@@ -1228,8 +1245,9 @@ Before any supported public artifact:
   repository-visibility authorization;
 - obtain separate later artifact-publication authorization after Phase 14.
 
-Rangoon separately owns graphical assets, final installer/package selection,
-wrapper lifecycle evidence, and downstream support claims; none blocks LNSAT V1.
+LNSAT owns selected core package lifecycle evidence and support claims for
+Phase 14 rows. Graphical assets and unselected installer formats do not block
+LNSAT V1.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).

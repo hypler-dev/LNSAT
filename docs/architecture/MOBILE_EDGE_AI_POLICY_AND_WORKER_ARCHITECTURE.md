@@ -1,7 +1,8 @@
 # Mobile Edge AI Policy And Worker Architecture
 
-> Boundary status: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
-> assigns graphical device, policy, approval, and fleet management to Rangoon.
+> Boundary status: [ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md) keeps
+> mobile policy and worker behavior at portable contract level until separately
+> evidenced by LNSAT.
 > LNSAT retains portable mobile policy/worker contracts, authority enforcement,
 > leases, receipts, reconciliation, and evidence.
 
@@ -37,14 +38,14 @@ and developers adding governed local inference to existing apps.
 
 ## Product Surfaces
 
-LNSAT defines two portable authority/runtime contract surfaces; Rangoon owns the
+LNSAT defines portable authority/runtime contract surfaces; optional local clients own the
 graphical management surface:
 
 1. **Mobile Policy SDK** - embedded in an existing iOS or Android app; verifies
    policy before inference and emits bounded evidence.
 2. **Mobile Edge Worker** - installable owner-managed app; advertises bounded
    capabilities and pulls eligible workload leases.
-3. **Rangoon mobile management** - presents devices, models, policies, capacity,
+3. **Mobile management contract** - represents devices, models, policies, capacity,
    approval workflows, workloads, results, revocations, and LNSAT evidence
    through protected versioned interfaces.
 
@@ -214,9 +215,9 @@ that many phones form one shared-memory accelerator. Large-model tensor
 splitting, authority roles, and irreplaceable workloads remain excluded until
 separate evidence proves them safe and useful.
 
-## Rangoon Mobile Management Requirements
+## Mobile Management Contract Requirements
 
-Rangoon's graphical mobile-management UI should show:
+An optional mobile-management UI should show:
 
 - enrolled, available, busy, paused, offline, expired, revoked, and quarantined
   devices;
@@ -229,7 +230,7 @@ Rangoon's graphical mobile-management UI should show:
   sensitive-data, and untrusted-result workers;
 - model/device/workload revocation and evidence-backed rollback.
 
-Rangoon may present proposal and approval workflows, but it does not itself
+Optional clients may present proposal and approval workflows, but they do not themselves
 approve or authorize work. Authenticated humans submit exact bound decisions
 through LNSAT. The UI must not expose arbitrary shell, unbounded file access,
 hidden background compute, or policy-bypass controls.
@@ -247,7 +248,7 @@ policy expiry, or revoked device fails closed and cannot silently publish.
 1. **Complete:** source-only mobile capability, policy, signed lease,
    result, and evidence contracts with validators and negative probes.
 2. Deterministic mobile fleet and workload simulator; no network or inference.
-3. Read-only Rangoon mobile inventory, policy, and scheduling previews over
+3. Read-only mobile inventory, policy, and scheduling previews over
    protected LNSAT interfaces.
 4. Local loopback worker protocol with synthetic models/data only.
 5. Android worker app for explicit opt-in test devices.

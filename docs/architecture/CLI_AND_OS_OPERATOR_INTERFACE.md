@@ -12,8 +12,8 @@
 
 Product split and extension boundary are accepted by
 [ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
-The LNSAT/Rangoon ownership boundary is defined by
-[ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
+The LNSAT standalone ownership boundary is defined by
+[ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md).
 
 ## Decision
 

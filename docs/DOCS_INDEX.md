@@ -35,11 +35,10 @@ subsystem or proposal.
 
 ## Core Architecture
 
-- [LNSAT kernel and Rangoon boundary](architecture/ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
-  — accepted V1 ownership split and headless exit criteria.
+- [LNSAT standalone V1 scope](architecture/ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)
+  — accepted V1 product surface and headless exit criteria.
 - [Headless configuration and control](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
-  — headless LNSAT configuration requirements; graphical wizard and distro
-  packaging belong to Rangoon.
+  — headless LNSAT configuration requirements and product acceptance criteria.
 
 - [Headless declaration composition](architecture/headless-configuration/spec.md)
   — exact source-only resource/action ceilings and remaining activation boundary.
@@ -80,7 +79,7 @@ subsystem or proposal.
 - [SQLite recovery inspection events](architecture/SQLITE_RECOVERY_INSPECTION_EVENTS.md)
 - [SQLite retention policy](architecture/SQLITE_RETENTION_POLICY.md)
 - [Authentication and integration posture](architecture/AUTH_AND_INTEGRATION_POSTURE.md)
-- [Open core and product repositories](architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+- [Open core and extension boundaries](architecture/OPEN_CORE_AND_EXTENSION_BOUNDARIES.md)
 - [Agent configuration, skill, and context management](architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)
 - [CLI and OS operator interface](architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
 - [MCP 2026-07-28 interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md)
@@ -99,15 +98,23 @@ two readiness records. It structurally checks a caller-supplied claim snapshot
 against the canonical run manifest, D3/D4A payload, loaded profile, and
 launch-contract digest while remaining source-only and side-effect free. Its
 digest authenticates no snapshot, proves no current durable state, and grants no
-launch permission; a later runnable driver must perform an authenticated
-durable-store re-read of the exact bound consumption, operation, and attempt
-immediately before process creation.
+launch permission. After a successful D4B2A claim commit, a later runnable
+driver must use a private store-owned verifier and a fresh authenticated store
+transaction to re-read the exact bound consumption, operation, and attempt
+immediately before process creation. Exact success returns a bound
+pre-supervisor guard; a caller-supplied snapshot, public read API, or admission
+digest never does.
 
-The source-only operator run packet locks the reconciled public source revision
-and enumerates the exact later-run identities, driver-admission inputs, D3
-limits, positive and rejection cases, ambiguity, cleanup, evidence, redaction,
-and pass/fail gates. Its live runtime identities are deliberately
-`UNSET_BLOCKING`; it is not a runnable driver or execution authority.
+The source-only operator run packet locks the reviewed proof-implementation
+source and enumerates the exact later-run identities, driver-admission inputs,
+D3 limits, positive and rejection cases, ambiguity, cleanup, evidence,
+redaction, and pass/fail gates. Its public integration record separately binds
+PR #39 head `2c918bc59b82ffabc378b47e66137733cf24a6d7`, merge
+`190ab32443f60a2a1bc78f990e8ea5571c28f96f`, and integration tree
+`17247c9c194f6a332e99ee32ae5052620349896b`; those identities do not move the
+proof-source lock or change product version `0.1.0`. Live runtime identities
+remain `UNSET_BLOCKING`; the packet is not a runnable driver or execution
+authority. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
 The source-only execution-harness contract binds those proposed records for a
 later authority. [PHR-0005](reference/public-history-reviews/PHR-0005/review.json)
@@ -130,7 +137,6 @@ human authority, inspecting private filesystem identities, or accessing Docker.
 - [Contract provenance](reference/CONTRACT_PROVENANCE.md)
 - [Contract versioning and negotiation](reference/CONTRACT_VERSIONING.md)
 - [Product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md)
-- [Docker AI technical comparison](reference/DOCKER_AI_TECHNICAL_COMPARISON.md)
 
 Current npm workspaces are unpublished workspace packages. Documentation
 describes repository-local contracts, not installable packages or stable public
@@ -142,15 +148,15 @@ authority.
 
 ## Product and Extension Authors
 
-- [Open core and downstream product boundaries](architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+- [Open core and extension boundaries](architecture/OPEN_CORE_AND_EXTENSION_BOUNDARIES.md)
 - [Agent configuration, skill, model-overlay, and shared-library design](architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)
 - [OS CLI, daemon, service, output, and automation contract](architecture/CLI_AND_OS_OPERATOR_INTERFACE.md)
 - [Agent framework adapter inclusion](architecture/AGENT_FRAMEWORK_ADAPTER_INCLUSION.md)
 - [SDK information architecture](architecture/SDK_INFORMATION_ARCHITECTURE.md)
 
-Private downstream repositories may implement paid management, connectors,
-model packs, and release composition. Portable formats, authority boundaries,
-security behavior, and conformance remain public-core concerns.
+Extensions may implement management, connectors, model packs, and release
+composition. Portable formats, authority boundaries, security behavior, and
+conformance remain LNSAT concerns.
 
 ## Maintainers and Release Reviewers
 
@@ -173,7 +179,7 @@ security behavior, and conformance remain public-core concerns.
 - [ADR-0003: open core, extensions, and management plane](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)
 - [ADR-0002: authority layer and v1 distribution](architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
 - [ADR-0001: historical v1 product scope](architecture/ADR-0001_V1_SCOPE.md)
-- [Phase 14 core artifacts and downstream installer reference](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)
+- [Phase 14 core artifacts and package reference](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md)
 - [Source release process](RELEASING.md)
 - [Public-readiness report](PUBLIC_READINESS.md)
 - [Provenance timeline](../PROVENANCE.md)

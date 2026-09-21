@@ -28,17 +28,15 @@
 
 ## Context
 
-LNSAT must become usable soon without rebuilding agent runtimes, MCP lifecycle
-management, container isolation, or VM orchestration. Docker Agent, Docker MCP
-Gateway, and Docker Sandboxes already cover substantial parts of those adjacent
-problems. LNSAT should integrate with them while retaining its distinct
+LNSAT must become usable without rebuilding agent runtimes, MCP lifecycle
+management, container isolation, or VM orchestration. It integrates with
+versioned protocol and runtime interfaces while retaining its authority
 boundary: deterministic authorization and durable evidence for consequential
 actions.
 
 Docker is a practical first integration because it provides a widely available
-OCI execution boundary and an existing MCP operations layer. Docker must not
-become the source of LNSAT authority, a required paid governance dependency, or
-the only future execution substrate.
+OCI execution boundary. Docker must not become the source of LNSAT authority
+or the only future execution substrate.
 
 Current LNSAT source remains one local loopback authority cell with SQLite and
 bounded local foundations. Runtime-target contracts and adapter manifests are
@@ -56,14 +54,13 @@ agent or MCP client
   -> LNSAT Gateway authority facade
   -> identity + policy + distinct approval + one-time authorization
   -> isolated Docker adapter
-  -> Docker MCP Gateway or bounded OCI workload
+  -> bounded OCI workload or MCP adapter
   -> bound receipt + audit + reconciliation
 ```
 
-Docker Agent may act as a client. Docker MCP Gateway may provide upstream MCP
-catalog, routing, OAuth, and server lifecycle. Docker Sandboxes may provide a
-microVM boundary. Each remains replaceable. Possession of a Docker socket,
-container endpoint, MCP session, runtime process, or governance decision never
+An MCP client may request an action through Gateway; an OCI adapter may execute
+the approved bounded workload. Possession of a Docker socket, container
+endpoint, MCP session, runtime process, or external governance decision never
 grants LNSAT action authority.
 
 Agents do not receive direct Docker-socket access, upstream infrastructure
@@ -474,17 +471,27 @@ payload, loaded profile, and launch-contract digest, including exact
 profile-derived D3 stdin, stdout, stderr, and deadline limits. Replay, ambiguous
 state/receipt/reconciliation, and binding drift are rejected. The output
 authenticates no snapshot, revalidates no durable state, and grants no launch
-permission. A later runnable driver must perform an authenticated durable-store
-re-read of the exact bound consumption, operation, and attempt immediately
-before process creation and revalidate created, dispatching, no-receipt, and
-no-reconciliation state. The evaluator performs no store write, route,
-filesystem/process/Docker I/O, receipt, evidence persistence, runtime selector,
-or execution, and therefore does not advance the Phase 11 real-proof gate.
+permission. After the successful D4B2A claim commit, a later runnable driver
+must authenticate the created-claim result and call a private store-owned
+verifier using the live session and CSRF proof in a fresh authenticated store
+transaction. The verifier must re-read and cross-check the exact durable
+consumption, operation, and attempt immediately before process creation, bind
+all admitted authority/request/payload/runtime identities and exact dispatching
+sequences, and require no receipt or reconciliation. Only exact success may
+return a bound pre-supervisor guard. A caller-supplied claim snapshot, public
+read API, or structural admission digest cannot satisfy the gate. Any post-claim
+mismatch or read failure rejects before spawn, preserves or marks
+`outcome_unknown`, and never redispatches. Any post-spawn anomaly remains
+inspection-only and never permits a blind Docker retry. The evaluator performs
+no store write, route, filesystem/process/Docker I/O, receipt, evidence
+persistence, runtime selector, or execution, and therefore does not advance the
+Phase 11 real-proof gate.
 
 The source-only
 [operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-locks preparation to the reconciled public source revision and enumerates every
-later executable, image, profile, launch, manifest, disposable-target,
+locks the reviewed proof-implementation source and separately records the public
+packet integration identity. It enumerates every later executable, image,
+profile, launch, manifest, disposable-target,
 admission, D3-limit, proof-case, cleanup, evidence, redaction, and terminal
 criterion. It intentionally leaves live runtime identities blocking and records
 that no runnable driver yet authenticates and re-reads durable claim state
@@ -526,7 +533,8 @@ Docker support cannot be claimed until checked-in evidence proves:
 ## Consequences
 
 - Docker becomes build priority, not product identity.
-- LNSAT reuses Docker runtime and MCP strengths instead of duplicating them.
+- LNSAT uses Docker/OCI runtime and MCP protocol interfaces without duplicating
+  their lifecycle responsibilities.
 - Secure VM, native-host, and remote connectors reuse one authority contract
   later, with profile-specific isolation claims.
 - Phase 10 source conformance remains prerequisite to runtime work. P11-D1

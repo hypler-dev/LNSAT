@@ -16,8 +16,14 @@ required, narrowly scoped execution, and a record of what actually happened.
 > LNSAT `0.1.0` contains experimental implementations and tests, not a supported
 > production product. No supported installer, package, container, or hosted
 > service is available. Real Docker runtime proof remains unfinished. APIs and
-> schemas may change. Rangoon's graphical installer and management UI are
-> separate downstream work.
+> schemas may change. The Control Center remains an experimental read-only
+> preview while the headless V1 control surface is completed.
+
+Current version layers remain separate: product/source SemVer is unpublished
+`0.1.0`, the stable Gateway wire target is `lnsat.contracts.v1_0`, and the
+local SQLite schema is `17`. Merging source-only proof preparation changes none
+of those identities and publishes no artifact. See
+[contract versioning and negotiation](docs/reference/CONTRACT_VERSIONING.md).
 
 [Evaluate from source](#evaluate-from-source) · [Project status](docs/PROJECT_STATUS.md) ·
 [Documentation](docs/DOCS_INDEX.md) · [Contribute](CONTRIBUTING.md)
@@ -110,27 +116,18 @@ and [local authentication availability record](docs/architecture/SECURITY_LOCAL_
 These source controls grant no merge, runtime, build, publication, deployment,
 or release authority.
 
-## The LNSAT Core and Rangoon Boundary
+## LNSAT V1 Product Surface
 
-LNSAT V1 is planned as an embeddable authority kernel/library with a stable
+LNSAT V1 is an embeddable authority runtime and package with a stable
 integration API and complete headless `lnsatctl` configuration and operations.
 The optional `lnsatd` reference host/sidecar provides a local service boundary
-for consumers that need one. LNSAT remains fully usable without Rangoon.
-
-Rangoon is a separate userland/distro that may provide the graphical installer,
-setup wizard, presets, configuration pages, approvals, audit, recovery, graphs,
-agents, fleets, and final packaging. It installs or bundles a pinned, verified
-LNSAT version and submits requests through LNSAT's versioned interface.
-
-Rangoon recovery surfaces are limited to online Gateway-authorized requests,
-status, evidence, and host-owner instructions. They cannot invoke LNSAT's
-offline backup, inert restore, owner recovery, or initial bootstrap operations,
-which remain local `lnsatctl`-only procedures with no agent, API, MCP, or UI
-route.
-
-Rangoon never edits LNSAT storage, computes effective permissions, or executes
-consequential work outside LNSAT. LNSAT independently validates, authorizes,
+when a process boundary is useful. LNSAT independently validates, authorizes,
 executes, and produces evidence.
+
+The LNSAT product surface includes policy, approval, execution authorization,
+evidence, recovery, configuration, status, and interoperability contracts. The
+Control Center may present these contracts as read-only or mutation-capable
+experiences only through the Gateway and its versioned interfaces.
 
 The LNSAT headless configuration contract separates:
 
@@ -139,23 +136,24 @@ The LNSAT headless configuration contract separates:
 2. **Agent action authority:** what agents may request within that envelope,
    what requires human approval, and what is denied.
 
-Rangoon may render observe-only, approval-required, bounded-automation, and
-custom presets as a user experience. LNSAT validates the resulting declarative
-configuration and computes effective authority; presets cannot silently grant
-access, and an unverifiable OS restriction cannot be advertised as enforced.
+The Control Center may render observe-only, approval-required,
+bounded-automation, and custom presets as a user experience. LNSAT validates
+the resulting declarative configuration and computes effective authority;
+presets cannot silently grant access, and an unverifiable OS restriction cannot
+be advertised as enforced.
 
 `lnsatctl` will expose permission changes, approvals, activity evidence,
 emergency disablement, recovery, declarative configuration, validation, and
 status through protected interfaces. The existing React console remains an
 experimental read-only source preview; it is not an LNSAT V1 exit requirement.
-See the [kernel and Rangoon boundary](docs/architecture/ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
+See the [standalone V1 scope](docs/architecture/ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md).
 
 Docker/OCI is the first planned isolated execution profile. Platform and package
 support will be claimed only for explicitly selected, tested combinations—not
 inferred from a successful build. See the [build sequence](docs/PRODUCT_BUILD_SEQUENCE.md)
 and [compatibility matrix](docs/architecture/COMPATIBILITY_AND_CONFORMANCE_MATRIX.md).
 
-## Product Ecosystem
+## Interoperability
 
 LNSAT supplies authority, not a replacement for the rest of the agent stack:
 
@@ -165,16 +163,12 @@ LNSAT supplies authority, not a replacement for the rest of the agent stack:
   approve their own permissions.
 - **Runtime isolation** constrains execution; it does not replace policy,
   approval, or consequence evidence.
-- **Rangoon and other downstream products** may provide policy intelligence or
-  additional management experiences. They can use a compatible LNSAT service
-  or install a pinned, verified release once available. LNSAT remains independent.
+  Gateway is the security boundary. Clients, connectors, and UIs cannot create an
+  alternate authority path. LNSAT cannot control a bypass path that retains direct
+  credentials or unmediated infrastructure access; that coverage must be constrained
+  or explicitly identified as missing.
 
-Gateway is the security boundary. Clients, connectors, and UIs cannot create an
-alternate authority path. LNSAT cannot control a bypass path that retains direct
-credentials or unmediated infrastructure access; that coverage must be constrained
-or explicitly identified as missing.
-
-The core is Apache-2.0. See [product boundaries](docs/architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+The core is Apache-2.0. See [extension boundaries](docs/architecture/OPEN_CORE_AND_EXTENSION_BOUNDARIES.md)
 and [CLI and OS interfaces](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md).
 
 ## Evaluate From Source
@@ -200,8 +194,7 @@ Preview the experimental read-only Control Center:
 npm run dev -w @lnsat/console
 ```
 
-The preview is not Rangoon's planned setup wizard and does not enable agent
-execution.
+The preview does not enable agent execution.
 See [Local Development](docs/LOCAL_DEVELOPMENT.md) for configuration, focused
 tests, and troubleshooting. Before proposing a source change, run:
 
@@ -242,12 +235,23 @@ rejects replay, profile-derived D3 limit drift, state/receipt/reconciliation
 ambiguity, and binding drift without writing to the store or performing route,
 filesystem, process, Docker, receipt, evidence, selector, or runtime work. Its
 output explicitly authenticates no claim snapshot, revalidates no durable claim
-state, and grants no launch permission. A later runnable driver must perform an
-authenticated durable-store re-read of the exact bound consumption, operation,
-and attempt immediately before process creation, then revalidate created,
-dispatching, no-receipt, and no-reconciliation state. These remain proposed design evidence only: none
-grants a runtime result, receipt, execution, completion, or support claim. The
-execution-harness contract has [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
+state, and grants no launch permission. The evaluator is implemented
+source-only, verification-only structural binding. The real-driver and runtime
+proof steps remain proposed design evidence only: none grants a runtime result,
+receipt, execution, completion, or support claim.
+
+After a successful D4B2A claim commit, a later runnable driver must authenticate
+the created-claim result and call a private store-owned verifier in a fresh
+authenticated store transaction. That verifier must re-read the exact bound
+consumption, operation, and attempt through the durable-store boundary
+immediately before process creation, revalidate created, dispatching,
+no-receipt, and no-reconciliation state, and return a bound pre-supervisor guard.
+A caller-supplied claim snapshot, public read API, or admission digest cannot
+satisfy this gate. Failure after the durable claim commit rejects before spawn,
+preserves or marks `outcome_unknown`, and never redispatches.
+
+The execution-harness contract has
+[independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
 but it is not a runnable proof driver. The private run-manifest contract only
 binds syntactically valid later declarations to a separately supplied expected
 source-root/revision/build identity, rejects evidence beneath that source root
@@ -260,8 +264,11 @@ It does not constitute real runtime evidence or complete Phase 11.
 See the [proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 and [execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).
 The [operator run packet](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-locks the merged public source revision and makes every later identity,
+locks the reviewed proof-implementation source and makes every later identity,
 admission, case, limit, evidence, cleanup, and pass/fail requirement explicit.
+Its public integration record distinguishes that proof source from PR #39's
+packet integration identity; merging the packet did not silently move the proof
+source lock.
 It is source-only and not execution-ready: a later runnable driver must
 authenticate the created-claim result and re-read the exact bound consumption,
 operation, and attempt through the durable-store boundary immediately before
