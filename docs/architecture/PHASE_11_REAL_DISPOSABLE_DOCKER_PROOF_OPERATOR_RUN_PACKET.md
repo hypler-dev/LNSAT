@@ -17,6 +17,28 @@ and reviewed PR-head parent `914da579f28c98dd59cb5303eba5d7fa3c68664e`.
 Movement of the source revision, tree, base, packet, or any later declaration
 invalidates authorization and requires a new review and authority decision.
 
+## Public packet integration and version record
+
+The proof-implementation source lock above and this packet's public integration
+identity are intentionally different:
+
+| Identity                         | Exact value                                |
+| -------------------------------- | ------------------------------------------ |
+| Proof-implementation source      | `b41aa756bccd85843ac540abfd927e8c5693d5fe` |
+| Proof-implementation source tree | `fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c` |
+| Packet PR                        | `hypler-dev/LNSAT#39`                      |
+| Reviewed packet head             | `2c918bc59b82ffabc378b47e66137733cf24a6d7` |
+| Public packet merge              | `190ab32443f60a2a1bc78f990e8ea5571c28f96f` |
+| Packet integration tree          | `17247c9c194f6a332e99ee32ae5052620349896b` |
+
+The packet integration identity proves only that this preparation record and
+its fail-closed validators reached public `main`. It does not silently move the
+proof-implementation source lock, authenticate a build, or grant runtime
+authority. Product/source version remains unpublished `0.1.0`; Gateway wire
+contract `lnsat.contracts.v1_0`, local SQLite schema `17`, runtime-profile
+families, and adapter protocol versions are unchanged. No tag, package, image,
+release, deployment, production, or support state changed.
+
 This document is the canonical operator preparation record. The canonical
 runtime contracts remain the
 [proof-readiness plan](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md),
@@ -35,6 +57,35 @@ or process creation. No runnable proof driver currently authenticates and
 re-reads the durable claim state immediately before process creation. That
 missing driver boundary is also blocking. A source-only manifest or admission
 digest never substitutes for either requirement.
+
+## Required authenticated durable-store admission boundary
+
+After structural admission and a successful D4B2A claim commit, the later
+runnable driver must authenticate the created-claim result and call a private
+store-owned verifier. The verifier must use the live session and CSRF proof and
+one fresh authoritative SQLite transaction to re-read and cross-check the exact
+durable consumption, operation, and attempt immediately before process
+creation. A caller-supplied `Phase11DockerRuntimeCompositionClaimV1`, the public
+operation-read API, or the structural admission digest cannot satisfy this
+gate.
+
+The fresh authenticated store transaction must bind:
+
+- consumption, operation, attempt, authorization, project, and resource IDs;
+- idempotency key and canonical execution-request digest;
+- payload action, target, configuration, and tool-argument digests;
+- profile, authority-configuration, adapter reference/version,
+  adapter-executable, image, protocol, and launch-contract identities;
+- `claim_created = true`, operation `dispatching` at state sequence `2`, and
+  attempt `dispatching` at state sequence `1` and attempt sequence `1`; and
+- absence of any receipt or reconciliation.
+
+Only exact success may return a bound pre-supervisor guard to the process-
+creation path. A failure before the original claim commits rolls back the claim
+and attempt. A mismatch or read failure after the durable claim commit rejects
+before spawn, preserves or marks `outcome_unknown`, and never redispatches. Any
+post-spawn anomaly remains `outcome_unknown` and permits inspection-only
+reconciliation, never a blind Docker retry.
 
 ## Exact identity register
 
@@ -109,11 +160,16 @@ loaded schema-2 profile. It must bind:
 
 Those public claim structs remain non-authoritative. Their presence and the
 admission digest authenticate no store provenance, prove no durable freshness,
-and grant no launch permission. The later runnable driver must authenticate the
-created-claim result, re-read the exact bound consumption, operation, and
-attempt from the durable store immediately before process creation, and
-revalidate both states and the absence of receipt and reconciliation. Any
-mismatch or read failure rejects before launch.
+and grant no launch permission. After the successful D4B2A claim commit, the
+later runnable driver must authenticate the created-claim result and call the
+private store-owned verifier using the live session and CSRF proof in a fresh
+authenticated store transaction. The verifier must re-read and cross-check the
+exact durable consumption, operation, and attempt immediately before process
+creation and may return a bound pre-supervisor guard only after every binding,
+state-sequence, receipt-absence, and reconciliation-absence check succeeds. A
+post-claim mismatch or read failure rejects before spawn, preserves or marks
+`outcome_unknown`, and never redispatches. A post-spawn anomaly remains
+inspection-only and never permits a blind Docker retry.
 
 ## D3 and profile limits
 
@@ -248,6 +304,7 @@ Before any Docker access, the owner must issue a new explicit authorization
 naming the exact proof source revision, this finalized operator record and its
 reviewed revision, canonical private run-manifest digest, proof-driver
 executable digest, schema-2 profile and authority-configuration digests,
+the reviewed durable-admission verifier and bound pre-supervisor-guard contract,
 exact adapter reference `adapter:docker-local:git-commit`, exact adapter version
 `v1`, adapter-executable/image/launch digests, execution host and UTC window,
 local Unix endpoint, exact served-chain authorization identity

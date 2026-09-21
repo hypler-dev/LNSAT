@@ -19,6 +19,12 @@ required, narrowly scoped execution, and a record of what actually happened.
 > schemas may change. The Control Center remains an experimental read-only
 > preview while the headless V1 control surface is completed.
 
+Current version layers remain separate: product/source SemVer is unpublished
+`0.1.0`, the stable Gateway wire target is `lnsat.contracts.v1_0`, and the
+local SQLite schema is `17`. Merging source-only proof preparation changes none
+of those identities and publishes no artifact. See
+[contract versioning and negotiation](docs/reference/CONTRACT_VERSIONING.md).
+
 [Evaluate from source](#evaluate-from-source) · [Project status](docs/PROJECT_STATUS.md) ·
 [Documentation](docs/DOCS_INDEX.md) · [Contribute](CONTRIBUTING.md)
 
@@ -229,12 +235,23 @@ rejects replay, profile-derived D3 limit drift, state/receipt/reconciliation
 ambiguity, and binding drift without writing to the store or performing route,
 filesystem, process, Docker, receipt, evidence, selector, or runtime work. Its
 output explicitly authenticates no claim snapshot, revalidates no durable claim
-state, and grants no launch permission. A later runnable driver must perform an
-authenticated durable-store re-read of the exact bound consumption, operation,
-and attempt immediately before process creation, then revalidate created,
-dispatching, no-receipt, and no-reconciliation state. These remain proposed design evidence only: none
-grants a runtime result, receipt, execution, completion, or support claim. The
-execution-harness contract has [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
+state, and grants no launch permission. The evaluator is implemented
+source-only, verification-only structural binding. The real-driver and runtime
+proof steps remain proposed design evidence only: none grants a runtime result,
+receipt, execution, completion, or support claim.
+
+After a successful D4B2A claim commit, a later runnable driver must authenticate
+the created-claim result and call a private store-owned verifier in a fresh
+authenticated store transaction. That verifier must re-read the exact bound
+consumption, operation, and attempt through the durable-store boundary
+immediately before process creation, revalidate created, dispatching,
+no-receipt, and no-reconciliation state, and return a bound pre-supervisor guard.
+A caller-supplied claim snapshot, public read API, or admission digest cannot
+satisfy this gate. Failure after the durable claim commit rejects before spawn,
+preserves or marks `outcome_unknown`, and never redispatches.
+
+The execution-harness contract has
+[independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
 but it is not a runnable proof driver. The private run-manifest contract only
 binds syntactically valid later declarations to a separately supplied expected
 source-root/revision/build identity, rejects evidence beneath that source root
@@ -247,8 +264,11 @@ It does not constitute real runtime evidence or complete Phase 11.
 See the [proof-readiness plan](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 and [execution evidence requirements](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md).
 The [operator run packet](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-locks the merged public source revision and makes every later identity,
+locks the reviewed proof-implementation source and makes every later identity,
 admission, case, limit, evidence, cleanup, and pass/fail requirement explicit.
+Its public integration record distinguishes that proof source from PR #39's
+packet integration identity; merging the packet did not silently move the proof
+source lock.
 It is source-only and not execution-ready: a later runnable driver must
 authenticate the created-claim result and re-read the exact bound consumption,
 operation, and attempt through the durable-store boundary immediately before

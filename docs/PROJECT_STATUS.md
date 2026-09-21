@@ -3,6 +3,17 @@
 LNSAT `0.1.0` is pre-release, source-only software. Repository is suitable for
 contract evaluation and contributor development, not production operation.
 
+## Version Posture
+
+Product/source SemVer remains unpublished `0.1.0` across the root npm package,
+every private npm workspace, and the unpublished Cargo workspace. The stable
+Gateway wire target is `lnsat.contracts.v1_0`; the default product surface is
+`lnsat.product_surface.v1` with explicit source-diagnostic v2 selection; local
+SQLite schema is `17`. These layers are independent. PR #39 merged Phase 11
+operator preparation into public `main`, but changed no product, wire, family,
+persistence, runtime-profile, or adapter-protocol version and created no tag or
+release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
+
 ## Active Security Remediation
 
 The owner accepted the
@@ -257,25 +268,32 @@ boundary: canonical run manifest -> fields in a caller-supplied claim snapshot
 -> D3/D4A payload -> loaded profile -> launch-contract digest. Replay, ambiguous
 state/receipt/reconciliation, and binding drift fail closed, but its digest
 authenticates no snapshot, revalidates no durable state, and grants no launch
-permission. A later runnable driver must perform an authenticated durable-store
-re-read of the exact bound consumption, operation, and attempt immediately
-before process creation and revalidate created, dispatching, no-receipt, and
-no-reconciliation state. This evaluator performs no store write, route,
+permission. It is implemented source-only, verification-only structural
+binding, not a runtime gate. After a successful D4B2A claim commit, a later
+runnable driver must authenticate the created-claim result, call a private
+store-owned verifier in a fresh authenticated store transaction, and re-read
+the exact durable consumption, operation, and attempt through the durable-store
+boundary. Only exact created, dispatching, no-receipt, and no-reconciliation
+state returns a bound pre-supervisor guard. Failure after claim commit rejects
+before spawn, preserves or marks `outcome_unknown`, and never redispatches. This
+evaluator performs no store write, route,
 filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
 runtime execution. Phase 11 remains incomplete; real Docker proof and later
 Phase 13/14 release gates remain separately closed.
 The source-only
 [operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-now locks proof preparation to public source revision
-`b41aa756bccd85843ac540abfd927e8c5693d5fe` and its exact public tree. It
-enumerates later executable, image, profile, launch, manifest, target,
-admission, case, D3-limit, receipt, reconciliation, ambiguity, cleanup,
-evidence, retention, redaction, and pass/fail requirements. A later runnable
-driver must authenticate the created-claim result and re-read the exact bound
-consumption, operation, and attempt through the durable-store boundary
-immediately before process creation. All live identities remain explicitly
-blocking. The packet grants no Docker, execution, build-candidate, release,
-deploy, publication, production, or support authority.
+locks the proof-implementation source at public revision
+`b41aa756bccd85843ac540abfd927e8c5693d5fe` and tree
+`fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c`. Separately, PR #39 integrated
+the reviewed packet head `2c918bc59b82ffabc378b47e66137733cf24a6d7`
+into public `main` as merge `190ab32443f60a2a1bc78f990e8ea5571c28f96f`
+with tree `17247c9c194f6a332e99ee32ae5052620349896b`. That packet integration
+identity does not move the proof-source lock. The record enumerates later
+executable, image, profile, launch, manifest, target, admission, case, D3-limit,
+receipt, reconciliation, ambiguity, cleanup, evidence, retention, redaction,
+and pass/fail requirements. All live identities remain explicitly blocking.
+The packet grants no Docker, execution, build-candidate, release, deploy,
+publication, production, or support authority.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence

@@ -105,23 +105,27 @@ run manifest against fields in a caller-supplied claim snapshot, canonical
 D3/D4A payload, loaded profile, and launch-contract digest. Replay, ambiguous
 state/receipt/reconciliation, and binding drift fail closed, but its digest
 authenticates no snapshot, revalidates no durable state, and grants no launch
-permission. A later runnable driver must perform an authenticated durable-store
-re-read of the exact bound consumption, operation, and attempt immediately
-before process creation and revalidate the required live state. This evaluator
-performs no store write, route, filesystem/process/Docker I/O, receipt, evidence
+permission. After a successful D4B2A claim commit, a later runnable driver must
+authenticate the created-claim result and use a private store-owned verifier in
+a fresh authenticated store transaction. It must re-read the exact consumption,
+operation, and attempt through the durable-store boundary and return a bound
+pre-supervisor guard only for exact live state. A post-claim pre-spawn failure
+preserves or marks `outcome_unknown` and never redispatches. This evaluator
+performs
+no store write, route, filesystem/process/Docker I/O, receipt, evidence
 persistence, selector, or runtime execution; Phase 11 remains incomplete.
 
-The source-only operator run packet now fixes the prepared proof source at
-public revision `b41aa756bccd85843ac540abfd927e8c5693d5fe` and collects the
-later-run identity register, private declarations, admission/live-store gate,
-D3 limits, eight positive cases, preflight rejections, durable ambiguity,
-cleanup, evidence custody, retention, redaction, and pass/fail rules in one
-reviewable record. It remains not execution-ready: a later runnable driver must
-authenticate the created-claim result and re-read the exact bound consumption,
-operation, and attempt through the durable-store boundary immediately before
-process creation. All live runtime identity values remain blocking. A new exact
-owner authorization is still required before any Docker observation or
-execution.
+The source-only operator run packet fixes the proof-implementation source at
+public revision `b41aa756bccd85843ac540abfd927e8c5693d5fe` and separately
+records PR #39 packet integration at public merge
+`190ab32443f60a2a1bc78f990e8ea5571c28f96f`. It collects the later-run
+identity register, private declarations, admission/live-store gate, D3 limits,
+eight positive cases, preflight rejections, durable ambiguity, cleanup,
+evidence custody, retention, redaction, and pass/fail rules in one reviewable
+record. Packet integration does not move the proof-source lock or
+product/source version `0.1.0`. All live runtime identity values remain
+blocking. A new exact owner authorization is still required before any Docker
+observation or execution.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
