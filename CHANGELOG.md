@@ -30,8 +30,9 @@
 - Added the source-only Phase 11 real-Docker proof operator run packet and its
   fail-closed readiness validation. The packet now distinguishes the reviewed
   proof-implementation source lock from the later public packet integration
-  identity, records the still-missing fresh authenticated store transaction and
-  bound pre-supervisor guard, and keeps every live runtime identity blocking.
+  identity, records the source-only fresh authenticated store transaction and
+  bound pre-supervisor guard, and keeps the runnable driver and every live
+  runtime identity blocking.
   Product/source version remains unpublished `0.1.0`; no Docker, runtime,
   package, tag, release, deployment, production, or support authority opens.
 

@@ -4,6 +4,23 @@ use crate::adapter_process_protocol::{
     encode_docker_local_adapter_process_result_frame_v1,
 };
 use crate::docker_local_execution_payload::build_docker_local_execution_payload_request_v1;
+use crate::docker_local_runtime_proof::build_docker_local_runtime_proof_plan_v1;
+use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
+    DockerLocalRuntimeProofDriverPreSupervisorGuardErrorV1,
+    DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1,
+    guard_docker_local_runtime_proof_pre_supervisor_v1,
+};
+use crate::docker_local_runtime_proof_evidence::build_docker_local_runtime_proof_evidence_requirements_v1;
+use crate::docker_local_runtime_proof_execution_harness::build_docker_local_runtime_proof_execution_harness_v1;
+use crate::docker_local_runtime_proof_run_manifest::{
+    DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_EXECUTION_PERMISSIONS_V1,
+    DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_OBSERVATION_PERMISSIONS_V1,
+    DockerLocalRuntimeProofDaemonDeclarationV1, DockerLocalRuntimeProofImageDeclarationV1,
+    DockerLocalRuntimeProofPathIdentityV1, DockerLocalRuntimeProofPrivateEvidenceDeclarationV1,
+    DockerLocalRuntimeProofRunManifestOutputV1, DockerLocalRuntimeProofRunManifestSourceBindingV1,
+    DockerLocalRuntimeProofRunManifestSourceInputV1, DockerLocalRuntimeProofRunWindowV1,
+    DockerLocalRuntimeProofTargetDeclarationV1, build_docker_local_runtime_proof_run_manifest_v1,
+};
 use crate::docker_local_supervisor::docker_local_supervised_git_result_digest_v1;
 use crate::runtime_profile::{
     DOCKER_LOCAL_ADAPTER_REF_V1, DOCKER_LOCAL_ADAPTER_VERSION_V1, DOCKER_LOCAL_AUDIENCE_V1,
@@ -13,7 +30,9 @@ use lnsat_contracts::{
     ExecutionRequestV1Input, decide_packet_envelope_policy_v1, derive_execution_request_v1,
 };
 use lnsat_store::{
-    PHASE7_GIT_FIXTURE_MARKER_V1, Phase7GitExecutionResultV1, Phase7GitRepositoryIdentityV1,
+    PHASE7_GIT_FIXTURE_MARKER_V1, Phase7CapabilityRedemptionInputV1, Phase7CapabilitySecretV1,
+    Phase7GitExecutionResultV1, Phase7GitRepositoryIdentityV1,
+    Phase11DockerRuntimeCompositionInputV1,
 };
 use serde_json::json;
 use sha2::{Digest as _, Sha256};
@@ -85,7 +104,8 @@ impl Drop for ServedDaemon {
 }
 
 struct ServedFakeRuntimeFixture {
-    _directory: TestDirectory,
+    directory: TestDirectory,
+    database_path: PathBuf,
     _socket_listener: UnixListener,
     config: DaemonConfigV1,
     git: GitFixture,
@@ -93,12 +113,15 @@ struct ServedFakeRuntimeFixture {
     docker_socket: PathBuf,
     invocation_log: PathBuf,
     requester_cookie: String,
+    requester_session_token: String,
     requester_csrf: String,
     packet_project_ref: String,
     resource_ref: String,
     authorization_id: String,
     operation_id: String,
     capability: String,
+    profile: LoadedDockerLocalRuntimeProfileV1,
+    payload: crate::docker_local_execution_payload::DockerLocalExecutionPayloadRequestFrameV1,
 }
 
 impl ServedFakeRuntimeFixture {
@@ -421,9 +444,11 @@ impl ServedFakeRuntimeFixture {
         )
         .expect("result frame write");
         drop(store);
+        let database_path = directory.database_path().clone();
 
         Self {
-            _directory: directory,
+            directory,
+            database_path,
             _socket_listener: socket_listener,
             config,
             git,
@@ -431,12 +456,15 @@ impl ServedFakeRuntimeFixture {
             docker_socket,
             invocation_log,
             requester_cookie,
+            requester_session_token: requester_session.raw_session_token,
             requester_csrf: requester_session.raw_csrf_token.clone(),
             packet_project_ref: packet.project_ref,
             resource_ref,
             authorization_id,
             operation_id,
             capability,
+            profile,
+            payload,
         }
     }
 
@@ -680,6 +708,241 @@ fn load_schema2_profile(
     .expect("profile write");
     fs::set_permissions(&profile_path, fs::Permissions::from_mode(0o600)).expect("profile mode");
     load_docker_local_runtime_profile_v1(&profile_path).expect("D2 profile loader")
+}
+
+#[test]
+fn pre_supervisor_guard_rebinds_structural_inputs_and_fresh_durable_claim() {
+    let fixture = ServedFakeRuntimeFixture::new("pre-supervisor-guard-positive", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let manifest = pre_supervisor_guard_manifest(&fixture.profile);
+    let guard = guard_docker_local_runtime_proof_pre_supervisor_v1(
+        &mut store,
+        DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
+            run_manifest: &manifest,
+            payload: &fixture.payload,
+            loaded_profile: &fixture.profile,
+            claim_handle: handle,
+            raw_session_token: &fixture.requester_session_token,
+            raw_csrf_token: &fixture.requester_csrf,
+        },
+    )
+    .expect("exact structural and durable bindings must produce guard");
+    assert!(!guard.admission().admission().launch_permission_granted);
+    assert!(!guard.admission().admission().runtime_launch_performed);
+    assert_eq!(
+        guard.configuration_digest(),
+        fixture.profile.authority_configuration_digest()
+    );
+    assert_eq!(guard.durable_proof().claim().operation.state, "dispatching");
+    store
+        .state()
+        .expect("guard must preserve dispatching durable state");
+}
+
+#[test]
+fn pre_supervisor_guard_structural_or_durable_reject_marks_unknown() {
+    let fixture =
+        ServedFakeRuntimeFixture::new("pre-supervisor-guard-structural", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let drifted_profile = drifted_profile(&fixture);
+    let manifest = pre_supervisor_guard_manifest(&drifted_profile);
+    assert!(matches!(
+        guard_docker_local_runtime_proof_pre_supervisor_v1(
+            &mut store,
+            DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
+                run_manifest: &manifest,
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                claim_handle: handle,
+                raw_session_token: &fixture.requester_session_token,
+                raw_csrf_token: &fixture.requester_csrf,
+            },
+        ),
+        Err(DockerLocalRuntimeProofDriverPreSupervisorGuardErrorV1::StructuralBindingInvalid)
+    ));
+    assert_phase11_unknown(&store, &fixture.operation_id);
+
+    let fixture = ServedFakeRuntimeFixture::new("pre-supervisor-guard-durable", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let manifest = pre_supervisor_guard_manifest(&fixture.profile);
+    assert!(matches!(
+        guard_docker_local_runtime_proof_pre_supervisor_v1(
+            &mut store,
+            DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
+                run_manifest: &manifest,
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                claim_handle: handle,
+                raw_session_token: &fixture.requester_session_token,
+                raw_csrf_token: "wrong csrf proof",
+            },
+        ),
+        Err(DockerLocalRuntimeProofDriverPreSupervisorGuardErrorV1::DurableProofRejected)
+    ));
+    assert_phase11_unknown(&store, &fixture.operation_id);
+}
+
+fn claim_pre_supervisor_guard_handle(
+    store: &mut SqliteStore,
+    fixture: &ServedFakeRuntimeFixture,
+) -> lnsat_store::Phase11DockerRuntimeCompositionClaimHandleV1 {
+    let mut capability = fixture.capability.clone();
+    let capability = Phase7CapabilitySecretV1::take_from_canonical_wire_v1(&mut capability)
+        .expect("fixture capability must decode");
+    store
+        .claim_phase11_docker_runtime_composition_handle_v1(
+            &Phase11DockerRuntimeCompositionInputV1 {
+                redemption: Phase7CapabilityRedemptionInputV1 {
+                    project_ref: &fixture.packet_project_ref,
+                    resource_ref: &fixture.resource_ref,
+                    authorization_id: &fixture.authorization_id,
+                    operation_id: &fixture.operation_id,
+                    idempotency_key: EXECUTE_IDEMPOTENCY,
+                },
+                derived_request: fixture.payload.derived_request(),
+                disposable_root: &fixture.git.root,
+                verifier_git_executable: Path::new(GIT_EXECUTABLE),
+            },
+            capability,
+            &fixture.requester_session_token,
+            &fixture.requester_csrf,
+        )
+        .expect("fixture must create one handle")
+}
+
+fn assert_phase11_unknown(store: &SqliteStore, operation_id: &str) {
+    assert_eq!(
+        store
+            .read_phase8_operation_v1(operation_id)
+            .expect("operation read must work")
+            .expect("operation must exist")
+            .state,
+        "outcome_unknown"
+    );
+}
+
+fn drifted_profile(fixture: &ServedFakeRuntimeFixture) -> LoadedDockerLocalRuntimeProfileV1 {
+    let mut profile: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../fixtures/contracts/phase11-docker-local-profile-v1.json"
+    ))
+    .expect("profile fixture must parse");
+    profile["schema_version"] = json!(2);
+    profile["image_digest"] =
+        json!("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+    profile["supervisor"] = json!({
+        "docker_executable_digest": file_digest(&fixture.fake_docker_executable),
+        "verifier_git_executable_digest": file_digest(Path::new(GIT_EXECUTABLE)),
+        "docker_host": format!("unix://{}", fixture.docker_socket.display()),
+    });
+    profile["limits"]["wall_clock_seconds"] = json!(2);
+    let path = fixture
+        .directory
+        .path
+        .join("drifted-docker-local-profile.json");
+    fs::write(
+        &path,
+        serde_json::to_vec(&profile).expect("profile serialize"),
+    )
+    .expect("drifted profile write");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).expect("drifted profile mode");
+    load_docker_local_runtime_profile_v1(&path).expect("drifted profile must load")
+}
+
+fn pre_supervisor_guard_manifest(
+    profile: &LoadedDockerLocalRuntimeProfileV1,
+) -> DockerLocalRuntimeProofRunManifestOutputV1 {
+    let plan = build_docker_local_runtime_proof_plan_v1(profile).expect("plan");
+    let requirements =
+        build_docker_local_runtime_proof_evidence_requirements_v1(&plan).expect("requirements");
+    let harness = build_docker_local_runtime_proof_execution_harness_v1(&plan, &requirements)
+        .expect("harness");
+    build_docker_local_runtime_proof_run_manifest_v1(
+        &plan,
+        &requirements,
+        &harness,
+        &DockerLocalRuntimeProofRunManifestSourceBindingV1 {
+            repository_absolute_path: "/private/guard/source".to_owned(),
+            repository_identity_digest: guard_sha('a'),
+            revision: "a".repeat(40),
+            proof_driver_executable_digest: guard_sha('b'),
+        },
+        pre_supervisor_guard_declarations(profile),
+    )
+    .expect("guard manifest")
+}
+
+fn pre_supervisor_guard_declarations(
+    profile: &LoadedDockerLocalRuntimeProfileV1,
+) -> DockerLocalRuntimeProofRunManifestSourceInputV1 {
+    let path = |name: &str, byte| DockerLocalRuntimeProofPathIdentityV1 {
+        absolute_path: format!("/private/guard/{name}"),
+        digest: guard_sha(byte),
+        stable_identity_digest: guard_sha(byte),
+    };
+    DockerLocalRuntimeProofRunManifestSourceInputV1 {
+        run_nonce: "private-guard-test-nonce".to_owned(),
+        run_window: DockerLocalRuntimeProofRunWindowV1 {
+            not_before_utc: "2026-09-16T10:00:00Z".to_owned(),
+            not_after_utc: "2026-09-16T10:15:00Z".to_owned(),
+        },
+        human_authority_reference: "private-guard-test-owner".to_owned(),
+        host_identity_digest: guard_sha('1'),
+        docker_client: path("docker", '2'),
+        local_unix_endpoint: path("socket", '3'),
+        daemon: DockerLocalRuntimeProofDaemonDeclarationV1 {
+            identity_digest: guard_sha('4'),
+            api_version: "1.47".to_owned(),
+            runtime_version: "27.3.1".to_owned(),
+            platform_digest: guard_sha('5'),
+            security_posture_digest: guard_sha('6'),
+        },
+        image: DockerLocalRuntimeProofImageDeclarationV1 {
+            immutable_digest: profile.profile().image_digest.clone(),
+            provenance_digest: guard_sha('8'),
+            platform_digest: guard_sha('9'),
+            configuration_digest: guard_sha('a'),
+            entrypoint_digest: guard_sha('b'),
+            in_image_adapter_absolute_path: "/usr/local/bin/lnsat-git-reference".to_owned(),
+            in_image_adapter_digest: profile.profile().adapter_executable_digest.clone(),
+            pull_policy: "never".to_owned(),
+        },
+        disposable_target: DockerLocalRuntimeProofTargetDeclarationV1 {
+            owner_only_disposable_root: "/private/guard/target".to_owned(),
+            repository_absolute_path: "/private/guard/target/repository".to_owned(),
+            marker_absolute_path: "/private/guard/target/repository/marker".to_owned(),
+            base_revision: "b".repeat(40),
+            ownership_mode_identity_digest: guard_sha('c'),
+            repository_identity_digest: guard_sha('d'),
+            marker_digest: guard_sha('e'),
+            target_identity_digest: guard_sha('f'),
+        },
+        host_git_verifier: path("git", '0'),
+        served_chain_digest: guard_sha('1'),
+        private_evidence: DockerLocalRuntimeProofPrivateEvidenceDeclarationV1 {
+            absolute_location: "/private/guard/evidence".to_owned(),
+            custody_digest: guard_sha('2'),
+            redaction_digest: guard_sha('3'),
+            cleanup_digest: guard_sha('4'),
+            rollback_digest: guard_sha('5'),
+        },
+        independent_reviewer_reference: "private-guard-test-reviewer".to_owned(),
+        independent_reviewer_digest: guard_sha('6'),
+        observation_permissions: DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_OBSERVATION_PERMISSIONS_V1
+            .iter()
+            .map(|value| (*value).to_owned())
+            .collect(),
+        execution_permissions: DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_EXECUTION_PERMISSIONS_V1
+            .iter()
+            .map(|value| (*value).to_owned())
+            .collect(),
+    }
+}
+
+fn guard_sha(byte: char) -> String {
+    format!("sha256:{}", byte.to_string().repeat(64))
 }
 
 fn create_git_fixture(directory: &TestDirectory) -> GitFixture {

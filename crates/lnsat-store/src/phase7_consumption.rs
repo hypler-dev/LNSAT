@@ -421,6 +421,69 @@ impl AuthorizationTransitionKind {
 }
 
 impl SqliteStore {
+    /// Re-authenticates the original requester and re-reads one already
+    /// committed capability consumption inside one fresh immediate transaction.
+    ///
+    /// This internal seam is deliberately callable only by the durable
+    /// pre-supervisor guard. The caller-supplied record is compared with the
+    /// validated durable record before its callback may inspect related state.
+    pub(super) fn with_authenticated_phase11_claim_consumption_v1<T, F>(
+        &mut self,
+        expected: &Phase7CapabilityConsumptionRecordV1,
+        raw_session_token: &str,
+        raw_csrf_token: &str,
+        inspect: F,
+    ) -> Result<T, Phase7PersistenceErrorV1>
+    where
+        F: FnOnce(
+            &Transaction<'_>,
+            &Phase7CapabilityConsumptionRecordV1,
+        ) -> Result<T, Phase7PersistenceErrorV1>,
+    {
+        validate_redemption_input(&Phase7CapabilityRedemptionInputV1 {
+            project_ref: &expected.project_ref,
+            resource_ref: &expected.resource_ref,
+            authorization_id: &expected.authorization_id,
+            operation_id: &expected.operation_id,
+            idempotency_key: &expected.idempotency_key,
+        })?;
+        let transaction = begin_immediate_transaction(&self.connection)?;
+        let checked_at = canonical_system_time_v1(SystemTime::now())?;
+        verify_current_schema(&transaction).map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+        let requester = authenticate_phase7_local_session(
+            &transaction,
+            raw_session_token,
+            Some(raw_csrf_token),
+            &checked_at,
+        )?;
+        let authorization = select_authorization_by_id(
+            &transaction,
+            &expected.project_ref,
+            &expected.resource_ref,
+            &expected.authorization_id,
+        )?
+        .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+        let authorization = validate_stored_authorization(&transaction, authorization)?;
+        authorize_phase7_redemption_actor(&authorization, &requester)?;
+        let consumption = select_consumption_by_id(
+            &transaction,
+            &expected.project_ref,
+            &expected.resource_ref,
+            &expected.consumption_id,
+        )?
+        .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+        let consumption = validate_stored_consumption(&transaction, consumption)?;
+        let fresh = consumption_public_record(&transaction, &consumption)?;
+        if &fresh != expected {
+            return Err(Phase7PersistenceErrorV1::EvidenceDrift);
+        }
+        let value = inspect(&transaction, &fresh)?;
+        transaction
+            .commit()
+            .map_err(|_| Phase7PersistenceErrorV1::OutcomeAmbiguous)?;
+        Ok(value)
+    }
+
     /// Issues one exact local execution authorization and prepared operation.
     ///
     /// Requester bearer/CSRF verification, full persisted source revalidation,
