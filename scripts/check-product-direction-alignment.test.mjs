@@ -93,6 +93,22 @@ test("historical tokens and duplicate rows cannot satisfy current snapshot", () 
     ),
     /current version snapshot mismatch: Product\/source SemVer/u,
   );
+  const extraRow =
+    "| Unrecognized version layer | `v1` | Must not extend the current snapshot |";
+  const injectedRows = [
+    extraRow,
+    `  ${extraRow}`,
+    "| Surface | injected | injected |",
+    "| ------ | injected | injected |",
+    "| Surface | current | state | extra |",
+  ];
+  for (const injectedRow of injectedRows) {
+    assert.notDeepEqual(
+      collectCurrentVersionSnapshotErrors(value.replace(row, `${row}\n${injectedRow}`)),
+      [],
+      injectedRow,
+    );
+  }
 });
 
 test("historical no-increment prose cannot mask changed current claim", () => {

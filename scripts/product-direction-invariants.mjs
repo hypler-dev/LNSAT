@@ -47,12 +47,38 @@ export function collectCurrentVersionSnapshotErrors(document) {
     (line, index) => index > starts[0] && line.startsWith("## "),
   );
   const snapshotLines = lines.slice(starts[0] + 1, end < 0 ? undefined : end);
-  const rows = snapshotLines
-    .filter((line) => /^\|/u.test(line))
-    .map((line) => line.split("|").slice(1, -1).map(compact));
+  const tableLines = snapshotLines.filter((line) => line.trimStart().startsWith("|"));
+  const rows = tableLines.map((line) =>
+    line.trimStart().split("|").slice(1, -1).map(compact),
+  );
   const errors = [];
+  if (tableLines.some((line) => line !== line.trimStart())) {
+    errors.push("current version snapshot rows must not be indented");
+  }
+  if (rows.length !== currentVersionSnapshotRows.length + 2) {
+    errors.push(
+      `current version snapshot must contain exactly ${currentVersionSnapshotRows.length} data rows`,
+    );
+  }
+  const expectedHeader = ["Surface", "Current identity", "Current state"];
+  if (
+    rows[0]?.length !== expectedHeader.length ||
+    rows[0].some((cell, index) => cell !== expectedHeader[index])
+  ) {
+    errors.push("current version snapshot table header mismatch");
+  }
+  if (
+    rows[1]?.length !== expectedHeader.length ||
+    rows[1].some((cell) => !/^-+$/u.test(cell))
+  ) {
+    errors.push("current version snapshot table separator mismatch");
+  }
+  const dataRows = rows.slice(2);
+  if (dataRows.some((row) => row.length !== expectedHeader.length)) {
+    errors.push("current version snapshot data rows must contain exactly three cells");
+  }
   for (const [surface, identity, state] of currentVersionSnapshotRows) {
-    const matches = rows.filter((row) => row[0] === surface);
+    const matches = dataRows.filter((row) => row[0] === surface);
     if (
       matches.length !== 1 ||
       matches[0].length !== 3 ||
