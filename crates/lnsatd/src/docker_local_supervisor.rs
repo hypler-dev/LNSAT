@@ -71,6 +71,16 @@ pub struct DockerLocalSupervisorInputV1<'a> {
     pub disposable_root: &'a Path,
 }
 
+/// Exact paths and target identity revalidated at the final pre-spawn boundary.
+#[allow(dead_code)]
+pub(crate) struct DockerLocalSupervisorFinalAuthorizationContextV1 {
+    pub docker_executable: PathBuf,
+    pub verifier_git_executable: PathBuf,
+    pub endpoint_path: PathBuf,
+    pub disposable_root: PathBuf,
+    pub repository: lnsat_store::Phase7GitRepositoryIdentityV1,
+}
+
 /// Receipt-ready semantic result. Separate P11-D4B2A store APIs own persistence;
 /// this supervisor never opens storage or writes a receipt.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -212,6 +222,24 @@ pub fn docker_local_launch_contract_argv_template_v1(
 pub fn supervise_docker_local_git_execution_v1(
     input: &DockerLocalSupervisorInputV1<'_>,
 ) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_git_execution_with_final_authorization_v1(input, |_| Ok(()))
+}
+
+/// Runs the supervisor with one caller-owned authorization object retained
+/// across the exact process-creation boundary.
+///
+/// The callback runs after every filesystem, target, executable, and endpoint
+/// revalidation and immediately before command construction and `spawn`. The
+/// returned object remains owned by this stack frame until the supervised
+/// exchange ends. Only the private Phase 11 proof-driver seam may call this
+/// helper; the ordinary source-only supervisor retains its existing behavior.
+#[allow(clippy::too_many_lines)]
+pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T>(
+    input: &DockerLocalSupervisorInputV1<'_>,
+    final_authorization: impl FnOnce(
+        &DockerLocalSupervisorFinalAuthorizationContextV1,
+    ) -> Result<T, DockerLocalSupervisorErrorV1>,
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
     let supervisor = input
         .loaded_profile
         .supervisor()
@@ -314,6 +342,16 @@ pub fn supervise_docker_local_git_execution_v1(
         return Err(DockerLocalSupervisorErrorV1::DockerEndpointInvalid);
     }
 
+    let disposable_root = fs::canonicalize(input.disposable_root)
+        .map_err(|_| DockerLocalSupervisorErrorV1::TargetRejected)?;
+    let _final_authorization =
+        final_authorization(&DockerLocalSupervisorFinalAuthorizationContextV1 {
+            docker_executable: input.docker_executable.to_path_buf(),
+            verifier_git_executable: input.verifier_git_executable.to_path_buf(),
+            endpoint_path: endpoint_path.clone(),
+            disposable_root,
+            repository: repository_immediately_before_spawn,
+        })?;
     let started = Instant::now();
     let mut command = Command::new(input.docker_executable);
     command

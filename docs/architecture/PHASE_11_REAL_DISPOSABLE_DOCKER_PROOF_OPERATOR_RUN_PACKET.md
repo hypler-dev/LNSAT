@@ -54,20 +54,27 @@ public record.
 Every field marked `UNSET_BLOCKING` must be resolved to one exact value,
 reviewed, and named by a new explicit authority before any Docker observation
 or process creation. No runnable proof driver currently authenticates and
-re-reads the durable claim state immediately before process creation. That
-missing driver boundary is also blocking. A source-only manifest or admission
-digest never substitutes for either requirement.
+re-reads the durable claim state immediately before process creation. A private
+source-only final-supervisor seam can perform that re-read after the
+supervisor's repeated target, executable, and endpoint checks. The seam binds
+the manifest-declared Docker client, host Git verifier, local endpoint, and
+disposable target to that final context by exact path and domain-separated
+filesystem identity. No route, CLI, daemon configuration, package, or release
+selects it. That missing runnable driver boundary is still blocking. A
+source-only manifest, admission digest, or unselected seam never substitutes
+for either requirement.
 
 ## Required authenticated durable-store admission boundary
 
 After structural admission and a successful D4B2A claim commit, the later
-runnable driver must authenticate the created-claim result and call a private
-store-owned verifier. The verifier must use the live session and CSRF proof and
-one fresh authoritative SQLite transaction to re-read and cross-check the exact
-durable consumption, operation, and attempt immediately before process
-creation. A caller-supplied `Phase11DockerRuntimeCompositionClaimV1`, the public
-operation-read API, or the structural admission digest cannot satisfy this
-gate.
+runnable driver must pass the authenticated created-claim handle and exact
+bound inputs through the private final-supervisor seam. That seam calls the
+store-owned verifier from the supervisor's final callback. The verifier uses
+the live session and CSRF proof and one fresh authoritative SQLite transaction
+to re-read and cross-check the exact durable consumption, operation, and
+attempt immediately before process creation. A caller-supplied
+`Phase11DockerRuntimeCompositionClaimV1`, the public operation-read API, or the
+structural admission digest cannot satisfy this gate.
 
 The fresh authenticated store transaction must bind:
 
@@ -161,15 +168,16 @@ loaded schema-2 profile. It must bind:
 Those public claim structs remain non-authoritative. Their presence and the
 admission digest authenticate no store provenance, prove no durable freshness,
 and grant no launch permission. After the successful D4B2A claim commit, the
-later runnable driver must authenticate the created-claim result and call the
-private store-owned verifier using the live session and CSRF proof in a fresh
-authenticated store transaction. The verifier must re-read and cross-check the
-exact durable consumption, operation, and attempt immediately before process
-creation and may return a bound pre-supervisor guard only after every binding,
-state-sequence, receipt-absence, and reconciliation-absence check succeeds. A
-post-claim mismatch or read failure rejects before spawn, preserves or marks
-`outcome_unknown`, and never redispatches. A post-spawn anomaly remains
-inspection-only and never permits a blind Docker retry.
+later runnable driver must pass the authenticated created-claim handle through
+the private final-supervisor seam using the live session and CSRF proof. The
+seam calls the store-owned verifier in a fresh authenticated store transaction
+after the supervisor's final target, executable, and endpoint checks and
+immediately before process creation. It retains the bound opaque guard across
+the process boundary only after every binding, state-sequence, receipt-absence,
+and reconciliation-absence check succeeds. A post-claim mismatch or read
+failure rejects before spawn, preserves or marks `outcome_unknown`, and never
+redispatches. A post-spawn anomaly remains inspection-only and never permits a
+blind Docker retry.
 
 ## D3 and profile limits
 
@@ -305,6 +313,8 @@ naming the exact proof source revision, this finalized operator record and its
 reviewed revision, canonical private run-manifest digest, proof-driver
 executable digest, schema-2 profile and authority-configuration digests,
 the reviewed durable-admission verifier and bound pre-supervisor-guard contract,
+the private final-supervisor seam and its exact payload/profile plus
+manifest-to-supervisor identity binding,
 exact adapter reference `adapter:docker-local:git-commit`, exact adapter version
 `v1`, adapter-executable/image/launch digests, execution host and UTC window,
 local Unix endpoint, exact served-chain authorization identity
