@@ -250,6 +250,17 @@ A caller-supplied claim snapshot, public read API, or admission digest cannot
 satisfy this gate. Failure after the durable claim commit rejects before spawn,
 preserves or marks `outcome_unknown`, and never redispatches.
 
+A private source-only composition seam now calls that one-shot verifier only
+after the supervisor repeats its disposable-target, executable, and local
+endpoint checks, immediately before command construction and process creation.
+It binds the same payload and loaded-profile identities plus the run-manifest
+Docker client, host Git verifier, local endpoint, and disposable-target paths
+and domain-separated filesystem identities. It retains the opaque guard through
+the supervised exchange and marks every post-claim failure `outcome_unknown`.
+Hermetic tests use only the existing fake executable and temporary Unix socket.
+No route, CLI, daemon configuration, package, or release selects the seam, so
+it is not a runnable proof driver or real Docker evidence.
+
 The execution-harness contract has
 [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
 but it is not a runnable proof driver. The private run-manifest contract only
@@ -269,12 +280,12 @@ admission, case, limit, evidence, cleanup, and pass/fail requirement explicit.
 Its public integration record distinguishes that proof source from PR #39's
 packet integration identity; merging the packet did not silently move the proof
 source lock.
-It is source-only and not execution-ready: a later runnable driver must
-authenticate the created-claim result and re-read the exact bound consumption,
-operation, and attempt through the durable-store boundary immediately before
-process creation. All live executable, image, profile, launch, and manifest
-identities remain blocking until a separately reviewed and explicitly
-authorized run.
+It is source-only and not execution-ready: a later runnable driver must call the
+private final-supervisor seam with the authenticated created-claim handle and
+exact bound inputs. The seam re-reads the consumption, operation, and attempt
+through the durable-store boundary immediately before process creation. All
+live executable, image, profile, launch, and manifest identities remain
+blocking until a separately reviewed and explicitly authorized run.
 
 </details>
 

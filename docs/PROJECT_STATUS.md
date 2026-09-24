@@ -276,10 +276,20 @@ the exact durable consumption, operation, and attempt through the durable-store
 boundary. Only exact created, dispatching, no-receipt, and no-reconciliation
 state returns a bound pre-supervisor guard. Failure after claim commit rejects
 before spawn, preserves or marks `outcome_unknown`, and never redispatches. This
-evaluator performs no store write, route,
-filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
-runtime execution. Phase 11 remains incomplete; real Docker proof and later
-Phase 13/14 release gates remain separately closed.
+evaluator performs no store write, route, filesystem/process/Docker I/O,
+receipt, evidence persistence, selector, or runtime execution. A private
+source-only final-supervisor seam now cross-checks the guard and supervisor
+payload/profile inputs and binds the manifest-declared Docker client, host Git
+verifier, local endpoint, and disposable target to the supervisor's final exact
+paths and domain-separated filesystem identities. It invokes the one-shot
+authenticated durable re-read only after the supervisor repeats those checks
+and retains the opaque guard across process creation and the supervised
+exchange. Every failure after claim commit marks or preserves
+`outcome_unknown`. Hermetic tests use the existing fake executable and
+temporary Unix socket. No route, CLI, daemon configuration, package, or release
+selects this seam; it is not a runnable proof driver or real Docker evidence.
+Phase 11 remains incomplete; real Docker proof and later Phase 13/14 release
+gates remain separately closed.
 The source-only
 [operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
 locks the proof-implementation source at public revision

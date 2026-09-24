@@ -1,8 +1,9 @@
 //! Private authenticated durable-store guard for a later Phase 11 supervisor.
 //!
-//! This module consumes one store-created claim handle after the separate
-//! source-only structural admission. It performs no runtime selection, process
-//! creation, Docker access, receipt persistence, or launch authorization.
+//! The base guard consumes one store-created claim handle after the separate
+//! source-only structural admission without process or Docker access. A private
+//! composition seam can invoke that guard from the supervisor's final callback,
+//! but no route, CLI, daemon configuration, package, or release selects it.
 
 use crate::adapter_process_protocol::DOCKER_LOCAL_ADAPTER_PROCESS_PROTOCOL_CONTRACT_ID_V1;
 use crate::docker_local_execution_payload::DockerLocalExecutionPayloadRequestFrameV1;
@@ -10,15 +11,37 @@ use crate::docker_local_runtime_proof_driver_admission::{
     DockerLocalRuntimeProofDriverAdmissionInputV1, DockerLocalRuntimeProofDriverAdmissionOutputV1,
     admit_docker_local_runtime_proof_driver_v1, prefixed_sha256_v1,
 };
-use crate::docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1;
+use crate::docker_local_runtime_proof_run_manifest::{
+    DockerLocalRuntimeProofPathIdentityV1, DockerLocalRuntimeProofRunManifestOutputV1,
+    DockerLocalRuntimeProofTargetDeclarationV1,
+};
+use crate::docker_local_supervisor::{
+    DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1,
+    DockerLocalSupervisorFinalAuthorizationContextV1, DockerLocalSupervisorInputV1,
+    supervise_docker_local_git_execution_with_final_authorization_v1,
+};
 use crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1;
 use lnsat_store::{
-    PHASE11_DOCKER_GIT_ADAPTER_REF_V1, PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
+    PHASE7_GIT_FIXTURE_MARKER_V1, PHASE11_DOCKER_GIT_ADAPTER_REF_V1,
+    PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1, Phase7GitRepositoryIdentityV1,
     Phase11DockerPreSupervisorBindingV1, Phase11DockerPreSupervisorProofV1,
     Phase11DockerRuntimeCompositionClaimHandleV1, Phase11DockerRuntimeCompositionClaimV1,
     SqliteStore,
 };
+use sha2::{Digest, Sha256};
 use std::fmt;
+use std::fs;
+#[cfg(unix)]
+use std::os::unix::fs::{FileTypeExt as _, MetadataExt as _};
+use std::path::Path;
+
+const PATH_IDENTITY_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-runtime-proof-path-identity.v1";
+const TARGET_OWNERSHIP_DIGEST_DOMAIN_V1: &[u8] =
+    b"lnsat.docker-local-runtime-proof-target-ownership.v1";
+const REPOSITORY_IDENTITY_DIGEST_DOMAIN_V1: &[u8] =
+    b"lnsat.docker-local-runtime-proof-repository-identity.v1";
+const TARGET_IDENTITY_DIGEST_DOMAIN_V1: &[u8] =
+    b"lnsat.docker-local-runtime-proof-target-identity.v1";
 
 /// One-shot inputs for the private pre-supervisor guard.
 ///
@@ -165,6 +188,226 @@ pub fn guard_docker_local_runtime_proof_pre_supervisor_v1(
         durable_proof,
         configuration_digest,
     })
+}
+
+/// Runs the private source-only proof composition through the supervisor's
+/// exact final authorization callback.
+///
+/// The one-shot durable handle is authenticated and re-read only after the
+/// supervisor has repeated every target, executable, and endpoint check. The
+/// callback also binds the run-manifest Docker client, Git verifier, local
+/// endpoint, and disposable-target declarations to those exact revalidated
+/// paths and domain-separated filesystem identities. The returned opaque guard
+/// stays alive across `spawn` and the complete exchange. Any rejection after
+/// the claim committed preserves or marks the operation as `outcome_unknown`.
+/// This seam is not selected by any route, CLI, daemon configuration, package,
+/// or release surface.
+///
+/// # Errors
+///
+/// Rejects cross-input substitution, a failed fresh durable guard, supervisor
+/// preflight drift, runtime ambiguity, or result validation failure. Every
+/// failure occurs after a durable claim and therefore marks or preserves
+/// `outcome_unknown`.
+pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
+    store: &mut SqliteStore,
+    guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
+    supervisor_input: &DockerLocalSupervisorInputV1<'_>,
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    let operation_id = guard_input
+        .claim_handle
+        .claim()
+        .operation
+        .operation_id
+        .clone();
+    if guard_input.payload.frame() != supervisor_input.payload.frame()
+        || guard_input.loaded_profile.profile_digest()
+            != supervisor_input.loaded_profile.profile_digest()
+        || guard_input.loaded_profile.authority_configuration_digest()
+            != supervisor_input
+                .loaded_profile
+                .authority_configuration_digest()
+    {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(&operation_id);
+        return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
+    }
+
+    let result = supervise_docker_local_git_execution_with_final_authorization_v1(
+        supervisor_input,
+        |context| {
+            if !run_manifest_matches_final_supervisor_v1(
+                guard_input.run_manifest,
+                guard_input.loaded_profile,
+                context,
+            ) {
+                return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
+            }
+            guard_docker_local_runtime_proof_pre_supervisor_v1(store, guard_input)
+                .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)
+        },
+    );
+    if result.is_err() {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(&operation_id);
+    }
+    result
+}
+
+fn run_manifest_matches_final_supervisor_v1(
+    run_manifest: &DockerLocalRuntimeProofRunManifestOutputV1,
+    loaded_profile: &LoadedDockerLocalRuntimeProfileV1,
+    context: &DockerLocalSupervisorFinalAuthorizationContextV1,
+) -> bool {
+    let Some(supervisor) = loaded_profile.supervisor() else {
+        return false;
+    };
+    let declarations = &run_manifest.manifest().declarations;
+    runtime_path_identity_declaration_v1(
+        &context.docker_executable,
+        Some(&supervisor.docker_executable_digest),
+    )
+    .is_ok_and(|expected| expected == declarations.docker_client)
+        && runtime_path_identity_declaration_v1(&context.endpoint_path, None)
+            .is_ok_and(|expected| expected == declarations.local_unix_endpoint)
+        && runtime_path_identity_declaration_v1(
+            &context.verifier_git_executable,
+            Some(&supervisor.verifier_git_executable_digest),
+        )
+        .is_ok_and(|expected| expected == declarations.host_git_verifier)
+        && runtime_target_identity_declaration_v1(&context.disposable_root, &context.repository)
+            .is_ok_and(|expected| expected == declarations.disposable_target)
+}
+
+pub(crate) fn runtime_path_identity_declaration_v1(
+    path: &Path,
+    content_digest: Option<&str>,
+) -> Result<DockerLocalRuntimeProofPathIdentityV1, ()> {
+    let absolute_path = canonical_utf8_path_v1(path)?;
+    let stable_identity_digest = stable_path_identity_digest_v1(path)?;
+    Ok(DockerLocalRuntimeProofPathIdentityV1 {
+        absolute_path,
+        digest: content_digest.unwrap_or(&stable_identity_digest).to_owned(),
+        stable_identity_digest,
+    })
+}
+
+pub(crate) fn runtime_target_identity_declaration_v1(
+    disposable_root: &Path,
+    repository: &Phase7GitRepositoryIdentityV1,
+) -> Result<DockerLocalRuntimeProofTargetDeclarationV1, ()> {
+    let owner_only_disposable_root = canonical_utf8_path_v1(disposable_root)?;
+    let repository_absolute_path = canonical_utf8_path_v1(&repository.repository_path)?;
+    let git_dir_path = canonical_utf8_path_v1(&repository.git_dir_path)?;
+    let marker_path = repository
+        .repository_path
+        .join(PHASE7_GIT_FIXTURE_MARKER_V1);
+    let marker_absolute_path = canonical_utf8_path_v1(&marker_path)?;
+    let root_identity = stable_path_identity_digest_v1(disposable_root)?;
+    let repository_file_identity = stable_path_identity_digest_v1(&repository.repository_path)?;
+    let git_dir_identity = stable_path_identity_digest_v1(&repository.git_dir_path)?;
+    let marker_file_identity = stable_path_identity_digest_v1(&marker_path)?;
+    let ownership_mode_identity_digest = digest_text_fields_v1(
+        TARGET_OWNERSHIP_DIGEST_DOMAIN_V1,
+        &[
+            owner_only_disposable_root.as_bytes(),
+            root_identity.as_bytes(),
+            repository_absolute_path.as_bytes(),
+            repository_file_identity.as_bytes(),
+            git_dir_path.as_bytes(),
+            git_dir_identity.as_bytes(),
+            marker_absolute_path.as_bytes(),
+            marker_file_identity.as_bytes(),
+        ],
+    );
+    let repository_identity_digest = digest_text_fields_v1(
+        REPOSITORY_IDENTITY_DIGEST_DOMAIN_V1,
+        &[
+            repository_absolute_path.as_bytes(),
+            git_dir_path.as_bytes(),
+            repository.object_format.as_bytes(),
+            repository.head_ref.as_bytes(),
+            repository.base_commit_oid.as_bytes(),
+            repository.fixture_marker_sha256.as_bytes(),
+        ],
+    );
+    let target_identity_digest = digest_text_fields_v1(
+        TARGET_IDENTITY_DIGEST_DOMAIN_V1,
+        &[
+            owner_only_disposable_root.as_bytes(),
+            repository_absolute_path.as_bytes(),
+            marker_absolute_path.as_bytes(),
+            repository.base_commit_oid.as_bytes(),
+            ownership_mode_identity_digest.as_bytes(),
+            repository_identity_digest.as_bytes(),
+            repository.fixture_marker_sha256.as_bytes(),
+        ],
+    );
+    Ok(DockerLocalRuntimeProofTargetDeclarationV1 {
+        owner_only_disposable_root,
+        repository_absolute_path,
+        marker_absolute_path,
+        base_revision: repository.base_commit_oid.clone(),
+        ownership_mode_identity_digest,
+        repository_identity_digest,
+        marker_digest: repository.fixture_marker_sha256.clone(),
+        target_identity_digest,
+    })
+}
+
+fn canonical_utf8_path_v1(path: &Path) -> Result<String, ()> {
+    let canonical = fs::canonicalize(path).map_err(|_| ())?;
+    if canonical != path {
+        return Err(());
+    }
+    canonical.into_os_string().into_string().map_err(|_| ())
+}
+
+fn stable_path_identity_digest_v1(path: &Path) -> Result<String, ()> {
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+        Err(())
+    }
+    #[cfg(unix)]
+    {
+        let absolute_path = canonical_utf8_path_v1(path)?;
+        let metadata = fs::symlink_metadata(path).map_err(|_| ())?;
+        if metadata.file_type().is_symlink()
+            || !(metadata.file_type().is_file()
+                || metadata.file_type().is_dir()
+                || metadata.file_type().is_socket())
+        {
+            return Err(());
+        }
+        let device = metadata.dev().to_be_bytes();
+        let inode = metadata.ino().to_be_bytes();
+        let uid = metadata.uid().to_be_bytes();
+        let gid = metadata.gid().to_be_bytes();
+        let mode = metadata.mode().to_be_bytes();
+        let size = metadata.size().to_be_bytes();
+        Ok(digest_text_fields_v1(
+            PATH_IDENTITY_DIGEST_DOMAIN_V1,
+            &[
+                absolute_path.as_bytes(),
+                &device,
+                &inode,
+                &uid,
+                &gid,
+                &mode,
+                &size,
+            ],
+        ))
+    }
+}
+
+fn digest_text_fields_v1(domain: &[u8], fields: &[&[u8]]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update((domain.len() as u64).to_be_bytes());
+    hasher.update(domain);
+    for field in fields {
+        hasher.update((field.len() as u64).to_be_bytes());
+        hasher.update(field);
+    }
+    prefixed_sha256_v1(&hasher.finalize().into())
 }
 
 fn durable_claim_matches_admission_v1(
