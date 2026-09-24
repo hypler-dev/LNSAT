@@ -104,6 +104,14 @@ transaction to re-read the exact bound consumption, operation, and attempt
 immediately before process creation. Exact success returns a bound
 pre-supervisor guard; a caller-supplied snapshot, public read API, or admission
 digest never does.
+The private source-only final-supervisor seam invokes that verifier after the
+supervisor's repeated target, executable, and endpoint checks and retains the
+opaque guard across the exact process boundary. It also binds the run-manifest
+Docker client, host Git verifier, local endpoint, and disposable-target paths
+and domain-separated filesystem identities to the supervisor's final context.
+Hermetic tests use the existing fake executable and temporary Unix socket. No
+route, CLI, daemon configuration, package, or release selects the seam; it
+remains neither a runnable proof driver nor real Docker evidence.
 
 The source-only operator run packet locks the reviewed proof-implementation
 source and enumerates the exact later-run identities, driver-admission inputs,
