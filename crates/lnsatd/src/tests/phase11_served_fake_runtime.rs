@@ -160,6 +160,12 @@ impl ServedFakeRuntimeFixture {
             .expect("disposable socket mode");
         let docker_socket = fs::canonicalize(&docker_socket).expect("canonical socket path");
         let profile = load_schema2_profile(&directory, &fake_docker_executable, &docker_socket);
+        let run_manifest = final_supervisor_guard_manifest_from_parts(
+            &profile,
+            &fake_docker_executable,
+            &docker_socket,
+            &git,
+        );
 
         let packet;
         let policy;
@@ -281,7 +287,7 @@ impl ServedFakeRuntimeFixture {
             .expect("Phase 8 runtime")
             .with_docker_local_runtime_profile(profile.clone())
             .expect("D2 profile selection")
-            .with_phase11_served_fake_docker_runtime(&fake_docker_executable)
+            .with_phase11_served_fake_docker_runtime(&fake_docker_executable, run_manifest)
             .expect("fake-only served runtime");
         let daemon = ServedDaemon::start(&config);
         let owner_cookie = cookie(&owner_session);
@@ -606,6 +612,29 @@ fn phase11_served_fake_runtime_executes_once_and_exact_replay_never_redispatches
     let reconciled = response_json(&fixture.reconcile(&daemon), "HTTP/1.1 200 OK\r\n");
     assert_eq!(reconciled["operation"]["receipt"]["receipt_id"], receipt_id);
     assert_eq!(fixture.run_count(), 1);
+    daemon.stop();
+}
+
+#[test]
+fn phase11_served_fake_runtime_manifest_drift_never_spawns() {
+    let fixture = ServedFakeRuntimeFixture::new("served-final-guard-drift", FakeMode::Success);
+    let mut declarations = final_supervisor_guard_declarations(&fixture);
+    declarations.docker_client.absolute_path = "/private/substituted/docker".to_owned();
+    let drifted_manifest =
+        pre_supervisor_guard_manifest_with_declarations(&fixture.profile, declarations);
+    let config = fixture
+        .config
+        .clone()
+        .with_phase11_served_fake_docker_runtime(&fixture.fake_docker_executable, drifted_manifest)
+        .expect("fake-only runtime selection");
+    let daemon = ServedDaemon::start(&config);
+    let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+    response_json(&response, "HTTP/1.1 403 Forbidden\r\n");
+    assert_eq!(fixture.run_count(), 0);
+    fixture.assert_public_safe(&response);
+    let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
+    assert_eq!(operation["operation"]["state"], "outcome_unknown");
+    assert!(operation["operation"]["receipt"].is_null());
     daemon.stop();
 }
 
@@ -1054,34 +1083,65 @@ fn pre_supervisor_guard_manifest(
 fn final_supervisor_guard_manifest(
     fixture: &ServedFakeRuntimeFixture,
 ) -> DockerLocalRuntimeProofRunManifestOutputV1 {
-    pre_supervisor_guard_manifest_with_declarations(
+    final_supervisor_guard_manifest_from_parts(
         &fixture.profile,
-        final_supervisor_guard_declarations(fixture),
+        &fixture.fake_docker_executable,
+        &fixture.docker_socket,
+        &fixture.git,
+    )
+}
+
+fn final_supervisor_guard_manifest_from_parts(
+    profile: &LoadedDockerLocalRuntimeProfileV1,
+    fake_docker_executable: &Path,
+    docker_socket: &Path,
+    git: &GitFixture,
+) -> DockerLocalRuntimeProofRunManifestOutputV1 {
+    pre_supervisor_guard_manifest_with_declarations(
+        profile,
+        final_supervisor_guard_declarations_from_parts(
+            profile,
+            fake_docker_executable,
+            docker_socket,
+            git,
+        ),
     )
 }
 
 fn final_supervisor_guard_declarations(
     fixture: &ServedFakeRuntimeFixture,
 ) -> DockerLocalRuntimeProofRunManifestSourceInputV1 {
-    let profile = &fixture.profile;
+    final_supervisor_guard_declarations_from_parts(
+        &fixture.profile,
+        &fixture.fake_docker_executable,
+        &fixture.docker_socket,
+        &fixture.git,
+    )
+}
+
+fn final_supervisor_guard_declarations_from_parts(
+    profile: &LoadedDockerLocalRuntimeProfileV1,
+    fake_docker_executable: &Path,
+    docker_socket: &Path,
+    git: &GitFixture,
+) -> DockerLocalRuntimeProofRunManifestSourceInputV1 {
     let supervisor = profile.supervisor().expect("schema-2 supervisor");
     let mut declarations = pre_supervisor_guard_declarations(profile);
     declarations.docker_client = runtime_path_identity_declaration_v1(
-        &fixture.fake_docker_executable,
+        fake_docker_executable,
         Some(&supervisor.docker_executable_digest),
     )
     .expect("fake Docker identity");
     declarations.local_unix_endpoint =
-        runtime_path_identity_declaration_v1(&fixture.docker_socket, None)
-            .expect("fake endpoint identity");
+        runtime_path_identity_declaration_v1(docker_socket, None).expect("fake endpoint identity");
     declarations.host_git_verifier = runtime_path_identity_declaration_v1(
         Path::new(GIT_EXECUTABLE),
         Some(&supervisor.verifier_git_executable_digest),
     )
     .expect("host Git identity");
-    let disposable_root = fs::canonicalize(&fixture.git.root).expect("canonical disposable root");
+    let disposable_root = fs::canonicalize(&git.root).expect("canonical disposable root");
     declarations.disposable_target =
-        runtime_target_identity_declaration_v1(&disposable_root, &fixture.git.identity)
+        runtime_target_identity_declaration_v1(&disposable_root, &git.identity)
             .expect("disposable target identity");
     declarations
 }
