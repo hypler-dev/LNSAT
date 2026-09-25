@@ -53,16 +53,21 @@ public record.
 
 Every field marked `UNSET_BLOCKING` must be resolved to one exact value,
 reviewed, and named by a new explicit authority before any Docker observation
-or process creation. No runnable proof driver currently authenticates and
-re-reads the durable claim state immediately before process creation. A private
-source-only final-supervisor seam can perform that re-read after the
-supervisor's repeated target, executable, and endpoint checks. The seam binds
-the manifest-declared Docker client, host Git verifier, local endpoint, and
+or process creation. A private source-only driver composition now joins atomic
+created-handle/replay disposition, canonical payload, final-supervisor durable
+guard, and independently host-verified receipt in the test-only served
+fake-runtime path. No production-selectable real proof driver currently
+authenticates and re-reads the durable claim state immediately before Docker
+process creation. The private final-supervisor seam performs that re-read for
+the fake-runtime path after the supervisor's repeated target, executable, and
+endpoint checks. The seam binds the manifest-declared Docker client, host Git
+verifier, local endpoint, and
 disposable target to that final context by exact path and domain-separated
 filesystem identity. No route, CLI, daemon configuration, package, or release
-selects it. That missing runnable driver boundary is still blocking. A
-source-only manifest, admission digest, or unselected seam never substitutes
-for either requirement.
+selects it for production. No real Docker observation exists, and all
+`UNSET_BLOCKING` identities remain blocking. A source-only manifest, admission
+digest, or test-only composition never substitutes for a runnable real proof
+driver, exact run identities, or separate owner authorization.
 
 ## Required authenticated durable-store admission boundary
 

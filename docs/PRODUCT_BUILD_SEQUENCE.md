@@ -333,7 +333,13 @@ unknown survives restart and reconciles through host Git inspection only;
 unchanged-target unknown persists without receipt. Exact replay is metadata-only
 with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
-configures or invokes Docker. P11-D4C1 adds source-only reference-adapter
+configures or invokes Docker. A private source-only driver composition now
+joins atomic created-handle/replay disposition -> canonical payload ->
+final-supervisor durable guard -> independently host-verified receipt. Existing
+test-only served fake-runtime integration selects it; no production route, CLI,
+or daemon configuration selects it. No real Docker observation or runnable
+real proof driver exists; all `UNSET_BLOCKING` identities remain closed.
+P11-D4C1 adds source-only reference-adapter
 execution: D4A retains the exact profile mount path and the supervisor supplies
 that sole repository argument; `lnsat-git-reference` rejects any raw mismatch,
 validates canonical D4A input and its own approved digest, requires exact

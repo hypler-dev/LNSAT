@@ -1141,6 +1141,13 @@ The proof-readiness plan can now freeze exact future identities and negative
 cases without runtime I/O. This remains source design only; no runtime evidence
 exists and Phase 11 remains incomplete.
 
+A private source-only driver composition now joins atomic created-handle/replay
+disposition -> canonical payload -> final-supervisor durable guard ->
+independently host-verified receipt. The existing test-only served fake-runtime
+selector exercises it; no production route, CLI, or daemon configuration
+selects it. No real Docker observation or runnable real proof driver exists,
+and all `UNSET_BLOCKING` identities remain closed.
+
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
 explicit local login issues the existing bounded session and captures the
 non-ambient token/proof response-header pair in volatile React memory. One

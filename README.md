@@ -250,16 +250,16 @@ A caller-supplied claim snapshot, public read API, or admission digest cannot
 satisfy this gate. Failure after the durable claim commit rejects before spawn,
 preserves or marks `outcome_unknown`, and never redispatches.
 
-A private source-only composition seam now calls that one-shot verifier only
-after the supervisor repeats its disposable-target, executable, and local
-endpoint checks, immediately before command construction and process creation.
-It binds the same payload and loaded-profile identities plus the run-manifest
-Docker client, host Git verifier, local endpoint, and disposable-target paths
-and domain-separated filesystem identities. It retains the opaque guard through
-the supervised exchange and marks every post-claim failure `outcome_unknown`.
-Hermetic tests use only the existing fake executable and temporary Unix socket.
-No route, CLI, daemon configuration, package, or release selects the seam, so
-it is not a runnable proof driver or real Docker evidence.
+A private source-only driver composition now joins atomic created-handle/replay
+disposition, canonical payload, final-supervisor durable guard, and
+independently host-verified receipt. It calls that one-shot verifier only after
+the supervisor repeats its disposable-target, executable, and local endpoint
+checks, immediately before command construction and process creation. Existing
+test-only served fake-runtime integration selects this composition; no
+production route, CLI, or daemon configuration selects it. Hermetic tests use
+only the existing fake executable and temporary Unix socket. No real Docker
+observation or runnable real proof driver exists, so it remains source-only and
+does not change the `UNSET_BLOCKING` run identities.
 
 The execution-harness contract has
 [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),

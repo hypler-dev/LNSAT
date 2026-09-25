@@ -801,6 +801,9 @@ test("operator run packet locks source, cases, adapter, and D3 derivation one ma
     "isolation_no_socket_credentials_or_network",
     "cleanup_verified_container_id_only",
     "runtime_and_image_identity_stable",
+    "test-only served",
+    "No production-selectable real proof driver currently",
+    "No real Docker observation exists",
   ]) {
     const mutated = removeWhitespaceFlexibleMarker(source, marker);
     assert.notEqual(mutated, source, marker);
