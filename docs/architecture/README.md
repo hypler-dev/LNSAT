@@ -152,6 +152,10 @@ support, package, target path, service lifecycle, or artifact.
 
 ## Proposals and Future Design
 
+- [HCFG-4A exact approval and audit evidence readback](headless-monitoring/intent.md)
+  — proposed source packet; owner acceptance and implementation remain pending
+- [HCFG-4A exact evidence-readback specification](headless-monitoring/spec.md)
+  — proposed exact routes, permissions, response closure, and security negatives
 - [Agent configuration, skill, and context management](AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)
 - [UI and framework expansion](UI_AND_FRAMEWORK.md)
 - [Persistence schema plan](PERSISTENCE_SCHEMA_PLAN.md)

@@ -142,6 +142,11 @@ the resulting declarative configuration and computes effective authority;
 presets cannot silently grant access, and an unverifiable OS restriction cannot
 be advertised as enforced.
 
+HCFG-4A is currently a proposed, unaccepted packet for exact authenticated
+approval and audit evidence readback. Its [intent](docs/architecture/headless-monitoring/intent.md)
+defines review scope only; it grants no source implementation, merge, runtime,
+build, publication, deployment, or release authority.
+
 `lnsatctl` will expose permission changes, approvals, activity evidence,
 emergency disablement, recovery, declarative configuration, validation, and
 status through protected interfaces. The existing React console remains an
