@@ -3,7 +3,7 @@
 # Intent: Versioned monitoring evidence-subject snapshot
 
 Status: proposed
-Authority: [Product Build Sequence](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control) and [Project Status](../../PROJECT_STATUS.md#current-build-position)
+Authority: this file
 Owner: LNSAT project owner
 Accepted by: pending
 Last updated: 2026-09-25

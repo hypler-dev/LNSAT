@@ -3,8 +3,7 @@
 # Plan: HCFG-4C versioned monitoring evidence watch
 
 Status: proposed
-Authority: [HCFG-4C monitoring watch intent](intent.md) and the
-[HCFG-4 requirement](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+Authority: [HCFG-4C monitoring watch intent](intent.md)
 Owner: LNSAT project owner
 Last updated: 2026-09-25
 
