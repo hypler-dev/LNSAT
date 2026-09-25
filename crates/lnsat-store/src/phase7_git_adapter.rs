@@ -222,6 +222,13 @@ pub struct Phase11DockerRuntimeCompositionClaimHandleV1 {
     operation_idempotency_key: String,
 }
 
+/// One atomic Docker claim outcome for a caller that must preserve replay
+/// readback while requiring a one-shot handle before any new dispatch.
+pub enum Phase11DockerRuntimeCompositionClaimOutcomeV1 {
+    Created(Box<Phase11DockerRuntimeCompositionClaimHandleV1>),
+    Replay(Box<Phase11DockerRuntimeCompositionClaimV1>),
+}
+
 impl Phase11DockerRuntimeCompositionClaimHandleV1 {
     /// Returns the original created-claim snapshot for structural admission
     /// only. It carries no store-freshness or launch permission.
@@ -1437,6 +1444,33 @@ impl SqliteStore {
         raw_session_token: &str,
         raw_csrf_token: &str,
     ) -> Result<Phase11DockerRuntimeCompositionClaimHandleV1, Phase7GitAdapterErrorV1> {
+        match self.claim_phase11_docker_runtime_composition_handle_or_replay_v1(
+            input,
+            capability,
+            raw_session_token,
+            raw_csrf_token,
+        )? {
+            Phase11DockerRuntimeCompositionClaimOutcomeV1::Created(handle) => Ok(*handle),
+            Phase11DockerRuntimeCompositionClaimOutcomeV1::Replay(_) => {
+                Err(Phase7GitAdapterErrorV1::DispatchAlreadyClaimed)
+            }
+        }
+    }
+
+    /// Atomically returns a one-shot handle only for a new claim and immutable
+    /// metadata only for exact replay. Replay never receives launch provenance.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid source, authentication, capability, target, persistence,
+    /// or post-claim binding state through the existing closed error family.
+    pub fn claim_phase11_docker_runtime_composition_handle_or_replay_v1(
+        &mut self,
+        input: &Phase11DockerRuntimeCompositionInputV1<'_>,
+        capability: Phase7CapabilitySecretV1,
+        raw_session_token: &str,
+        raw_csrf_token: &str,
+    ) -> Result<Phase11DockerRuntimeCompositionClaimOutcomeV1, Phase7GitAdapterErrorV1> {
         let claim = self.claim_phase11_docker_runtime_composition_v1(
             input,
             capability,
@@ -1444,7 +1478,9 @@ impl SqliteStore {
             raw_csrf_token,
         )?;
         if !claim.created {
-            return Err(Phase7GitAdapterErrorV1::DispatchAlreadyClaimed);
+            return Ok(Phase11DockerRuntimeCompositionClaimOutcomeV1::Replay(
+                Box::new(claim),
+            ));
         }
         let Ok(durable_binding) = read_phase11_handle_creation_binding_v1(
             &self.connection,
@@ -1467,20 +1503,22 @@ impl SqliteStore {
             let _ = self.mark_phase11_docker_outcome_unknown_v1(&claim.operation.operation_id);
             return Err(Phase7GitAdapterErrorV1::OutcomeUnknown);
         }
-        Ok(Phase11DockerRuntimeCompositionClaimHandleV1 {
-            claim,
-            execution_request_digest: input.derived_request.request_digest,
-            action_digest: input.derived_request.action_digest,
-            target_digest: input.derived_request.target_digest,
-            configuration_digest: input.derived_request.configuration_digest,
-            executable_digest: input.derived_request.executable_digest,
-            adapter_ref: format!(
-                "{}@{}",
-                input.derived_request.request.adapter.adapter_ref,
-                input.derived_request.request.adapter.version
-            ),
-            operation_idempotency_key: durable_binding.idempotency_key,
-        })
+        Ok(Phase11DockerRuntimeCompositionClaimOutcomeV1::Created(
+            Box::new(Phase11DockerRuntimeCompositionClaimHandleV1 {
+                claim,
+                execution_request_digest: input.derived_request.request_digest,
+                action_digest: input.derived_request.action_digest,
+                target_digest: input.derived_request.target_digest,
+                configuration_digest: input.derived_request.configuration_digest,
+                executable_digest: input.derived_request.executable_digest,
+                adapter_ref: format!(
+                    "{}@{}",
+                    input.derived_request.request.adapter.adapter_ref,
+                    input.derived_request.request.adapter.version
+                ),
+                operation_idempotency_key: durable_binding.idempotency_key,
+            }),
+        ))
     }
 
     /// Authenticates the original requester and performs one fresh immediate
