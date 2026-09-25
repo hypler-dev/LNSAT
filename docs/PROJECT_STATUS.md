@@ -205,8 +205,8 @@ verifier digests, one absolute local Unix endpoint, and one marked disposable
 Git target before launch. The constructed run is environment-cleared,
 pull-disabled, networkless, capability-free, no-new-privileges, non-root,
 read-only, and profile-resource-bounded. Post-spawn anomalies remain
-`outcome_unknown`; cleanup requires a valid private Docker-written container ID,
-and success requires independent host Git consequence inspection plus an exact
+`outcome_unknown`; forced cleanup is disabled until an exact daemon and
+container inspection contract is authorized, and success requires independent host Git consequence inspection plus an exact
 semantic result-digest match. Hermetic tests use a fake Docker
 executable and disposable Unix socket, so no real Docker or image-isolation
 claim exists. P11-D4B2A adds source-only durable lifecycle APIs: capability
@@ -278,6 +278,12 @@ records the still-unaccepted evidence mapping decisions needed for daemon,
 image, provenance, entrypoint, and in-image adapter preflight. No observer or real
 image verification is implemented, and the operator packet remains the status
 authority.
+The source-only supervisor now binds operation and launch-contract labels into
+its exact run arguments. It no longer force-removes a CID after an ambiguous
+result: a CID file plus client/socket checks cannot establish daemon and
+container ownership. Ambiguity stays `outcome_unknown`; an authorized,
+daemon-revalidated inspect-before-remove implementation and cleanup evidence
+remain missing.
 
 The private served-driver admission evaluator now adds a source-only structural
 boundary: canonical run manifest -> fields in a caller-supplied claim snapshot

@@ -19,8 +19,10 @@ use lnsatd::docker_local_execution_payload::{
     parse_docker_local_execution_payload_request_v1,
 };
 use lnsatd::docker_local_supervisor::{
+    DOCKER_LOCAL_LAUNCH_LABEL_KEY_V1, DOCKER_LOCAL_OPERATION_LABEL_KEY_V1,
     DockerLocalSupervisorErrorV1, DockerLocalSupervisorInputV1,
-    docker_local_supervised_git_result_digest_v1, supervise_docker_local_git_execution_v1,
+    docker_local_launch_contract_digest_v1, docker_local_supervised_git_result_digest_v1,
+    supervise_docker_local_git_execution_v1,
 };
 use lnsatd::runtime_profile::{
     DOCKER_LOCAL_ADAPTER_REF_V1, DOCKER_LOCAL_ADAPTER_VERSION_V1, DOCKER_LOCAL_AUDIENCE_V1,
@@ -103,6 +105,7 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
         "--cidfile",
         "--pull=never",
         "--rm",
+        "--label",
         "--network=none",
         "--ipc=none",
         "--read-only",
@@ -141,6 +144,18 @@ fn schema2_supervisor_runs_exact_isolated_command_and_binds_git_result() {
         "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n--repository\n/workspace/repository\n"
     ));
     assert_eq!(invocations.matches("--repository\n").count(), 1);
+    assert_eq!(invocations.matches("--label\n").count(), 2);
+    assert!(invocations.contains(&format!(
+        "--label\n{DOCKER_LOCAL_OPERATION_LABEL_KEY_V1}=opn_{}\n",
+        "a".repeat(64),
+    )));
+    assert!(invocations.contains(&format!(
+        "--label\n{DOCKER_LOCAL_LAUNCH_LABEL_KEY_V1}={}\n",
+        prefixed_sha256(
+            &docker_local_launch_contract_digest_v1(&fixture.profile)
+                .expect("launch contract digest"),
+        ),
+    )));
     assert!(invocations.contains(fixture.repository.to_str().expect("UTF-8 path")));
 }
 
@@ -163,12 +178,12 @@ fn post_spawn_result_mismatch_is_unknown_even_when_consequence_exists() {
         fixture.expected_commit
     );
     let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
-    assert_eq!(invocations.matches("BEGIN\n").count(), 2);
-    assert!(invocations.lines().any(|line| line == "rm"));
+    assert_eq!(invocations.matches("BEGIN\n").count(), 1);
+    assert!(!invocations.lines().any(|line| line == "rm"));
 }
 
 #[test]
-fn timeout_kills_client_requests_cleanup_and_never_reports_non_execution() {
+fn timeout_kills_client_without_unverified_forced_cleanup() {
     let fixture = SupervisorFixture::new(ScriptMode::Timeout, 2);
     let started = Instant::now();
     assert_eq!(
@@ -185,8 +200,8 @@ fn timeout_kills_client_requests_cleanup_and_never_reports_non_execution() {
         fixture.base_commit
     );
     let invocations = fs::read_to_string(&fixture.invocations).expect("invocation log");
-    assert_eq!(invocations.matches("BEGIN\n").count(), 2);
-    assert!(invocations.lines().any(|line| line == "rm"));
+    assert_eq!(invocations.matches("BEGIN\n").count(), 1);
+    assert!(!invocations.lines().any(|line| line == "rm"));
 }
 
 #[test]
