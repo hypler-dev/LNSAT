@@ -316,6 +316,224 @@ describe("Phase 9 operation readback client", () => {
     }
   });
 
+  it("separates malformed JSON from response-body transport failure", async () => {
+    for (const error of [
+      new TypeError("body stream failed"),
+      new DOMException("body aborted", "AbortError"),
+    ]) {
+      const result = await loadControlCenterLiveOperationV1(operationId, {
+        fetch: vi.fn(async () => ({
+          ok: true,
+          status: 200,
+          json: async () => {
+            throw error;
+          },
+        })),
+        now,
+        session,
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+    }
+    const invalidJson = await loadControlCenterLiveOperationV1(operationId, {
+      fetch: vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => {
+          throw new SyntaxError("invalid JSON");
+        },
+      })),
+      now,
+      session,
+    });
+    expect(invalidJson).toMatchObject({
+      ok: false,
+      failure: {
+        kind: "degraded",
+        code: "control_center.live.invalid_json",
+      },
+    });
+  });
+
+  it("bounds a stalled evidence read and keeps prior evidence refreshable", async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      const fetch = vi.fn<ControlCenterFetchV1>((_input, init) => {
+        requestSignal = init.signal ?? undefined;
+        return new Promise(() => {});
+      });
+      const pending = loadControlCenterLiveOperationV1(operationId, {
+        fetch,
+        now,
+        session,
+      });
+      await vi.advanceTimersByTimeAsync(10_000);
+      const result = await pending;
+      expect(result).toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(requestSignal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      const loaded = await loadControlCenterLiveOperationV1(operationId, {
+        fetch: responseSequence([
+          okJson(operationEnvelope("prepared", null, null)),
+          okJson(authorizationEnvelope("active", true)),
+        ]),
+        now,
+        session,
+      });
+      if (!loaded.ok) throw new Error("live fixture should load");
+      const stale = applyControlCenterLiveLoadResultV1(
+        { snapshot: loaded.snapshot, last_failure: null },
+        result,
+        operationId,
+      );
+      expect(stale).toMatchObject({
+        snapshot: { observation_status: "stale" },
+        last_failure: "control_center.live.transport_unavailable",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("uses one deadline across sequential evidence responses", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetch = vi.fn<ControlCenterFetchV1>((_input, _init) => {
+        if (fetch.mock.calls.length === 1) {
+          return new Promise((resolve) => {
+            setTimeout(
+              () => resolve(okJson(operationEnvelope("prepared", null, null))),
+              6_000,
+            );
+          });
+        }
+        return new Promise(() => {});
+      });
+      const pending = loadControlCenterLiveOperationV1(operationId, {
+        fetch,
+        now,
+        session,
+      });
+      await vi.advanceTimersByTimeAsync(10_000);
+      await expect(pending).resolves.toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("bounds a stalled response body and relays caller cancellation", async () => {
+    vi.useFakeTimers();
+    try {
+      let bodySignal: AbortSignal | undefined;
+      const bodyPending = loadControlCenterLiveOperationV1(operationId, {
+        fetch: vi.fn<ControlCenterFetchV1>((_input, init) => {
+          bodySignal = init.signal ?? undefined;
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => new Promise(() => {}),
+          });
+        }),
+        now,
+        session,
+      });
+      await vi.advanceTimersByTimeAsync(10_000);
+      await expect(bodyPending).resolves.toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(bodySignal?.aborted).toBe(true);
+
+      const caller = new AbortController();
+      const removeAbortListener = vi.spyOn(caller.signal, "removeEventListener");
+      let callerSignal: AbortSignal | undefined;
+      const callerPending = loadControlCenterLiveOperationV1(operationId, {
+        fetch: vi.fn<ControlCenterFetchV1>((_input, init) => {
+          callerSignal = init.signal ?? undefined;
+          return new Promise(() => {});
+        }),
+        now,
+        session,
+        signal: caller.signal,
+      });
+      caller.abort();
+      await expect(callerPending).resolves.toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(callerSignal?.aborted).toBe(true);
+      expect(removeAbortListener).toHaveBeenCalledWith("abort", expect.any(Function));
+
+      const preAborted = new AbortController();
+      preAborted.abort();
+      const preAbortedFetch = vi.fn<ControlCenterFetchV1>();
+      await expect(
+        loadControlCenterLiveOperationV1(operationId, {
+          fetch: preAbortedFetch,
+          now,
+          session,
+          signal: preAborted.signal,
+        }),
+      ).resolves.toMatchObject({
+        ok: false,
+        failure: {
+          kind: "unavailable",
+          code: "control_center.live.transport_unavailable",
+        },
+      });
+      expect(preAbortedFetch).not.toHaveBeenCalled();
+
+      const successfulCaller = new AbortController();
+      const removeSuccessListener = vi.spyOn(
+        successfulCaller.signal,
+        "removeEventListener",
+      );
+      const success = await loadControlCenterLiveOperationV1(operationId, {
+        fetch: responseSequence([
+          okJson(operationEnvelope("prepared", null, null)),
+          okJson(authorizationEnvelope("active", true)),
+        ]),
+        now,
+        session,
+        signal: successfulCaller.signal,
+      });
+      expect(success.ok).toBe(true);
+      expect(removeSuccessListener).toHaveBeenCalledWith("abort", expect.any(Function));
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("rejects malformed local session material before any evidence read", async () => {
     const fetch = vi.fn<ControlCenterFetchV1>();
     const result = await loadControlCenterLiveOperationV1(operationId, {
