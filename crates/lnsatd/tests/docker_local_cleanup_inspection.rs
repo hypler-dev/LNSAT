@@ -19,6 +19,7 @@ fn launch_digest() -> String {
 fn response() -> Vec<u8> {
     serde_json::to_vec(&json!({
         "Id": cid(),
+        "Name": format!("/lnsat-{}", &operation()[4..36]),
         "Image": format!("sha256:{}", "d".repeat(64)),
         "Config": {
             "Labels": {
@@ -46,6 +47,10 @@ fn parse(
 fn exact_response_is_only_a_syntactic_observation() {
     let parsed = parse(&response()).expect("matching response");
     assert_eq!(parsed.container_id, cid());
+    assert_eq!(
+        parsed.container_name,
+        format!("/lnsat-{}", &operation()[4..36])
+    );
     assert_eq!(parsed.local_image_id, format!("sha256:{}", "d".repeat(64)));
     assert_eq!(parsed.operation_id, operation());
     assert_eq!(parsed.launch_contract_digest, launch_digest());
@@ -56,6 +61,7 @@ fn rejects_wrong_or_missing_private_identity() {
     let mut value: serde_json::Value = serde_json::from_slice(&response()).expect("fixture");
     for (path, replacement) in [
         (vec!["Id"], json!("e".repeat(64))),
+        (vec!["Name"], json!("/lnsat-other")),
         (vec!["Image"], json!("missing")),
         (
             vec!["Config", "Labels", "lnsat.operation_id"],
@@ -82,25 +88,38 @@ fn rejects_wrong_or_missing_private_identity() {
         parse(&serde_json::to_vec(&value).expect("changed fixture")),
         Err(DockerLocalContainerInspectErrorV1::Invalid)
     );
+    value = serde_json::from_slice(&response()).expect("fixture");
+    value.as_object_mut().expect("object").remove("Name");
+    assert_eq!(
+        parse(&serde_json::to_vec(&value).expect("changed fixture")),
+        Err(DockerLocalContainerInspectErrorV1::Invalid)
+    );
 }
 
 #[test]
 fn rejects_ambiguous_and_unbounded_json() {
     let duplicate_id = format!(
-        r#"{{"Id":"{}","Id":"{}","Image":"sha256:{}","Config":{{"Labels":{{"lnsat.operation_id":"{}","lnsat.launch_contract_sha256":"{}"}}}}}}"#,
+        r#"{{"Id":"{}","Id":"{}","Name":"/lnsat-{}","Image":"sha256:{}","Config":{{"Labels":{{"lnsat.operation_id":"{}","lnsat.launch_contract_sha256":"{}"}}}}}}"#,
         cid(),
         cid(),
+        &operation()[4..36],
         "d".repeat(64),
         operation(),
         launch_digest()
     );
     let duplicate_label = format!(
-        r#"{{"Id":"{}","Image":"sha256:{}","Config":{{"Labels":{{"lnsat.operation_id":"{}","lnsat.operation_id":"{}","lnsat.launch_contract_sha256":"{}"}}}}}}"#,
+        r#"{{"Id":"{}","Name":"/lnsat-{}","Image":"sha256:{}","Config":{{"Labels":{{"lnsat.operation_id":"{}","lnsat.operation_id":"{}","lnsat.launch_contract_sha256":"{}"}}}}}}"#,
         cid(),
+        &operation()[4..36],
         "d".repeat(64),
         operation(),
         operation(),
         launch_digest()
+    );
+    let duplicate_name = String::from_utf8(response()).expect("fixture").replacen(
+        "\"Name\":",
+        "\"Name\":\"/lnsat-other\",\"Name\":",
+        1,
     );
     for bytes in [
         b"[]".as_slice(),
@@ -108,6 +127,7 @@ fn rejects_ambiguous_and_unbounded_json() {
         b"{bad",
         duplicate_id.as_bytes(),
         duplicate_label.as_bytes(),
+        duplicate_name.as_bytes(),
         &vec![b' '; MAX_DOCKER_LOCAL_CONTAINER_INSPECT_BYTES_V1 + 1],
     ] {
         assert_eq!(

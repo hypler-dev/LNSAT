@@ -285,8 +285,9 @@ container ownership. Ambiguity stays `outcome_unknown`; an authorized,
 daemon-revalidated inspect-before-remove implementation and cleanup evidence
 remain missing.
 An isolated source-only container-inspection parser checks bounded JSON for one
-exact private container ID plus operation and launch-contract labels. It uses
-no Docker command and treats a matching response as untrusted syntax only;
+exact private container ID, deterministic launch name, and operation and
+launch-contract labels. It uses no Docker command and treats a matching response
+as untrusted syntax only;
 daemon/client/endpoint revalidation, image provenance, lifecycle evidence,
 cleanup authority, and verified removal remain absent.
 The test-only served proof driver now prepares an owner-only per-launch custody

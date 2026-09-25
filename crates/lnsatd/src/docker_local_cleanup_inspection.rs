@@ -5,7 +5,7 @@
 //! container. No command or cleanup operation is implemented here.
 
 use crate::docker_local_supervisor::{
-    DOCKER_LOCAL_LAUNCH_LABEL_KEY_V1, DOCKER_LOCAL_OPERATION_LABEL_KEY_V1,
+    DOCKER_LOCAL_LAUNCH_LABEL_KEY_V1, DOCKER_LOCAL_OPERATION_LABEL_KEY_V1, container_name_v1,
 };
 use serde::de::{MapAccess, Visitor};
 use serde::{Deserialize, Deserializer};
@@ -19,6 +19,7 @@ pub const MAX_DOCKER_LOCAL_CONTAINER_INSPECT_BYTES_V1: usize = 64 * 1024;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DockerLocalContainerInspectIdentityV1 {
     pub container_id: String,
+    pub container_name: String,
     pub local_image_id: String,
     pub operation_id: String,
     pub launch_contract_digest: String,
@@ -49,6 +50,8 @@ impl std::error::Error for DockerLocalContainerInspectErrorV1 {}
 struct InspectResponseV1 {
     #[serde(rename = "Id")]
     id: String,
+    #[serde(rename = "Name")]
+    name: String,
     #[serde(rename = "Image")]
     image: String,
     #[serde(rename = "Config")]
@@ -96,7 +99,7 @@ impl<'de> Deserialize<'de> for UniqueLabelsV1 {
 }
 
 /// Parses one bounded formatted `docker container inspect` JSON object and
-/// checks its exact private container ID and two launch labels.
+/// checks its exact private container ID, launch name, and two launch labels.
 ///
 /// The response remains untrusted even when all fields match. Callers cannot
 /// use this result as removal authority; daemon/endpoint/client revalidation,
@@ -125,7 +128,12 @@ pub fn parse_docker_local_container_inspect_identity_v1(
         return Err(invalid);
     }
     let parsed: InspectResponseV1 = serde_json::from_slice(response).map_err(|_| invalid)?;
+    let expected_name = format!(
+        "/{}",
+        container_name_v1(expected_operation_id).ok_or(invalid)?
+    );
     if parsed.id != expected_container_id
+        || parsed.name != expected_name
         || !parsed
             .image
             .strip_prefix("sha256:")
@@ -149,6 +157,7 @@ pub fn parse_docker_local_container_inspect_identity_v1(
     }
     Ok(DockerLocalContainerInspectIdentityV1 {
         container_id: parsed.id,
+        container_name: parsed.name,
         local_image_id: parsed.image,
         operation_id: expected_operation_id.to_owned(),
         launch_contract_digest: expected_launch_contract_digest.to_owned(),
