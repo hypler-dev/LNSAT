@@ -135,7 +135,12 @@
     "transport": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["bind_scope", "same_origin_required", "cors_enabled"],
+      "required": [
+        "bind_scope",
+        "same_origin_required",
+        "cors_enabled",
+        "session_secret_headers"
+      ],
       "properties": {
         "bind_scope": {
           "const": "loopback"
@@ -145,6 +150,9 @@
         },
         "cors_enabled": {
           "const": false
+        },
+        "session_secret_headers": {
+          "const": "required"
         }
       }
     },

@@ -3,6 +3,31 @@
 LNSAT `0.1.0` is pre-release, source-only software. Repository is suitable for
 contract evaluation and contributor development, not production operation.
 
+## Version Posture
+
+Product/source SemVer remains unpublished `0.1.0` across the root npm package,
+every private npm workspace, and the unpublished Cargo workspace. The stable
+Gateway wire target is `lnsat.contracts.v1_0`; the default product surface is
+`lnsat.product_surface.v1` with explicit source-diagnostic v2 selection; local
+SQLite schema is `17`. These layers are independent. PR #39 merged Phase 11
+operator preparation into public `main`, but changed no product, wire, family,
+persistence, runtime-profile, or adapter-protocol version and created no tag or
+release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
+
+## Active Security Remediation
+
+The owner accepted the
+[loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
+intent on 2026-09-10. The in-review packet removes browser cookies from the
+numeric-loopback authentication path and requires an explicit non-ambient
+session-token plus independent-proof header pair on every authenticated browser
+request. Merge, deployment, publication, and release remain separately gated.
+The accepted [local authentication availability and UDS withdrawal](architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
+applies source remediation for the same-UID Unix control-socket substitution and
+global login-limiter lockout findings. It withdraws Unix bearer reads before the
+first supported release, preserves browser header-pair transport, and still
+requires focused validation and independent review before release judgment.
+
 Repository source is public through the independently audited fresh-history
 cutover recorded in [public source readiness](PUBLIC_READINESS.md). Public
 visibility does not change this maturity, publish an artifact, or establish
@@ -89,18 +114,21 @@ Complete headless setup and access-management through the versioned API and
 LNSAT's resource access from agent action authority, support layered declarative
 configuration and customizable least-privilege settings, expose actual OS
 enforcement coverage, and protect configuration changes through Gateway.
-LNSAT remains usable independently of Rangoon; downstream installation or API use
-cannot bypass approval or increase authority implicitly. The
+LNSAT remains a standalone product; installation or API use cannot bypass
+approval or increase authority implicitly. The
 [headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
-own this additional product acceptance scope. Rangoon owns graphical setup,
-presets, and rich management UI. Existing P10-X1 source conformance does not
-satisfy it; current Control Center readback remains read-only. No new
+own this additional product acceptance scope. Graphical setup, presets, and rich
+management UI are later LNSAT surfaces, not V1 exit requirements. Existing
+P10-X1 source conformance does not satisfy it; current Control Center readback
+remains read-only. No new
 management mutation, runtime, installer, or supported-platform claim is opened.
 
 HCFG-0/HCFG-1 source diagnostics are implemented: status defaults to and echoes
 exact `lnsat.product_surface.v1`; explicit v1/v2 selection is exact-match only
 and fails before session work when duplicate, malformed, unsupported, or
-wrong-route. Frozen v1 command/status bytes remain unchanged. Explicit
+wrong-route. The accepted pre-1.0 security correction changes the v1 command
+inventory and status bytes, records the superseded digests, and keeps selector
+matching fail closed. Explicit
 `lnsat.product_surface.v2` adds source-only v2 manifest/status diagnostics plus
 `lnsatctl config schema|validate`; validation reads a selected config and a
 referenced runtime profile but opens no database, listener, process, or action
@@ -138,11 +166,12 @@ Rollback is a normal reviewed source revert; there is no persistent migration.
 Phase 8 bounded loopback runtime composition is merged. Phase 9 authenticated,
 exact-ID Control Center readback and manifest-only source-local console hosting
 are implemented as experimental source. Phase 10 P10-A1 product-surface spine,
-P10-A2 explicit-only configuration, and P10-A3 authenticated local
-health/status plus stable output contracts are implemented. P10-A4 offline
+P10-A2 explicit-only configuration, and P10-A3 browser/API health/status plus
+withdrawn Unix CLI health/status contracts are implemented. P10-A4 offline
 backup, inert restore, protected owner recovery, non-root enforcement, and
 cross-surface unavailability parity are also implemented. P10-X1 closes Phase
-10 source conformance with a fail-closed evidence/compatibility ledger. P11-R1
+10 source conformance with a security-corrected fail-closed
+evidence/compatibility ledger. P11-R1
 adds one experimental served reference proof over existing Phase 8 loopback
 routes and a marked disposable Git fixture. The execute response is discarded;
 after daemon restart, the requester resolves the unknown outcome only through
@@ -216,6 +245,55 @@ runtime, image-provenance, disposable-target, served-chain, lifecycle, cleanup,
 redaction, and independent-review commitments for those same eight future
 cases. It contains no actual evidence or execution seam and keeps every runtime,
 completion, production, package, deployment, and support flag closed.
+A source-only execution-harness contract binds the proof plan and evidence
+requirements digests with the same closed lists and later-authority declaration
+and stop IDs. PHR-0005 records independent source review. It is metadata only,
+has no runnable proof driver, runtime evidence, or execution authority; Phase 11
+remains incomplete.
+The private run-manifest contract now binds a nonce, bounded UTC window, exact
+later-run identities, and private evidence custody declarations to a separately
+supplied expected source-root/revision/build identity. It rejects evidence
+beneath source or the disposable target root and declared source/target path
+overlap lexically. JSON alone never grants permission or proves physical
+filesystem identity or disjointness.
+It performs no filesystem identity checks or runtime I/O. A later driver must
+resolve and authenticate the physical source and target identities and
+revalidate their disjointness immediately before process creation; preflight
+the daemon, image, configuration, entrypoint, and in-image adapter; traverse Gateway ->
+D4B2A -> D3/D4A -> supervisor; and use daemon/client/endpoint-revalidated,
+launch-label-bound inspect-before-remove cleanup.
+
+The private served-driver admission evaluator now adds a source-only structural
+boundary: canonical run manifest -> fields in a caller-supplied claim snapshot
+-> D3/D4A payload -> loaded profile -> launch-contract digest. Replay, ambiguous
+state/receipt/reconciliation, and binding drift fail closed, but its digest
+authenticates no snapshot, revalidates no durable state, and grants no launch
+permission. It is implemented source-only, verification-only structural
+binding, not a runtime gate. After a successful D4B2A claim commit, a later
+runnable driver must authenticate the created-claim result, call a private
+store-owned verifier in a fresh authenticated store transaction, and re-read
+the exact durable consumption, operation, and attempt through the durable-store
+boundary. Only exact created, dispatching, no-receipt, and no-reconciliation
+state returns a bound pre-supervisor guard. Failure after claim commit rejects
+before spawn, preserves or marks `outcome_unknown`, and never redispatches. This
+evaluator performs no store write, route,
+filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
+runtime execution. Phase 11 remains incomplete; real Docker proof and later
+Phase 13/14 release gates remain separately closed.
+The source-only
+[operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+locks the proof-implementation source at public revision
+`b41aa756bccd85843ac540abfd927e8c5693d5fe` and tree
+`fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c`. Separately, PR #39 integrated
+the reviewed packet head `2c918bc59b82ffabc378b47e66137733cf24a6d7`
+into public `main` as merge `190ab32443f60a2a1bc78f990e8ea5571c28f96f`
+with tree `17247c9c194f6a332e99ee32ae5052620349896b`. That packet integration
+identity does not move the proof-source lock. The record enumerates later
+executable, image, profile, launch, manifest, target, admission, case, D3-limit,
+receipt, reconciliation, ambiguity, cleanup, evidence, retention, redaction,
+and pass/fail requirements. All live identities remain explicitly blocking.
+The packet grants no Docker, execution, build-candidate, release, deploy,
+publication, production, or support authority.
 Required path stays Phase 8 -> Phase 9 ->
 Phase 10 -> Phase 11 ->
 Phase 13 -> Phase 14. Phase 12 and optional signed-evidence
@@ -252,7 +330,7 @@ route, or supported deployment exists.
 | CLI                  | Local experimental     | `lnsat` packet/manifest plus `lnsatctl` diagnostics, inspection, and offline recovery                                                                                                                                                         |
 | Control Center       | Local experimental     | Exact-ID live Gateway readback plus separate unchanged synthetic fixture panel                                                                                                                                                                |
 | Agent configuration  | Proposal               | Versioned profile, skill, instruction, context, and shared-library architecture only                                                                                                                                                          |
-| Commercial modules   | Repository boundary    | Private repositories and public-core dependency rules; no implementation                                                                                                                                                                      |
+| Optional modules     | Product boundary       | Versioned extension contracts only; no implementation                                                                                                                                                                                         |
 | Rust                 | Local foundation       | Deterministic contracts plus embedded SQLite bootstrap and integrity core                                                                                                                                                                     |
 | Distribution         | Not available          | No package, binary, image, installer, release, or update channel                                                                                                                                                                              |
 | Docker integration   | Experimental source    | P11-D1 through P11-D4C1 include closed profile/config/protocol/payload, durable lifecycle, served fake-runtime proof, and a hermetically tested source-only reference adapter; no real Docker, image operation, supported runtime, or support |
@@ -301,13 +379,11 @@ ADR-0003 and ADR-0007 now fix repository, product, and first-integration
 boundaries:
 
 - `LNSAT` remains canonical open authority core;
-- `LNSAT-Commercial`, `LNSAT-Connectors`, `LNSAT-Models`, and `LNSAT-Release`
-  exist as private documentation bootstraps;
 - managed instructions, skills, profiles, context, graphs, and model overlays
   are planned governed inputs;
 - gatekeeper models remain advisory;
 - rich registry, graph editing, collaboration, certified adapters, model packs,
-  and commercial composition remain downstream;
+  and package composition remain staged LNSAT work;
 - portable formats, Gateway authority, essential security, OS CLI conventions,
   and conformance remain public-core concerns;
 - Docker/OCI is first planned v1 runtime profile, but Docker remains a
@@ -316,7 +392,7 @@ boundaries:
   authority-managed emergency stop dominates lower-precedence configuration.
 
 This direction adds no live module runtime, model deployment, connector,
-registry install/enable authority, entitlement, hosted service, or commercial
+registry install/enable authority, entitlement, hosted service, or unpublished
 artifact. See
 [ADR-0003](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md),
 [ADR-0007](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md),
@@ -327,7 +403,7 @@ and [product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md).
 Current workspace packages are private and unpublished. Source exports may
 change before first supported release. Contract changes should still use
 explicit schema versions, migration notes, fixtures, conformance tests, and
-changelog entries so downstream evaluation remains reviewable.
+changelog entries so evaluation remains reviewable.
 
 Exact-match contract-version validation now identifies
 `lnsat.contracts.v1_0` as the stable v1 target and retains `v0_1` as deprecated
@@ -548,7 +624,7 @@ wildcard/non-loopback/port-zero configuration, opens and verifies SQLite before
 binding, confirms the operating-system address is loopback, and serves at most
 eight bounded concurrent requests. `GET /healthz` remains readiness-only.
 Authenticated `GET|HEAD /v1/health` and `/v1/status` reuse exact Host,
-contract-version, same-origin fetch metadata, existing session cookie, active
+contract-version, same-origin fetch metadata, existing session-token header, active
 owner/operator/auditor `ReadEvidence`, and one generic denial. They preserve
 bodyless HEAD parity, expose no identity/session/path/host data, grant no
 mutation authority, and declare only bounded session-activity evidence.
@@ -598,12 +674,13 @@ session, independent anti-CSRF proof, canonical session reference, and exact
 trusted decision time; approval still grants no execution authority. Role,
 CSRF, substitution, expiry, reopen, migration, interruption, and tamper
 negatives pass. Route-neutral daemon composition now adds bounded
-duplicate-refusing HTTP/1.1 head parsing, host-only strict same-site cookies,
-constant-time anti-CSRF double-submit, SQLite session/revocation verification,
+duplicate-refusing HTTP/1.1 head parsing, non-ambient browser secret headers,
+independent session-proof verification, SQLite session/revocation verification,
 secret-free authorized request evidence, and one generic denial. Server-owned
 UTC now supplies issue/verification time; served session issue is bounded to
-five attempts per identity and 30 process-wide per monotonic minute, while
-unknown identities consume a validated fixed-profile Argon2id verification.
+five attempts per durably known active identity per monotonic minute, while
+unknown, invalid, and inactive identities do not consume limiter capacity but
+still consume a validated fixed-profile Argon2id verification.
 Authenticated mutation composition can atomically append revocations
 for every active same-identity session without duplicate or cross-identity
 authority. Schema v11 adds preserve-only append-only activity evidence with a
@@ -622,8 +699,8 @@ permanent non-owner disablement appends immutable actor-session-bound status
 evidence and atomically closes the target family with `owner_revoke`. Disabled
 identities use the dummy Argon2id denial path. Daemon composition owns time and
 generic denial for both operations. Password rotation is served through a
-closed two-field JSON body, per-session/process limiting, strict same-origin
-CSRF proof, full session-family revocation, cleared cookies, and explicit
+closed two-field JSON body, post-authentication per-session limiting, strict same-origin
+CSRF proof, full session-family revocation, invalidated session-secret headers, and explicit
 reauthentication. Owner-only identity disablement is served with exact empty
 framing, permanent status evidence, atomic target-family closure, and no
 re-enable authority.
@@ -654,12 +731,13 @@ transaction. It invalidates every active owner session and opens no HTTP route.
 The live loopback server now
 serves `POST|GET|HEAD|PATCH|DELETE /v1/session` through strict source parsing. `POST`
 requires exact Origin, same-origin Fetch Metadata, JSON, a custom
-session-intent header, a closed body at most 4 KiB, and the process-wide
-limiter; success sets fresh host-only bearer/CSRF cookies. All issue failures
+session-intent header, a closed body at most 4 KiB, and a per-known-active-identity
+limiter; success sets fresh non-ambient bearer/proof headers. Unknown identity
+churn cannot consume known-identity capacity. All issue failures
 share one stable denial. `POST /v1/session` now publishes the stable
 `lnsat.gateway.session_issue.v1_0` contract with closed secret input,
 fresh-session-per-success replay, possible failure-side limiter advancement,
-and exact success-side limiter/session/event/cookie effects.
+and exact success-side limiter/session/event/session-secret-header effects.
 `GET|HEAD` now emits the stable `lnsat.gateway.session_read.v1_0` secret-free
 contract with exact bodyless `HEAD`, one generic denial, and explicit bounded
 activity-evidence side-effect disclosure. No route emits CORS allow headers.
@@ -667,26 +745,26 @@ Authenticated `PATCH` now emits stable
 `lnsat.gateway.session_rotation.v1_0` success/failure contracts. It requires
 exact zero-length JSON framing plus Origin/Fetch Metadata/CSRF proof, atomically
 replaces only the current session secrets, preserves absolute expiry, binds
-prior and replacement ids in immutable evidence, returns fresh host-only
-cookies once, declares exact activity/revocation/replacement/rotation/event/cookie
+prior and replacement ids in immutable evidence, returns fresh non-ambient
+session-secret headers once, declares exact activity/revocation/replacement/rotation/event/session-secret-header
 effects, and uses one zero-side-effect denial for transport, authentication,
 expiry, replay, clock, evidence, and persistence failure. Authenticated
 `DELETE` uses the same transport proof, atomically revokes every active
-same-identity session, clears both host-only cookies, and emits stable
+same-identity session, requires both client-held secrets to be discarded, and emits stable
 `lnsat.gateway.session_family_sign_out.v1_0` success/failure contracts.
-Success declares exact activity/revocation/event/cookie effects, forces
+Success declares exact activity/revocation/event/session-secret-header effects, forces
 reauthentication, and is one-time per active family. Transport,
 authentication, expiry, replay, clock, evidence, and persistence failures
-collapse into one zero-side-effect denial without cookies or identity/session
+collapse into one zero-side-effect denial without session-secret headers or identity/session
 detail. Authenticated `PATCH /v1/identity/password` accepts only
-`current_password` and `new_password`, applies the shared per-session/process
-limiter, reverifies the latest credential, appends one immutable generation,
-atomically revokes all same-identity sessions, clears both cookies, and requires
+`current_password` and `new_password`, applies a shared post-authentication
+per-session limiter, reverifies the latest credential, appends one immutable generation,
+atomically revokes all same-identity sessions, invalidates both session-secret headers, and requires
 reauthentication under stable
 `lnsat.gateway.identity_password_rotation.v1_0`. Success declares exact
-limiter/activity/credential/identity-event/revocation/session-event/cookie
+limiter/activity/credential/identity-event/revocation/session-event/session-secret-header
 effects. Transport, schema, credential, limit, clock, evidence, and persistence
-failures share one denial that exposes only possible process-limiter
+failures share one denial that exposes only possible verified-session limiter
 advancement and no durable credential/session change. Packet/action mutation
 and identity re-enable remain unserved. Owner-only `POST /v1/identities`
 accepts only identity reference, display name, operator/auditor role, and
@@ -716,7 +794,7 @@ No approval signer, one-time execution issuer, sandbox adapter, hardware
 attester, package, binary, image, installer, release, or update channel exists.
 No stable OS operator CLI, module runtime, connector, model gatekeeper,
 configuration registry, shared skill library, graph editor, entitlement
-service, commercial artifact, or hosted management system exists.
+service, unpublished artifact, or hosted management system exists.
 
 Provider-neutral signer readiness source now models software-vault,
 PKCS#11 3.2, and cloud KMS/HSM boundaries using key references and public
@@ -915,7 +993,7 @@ Every routed response after acceptance repeats the version header.
 Approval-request creation and approval-decision recording are stable.
 Local-password
 `POST /v1/session` is closed-schema and non-idempotent: every success creates
-fresh authentication state and cookies, while failure discloses only possible
+fresh authentication state and session-secret headers, while failure discloses only possible
 limiter advancement. Authenticated
 `GET|HEAD /v1/session` is current-session-only, returns one generic oracle-free
 denial for every authentication failure, reflects no secret, and declares that
@@ -924,24 +1002,26 @@ packet/action or execution mutation authority.
 Authenticated `PATCH /v1/session` is current-session-only and one-time:
 success atomically appends replacement, prior revocation, rotation, and
 security-event evidence while preserving absolute expiry and returning fresh
-strict cookies; every in-contract denial is generic and zero-side-effect.
+session-secret headers; every in-contract denial is generic and zero-side-effect.
 Authenticated `DELETE /v1/session` is same-identity-family-only and one-time:
 success atomically revokes every active family session, appends security-event
-evidence, clears both strict cookies, and forces reauthentication; every
+evidence, invalidates both client-held secret headers, and forces
+reauthentication; every
 in-contract denial is generic and zero-side-effect.
 Authenticated `PATCH /v1/identity/password` is authenticated-identity-only and
 one-time per active family: success reverifies the latest password, appends one
 credential generation and identity event, atomically revokes the family,
-clears both strict cookies, and forces login with the new password. Its generic
-denial discloses possible process-limiter advancement while durable
+invalidates both client-held secret headers, and forces login with the new
+password. Its generic
+denial discloses possible verified-session limiter advancement while durable
 credential/session state remains unchanged.
 Owner-only `POST /v1/identities` is create-once per immutable identity
 reference: success appends one operator/auditor identity, initial Argon2id
 credential, and actor-session-bound identity event atomically. Its secret-free
 response declares exact limiter/activity/identity/credential/event effects and
-sets no cookies. Duplicate, non-owner, schema, credential, CSRF, clock, drift,
+returns no session-secret headers. Duplicate, non-owner, schema, credential, CSRF, clock, drift,
 and persistence failures share one generic denial exposing only possible
-process-limiter advancement; durable state rolls back.
+verified-session limiter advancement; durable state rolls back.
 Owner-only `DELETE /v1/identities/{identity_ref}` is one-time per active
 operator or auditor target: success appends permanent identity-status and
 actor-session-bound identity-event evidence, atomically closes the target
@@ -1052,11 +1132,15 @@ cases without runtime I/O. This remains source design only; no runtime evidence
 exists and Phase 11 remains incomplete.
 
 Phase 9 adds a read-only Control Center client for one exact operation ID. One
-explicit Load/Refresh action performs only relative same-origin GETs with the
-stable contract-version header and active host-only session cookie. It reads
-the operation, Gateway-supplied authorization, and an attempt only when the
-operation supplies its exact attempt ID. Closed-shape validation and exact
-project/resource equality precede rendering. `completed` requires canonical
+explicit local login issues the existing bounded session and captures the
+non-ambient token/proof response-header pair in volatile React memory. One
+explicit Load/Refresh action performs only relative same-origin GETs with
+ambient credentials omitted, the stable contract-version header, and both
+session-secret headers. Local forget, page hide, unmount, or HTTP 403 discards
+the pair and live snapshot. It reads the operation, Gateway-supplied
+authorization, and an attempt only when the operation supplies its exact
+attempt ID. Closed-shape validation and exact project/resource equality precede
+rendering. `completed` requires canonical
 Gateway receipt evidence; `outcome_unknown`, failure, timeout, abort, missing
 response, missing receipt, and cancellation remain non-successful and never
 confirm non-execution. Prior valid live evidence survives failed refresh only
@@ -1093,21 +1177,23 @@ P10-A2 adds closed contract `lnsat.daemon.config.v1` and
 `lnsatd --config <absolute-path>`. One explicit file must be regular,
 non-symlinked, UTF-8, at most 64 KiB, duplicate-key-free, and schema-closed. It
 may select only the existing database path, numeric-loopback listen address,
-optional authenticated CLI Unix-socket path, paired disposable Phase 8 Git
+paired disposable Phase 8 Git
 paths, and exact console-root asset manifest. Mixed direct/config input, unsafe
 paths/manifests, secret fields, and environment discovery fail closed. Existing
 direct daemon arguments remain compatible.
 
 Current `lnsatctl` implements source-local `doctor`, public-safe `config
-inspect`, exact read-only `recovery inspect`, authenticated `health`/`status`,
+inspect`, exact read-only `recovery inspect`, withdrawn legacy `health`/`status`
+errors,
 non-root offline `backup`, fresh inert `restore`, protected `recovery owner`,
 stable text/JSON/JSONL/YAML, manifest, completion, man, help, and version.
-Health/status require one explicit macOS/Linux Unix-socket path and one opaque
-session token from stdin. Client proves private parent, socket mode/type/owner,
-stable inode identity, and peer effective UID before bearer transmission;
-daemon applies the equal-UID check to clients. Numeric-loopback HTTP remains
-browser/API transport but is closed for `lnsatctl` bearer reads. No
-default/remote/DNS/proxy/redirect/retry/discovery transport exists. Config
+Legacy health/status forms return `lnsatctl.unix_transport.withdrawn` before
+protected stdin, Unix connection, or request bytes. No bearer or browser proof
+is sent to a Unix peer. Numeric-loopback HTTP remains the browser/API transport
+with unchanged header-pair authentication. A non-null `control_socket_path`
+returns `lnsatd.control_socket.withdrawn` before bind; absent or `null` remains
+schema-compatible. No default/remote/DNS/proxy/redirect/retry/discovery CLI
+transport exists. Config
 inspection returns exact-byte SHA-256 and applied-layer evidence without path,
 address, or source-byte reflection. P11-D2 may additionally open one explicitly
 selected Docker-local profile file through the closed D1 loader and return only
@@ -1149,7 +1235,7 @@ Before any supported public artifact:
   other explicitly post-local-v1 phases remain optional;
 - select one or two exact Phase 14 OS/architecture core-target rows and prove
   every selected row; unselected rows remain unsupported, not blockers;
-- expose pin-verifiable canonical component identity for downstream consumers;
+- expose pin-verifiable canonical component identity for LNSAT packages and consumers;
 - produce reproducible artifacts, checksums, signature bundles, SPDX JSON SBOM,
   SLSA v1 provenance, and selected core-target compatibility evidence;
 - document headless configuration, recovery, update, rollback, and revocation;
@@ -1159,8 +1245,9 @@ Before any supported public artifact:
   repository-visibility authorization;
 - obtain separate later artifact-publication authorization after Phase 14.
 
-Rangoon separately owns graphical assets, final installer/package selection,
-wrapper lifecycle evidence, and downstream support claims; none blocks LNSAT V1.
+LNSAT owns selected core package lifecycle evidence and support claims for
+Phase 14 rows. Graphical assets and unselected installer formats do not block
+LNSAT V1.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).

@@ -11,6 +11,15 @@ import {
 
 export const LIVE_GATEWAY_CONTRACT_VERSION = "lnsat.contracts.v1_0";
 export const LIVE_GATEWAY_SOURCE_CONTRACT = "lnsat.gateway.runtime_composition.v1_0";
+export const LOCAL_SESSION_TOKEN_HEADER = "X-LNSAT-Local-Session-Token";
+export const LOCAL_SESSION_PROOF_HEADER = "X-LNSAT-Local-Session-Proof";
+
+const LOCAL_SESSION_ISSUE_CONTRACT = "lnsat.gateway.session_issue.v1_0";
+const LOCAL_SESSION_ISSUE_INTENT_HEADER = "X-LNSAT-Session-Intent";
+const LOCAL_SESSION_ISSUE_INTENT = "lnsat.session.issue.v1";
+const LOCAL_SESSION_TOKEN_PATTERN = /^ses_[0-9a-f]{32}\.[0-9a-f]{64}$/;
+const LOCAL_SESSION_PROOF_PATTERN = /^[0-9a-f]{64}$/;
+const LOCAL_IDENTITY_PATTERN = /^identity:human:[^\s\u0000-\u001f\u007f]+$/u;
 
 const OPERATION_ID_PATTERN = /^opn_[0-9a-f]{64}$/;
 const AUTHORIZATION_ID_PATTERN = /^xau_[0-9a-f]{64}$/;
@@ -19,6 +28,7 @@ const ATTEMPT_ID_PATTERN = /^opa_[0-9a-f]{64}$/;
 type FetchResponseV1 = {
   ok: boolean;
   status: number;
+  headers?: { get(name: string): string | null };
   json(): Promise<unknown>;
 };
 
@@ -26,6 +36,28 @@ export type ControlCenterFetchV1 = (
   input: string,
   init: RequestInit,
 ) => Promise<FetchResponseV1>;
+
+export type ControlCenterLocalSessionV1 = Readonly<{
+  token: string;
+  proof: string;
+}>;
+
+type MutableControlCenterRefV1<T> = { current: T };
+
+export function discardControlCenterLocalSessionRefsV1(
+  sessionRef: MutableControlCenterRefV1<ControlCenterLocalSessionV1 | null>,
+  sessionEpochRef: MutableControlCenterRefV1<number>,
+  activeRequestRef: MutableControlCenterRefV1<{ abort(): void } | null>,
+): void {
+  activeRequestRef.current?.abort();
+  activeRequestRef.current = null;
+  sessionEpochRef.current += 1;
+  sessionRef.current = null;
+}
+
+export type ControlCenterLocalSessionIssueResultV1 =
+  | { ok: true; session: ControlCenterLocalSessionV1 }
+  | { ok: false; code: "control_center.session_issue.denied" };
 
 export type ControlCenterLiveLoadFailureV1 = {
   kind: "degraded" | "unavailable";
@@ -115,23 +147,157 @@ export function isCurrentControlCenterLiveLoadV1(
   return requestedOperationId === inputOperationId;
 }
 
+export async function issueControlCenterLocalSessionV1(
+  identity_ref: string,
+  password: string,
+  options: {
+    fetch?: ControlCenterFetchV1;
+    signal?: AbortSignal;
+  } = {},
+): Promise<ControlCenterLocalSessionIssueResultV1> {
+  if (
+    identity_ref.length > 255 ||
+    !LOCAL_IDENTITY_PATTERN.test(identity_ref) ||
+    password.length < 15 ||
+    password.length > 128
+  ) {
+    return { ok: false, code: "control_center.session_issue.denied" };
+  }
+  const fetchImpl = options.fetch ?? (fetch as ControlCenterFetchV1);
+  try {
+    const response = await fetchImpl("/v1/session", {
+      method: "POST",
+      credentials: "omit",
+      cache: "no-store",
+      redirect: "error",
+      referrerPolicy: "no-referrer",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "LNSAT-Contract-Version": LIVE_GATEWAY_CONTRACT_VERSION,
+        [LOCAL_SESSION_ISSUE_INTENT_HEADER]: LOCAL_SESSION_ISSUE_INTENT,
+      },
+      body: JSON.stringify({ identity_ref, password, lifetime_seconds: 300 }),
+      ...(options.signal === undefined ? {} : { signal: options.signal }),
+    });
+    if (!isPlainObject(response) || response.ok !== true || response.status !== 201) {
+      return { ok: false, code: "control_center.session_issue.denied" };
+    }
+    const token = response.headers?.get(LOCAL_SESSION_TOKEN_HEADER) ?? "";
+    const proof = response.headers?.get(LOCAL_SESSION_PROOF_HEADER) ?? "";
+    if (
+      !LOCAL_SESSION_TOKEN_PATTERN.test(token) ||
+      !LOCAL_SESSION_PROOF_PATTERN.test(proof)
+    ) {
+      return { ok: false, code: "control_center.session_issue.denied" };
+    }
+    const body = await response.json();
+    const serializedBody = JSON.stringify(body);
+    if (
+      !isLocalSessionIssueEnvelopeV1(body, identity_ref) ||
+      serializedBody.includes(token) ||
+      serializedBody.includes(proof)
+    ) {
+      return { ok: false, code: "control_center.session_issue.denied" };
+    }
+    return { ok: true, session: { token, proof } };
+  } catch {
+    return { ok: false, code: "control_center.session_issue.denied" };
+  }
+}
+
+function isLocalSessionIssueEnvelopeV1(value: unknown, identityRef: string): boolean {
+  if (
+    !hasExactKeys(value, [
+      "contract",
+      "contract_version",
+      "ok",
+      "status",
+      "session",
+      "transport",
+      "replay_semantics",
+      "side_effects",
+      "session_state_changed",
+      "execution_authority",
+      "mutation_authority",
+    ]) ||
+    value.contract !== LOCAL_SESSION_ISSUE_CONTRACT ||
+    value.contract_version !== LIVE_GATEWAY_CONTRACT_VERSION ||
+    value.ok !== true ||
+    value.status !== "authenticated" ||
+    value.replay_semantics !== "fresh_session_per_success" ||
+    value.session_state_changed !== true ||
+    value.execution_authority !== false ||
+    value.mutation_authority !== false
+  ) {
+    return false;
+  }
+  if (
+    !hasExactKeys(value.session, [
+      "session_id",
+      "identity_ref",
+      "role",
+      "issued_at",
+      "expires_at",
+    ]) ||
+    !/^ses_[0-9a-f]{32}$/.test(asString(value.session.session_id)) ||
+    value.session.identity_ref !== identityRef ||
+    !isOneOf(value.session.role, ["owner", "operator", "auditor"]) ||
+    !isTimestamp(value.session.issued_at) ||
+    !isTimestamp(value.session.expires_at) ||
+    Date.parse(value.session.expires_at) <= Date.parse(value.session.issued_at)
+  ) {
+    return false;
+  }
+  if (
+    !hasExactKeys(value.transport, [
+      "bind_scope",
+      "same_origin_required",
+      "cors_enabled",
+      "session_secret_headers",
+    ]) ||
+    value.transport.bind_scope !== "loopback" ||
+    value.transport.same_origin_required !== true ||
+    value.transport.cors_enabled !== false ||
+    value.transport.session_secret_headers !== "returned_once_then_required"
+  ) {
+    return false;
+  }
+  return (
+    Array.isArray(value.side_effects) &&
+    value.side_effects.length === 4 &&
+    value.side_effects[0] === "authentication_limiter_advanced" &&
+    value.side_effects[1] === "session_evidence_appended" &&
+    value.side_effects[2] === "session_security_event_appended" &&
+    value.side_effects[3] === "session_secret_headers_returned"
+  );
+}
+
 export async function loadControlCenterLiveOperationV1(
   operation_id: string,
   options: {
+    session: ControlCenterLocalSessionV1;
     fetch?: ControlCenterFetchV1;
     now?: () => Date;
     signal?: AbortSignal;
-  } = {},
+  },
 ): Promise<ControlCenterLiveLoadResultV1> {
   const observed_at = (options.now ?? (() => new Date()))().toISOString();
   if (!isExactOperationIdV1(operation_id)) {
     return degraded("control_center.live.operation_id_invalid", observed_at);
+  }
+  if (
+    !LOCAL_SESSION_TOKEN_PATTERN.test(options.session.token) ||
+    !LOCAL_SESSION_PROOF_PATTERN.test(options.session.proof)
+  ) {
+    return unavailable("control_center.live.session_invalid", observed_at);
   }
   const fetchImpl = options.fetch ?? (fetch as ControlCenterFetchV1);
   try {
     const operationResult = await fetchGatewayJsonV1(
       fetchImpl,
       `/v1/operations/${operation_id}`,
+      options.session,
       options.signal,
     );
     if (!operationResult.ok) return failureFromFetch(operationResult, observed_at);
@@ -143,28 +309,37 @@ export async function loadControlCenterLiveOperationV1(
     const authorizationResult = await fetchGatewayJsonV1(
       fetchImpl,
       `/v1/execution-authorizations/${operation.authorization_id}`,
+      options.session,
       options.signal,
     );
     if (!authorizationResult.ok) {
       return failureFromFetch(authorizationResult, observed_at);
     }
-    const authorization = parseAuthorizationEnvelopeV1(
+    const parsedAuthorization = parseAuthorizationEnvelopeV1(
       authorizationResult.value,
       operation.authorization_id,
       operation_id,
     );
-    if (authorization === null) {
+    if (parsedAuthorization === null) {
       return degraded(
         "control_center.live.authorization_contract_invalid",
         observed_at,
       );
     }
+    if (
+      operation.attempt !== null &&
+      parsedAuthorization.adapter_ref !== operation.attempt.adapter_ref
+    ) {
+      return degraded("control_center.live.scope_mismatch", observed_at);
+    }
+    const authorization = parsedAuthorization.evidence;
 
     let attempt: ControlCenterLiveAttemptEvidenceV1 | null = null;
     if (operation.attempt !== null) {
       const attemptResult = await fetchGatewayJsonV1(
         fetchImpl,
         `/v1/operations/${operation_id}/attempts/${operation.attempt.operation_attempt_id}`,
+        options.session,
         options.signal,
       );
       if (!attemptResult.ok) return failureFromFetch(attemptResult, observed_at);
@@ -207,17 +382,20 @@ type GatewayFetchResultV1 =
 async function fetchGatewayJsonV1(
   fetchImpl: ControlCenterFetchV1,
   path: string,
+  session: ControlCenterLocalSessionV1,
   signal: AbortSignal | undefined,
 ): Promise<GatewayFetchResultV1> {
   const response = await fetchImpl(path, {
     method: "GET",
-    credentials: "same-origin",
+    credentials: "omit",
     cache: "no-store",
     redirect: "error",
     referrerPolicy: "no-referrer",
     headers: {
       Accept: "application/json",
       "LNSAT-Contract-Version": LIVE_GATEWAY_CONTRACT_VERSION,
+      [LOCAL_SESSION_TOKEN_HEADER]: session.token,
+      [LOCAL_SESSION_PROOF_HEADER]: session.proof,
     },
     ...(signal === undefined ? {} : { signal }),
   });
@@ -337,7 +515,10 @@ function parseAuthorizationEnvelopeV1(
   value: unknown,
   expectedAuthorizationId: string,
   expectedOperationId: string,
-): ControlCenterLiveAuthorizationEvidenceV1 | null {
+): {
+  evidence: ControlCenterLiveAuthorizationEvidenceV1;
+  adapter_ref: string;
+} | null {
   if (
     !hasExactKeys(value, ["contract", "status", "authorization"]) ||
     value.contract !== LIVE_GATEWAY_SOURCE_CONTRACT ||
@@ -406,21 +587,24 @@ function parseAuthorizationEnvelopeV1(
     return null;
   }
   return {
-    authorization_id: authorization.authorization_id,
-    project_ref: asString(authorization.project_ref),
-    resource_ref: asString(authorization.resource_ref),
-    state: authorization.state,
-    active: authorization.active,
-    issued_at: asString(authorization.issued_at),
-    expires_at: asString(authorization.expires_at),
-    approval_decision_id: asString(authorization.approval_decision_id),
-    policy_decision_id: asString(authorization.policy_decision_id),
-    packet_id: asString(authorization.packet_id),
-    requester_ref: asString(authorization.requester_ref),
-    requester_session_ref: asString(authorization.requester_session_ref),
-    approver_ref: asString(authorization.approver_ref),
-    approver_session_ref: asString(authorization.approver_session_ref),
-    operation_id: authorization.operation_id,
+    adapter_ref: asString(authorization.adapter_ref),
+    evidence: {
+      authorization_id: authorization.authorization_id,
+      project_ref: asString(authorization.project_ref),
+      resource_ref: asString(authorization.resource_ref),
+      state: authorization.state,
+      active: authorization.active,
+      issued_at: asString(authorization.issued_at),
+      expires_at: asString(authorization.expires_at),
+      approval_decision_id: asString(authorization.approval_decision_id),
+      policy_decision_id: asString(authorization.policy_decision_id),
+      packet_id: asString(authorization.packet_id),
+      requester_ref: asString(authorization.requester_ref),
+      requester_session_ref: asString(authorization.requester_session_ref),
+      approver_ref: asString(authorization.approver_ref),
+      approver_session_ref: asString(authorization.approver_session_ref),
+      operation_id: authorization.operation_id,
+    },
   };
 }
 

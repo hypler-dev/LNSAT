@@ -9,12 +9,12 @@ allowed capabilities, and secret references. Validation fails closed.
 
 Project onboarding eventually binds exact organization/workspace profile,
 universal instructions and skills, provider/model overlays, context rules,
-connector/module compatibility, and assignment evidence. Portable identity and
-conformance belong to public LNSAT; rich shared-library and visual management
-may live downstream.
+connector/module compatibility, and assignment evidence. Portable identity,
+conformance, shared libraries, and visual management are LNSAT capabilities;
+all must preserve the Gateway authority boundary.
 
 Current profile contracts do not activate these future systems. Read
-[ADR-0003](../architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md),
+[standalone v1 scope](../architecture/ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md),
 [agent configuration management](../architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md),
 and [project status](../PROJECT_STATUS.md).
 
@@ -31,4 +31,4 @@ Recommended flow:
 7. Inspect result through CLI, API, MCP, or Control Center.
 
 Onboarding does not grant live connectors, deploy rights, database credentials,
-model authority, commercial entitlement, or infrastructure control.
+model authority, package publication, or infrastructure control.

@@ -17,11 +17,12 @@ describe("@lnsat/packets Gateway session-rotation v1 contract", () => {
       contract_version: "lnsat.contracts.v1_0",
       path: "/v1/session",
       method: "PATCH",
-      authentication: "active local browser session plus double-submit CSRF",
+      authentication:
+        "active local browser session token and independent proof headers",
       scope: "current_session_only",
       roles: ["owner", "operator", "auditor"],
       request_body: "exact_empty_json_framing",
-      csrf: "required_double_submit",
+      session_proof: "required_independent_header",
       absolute_expiry: "preserve_original",
       replay_semantics: "one_time_current_session",
       failure_oracle: "one generic denial",
@@ -32,7 +33,7 @@ describe("@lnsat/packets Gateway session-rotation v1 contract", () => {
         "replacement_session_evidence_appended",
         "session_rotation_evidence_appended",
         "session_security_events_appended",
-        "session_cookies_set",
+        "session_secret_headers_returned",
       ],
       failure_side_effects: [],
       execution_authority: false,
@@ -84,6 +85,10 @@ describe("@lnsat/packets Gateway session-rotation v1 contract", () => {
     expect(schema).toHaveProperty(
       "$defs.transport.properties.csrf_verified.const",
       true,
+    );
+    expect(schema).toHaveProperty(
+      "$defs.transport.properties.session_secret_headers.const",
+      "returned_once_then_required",
     );
     expect(schema).toHaveProperty("$defs.failure.properties.side_effects.maxItems", 0);
   });

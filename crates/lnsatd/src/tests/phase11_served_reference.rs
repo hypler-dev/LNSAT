@@ -196,13 +196,7 @@ fn timestamp(offset_seconds: i64) -> String {
 }
 
 fn cookie(session: &lnsat_store::LocalSessionIssueResultV1) -> String {
-    format!(
-        "{}={}; {}={}",
-        lnsat_auth::LOCAL_SESSION_COOKIE_NAME_V1,
-        session.raw_session_token,
-        lnsat_auth::LOCAL_CSRF_COOKIE_NAME_V1,
-        session.raw_csrf_token,
-    )
+    session.raw_session_token.clone()
 }
 
 fn mutation_request(
@@ -221,7 +215,7 @@ fn mutation_request(
             "Sec-Fetch-Site: same-origin\r\n",
             "Content-Type: application/json\r\n",
             "Content-Length: {content_length}\r\n",
-            "Cookie: {cookie}\r\n",
+            "X-LNSAT-Local-Session-Token: {cookie}\r\n",
             "{csrf_name}: {csrf}\r\n",
             "Connection: close\r\n\r\n",
             "{body}"
@@ -232,20 +226,21 @@ fn mutation_request(
         version = CONTRACT_VERSION_V1_0,
         content_length = body.len(),
         cookie = cookie,
-        csrf_name = LOCAL_CSRF_HEADER_NAME_V1,
+        csrf_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
         csrf = csrf,
         body = body,
     )
 }
 
-fn read_request(address: SocketAddr, path: &str, cookie: &str) -> String {
+fn read_request(address: SocketAddr, path: &str, cookie: &str, proof: &str) -> String {
     format!(
         concat!(
             "GET {path} HTTP/1.1\r\n",
             "Host: {address}\r\n",
             "{version_name}: {version}\r\n",
             "Sec-Fetch-Site: same-origin\r\n",
-            "Cookie: {cookie}\r\n",
+            "X-LNSAT-Local-Session-Token: {cookie}\r\n",
+            "{proof_name}: {proof}\r\n",
             "Connection: close\r\n\r\n"
         ),
         path = path,
@@ -253,6 +248,8 @@ fn read_request(address: SocketAddr, path: &str, cookie: &str) -> String {
         version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
         version = CONTRACT_VERSION_V1_0,
         cookie = cookie,
+        proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
+        proof = proof,
     )
 }
 
@@ -678,6 +675,7 @@ fn phase11_served_reference_intake_executes_once_and_reconciles_without_retry() 
             daemon.address,
             &format!("/v1/operations/{operation_id}"),
             &requester_cookie,
+            &requester_session.raw_csrf_token,
         )
         .as_bytes(),
     );
@@ -705,6 +703,7 @@ fn phase11_served_reference_intake_executes_once_and_reconciles_without_retry() 
             daemon.address,
             &format!("/v1/operations/{operation_id}/attempts/{attempt_id}"),
             &requester_cookie,
+            &requester_session.raw_csrf_token,
         )
         .as_bytes(),
     );

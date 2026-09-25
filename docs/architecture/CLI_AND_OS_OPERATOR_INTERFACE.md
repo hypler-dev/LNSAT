@@ -1,19 +1,19 @@
 # CLI and OS Operator Interface
 
-- Status: accepted direction with experimental P10-A1 source contract spine and
-  P10-A2 explicit daemon configuration plus P10-A3 authenticated local
-  health/status and stable output formats plus P10-A4 offline recovery,
+- Status: accepted direction with security-corrected experimental P10-A1 source
+  contract spine and P10-A2 explicit daemon configuration plus withdrawn P10-A3
+  Unix health/status commands and stable output formats plus P10-A4 offline recovery,
   non-root enforcement, and parity evidence; P11-D2 adds optional closed
   Docker-local profile selection and redacted config readback only
 - Availability: packet inspection, direct/explicit-config daemon arguments,
-  target-neutral manifest, operator doctor/health/status/config/recovery
-  inspection, offline backup, inert restore, protected owner recovery,
+  target-neutral manifest, operator doctor/config/recovery inspection, withdrawn
+  legacy health/status errors, offline backup, inert restore, protected owner recovery,
   completion, and man source exist; stable supported product CLI does not
 
 Product split and extension boundary are accepted by
 [ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md).
-The LNSAT/Rangoon ownership boundary is defined by
-[ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md).
+The LNSAT standalone ownership boundary is defined by
+[ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md).
 
 ## Decision
 
@@ -37,8 +37,8 @@ for online commands, the CLI is a client and never bypasses Gateway. The bounded
 offline exceptions do not create an agent, API, MCP, or UI authority path.
 
 HCFG-0/HCFG-1 add exact `--product-surface-contract` selection to the three
-manifest commands and `lnsatctl status`. Omission preserves frozen v1 behavior;
-an explicit v1 or v2 selection requires an exact daemon echo for status. v2
+manifest commands. Earlier `lnsatctl status` selector forms remain recognized
+only to return the withdrawn Unix transport error. v2
 adds only source diagnostics: `lnsatctl config schema --product-surface-contract
 lnsat.product_surface.v2` and `lnsatctl config validate --config <absolute-path>
 --product-surface-contract lnsat.product_surface.v2`. Validation may read the
@@ -146,8 +146,6 @@ Current P10-A1/P10-A2/P10-A3/P10-A4 implemented subset:
 lnsat packet validate|hash|inspect ...
 lnsat manifest [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>]|completion|man|--help|--version
 lnsatctl doctor
-lnsatctl health --socket <absolute-path> --session-token-stdin [--output <text|json|jsonl|yaml>]
-lnsatctl status --socket <absolute-path> --session-token-stdin [--product-surface-contract <lnsat.product_surface.v1|lnsat.product_surface.v2>] [--output <text|json|jsonl|yaml>]
 lnsatctl config inspect --config <absolute-path>
 lnsatctl config schema --product-surface-contract lnsat.product_surface.v2
 lnsatctl config validate --config <absolute-path> --product-surface-contract lnsat.product_surface.v2
@@ -163,17 +161,15 @@ lnsatd --database ... | --manifest [--product-surface-contract <lnsat.product_su
 ```
 
 Exact v2 manifest output is
-`fixtures/contracts/product-surface-v2.json`; explicit v2 status output has
-`contract: lnsat.daemon.status.v2`. `config schema` returns
+`fixtures/contracts/product-surface-v2.json`. `config schema` returns
 `command: config.schema`, the embedded closed config schema, and
 `activation_authority: false`; `config validate` returns
 `command: config.validate`, its exact config digest, `valid: true`, and
 `side_effects: []`. Missing, range, duplicate, v1, or unsupported selectors for
 the v2 config commands fail with `lnsatctl.arguments.invalid`, exit `2`, and
-empty stdout. Status selector rejection remains the public-safe
-`lnsatd.product_surface_contract.rejected`; a missing or mismatched explicit
-status echo remains `lnsatctl.product_surface_contract.incompatible`, exit `5`,
-and empty stdout.
+empty stdout. Legacy health/status selector forms return
+`lnsatctl.unix_transport.withdrawn`, exit `2`, before protected stdin, Unix
+connection, or request bytes.
 
 All other listed groups remain reserved and unavailable. Recovery inspection
 is read-only. Backup creates one non-root offline snapshot. Restore creates one
@@ -183,16 +179,14 @@ credential/audit evidence, and revokes every owner session. None reflects raw
 paths or secret material. No repair, migration, quarantine, served recovery,
 or activation authority exists.
 
-P10-A3 health/status accept no default target. macOS/Linux accept one explicit
-absolute, bounded, normalized UTF-8 Unix-socket path. One opaque session token
-is read only from stdin and zeroized after request construction. Client proves
-private parent mode `0700`, non-symlink socket type, socket mode `0600`, owner,
-stable device/inode identity, and connected peer effective UID before bearer
-transmission. Daemon verifies accepted client effective UID before request read.
-TCP bearer, hostname, DNS, TLS, userinfo, query, fragment, proxy environment,
-redirect, retry, discovery, secret argument/file/URL, and remote transport
-behavior are absent. Invalid arguments, path syntax, and stdin fail before
-connect. Unsafe path or server identity fails before request bytes are written.
+The accepted [local authentication availability and UDS withdrawal](SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
+withdraws P10-A3 Unix health/status before the first supported release. Legacy
+command forms remain parse-compatible only to return
+`lnsatctl.unix_transport.withdrawn`, exit `2`, before protected stdin, Unix
+connection, or request bytes. They never send a bearer or browser proof over
+Unix transport. A future CLI transport requires separately accepted mutual
+live-daemon authentication; same-UID path and peer-UID checks are insufficient.
+The browser/API numeric-loopback header-pair flow remains unchanged.
 
 P10-A4 recovery commands accept no default store or destination. Backup and
 owner recovery acquire the daemon-shared exclusive database lease. Owner
@@ -240,12 +234,12 @@ stay result-equivalent to direct Gateway, REST, and MCP fixtures.
 
 ## Local OS Transport
 
-Default v1 client/server path:
+Current source transport path:
 
-- macOS/Linux authenticated CLI reads: owner-controlled Unix domain socket with
-  strict path and peer-credential proof before bearer transmission;
-- macOS/Linux browser/API Gateway: numeric-loopback HTTP remains compatible,
-  but `lnsatctl` never sends its bearer through that lane;
+- macOS/Linux legacy CLI health/status: withdrawn before stdin, Unix connection,
+  or request bytes; no bearer or browser proof is sent;
+- macOS/Linux browser/API Gateway: numeric-loopback HTTP remains compatible with
+  its existing header-pair authentication;
 - Windows later lane: named pipe or loopback transport after threat model and
   compatibility evidence;
 - remote administration: disabled by default; later authenticated TLS/mTLS
@@ -288,9 +282,10 @@ Current P10-A2 source deliberately selects none of the system/user paths above.
 non-symlinked UTF-8 JSON file no larger than 64 KiB. Contract
 `lnsat.daemon.config.v1` is schema-closed and rejects duplicate keys, unknown
 fields, wrong versions, secret fields, non-loopback listeners, unpaired Phase 8
-runtime paths, invalid control-socket paths, unsafe console manifests, and mixed
-direct/config input. Optional `control_socket_path` enables authenticated CLI
-reads; inspection validates syntax only and opens no listener.
+runtime paths, non-null control-socket paths, unsafe console manifests, and
+mixed direct/config input. `control_socket_path` remains a recognized schema
+property only when absent or `null`; a non-null value returns
+`lnsatd.control_socket.withdrawn` before a listener is bound.
 `lnsatctl config inspect` returns only exact-byte SHA-256 and applied-layer
 evidence; configured and rejected paths/bytes are never reflected.
 
@@ -329,8 +324,9 @@ Human output is concise. Automation has versioned closed schemas:
 - pagination, timeout, and cancellation controls;
 - compatibility negotiation and actionable upgrade errors.
 
-P10-A3/P10-A4 implement `text`, `json`, `jsonl`, and `yaml` for `doctor`, config
-and recovery inspection, health, status, backup, restore, and owner recovery.
+P10-A4 implements `text`, `json`, `jsonl`, and `yaml` for `doctor`, config and
+recovery inspection, backup, restore, and owner recovery. Legacy health/status
+withdrawal uses its stable JSON error before output parsing or secret input.
 JSON remains default and preserves existing doctor/config/recovery semantics.
 JSONL emits one compact object line for these single-result commands. YAML is
 one deterministic plain document without tags, anchors, aliases, or multiple

@@ -1,8 +1,9 @@
 # Phase 10 Product-Surface Conformance Freeze
 
-- Status: complete experimental source conformance
+- Status: security-corrected experimental source conformance
 - Packet: `P10-X1`
-- Runtime effect: none beyond P10-A1 through P10-A4
+- Runtime effect: withdrawal of unsupported Unix bearer reads before first
+  supported release; no browser transport change
 - New mutation authority: none
 - Phase 11 status: closed; separate authorization required
 - Package, target, service, deployment, production, or support claim: none
@@ -16,7 +17,12 @@ required negative cases, eight compatibility guarantees, exact validation
 commands, and explicit exclusions. `npm run phase10:exit:test` runs the
 fail-closed validator tests plus the complete Rust product-surface test profile.
 
-This is a source-conformance decision only. It does not select a target, bind a
+This is a source-conformance decision only. The accepted
+[local authentication availability and UDS withdrawal](SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
+corrects the frozen product surface before the first supported release. The
+conformance ledger records the prior manifest, status, and ledger digests it
+supersedes.
+It does not select a target, bind a
 source revision to an artifact, produce a package, install a service, prove a
 target lifecycle, authorize production use, or open Phase 11 implementation.
 Phase 14 still owns every later-selected target/package lifecycle row.
@@ -28,10 +34,13 @@ Phase 14 still owns every later-selected target/package lifecycle row.
   bytes, duplicate/unknown-field refusal, no secret fields, and no ambient
   discovery. Existing direct daemon arguments remain a separate compatible
   mode; mixed direct/config input remains invalid.
-- `lnsatctl health` and `status` require one explicit owner-controlled Unix
-  socket and protected-stdin session token. Client and daemon prove local
-  socket/peer identity before accepting bearer material. GET and HEAD have
-  equal authentication; HEAD is bodyless.
+- `lnsatctl health` and `status` are recognized withdrawn legacy commands.
+  They return `lnsatctl.unix_transport.withdrawn` before protected stdin,
+  Unix connect, or request bytes. No supported command sends a bearer or
+  browser proof over Unix transport.
+- `control_socket_path` remains a recognized configuration property only when
+  absent or `null`; a non-null value returns
+  `lnsatd.control_socket.withdrawn` before daemon bind.
 - JSON remains default. Text, JSON, JSONL, and YAML share deterministic output
   contracts and stable exit families.
 - Recovery inspection remains read-only. Backup and owner recovery require
@@ -64,11 +73,12 @@ to completed Phase 10 evidence.
 ## Negative Evidence
 
 The closed ledger requires negatives for ambient authority or secret-bearing
-arguments, mixed configuration precedence, TCP bearer fallback, token input
-before endpoint validation, insecure or symlinked socket identity, GET/HEAD
-authentication drift, restore overwrite/activation, owner-secret reflection,
+arguments, mixed configuration precedence, TCP bearer fallback, protected token
+input, Unix connection, or request bytes before withdrawal, restored Unix
+socket identity claims, restore overwrite/activation, owner-secret reflection,
 root execution, served API/MCP/UI recovery actions, and early Phase 10 target
-lifecycle claims.
+lifecycle claims. It also requires that unverified session traffic and unknown
+identity churn cannot consume verified identity or session limiter capacity.
 
 Unknown, missing, reordered, duplicated, unreadable, or marker-drifted evidence
 fails closed. Migration `0018` remains unregistered. Every product manifest

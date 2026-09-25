@@ -29,6 +29,31 @@ Current behavior:
   eight future cases, including exact runtime, image, target, lifecycle,
   cleanup, redaction, and review observations; it carries no observation,
   result, receipt, host path, container ID, output, or secret;
+- derives one pure source-only execution-harness commitment that binds the
+  proof-plan and evidence-requirements digests, all inherited requirement sets,
+  and the exact later-authority declarations and stops; it has no runtime call
+  surface and has independent source review under `PHR-0005`, while a runnable
+  proof driver and real runtime evidence remain separate gates;
+- derives one pure private run-manifest contract that binds the reviewed plan,
+  evidence requirements, and execution harness to a nonce, separately supplied
+  expected source-root/revision/build identity, bounded UTC window, exact future
+  identities, private evidence custody, and named permissions; it rejects
+  evidence beneath source or the disposable target root and declared
+  source/target path overlap lexically, does not prove human authority or
+  inspect physical filesystem identities or disjointness, and leaves the driver
+  as a separate gate that must resolve and authenticate the physical source and
+  target identities and revalidate their disjointness immediately before process
+  creation;
+- evaluates one private served-driver admission contract as a structural check
+  over a caller-supplied claim snapshot, run manifest, canonical D3/D4A payload,
+  loaded profile, exact profile-derived D3 limits, and launch-contract digest;
+  replay, ambiguous state/receipt/reconciliation, and binding drift fail closed,
+  but the output authenticates no snapshot, revalidates no durable state, and
+  grants no launch permission; a later runnable driver must perform an
+  authenticated durable-store re-read of the exact bound consumption,
+  operation, and attempt immediately before process creation, with no store
+  write, route, filesystem/process/Docker I/O, receipt, evidence persistence,
+  selector, or runtime execution in this evaluator;
 - exposes the target-neutral Phase 10 source manifest with `--manifest` without
   opening storage or a listener;
 - acquires and holds an owner-only exclusive database-sidecar lease before

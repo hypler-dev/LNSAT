@@ -5,7 +5,7 @@
 Status: proposed
 Authority: [HCFG-4A intent](intent.md)
 Owner: LNSAT maintainers
-Last updated: 2026-09-10
+Last updated: 2026-09-24
 
 ## Scope and protected lanes
 
@@ -130,5 +130,13 @@ None. Proposed plan only.
   source; OSV was skipped because it changes no dependency manifest or lockfile.
 - 2026-09-10: fresh independent `gpt_reviewer` (Terra xhigh, OpenAI) manually
   reviewed all five proposal paths and reported PASS with no P1/P2/P3 finding.
+- 2026-09-24: reconciled the proposal with public main after the browser
+  session contract changed from cookies to a required bearer/proof header pair.
+  Intent and specification remain proposed; owner acceptance is pending.
+- 2026-09-24: intent/spec/plan artifact validation, full Prettier check,
+  product-direction tests (31/31), public-readiness check (868 files), legacy
+  inventory check (2,122 occurrences across 295 files), and Git diff checks
+  passed. Fresh read-only `gpt_reviewer` (Terra xhigh, OpenAI) reported no
+  actionable P1/P2/P3 finding on the proposal diff against public main.
 - Source implementation, source validation/scanning/review, implementation PR,
   merge, runtime, build, and release evidence: pending.

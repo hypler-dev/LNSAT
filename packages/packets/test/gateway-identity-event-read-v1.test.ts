@@ -17,7 +17,7 @@ describe("@lnsat/packets Gateway identity-event read v1 contract", () => {
       contract_version: "lnsat.contracts.v1_0",
       path: "/v1/identities/{identity_ref}/events",
       methods: ["GET", "HEAD"],
-      authentication: "active local browser session",
+      authentication: "active local browser session header pair",
       authorization_permission: "read_evidence",
       scope: "validated_target_identity",
       roles: ["owner", "operator", "auditor"],

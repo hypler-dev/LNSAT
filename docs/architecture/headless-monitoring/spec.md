@@ -5,7 +5,7 @@
 Status: proposed
 Intent: [HCFG-4A exact evidence-readback intent](intent.md)
 Owner: LNSAT maintainers
-Last updated: 2026-09-10
+Last updated: 2026-09-24
 
 ## Behavior
 
@@ -19,8 +19,11 @@ LNSAT-Contract-Version: lnsat.contracts.v1_0
 ```
 
 The routes use the existing API-wide numeric-loopback peer, exact bound `Host`,
-exact contract-version, same-origin, cookie-authentication, session-validity,
-and fixed `ReadEvidence` gates. Owner, operator, and auditor roles may read.
+exact contract-version, same-origin, two-header session authentication,
+session-validity, and fixed `ReadEvidence` gates. Both
+`X-LNSAT-Local-Session-Token` and independent
+`X-LNSAT-Local-Session-Proof` are required; browser cookies grant no
+authentication. Owner, operator, and auditor roles may read.
 The permission is installation-wide because the current local role model has no
 project-scoped sessions or grants.
 
@@ -204,7 +207,8 @@ unchanged.
   encoding, fragment, slash, suffix, and family-confusion negatives.
 - Authentication tests: owner/operator/auditor success; missing, malformed,
   expired, revoked, wrong-origin, remote-peer, Host drift, Fetch-Metadata drift,
-  duplicate cookie/header, and forbidden-CSRF negatives.
+  cookie-only replay, duplicate or mismatched session headers, and
+  forbidden-CSRF negatives.
 - Response tests: closed fields, stable domain values, sorted collections,
   nullable audit links, false authority fields, no mutation/replay claims,
   `GET`/`HEAD` status and `Content-Length` parity, and bodyless `HEAD`.

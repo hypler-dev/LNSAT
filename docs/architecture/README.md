@@ -16,6 +16,7 @@ wording; [project status](../PROJECT_STATUS.md) controls merged truth.
 - [Architecture and developer guide](ARCHITECTURE_AND_DEVELOPER_GUIDE.md)
 - [Authority layer and reference workflow](AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](THREAT_MODEL.md)
+- [Loopback browser session header hardening](SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [System architecture](SYSTEM_ARCHITECTURE.md)
 - [Packet model](PACKET_MODEL.md)
 - [Policy and audit](POLICY_AND_AUDIT.md)
@@ -27,11 +28,11 @@ wording; [project status](../PROJECT_STATUS.md) controls merged truth.
 - [Internal knowledge surface](INTERNAL_KNOWLEDGE_SURFACE.md)
 - [Control Center information architecture](MANAGEMENT_UI_INFORMATION_ARCHITECTURE.md)
 - [Rust core and TypeScript Control Center](RUST_CORE_AND_TYPESCRIPT_CONTROL_CENTER_ARCHITECTURE.md)
-- [Open core and product repositories](OPEN_CORE_AND_PRODUCT_REPOSITORIES.md)
+- [Open core and extension boundaries](OPEN_CORE_AND_EXTENSION_BOUNDARIES.md)
 
 ## Accepted Decisions
 
-- [ADR-0008: LNSAT kernel and Rangoon userland boundary](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+- [ADR-0008: LNSAT standalone v1 scope](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)
 - [ADR-0007: Docker-first runtime-neutral enforcement](ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [ADR-0006: Phase 7 local-v1 trust and optional signed evidence](ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md)
 - [ADR-0004: Phase 7 signed approval evidence](ADR-0004_PHASE_7_SIGNED_APPROVAL_EVIDENCE.md)
@@ -91,8 +92,32 @@ publication order is controlled by [product build sequence](../PRODUCT_BUILD_SEQ
 - [Phase 9 API-backed Control Center](PHASE_9_API_BACKED_CONTROL_CENTER.md)
 - [Phase 10 product-surface contract spine](PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md)
 - [Phase 10 product-surface conformance freeze](PHASE_10_PRODUCT_SURFACE_CONFORMANCE_FREEZE.md)
+- [Local authentication availability and UDS withdrawal](SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
 - [Phase 11 real disposable Docker proof readiness](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
+- [Phase 11 real disposable Docker proof operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+
+The source-only execution-harness contract binds the proposed Phase 11 proof
+records for later authority. PHR-0005 records independent source review. It is
+not a runnable proof driver and has no runtime evidence.
+
+The private served-driver admission evaluator structurally checks the canonical
+run manifest against fields in a caller-supplied claim snapshot, the D3/D4A
+payload, loaded profile, and launch-contract digest. It rejects replay and state
+or identity drift without store writes or runtime I/O. Its digest authenticates
+no snapshot, proves no current durable state, and grants no launch permission.
+After the D4B2A claim commits, a later runnable driver must use a private
+store-owned verifier and a fresh authenticated store transaction to re-read the
+exact durable consumption, operation, and attempt immediately before process
+creation. Exact success returns a bound pre-supervisor guard. It remains
+source-only and does not complete Phase 11 or open real Docker proof.
+
+The source-only operator packet locks the reviewed proof-implementation source
+and separately records PR #39's packet integration identity. It enumerates the
+later identity, admission, case, limit, evidence, cleanup, redaction, and
+pass/fail gates without moving product/source `0.1.0`. Live runtime identities
+and the runnable authenticated-store boundary remain blocking; the record
+grants no Docker or execution authority.
 
 These files describe experimental local foundations. Local owner, append-only
 credential rotation, permanent non-owner disablement, hash-only session

@@ -162,6 +162,10 @@ main {
   padding-left: 20px;
   color: #b9ccca;
 }
+.panel dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 760px) {
   .console-shell {

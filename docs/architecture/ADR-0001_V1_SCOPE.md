@@ -5,7 +5,7 @@
 - Decision owners: LNSAT maintainers
 - Implementation state: not shipped; evidence gates remain open
 
-> Historical decision. [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
+> Historical decision. [ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)
 > supersedes conflicting UI, wizard, installer, and distro ownership wording.
 > [ADR-0002](ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
 > supersedes this record where platform, architecture, package, installer,
@@ -13,9 +13,8 @@
 > conflict. Local-first single-node, SQLite, local-auth, non-root, fail-closed,
 > API, support-window, and no-live boundaries remain in force.
 > [ADR-0003](ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md) governs
-> later open-core, downstream extension, managed-agent-content, advisory-model,
-> visual-management, and OS CLI direction without reopening this historical
-> v1 scope.
+> later extension and management-plane direction without reopening this
+> historical v1 scope.
 
 ## Context
 

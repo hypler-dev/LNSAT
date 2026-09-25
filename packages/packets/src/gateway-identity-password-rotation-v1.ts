@@ -21,8 +21,8 @@ export const GATEWAY_IDENTITY_PASSWORD_ROTATION_REVOCATION_SIDE_EFFECT_V1 =
   "session_family_revocations_appended";
 export const GATEWAY_IDENTITY_PASSWORD_ROTATION_SESSION_EVENT_SIDE_EFFECT_V1 =
   "session_security_events_appended";
-export const GATEWAY_IDENTITY_PASSWORD_ROTATION_COOKIE_SIDE_EFFECT_V1 =
-  "session_cookies_cleared";
+export const GATEWAY_IDENTITY_PASSWORD_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1 =
+  "session_secret_headers_invalidated";
 export const GATEWAY_IDENTITY_PASSWORD_ROTATION_FAILURE_SIDE_EFFECT_V1 =
   "authentication_limiter_may_advance";
 
@@ -32,7 +32,7 @@ export const gatewayIdentityPasswordRotationV1Contract = {
   path: "/v1/identity/password",
   method: "PATCH",
   authentication:
-    "active local browser session plus double-submit CSRF and latest password",
+    "active local browser session token and independent proof headers and latest password",
   scope: "authenticated_identity",
   roles: ["owner", "operator", "auditor"] satisfies GatewaySessionReadRoleV1[],
   request_fields: ["current_password", "new_password"],
@@ -51,7 +51,7 @@ export const gatewayIdentityPasswordRotationV1Contract = {
     GATEWAY_IDENTITY_PASSWORD_ROTATION_IDENTITY_EVENT_SIDE_EFFECT_V1,
     GATEWAY_IDENTITY_PASSWORD_ROTATION_REVOCATION_SIDE_EFFECT_V1,
     GATEWAY_IDENTITY_PASSWORD_ROTATION_SESSION_EVENT_SIDE_EFFECT_V1,
-    GATEWAY_IDENTITY_PASSWORD_ROTATION_COOKIE_SIDE_EFFECT_V1,
+    GATEWAY_IDENTITY_PASSWORD_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1,
   ],
   failure_side_effects: [GATEWAY_IDENTITY_PASSWORD_ROTATION_FAILURE_SIDE_EFFECT_V1],
   execution_authority: false,
@@ -78,8 +78,7 @@ export type GatewayIdentityPasswordRotationSuccessV1 = {
     same_origin_required: true;
     csrf_verified: true;
     cors_enabled: false;
-    session_cookie: "cleared_host_only_http_only_samesite_strict";
-    csrf_cookie: "cleared_host_only_samesite_strict";
+    session_secret_headers: "discard_required";
   };
   replay_semantics: "one_time_active_session_family";
   side_effects: [
@@ -89,7 +88,7 @@ export type GatewayIdentityPasswordRotationSuccessV1 = {
     typeof GATEWAY_IDENTITY_PASSWORD_ROTATION_IDENTITY_EVENT_SIDE_EFFECT_V1,
     typeof GATEWAY_IDENTITY_PASSWORD_ROTATION_REVOCATION_SIDE_EFFECT_V1,
     typeof GATEWAY_IDENTITY_PASSWORD_ROTATION_SESSION_EVENT_SIDE_EFFECT_V1,
-    typeof GATEWAY_IDENTITY_PASSWORD_ROTATION_COOKIE_SIDE_EFFECT_V1,
+    typeof GATEWAY_IDENTITY_PASSWORD_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1,
   ];
   credential_state_changed: true;
   session_state_changed: true;

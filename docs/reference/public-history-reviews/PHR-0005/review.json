@@ -1,0 +1,99 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0005-independent-implementation-review-6296eadb",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["phase11-docker-proof-execution-harness-contract"],
+  "base_revision": "b6e76bcc604beeb6ea291e082f0c0452334d2e51",
+  "reviewed_revision": "6296eadbb7699791fb164b1e65bbda8e0ec93110",
+  "reviewed_tree_oid": "151d84616b196ac17c617ba18a92a3a6b9346d57",
+  "diff_sha256": "sha256:c2121ff51c8290a4c15139dd6806a9d2ad1995381853333b84964bd97f8e73a3",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:a9cdf5c164fe4d9f592fcb331cca86687c89355905a8190255247d1fb76a2bef"
+    },
+    {
+      "path": "crates/lnsatd/README.md",
+      "sha256": "sha256:d1f87bdbab3cced0e106c6e338b0e7ea6a00369f078bd09bc374c0a10c6f573f"
+    },
+    {
+      "path": "crates/lnsatd/src/docker_local_runtime_proof_execution_harness.rs",
+      "sha256": "sha256:e4e3897e17b825bfcc4e436ed028106987a8fbed3ee9f37913856d2481f9c3b0"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:4409caaa5a5f23f98d9d43ae72a917e1aa457d5d2c20b40a5be48d4ea0f08a90"
+    },
+    {
+      "path": "crates/lnsatd/tests/docker_local_runtime_proof_execution_harness.rs",
+      "sha256": "sha256:02ba96d0f6e8a02acb51031d4e45d115ef11e164ac667d265e1682017d5f0e9a"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:6ed828569de45a898d2d080c91e085ef50b0bbe9913c633d1d78e2fc5bbca901"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:b3169558b203024071e2f3d7da7101c7aa8695b42f7268355ba4c25cd091cbf6"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:2dd585a77608801074f4bb2724b48950ed7b28082a9784d40f8cbf6a72d2875b"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:b3b360d68bfa2f3473adecdb618fe374efcd856fec6c78a698d3f47675a8e64c"
+    },
+    {
+      "path": "docs/WHY_PUBLIC_NOW.md",
+      "sha256": "sha256:c61997e726ca028f530c0264cf8a08ea500ef89aff3a7366ab50ac36381de667"
+    },
+    {
+      "path": "docs/architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md",
+      "sha256": "sha256:a40d4102e7a9404277d63e03b6c942461a878cc269cf7ebbc804a8903167aba1"
+    },
+    {
+      "path": "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md",
+      "sha256": "sha256:500214fa91d32385eeb1837d4ebdf0e65d98b008a6aefccc25540e75ceaf35fb"
+    },
+    {
+      "path": "docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md",
+      "sha256": "sha256:354ff0b0a12513deb58d5a4b5ef36e4187e3980357b07951e1d948c8316449ed"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "sha256": "sha256:625e7c0c284078fe2d7d953842914ef8bb220434526af124a950ee95adb46516"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:54f2e72eab8be1a337e2c9df1eb5b3ee7ff9fd3d87e646b6a043b325b6711d88"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:53f756454c498feacf0a19915b5caa863da06cb79fb1bc312b2e97b13fba533d"
+    },
+    {
+      "path": "fixtures/contracts/phase11-docker-local-runtime-proof-execution-harness-v1.json",
+      "sha256": "sha256:1e718cd56a136ab99044ba874d4a20ee2d2a2bfcedaba896c2137a30fe5c5117"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.mjs",
+      "sha256": "sha256:e61782fb42abea625d947d45a4771f631c00d7e8c5358b2b3f189edbe0029ad3"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.test.mjs",
+      "sha256": "sha256:70936472c225180a51c7232127436d546dbde890c68d8dc6a53b4da875d5436f"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/phase11_harness_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex Terra xhigh read-only review; corroborated by Z.AI GLM-5.3 read-only review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

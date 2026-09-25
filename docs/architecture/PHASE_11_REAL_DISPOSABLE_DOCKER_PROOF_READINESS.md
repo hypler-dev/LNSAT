@@ -112,6 +112,63 @@ must run all eight proof cases against a marked disposable target, then receive
 independent review. No source check, fake-runtime test, host-process test, or
 operator acknowledgement substitutes for real runtime evidence.
 
+The source-only execution-harness contract binds this readiness plan and its
+evidence requirements for later authority. PHR-0005 records independent source
+review of that contract. It is not a runnable proof driver and adds no execution
+or runtime evidence.
+
+The private run-manifest contract binds the reviewed plan, evidence requirements,
+and execution harness to exact later-run declarations plus a separately supplied
+expected source-root/revision/build identity. It rejects private evidence beneath
+that source root or the disposable target root and declared source/target path
+overlap lexically. JSON manifest presence never grants permission or proves
+physical filesystem disjointness. It performs no filesystem identity check,
+Docker access, or runtime I/O.
+The later driver must resolve and authenticate the physical source and target
+identities and revalidate their disjointness immediately before process creation;
+preflight daemon, image, configuration, entrypoint, and in-image adapter identity;
+traverse Gateway -> D4B2A -> D3/D4A -> supervisor;
+and require daemon/client/endpoint-revalidated, launch-label-bound
+inspect-before-remove cleanup.
+
+The private served-driver admission evaluator is the next source-only structural
+seam. It checks created and dispatching fields in a caller-supplied claim
+snapshot and binds the canonical run manifest to that snapshot, the canonical
+D3/D4A payload, the loaded profile, and the recomputed launch-contract digest.
+The structural check requires the D3 stdin, stdout, stderr, and deadline limits
+to equal the loaded profile's exact derived values. Replay, ambiguous operation
+or attempt state, receipt or reconciliation presence, and any binding drift fail
+closed. Its digest authenticates no snapshot, proves no current durable claim
+state, and grants no launch permission.
+A later runnable driver must, after the successful D4B2A claim commit,
+authenticate the created-claim result and call a private store-owned verifier.
+That verifier must use the live session and CSRF proof in a fresh authenticated
+store transaction to re-read and cross-check the exact durable consumption,
+operation, and attempt immediately before process creation. It must bind every
+admission, authority, request, payload, profile, adapter, image, protocol, and
+launch identity; require created and exact dispatching sequence state; and
+require no receipt or reconciliation. Only exact success may return a bound
+pre-supervisor guard. A caller-supplied claim snapshot, public read API, or
+structural admission digest cannot satisfy this gate. A post-claim mismatch or
+read failure rejects before spawn, preserves or marks `outcome_unknown`, and
+never redispatches; a post-spawn anomaly remains inspection-only and never
+permits a blind Docker retry. The evaluator performs no store write, route
+handling, filesystem or process I/O, Docker access, receipt or evidence
+persistence, runtime selector, or runtime execution. It prepares a later driver
+gate; it does not open one.
+
+The source-only
+[operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+locks the reviewed proof-implementation source and separately records the
+public packet integration identity. It turns this plan into one reviewable
+operator checklist: exact identity slots, private
+declarations, admission/live-store inputs, profile-derived D3 limits, all eight
+positive cases, required rejections, receipt/reconciliation behavior,
+`outcome_unknown`, cleanup, evidence custody and retention, redaction, and
+pass/fail criteria. Its runnable-driver boundary and live runtime identity slots
+remain blocking. It neither finalizes a private run manifest nor authorizes
+Docker access.
+
 ## Support and release boundary
 
 This readiness plan does not complete Phase 11, create a supported runtime,

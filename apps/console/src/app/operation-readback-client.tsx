@@ -3,12 +3,15 @@
 import * as React from "react";
 import {
   applyControlCenterLiveLoadResultV1,
+  discardControlCenterLocalSessionRefsV1,
+  issueControlCenterLocalSessionV1,
   isExactOperationIdV1,
   isCurrentControlCenterLiveLoadV1,
   loadControlCenterLiveOperationV1,
   operationIdForExplicitLoadV1,
   retainControlCenterLiveStateForInputV1,
   type ControlCenterLiveClientStateV1,
+  type ControlCenterLocalSessionV1,
 } from "../lib/control-center-live-readback.js";
 
 const EMPTY_STATE: ControlCenterLiveClientStateV1 = {
@@ -17,15 +20,103 @@ const EMPTY_STATE: ControlCenterLiveClientStateV1 = {
 };
 
 export function OperationReadbackClient(): React.ReactElement {
+  const sessionRef = React.useRef<ControlCenterLocalSessionV1 | null>(null);
+  const sessionEpochRef = React.useRef(0);
+  const activeRequestRef = React.useRef<AbortController | null>(null);
+  const [sessionState, setSessionState] = React.useState<
+    "unauthenticated" | "issuing" | "ready" | "failed"
+  >("unauthenticated");
+  const [sessionError, setSessionError] = React.useState<string | null>(null);
+  const [identityRef, setIdentityRef] = React.useState("");
+  const [password, setPassword] = React.useState("");
   const [operationId, setOperationId] = React.useState("");
   const operationIdRef = React.useRef("");
   const [state, setState] = React.useState(EMPTY_STATE);
   const [loading, setLoading] = React.useState(false);
   const [inputError, setInputError] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    const page = globalThis as unknown as {
+      addEventListener(type: "pagehide", listener: () => void): void;
+      removeEventListener(type: "pagehide", listener: () => void): void;
+    };
+    const discardOnPageHide = (): void => {
+      discardControlCenterLocalSessionRefsV1(
+        sessionRef,
+        sessionEpochRef,
+        activeRequestRef,
+      );
+      setLoading(false);
+      setState(EMPTY_STATE);
+      setSessionError(null);
+      setSessionState("unauthenticated");
+    };
+    page.addEventListener("pagehide", discardOnPageHide);
+    return () => {
+      page.removeEventListener("pagehide", discardOnPageHide);
+      discardControlCenterLocalSessionRefsV1(
+        sessionRef,
+        sessionEpochRef,
+        activeRequestRef,
+      );
+    };
+  }, []);
+
+  function discardLocalSession(message: string | null = null): void {
+    discardControlCenterLocalSessionRefsV1(
+      sessionRef,
+      sessionEpochRef,
+      activeRequestRef,
+    );
+    setLoading(false);
+    setState(EMPTY_STATE);
+    setInputError(null);
+    setSessionError(message);
+    setSessionState(message === null ? "unauthenticated" : "failed");
+  }
+
+  async function startSession(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (sessionState === "issuing") return;
+    activeRequestRef.current?.abort();
+    const controller = new AbortController();
+    activeRequestRef.current = controller;
+    const issueEpoch = sessionEpochRef.current + 1;
+    sessionEpochRef.current = issueEpoch;
+    sessionRef.current = null;
+    setState(EMPTY_STATE);
+    setInputError(null);
+    setSessionError(null);
+    setSessionState("issuing");
+    const requestPassword = password;
+    setPassword("");
+    const result = await issueControlCenterLocalSessionV1(
+      identityRef,
+      requestPassword,
+      { signal: controller.signal },
+    );
+    if (sessionEpochRef.current !== issueEpoch) return;
+    activeRequestRef.current = null;
+    if (!result.ok) {
+      sessionRef.current = null;
+      setSessionState("failed");
+      setSessionError(
+        "Could not start local session. Check credentials and try again.",
+      );
+      return;
+    }
+    sessionRef.current = result.session;
+    setSessionState("ready");
+  }
+
   async function load(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (loading) return;
+    const session = sessionRef.current;
+    if (session === null || sessionState !== "ready") {
+      setInputError("Start a local session before loading evidence.");
+      return;
+    }
     const selectedOperationId = operationIdForExplicitLoadV1(
       operationId,
       currentLocationHashV1(),
@@ -38,12 +129,29 @@ export function OperationReadbackClient(): React.ReactElement {
     setOperationId(selectedOperationId);
     setInputError(null);
     setLoading(true);
-    const result = await loadControlCenterLiveOperationV1(selectedOperationId);
-    if (isCurrentControlCenterLiveLoadV1(selectedOperationId, operationIdRef.current)) {
-      setState((previous) =>
-        applyControlCenterLiveLoadResultV1(previous, result, selectedOperationId),
-      );
+    activeRequestRef.current?.abort();
+    const controller = new AbortController();
+    activeRequestRef.current = controller;
+    const requestEpoch = sessionEpochRef.current;
+    const result = await loadControlCenterLiveOperationV1(selectedOperationId, {
+      session,
+      signal: controller.signal,
+    });
+    if (
+      sessionEpochRef.current !== requestEpoch ||
+      sessionRef.current !== session ||
+      !isCurrentControlCenterLiveLoadV1(selectedOperationId, operationIdRef.current)
+    ) {
+      return;
     }
+    activeRequestRef.current = null;
+    if (!result.ok && result.failure.code === "control_center.live.http_403") {
+      discardLocalSession("Local session expired. Sign in again.");
+      return;
+    }
+    setState((previous) =>
+      applyControlCenterLiveLoadResultV1(previous, result, selectedOperationId),
+    );
     setLoading(false);
   }
 
@@ -62,21 +170,70 @@ export function OperationReadbackClient(): React.ReactElement {
     <section className="panel" aria-label="Live Gateway operation evidence">
       <div className="panel-head">
         <h2>Live Gateway evidence</h2>
-        <span>authenticated · same origin · read only</span>
+        <span>local session · same origin · evidence reads</span>
+      </div>
+      <div className="session-panel" aria-label="Local browser session">
+        {sessionState === "ready" ? (
+          <>
+            <p aria-live="polite">Local session active in this tab.</p>
+            <button type="button" onClick={() => discardLocalSession()}>
+              Forget local session
+            </button>
+            <p>
+              Browser-held access clears here. The server session expires on schedule.
+            </p>
+          </>
+        ) : (
+          <form onSubmit={startSession}>
+            <label htmlFor="local-identity-ref">Local identity</label>{" "}
+            <input
+              autoCapitalize="none"
+              autoComplete="username"
+              disabled={sessionState === "issuing"}
+              id="local-identity-ref"
+              onChange={(event) =>
+                setIdentityRef(
+                  (event.currentTarget as unknown as { value: string }).value,
+                )
+              }
+              spellCheck={false}
+              type="text"
+              value={identityRef}
+            />{" "}
+            <label htmlFor="local-password">Password</label>{" "}
+            <input
+              autoComplete="current-password"
+              disabled={sessionState === "issuing"}
+              id="local-password"
+              onChange={(event) =>
+                setPassword((event.currentTarget as unknown as { value: string }).value)
+              }
+              type="password"
+              value={password}
+            />{" "}
+            <button disabled={sessionState === "issuing"} type="submit">
+              {sessionState === "issuing"
+                ? "Starting local session…"
+                : "Start local session"}
+            </button>
+            <p>Session secrets stay only in this tab and clear when the page closes.</p>
+          </form>
+        )}
+        {sessionError === null ? null : <p role="alert">{sessionError}</p>}
       </div>
       <form onSubmit={load}>
         <label htmlFor="live-operation-id">Exact operation ID</label>{" "}
         <input
           aria-describedby="live-operation-help"
           autoComplete="off"
-          disabled={loading}
+          disabled={loading || sessionState !== "ready"}
           id="live-operation-id"
           onChange={updateOperationId}
           spellCheck={false}
           type="text"
           value={operationId}
         />{" "}
-        <button disabled={loading} type="submit">
+        <button disabled={loading || sessionState !== "ready"} type="submit">
           {loading
             ? "Loading…"
             : snapshot?.operation === null || snapshot === null

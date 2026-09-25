@@ -6,8 +6,8 @@ ordered; explicitly post-local-v1 lanes do not block first local support.
 [ADR-0002](architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
 controls positioning, authority boundaries, and expanded v1 distribution.
 [ADR-0003](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)
-controls open-core/downstream boundaries, governed agent content, advisory
-models, extension isolation, management views, and OS CLI direction.
+controls governed agent content, advisory models, extension isolation,
+management views, and OS CLI direction.
 [ADR-0006](architecture/ADR-0006_PHASE_7_LOCAL_V1_TRUST_AND_OPTIONAL_SIGNED_EVIDENCE.md)
 controls local-v1 trust, optional signed approval, online one-time
 authorization, revised Phase 7 lanes, and staged release breadth.
@@ -82,6 +82,50 @@ client, endpoint, daemon, image, adapter, disposable-target, authority-chain,
 lifecycle, cleanup, reconciliation, redaction, and review commitments each of
 those eight cases must later provide. It records no real observation and opens
 no Docker or public runtime selector.
+A source-only execution-harness contract now binds the proof-plan and
+evidence-requirements digests, inherited lists, and exact later-authority
+declarations and stops. PHR-0005 records independent source review. It remains
+proposed source-only metadata, opens no runnable proof driver or runtime selector,
+and does not complete Phase 11.
+
+A private run-manifest contract binds exact later-run declarations to a
+separately supplied expected source-root/revision/build identity, rejects private
+evidence beneath source or the disposable target root and declared source/target
+path overlap lexically, and preserves the closed boundary: JSON alone never
+grants permission, proves physical filesystem disjointness, or creates runtime
+authority.
+Physical source/target identity resolution and authentication plus disjointness
+revalidation immediately before process creation, other daemon/image/
+configuration/entrypoint/in-image-adapter preflight, the served Gateway ->
+D4B2A -> D3/D4A -> supervisor chain, and launch-label-bound cleanup remain later
+driver and real-proof work.
+
+The private served-driver admission seam now structurally checks the canonical
+run manifest against fields in a caller-supplied claim snapshot, canonical
+D3/D4A payload, loaded profile, and launch-contract digest. Replay, ambiguous
+state/receipt/reconciliation, and binding drift fail closed, but its digest
+authenticates no snapshot, revalidates no durable state, and grants no launch
+permission. After a successful D4B2A claim commit, a later runnable driver must
+authenticate the created-claim result and use a private store-owned verifier in
+a fresh authenticated store transaction. It must re-read the exact consumption,
+operation, and attempt through the durable-store boundary and return a bound
+pre-supervisor guard only for exact live state. A post-claim pre-spawn failure
+preserves or marks `outcome_unknown` and never redispatches. This evaluator
+performs
+no store write, route, filesystem/process/Docker I/O, receipt, evidence
+persistence, selector, or runtime execution; Phase 11 remains incomplete.
+
+The source-only operator run packet fixes the proof-implementation source at
+public revision `b41aa756bccd85843ac540abfd927e8c5693d5fe` and separately
+records PR #39 packet integration at public merge
+`190ab32443f60a2a1bc78f990e8ea5571c28f96f`. It collects the later-run
+identity register, private declarations, admission/live-store gate, D3 limits,
+eight positive cases, preflight rejections, durable ambiguity, cleanup,
+evidence custody, retention, redaction, and pass/fail rules in one reviewable
+record. Packet integration does not move the proof-source lock or
+product/source version `0.1.0`. All live runtime identity values remain
+blocking. A new exact owner authorization is still required before any Docker
+observation or execution.
 
 Successful source validation never implies shipped support. Unknown or untested
 compatibility rows remain unsupported.
@@ -190,17 +234,17 @@ sessions, and authenticated owner/operator approval persistence are also
 implemented. Approval binds exact identity, local-session reference, CSRF, and
 trusted decision time while retaining `execution_authorized: false`.
 Daemon composition now strictly parses duplicate-refused browser request heads
-and exact bounded bodies, emits host-only strict same-site cookie values, verifies
-anti-CSRF double-submit plus active SQLite session evidence, and returns
+and exact bounded bodies, emits non-ambient session-token/proof response headers, verifies
+independent session proof plus active SQLite session evidence, and returns
 secret-free request evidence. Server-owned UTC supplies issue/verification
 time, a monotonic fixed-window limiter caps authentication attempts, and
 unknown identities consume the same validated Argon2id profile. Active
-bearer/CSRF mutation proof can atomically revoke every active
+token/proof mutation authentication can atomically revoke every active
 same-identity session through immutable revocation rows. Schema v11 adds
 append-only activity evidence with 60-second touch granularity, a 900-second
 default idle timeout, exact-boundary rejection, and a 61-row bound across the
 maximum one-hour absolute lifetime. Existing v10 sessions anchor initially to
-immutable issue time. Atomic session rotation creates fresh bearer/CSRF
+immutable issue time. Atomic session rotation creates fresh token/proof
 material, retains the original absolute expiry, revokes the prior session, and
 persists immutable replacement linkage. Schema v12 permits at most 64
 strictly ordered immutable credential generations, verifies only the latest,
@@ -208,8 +252,8 @@ and atomically revokes every active same-identity session after authenticated
 self-service rotation. Owner-authorized permanent non-owner disablement appends
 actor-session-bound status evidence and atomically revokes the target family.
 Daemon wrappers own time and generic denial. Password rotation is served through
-a closed two-field JSON body, one per-session/process limiter, strict
-same-origin CSRF proof, full session-family revocation, cleared cookies, and
+a closed two-field JSON body, one post-authentication per-session limiter, strict
+same-origin CSRF proof, full session-family revocation, invalidated session-secret headers, and
 explicit reauthentication. Owner-only
 `DELETE /v1/identities/{identity_ref}` permanently disables one non-owner,
 atomically revokes the target session family, and returns secret-free evidence
@@ -226,20 +270,22 @@ invented history. Authenticated route-neutral reads use the same evidence-read
 permission and deny mutation transport. Source-local `POST /v1/session`
 requires numeric loopback peer/Host, exact Origin, same-origin Fetch Metadata,
 exact JSON, a non-simple `X-LNSAT-Session-Intent` header, a closed 4 KiB body,
-and one process-wide limiter. Success sets fresh host-only bearer/CSRF cookies
+and one per-known-active-identity limiter. Unknown identity churn cannot consume
+known-identity capacity. Success sets fresh non-ambient bearer/proof headers
 and returns the same secret-free session contract used by authenticated
 `GET|HEAD`; every issue failure is generic. `HEAD` remains bodyless, `OPTIONS`
 is denied, and no CORS allow header is emitted. Authenticated
 `DELETE /v1/session` requires exact zero-length JSON mutation framing plus
-Origin/Fetch Metadata/CSRF proof, atomically revokes the active same-identity
-session family, clears both host-only cookies, and denies replay generically.
+Origin/Fetch Metadata/session proof, atomically revokes the active same-identity
+session family, requires both client-held secrets to be discarded, and denies replay generically.
 Authenticated `PATCH /v1/session` uses the same exact empty mutation framing,
-atomically replaces only the current session's bearer/CSRF material, preserves
-its absolute expiry, sets fresh host-only cookies once, and generically denies
+atomically replaces only the current session's token/proof material, preserves
+its absolute expiry, sets fresh non-ambient session-secret headers once, and generically denies
 prior-token use and replay. Authenticated
 `PATCH /v1/identity/password` reverifies the latest password, appends one
-credential generation, atomically revokes all same-identity sessions, clears
-both cookies, and requires reauthentication. Owner-only `POST /v1/identities`
+credential generation, atomically revokes all same-identity sessions,
+invalidates both client-held secret headers, and requires reauthentication.
+Owner-only `POST /v1/identities`
 accepts only a closed operator/auditor creation schema, uses server-owned time,
 persists immutable credential/audit evidence, and returns no secret. Owner-only
 identity disablement uses exact empty mutation framing and closes the target
@@ -291,49 +337,49 @@ discovery exception requires no session and reveals no stored state.
 Local-password `POST /v1/session` is also promoted with a closed secret-input
 schema, exact same-origin/non-simple intent controls, one generic denial,
 bounded limiter disclosure, fresh-session-per-success replay semantics, and
-explicit session evidence/event/cookie side effects. It creates only local
+explicit session evidence/event/session-secret-header side effects. It creates only local
 authentication state and grants no packet/action or execution authority.
 
 Authenticated `PATCH /v1/session` is promoted with exact empty JSON framing,
-same-origin and double-submit CSRF proof, one generic zero-side-effect denial,
+same-origin and independent session proof, one generic zero-side-effect denial,
 one-time current-session replay semantics, exact prior-to-replacement binding,
 preserved absolute expiry, and explicit
-activity/revocation/replacement/rotation/event/cookie side effects. It mutates
+activity/revocation/replacement/rotation/event/session-secret-header side effects. It mutates
 only the authenticated session state and grants no packet/action or execution
 authority.
 
 Authenticated `DELETE /v1/session` is promoted with exact empty JSON framing,
-same-origin and double-submit CSRF proof, one generic zero-side-effect denial,
+same-origin and independent session proof, one generic zero-side-effect denial,
 one-time active-family replay semantics, atomic same-identity session-family
 revocation, forced reauthentication, and explicit
-activity/revocation/event/cookie effects. It cannot select or affect another
+activity/revocation/event/session-secret-header effects. It cannot select or affect another
 identity and grants no packet/action or execution authority.
 
 Authenticated `PATCH /v1/identity/password` is promoted with a closed
-two-secret schema, same-origin and double-submit CSRF proof, latest-credential
-reverification, bounded per-session/process limiting, one-time active-family
+two-secret schema, same-origin and independent session proof, latest-credential
+reverification, bounded post-authentication per-session limiting, one-time active-family
 replay, append-only credential and identity-event evidence, atomic
-same-identity session-family revocation, cookie clearing, and forced
-reauthentication. One generic denial exposes only possible process-limiter
+same-identity session-family revocation, session-secret-header invalidation, and forced
+reauthentication. One generic denial exposes only possible verified-session limiter
 advancement; durable credential and session state remain unchanged on failure.
 It cannot select another identity and grants no packet/action or execution
 authority.
 
 Owner-only `POST /v1/identities` is promoted with a closed
-identity/name/role/password schema, same-origin and double-submit CSRF proof,
-bounded per-session/process limiting, operator/auditor-only target roles,
+identity/name/role/password schema, same-origin and independent session proof,
+bounded post-authentication per-session limiting, operator/auditor-only target roles,
 create-once identity-reference replay semantics, and atomic
 identity/credential/actor-session-bound event evidence. Success is secret-free
-and sets no cookies. One generic denial exposes only possible process-limiter
+and returns no session-secret headers. One generic denial exposes only possible verified-session limiter
 advancement; failed SQLite transitions roll back durable
 session/identity/credential/event state. It cannot create another owner and
 grants no packet/action or execution authority.
 
 Owner-only `DELETE /v1/identities/{identity_ref}` is promoted with exact empty
-JSON framing, same-origin and double-submit CSRF proof, validated route-only
+JSON framing, same-origin and independent session proof, validated route-only
 target selection, operator/auditor-only target roles, one-time active-target
 replay semantics, and atomic identity-status/actor-session/event evidence plus
-target-session-family closure. Success is secret-free and sets no cookies.
+target-session-family closure. Success is secret-free and returns no session-secret headers.
 One generic zero-side-effect denial covers owner, missing, malformed,
 already-disabled, transport, authorization, CSRF, clock, drift, and persistence
 failures; failed SQLite transitions roll back activity, identity, event,
@@ -365,7 +411,7 @@ mutation authority remain false. Current-session `/v1/session` semantics are
 unchanged and distinct.
 
 Authenticated `POST /v1/approval-requests` is promoted with a closed
-project/policy-reference schema, same-origin and double-submit CSRF proof,
+project/policy-reference schema, same-origin and independent session proof,
 owner/operator-only `request_action` scope, exact persisted approval-required
 policy actor/local-session binding, and server-owned request time. Identical
 derived identity at an identical instant replays exactly; different instants
@@ -379,7 +425,7 @@ consume approval, or dispatch adapters.
 Authenticated
 `POST /v1/approval-requests/{approval_request_id}/decision` is promoted with a
 closed project/outcome/reason schema, path-only request selection,
-same-origin/double-submit CSRF proof, owner/operator-only
+same-origin/independent session proof, owner/operator-only
 `decide_approval` scope, exact request/policy/packet rederivation,
 distinct-human enforcement, and server-owned decision time. One immutable
 terminal decision may be recorded or exactly replayed; different time,
@@ -509,7 +555,7 @@ no adapter bypasses Gateway validation, and stable conformance artifacts map:
 - cancellation ambiguity
 - task completion with application error
 
-Portable extension contracts remain independent of commercial implementation.
+Portable extension contracts remain independent of any implementation.
 
 ### 9. API-Backed Control Center and Ambiguity Recovery
 
@@ -558,19 +604,20 @@ Exit: browser security and cross-surface conformance pass; management state
 remains consistent under disconnect/reconnect; no route claims execution
 success without Gateway-sourced completion evidence.
 
-### 10. `lnsatd`, `lnsatctl`, and `lnsat` Product Split
+### 10. `lnsatd`, `lnsatctl`, and LNSAT Product Surface
 
 Additional accepted V1 scope: LNSAT-owned headless setup and ongoing
-access-management API/CLI, independent of Rangoon. The
+access-management API/CLI as one LNSAT product surface. The
 [headless configuration and control requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 define resource access versus agent authority, layered declarative configuration,
 customizable settings, OS enforcement visibility, protected changes, and
-acceptance tests. Rangoon owns graphical setup, presets, and rich management UI.
-P10-X1 remains a completed
-source checkpoint; it does not complete this additional work. Deliver the new
+acceptance tests. LNSAT may add graphical setup, presets, and rich management UI
+after the headless V1 contracts are proven; these are not V1 exit requirements.
+P10-X1 remains a completed source checkpoint; it does not complete this
+additional work. Deliver the new
 product behavior before Phase 13 RC freeze, prove its security/recovery in Phase
-13, and validate selected LNSAT core targets in Phase 14. Rangoon owns final
-installer and service-manager lifecycle proof.
+13, and validate selected LNSAT core targets in Phase 14. LNSAT owns final
+package and service-manager lifecycle proof for selected targets.
 Current read-only surfaces and runtime closures remain unchanged until separately
 reviewed implementation is authorized.
 
@@ -588,10 +635,12 @@ lower-precedence configuration and survives reload/restart; served stop/resume
 mutation remains unopened.
 
 Status: P10-A1 target-neutral source contract spine, P10-A2 explicit-only
-`lnsat.daemon.config.v1` loading/path evidence, and P10-A3 authenticated local
-health/status over a server-authenticated macOS/Linux Unix socket plus
-deterministic text/JSON/JSONL/YAML are implemented. Numeric-loopback HTTP
-remains browser/API transport and is not a CLI bearer lane.
+`lnsat.daemon.config.v1` loading/path evidence, and P10-A3 browser/API
+health/status with deterministic text/JSON/JSONL/YAML are implemented. The
+accepted local-authentication security correction withdraws Unix CLI health and
+status before the first supported release. Legacy forms fail before protected
+stdin, Unix connection, or request bytes; browser header-pair transport remains
+unchanged. Numeric-loopback HTTP remains browser/API transport.
 P10-A4 non-root offline backup, fresh inert restore, and protected-stdin owner
 recovery are implemented with exclusive-lease preflight, credential/audit
 append, all-owner-session revocation, and exact API/MCP/UI unavailability
@@ -799,22 +848,18 @@ material, SBOM, provenance, reproducibility, non-root behavior, headless
 configuration, monitoring, recovery, and compatibility results. No graphical
 asset or final installer wrapper is an LNSAT V1 component.
 
-Phase 14 owns lifecycle proof on each later-selected canonical target. That
-marker applies to LNSAT core-target behavior, not Rangoon's downstream installer
-or package lifecycle.
-
-Rangoon owns Homebrew, direct-download, install-script, deb, rpm, MSI, OCI, or
-other final distro composition and lifecycle proof. Each downstream wrapper must
-pin and verify exact LNSAT components and cannot rebuild or alter authority
-behavior. Those wrapper rows may be tracked as downstream reference work, but
-they do not block LNSAT V1.
+Phase 14 owns lifecycle proof on each later-selected canonical target, including
+Homebrew, direct-download, install-script, deb, rpm, MSI, and OCI rows when
+selected. Each package must pin and verify exact LNSAT components and cannot
+rebuild or alter authority behavior. Unselected formats remain unsupported.
 
 Phase 14 signature evidence uses non-production rehearsal material. Production
 signing happens only under final publication authorization against unchanged
 proven digests. Any artifact-byte change repeats affected Phase 14 proof.
 
 Exit: every selected LNSAT core-target compatibility row passes and produces
-pin-verifiable identity. Final installer/package breadth remains Rangoon work.
+pin-verifiable identity. Final package breadth follows the selected Phase 14
+rows.
 
 ## Publication Gate
 
@@ -834,25 +879,23 @@ production deployment, or stable compatibility.
 Winget, Scoop, MSI, Chocolatey, and signed/notarized macOS `.pkg` are later
 lanes, not v1 blockers.
 
-## Downstream Product Sequence
+## LNSAT Runtime and Package Sequence
 
-Separate commercial repositories do not expand the fourteen-phase v1 core
-release gate. After relevant public contracts stabilize, downstream work may
-proceed in this order:
+After the core contracts stabilize, LNSAT product work proceeds in this order:
 
 1. public portable manifests and conformance for modules, connectors, agent
    profiles, skills, instructions, context objects, and model overlays;
-2. private visual and CLI management of immutable content, assignments,
+2. visual and CLI management of immutable content, assignments,
    history, sharing, graphs, and request-context grouping;
 3. isolated certified connector packs with exact authorization/receipt binding;
 4. advisory delegator-model profiles with provenance, compatibility, evaluation,
    uncertainty, and deterministic deny/escalate fallback;
-5. official commercial edition manifests that compose exact public core and
-   module digests without private authority forks;
+5. versioned LNSAT package manifests that compose exact core and module
+   digests without authority forks;
 6. hosted, hybrid, fleet, or multi-tenant work only after separate identity,
    isolation, data, reliability, security, and publication decisions.
 
-See [open core and product repositories](architecture/OPEN_CORE_AND_PRODUCT_REPOSITORIES.md),
+See [extension boundaries](architecture/OPEN_CORE_AND_EXTENSION_BOUNDARIES.md),
 [agent configuration management](architecture/AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md),
 and [CLI and OS operator interface](architecture/CLI_AND_OS_OPERATOR_INTERFACE.md).
 

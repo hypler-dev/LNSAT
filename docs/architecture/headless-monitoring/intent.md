@@ -6,7 +6,7 @@ Status: proposed
 Authority: this file
 Owner: LNSAT maintainers
 Accepted by: pending
-Last updated: 2026-09-10
+Last updated: 2026-09-24
 
 ## Problem and evidence
 
@@ -48,8 +48,9 @@ v1 byte remain unchanged.
 
 - Gateway remains the only served authority boundary. No direct database,
   Fastify local-beta fixture, console fixture, or alternate API becomes truth.
-- All successful reads require an active same-origin local browser session and
-  the existing fixed `ReadEvidence` permission.
+- All successful reads require an active same-origin local browser session
+  authenticated by the bearer/proof header pair and the existing fixed
+  `ReadEvidence` permission. Cookies grant no authentication.
 - Exact content-bound identifiers are the only selectors. There is no list,
   prefix, query, pagination, or search surface.
 - Only `GET` and `HEAD` are accepted. Request bodies, query strings, CSRF input,

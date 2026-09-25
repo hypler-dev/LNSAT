@@ -18,18 +18,19 @@ export const GATEWAY_SESSION_ROTATION_EVIDENCE_SIDE_EFFECT_V1 =
   "session_rotation_evidence_appended";
 export const GATEWAY_SESSION_ROTATION_EVENT_SIDE_EFFECT_V1 =
   "session_security_events_appended";
-export const GATEWAY_SESSION_ROTATION_COOKIE_SIDE_EFFECT_V1 = "session_cookies_set";
+export const GATEWAY_SESSION_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1 =
+  "session_secret_headers_returned";
 
 export const gatewaySessionRotationV1Contract = {
   contract_id: GATEWAY_SESSION_ROTATION_CONTRACT_V1,
   contract_version: "lnsat.contracts.v1_0",
   path: "/v1/session",
   method: "PATCH",
-  authentication: "active local browser session plus double-submit CSRF",
+  authentication: "active local browser session token and independent proof headers",
   scope: "current_session_only",
   roles: ["owner", "operator", "auditor"],
   request_body: "exact_empty_json_framing",
-  csrf: "required_double_submit",
+  session_proof: "required_independent_header",
   absolute_expiry: "preserve_original",
   replay_semantics: "one_time_current_session",
   failure_oracle: "one generic denial",
@@ -40,7 +41,7 @@ export const gatewaySessionRotationV1Contract = {
     GATEWAY_SESSION_ROTATION_REPLACEMENT_SIDE_EFFECT_V1,
     GATEWAY_SESSION_ROTATION_EVIDENCE_SIDE_EFFECT_V1,
     GATEWAY_SESSION_ROTATION_EVENT_SIDE_EFFECT_V1,
-    GATEWAY_SESSION_ROTATION_COOKIE_SIDE_EFFECT_V1,
+    GATEWAY_SESSION_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1,
   ],
   failure_side_effects: [],
   execution_authority: false,
@@ -60,8 +61,7 @@ export type GatewaySessionRotationSuccessV1 = {
     same_origin_required: true;
     csrf_verified: true;
     cors_enabled: false;
-    session_cookie: "host_only_http_only_samesite_strict";
-    csrf_cookie: "host_only_samesite_strict";
+    session_secret_headers: "returned_once_then_required";
   };
   replay_semantics: "one_time_current_session";
   absolute_expiry_preserved: true;
@@ -71,7 +71,7 @@ export type GatewaySessionRotationSuccessV1 = {
     typeof GATEWAY_SESSION_ROTATION_REPLACEMENT_SIDE_EFFECT_V1,
     typeof GATEWAY_SESSION_ROTATION_EVIDENCE_SIDE_EFFECT_V1,
     typeof GATEWAY_SESSION_ROTATION_EVENT_SIDE_EFFECT_V1,
-    typeof GATEWAY_SESSION_ROTATION_COOKIE_SIDE_EFFECT_V1,
+    typeof GATEWAY_SESSION_ROTATION_SECRET_HEADER_SIDE_EFFECT_V1,
   ];
   session_state_changed: true;
   execution_authority: false;

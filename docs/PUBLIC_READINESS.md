@@ -44,7 +44,7 @@ production connectors, or hosted operation until exact gates pass.
 Docker and OCI are first planned runtime profile. No Docker adapter, image,
 installation path, or support claim exists yet. See the
 [Docker-first runtime ADR](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
-and [technical comparison](reference/DOCKER_AI_TECHNICAL_COMPARISON.md).
+and [Phase 11 proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md).
 
 ## History and Provenance
 

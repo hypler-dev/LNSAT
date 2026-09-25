@@ -31,7 +31,7 @@ Read:
 2. [ADR-0002](architecture/ADR-0002_AUTHORITY_LAYER_AND_V1_DISTRIBUTION.md)
    for authority lifecycle, fourteen-phase v1, and mandatory distribution;
 3. [ADR-0003](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)
-   for open-core, downstream repository, managed-agent-content, model, module,
+   for extension boundaries, managed-agent-content, model, module,
    UI, and OS CLI boundaries;
 4. [ADR-0007](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
    for Docker-first integration, runtime-neutral authority, monotonic

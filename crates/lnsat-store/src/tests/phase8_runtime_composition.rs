@@ -419,6 +419,410 @@ fn phase11_docker_input<'a>(
     }
 }
 
+fn phase11_pre_supervisor_binding(
+    derived: &lnsat_contracts::DerivedExecutionRequestV1,
+) -> Phase11DockerPreSupervisorBindingV1 {
+    Phase11DockerPreSupervisorBindingV1 {
+        execution_request_digest: derived.request_digest,
+        tool_arguments_digest: phase7_git_tool_arguments_digest_v1(derived)
+            .expect("derived request must produce exact Git tool digest"),
+    }
+}
+
+#[test]
+fn phase11_docker_pre_supervisor_re_reads_authenticated_durable_claim() {
+    let mut fixture = phase11_docker_fixture(11_405);
+    let project_ref = fixture.project_ref.clone();
+    let resource_ref = fixture.resource_ref.clone();
+    let authorization_id = fixture.authorization_id.clone();
+    let operation_id = fixture.operation_id.clone();
+    let derived = fixture.derived.clone();
+    let disposable_root = std::env::temp_dir();
+    let session = fixture.requester_session_token.clone();
+    let csrf = fixture.requester_csrf_token.clone();
+    let input = phase11_docker_input(
+        &project_ref,
+        &resource_ref,
+        &authorization_id,
+        &operation_id,
+        &derived,
+        &disposable_root,
+        "idempotency:phase11:docker:11405",
+    );
+    let handle = fixture
+        .store
+        .claim_phase11_docker_runtime_composition_handle_v1(
+            &input,
+            fixture.capability(),
+            &session,
+            &csrf,
+        )
+        .expect("created durable Docker claim must return one handle");
+    assert!(handle.claim().created);
+    let proof = fixture
+        .store
+        .verify_phase11_docker_pre_supervisor_v1(
+            handle,
+            &session,
+            &csrf,
+            &phase11_pre_supervisor_binding(&derived),
+        )
+        .expect("original requester must receive a fresh durable proof");
+    assert!(proof.claim().created);
+    assert_eq!(proof.claim().consumption.operation_id, operation_id);
+    assert_eq!(proof.claim().operation.state, "dispatching");
+    assert_eq!(
+        proof
+            .claim()
+            .operation
+            .attempt
+            .as_ref()
+            .map(|attempt| attempt.state.as_str()),
+        Some("dispatching")
+    );
+    fixture
+        .store
+        .state()
+        .expect("fresh proof must preserve durable state");
+}
+
+#[test]
+fn phase11_docker_pre_supervisor_replay_cannot_get_handle() {
+    let mut replay_fixture = phase11_docker_fixture(11_406);
+    let replay_project = replay_fixture.project_ref.clone();
+    let replay_resource = replay_fixture.resource_ref.clone();
+    let replay_authorization = replay_fixture.authorization_id.clone();
+    let replay_operation = replay_fixture.operation_id.clone();
+    let replay_derived = replay_fixture.derived.clone();
+    let replay_root = std::env::temp_dir();
+    let replay_session = replay_fixture.requester_session_token.clone();
+    let replay_csrf = replay_fixture.requester_csrf_token.clone();
+    let replay_input = phase11_docker_input(
+        &replay_project,
+        &replay_resource,
+        &replay_authorization,
+        &replay_operation,
+        &replay_derived,
+        &replay_root,
+        "idempotency:phase11:docker:11406",
+    );
+    replay_fixture
+        .store
+        .claim_phase11_docker_runtime_composition_handle_v1(
+            &replay_input,
+            replay_fixture.capability(),
+            &replay_session,
+            &replay_csrf,
+        )
+        .expect("first claim must create handle");
+    assert!(matches!(
+        replay_fixture
+            .store
+            .claim_phase11_docker_runtime_composition_handle_v1(
+                &replay_input,
+                replay_fixture.capability(),
+                &replay_session,
+                &replay_csrf,
+            ),
+        Err(Phase7GitAdapterErrorV1::DispatchAlreadyClaimed)
+    ));
+}
+
+#[test]
+fn phase11_docker_pre_supervisor_tampered_digest_becomes_unknown() {
+    let mut tamper_fixture = phase11_docker_fixture(11_407);
+    let tamper_project = tamper_fixture.project_ref.clone();
+    let tamper_resource = tamper_fixture.resource_ref.clone();
+    let tamper_authorization = tamper_fixture.authorization_id.clone();
+    let tamper_operation = tamper_fixture.operation_id.clone();
+    let tamper_derived = tamper_fixture.derived.clone();
+    let tamper_root = std::env::temp_dir();
+    let tamper_session = tamper_fixture.requester_session_token.clone();
+    let tamper_csrf = tamper_fixture.requester_csrf_token.clone();
+    let tamper_input = phase11_docker_input(
+        &tamper_project,
+        &tamper_resource,
+        &tamper_authorization,
+        &tamper_operation,
+        &tamper_derived,
+        &tamper_root,
+        "idempotency:phase11:docker:11407",
+    );
+    let tamper_handle = tamper_fixture
+        .store
+        .claim_phase11_docker_runtime_composition_handle_v1(
+            &tamper_input,
+            tamper_fixture.capability(),
+            &tamper_session,
+            &tamper_csrf,
+        )
+        .expect("created claim must return handle");
+    let mut tampered = phase11_pre_supervisor_binding(&tamper_fixture.derived);
+    tampered.execution_request_digest[0] ^= 1;
+    assert!(matches!(
+        tamper_fixture
+            .store
+            .verify_phase11_docker_pre_supervisor_v1(
+                tamper_handle,
+                &tamper_session,
+                &tamper_csrf,
+                &tampered,
+            ),
+        Err(Phase7GitAdapterErrorV1::OutcomeUnknown)
+    ));
+    assert_eq!(
+        tamper_fixture
+            .store
+            .read_phase8_operation_v1(&tamper_fixture.operation_id)
+            .expect("unknown operation must read")
+            .expect("unknown operation must exist")
+            .state,
+        "outcome_unknown"
+    );
+}
+
+#[test]
+fn phase11_docker_pre_supervisor_wrong_csrf_becomes_unknown() {
+    let mut csrf_fixture = phase11_docker_fixture(11_408);
+    let csrf_project = csrf_fixture.project_ref.clone();
+    let csrf_resource = csrf_fixture.resource_ref.clone();
+    let csrf_authorization = csrf_fixture.authorization_id.clone();
+    let csrf_operation = csrf_fixture.operation_id.clone();
+    let csrf_derived = csrf_fixture.derived.clone();
+    let csrf_root = std::env::temp_dir();
+    let csrf_session = csrf_fixture.requester_session_token.clone();
+    let csrf_csrf = csrf_fixture.requester_csrf_token.clone();
+    let csrf_input = phase11_docker_input(
+        &csrf_project,
+        &csrf_resource,
+        &csrf_authorization,
+        &csrf_operation,
+        &csrf_derived,
+        &csrf_root,
+        "idempotency:phase11:docker:11408",
+    );
+    let csrf_handle = csrf_fixture
+        .store
+        .claim_phase11_docker_runtime_composition_handle_v1(
+            &csrf_input,
+            csrf_fixture.capability(),
+            &csrf_session,
+            &csrf_csrf,
+        )
+        .expect("created claim must return handle");
+    assert!(matches!(
+        csrf_fixture.store.verify_phase11_docker_pre_supervisor_v1(
+            csrf_handle,
+            &csrf_session,
+            "wrong csrf token",
+            &phase11_pre_supervisor_binding(&csrf_fixture.derived),
+        ),
+        Err(Phase7GitAdapterErrorV1::OutcomeUnknown)
+    ));
+    assert_eq!(
+        csrf_fixture
+            .store
+            .read_phase8_operation_v1(&csrf_fixture.operation_id)
+            .expect("unknown operation must read")
+            .expect("unknown operation must exist")
+            .state,
+        "outcome_unknown"
+    );
+}
+
+#[test]
+fn phase11_docker_pre_supervisor_revoked_session_becomes_unknown() {
+    let mut revoked_fixture = phase11_docker_fixture(11_409);
+    let revoked_project = revoked_fixture.project_ref.clone();
+    let revoked_resource = revoked_fixture.resource_ref.clone();
+    let revoked_authorization = revoked_fixture.authorization_id.clone();
+    let revoked_operation = revoked_fixture.operation_id.clone();
+    let revoked_derived = revoked_fixture.derived.clone();
+    let revoked_root = std::env::temp_dir();
+    let revoked_session = revoked_fixture.requester_session_token.clone();
+    let revoked_csrf = revoked_fixture.requester_csrf_token.clone();
+    let revoked_input = phase11_docker_input(
+        &revoked_project,
+        &revoked_resource,
+        &revoked_authorization,
+        &revoked_operation,
+        &revoked_derived,
+        &revoked_root,
+        "idempotency:phase11:docker:11409",
+    );
+    let revoked_handle = revoked_fixture
+        .store
+        .claim_phase11_docker_runtime_composition_handle_v1(
+            &revoked_input,
+            revoked_fixture.capability(),
+            &revoked_session,
+            &revoked_csrf,
+        )
+        .expect("created claim must return handle");
+    assert!(
+        revoked_fixture
+            .store
+            .revoke_local_session_v1(
+                &revoked_session,
+                &revoked_csrf,
+                &timestamp(0),
+                LocalSessionRevocationReasonV1::SignOut,
+            )
+            .expect("requester session must revoke")
+    );
+    assert!(matches!(
+        revoked_fixture
+            .store
+            .verify_phase11_docker_pre_supervisor_v1(
+                revoked_handle,
+                &revoked_session,
+                &revoked_csrf,
+                &phase11_pre_supervisor_binding(&revoked_derived),
+            ),
+        Err(Phase7GitAdapterErrorV1::OutcomeUnknown)
+    ));
+    assert_eq!(
+        revoked_fixture
+            .store
+            .read_phase8_operation_v1(&revoked_operation)
+            .expect("unknown operation must read")
+            .expect("unknown operation must exist")
+            .state,
+        "outcome_unknown"
+    );
+}
+
+#[test]
+fn phase11_docker_pre_supervisor_stale_claim_stays_unknown() {
+    let mut stale_fixture = phase11_docker_fixture(11_410);
+    let stale_project = stale_fixture.project_ref.clone();
+    let stale_resource = stale_fixture.resource_ref.clone();
+    let stale_authorization = stale_fixture.authorization_id.clone();
+    let stale_operation = stale_fixture.operation_id.clone();
+    let stale_derived = stale_fixture.derived.clone();
+    let stale_root = std::env::temp_dir();
+    let stale_session = stale_fixture.requester_session_token.clone();
+    let stale_csrf = stale_fixture.requester_csrf_token.clone();
+    let stale_input = phase11_docker_input(
+        &stale_project,
+        &stale_resource,
+        &stale_authorization,
+        &stale_operation,
+        &stale_derived,
+        &stale_root,
+        "idempotency:phase11:docker:11410",
+    );
+    let stale_handle = stale_fixture
+        .store
+        .claim_phase11_docker_runtime_composition_handle_v1(
+            &stale_input,
+            stale_fixture.capability(),
+            &stale_session,
+            &stale_csrf,
+        )
+        .expect("created claim must return handle");
+    stale_fixture
+        .store
+        .mark_phase11_docker_outcome_unknown_v1(&stale_operation)
+        .expect("stale attempt must become unknown");
+    assert!(matches!(
+        stale_fixture.store.verify_phase11_docker_pre_supervisor_v1(
+            stale_handle,
+            &stale_session,
+            &stale_csrf,
+            &phase11_pre_supervisor_binding(&stale_derived),
+        ),
+        Err(Phase7GitAdapterErrorV1::OutcomeUnknown)
+    ));
+    assert_eq!(
+        stale_fixture
+            .store
+            .read_phase8_operation_v1(&stale_operation)
+            .expect("unknown operation must read")
+            .expect("unknown operation must exist")
+            .state,
+        "outcome_unknown"
+    );
+}
+
+#[test]
+fn phase11_docker_post_claim_read_faults_become_unknown_without_redispatch() {
+    for (sequence, idempotency_key, fault) in [
+        (
+            11_411,
+            "idempotency:phase11:docker:11411",
+            crate::phase7_git_adapter::Phase11DockerPostClaimReadFaultV1::OperationRead,
+        ),
+        (
+            11_412,
+            "idempotency:phase11:docker:11412",
+            crate::phase7_git_adapter::Phase11DockerPostClaimReadFaultV1::HandleBindingRead,
+        ),
+    ] {
+        let mut fixture = phase11_docker_fixture(sequence);
+        let project_ref = fixture.project_ref.clone();
+        let resource_ref = fixture.resource_ref.clone();
+        let authorization_id = fixture.authorization_id.clone();
+        let operation_id = fixture.operation_id.clone();
+        let derived = fixture.derived.clone();
+        let disposable_root = std::env::temp_dir();
+        let session = fixture.requester_session_token.clone();
+        let csrf = fixture.requester_csrf_token.clone();
+        let input = phase11_docker_input(
+            &project_ref,
+            &resource_ref,
+            &authorization_id,
+            &operation_id,
+            &derived,
+            &disposable_root,
+            idempotency_key,
+        );
+        crate::phase7_git_adapter::inject_phase11_docker_post_claim_read_fault_v1(fault);
+        assert!(matches!(
+            fixture
+                .store
+                .claim_phase11_docker_runtime_composition_handle_v1(
+                    &input,
+                    fixture.capability(),
+                    &session,
+                    &csrf,
+                ),
+            Err(Phase7GitAdapterErrorV1::OutcomeUnknown)
+        ));
+        let operation = fixture
+            .store
+            .read_phase8_operation_v1(&operation_id)
+            .expect("unknown operation must read")
+            .expect("unknown operation must exist");
+        assert_eq!(operation.state, "outcome_unknown");
+        assert_eq!(
+            operation
+                .attempt
+                .as_ref()
+                .map(|attempt| attempt.state.as_str()),
+            Some("outcome_unknown")
+        );
+        assert_eq!(
+            table_count(&fixture.store, "lnsat_capability_consumptions"),
+            1
+        );
+        assert_eq!(table_count(&fixture.store, "lnsat_operation_attempts"), 1);
+        assert_eq!(table_count(&fixture.store, "lnsat_operation_receipts"), 0);
+        assert!(matches!(
+            fixture
+                .store
+                .claim_phase11_docker_runtime_composition_handle_v1(
+                    &input,
+                    fixture.capability(),
+                    &session,
+                    &csrf,
+                ),
+            Err(Phase7GitAdapterErrorV1::DispatchAlreadyClaimed)
+        ));
+        assert_eq!(table_count(&fixture.store, "lnsat_operation_attempts"), 1);
+    }
+}
+
 #[test]
 fn phase11_docker_claim_receipt_and_replay_are_durable_and_single_attempt() {
     let mut fixture = phase11_docker_fixture(11_401);

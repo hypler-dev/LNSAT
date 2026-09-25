@@ -21,7 +21,8 @@ export const gatewayApprovalRequestV1Contract = {
   contract_version: "lnsat.contracts.v1_0",
   path: "/v1/approval-requests",
   method: "POST",
-  authentication: "active owner or operator session plus double-submit CSRF",
+  authentication:
+    "active owner or operator session token and independent proof headers",
   actor_roles: ["owner", "operator"],
   permission: "request_action",
   request_fields: ["project_ref", "policy_decision_id"],

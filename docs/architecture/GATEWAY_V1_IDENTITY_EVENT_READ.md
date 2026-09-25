@@ -10,6 +10,8 @@ The authenticated identity-event evidence surface is:
 ```text
 GET|HEAD /v1/identities/{identity_ref}/events
 LNSAT-Contract-Version: lnsat.contracts.v1_0
+X-LNSAT-Local-Session-Token: <bearer>
+X-LNSAT-Local-Session-Proof: <independent proof>
 ```
 
 Its response contract is `lnsat.gateway.identity_event_read.v1_0`. The route
@@ -35,7 +37,7 @@ target identity comes only from the exact validated path.
   closed;
 - caller idempotency keys are forbidden and have no meaning for this read;
 - `OPTIONS` and every mutation method are denied without CORS permission;
-- bearer authentication remains host-only cookie input and is never reflected.
+- bearer authentication remains non-ambient session-token and session-proof header input and is never reflected.
 
 ## Success
 

@@ -5,8 +5,7 @@
 - Decision owners: LNSAT maintainers
 - Supersedes: ADR-0001 where platform, package, installer, service, and
   distribution requirements conflict
-- Extended by: ADR-0003 for open-core, downstream extension, managed-agent
-  content, advisory-model, visual-management, and OS CLI boundaries
+- Extended by: ADR-0003 for extension, management-plane, and OS CLI boundaries
 - Proposed extension: ADR-0004 for Phase 7 signed approval-evidence contract,
   cryptographic profile, key lifecycle, and zero-execution-authority closure
 - Superseded in part by:
@@ -17,10 +16,8 @@
   required runtime/product, candidate-build, Phase 14 proof, and publication
   gates remain closed or unmet
 
-> Boundary clarification: [ADR-0008](ADR-0008_LNSAT_KERNEL_AND_RANGOON_USERLAND_BOUNDARY.md)
-> supersedes this ADR's LNSAT-owned graphical UI, installer, and final distro
-> breadth. LNSAT V1 requires pin-verifiable core identity and selected core
-> conformance only; Rangoon owns downstream composition.
+> Boundary clarification: [ADR-0008](ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)
+> defines LNSAT-owned runtime, package, CLI, API, and protocol boundaries.
 
 ## Context
 
@@ -36,8 +33,8 @@ them.
 
 The narrow platform exclusions in ADR-0001 no longer match the required
 operator experience. ADR-0008 supersedes this ADR's earlier coupling between
-LNSAT V1 and thin-installer proof: LNSAT must prove selected core targets;
-Rangoon owns final installer and package evidence.
+LNSAT V1 and thin-installer proof: LNSAT must prove selected core targets and
+the exact package evidence for each selected row.
 
 ## Decision
 
@@ -139,7 +136,7 @@ Each canonical bundle contains `lnsatd`, `lnsatctl`, the `lnsat` convenience
 dispatcher, configuration templates,
 licenses/notices, and a version/build manifest.
 
-Downstream Rangoon distribution references, opened separately from LNSAT V1:
+Candidate artifact formats, none currently selected:
 
 - dedicated Homebrew tap: `brew install hypler-dev/tap/lnsat`;
 - direct macOS/Linux `.tar.gz` bundles;
@@ -153,24 +150,22 @@ The Cargo package contains only the bootstrap/verifier. An explicit setup
 command downloads and verifies a signed canonical bundle. Cargo never rebuilds
 the product core or creates different product behavior.
 
-Rangoon owns selection, support, and lifecycle evidence for every Homebrew,
-tarball, install-script, deb, rpm, OCI, or Cargo wrapper. Each claimed wrapper
-must consume or wrap the same versioned canonical LNSAT components, but no
-wrapper family blocks LNSAT V1.
+LNSAT owns selection, support, and lifecycle evidence for every published
+artifact. Each artifact must consume the same versioned canonical components,
+but no unselected format blocks LNSAT V1.
 
 Every selected canonical LNSAT core artifact requires SHA-256 checksums,
 a non-production signature rehearsal/verification bundle, SPDX JSON SBOM, SLSA
 v1 provenance, source revision, build recipe, canonical component digest map,
 license/notice references, reproducibility evidence, non-root proof, and the
 selected core-target compatibility evidence. Production signing is a later
-publication gate against unchanged Phase 14-proven digests. Rangoon separately
-owns lifecycle evidence for any downstream wrapper it claims.
+publication gate against unchanged Phase 14-proven digests.
 
-For downstream Rangoon wrappers, Homebrew service metadata must never start
+For package service metadata, the installer must never start
 `lnsatd`; operator start remains explicit. Linux packages must use a non-root
 runtime identity, install disabled service metadata, preserve configuration and
 data unless explicitly purged, and never start the daemon in post-install
-scripts. These are downstream wrapper requirements, not LNSAT V1 gates.
+scripts. These are LNSAT package safety requirements.
 
 Compatibility matrix owns exact selected target, architecture, package,
 service, path, security-evidence, and lifecycle rows. Unknown, unselected, or
@@ -202,14 +197,14 @@ blockers:
 - Roadmap retains fourteen numbered phases, with explicitly optional
   post-local-v1 lanes.
 - Phase 14 selected-core-target compatibility evidence is mandatory before
-  `v1.0.0`; downstream package breadth is not.
+  `v1.0.0`; unselected package breadth is not.
 - Publication follows Phase 14 through a separate explicit go/no-go gate.
 - ADR-0001 remains the historical source for retained local-first, single-node,
   SQLite, local-auth, non-root, fail-closed, and support-window decisions.
 - ADR-0001 platform/package exclusions no longer control.
 - Core-target evidence documents become normative Phase 14 plans where they
-  implement this decision; downstream distribution references remain Rangoon-owned.
-- ADR-0003 may add downstream product planes without weakening authority
+  implement this decision.
+- ADR-0003 may add extension planes without weakening authority
   semantics or adding them to local-v1 blockers.
 
 ## Release Gate

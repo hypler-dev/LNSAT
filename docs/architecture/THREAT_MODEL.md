@@ -1,8 +1,9 @@
 # Threat Model
 
-- Status: accepted v1 security plan plus expanded-product threat requirements
+- Status: accepted v1 security plan plus expanded runtime and integration
+  requirements
 - Scope: local/self-hosted single-node authority lifecycle, distribution, and
-  future managed-content/extension boundaries
+  managed-content, protocol, extension, and execution boundaries
 - Current implementation: contract foundations, source-local Phase 5
   identity/session/approval authentication and offline owner recovery, plus
   experimental protocol/recovery/trust interfaces; execution authority remains
@@ -40,9 +41,9 @@ Threats reachable through selected local-v1 authority, OS CLI, or claimed
 distribution profile are release blockers. Optional signed-evidence,
 attestation, enterprise, and unselected distribution threats become blockers
 only when those profiles are claimed. Managed-content, gatekeeper-model,
-module, and entitlement threats
-become blockers for any later product that enables those surfaces; their
-presence here does not add downstream runtime to v1.
+module, and entitlement threats become blockers whenever LNSAT enables those
+surfaces; documenting them does not by itself claim that the surface is
+currently available.
 
 | Threat                                   | Required controls                                                                                                                                          | Required negative evidence                                                                                                    |
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -61,13 +62,13 @@ presence here does not add downstream runtime to v1.
 | Context misclassification                | Explicit work-context object; deterministic scope signals first; classifier identity/confidence; operator correction and cross-project policy              | Low-confidence grouping, cross-project move, tenant leakage, or conflicting scope denied/escalated                            |
 | Gatekeeper-model false allow             | Model output treated as untrusted fact; deterministic capability/role ceilings; deny/escalate fallback; versioned evaluation and drift controls            | Model-only approval, capability widening, low-confidence allow, drift, or unavailable-model bypass denied                     |
 | Identity delegation                      | Explicit delegation chain, audience, scope, expiry, depth, and revocation; no implicit identity inheritance                                                | Missing, widened, cyclic, stale, or wrong-audience delegation denied                                                          |
-| CSRF                                     | Host-only `SameSite=Strict` sessions, session-bound anti-CSRF token, strict Origin/Host checks, mutation content type, no state change by GET              | Missing/mismatched token or hostile origin denied                                                                             |
-| Login CSRF/session fixation              | Non-simple custom intent header, exact Origin/Host/Fetch Metadata, no CORS preflight, fresh random session after password proof                            | Cross-site, missing-intent, stale-cookie reuse, and credential-oracle paths denied                                            |
+| CSRF                                     | Non-ambient session-token and independent-proof headers, strict Origin/Host checks, mutation content type, no state change by GET                          | Missing/invalid header pair or hostile origin denied                                                                          |
+| Login CSRF/session fixation              | Non-simple custom intent header, exact Origin/Host/Fetch Metadata, no CORS preflight, fresh random session after password proof                            | Cross-site, missing-intent, ambient-cookie replay, and credential-oracle paths denied                                         |
 | Owner recovery bypass                    | Offline host authority, exact database/owner confirmation, daemon-held exclusive lease, append-only credential, full session revocation                    | Live-daemon, wrong-database, wrong-owner, password-reuse, symlink, and partial-write attempts denied                          |
 | Execution substitution                   | Canonical digests bind action, target, executable, artifact, config, constraints, adapter, and receipt                                                     | Any requested/approved/executed digest mismatch denied                                                                        |
 | Adapter compromise                       | Least privilege; sandbox; one authorization per action; bounded output; receipt verification; emergency disable and rollback                               | Extra action, target, network, filesystem, or credential access denied/rejected                                               |
 | Module/extension compromise              | Out-of-process or sandbox isolation; signed manifest; declared capability/data/egress/resource bounds; no core DB or signing access; quarantine            | Native injection, undeclared capability, ambient credential, authority minting, or audit suppression denied                   |
-| Entitlement/authority confusion          | Feature entitlement evaluated separately from Gateway action policy; entitlement cannot mint roles, approvals, or authorization                            | Paid tier, license token, marketplace install, or support state cannot bypass policy                                          |
+| Entitlement/authority confusion          | Feature or support state is evaluated separately from Gateway action policy; it cannot mint roles, approvals, or authorization                             | License token, package installation, or support state cannot bypass policy                                                    |
 | CLI or local IPC abuse                   | Authenticated client, owner-controlled socket/loopback binding, peer/path checks, no ambient sudo, no secret args/env, stable closed schemas               | Socket spoofing, wrong user, path substitution, shell-history secret, ambiguous target, or direct-adapter bypass denied       |
 | Stale hardware facts                     | Post-local-v1 unless claimed; signed attester identity, nonce, measurement, target, issue/expiry, freshness policy, revocation                             | Stale, replayed, unsigned, downgraded, mismatched, or unimplemented attestation claim denied                                  |
 | Release artifact substitution            | Canonical digest map; SHA-256; signature bundle; SPDX SBOM; SLSA provenance; wrapper digest parity                                                         | Altered binary, wrapper, manifest, signature, or provenance denied                                                            |
@@ -189,8 +190,8 @@ v1 is no-go while any threat reachable in v1 scope lacks:
 - recovery, rollback, and revocation procedure;
 - security review with no unresolved critical/high release blocker.
 
-Each downstream product is independently no-go while its managed-content,
-model, module, connector, entitlement, tenant, or hosted threats lack equivalent
+LNSAT is no-go for any claimed managed-content, model, module, connector,
+entitlement, tenant, or hosted surface while its threats lack equivalent
 control and evidence.
 
 This document grants no runtime, signing, build, publication, deployment, or

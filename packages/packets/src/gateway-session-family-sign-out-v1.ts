@@ -14,19 +14,19 @@ export const GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1 =
   "session_family_revocations_appended";
 export const GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1 =
   "session_security_events_appended";
-export const GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1 =
-  "session_cookies_cleared";
+export const GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1 =
+  "session_secret_headers_invalidated";
 
 export const gatewaySessionFamilySignOutV1Contract = {
   contract_id: GATEWAY_SESSION_FAMILY_SIGN_OUT_CONTRACT_V1,
   contract_version: "lnsat.contracts.v1_0",
   path: "/v1/session",
   method: "DELETE",
-  authentication: "active local browser session plus double-submit CSRF",
+  authentication: "active local browser session token and independent proof headers",
   scope: "authenticated_identity_session_family",
   roles: ["owner", "operator", "auditor"],
   request_body: "exact_empty_json_framing",
-  csrf: "required_double_submit",
+  session_proof: "required_independent_header",
   replay_semantics: "one_time_active_session_family",
   failure_oracle: "one generic denial",
   failure_code: GATEWAY_SESSION_FAMILY_SIGN_OUT_ERROR_CODE_V1,
@@ -34,7 +34,7 @@ export const gatewaySessionFamilySignOutV1Contract = {
     GATEWAY_SESSION_FAMILY_SIGN_OUT_ACTIVITY_SIDE_EFFECT_V1,
     GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1,
     GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1,
-    GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1,
+    GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1,
   ],
   failure_side_effects: [],
   execution_authority: false,
@@ -56,15 +56,14 @@ export type GatewaySessionFamilySignOutSuccessV1 = {
     same_origin_required: true;
     csrf_verified: true;
     cors_enabled: false;
-    session_cookie: "cleared_host_only_http_only_samesite_strict";
-    csrf_cookie: "cleared_host_only_samesite_strict";
+    session_secret_headers: "discard_required";
   };
   replay_semantics: "one_time_active_session_family";
   side_effects: [
     typeof GATEWAY_SESSION_FAMILY_SIGN_OUT_ACTIVITY_SIDE_EFFECT_V1,
     typeof GATEWAY_SESSION_FAMILY_SIGN_OUT_REVOCATION_SIDE_EFFECT_V1,
     typeof GATEWAY_SESSION_FAMILY_SIGN_OUT_EVENT_SIDE_EFFECT_V1,
-    typeof GATEWAY_SESSION_FAMILY_SIGN_OUT_COOKIE_SIDE_EFFECT_V1,
+    typeof GATEWAY_SESSION_FAMILY_SIGN_OUT_SECRET_HEADER_SIDE_EFFECT_V1,
   ];
   session_state_changed: true;
   reauthentication_required: true;

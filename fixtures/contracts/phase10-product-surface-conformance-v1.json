@@ -1,7 +1,17 @@
 {
   "schema_version": "lnsat.phase10_product_surface_conformance.v1",
   "packet_id": "P10-X1",
-  "freeze_status": "complete",
+  "freeze_status": "security_corrected",
+  "authority": "docs/architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md",
+  "finding_ids": [
+    "same_uid_unix_control_socket_substitution",
+    "global_login_limiter_lockout"
+  ],
+  "supersedes": {
+    "phase10_manifest_sha256": "ec06efca74829ff0d7c13c2b2aa9a2b22222ed7b065833e532c09fe1075f6dfb",
+    "phase10_status_sha256": "ee3756749f94842a51d510798fea6c11bb8ad0a366c67e7ff140d4a1bafb333d",
+    "conformance_ledger_sha256": "fee1eb3afa477a928386cebf19264efdb60bd22b1011d32abc1e9ed8d7e0275a"
+  },
   "scope": {
     "source_only": true,
     "new_runtime_features": false,
@@ -41,7 +51,7 @@
     {
       "id": "authenticated_health_status",
       "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
-      "evidence_marker": "authenticated_health_and_status_match_exact_output_contracts_over_unix_socket",
+      "evidence_marker": "legacy_health_and_status_fail_before_stdin_or_unix_connection",
       "command": "npm run phase10:exit:test"
     },
     {
@@ -123,22 +133,22 @@
     {
       "id": "tcp_bearer_or_input_before_validation",
       "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
-      "evidence_marker": "removed_endpoint_and_invalid_stdin_fail_before_any_connection"
+      "evidence_marker": "legacy_health_and_status_fail_before_stdin_or_unix_connection"
     },
     {
       "id": "insecure_socket_identity",
       "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
-      "evidence_marker": "insecure_parent_or_socket_mode_rejects_before_bearer_write"
+      "evidence_marker": "legacy_health_and_status_fail_before_stdin_or_unix_connection"
     },
     {
       "id": "socket_symlink_traversal",
       "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
-      "evidence_marker": "ancestor_symlink_traversal_rejects_bind_and_client_before_bearer_write"
+      "evidence_marker": "configured_control_socket_is_withdrawn_before_daemon_bind"
     },
     {
       "id": "get_head_auth_drift",
       "evidence_file": "crates/lnsatd/tests/product_status_health_cli.rs",
-      "evidence_marker": "unix_control_get_and_head_have_equal_auth_and_bodyless_head"
+      "evidence_marker": "configured_control_socket_is_withdrawn_before_daemon_bind"
     },
     {
       "id": "restore_overwrite_or_activation",

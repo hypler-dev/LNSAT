@@ -26,7 +26,7 @@ export const gatewayIdentityCreationV1Contract = {
   contract_version: "lnsat.contracts.v1_0",
   path: "/v1/identities",
   method: "POST",
-  authentication: "active owner session plus double-submit CSRF",
+  authentication: "active owner session token and independent proof headers",
   scope: "new_non_owner_identity",
   actor_roles: ["owner"],
   created_roles: ["operator", "auditor"],

@@ -4,7 +4,7 @@ Status: proposed source-only evidence requirements; no runtime evidence
 
 ## Authority and scope
 
-This document extends the accepted
+This document extends the proposed
 [Phase 11 real disposable Docker proof-readiness plan](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 with the exact evidence commitments required before a separately authorized real
 run. It does not assign a packet ID, authorize execution, or report Docker,
@@ -156,5 +156,56 @@ This source contract adds no Docker command, daemon configuration selector,
 public route, runtime result, receipt, target mutation, image/package artifact,
 deployment, publication, production authority, or support claim. It does not
 complete Phase 11. Next gate remains the separately authorized real disposable
-Docker image and runtime proof after these requirements and its execution harness
-receive source review.
+Docker image and runtime proof. PHR-0005 independently reviews the source-only
+execution-harness contract, which binds the plan and requirements digests,
+inherited requirements, and exact later-authority declarations and stops. It is
+not a runnable proof driver and adds no runtime evidence. Any later runnable
+execution harness and its exact source revision require review before Docker
+access.
+
+A private run-manifest contract may bind exact declarations for that later run
+to a separately supplied expected source-root/revision/build identity, reject
+private evidence beneath source or the disposable target root, and reject
+declared source/target path overlap lexically. It is not authority or evidence:
+JSON alone never grants permission, proves physical filesystem disjointness,
+inspects private filesystem identities, or performs runtime I/O. The future
+driver remains responsible for resolving and authenticating the physical source
+and target identities and revalidating their disjointness immediately before
+process creation; other daemon/image/configuration/entrypoint/in-image-adapter
+preflight; the served Gateway -> D4B2A -> D3/D4A -> supervisor chain; and
+daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove
+cleanup.
+
+The private served-driver admission evaluator adds a source-only structural
+contract for that future driver. It binds the run-manifest digest to fields in a
+caller-supplied claim snapshot, the canonical D3/D4A payload, the loaded
+profile, and the launch-contract digest. It also requires exact profile-derived
+D3 stdin, stdout, stderr, and deadline limits. It rejects replay, ambiguous
+state/receipt/reconciliation, and binding drift, but its digest authenticates no
+snapshot, revalidates no durable state, and grants no launch permission. After
+the successful D4B2A claim commit, a later runnable driver must authenticate the
+created-claim result and call a private store-owned verifier using the live
+session and CSRF proof in a fresh authenticated store transaction. That verifier
+must re-read and cross-check the exact durable consumption, operation, and
+attempt immediately before process creation; bind the exact admission,
+authority, request, payload, profile, adapter, image, protocol, and launch
+identities; require created and exact dispatching sequence state; and require no
+receipt or reconciliation. Only exact success may return a bound pre-supervisor
+guard. A caller-supplied claim snapshot, public read API, or structural admission
+digest cannot satisfy the gate. Any post-claim mismatch or read failure rejects
+before spawn, preserves or marks `outcome_unknown`, and never redispatches. Any
+post-spawn anomaly remains inspection-only and never permits a blind Docker
+retry. The evaluator has no store write, route, filesystem, process, Docker,
+receipt, evidence-persistence, selector, or runtime-execution surface; real
+Docker proof remains separately authorized and incomplete.
+
+The source-only
+[operator run packet](PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+maps these requirements to the reviewed proof-implementation source and
+separately records the public packet integration identity. It supplies an exact
+identity register, private declaration inputs, D3 limits, positive and rejection
+cases, receipt/reconciliation expectations, ambiguity, cleanup, evidence
+destinations and retention, redaction, and pass/fail criteria. All live runtime
+identities and the runnable authenticated durable-store boundary remain
+blocking. The packet contains no runtime evidence and grants no execution
+authority.

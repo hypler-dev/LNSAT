@@ -239,8 +239,8 @@ Request processing order is fixed:
 4. reject cross-site Fetch Metadata; mutation routes additionally require
    exact `Origin` equal to the bound loopback origin;
 5. authenticate the active, unexpired, non-revoked local session;
-6. on mutations, require the host-only `SameSite=Strict` CSRF cookie and exact
-   independent `X-LNSAT-CSRF` double-submit value;
+6. require exact non-ambient bearer-token and independent session-proof
+   headers on authenticated requests;
 7. authorize project/resource scope and role before any persisted read or
    write;
 8. collapse in-contract auth, scope, capability, state, and persistence failure

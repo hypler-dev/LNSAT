@@ -27,6 +27,28 @@
 
 ### Added
 
+- Added the source-only Phase 11 real-Docker proof operator run packet and its
+  fail-closed readiness validation. The packet now distinguishes the reviewed
+  proof-implementation source lock from the later public packet integration
+  identity, records the source-only fresh authenticated store transaction and
+  bound pre-supervisor guard, and keeps the runnable driver and every live
+  runtime identity blocking.
+  Product/source version remains unpublished `0.1.0`; no Docker, runtime,
+  package, tag, release, deployment, production, or support authority opens.
+
+- Added a source-only private Phase 11 Docker proof run-manifest contract. It
+  canonically binds reviewed proof metadata to exact later-run declarations,
+  including nonce, bounded UTC window, private evidence custody, and named
+  permissions. A separately supplied expected source-root/revision/build identity
+  keeps private evidence outside source and the disposable target root, and
+  rejects declared source/target path overlap lexically. It performs no runtime
+  I/O, does not prove physical filesystem disjointness, inspect private
+  identities, prove human authority, or open Docker, runtime, release,
+  deployment, production, or Phase 11 completion claims.
+  A later driver must resolve and authenticate physical source and target
+  identities and revalidate their disjointness immediately before process
+  creation.
+
 - Added v2-only `lnsatctl config effective` and redacted `config export`
   diagnostics over the experimental headless declaration contract. Inputs use
   bounded stable regular-file reads; outputs omit source identities and remain

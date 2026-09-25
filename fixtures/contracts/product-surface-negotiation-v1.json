@@ -10,7 +10,7 @@
     "routes": ["GET /v1/status", "HEAD /v1/status"],
     "default_response_selector": "lnsat.product_surface.v1",
     "explicit_response_echo": true,
-    "legacy_body_bytes_unchanged": true
+    "legacy_body_bytes_unchanged": false
   },
   "rejections": {
     "code": "lnsatd.product_surface_contract.rejected",

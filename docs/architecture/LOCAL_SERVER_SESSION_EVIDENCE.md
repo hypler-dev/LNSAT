@@ -60,12 +60,13 @@ evidence fails closed.
 The daemon owns production session time. `SystemTime` is converted to canonical
 UTC millisecond evidence, and the same sampled instant derives both issue and
 expiry values. Public browser-request verification no longer accepts a
-caller-supplied timestamp. Session issue first passes a process-local monotonic
-fixed-window limiter: five attempts per identity and 30 process-wide per
-60-second window, with a bounded identity-key set. Unknown, invalid, and
-inactive identities verify against one validated fixed-profile Argon2id dummy
-verifier. All of these failures remain indistinguishable at the public source
-boundary.
+caller-supplied timestamp. Session issue applies a process-local monotonic
+fixed-window limiter only to durably known active identities: five attempts per
+identity per 60-second window, with at most 128 tracked identity keys. Unknown,
+invalid, and inactive identities do not consume limiter capacity, but they
+still verify against one validated fixed-profile Argon2id dummy verifier. A
+rate-limited known identity also performs one Argon2id verification. All of
+these failures remain indistinguishable at the public source boundary.
 
 Served `POST /v1/session` requires an operating-system loopback peer, exact
 numeric bound Host and Origin, `Sec-Fetch-Site: same-origin`, exact
@@ -79,8 +80,8 @@ evidence, and persistence failures collapse to the stable
 `gateway.session_issue.denied` response. Failure discloses only that bounded
 process-local limiter state may advance. Success returns `201`, the
 `lnsat.gateway.session_issue.v1_0` secret-free session representation, declares
-limiter/session/event/cookie side effects and fresh-session-per-success replay,
-and sets fresh host-only bearer/CSRF cookies. Request, password, and composed
+limiter/session/event/session-secret-header side effects and fresh-session-per-success replay,
+and sets fresh non-ambient bearer/proof headers. Request, password, and composed
 secret-bearing response buffers plus raw issue/rotation tokens are zeroized
 after use.
 
@@ -100,7 +101,7 @@ preserves the original absolute expiry, revokes the prior session with reason
 immediate transaction. At least 60 seconds must remain. Wrong CSRF, idle or
 expired input, replay, evidence drift, or partial persistence yields no
 replacement. The daemon requires strict mutation preflight and server-owned
-time, then returns replacement secrets only in new host-only cookie fields.
+time, then returns replacement secrets only in the two named session-secret response headers.
 
 Issue, revocation, and rotation source writes append their matching schema-v14
 security events inside the same immediate transaction. A failed event write
@@ -145,10 +146,10 @@ origin and:
 - permits only GET/HEAD as read-only requests;
 - permits POST/PUT/PATCH/DELETE only with the exact Origin,
   `application/json`, and verified independent anti-CSRF proof;
-- carries bearer only in a host-only `HttpOnly`/`SameSite=Strict` session
-  cookie;
-- uses a second host-only strict same-site cookie plus exact
-  `X-LNSAT-CSRF` header with constant-time double-submit equality;
+- carries bearer only in the non-ambient `X-LNSAT-Local-Session-Token`
+  request header;
+- requires the independent `X-LNSAT-Local-Session-Proof` request header and
+  compares its stored digest in constant time;
 - verifies extracted secrets against active SQLite session/revocation evidence
   and bounded activity evidence before returning secret-free role-bound request
   evidence;
@@ -166,29 +167,29 @@ active secret-free session/identity evidence, preserves exact bodyless `HEAD`,
 uses one generic oracle-free denial, and declares that successful
 authentication may append bounded activity evidence. `PATCH` requires exact
 zero-length JSON framing,
-Origin/Fetch Metadata, active bearer proof, and matching CSRF cookie/header. It
-atomically revokes the prior bearer/CSRF pair, preserves absolute expiry,
-returns secret-free rotation evidence, and sets fresh host-only cookies once.
+Origin/Fetch Metadata, an active bearer token, and the matching independent
+session proof. It atomically revokes the prior token/proof pair, preserves absolute expiry,
+returns secret-free rotation evidence, and sets fresh non-ambient session-secret headers once.
 Prior-token use and replay share the generic browser-transport denial. `DELETE`
 uses the same strict mutation proof, atomically revokes every active
 same-identity session, returns only secret-free family counts/time, and clears
-both host-only cookies. No response emits permissive CORS headers and `OPTIONS`
+both client-held session-secret headers. No response emits permissive CORS headers and `OPTIONS`
 is denied. No packet/action mutation, identity re-enable, event mutation, or
 execution route is opened. Static page
 navigation remains
 separate from authenticated API requests.
 
 Stable `PATCH /v1/identity/password` uses the same strict mutation transport
-with a closed `current_password`/`new_password` JSON body and
-per-session/process attempt limits. The transaction reverifies the latest
+with a closed `current_password`/`new_password` JSON body and a bounded
+per-verified-session attempt limit. The transaction reverifies the latest
 Argon2id credential, appends one immutable generation, revokes every active
-same-identity session with `credential_revoke`, and clears both host-only
-cookies. Success returns only secret-free credential version/time/count
+same-identity session with `credential_revoke` and invalidates both
+client-held secret headers. Success returns only secret-free credential version/time/count
 evidence plus `reauthentication_required: true`; no replacement session is
 issued. Transport, schema, credential, limit, clock, drift, and persistence
 failures share stable `gateway.identity_password_rotation.denied` without
-cookies or identity detail. Failure discloses only possible process-limiter
-advancement; durable credential and session state remain unchanged.
+session-secret headers or identity detail. Failure discloses only possible
+verified-session limiter advancement; durable credential and session state remain unchanged.
 
 Stable owner-only `POST /v1/identities` uses the same strict mutation
 transport and a closed `identity_ref`/`display_name`/`role`/`password` JSON
@@ -275,14 +276,14 @@ Tests prove:
 - exact fixed local control-permission mapping and role-bound sessions;
 - operator approval plus auditor, wrong-CSRF, session-substitution, and
   unauthenticated persistence negatives;
-- wrong identity/password, malformed token, wrong anti-CSRF token, pre-issue
+- wrong identity/password, malformed token, wrong session proof, pre-issue
   use, and exact-boundary expiry rejection;
 - month and leap-day duration arithmetic;
 - exact IPv4/IPv6 loopback origin construction plus remote-peer, Host
   rebinding, cross-site/missing Fetch Metadata, Origin, media-type, method, and
   anti-CSRF negatives;
-- exact host-only issue/clear cookie attributes, bounded lifetime, duplicate
-  cookie/header, transfer-encoding, length, oversized-head, and trailing-body
+- exact browser secret-header issue/absence semantics, bounded lifetime, duplicate
+  session-secret header, transfer-encoding, length, oversized-head, and trailing-body
   negatives;
 - route-neutral active/expired SQLite session composition with generic public
   denial and no secret-bearing output;
@@ -290,21 +291,22 @@ Tests prove:
   secret-free response, exact bodyless `HEAD`, denied preflight, no CORS allow
   headers, and generic cross-site/missing-auth negatives;
 - served same-origin `POST /v1/session` with exact Origin/Fetch Metadata/custom
-  intent, closed 4 KiB JSON, process-wide rate limits, equal wrong/unknown
-  credential denial, host-only cookies, secret-free readback, secret-buffer
+  intent, closed 4 KiB JSON, per-known-active-identity rate limits,
+  unknown-identity limiter isolation, equal wrong/unknown credential denial,
+  client-held session-secret headers, secret-free readback, secret-buffer
   zeroization, and framing/schema/CORS negatives;
 - served same-origin `DELETE /v1/session` with exact empty framing, active
-  bearer/CSRF proof, atomic same-identity family revocation, host-only cookie
-  clearing, generic replay/auth denial, malformed-framing rejection, and
+  bearer/session proof, atomic same-identity family revocation, secret-header
+  invalidation, generic replay/auth denial, malformed-framing rejection, and
   no-CORS negatives;
 - served same-origin `PATCH /v1/session` with exact empty framing, active
-  bearer/CSRF proof, fresh host-only cookies, unchanged absolute expiry,
+  bearer/CSRF proof, fresh non-ambient session-secret headers, unchanged absolute expiry,
   immediate prior-session rejection, replacement readback, generic
   replay/auth denial, malformed-framing rejection, and no-CORS negatives;
 - served same-origin `PATCH /v1/identity/password` with a closed secret body,
-  latest-password reverification, per-session/process limiting, append-only
-  credential generation, atomic session-family revocation, host-only cookie
-  clearing, required reauthentication, old/new login proof, and generic
+  latest-password reverification, post-authentication per-session limiting, append-only
+  credential generation, atomic session-family revocation, secret-header
+  invalidation, required reauthentication, old/new login proof, and generic
   transport/schema/credential/replay denial;
 - served owner-only `POST /v1/identities` with closed operator/auditor schema,
   server-owned time, immutable identity/credential/audit evidence, immediate
@@ -320,7 +322,7 @@ Tests prove:
   time, terminal replay closure, auditor/self-approval negatives, unsigned
   evidence, and zero execution authority;
 - exact epoch/leap-day UTC formatting, server-derived 60-second session
-  windows, monotonic per-identity/global rate-limit and reset boundaries;
+  windows, monotonic per-known-identity and per-verified-session rate-limit and reset boundaries;
 - fixed dummy-verifier consumption for unknown identities without per-open or
   per-request Argon2id hashing;
 - append-only sign-out revocation and replay rejection;

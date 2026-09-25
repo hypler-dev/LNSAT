@@ -20,7 +20,7 @@ closing the headless gate. No source foundation alone satisfies this sequence.
 ## Preserved Product Goal
 
 First LNSAT V1 release remains an embeddable, owner-controlled authority
-kernel/library:
+runtime and package:
 
 - Rust owns security-critical contracts, local persistence, daemon behavior,
   authorization, receipt binding, and stable operator CLI behavior;
@@ -31,32 +31,32 @@ kernel/library:
   receipt, reconciliation, and audit form one end-to-end product loop;
 - runtime is non-root, loopback-default, fail-closed, and explicitly started;
 - hosted SaaS, fleet/HA, multi-tenancy, unrestricted infrastructure control,
-  and production reference actions remain outside initial v1; Rangoon owns
-  graphical userland and final distro packaging.
+  and production reference actions remain outside initial v1; selected core
+  package lifecycle proof remains part of the staged V1 build.
 
 ## Headless Configuration And Control
 
 Accepted V1 product requirement; implementation and platform proof remain pending.
 Gate: headless configuration and control. State: pending; blocks Phase 13
 RC freeze regardless of the completed historical P10-X1 source checkpoint.
-HCFG-0 and HCFG-1 implement source-only diagnostics: exact product-surface
-negotiation keeps legacy v1 status and manifest bytes frozen, while explicitly
-selected `lnsat.product_surface.v2` exposes the v2 manifest/status diagnostic
-shapes and `lnsatctl config schema|validate`. There is no range or fallback.
+HCFG-0 and HCFG-1 implement source-only diagnostics. The accepted security
+correction supersedes the prior v1 status and manifest bytes to withdraw the
+unsafe Unix bearer transport; the ledger binds both old and replacement
+digests. Explicitly selected `lnsat.product_surface.v2` exposes the v2
+manifest/status diagnostic shapes and `lnsatctl config schema|validate`. There
+is no range or fallback.
 `config validate` reads the selected config and any referenced runtime profile,
 but opens no database, listener, process, or action authority. This does not
 satisfy this gate or the separate Phase 11 disposable Docker proof.
 LNSAT must provide complete headless setup and ongoing management through its
-versioned API and `lnsatctl`. Graphical setup, presets, management UI, and final
-distro packaging belong to Rangoon. Rangoon may install a pinned, verified
-LNSAT release or connect to a compatible existing installation through the same
-protected versioned interfaces. It cannot bypass Gateway or silently increase
-permissions.
-Any LNSAT core artifact consumed by Rangoon or another host must expose immutable
-component identity and support signature/provenance and revocation verification
-under the [release process](RELEASING.md). Verification failure blocks downstream
-installation or update. Trust-root rotation and downgrade denial require tests,
-not trust in a GitHub URL alone.
+versioned API and `lnsatctl`. Graphical setup, presets, and management UI are
+later LNSAT surfaces built on those protected versioned interfaces; they are
+not V1 exit requirements. Selected core package lifecycle is a V1 requirement.
+Gateway cannot be bypassed or silently grant additional permissions. Every LNSAT
+artifact must expose immutable component
+identity and support signature, provenance, and revocation verification under
+the [release process](RELEASING.md). Trust-root rotation and downgrade denial
+require tests, not trust in a GitHub URL alone.
 
 The LNSAT core and `lnsatctl` must distinguish two independently reviewable
 boundaries:
@@ -73,9 +73,9 @@ replacement that escapes scope. A UI selection is not OS enforcement proof.
 
 Declarative configuration supports explicit layers and composition, with
 `config schema`, `show`, `validate`, `diff`, `effective`, `apply`, and `export`.
-The core computes effective authority. Rangoon may render presets and forms but
-must consume those results and never compute permissions itself. Unknown fields,
-unsupported capabilities, and invalid composition fail closed.
+The core computes effective authority. Product surfaces may render presets and
+forms but must consume those results and never compute permissions themselves.
+Unknown fields, unsupported capabilities, and invalid composition fail closed.
 
 `lnsatctl` provides secure machine-readable monitoring and control for
 `watch`, `status`, `health`, `operations`, approvals, audit, recovery, and
@@ -97,7 +97,7 @@ owner-bootstrap security foundations where applicable rather than inventing a
 second ownership authority.
 
 Privilege increases require an explicit authenticated human decision bound to the
-exact configuration change; an agent or downstream client cannot self-approve.
+exact configuration change; an agent or client cannot self-approve.
 Rollback must not silently restore revoked or broader authority. Explain the
 effect of narrowing or disablement on queued and in-flight work without claiming
 that cancellation proves non-execution.
@@ -108,7 +108,7 @@ must block activation of the affected capability; diagnostic-only visibility may
 remain available with a clear coverage warning. Never silently emulate stronger
 isolation or label unmediated paths as controlled. Exact OS, architecture,
 runtime, and selected core-target rows still require separate compatibility
-evidence. Rangoon owns final installer-row evidence.
+evidence. LNSAT owns final package-row evidence for every selected target.
 
 This is additional product work beyond the completed P10-X1 source checkpoint,
 not a claim that the current read-only Control Center already administers access.
@@ -118,8 +118,8 @@ changes, self-approval, stale/concurrent updates, configuration drift,
 unsupported controls, interruption, disablement, rollback, restart, and
 secret-safe output. Every claimed target must also pass negative and race tests
 for symlink or reparse-point escape, mount substitution, target replacement
-between validation and use, and revocation concurrent with use. Rangoon's
-graphical lifecycle is downstream work.
+between validation and use, and revocation concurrent with use. Graphical
+lifecycle remains staged LNSAT product work.
 Source implementation needs a separately bounded packet; this documentation
 opens no route, OS permission, runtime, install, or execution authority.
 
@@ -174,17 +174,15 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 4. Phase 12 hardware/environment attestation, signed-evidence packets,
    enterprise persistence, fleet/HA, and unselected package rows do not block
    first local support.
-5. Phase 14 requires only explicitly selected LNSAT core-target rows. Rangoon
-   owns final installer/package breadth, but every claimed core target still
-   needs artifact identity, trust, runtime, and compatibility proof.
-6. Public core and private downstream products remain separate. Downstream
-   management, connectors, models, and release composition cannot fork or
+5. Phase 14 requires only explicitly selected LNSAT core-target rows. Every
+   claimed core target still needs artifact identity, trust, runtime,
+   compatibility, and package lifecycle proof.
+6. LNSAT extensions, connectors, models, and release composition cannot fork or
    weaken Gateway authority.
 7. ADR-0007 selects one local Docker/OCI profile as first v1 runtime
-   integration. Docker Agent, Docker MCP Gateway, and Docker Sandboxes may be
-   composed as replaceable adjacent systems; Gateway remains sole authority and
-   same contracts must support later secure-VM, native-host, and remote
-   profiles.
+   integration. Docker/OCI runtime components remain replaceable integration
+   surfaces; Gateway remains sole authority and the same contracts must support
+   later secure-VM, native-host, and remote profiles.
 
 ## Current Build Position
 
@@ -269,11 +267,11 @@ diagnostics, operator assets, and packet-inspection parity. P10-A2 adds one
 bounded explicit `lnsat.daemon.config.v1` file, `lnsatd --config`, public-safe
 digest/applied-layer inspection, and exact existing database/listen/Phase 8/
 console seams without selecting system, user, target, or package paths.
-P10-A3 now adds authenticated read-only health/status, explicit macOS/Linux
-Unix-socket client transport with path and peer-UID proof before bearer
-transmission, stdin-only session-token intake, and stable text/JSON/JSONL/YAML.
-Numeric-loopback HTTP remains browser/API transport and is closed for
-`lnsatctl` bearer reads. P10-A4 adds non-root offline backup, fresh inert
+P10-A3 browser/API health/status retains its authenticated header-pair transport
+and stable text/JSON/JSONL/YAML. The accepted local-authentication security
+correction withdraws Unix `lnsatctl` health/status before first support: legacy
+forms fail before protected stdin, Unix connection, or request bytes.
+Numeric-loopback HTTP remains browser/API transport. P10-A4 adds non-root offline backup, fresh inert
 restore, and protected-stdin owner recovery with exclusive-lease preflight,
 credential/audit append, and all-owner-session revocation. Exact parity keeps
 API routes, MCP tools, Control Center actions, served mutation, and activation
@@ -348,6 +346,22 @@ deployment, release, package, or support exists. Phase 11 remains incomplete;
 a later separately authorized gate owns real disposable Docker image/runtime
 proof.
 
+The private served-driver admission seam now provides a source-only structural
+check for that later chain. It binds the run manifest to fields in a
+caller-supplied claim snapshot, canonical D3/D4A payload, loaded profile, and
+launch-contract digest. Replay, ambiguous state/receipt/reconciliation, and
+binding drift fail closed, but its digest authenticates no snapshot, revalidates
+no durable state, and grants no launch permission. After the successful D4B2A
+claim commit, a later runnable driver must authenticate the created-claim result
+and call a private store-owned verifier in a fresh authenticated store
+transaction. The verifier must re-read and cross-check the exact durable
+consumption, operation, and attempt through the durable-store boundary
+immediately before process creation. Only exact live state may return a bound
+pre-supervisor guard; a post-claim failure preserves or marks `outcome_unknown`
+and cannot redispatch. This evaluator performs no store write, route,
+filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
+runtime execution.
+
 A source-only proof-readiness plan now defines one canonical, side-effect-free
 identity bundle for the loaded schema-2 profile and freezes eight required
 future proof cases. Repository validation covers parsing, canonicalization,
@@ -359,6 +373,21 @@ A companion source-only evidence-requirements contract freezes the required
 client, endpoint, daemon, image, adapter, target, authority-chain, lifecycle,
 cleanup, reconciliation, redaction, and independent-review commitments without
 recording runtime evidence or opening an execution selector.
+The source-only execution-harness contract binds that requirements digest to the
+proof-plan digest, inherited lists, and exact later-authority declarations and
+stops. It performs no Docker process, socket, daemon, image, or repository work;
+PHR-0005 records independent source review of that contract. A runnable proof
+driver and real runtime evidence remain separate gates; Phase 11 is incomplete.
+The source-only operator run packet locks the proof-implementation source to
+public revision `b41aa756bccd85843ac540abfd927e8c5693d5fe` and separately
+records PR #39 packet integration at public merge
+`190ab32443f60a2a1bc78f990e8ea5571c28f96f`. It consolidates later identity,
+target, admission, D3-limit, proof-case, ambiguity, cleanup, evidence,
+redaction, and terminal criteria. That packet integration identity moves neither
+the proof source nor product/source version `0.1.0`. Its runnable-driver
+boundary and all live runtime identities remain blocking. A new exact authority
+decision is required before Docker observation or execution, and later release
+gates remain unchanged.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.

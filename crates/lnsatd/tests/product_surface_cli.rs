@@ -415,9 +415,10 @@ fn zsh_completion_per_binary_exact_surfaces() {
         String::from_utf8(output.stdout).expect("zsh completion must be UTF-8"),
         concat!(
             "#compdef lnsatctl lnsat lnsatd\n",
+            "# health/status Unix transport withdrawn pending mutual daemon authentication\n",
             "case \"$service\" in\n",
             "  lnsatctl)\n",
-            "    _arguments '1:command:(doctor health status config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--socket' '--session-token-stdin' '--product-surface-contract' '--output' '--help' '--version' '*::argument:->args'\n",
+            "    _arguments '1:command:(doctor config recovery backup restore manifest completion man)' '--database' '--destination' '--backup' '--expected-owner' '--recovered-at' '--new-password-stdin' '--product-surface-contract' '--output' '--help' '--version' '*::argument:->args'\n",
             "    ;;\n",
             "  lnsat)\n",
             "    _arguments '1:command:(packet manifest completion man)' '--product-surface-contract' '--help' '--version' '*::argument:->args'\n",
