@@ -284,6 +284,11 @@ result: a CID file plus client/socket checks cannot establish daemon and
 container ownership. Ambiguity stays `outcome_unknown`; an authorized,
 daemon-revalidated inspect-before-remove implementation and cleanup evidence
 remain missing.
+An isolated source-only container-inspection parser checks bounded JSON for one
+exact private container ID plus operation and launch-contract labels. It uses
+no Docker command and treats a matching response as untrusted syntax only;
+daemon/client/endpoint revalidation, image provenance, lifecycle evidence,
+cleanup authority, and verified removal remain absent.
 
 The private served-driver admission evaluator now adds a source-only structural
 boundary: canonical run manifest -> fields in a caller-supplied claim snapshot
