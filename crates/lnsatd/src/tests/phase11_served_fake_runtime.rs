@@ -830,6 +830,97 @@ fn phase11_served_fake_runtime_manifest_drift_never_spawns() {
 }
 
 #[test]
+fn phase11_proof_driver_cannot_live_in_evidence_or_disposable_root() {
+    for (label, in_evidence) in [
+        ("driver-in-evidence", true),
+        ("driver-in-disposable", false),
+    ] {
+        let fixture = ServedFakeRuntimeFixture::new(label, FakeMode::Success);
+        let root = if in_evidence {
+            &fixture.private_evidence_root
+        } else {
+            &fixture.git.root
+        };
+        let nested_driver = root.join("proof-driver");
+        fs::copy(&fixture.proof_driver_executable, &nested_driver)
+            .expect("copy inert proof-driver fixture");
+        fs::set_permissions(&nested_driver, fs::Permissions::from_mode(0o700))
+            .expect("nested proof-driver mode");
+        let manifest = final_supervisor_guard_manifest_from_parts(
+            &fixture.profile,
+            &fixture.fake_docker_executable,
+            &fixture.docker_socket,
+            &fixture.git,
+            &nested_driver,
+            &fixture.source_root,
+            &fixture.private_evidence_root,
+        );
+        assert!(
+            preflight_docker_local_runtime_proof_environment_v1(
+                &manifest,
+                &nested_driver,
+                &fixture.source_root,
+                &fixture.private_evidence_root,
+                &fixture.git.root,
+            )
+            .is_err(),
+            "proof-driver placement must reject before launch: {label}"
+        );
+        let config = fixture
+            .config
+            .clone()
+            .with_phase11_served_fake_docker_runtime(
+                &fixture.fake_docker_executable,
+                &nested_driver,
+                &fixture.source_root,
+                (
+                    fixture.expected_source_revision.clone(),
+                    fixture.expected_source_tree_oid.clone(),
+                ),
+                &fixture.private_evidence_root,
+                manifest,
+            )
+            .expect("fake-only runtime selection");
+        let daemon = ServedDaemon::start(&config);
+        let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+        response_json(&response, "HTTP/1.1 403 Forbidden\r\n");
+        assert_eq!(fixture.run_count(), 0);
+        fixture.assert_public_safe(&response);
+        let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
+        assert_eq!(operation["operation"]["state"], "outcome_unknown");
+        assert!(operation["operation"]["receipt"].is_null());
+        daemon.stop();
+    }
+}
+
+#[test]
+fn phase11_environment_preflight_allows_proof_driver_under_source_root() {
+    let fixture = ServedFakeRuntimeFixture::new("driver-in-source", FakeMode::Success);
+    let source_driver = fixture.source_root.join("proof-driver");
+    fs::copy(&fixture.proof_driver_executable, &source_driver)
+        .expect("copy inert proof-driver fixture");
+    fs::set_permissions(&source_driver, fs::Permissions::from_mode(0o700))
+        .expect("source proof-driver mode");
+    let manifest = final_supervisor_guard_manifest_from_parts(
+        &fixture.profile,
+        &fixture.fake_docker_executable,
+        &fixture.docker_socket,
+        &fixture.git,
+        &source_driver,
+        &fixture.source_root,
+        &fixture.private_evidence_root,
+    );
+    preflight_docker_local_runtime_proof_environment_v1(
+        &manifest,
+        &source_driver,
+        &fixture.source_root,
+        &fixture.private_evidence_root,
+        &fixture.git.root,
+    )
+    .expect("source-root placement remains valid at the filesystem boundary");
+}
+
+#[test]
 fn phase11_served_fake_runtime_expired_window_marks_unknown_without_spawn() {
     let fixture = ServedFakeRuntimeFixture::new("served-expired-window", FakeMode::Success);
     let mut declarations = final_supervisor_guard_declarations(&fixture);

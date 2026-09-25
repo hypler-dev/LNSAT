@@ -67,6 +67,8 @@ filesystem identity. The separate filesystem-only guard binds the declared
 source root, proof-driver executable digest, owner-only private evidence
 directory, and disposable root after a created claim. It revalidates those
 identities and their physical separation in the final supervisor callback;
+it also rejects a proof-driver executable placed inside the private evidence
+or disposable root. This placement check adds no build or launch authority;
 exact replay stays metadata-only. A separate source-only guard now uses the
 declared host Git verifier to reject dirty or unsafe standalone source storage
 and require exact separately supplied source revision and tree before the fake
