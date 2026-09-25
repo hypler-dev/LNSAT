@@ -63,6 +63,68 @@ configuration-based image ID. The implementation must not silently choose one
 meaning. A versioned, reviewed binding decision must name both identities and
 their comparison before the observer can accept an image.
 
+### Proposed image-identity binding decision
+
+**Owner decision pending.** For the first real disposable proof, use one
+platform-specific OCI image manifest and its referenced OCI image configuration.
+The approved artifact may be that manifest directly or an OCI image index
+whose verified platform descriptor selects exactly that manifest.
+Interpret `profile.image_digest` as the local configuration-based ImageID used
+by the existing bare `sha256:` Docker run argument. A manifest digest is a
+different content identifier and must be supplied and verified separately.
+The OCI configuration specification defines ImageID as the SHA-256 of the exact
+configuration JSON bytes; the image manifest contains a descriptor for those
+bytes. Docker documents running a locally available image by its bare image
+ID, while registry manifest references use `name@sha256:...`. This proposal
+does not infer a manifest digest from a local image ID or `RepoDigests`.
+
+The existing run-manifest v1 declaration is insufficient for that decision:
+its `immutable_digest` is required to equal `profile.image_digest`, while its
+`configuration_digest` has no specified OCI byte or descriptor meaning. Keep
+v1 source-only and reject it as real-proof image authority. A successor private
+run-manifest contract must add these separately named, typed bindings without
+reinterpreting either v1 field:
+
+| Binding               | Required evidence and comparison                                                                                                                                                                                                                                                       |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `oci_index_digest`    | Present only when the approved artifact is an OCI image index. Equals SHA-256 of its exact raw bytes and the independently approved index identity. Its selected platform descriptor names `oci_manifest_digest` and has the verified manifest size.                                   |
+| `oci_manifest_digest` | SHA-256 of the exact raw single-platform manifest bytes; equals the private declaration and either the independently approved manifest subject or the verified selected index descriptor. An index digest cannot substitute for this field.                                            |
+| `oci_config_digest`   | Manifest `config.digest`; equals SHA-256 of the exact raw configuration bytes and `profile.image_digest`. Manifest `config.size` equals the raw byte count.                                                                                                                            |
+| `local_image_id`      | Docker image inspection `Id`, container inspection `Image`, and the exact `docker run` image argument all equal `oci_config_digest`. A Docker observation alone never supplies the manifest or provenance proof.                                                                       |
+| `platform`            | The approved OS and architecture, plus variant when declared, match the verified configuration. On the index path they also match exactly one verified selected index descriptor. The OCI manifest body does not carry platform fields; absent or ambiguous platform evidence rejects. |
+
+The new contract must bind these fields, their distinct types, the verified
+index/manifest/config byte commitments as applicable, and the
+provenance-verifier identity into its own domain-separated digest. That digest
+must be included in the later
+driver-admission, final pre-spawn, post-launch, and pre-cleanup comparisons.
+Retain `--pull=never`; no preflight may pull or resolve a mutable tag. Reject
+unknown index/manifest/config media types, an index digest supplied as a
+manifest digest, multiple matching index platform descriptors, mismatched
+descriptor size, malformed or duplicate JSON members, absent raw bytes, or
+any substitution among index, manifest, and config digest kinds. The selected
+exact Docker client/API and supported OCI media
+types still require review before implementation. The bounded source of raw
+index/manifest/config bytes and their private custody must also be specified;
+Docker inspection output cannot substitute for those bytes.
+
+This choice binds content identities, not build provenance or in-image adapter
+bytes. The owner-approved provenance verifier must independently connect the
+source revision/tree and build identity to the exact approved artifact,
+selected manifest, and config. Separately verified adapter bytes must match the
+approved host-built adapter
+digest and declared entrypoint. No Docker inspection field, annotation,
+self-reported hash, or syntactically matching digest can replace those checks.
+Until the provenance format, verifier, trust root, adapter-byte observation,
+and custody policy are accepted, the observer rejects before any real CLI call.
+
+Acceptance requires explicit owner approval of this image-identity choice and
+the successor manifest field contract. A source-only test implementation must
+then prove distinct manifest/config digest handling, raw-byte and descriptor
+verification, platform and entrypoint checks, cross-kind substitution denial,
+and zero fake-CLI calls for incomplete authority. Independent review and the
+operator packet's new source lock and run authority remain separate gates.
+
 Missing, malformed, substituted, mutable, platform-incompatible, or unstable
 identity rejects before process creation. Missing provenance or adapter identity
 is a rejection even when `docker image inspect` returns successfully.
@@ -198,7 +260,7 @@ alter the operator packet's source lock.
   evidence limits against the operator packet before any later Docker authority
   is considered.
 
-Reference material: [Docker image inspect](https://docs.docker.com/reference/cli/docker/image/inspect/), [Docker image save](https://docs.docker.com/reference/cli/docker/image/save/), [Docker Build attestations](https://docs.docker.com/build/metadata/attestations/), [OCI image configuration](https://github.com/opencontainers/image-spec/blob/main/config.md), and [OCI descriptors](https://github.com/opencontainers/image-spec/blob/main/descriptor.md).
+Reference material: [Docker image inspect](https://docs.docker.com/reference/cli/docker/image/inspect/), [Docker image-ID run example](https://docs.docker.com/get-started/docker-concepts/building-images/build-tag-and-publish-an-image/), [Docker image save](https://docs.docker.com/reference/cli/docker/image/save/), [Docker Build attestations](https://docs.docker.com/build/metadata/attestations/), [OCI image manifest](https://github.com/opencontainers/image-spec/blob/main/manifest.md), [OCI image configuration](https://github.com/opencontainers/image-spec/blob/main/config.md), and [OCI descriptors](https://github.com/opencontainers/image-spec/blob/main/descriptor.md).
 
 ## Non-goals and open questions
 
@@ -218,7 +280,8 @@ implementation or real proof:
 - Which Docker CLI/API versions and platform-specific OCI fields are supported?
 - Does schema-2 `profile.image_digest` mean the local OCI config image ID or a
   manifest digest, and how is the other identity bound without an implicit
-  compatibility change?
+  compatibility change? The candidate decision above chooses the local config
+  ImageID plus a successor private manifest; owner acceptance is pending.
 - Which bounded mechanism can inspect the adapter without granting it socket,
   network, credentials, or broader filesystem access?
 - Which private evidence custodian and reviewer may see raw observations, and
