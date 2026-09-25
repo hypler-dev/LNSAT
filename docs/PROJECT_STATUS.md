@@ -264,7 +264,11 @@ uses the declared host Git verifier to require a clean standalone checkout,
 exact expected revision and tree, and safe local Git storage. It repeats at
 the same final callback. The expected IDs remain separately supplied trusted
 inputs; this does not authenticate the operator packet's existing source lock
-on its own or prove any real proof-driver build. A later runnable driver
+on its own or prove any real proof-driver build. The test-only composition also
+checks that the manifest's bounded UTC run window is live after a created claim
+and at the final callback, rejecting clock rollback and expiration while exact
+replay remains metadata-only. This local-clock check does not prove execution
+host identity or human authorization. A later runnable driver
 must also preflight the daemon, image, configuration, entrypoint, and in-image
 adapter; traverse Gateway -> D4B2A -> D3/D4A -> supervisor; and use
 daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove

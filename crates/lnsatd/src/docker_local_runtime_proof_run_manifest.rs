@@ -610,7 +610,7 @@ fn valid_git_revision_v1(value: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
-fn utc_epoch_seconds_v1(value: &str) -> Option<u64> {
+pub(crate) fn utc_epoch_seconds_v1(value: &str) -> Option<u64> {
     if value.len() != 20
         || value.as_bytes().get(4) != Some(&b'-')
         || value.as_bytes().get(7) != Some(&b'-')

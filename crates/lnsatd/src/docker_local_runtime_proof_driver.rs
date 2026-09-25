@@ -15,6 +15,9 @@ use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
     supervise_docker_local_runtime_proof_with_final_guard_v1,
 };
 use crate::docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1;
+use crate::docker_local_runtime_proof_run_window_guard::{
+    DockerLocalRuntimeProofRunWindowGuardV1, preflight_phase11_proof_run_window_v1,
+};
 use crate::docker_local_runtime_proof_source_git_guard::{
     DockerLocalRuntimeProofSourceGitGuardV1, preflight_phase11_proof_source_git_v1,
 };
@@ -26,6 +29,7 @@ use lnsat_store::{
     SqliteStore,
 };
 use std::path::Path;
+use std::time::SystemTime;
 
 /// All server-owned inputs for one private served proof composition.
 pub(crate) struct DockerLocalRuntimeProofDriverInputV1<'a> {
@@ -127,6 +131,8 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
     };
     let consumption = handle.claim().consumption.clone();
     let operation_id = redemption.operation_id;
+    let run_window_guard =
+        preflight_claimed_run_window_v1(store, operation_id, input.run_manifest)?;
     let environment_guard = preflight_docker_local_runtime_proof_environment_v1(
         input.run_manifest,
         input.proof_driver_executable,
@@ -169,6 +175,7 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
         DockerLocalProofEnvironmentFinalInputV1 {
             guard: &environment_guard,
             source_git_guard: &source_git_guard,
+            run_window_guard: &run_window_guard,
             proof_driver_executable: input.proof_driver_executable,
             source_root: input.source_root,
             expected_source_revision: input.expected_source_revision,
@@ -190,5 +197,21 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
         created: true,
         consumption,
         operation,
+    })
+}
+
+fn preflight_claimed_run_window_v1(
+    store: &mut SqliteStore,
+    operation_id: &str,
+    run_manifest: &DockerLocalRuntimeProofRunManifestOutputV1,
+) -> Result<DockerLocalRuntimeProofRunWindowGuardV1, DockerLocalRuntimeProofDriverErrorV1> {
+    preflight_phase11_proof_run_window_v1(
+        &run_manifest.manifest().declarations.run_window,
+        run_manifest.digest(),
+        SystemTime::now(),
+    )
+    .map_err(|_| {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
+        DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
     })
 }
