@@ -10,9 +10,10 @@
   },
   "type": "module",
   "scripts": {
-    "build": "npm run build -w @lnsat/gateway && next build",
+    "build": "npm run build -w @lnsat/gateway && node scripts/build.mjs build",
+    "build:test": "node --test scripts/build.node-test.mjs",
     "dev": "next dev",
-    "test": "npm run build -w @lnsat/gateway && vitest run",
+    "test": "npm run build:test && npm run build -w @lnsat/gateway && vitest run",
     "test:operation-readback": "vitest run test/control-center-operation-readback.test.ts",
     "typecheck": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json --noEmit"
   },
