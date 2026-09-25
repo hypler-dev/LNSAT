@@ -7,6 +7,7 @@ pub mod docker_local_execution_payload;
 pub mod docker_local_runtime_proof;
 pub(crate) mod docker_local_runtime_proof_driver;
 pub mod docker_local_runtime_proof_driver_admission;
+pub(crate) mod docker_local_runtime_proof_driver_environment_preflight;
 // Dormant private seam until a separately authorized proof driver selects it.
 #[allow(dead_code)]
 pub(crate) mod docker_local_runtime_proof_driver_pre_supervisor_guard;
@@ -1475,11 +1476,20 @@ impl DaemonConfigV1 {
     fn with_phase11_served_fake_docker_runtime(
         mut self,
         fake_docker_executable: impl AsRef<Path>,
+        proof_driver_executable: impl AsRef<Path>,
+        source_root: impl AsRef<Path>,
+        private_evidence_root: impl AsRef<Path>,
         run_manifest: docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1,
     ) -> Result<Self, DaemonErrorV1> {
         let fake_docker_executable = fake_docker_executable.as_ref();
+        let proof_driver_executable = proof_driver_executable.as_ref();
+        let source_root = source_root.as_ref();
+        let private_evidence_root = private_evidence_root.as_ref();
         if fake_docker_executable.as_os_str().is_empty()
             || !fake_docker_executable.is_absolute()
+            || !proof_driver_executable.is_absolute()
+            || !source_root.is_absolute()
+            || !private_evidence_root.is_absolute()
             || self
                 .docker_local_runtime_profile
                 .as_deref()
@@ -1490,6 +1500,9 @@ impl DaemonConfigV1 {
         }
         self.phase11_served_fake_runtime = Some(Box::new(Phase11ServedFakeRuntimeSelectionV1 {
             fake_docker_executable: fake_docker_executable.to_path_buf(),
+            proof_driver_executable: proof_driver_executable.to_path_buf(),
+            source_root: source_root.to_path_buf(),
+            private_evidence_root: private_evidence_root.to_path_buf(),
             run_manifest,
         }));
         Ok(self)
@@ -1937,6 +1950,9 @@ struct Phase8DaemonRuntimeV1 {
 struct Phase11ServedFakeRuntimeV1 {
     loaded_profile: runtime_profile::LoadedDockerLocalRuntimeProfileV1,
     fake_docker_executable: PathBuf,
+    proof_driver_executable: PathBuf,
+    source_root: PathBuf,
+    private_evidence_root: PathBuf,
     run_manifest:
         docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1,
 }
@@ -1945,6 +1961,9 @@ struct Phase11ServedFakeRuntimeV1 {
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct Phase11ServedFakeRuntimeSelectionV1 {
     fake_docker_executable: PathBuf,
+    proof_driver_executable: PathBuf,
+    source_root: PathBuf,
+    private_evidence_root: PathBuf,
     run_manifest:
         docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1,
 }
@@ -2171,6 +2190,9 @@ impl DaemonServerV1 {
                             .map(|(selection, loaded_profile)| Phase11ServedFakeRuntimeV1 {
                                 loaded_profile: loaded_profile.clone(),
                                 fake_docker_executable: selection.fake_docker_executable.clone(),
+                                proof_driver_executable: selection.proof_driver_executable.clone(),
+                                source_root: selection.source_root.clone(),
+                                private_evidence_root: selection.private_evidence_root.clone(),
                                 run_manifest: selection.run_manifest.clone(),
                             }),
                     })
@@ -3712,6 +3734,9 @@ fn execute_phase11_served_fake_runtime_v1(
             loaded_profile: &fake_runtime.loaded_profile,
             run_manifest: &fake_runtime.run_manifest,
             docker_executable: &fake_runtime.fake_docker_executable,
+            proof_driver_executable: &fake_runtime.proof_driver_executable,
+            source_root: &fake_runtime.source_root,
+            private_evidence_root: &fake_runtime.private_evidence_root,
         },
     )
     .map_err(|_| LocalBrowserTransportErrorV1::Rejected)

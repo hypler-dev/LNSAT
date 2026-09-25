@@ -256,12 +256,15 @@ supplied expected source-root/revision/build identity. It rejects evidence
 beneath source or the disposable target root and declared source/target path
 overlap lexically. JSON alone never grants permission or proves physical
 filesystem identity or disjointness.
-It performs no filesystem identity checks or runtime I/O. A later driver must
-resolve and authenticate the physical source and target identities and
-revalidate their disjointness immediately before process creation; preflight
-the daemon, image, configuration, entrypoint, and in-image adapter; traverse Gateway ->
-D4B2A -> D3/D4A -> supervisor; and use daemon/client/endpoint-revalidated,
-launch-label-bound inspect-before-remove cleanup.
+It performs no filesystem identity checks or runtime I/O. The test-only driver
+composition now checks physical source, proof-driver executable, private
+evidence, and disposable-root identities after a created claim and repeats
+those checks at the final supervisor callback. This does not verify the locked
+Git source revision or any real proof-driver build. A later runnable driver
+must also preflight the daemon, image, configuration, entrypoint, and in-image
+adapter; traverse Gateway -> D4B2A -> D3/D4A -> supervisor; and use
+daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove
+cleanup.
 
 The private served-driver admission evaluator now adds a source-only structural
 boundary: canonical run manifest -> fields in a caller-supplied claim snapshot
@@ -283,8 +286,10 @@ payload/profile inputs and binds the manifest-declared Docker client, host Git
 verifier, local endpoint, and disposable target to the supervisor's final exact
 paths and domain-separated filesystem identities. It invokes the one-shot
 authenticated durable re-read only after the supervisor repeats those checks
-and retains the opaque guard across process creation and the supervised
-exchange. Every failure after claim commit marks or preserves
+and retains the opaque guards across process creation and the supervised
+exchange. The filesystem guard checks path identity and separation at that
+same final callback. Exact replay remains metadata-only if those paths later
+drift. Every failure after claim commit marks or preserves
 `outcome_unknown`. Hermetic tests use the existing fake executable and
 temporary Unix socket. No route, CLI, daemon configuration, package, or release
 selects this seam; it is not a runnable proof driver or real Docker evidence.
@@ -1142,7 +1147,8 @@ cases without runtime I/O. This remains source design only; no runtime evidence
 exists and Phase 11 remains incomplete.
 
 A private source-only driver composition now joins atomic created-handle/replay
-disposition -> canonical payload -> final-supervisor durable guard ->
+disposition -> canonical payload -> physical filesystem preflight ->
+final-supervisor durable guard ->
 independently host-verified receipt. The existing test-only served fake-runtime
 selector exercises it; no production route, CLI, or daemon configuration
 selects it. No real Docker observation or runnable real proof driver exists,
