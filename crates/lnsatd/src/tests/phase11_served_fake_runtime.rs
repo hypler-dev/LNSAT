@@ -65,12 +65,15 @@ const OWNER_PASSWORD: &str = "phase eleven d4b2b owner password";
 const REQUESTER_PASSWORD: &str = "phase eleven d4b2b requester password";
 const EXECUTE_IDEMPOTENCY: &str = "idempotency:phase11:d4b2b-execute";
 const COMMIT_MESSAGE: &str = "bounded Phase 11 fake-runtime commit\n";
+const FAKE_CONTAINER_ID: &str = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
 
 #[derive(Clone, Copy)]
 enum FakeMode {
     Success,
     ConsequenceThenStderr,
     NoConsequence,
+    MissingCid,
+    MalformedCid,
 }
 
 struct GitFixture {
@@ -659,6 +662,51 @@ impl ServedFakeRuntimeFixture {
             .count()
     }
 
+    fn assert_one_retained_launch_custody(&self) {
+        let leaves = fs::read_dir(&self.private_evidence_root)
+            .expect("private evidence root")
+            .collect::<Result<Vec<_>, _>>()
+            .expect("private evidence entries");
+        assert_eq!(leaves.len(), 1, "one launch custody leaf");
+        let leaf = leaves[0].path();
+        let leaf_metadata = fs::symlink_metadata(&leaf).expect("custody leaf metadata");
+        assert!(leaf_metadata.file_type().is_dir());
+        assert_eq!(leaf_metadata.permissions().mode() & 0o777, 0o700);
+        assert_eq!(
+            fs::read_to_string(leaf.join("container.cid")).expect("retained fake CID"),
+            format!("{FAKE_CONTAINER_ID}\n")
+        );
+        assert!(!leaf.join("docker-config").exists());
+        let identity_path = leaf.join("launch-identity.json");
+        let identity_metadata = fs::symlink_metadata(&identity_path).expect("identity metadata");
+        assert_eq!(identity_metadata.permissions().mode() & 0o777, 0o600);
+        let identity: serde_json::Value =
+            serde_json::from_slice(&fs::read(identity_path).expect("launch identity"))
+                .expect("launch identity JSON");
+        assert_eq!(
+            identity["contract_id"],
+            "lnsat.phase11_private_launch_custody.v1"
+        );
+        assert_eq!(identity["operation_id"], self.operation_id);
+        assert_eq!(identity["attempt_sequence"], 1);
+        assert_eq!(identity["cid_file"], "container.cid");
+        assert_eq!(identity["status"], "source_only_unverified");
+        assert_eq!(
+            identity["manifest_digest"],
+            final_supervisor_guard_manifest(self).digest_text()
+        );
+    }
+
+    fn assert_no_launch_custody(&self) {
+        assert_eq!(
+            fs::read_dir(&self.private_evidence_root)
+                .expect("private evidence root")
+                .count(),
+            0,
+            "pre-spawn failure must remove custody leaf"
+        );
+    }
+
     fn assert_public_safe(&self, response: &str) {
         for forbidden in [
             self.capability.as_str(),
@@ -718,6 +766,7 @@ fn phase11_served_fake_runtime_executes_once_and_exact_replay_never_redispatches
         .expect("receipt id")
         .to_owned();
     assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_retained_launch_custody();
     assert_eq!(
         git_text(&fixture.git.repository, &["rev-parse", "HEAD"]),
         fixture.git.expected_commit_oid
@@ -772,6 +821,7 @@ fn phase11_served_fake_runtime_manifest_drift_never_spawns() {
     let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
     response_json(&response, "HTTP/1.1 403 Forbidden\r\n");
     assert_eq!(fixture.run_count(), 0);
+    fixture.assert_no_launch_custody();
     fixture.assert_public_safe(&response);
     let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
     assert_eq!(operation["operation"]["state"], "outcome_unknown");
@@ -887,6 +937,7 @@ fn phase11_served_fake_runtime_replay_ignores_later_environment_drift() {
     );
     assert_eq!(initial["created"], true);
     assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_retained_launch_custody();
     fs::set_permissions(
         &fixture.proof_driver_executable,
         fs::Permissions::from_mode(0o600),
@@ -903,6 +954,7 @@ fn phase11_served_fake_runtime_replay_ignores_later_environment_drift() {
     );
     assert_eq!(replay["created"], false);
     assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_retained_launch_custody();
     daemon.stop();
 }
 
@@ -913,6 +965,7 @@ fn phase11_served_fake_runtime_unknown_survives_restart_and_reconciles_without_r
     let execute_response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
     response_json(&execute_response, "HTTP/1.1 403 Forbidden\r\n");
     assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_retained_launch_custody();
     assert_eq!(
         git_text(&fixture.git.repository, &["rev-parse", "HEAD"]),
         fixture.git.expected_commit_oid
@@ -957,6 +1010,7 @@ fn phase11_served_fake_runtime_unchanged_target_stays_unknown_without_retry_or_r
     let execute_response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
     response_json(&execute_response, "HTTP/1.1 403 Forbidden\r\n");
     assert_eq!(fixture.run_count(), 1);
+    fixture.assert_one_retained_launch_custody();
     assert_eq!(
         git_text(&fixture.git.repository, &["rev-parse", "HEAD"]),
         fixture.git.identity.base_commit_oid
@@ -983,6 +1037,53 @@ fn phase11_served_fake_runtime_unchanged_target_stays_unknown_without_retry_or_r
     assert_eq!(replay["operation"]["state"], "outcome_unknown");
     assert!(replay["operation"]["receipt"].is_null());
     assert_eq!(fixture.run_count(), 1);
+    daemon.stop();
+}
+
+#[test]
+fn phase11_served_fake_runtime_missing_cid_stays_unknown_and_preserves_identity() {
+    let fixture = ServedFakeRuntimeFixture::new("missing-cid", FakeMode::MissingCid);
+    let daemon = ServedDaemon::start(&fixture.config);
+    let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+    response_json(&response, "HTTP/1.1 403 Forbidden\r\n");
+    assert_eq!(fixture.run_count(), 1);
+    let leaf = fs::read_dir(&fixture.private_evidence_root)
+        .expect("private evidence root")
+        .next()
+        .expect("one retained leaf")
+        .expect("retained leaf")
+        .path();
+    assert!(leaf.join("launch-identity.json").is_file());
+    assert!(!leaf.join("container.cid").exists());
+    assert!(!leaf.join("docker-config").exists());
+    let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
+    assert_eq!(operation["operation"]["state"], "outcome_unknown");
+    assert!(operation["operation"]["receipt"].is_null());
+    daemon.stop();
+}
+
+#[test]
+fn phase11_served_fake_runtime_malformed_cid_stays_unknown_and_preserves_file() {
+    let fixture = ServedFakeRuntimeFixture::new("malformed-cid", FakeMode::MalformedCid);
+    let daemon = ServedDaemon::start(&fixture.config);
+    let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+    response_json(&response, "HTTP/1.1 403 Forbidden\r\n");
+    assert_eq!(fixture.run_count(), 1);
+    let leaf = fs::read_dir(&fixture.private_evidence_root)
+        .expect("private evidence root")
+        .next()
+        .expect("one retained leaf")
+        .expect("retained leaf")
+        .path();
+    assert!(leaf.join("launch-identity.json").is_file());
+    assert_eq!(
+        fs::read_to_string(leaf.join("container.cid")).expect("malformed CID retained"),
+        "not-a-container-id\n"
+    );
+    assert!(!leaf.join("docker-config").exists());
+    let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
+    assert_eq!(operation["operation"]["state"], "outcome_unknown");
+    assert!(operation["operation"]["receipt"].is_null());
     daemon.stop();
 }
 
@@ -1762,7 +1863,7 @@ fn fake_docker_script(
     invocation_log: &Path,
 ) -> String {
     let behavior = match mode {
-        FakeMode::Success => format!(
+        FakeMode::Success | FakeMode::MissingCid | FakeMode::MalformedCid => format!(
             "{git} -C {repository} update-ref refs/heads/main {expected_commit} {base_commit}\n{cat} {result_frame}\n",
             git = shell_quote(Path::new(GIT_EXECUTABLE)),
             repository = shell_quote(repository),
@@ -1778,8 +1879,13 @@ fn fake_docker_script(
         ),
         FakeMode::NoConsequence => "exit 1\n".to_owned(),
     };
+    let cid_write = match mode {
+        FakeMode::MissingCid => String::new(),
+        FakeMode::MalformedCid => "printf '%s\\n' 'not-a-container-id' > \"$cidfile\"\n".to_owned(),
+        _ => format!("printf '%s\\n' '{FAKE_CONTAINER_ID}' > \"$cidfile\"\n"),
+    };
     format!(
-        "#!/bin/sh\n# lnsat.hermetic_fake_docker.v1\nset -eu\nprintf 'BEGIN\\n' >> {invocation_log}\nfor argument in \"$@\"; do printf '%s\\n' \"$argument\" >> {invocation_log}; done\nfor argument in \"$@\"; do if [ \"$argument\" = 'rm' ]; then exit 0; fi; done\n{cat} >/dev/null\n{behavior}",
+        "#!/bin/sh\n# lnsat.hermetic_fake_docker.v1\nset -eu\nprintf 'BEGIN\\n' >> {invocation_log}\ncidfile=''\nprevious=''\nfor argument in \"$@\"; do printf '%s\\n' \"$argument\" >> {invocation_log}; if [ \"$previous\" = '--cidfile' ]; then cidfile=$argument; fi; previous=$argument; done\nfor argument in \"$@\"; do if [ \"$argument\" = 'rm' ]; then exit 0; fi; done\n[ -n \"$cidfile\" ]\n{cid_write}{cat} >/dev/null\n{behavior}",
         invocation_log = shell_quote(invocation_log),
         cat = shell_quote(Path::new("/bin/cat")),
     )

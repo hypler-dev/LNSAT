@@ -8,11 +8,13 @@
 
 use crate::adapter_process_protocol::DockerLocalAdapterProcessRequestInputV1;
 use crate::docker_local_execution_payload::build_docker_local_execution_payload_request_v1;
-use crate::docker_local_runtime_proof_driver_environment_preflight::preflight_docker_local_runtime_proof_environment_v1;
+use crate::docker_local_runtime_proof_driver_environment_preflight::{
+    DockerLocalRuntimeProofEnvironmentGuardV1, preflight_docker_local_runtime_proof_environment_v1,
+};
 use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
     DockerLocalProofEnvironmentFinalInputV1,
     DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1,
-    supervise_docker_local_runtime_proof_with_final_guard_v1,
+    supervise_docker_local_runtime_proof_with_custody_v1,
 };
 use crate::docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1;
 use crate::docker_local_runtime_proof_run_window_guard::{
@@ -21,7 +23,7 @@ use crate::docker_local_runtime_proof_run_window_guard::{
 use crate::docker_local_runtime_proof_source_git_guard::{
     DockerLocalRuntimeProofSourceGitGuardV1, preflight_phase11_proof_source_git_v1,
 };
-use crate::docker_local_supervisor::DockerLocalSupervisorInputV1;
+use crate::docker_local_supervisor::{DockerLocalSupervisorInputV1, PrivateDockerConfigV1};
 use crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1;
 use lnsat_store::{
     Phase7CapabilitySecretV1, Phase8RuntimeCompositionWriteV1,
@@ -55,6 +57,14 @@ pub(crate) enum DockerLocalRuntimeProofDriverErrorV1 {
     OutcomeUnknown,
 }
 
+fn mark_claim_outcome_unknown_v1(
+    store: &mut SqliteStore,
+    operation_id: &str,
+) -> DockerLocalRuntimeProofDriverErrorV1 {
+    let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
+    DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
+}
+
 fn preflight_source_git_guard_v1(
     run_manifest: &DockerLocalRuntimeProofRunManifestOutputV1,
     source_root: &Path,
@@ -83,6 +93,51 @@ fn preflight_source_git_guard_v1(
         expected_source_tree_oid,
     )
     .map_err(|_| ())
+}
+
+fn prepare_claimed_private_launch_v1(
+    store: &mut SqliteStore,
+    private_evidence_root: &Path,
+    source_root: &Path,
+    disposable_root: &Path,
+    run_manifest: &DockerLocalRuntimeProofRunManifestOutputV1,
+    operation_id: &str,
+) -> Result<PrivateDockerConfigV1, DockerLocalRuntimeProofDriverErrorV1> {
+    PrivateDockerConfigV1::create_custody(
+        private_evidence_root,
+        source_root,
+        disposable_root,
+        operation_id,
+        1,
+        &run_manifest.digest_text(),
+        &run_manifest.manifest().bindings.launch_contract_digest,
+    )
+    .map_err(|()| {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
+        DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
+    })
+}
+
+fn preflight_claimed_environment_v1(
+    store: &mut SqliteStore,
+    run_manifest: &DockerLocalRuntimeProofRunManifestOutputV1,
+    proof_driver_executable: &Path,
+    source_root: &Path,
+    private_evidence_root: &Path,
+    disposable_root: &Path,
+    operation_id: &str,
+) -> Result<DockerLocalRuntimeProofEnvironmentGuardV1, DockerLocalRuntimeProofDriverErrorV1> {
+    preflight_docker_local_runtime_proof_environment_v1(
+        run_manifest,
+        proof_driver_executable,
+        source_root,
+        private_evidence_root,
+        disposable_root,
+    )
+    .map_err(|_| {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
+        DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
+    })
 }
 
 /// Executes one created claim through the exact final guard and persists its
@@ -133,17 +188,23 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
     let operation_id = redemption.operation_id;
     let run_window_guard =
         preflight_claimed_run_window_v1(store, operation_id, input.run_manifest)?;
-    let environment_guard = preflight_docker_local_runtime_proof_environment_v1(
+    let mut private_launch = prepare_claimed_private_launch_v1(
+        store,
+        input.private_evidence_root,
+        input.source_root,
+        input.docker_input.disposable_root,
+        input.run_manifest,
+        operation_id,
+    )?;
+    let environment_guard = preflight_claimed_environment_v1(
+        store,
         input.run_manifest,
         input.proof_driver_executable,
         input.source_root,
         input.private_evidence_root,
         input.docker_input.disposable_root,
-    )
-    .map_err(|_| {
-        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
-        DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
-    })?;
+        operation_id,
+    )?;
     let source_git_guard = preflight_source_git_guard_v1(
         input.run_manifest,
         input.source_root,
@@ -151,11 +212,8 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
         input.expected_source_revision,
         input.expected_source_tree_oid,
     )
-    .map_err(|()| {
-        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
-        DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
-    })?;
-    let supervised = supervise_docker_local_runtime_proof_with_final_guard_v1(
+    .map_err(|()| mark_claim_outcome_unknown_v1(store, operation_id))?;
+    let supervised = supervise_docker_local_runtime_proof_with_custody_v1(
         store,
         DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
             run_manifest: input.run_manifest,
@@ -182,6 +240,7 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
             expected_source_tree_oid: input.expected_source_tree_oid,
             private_evidence_root: input.private_evidence_root,
         },
+        &mut private_launch,
     );
     let Ok(supervised) = supervised else {
         let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
@@ -189,10 +248,7 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
     };
     let operation = store
         .persist_phase11_docker_runtime_result_v1(&input.docker_input, &supervised.semantic_result)
-        .map_err(|_| {
-            let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
-            DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
-        })?;
+        .map_err(|_| mark_claim_outcome_unknown_v1(store, operation_id))?;
     Ok(Phase8RuntimeCompositionWriteV1 {
         created: true,
         consumption,
