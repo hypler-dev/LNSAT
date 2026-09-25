@@ -8,6 +8,7 @@ pub mod docker_local_runtime_proof;
 pub(crate) mod docker_local_runtime_proof_driver;
 pub mod docker_local_runtime_proof_driver_admission;
 pub(crate) mod docker_local_runtime_proof_driver_environment_preflight;
+pub(crate) mod docker_local_runtime_proof_source_git_guard;
 // Dormant private seam until a separately authorized proof driver selects it.
 #[allow(dead_code)]
 pub(crate) mod docker_local_runtime_proof_driver_pre_supervisor_guard;
@@ -1478,6 +1479,7 @@ impl DaemonConfigV1 {
         fake_docker_executable: impl AsRef<Path>,
         proof_driver_executable: impl AsRef<Path>,
         source_root: impl AsRef<Path>,
+        expected_source_identity: (String, String),
         private_evidence_root: impl AsRef<Path>,
         run_manifest: docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1,
     ) -> Result<Self, DaemonErrorV1> {
@@ -1502,6 +1504,8 @@ impl DaemonConfigV1 {
             fake_docker_executable: fake_docker_executable.to_path_buf(),
             proof_driver_executable: proof_driver_executable.to_path_buf(),
             source_root: source_root.to_path_buf(),
+            expected_source_revision: expected_source_identity.0,
+            expected_source_tree_oid: expected_source_identity.1,
             private_evidence_root: private_evidence_root.to_path_buf(),
             run_manifest,
         }));
@@ -1952,6 +1956,8 @@ struct Phase11ServedFakeRuntimeV1 {
     fake_docker_executable: PathBuf,
     proof_driver_executable: PathBuf,
     source_root: PathBuf,
+    expected_source_revision: String,
+    expected_source_tree_oid: String,
     private_evidence_root: PathBuf,
     run_manifest:
         docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1,
@@ -1963,6 +1969,8 @@ struct Phase11ServedFakeRuntimeSelectionV1 {
     fake_docker_executable: PathBuf,
     proof_driver_executable: PathBuf,
     source_root: PathBuf,
+    expected_source_revision: String,
+    expected_source_tree_oid: String,
     private_evidence_root: PathBuf,
     run_manifest:
         docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1,
@@ -2192,6 +2200,12 @@ impl DaemonServerV1 {
                                 fake_docker_executable: selection.fake_docker_executable.clone(),
                                 proof_driver_executable: selection.proof_driver_executable.clone(),
                                 source_root: selection.source_root.clone(),
+                                expected_source_revision: selection
+                                    .expected_source_revision
+                                    .clone(),
+                                expected_source_tree_oid: selection
+                                    .expected_source_tree_oid
+                                    .clone(),
                                 private_evidence_root: selection.private_evidence_root.clone(),
                                 run_manifest: selection.run_manifest.clone(),
                             }),
@@ -3736,6 +3750,8 @@ fn execute_phase11_served_fake_runtime_v1(
             docker_executable: &fake_runtime.fake_docker_executable,
             proof_driver_executable: &fake_runtime.proof_driver_executable,
             source_root: &fake_runtime.source_root,
+            expected_source_revision: &fake_runtime.expected_source_revision,
+            expected_source_tree_oid: &fake_runtime.expected_source_tree_oid,
             private_evidence_root: &fake_runtime.private_evidence_root,
         },
     )

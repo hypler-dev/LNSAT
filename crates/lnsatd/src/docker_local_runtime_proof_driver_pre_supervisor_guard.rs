@@ -16,6 +16,7 @@ use crate::docker_local_runtime_proof_run_manifest::{
     DockerLocalRuntimeProofPathIdentityV1, DockerLocalRuntimeProofRunManifestOutputV1,
     DockerLocalRuntimeProofTargetDeclarationV1,
 };
+use crate::docker_local_runtime_proof_source_git_guard::DockerLocalRuntimeProofSourceGitGuardV1;
 use crate::docker_local_supervisor::{
     DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1,
     DockerLocalSupervisorFinalAuthorizationContextV1, DockerLocalSupervisorInputV1,
@@ -63,8 +64,11 @@ pub struct DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'a> {
 #[derive(Clone, Copy)]
 pub(crate) struct DockerLocalProofEnvironmentFinalInputV1<'a> {
     pub guard: &'a DockerLocalRuntimeProofEnvironmentGuardV1,
+    pub source_git_guard: &'a DockerLocalRuntimeProofSourceGitGuardV1,
     pub proof_driver_executable: &'a Path,
     pub source_root: &'a Path,
+    pub expected_source_revision: &'a str,
+    pub expected_source_tree_oid: &'a str,
     pub private_evidence_root: &'a Path,
 }
 
@@ -257,6 +261,36 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
                     &context.disposable_root,
                 )
                 .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)?;
+            if guard_input.run_manifest.manifest().source.revision
+                != environment.expected_source_revision
+                || context.verifier_git_executable.to_str()
+                    != Some(
+                        guard_input
+                            .run_manifest
+                            .manifest()
+                            .declarations
+                            .host_git_verifier
+                            .absolute_path
+                            .as_str(),
+                    )
+            {
+                return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
+            }
+            environment
+                .source_git_guard
+                .revalidate(
+                    environment.source_root,
+                    &context.verifier_git_executable,
+                    &guard_input
+                        .run_manifest
+                        .manifest()
+                        .declarations
+                        .host_git_verifier
+                        .digest,
+                    environment.expected_source_revision,
+                    environment.expected_source_tree_oid,
+                )
+                .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)?;
             if !run_manifest_matches_final_supervisor_v1(
                 guard_input.run_manifest,
                 guard_input.loaded_profile,
@@ -267,7 +301,11 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
             let durable_guard =
                 guard_docker_local_runtime_proof_pre_supervisor_v1(store, guard_input)
                     .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)?;
-            Ok((environment.guard, durable_guard))
+            Ok((
+                environment.guard,
+                environment.source_git_guard,
+                durable_guard,
+            ))
         },
     );
     if result.is_err() {
