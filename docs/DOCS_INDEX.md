@@ -111,7 +111,9 @@ independently host-verified receipt. The final-supervisor seam invokes that
 verifier after repeated target, executable, and endpoint checks and retains the
 opaque guards across the exact process boundary. The filesystem guard checks
 source, proof-driver executable, private evidence, and target identities after
-created claims and repeats at that boundary; replay remains metadata-only.
+created claims and repeats at that boundary. A separate Git guard checks one
+clean standalone source checkout against separately supplied revision/tree
+identities and repeats at that boundary; replay remains metadata-only.
 Existing test-only served
 fake-runtime integration selects this composition; no production route, CLI, or
 daemon configuration selects it. Hermetic tests use the existing fake

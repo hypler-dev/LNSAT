@@ -67,13 +67,21 @@ filesystem identity. The separate filesystem-only guard binds the declared
 source root, proof-driver executable digest, owner-only private evidence
 directory, and disposable root after a created claim. It revalidates those
 identities and their physical separation in the final supervisor callback;
-exact replay stays metadata-only. This test-only seam does not verify the
-locked Git revision or real proof-driver build, inspect Docker or an image,
+exact replay stays metadata-only. A separate source-only guard now uses the
+declared host Git verifier to reject dirty or unsafe standalone source storage
+and require exact separately supplied source revision and tree before the fake
+process and again in that final callback. This test-only seam does not by
+itself authenticate this packet's locked source revision/tree or a real
+proof-driver build, inspect Docker or an image,
 or grant operator authority. No route, CLI, daemon configuration, package, or release
 selects it for production. No real Docker observation exists, and all
 `UNSET_BLOCKING` identities remain blocking. A source-only manifest, admission
 digest, or test-only composition never substitutes for a runnable real proof
 driver, exact run identities, or separate owner authorization.
+
+The lock above predates these later source-only guards. Any future proof built
+from a different source revision or tree requires a new reviewed source lock
+and separate authority decision; this record does not move its existing lock.
 
 ## Required authenticated durable-store admission boundary
 

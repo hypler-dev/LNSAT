@@ -259,8 +259,12 @@ filesystem identity or disjointness.
 It performs no filesystem identity checks or runtime I/O. The test-only driver
 composition now checks physical source, proof-driver executable, private
 evidence, and disposable-root identities after a created claim and repeats
-those checks at the final supervisor callback. This does not verify the locked
-Git source revision or any real proof-driver build. A later runnable driver
+those checks at the final supervisor callback. A separate source-only Git guard
+uses the declared host Git verifier to require a clean standalone checkout,
+exact expected revision and tree, and safe local Git storage. It repeats at
+the same final callback. The expected IDs remain separately supplied trusted
+inputs; this does not authenticate the operator packet's existing source lock
+on its own or prove any real proof-driver build. A later runnable driver
 must also preflight the daemon, image, configuration, entrypoint, and in-image
 adapter; traverse Gateway -> D4B2A -> D3/D4A -> supervisor; and use
 daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove
@@ -288,7 +292,8 @@ paths and domain-separated filesystem identities. It invokes the one-shot
 authenticated durable re-read only after the supervisor repeats those checks
 and retains the opaque guards across process creation and the supervised
 exchange. The filesystem guard checks path identity and separation at that
-same final callback. Exact replay remains metadata-only if those paths later
+same final callback; the Git guard rechecks source revision, tree, and
+cleanliness there. Exact replay remains metadata-only if those inputs later
 drift. Every failure after claim commit marks or preserves
 `outcome_unknown`. Hermetic tests use the existing fake executable and
 temporary Unix socket. No route, CLI, daemon configuration, package, or release
