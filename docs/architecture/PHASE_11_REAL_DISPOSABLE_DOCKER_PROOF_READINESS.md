@@ -135,6 +135,10 @@ must preflight daemon, image, configuration, entrypoint, and in-image adapter id
 traverse Gateway -> D4B2A -> D3/D4A -> supervisor;
 and require daemon/client/endpoint-revalidated, launch-label-bound
 inspect-before-remove cleanup.
+The current source-only supervisor adds exact operation and launch-contract
+labels but disables unverified forced CID removal. Missing daemon and
+container inspection still block cleanup proof; ambiguous results remain
+`outcome_unknown`.
 
 The private served-driver admission evaluator is the next source-only structural
 seam. It checks created and dispatching fields in a caller-supplied claim

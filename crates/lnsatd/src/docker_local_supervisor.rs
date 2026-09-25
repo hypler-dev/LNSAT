@@ -42,8 +42,10 @@ pub const DOCKER_LOCAL_LAUNCH_CONTRACT_ID_V1: &str = "lnsat.docker_local_launch_
 pub const DOCKER_LOCAL_ADAPTER_REPOSITORY_ARGUMENT_V1: &str = "--repository";
 /// Maximum host executable accepted for digest verification.
 pub const MAX_DOCKER_LOCAL_SUPERVISOR_EXECUTABLE_BYTES_V1: u64 = 512 * 1024 * 1024;
-/// Cleanup command deadline after any ambiguous launched exchange.
-pub const DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1: u64 = 5_000;
+/// Operation label reserved for a later inspect-before-remove cleanup contract.
+pub const DOCKER_LOCAL_OPERATION_LABEL_KEY_V1: &str = "lnsat.operation_id";
+/// Launch-contract label reserved for a later inspect-before-remove cleanup contract.
+pub const DOCKER_LOCAL_LAUNCH_LABEL_KEY_V1: &str = "lnsat.launch_contract_sha256";
 
 const RESULT_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-supervised-git-result.v1";
 const LAUNCH_CONTRACT_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-launch-contract.v1";
@@ -52,6 +54,8 @@ const LAUNCH_TEMPLATE_DOCKER_CONFIG_V1: &str = "{private_docker_config_path}";
 const LAUNCH_TEMPLATE_CID_PATH_V1: &str = "{private_cidfile_path}";
 const LAUNCH_TEMPLATE_REPOSITORY_V1: &str = "{disposable_repository_path}";
 const LAUNCH_TEMPLATE_CONTAINER_NAME_V1: &str = "{container_name}";
+const LAUNCH_TEMPLATE_OPERATION_ID_V1: &str = "{operation_id}";
+const LAUNCH_TEMPLATE_LAUNCH_DIGEST_V1: &str = "{launch_contract_sha256}";
 
 /// Exact process invariants outside argv, bound into every launch digest.
 pub const DOCKER_LOCAL_LAUNCH_PROCESS_INVARIANTS_V1: [&str; 4] = [
@@ -196,6 +200,10 @@ pub fn docker_local_launch_contract_argv_template_v1(
         OsStr::new(LAUNCH_TEMPLATE_CID_PATH_V1),
         LAUNCH_TEMPLATE_REPOSITORY_V1,
         OsStr::new(LAUNCH_TEMPLATE_CONTAINER_NAME_V1),
+        (
+            LAUNCH_TEMPLATE_OPERATION_ID_V1,
+            LAUNCH_TEMPLATE_LAUNCH_DIGEST_V1,
+        ),
     )
     .into_iter()
     .map(|argument| {
@@ -212,7 +220,8 @@ pub fn docker_local_launch_contract_argv_template_v1(
 /// a private empty client-config file is created. After process creation, any
 /// timeout, I/O failure, nonzero exit, output anomaly, runtime identity drift,
 /// protocol error, target ambiguity, or semantic-digest mismatch returns only
-/// `outcome_unknown` and triggers best-effort forced container cleanup.
+/// `outcome_unknown`. Forced cleanup remains closed until a separately
+/// authorized daemon- and launch-label-bound inspect-before-remove path exists.
 ///
 /// # Errors
 ///
@@ -298,17 +307,8 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
         docker_config.cid_path(),
         &repository.repository_path,
         &container_name,
+        &operation.operation_id,
     )?;
-    let cleanup = DockerCleanupV1 {
-        docker_executable: input.docker_executable,
-        docker_identity: &docker_identity,
-        expected_docker_digest: &supervisor.docker_executable_digest,
-        endpoint_path: &endpoint_path,
-        endpoint_identity: &endpoint_identity,
-        docker_host: &supervisor.docker_host,
-        docker_config: docker_config.path(),
-        cid_path: docker_config.cid_path(),
-    };
 
     let repository_immediately_before_spawn = validate_phase11_disposable_git_target_v1(
         parsed.derived_request(),
@@ -376,7 +376,6 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
     let Ok(launched) = launched else {
         let _ = child.kill();
         let _ = child.wait();
-        best_effort_remove_container_v1(&cleanup);
         return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
     };
 
@@ -392,11 +391,10 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
         .is_ok_and(|current| current == verifier_identity)
         && validate_endpoint_v1(&endpoint_path).is_ok_and(|current| current == endpoint_identity);
     if !runtime_stable || !launched.status.success() {
-        best_effort_remove_container_v1(&cleanup);
         return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
     }
 
-    let validated = (|| {
+    (|| {
         let protocol_result = validate_docker_local_adapter_process_exchange_v1(
             parsed.control(),
             &launched.stdout,
@@ -421,11 +419,7 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
             adapter_result_digest,
             elapsed_millis: u64::try_from(elapsed.as_millis()).unwrap_or(u64::MAX),
         })
-    })();
-    if validated.is_err() {
-        best_effort_remove_container_v1(&cleanup);
-    }
-    validated
+    })()
 }
 
 /// Computes exact semantic adapter-result identity for later receipt binding.
@@ -602,41 +596,6 @@ fn drain_nonblocking_v1(
     }
 }
 
-fn wait_for_child_v1(child: &mut Child, deadline: Duration) -> Result<ExitStatus, ()> {
-    let started = Instant::now();
-    wait_for_child_until_v1(child, started, deadline)
-}
-
-fn wait_for_child_until_v1(
-    child: &mut Child,
-    started: Instant,
-    deadline: Duration,
-) -> Result<ExitStatus, ()> {
-    loop {
-        match child.try_wait() {
-            Ok(Some(status)) => return Ok(status),
-            Ok(None) => {}
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(());
-            }
-        }
-        let elapsed = started.elapsed();
-        if elapsed >= deadline {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err(());
-        }
-        std::thread::sleep(
-            deadline
-                .checked_sub(elapsed)
-                .unwrap_or_default()
-                .min(Duration::from_millis(5)),
-        );
-    }
-}
-
 fn docker_run_arguments_v1(
     loaded: &LoadedDockerLocalRuntimeProfileV1,
     docker_host: &str,
@@ -644,10 +603,13 @@ fn docker_run_arguments_v1(
     cid_path: &Path,
     repository: &Path,
     container_name: &str,
+    operation_id: &str,
 ) -> Result<Vec<OsString>, DockerLocalSupervisorErrorV1> {
     let repository = repository
         .to_str()
         .ok_or(DockerLocalSupervisorErrorV1::TargetRejected)?;
+    let launch_digest = docker_local_launch_contract_digest_v1(loaded)?;
+    let launch_digest = prefixed_sha256_v1(&launch_digest);
     Ok(docker_run_argument_values_v1(
         loaded,
         OsStr::new(docker_host),
@@ -655,6 +617,7 @@ fn docker_run_arguments_v1(
         cid_path.as_os_str(),
         repository,
         OsStr::new(container_name),
+        (operation_id, &launch_digest),
     ))
 }
 
@@ -665,7 +628,9 @@ fn docker_run_argument_values_v1(
     cid_path: &OsStr,
     repository: &str,
     container_name: &OsStr,
+    labels: (&str, &str),
 ) -> Vec<OsString> {
+    let (operation_id, launch_digest) = labels;
     let profile = loaded.profile();
     let limits = &profile.limits;
     let isolation = &profile.isolation;
@@ -688,6 +653,10 @@ fn docker_run_argument_values_v1(
         "--rm".into(),
         "--name".into(),
         container_name.to_owned(),
+        "--label".into(),
+        format!("{DOCKER_LOCAL_OPERATION_LABEL_KEY_V1}={operation_id}").into(),
+        "--label".into(),
+        format!("{DOCKER_LOCAL_LAUNCH_LABEL_KEY_V1}={launch_digest}").into(),
         "--network=none".into(),
         "--ipc=none".into(),
         "--read-only".into(),
@@ -854,52 +823,6 @@ fn file_identity_v1(metadata: &Metadata) -> FileIdentityV1 {
     }
 }
 
-struct DockerCleanupV1<'a> {
-    docker_executable: &'a Path,
-    docker_identity: &'a FileIdentityV1,
-    expected_docker_digest: &'a str,
-    endpoint_path: &'a Path,
-    endpoint_identity: &'a FileIdentityV1,
-    docker_host: &'a str,
-    docker_config: &'a Path,
-    cid_path: &'a Path,
-}
-
-fn best_effort_remove_container_v1(cleanup: &DockerCleanupV1<'_>) {
-    let Some(container_id) = read_container_id_v1(cleanup.cid_path) else {
-        return;
-    };
-    let executable_stable =
-        validate_executable_v1(cleanup.docker_executable, cleanup.expected_docker_digest)
-            .is_ok_and(|identity| identity == *cleanup.docker_identity);
-    let endpoint_stable = validate_endpoint_v1(cleanup.endpoint_path)
-        .is_ok_and(|identity| identity == *cleanup.endpoint_identity);
-    if !executable_stable || !endpoint_stable {
-        return;
-    }
-    let mut command = Command::new(cleanup.docker_executable);
-    command
-        .env_clear()
-        .arg("--host")
-        .arg(cleanup.docker_host)
-        .arg("--config")
-        .arg(cleanup.docker_config)
-        .arg("rm")
-        .arg("--force")
-        .arg("--volumes")
-        .arg(container_id)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-    let Ok(mut child) = command.spawn() else {
-        return;
-    };
-    let _ = wait_for_child_v1(
-        &mut child,
-        Duration::from_millis(DOCKER_LOCAL_SUPERVISOR_CLEANUP_MILLIS_V1),
-    );
-}
-
 struct PrivateDockerConfigV1 {
     path: PathBuf,
     config_path: PathBuf,
@@ -990,47 +913,6 @@ impl PrivateDockerConfigV1 {
 
     fn cid_path(&self) -> &Path {
         &self.cid_path
-    }
-}
-
-fn read_container_id_v1(path: &Path) -> Option<String> {
-    #[cfg(not(unix))]
-    {
-        let _ = path;
-        None
-    }
-    #[cfg(unix)]
-    {
-        let before = fs::symlink_metadata(path).ok()?;
-        if !before.file_type().is_file()
-            || before.file_type().is_symlink()
-            || before.uid() != nix::unistd::geteuid().as_raw()
-            || before.nlink() != 1
-            || before.mode() & 0o022 != 0
-            || !(64..=65).contains(&before.len())
-        {
-            return None;
-        }
-        let file = File::open(path).ok()?;
-        let opened = file.metadata().ok()?;
-        if file_identity_v1(&before) != file_identity_v1(&opened) {
-            return None;
-        }
-        let mut value = String::new();
-        file.take(66).read_to_string(&mut value).ok()?;
-        let after = fs::symlink_metadata(path).ok()?;
-        if file_identity_v1(&opened) != file_identity_v1(&after) {
-            return None;
-        }
-        let value = value.strip_suffix('\n').unwrap_or(&value);
-        if value.len() != 64
-            || !value
-                .bytes()
-                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
-        {
-            return None;
-        }
-        Some(value.to_owned())
     }
 }
 
@@ -1160,6 +1042,10 @@ mod launch_argument_tests_v1 {
             &cid_path,
             "/private/tmp/disposable-repository",
             OsStr::new("lnsat-test-container"),
+            (
+                LAUNCH_TEMPLATE_OPERATION_ID_V1,
+                LAUNCH_TEMPLATE_LAUNCH_DIGEST_V1,
+            ),
         );
 
         assert_eq!(args[3], docker_config);

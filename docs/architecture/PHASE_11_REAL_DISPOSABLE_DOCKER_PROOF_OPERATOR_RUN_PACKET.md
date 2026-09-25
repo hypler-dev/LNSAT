@@ -96,6 +96,14 @@ does not yet distinguish a local configuration-based image ID from an OCI image
 manifest digest. No later observer may infer that equivalence without a
 reviewed, versioned binding decision.
 
+The source-only supervisor now places the exact operation ID and computed
+launch-contract digest in two launch labels. It refuses forced CID-based
+removal after an ambiguous result because no accepted daemon observation or
+label-bound container inspection exists. This leaves cleanup unverified and
+the result `outcome_unknown`; the labels alone grant no removal authority.
+The required inspect-before-remove cleanup and every blocking runtime identity
+remain open.
+
 The lock above predates these later source-only guards. Any future proof built
 from a different source revision or tree requires a new reviewed source lock
 and separate authority decision; this record does not move its existing lock.

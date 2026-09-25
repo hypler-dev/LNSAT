@@ -227,7 +227,7 @@ fn launch_digest_is_deterministic_and_binds_profile_launch_identities() {
     );
     assert_eq!(
         hex_digest(first),
-        "03c7386371537910bae1f2f3a0b0aa584d178b32cab87de489564eac92427aee"
+        "7b2a494680314d13e7f5582a8818e558bb06bebd385e8f036f4dc38d288e1aaa"
     );
 
     let image_drift = schema2_profile_with(|value| {
@@ -294,6 +294,10 @@ fn expected_launch_argv_template() -> Vec<String> {
         "--rm",
         "--name",
         "{container_name}",
+        "--label",
+        "lnsat.operation_id={operation_id}",
+        "--label",
+        "lnsat.launch_contract_sha256={launch_contract_sha256}",
         "--network=none",
         "--ipc=none",
         "--read-only",
