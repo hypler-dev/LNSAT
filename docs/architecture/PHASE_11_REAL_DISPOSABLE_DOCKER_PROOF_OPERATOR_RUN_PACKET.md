@@ -103,6 +103,14 @@ label-bound container inspection exists. This leaves cleanup unverified and
 the result `outcome_unknown`; the labels alone grant no removal authority.
 The required inspect-before-remove cleanup and every blocking runtime identity
 remain open.
+An isolated source-only parser now checks one bounded container-inspection JSON
+object against an exact private 64-hex container ID, operation label, and
+launch-contract label. It rejects malformed, duplicate relevant fields/labels,
+oversized, and mismatched responses. Its image field is recorded only as a
+local image ID observation, never equated to a manifest digest. The
+parser invokes no Docker command and grants no removal authority. The missing
+daemon/client/endpoint revalidation, independent image provenance, lifecycle
+evidence, accepted policy, and operator authorization still block cleanup.
 
 The lock above predates these later source-only guards. Any future proof built
 from a different source revision or tree requires a new reviewed source lock

@@ -3,6 +3,7 @@
 //! Fail-closed loopback daemon foundation for one local LNSAT deployment.
 
 pub mod adapter_process_protocol;
+pub mod docker_local_cleanup_inspection;
 pub mod docker_local_execution_payload;
 pub mod docker_local_runtime_proof;
 pub(crate) mod docker_local_runtime_proof_driver;
