@@ -709,7 +709,7 @@ fn docker_run_argument_values_v1(
     ]
 }
 
-fn container_name_v1(operation_id: &str) -> Option<String> {
+pub(crate) fn container_name_v1(operation_id: &str) -> Option<String> {
     let suffix = operation_id.strip_prefix("opn_")?;
     if suffix.len() != 64
         || !suffix
