@@ -122,7 +122,9 @@ opaque guards across the exact process boundary. The filesystem guard checks
 source, proof-driver executable, private evidence, and target identities after
 created claims and repeats before and after the fresh durable read in the final
 callback; replay remains metadata-only. This does not pin paths through Docker
-resolution.
+resolution. A separate Git guard checks one clean standalone source checkout
+against separately supplied revision/tree identities before the fake process
+and again in the final callback.
 It binds the run-manifest Docker client, host Git verifier, local endpoint, and
 disposable-target paths and domain-separated filesystem identities to the
 supervisor's final context. The production seam rejects executable paths that

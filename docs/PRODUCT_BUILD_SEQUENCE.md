@@ -339,7 +339,10 @@ physical source/proof-driver/evidence/target preflight -> final-supervisor
 durable guard -> independently host-verified receipt. The preflight repeats
 before and after the fresh durable read in the final supervisor callback;
 exact replay remains metadata-only. This does not pin paths through Docker
-resolution. Existing
+resolution. A separate source-only Git guard checks the
+declared verifier, clean standalone checkout, and exact separately supplied
+revision/tree before the fake process and again in that final callback; exact
+replay remains metadata-only. Existing
 test-only served fake-runtime integration selects it; no production route, CLI,
 or daemon configuration selects it. No real Docker observation or runnable
 real proof driver exists; all `UNSET_BLOCKING` identities remain closed.
@@ -379,8 +382,10 @@ the opaque guards across the exact process boundary. A filesystem-only guard
 also binds the declared source root, proof-driver executable digest, owner-only
 evidence directory, and disposable root; it revalidates their identities and
 physical separation before and after the fresh durable read in that final
-callback. It does not pin paths through Docker resolution or authenticate the
-locked Git revision, real build, daemon, image, or operator authority. Every
+callback. It does not pin paths through Docker resolution. The Git guard binds
+separately trusted revision/tree inputs and rejects dirty or unsafe source
+storage. Neither guard authenticates the operator packet's locked source on its
+own, a real build, daemon, image, or operator authority. Every
 post-claim failure
 marks or preserves `outcome_unknown`. Hermetic tests use the existing fake
 executable and temporary Unix socket through a test-only helper. The production

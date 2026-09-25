@@ -17,6 +17,9 @@ use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
     DockerLocalProofEnvironmentFinalInputV1, DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1,
 };
 use crate::docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1;
+use crate::docker_local_runtime_proof_source_git_guard::{
+    DockerLocalRuntimeProofSourceGitGuardV1, preflight_phase11_proof_source_git_v1,
+};
 use crate::docker_local_supervisor::DockerLocalSupervisorInputV1;
 use crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1;
 use lnsat_store::{
@@ -37,6 +40,8 @@ pub(crate) struct DockerLocalRuntimeProofDriverInputV1<'a> {
     pub docker_executable: &'a Path,
     pub proof_driver_executable: &'a Path,
     pub source_root: &'a Path,
+    pub expected_source_revision: &'a str,
+    pub expected_source_tree_oid: &'a str,
     pub private_evidence_root: &'a Path,
 }
 
@@ -46,6 +51,36 @@ pub(crate) enum DockerLocalRuntimeProofDriverErrorV1 {
     PayloadRejected,
     ClaimRejected,
     OutcomeUnknown,
+}
+
+fn preflight_source_git_guard_v1(
+    run_manifest: &DockerLocalRuntimeProofRunManifestOutputV1,
+    source_root: &Path,
+    git_executable: &Path,
+    expected_source_revision: &str,
+    expected_source_tree_oid: &str,
+) -> Result<DockerLocalRuntimeProofSourceGitGuardV1, ()> {
+    let manifest = run_manifest.manifest();
+    if manifest.source.revision != expected_source_revision
+        || git_executable.to_str()
+            != Some(
+                manifest
+                    .declarations
+                    .host_git_verifier
+                    .absolute_path
+                    .as_str(),
+            )
+    {
+        return Err(());
+    }
+    preflight_phase11_proof_source_git_v1(
+        source_root,
+        git_executable,
+        &manifest.declarations.host_git_verifier.digest,
+        expected_source_revision,
+        expected_source_tree_oid,
+    )
+    .map_err(|_| ())
 }
 
 /// Executes one created claim through the exact final guard and persists its
@@ -105,6 +140,17 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
         let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
         DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
     })?;
+    let source_git_guard = preflight_source_git_guard_v1(
+        input.run_manifest,
+        input.source_root,
+        input.docker_input.verifier_git_executable,
+        input.expected_source_revision,
+        input.expected_source_tree_oid,
+    )
+    .map_err(|()| {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
+        DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
+    })?;
     let supervised = supervise_docker_local_runtime_proof_for_driver_v1(
         store,
         DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
@@ -124,8 +170,11 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
         },
         DockerLocalProofEnvironmentFinalInputV1 {
             guard: &environment_guard,
+            source_git_guard: &source_git_guard,
             proof_driver_executable: input.proof_driver_executable,
             source_root: input.source_root,
+            expected_source_revision: input.expected_source_revision,
+            expected_source_tree_oid: input.expected_source_tree_oid,
             private_evidence_root: input.private_evidence_root,
         },
     );

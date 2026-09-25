@@ -124,9 +124,12 @@ that source root or the disposable target root and declared source/target path
 overlap lexically. JSON manifest presence never grants permission or proves
 physical filesystem disjointness. It performs no filesystem identity check,
 Docker access, or runtime I/O.
-The later driver must resolve and authenticate the physical source and target
-identities and revalidate their disjointness immediately before process creation;
-preflight daemon, image, configuration, entrypoint, and in-image adapter identity;
+The test-only driver now checks physical source and target identities and
+disjointness, plus a clean standalone source checkout against separately
+supplied expected revision/tree, before its fake process and at the final
+callback. It does not authenticate the operator packet's source lock or a real
+proof-driver build. A later runnable driver must preflight daemon, image,
+configuration, entrypoint, and in-image adapter identity;
 traverse Gateway -> D4B2A -> D3/D4A -> supervisor;
 and require daemon/client/endpoint-revalidated, launch-label-bound
 inspect-before-remove cleanup.
