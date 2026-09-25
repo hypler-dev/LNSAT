@@ -92,6 +92,7 @@ subsystem or proposal.
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
 - [Phase 11 real disposable Docker proof operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+- [Phase 11 runtime observation proposal](architecture/phase11-runtime-observation/spec.md)
 
 The private Phase 11 served-driver admission evaluator is documented by those
 two readiness records. It structurally checks a caller-supplied claim snapshot
@@ -189,6 +190,7 @@ conformance remain LNSAT concerns.
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)
 - [Phase 11 real disposable Docker execution evidence requirements](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_EXECUTION_EVIDENCE_REQUIREMENTS.md)
 - [Phase 11 real disposable Docker proof operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+- [Phase 11 runtime observation proposal](architecture/phase11-runtime-observation/spec.md)
 - [ADR-0005: Phase 7d enterprise local persistence](architecture/ADR-0005_PHASE_7D_ENTERPRISE_LOCAL_PERSISTENCE.md)
 - [ADR-0004: Phase 7 signed approval evidence](architecture/ADR-0004_PHASE_7_SIGNED_APPROVAL_EVIDENCE.md)
 - [ADR-0003: open core, extensions, and management plane](architecture/ADR-0003_OPEN_CORE_EXTENSIONS_AND_MANAGEMENT_PLANE.md)

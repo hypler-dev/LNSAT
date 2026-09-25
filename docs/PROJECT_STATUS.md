@@ -273,6 +273,11 @@ must also preflight the daemon, image, configuration, entrypoint, and in-image
 adapter; traverse Gateway -> D4B2A -> D3/D4A -> supervisor; and use
 daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove
 cleanup.
+The [runtime observation proposal](architecture/phase11-runtime-observation/spec.md)
+records the still-unaccepted evidence mapping decisions needed for daemon,
+image, provenance, entrypoint, and in-image adapter preflight. No observer or real
+image verification is implemented, and the operator packet remains the status
+authority.
 
 The private served-driver admission evaluator now adds a source-only structural
 boundary: canonical run manifest -> fields in a caller-supplied claim snapshot
