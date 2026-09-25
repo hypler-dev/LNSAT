@@ -340,8 +340,10 @@ durable guard -> independently host-verified receipt. The preflight repeats at
 the final supervisor callback. A separate source-only Git guard checks the
 declared verifier, clean standalone checkout, and exact separately supplied
 revision/tree before the fake process and again in that final callback; exact
-replay remains metadata-only. Existing
-test-only served fake-runtime integration selects it; no production route, CLI,
+replay remains metadata-only. A separate run-window guard requires the
+manifest's bounded UTC window to contain the local system clock after a created
+claim and again at that final callback; a clock rollback or expired window
+fails closed. Existing test-only served fake-runtime integration selects it; no production route, CLI,
 or daemon configuration selects it. No real Docker observation or runnable
 real proof driver exists; all `UNSET_BLOCKING` identities remain closed.
 P11-D4C1 adds source-only reference-adapter

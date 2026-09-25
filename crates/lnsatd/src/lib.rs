@@ -8,6 +8,7 @@ pub mod docker_local_runtime_proof;
 pub(crate) mod docker_local_runtime_proof_driver;
 pub mod docker_local_runtime_proof_driver_admission;
 pub(crate) mod docker_local_runtime_proof_driver_environment_preflight;
+pub(crate) mod docker_local_runtime_proof_run_window_guard;
 pub(crate) mod docker_local_runtime_proof_source_git_guard;
 // Dormant private seam until a separately authorized proof driver selects it.
 #[allow(dead_code)]

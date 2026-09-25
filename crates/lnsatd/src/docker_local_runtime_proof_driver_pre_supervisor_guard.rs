@@ -16,6 +16,7 @@ use crate::docker_local_runtime_proof_run_manifest::{
     DockerLocalRuntimeProofPathIdentityV1, DockerLocalRuntimeProofRunManifestOutputV1,
     DockerLocalRuntimeProofTargetDeclarationV1,
 };
+use crate::docker_local_runtime_proof_run_window_guard::DockerLocalRuntimeProofRunWindowGuardV1;
 use crate::docker_local_runtime_proof_source_git_guard::DockerLocalRuntimeProofSourceGitGuardV1;
 use crate::docker_local_supervisor::{
     DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1,
@@ -36,6 +37,7 @@ use std::fs;
 #[cfg(unix)]
 use std::os::unix::fs::{FileTypeExt as _, MetadataExt as _};
 use std::path::Path;
+use std::time::SystemTime;
 
 const PATH_IDENTITY_DIGEST_DOMAIN_V1: &[u8] = b"lnsat.docker-local-runtime-proof-path-identity.v1";
 const TARGET_OWNERSHIP_DIGEST_DOMAIN_V1: &[u8] =
@@ -65,6 +67,7 @@ pub struct DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'a> {
 pub(crate) struct DockerLocalProofEnvironmentFinalInputV1<'a> {
     pub guard: &'a DockerLocalRuntimeProofEnvironmentGuardV1,
     pub source_git_guard: &'a DockerLocalRuntimeProofSourceGitGuardV1,
+    pub run_window_guard: &'a DockerLocalRuntimeProofRunWindowGuardV1,
     pub proof_driver_executable: &'a Path,
     pub source_root: &'a Path,
     pub expected_source_revision: &'a str,
@@ -298,12 +301,24 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
             ) {
                 return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
             }
+            let run_window = guard_input
+                .run_manifest
+                .manifest()
+                .declarations
+                .run_window
+                .clone();
+            let manifest_digest = guard_input.run_manifest.digest();
             let durable_guard =
                 guard_docker_local_runtime_proof_pre_supervisor_v1(store, guard_input)
                     .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)?;
+            environment
+                .run_window_guard
+                .revalidate(&run_window, manifest_digest, SystemTime::now())
+                .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)?;
             Ok((
                 environment.guard,
                 environment.source_git_guard,
+                environment.run_window_guard,
                 durable_guard,
             ))
         },

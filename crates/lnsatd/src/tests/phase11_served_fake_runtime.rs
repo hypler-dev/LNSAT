@@ -27,6 +27,9 @@ use crate::docker_local_runtime_proof_run_manifest::{
     DockerLocalRuntimeProofRunManifestSourceInputV1, DockerLocalRuntimeProofRunWindowV1,
     DockerLocalRuntimeProofTargetDeclarationV1, build_docker_local_runtime_proof_run_manifest_v1,
 };
+use crate::docker_local_runtime_proof_run_window_guard::{
+    DockerLocalRuntimeProofRunWindowGuardV1, preflight_phase11_proof_run_window_v1,
+};
 use crate::docker_local_runtime_proof_source_git_guard::{
     DockerLocalRuntimeProofSourceGitGuardV1, preflight_phase11_proof_source_git_v1,
 };
@@ -52,6 +55,7 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::os::unix::fs::symlink;
 use std::os::unix::net::UnixListener;
 use std::process::{Command, Stdio};
+use std::sync::OnceLock;
 
 const GIT_EXECUTABLE: &str = "/usr/bin/git";
 const PATCH: &[u8] = b"diff --git a/fixture.txt b/fixture.txt\n--- a/fixture.txt\n+++ b/fixture.txt\n@@ -1 +1 @@\n-before\n+after\n";
@@ -127,6 +131,7 @@ struct ServedFakeRuntimeFixture {
     source_root: PathBuf,
     expected_source_revision: String,
     expected_source_tree_oid: String,
+    run_window_guard: DockerLocalRuntimeProofRunWindowGuardV1,
     private_evidence_root: PathBuf,
     docker_socket: PathBuf,
     invocation_log: PathBuf,
@@ -331,6 +336,12 @@ impl ServedFakeRuntimeFixture {
             policy = decided;
         }
 
+        let run_window_guard = preflight_phase11_proof_run_window_v1(
+            &run_manifest.manifest().declarations.run_window,
+            run_manifest.digest(),
+            SystemTime::now(),
+        )
+        .expect("fixture run window must be live");
         let config = DaemonConfigV1::for_test(directory.database_path())
             .with_phase8_runtime(&git.root, Path::new(GIT_EXECUTABLE))
             .expect("Phase 8 runtime")
@@ -527,6 +538,7 @@ impl ServedFakeRuntimeFixture {
             source_root,
             expected_source_revision,
             expected_source_tree_oid,
+            run_window_guard,
             private_evidence_root,
             docker_socket,
             invocation_log,
@@ -579,6 +591,7 @@ impl ServedFakeRuntimeFixture {
         DockerLocalProofEnvironmentFinalInputV1 {
             guard,
             source_git_guard,
+            run_window_guard: &self.run_window_guard,
             proof_driver_executable: &self.proof_driver_executable,
             source_root: &self.source_root,
             expected_source_revision: &self.expected_source_revision,
@@ -753,6 +766,45 @@ fn phase11_served_fake_runtime_manifest_drift_never_spawns() {
             ),
             &fixture.private_evidence_root,
             drifted_manifest,
+        )
+        .expect("fake-only runtime selection");
+    let daemon = ServedDaemon::start(&config);
+    let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+    response_json(&response, "HTTP/1.1 403 Forbidden\r\n");
+    assert_eq!(fixture.run_count(), 0);
+    fixture.assert_public_safe(&response);
+    let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
+    assert_eq!(operation["operation"]["state"], "outcome_unknown");
+    assert!(operation["operation"]["receipt"].is_null());
+    daemon.stop();
+}
+
+#[test]
+fn phase11_served_fake_runtime_expired_window_marks_unknown_without_spawn() {
+    let fixture = ServedFakeRuntimeFixture::new("served-expired-window", FakeMode::Success);
+    let mut declarations = final_supervisor_guard_declarations(&fixture);
+    declarations.run_window = DockerLocalRuntimeProofRunWindowV1 {
+        not_before_utc: run_window_timestamp(-1200),
+        not_after_utc: run_window_timestamp(-600),
+    };
+    let expired_manifest = pre_supervisor_guard_manifest_with_source_and_declarations(
+        &fixture.profile,
+        &final_supervisor_guard_manifest(&fixture).manifest().source,
+        declarations,
+    );
+    let config = fixture
+        .config
+        .clone()
+        .with_phase11_served_fake_docker_runtime(
+            &fixture.fake_docker_executable,
+            &fixture.proof_driver_executable,
+            &fixture.source_root,
+            (
+                fixture.expected_source_revision.clone(),
+                fixture.expected_source_tree_oid.clone(),
+            ),
+            &fixture.private_evidence_root,
+            expired_manifest,
         )
         .expect("fake-only runtime selection");
     let daemon = ServedDaemon::start(&config);
@@ -1157,6 +1209,52 @@ fn final_supervisor_guard_rejects_source_git_drift_after_preflight() {
 }
 
 #[test]
+fn final_supervisor_guard_rejects_clock_rollback_without_spawn() {
+    let fixture = ServedFakeRuntimeFixture::new("final-clock-rollback", FakeMode::Success);
+    let manifest = final_supervisor_guard_manifest(&fixture);
+    let environment_guard = fixture.environment_guard(&manifest);
+    let source_git_guard = fixture.source_git_guard(&manifest);
+    let future_observation = SystemTime::now()
+        .checked_add(Duration::from_mins(2))
+        .expect("future fixture clock");
+    let future_run_window_guard = preflight_phase11_proof_run_window_v1(
+        &manifest.manifest().declarations.run_window,
+        manifest.digest(),
+        future_observation,
+    )
+    .expect("future observation is within the declared window");
+    let mut final_environment =
+        fixture.final_environment_input(&environment_guard, &source_git_guard);
+    final_environment.run_window_guard = &future_run_window_guard;
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    assert_eq!(
+        supervise_docker_local_runtime_proof_with_final_guard_v1(
+            &mut store,
+            DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
+                run_manifest: &manifest,
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                claim_handle: handle,
+                raw_session_token: &fixture.requester_session_token,
+                raw_csrf_token: &fixture.requester_csrf,
+            },
+            &DockerLocalSupervisorInputV1 {
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                docker_executable: &fixture.fake_docker_executable,
+                verifier_git_executable: Path::new(GIT_EXECUTABLE),
+                disposable_root: &fixture.git.root,
+            },
+            final_environment,
+        ),
+        Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
+    );
+    assert_eq!(fixture.run_count(), 0);
+    assert_phase11_unknown(&store, &fixture.operation_id);
+}
+
+#[test]
 fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
     let fixture = ServedFakeRuntimeFixture::new("final-guard-auth-reject", FakeMode::Success);
     let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
@@ -1526,10 +1624,7 @@ fn pre_supervisor_guard_declarations(
     };
     DockerLocalRuntimeProofRunManifestSourceInputV1 {
         run_nonce: "private-guard-test-nonce".to_owned(),
-        run_window: DockerLocalRuntimeProofRunWindowV1 {
-            not_before_utc: "2026-09-16T10:00:00Z".to_owned(),
-            not_after_utc: "2026-09-16T10:15:00Z".to_owned(),
-        },
+        run_window: fixture_run_window_v1(),
         human_authority_reference: "private-guard-test-owner".to_owned(),
         host_identity_digest: guard_sha('1'),
         docker_client: path("docker", '2'),
@@ -1751,6 +1846,36 @@ fn timestamp(offset_seconds: i64) -> String {
     }
     .expect("fixture timestamp");
     canonical_system_time_v1(value).expect("canonical timestamp")
+}
+
+fn fixture_run_window_v1() -> DockerLocalRuntimeProofRunWindowV1 {
+    static WINDOW: OnceLock<DockerLocalRuntimeProofRunWindowV1> = OnceLock::new();
+    WINDOW
+        .get_or_init(|| DockerLocalRuntimeProofRunWindowV1 {
+            not_before_utc: run_window_timestamp(-60),
+            not_after_utc: run_window_timestamp(3480),
+        })
+        .clone()
+}
+
+fn run_window_timestamp(offset_seconds: i64) -> String {
+    let now = SystemTime::now();
+    let value = if offset_seconds >= 0 {
+        now.checked_add(Duration::from_secs(offset_seconds.unsigned_abs()))
+    } else {
+        now.checked_sub(Duration::from_secs(offset_seconds.unsigned_abs()))
+    }
+    .expect("fixture run-window timestamp");
+    let whole_seconds = value
+        .duration_since(UNIX_EPOCH)
+        .expect("fixture time after epoch")
+        .as_secs();
+    let canonical = canonical_system_time_v1(UNIX_EPOCH + Duration::from_secs(whole_seconds))
+        .expect("canonical fixture run-window timestamp");
+    format!(
+        "{}Z",
+        canonical.strip_suffix(".000Z").expect("whole-second UTC")
+    )
 }
 
 fn commit_metadata() -> lnsat_store::Phase7GitCommitMetadataV1 {

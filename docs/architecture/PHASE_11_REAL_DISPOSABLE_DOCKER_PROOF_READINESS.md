@@ -128,8 +128,10 @@ The test-only driver now checks physical source and target identities and
 disjointness, plus a clean standalone source checkout against separately
 supplied expected revision/tree, before its fake process and at the final
 callback. It does not authenticate the operator packet's source lock or a real
-proof-driver build. A later runnable driver must preflight daemon, image,
-configuration, entrypoint, and in-image adapter identity;
+proof-driver build. A bounded UTC run-window guard now rejects future or expired
+windows and clock rollback after a created claim and at the final callback;
+it does not authenticate host time or owner authority. A later runnable driver
+must preflight daemon, image, configuration, entrypoint, and in-image adapter identity;
 traverse Gateway -> D4B2A -> D3/D4A -> supervisor;
 and require daemon/client/endpoint-revalidated, launch-label-bound
 inspect-before-remove cleanup.

@@ -79,6 +79,12 @@ selects it for production. No real Docker observation exists, and all
 digest, or test-only composition never substitutes for a runnable real proof
 driver, exact run identities, or separate owner authorization.
 
+The test-only driver also checks the bounded manifest UTC run window against
+the local system clock after a created claim and at the final callback. Future,
+expired, or rolled-back clock observations fail closed to `outcome_unknown`;
+exact replay remains metadata-only. This check does not authenticate the
+execution host's clock, source lock, or owner decision.
+
 The lock above predates these later source-only guards. Any future proof built
 from a different source revision or tree requires a new reviewed source lock
 and separate authority decision; this record does not move its existing lock.
