@@ -112,6 +112,17 @@ parser invokes no Docker command and grants no removal authority. The missing
 daemon/client/endpoint revalidation, independent image provenance, lifecycle
 evidence, accepted policy, and operator authorization still block cleanup.
 
+The test-only served driver now creates an owner-only launch custody leaf in
+the declared private evidence root before filesystem preflight. Its private
+identity record binds this run-manifest digest, operation ID, attempt, launch
+contract digest, and relative CID filename. After a fake client process is
+created, the leaf and any client-written CID survive both success and
+`outcome_unknown`; the temporary client config is removed. Pre-spawn failures
+remove the leaf. Missing or malformed CID remains `outcome_unknown`. The
+retained file has no verified daemon or container
+identity and grants no inspect or removal authority. This source-only change
+does not move the proof-source lock or any `UNSET_BLOCKING` value.
+
 The lock above predates these later source-only guards. Any future proof built
 from a different source revision or tree requires a new reviewed source lock
 and separate authority decision; this record does not move its existing lock.

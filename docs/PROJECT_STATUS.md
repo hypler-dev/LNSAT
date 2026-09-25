@@ -289,6 +289,15 @@ exact private container ID plus operation and launch-contract labels. It uses
 no Docker command and treats a matching response as untrusted syntax only;
 daemon/client/endpoint revalidation, image provenance, lifecycle evidence,
 cleanup authority, and verified removal remain absent.
+The test-only served proof driver now prepares an owner-only per-launch custody
+leaf under the declared private evidence root before its filesystem preflight.
+It binds the run-manifest digest, operation, attempt, launch-contract digest,
+and CID filename in a private identity record. Once the fake client process
+starts, that leaf and any client-written CID survive success and
+`outcome_unknown`; only the temporary client config is removed. Failures before
+spawn remove the leaf. A missing or malformed CID stays `outcome_unknown`.
+A retained syntactically valid CID is unverified evidence, not cleanup
+authority. No real Docker inspection or removal is implemented.
 
 The private served-driver admission evaluator now adds a source-only structural
 boundary: canonical run manifest -> fields in a caller-supplied claim snapshot

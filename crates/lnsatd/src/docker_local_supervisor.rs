@@ -231,7 +231,7 @@ pub fn docker_local_launch_contract_argv_template_v1(
 pub fn supervise_docker_local_git_execution_v1(
     input: &DockerLocalSupervisorInputV1<'_>,
 ) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
-    supervise_docker_local_git_execution_with_final_authorization_v1(input, |_| Ok(()))
+    supervise_docker_local_git_execution_with_final_authorization_v1(input, None, |_| Ok(()))
 }
 
 /// Runs the supervisor with one caller-owned authorization object retained
@@ -245,6 +245,7 @@ pub fn supervise_docker_local_git_execution_v1(
 #[allow(clippy::too_many_lines)]
 pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T>(
     input: &DockerLocalSupervisorInputV1<'_>,
+    private_launch: Option<&mut PrivateDockerConfigV1>,
     final_authorization: impl FnOnce(
         &DockerLocalSupervisorFinalAuthorizationContextV1,
     ) -> Result<T, DockerLocalSupervisorErrorV1>,
@@ -296,10 +297,31 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
         return Err(DockerLocalSupervisorErrorV1::TargetRejected);
     }
 
-    let docker_config = PrivateDockerConfigV1::create(&operation.operation_id)
-        .map_err(|()| DockerLocalSupervisorErrorV1::RuntimeUnavailable)?;
     let container_name = container_name_v1(&operation.operation_id)
         .ok_or(DockerLocalSupervisorErrorV1::InputInvalid)?;
+    let launch_digest = prefixed_sha256_v1(&docker_local_launch_contract_digest_v1(
+        input.loaded_profile,
+    )?);
+    let mut temporary_config = if private_launch.is_some() {
+        None
+    } else {
+        Some(
+            PrivateDockerConfigV1::create(&operation.operation_id)
+                .map_err(|()| DockerLocalSupervisorErrorV1::RuntimeUnavailable)?,
+        )
+    };
+    let docker_config = match private_launch {
+        Some(config) => {
+            if config.operation_id != operation.operation_id
+                || config.launch_digest != launch_digest
+                || !config.private_custody
+            {
+                return Err(DockerLocalSupervisorErrorV1::InputInvalid);
+            }
+            config
+        }
+        None => temporary_config.as_mut().expect("temporary config exists"),
+    };
     let args = docker_run_arguments_v1(
         input.loaded_profile,
         &supervisor.docker_host,
@@ -352,6 +374,9 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
             disposable_root,
             repository: repository_immediately_before_spawn,
         })?;
+    if !docker_config.revalidate_before_spawn() {
+        return Err(DockerLocalSupervisorErrorV1::RuntimeUnavailable);
+    }
     let started = Instant::now();
     let mut command = Command::new(input.docker_executable);
     command
@@ -363,6 +388,7 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
     let mut child = command
         .spawn()
         .map_err(|_| DockerLocalSupervisorErrorV1::RuntimeUnavailable)?;
+    docker_config.mark_spawned();
     let launched = run_launched_process_v1(
         &mut child,
         parsed.frame(),
@@ -378,6 +404,9 @@ pub(crate) fn supervise_docker_local_git_execution_with_final_authorization_v1<T
         let _ = child.wait();
         return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
     };
+    if !docker_config.validate_retained_cid() {
+        return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
+    }
 
     let runtime_stable = validate_executable_v1(
         input.docker_executable,
@@ -823,10 +852,20 @@ fn file_identity_v1(metadata: &Metadata) -> FileIdentityV1 {
     }
 }
 
-struct PrivateDockerConfigV1 {
+pub(crate) struct PrivateDockerConfigV1 {
     path: PathBuf,
     config_path: PathBuf,
     cid_path: PathBuf,
+    operation_id: String,
+    launch_digest: String,
+    private_custody: bool,
+    spawned: bool,
+    custody_root: Option<PathBuf>,
+    custody_leaf: Option<PathBuf>,
+    identity_path: Option<PathBuf>,
+    root_identity: Option<FileIdentityV1>,
+    leaf_identity: Option<FileIdentityV1>,
+    identity_digest: Option<[u8; 32]>,
 }
 
 impl PrivateDockerConfigV1 {
@@ -898,6 +937,16 @@ impl PrivateDockerConfigV1 {
                         path,
                         config_path,
                         cid_path,
+                        operation_id: operation_id.to_owned(),
+                        launch_digest: String::new(),
+                        private_custody: false,
+                        spawned: false,
+                        custody_root: None,
+                        custody_leaf: None,
+                        identity_path: None,
+                        root_identity: None,
+                        leaf_identity: None,
+                        identity_digest: None,
                     });
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
@@ -907,12 +956,317 @@ impl PrivateDockerConfigV1 {
         Err(())
     }
 
+    /// Prepares one private, owner-only lifecycle leaf before the final guard.
+    /// The leaf is retained after any successful process creation, including an
+    /// ambiguous result. Its presence is evidence of an attempted launch only;
+    /// the CID file is untrusted until separately inspected and bound.
+    #[cfg(unix)]
+    pub(crate) fn create_custody(
+        evidence_root: &Path,
+        source_root: &Path,
+        disposable_root: &Path,
+        operation_id: &str,
+        attempt_sequence: u32,
+        manifest_digest: &str,
+        launch_digest: &str,
+    ) -> Result<Self, ()> {
+        if container_name_v1(operation_id).is_none()
+            || attempt_sequence != 1
+            || decode_prefixed_sha256_v1(manifest_digest).is_none()
+            || decode_prefixed_sha256_v1(launch_digest).is_none()
+        {
+            return Err(());
+        }
+        let root = fs::canonicalize(evidence_root).map_err(|_| ())?;
+        let source = fs::canonicalize(source_root).map_err(|_| ())?;
+        let disposable = fs::canonicalize(disposable_root).map_err(|_| ())?;
+        let metadata = fs::symlink_metadata(evidence_root).map_err(|_| ())?;
+        if root != evidence_root
+            || !safe_private_directory_v1(&metadata)
+            || root.starts_with(&source)
+            || source.starts_with(&root)
+            || root.starts_with(&disposable)
+            || disposable.starts_with(&root)
+        {
+            return Err(());
+        }
+        for _ in 0..8 {
+            let mut entropy = [0_u8; 32];
+            getrandom::getrandom(&mut entropy).map_err(|_| ())?;
+            let suffix = prefixed_sha256_v1(&entropy);
+            entropy.fill(0);
+            let leaf = root.join(format!(
+                "lnsat-launch-{}-{}",
+                operation_id.strip_prefix("opn_").ok_or(())?,
+                &suffix[7..],
+            ));
+            let mut builder = fs::DirBuilder::new();
+            #[cfg(unix)]
+            builder.mode(0o700);
+            match builder.create(&leaf) {
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(_) => return Err(()),
+                Ok(()) => {}
+            }
+            let path = leaf.join("docker-config");
+            let config_path = path.join("config.json");
+            let cid_path = leaf.join("container.cid");
+            let identity_path = leaf.join("launch-identity.json");
+            let mut prepared = Self {
+                path,
+                config_path,
+                cid_path,
+                operation_id: operation_id.to_owned(),
+                launch_digest: launch_digest.to_owned(),
+                private_custody: true,
+                spawned: false,
+                custody_root: Some(root.clone()),
+                custody_leaf: Some(leaf.clone()),
+                identity_path: Some(identity_path.clone()),
+                root_identity: None,
+                leaf_identity: None,
+                identity_digest: None,
+            };
+            let mut config_builder = fs::DirBuilder::new();
+            #[cfg(unix)]
+            config_builder.mode(0o700);
+            config_builder.create(&prepared.path).map_err(|_| ())?;
+            let mut config_options = OpenOptions::new();
+            config_options.write(true).create_new(true);
+            #[cfg(unix)]
+            config_options.mode(0o600);
+            let mut config = config_options.open(&prepared.config_path).map_err(|_| ())?;
+            config.write_all(b"{}\n").map_err(|_| ())?;
+            config.sync_all().map_err(|_| ())?;
+            prepared.identity_digest =
+                Some(prepared.write_custody_identity(manifest_digest, attempt_sequence)?);
+            File::open(&leaf)
+                .and_then(|directory| directory.sync_all())
+                .map_err(|_| ())?;
+            File::open(&root)
+                .and_then(|directory| directory.sync_all())
+                .map_err(|_| ())?;
+            prepared.root_identity = Some(file_identity_v1(
+                &fs::symlink_metadata(&root).map_err(|_| ())?,
+            ));
+            prepared.leaf_identity = Some(file_identity_v1(
+                &fs::symlink_metadata(&leaf).map_err(|_| ())?,
+            ));
+            if !prepared.revalidate_before_spawn() {
+                return Err(());
+            }
+            return Ok(prepared);
+        }
+        Err(())
+    }
+
+    #[cfg(not(unix))]
+    pub(crate) fn create_custody(
+        _evidence_root: &Path,
+        _source_root: &Path,
+        _disposable_root: &Path,
+        _operation_id: &str,
+        _attempt_sequence: u32,
+        _manifest_digest: &str,
+        _launch_digest: &str,
+    ) -> Result<Self, ()> {
+        Err(())
+    }
+
+    fn write_custody_identity(
+        &self,
+        manifest_digest: &str,
+        attempt_sequence: u32,
+    ) -> Result<[u8; 32], ()> {
+        let identity_path = self.identity_path.as_ref().ok_or(())?;
+        let identity = serde_json::to_vec(&serde_json::json!({
+            "contract_id": "lnsat.phase11_private_launch_custody.v1",
+            "manifest_digest": manifest_digest,
+            "operation_id": self.operation_id,
+            "attempt_sequence": attempt_sequence,
+            "launch_contract_sha256": self.launch_digest,
+            "cid_file": "container.cid",
+            "status": "source_only_unverified"
+        }))
+        .map_err(|_| ())?;
+        if identity.len() > 512 {
+            return Err(());
+        }
+        let mut identity_options = OpenOptions::new();
+        identity_options.write(true).create_new(true);
+        #[cfg(unix)]
+        identity_options.mode(0o600);
+        let mut identity_file = identity_options.open(identity_path).map_err(|_| ())?;
+        identity_file.write_all(&identity).map_err(|_| ())?;
+        identity_file.write_all(b"\n").map_err(|_| ())?;
+        identity_file.sync_all().map_err(|_| ())?;
+        Ok(Sha256::digest(fs::read(identity_path).map_err(|_| ())?).into())
+    }
+
     fn path(&self) -> &Path {
         &self.path
     }
 
     fn cid_path(&self) -> &Path {
         &self.cid_path
+    }
+
+    fn mark_spawned(&mut self) {
+        self.spawned = true;
+    }
+
+    fn validate_retained_cid(&self) -> bool {
+        if !self.private_custody {
+            return true;
+        }
+        if !self.custody_stable_after_spawn() {
+            return false;
+        }
+        let Ok(before) = fs::symlink_metadata(&self.cid_path) else {
+            return false;
+        };
+        #[cfg(not(unix))]
+        {
+            let _ = before;
+            return false;
+        }
+        #[cfg(unix)]
+        {
+            if !before.file_type().is_file()
+                || before.file_type().is_symlink()
+                || before.uid() != nix::unistd::geteuid().as_raw()
+                || before.nlink() != 1
+                || before.mode() & 0o022 != 0
+                || !(64..=65).contains(&before.len())
+            {
+                return false;
+            }
+            let Ok(mut file) = File::open(&self.cid_path) else {
+                return false;
+            };
+            if !file
+                .metadata()
+                .is_ok_and(|opened| file_identity_v1(&opened) == file_identity_v1(&before))
+            {
+                return false;
+            }
+            let mut cid = Vec::with_capacity(65);
+            if (&mut file).take(66).read_to_end(&mut cid).is_err() {
+                return false;
+            }
+            let cid_bytes = cid.strip_suffix(b"\n").unwrap_or(&cid);
+            cid_bytes.len() == 64
+                && cid_bytes
+                    .iter()
+                    .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(byte))
+                && fs::symlink_metadata(&self.cid_path)
+                    .is_ok_and(|after| file_identity_v1(&after) == file_identity_v1(&before))
+        }
+    }
+
+    #[cfg(unix)]
+    fn custody_stable_after_spawn(&self) -> bool {
+        let (
+            Some(root),
+            Some(leaf),
+            Some(identity_path),
+            Some(root_identity),
+            Some(leaf_identity),
+            Some(identity_digest),
+        ) = (
+            &self.custody_root,
+            &self.custody_leaf,
+            &self.identity_path,
+            self.root_identity,
+            self.leaf_identity,
+            self.identity_digest,
+        )
+        else {
+            return false;
+        };
+        let (Ok(root_metadata), Ok(leaf_metadata), Ok(identity_metadata)) = (
+            fs::symlink_metadata(root),
+            fs::symlink_metadata(leaf),
+            fs::symlink_metadata(identity_path),
+        ) else {
+            return false;
+        };
+        let current_leaf = file_identity_v1(&leaf_metadata);
+        safe_private_directory_v1(&root_metadata)
+            && safe_private_directory_v1(&leaf_metadata)
+            && safe_private_file_v1(&identity_metadata)
+            && identity_metadata.len() <= 513
+            && file_identity_v1(&root_metadata) == root_identity
+            && current_leaf.device == leaf_identity.device
+            && current_leaf.inode == leaf_identity.inode
+            && current_leaf.uid == leaf_identity.uid
+            && current_leaf.gid == leaf_identity.gid
+            && current_leaf.mode == leaf_identity.mode
+            && fs::canonicalize(leaf).is_ok_and(|canonical| canonical == *leaf)
+            && fs::read(identity_path).is_ok_and(|bytes| {
+                let current: [u8; 32] = Sha256::digest(&bytes).into();
+                current == identity_digest
+            })
+    }
+
+    #[cfg(not(unix))]
+    fn custody_stable_after_spawn(&self) -> bool {
+        false
+    }
+
+    #[cfg(unix)]
+    fn revalidate_before_spawn(&self) -> bool {
+        if !self.private_custody {
+            return true;
+        }
+        let (
+            Some(root),
+            Some(leaf),
+            Some(identity_path),
+            Some(root_identity),
+            Some(leaf_identity),
+            Some(identity_digest),
+        ) = (
+            &self.custody_root,
+            &self.custody_leaf,
+            &self.identity_path,
+            self.root_identity,
+            self.leaf_identity,
+            self.identity_digest,
+        )
+        else {
+            return false;
+        };
+        let Ok(root_metadata) = fs::symlink_metadata(root) else {
+            return false;
+        };
+        let Ok(leaf_metadata) = fs::symlink_metadata(leaf) else {
+            return false;
+        };
+        let Ok(config_metadata) = fs::symlink_metadata(&self.config_path) else {
+            return false;
+        };
+        let Ok(identity_metadata) = fs::symlink_metadata(identity_path) else {
+            return false;
+        };
+        safe_private_directory_v1(&root_metadata)
+            && safe_private_directory_v1(&leaf_metadata)
+            && safe_private_file_v1(&config_metadata)
+            && safe_private_file_v1(&identity_metadata)
+            && file_identity_v1(&root_metadata) == root_identity
+            && file_identity_v1(&leaf_metadata) == leaf_identity
+            && fs::canonicalize(root).is_ok_and(|canonical| canonical == *root)
+            && fs::canonicalize(leaf)
+                .is_ok_and(|canonical| canonical.parent() == Some(root.as_path()))
+            && fs::read(identity_path).is_ok_and(|bytes| {
+                let current: [u8; 32] = Sha256::digest(&bytes).into();
+                current == identity_digest
+            })
+    }
+
+    #[cfg(not(unix))]
+    fn revalidate_before_spawn(&self) -> bool {
+        !self.private_custody
     }
 }
 
@@ -965,9 +1319,20 @@ fn safe_private_file_v1(metadata: &Metadata) -> bool {
 
 impl Drop for PrivateDockerConfigV1 {
     fn drop(&mut self) {
+        if self.private_custody && self.spawned {
+            let _ = fs::remove_file(&self.config_path);
+            let _ = fs::remove_dir(&self.path);
+            return;
+        }
         let _ = fs::remove_file(&self.cid_path);
         let _ = fs::remove_file(&self.config_path);
         let _ = fs::remove_dir(&self.path);
+        if let Some(identity_path) = &self.identity_path {
+            let _ = fs::remove_file(identity_path);
+        }
+        if let Some(leaf) = &self.custody_leaf {
+            let _ = fs::remove_dir(leaf);
+        }
     }
 }
 

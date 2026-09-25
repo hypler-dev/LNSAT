@@ -21,7 +21,7 @@ use crate::docker_local_runtime_proof_source_git_guard::DockerLocalRuntimeProofS
 use crate::docker_local_supervisor::{
     DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1,
     DockerLocalSupervisorFinalAuthorizationContextV1, DockerLocalSupervisorInputV1,
-    supervise_docker_local_git_execution_with_final_authorization_v1,
+    PrivateDockerConfigV1, supervise_docker_local_git_execution_with_final_authorization_v1,
 };
 use crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1;
 use lnsat_store::{
@@ -233,6 +233,38 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
     supervisor_input: &DockerLocalSupervisorInputV1<'_>,
     environment: DockerLocalProofEnvironmentFinalInputV1<'_>,
 ) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_runtime_proof_with_final_guard_inner_v1(
+        store,
+        guard_input,
+        supervisor_input,
+        environment,
+        None,
+    )
+}
+
+pub(crate) fn supervise_docker_local_runtime_proof_with_custody_v1(
+    store: &mut SqliteStore,
+    guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
+    supervisor_input: &DockerLocalSupervisorInputV1<'_>,
+    environment: DockerLocalProofEnvironmentFinalInputV1<'_>,
+    private_launch: &mut PrivateDockerConfigV1,
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_runtime_proof_with_final_guard_inner_v1(
+        store,
+        guard_input,
+        supervisor_input,
+        environment,
+        Some(private_launch),
+    )
+}
+
+fn supervise_docker_local_runtime_proof_with_final_guard_inner_v1(
+    store: &mut SqliteStore,
+    guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
+    supervisor_input: &DockerLocalSupervisorInputV1<'_>,
+    environment: DockerLocalProofEnvironmentFinalInputV1<'_>,
+    private_launch: Option<&mut PrivateDockerConfigV1>,
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
     let operation_id = guard_input
         .claim_handle
         .claim()
@@ -253,6 +285,7 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
 
     let result = supervise_docker_local_git_execution_with_final_authorization_v1(
         supervisor_input,
+        private_launch,
         |context| {
             environment
                 .guard
