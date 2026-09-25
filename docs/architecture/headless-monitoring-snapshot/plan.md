@@ -3,7 +3,7 @@
 # Plan: Versioned monitoring evidence-subject snapshot
 
 Status: proposed
-Authority: [Versioned monitoring evidence-subject snapshot intent](intent.md) and the [HCFG-4 requirement](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
+Authority: [Versioned monitoring evidence-subject snapshot intent](intent.md)
 Owner: LNSAT project owner
 Last updated: 2026-09-25
 
