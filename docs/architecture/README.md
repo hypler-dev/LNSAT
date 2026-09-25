@@ -152,6 +152,12 @@ support, package, target path, service lifecycle, or artifact.
 
 ## Proposals and Future Design
 
+- [HCFG-4B monitoring snapshot intent](headless-monitoring-snapshot/intent.md)
+- [HCFG-4B monitoring snapshot specification](headless-monitoring-snapshot/spec.md)
+- [HCFG-4B monitoring snapshot plan](headless-monitoring-snapshot/plan.md)
+- [HCFG-4C monitoring watch intent](headless-monitoring-watch/intent.md)
+- [HCFG-4C monitoring watch specification](headless-monitoring-watch/spec.md)
+- [HCFG-4C monitoring watch plan](headless-monitoring-watch/plan.md)
 - [Agent configuration, skill, and context management](AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)
 - [UI and framework expansion](UI_AND_FRAMEWORK.md)
 - [Persistence schema plan](PERSISTENCE_SCHEMA_PLAN.md)

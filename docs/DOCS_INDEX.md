@@ -42,6 +42,10 @@ subsystem or proposal.
 
 - [Headless declaration composition](architecture/headless-configuration/spec.md)
   — exact source-only resource/action ceilings and remaining activation boundary.
+- [Proposed HCFG-4B monitoring snapshot](architecture/headless-monitoring-snapshot/intent.md)
+  — proposed atomic current-state inventory and watch cutover.
+- [Proposed HCFG-4C monitoring watch](architecture/headless-monitoring-watch/intent.md)
+  — proposed durable event order, bounded cursor/resume, and watch scope.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
