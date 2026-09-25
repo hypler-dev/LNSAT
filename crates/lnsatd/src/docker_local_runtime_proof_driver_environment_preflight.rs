@@ -143,6 +143,8 @@ fn collect_environment_v1(
             || !directories_disjoint_v1(&source, &evidence)
             || !directories_disjoint_v1(&source, &disposable)
             || !directories_disjoint_v1(&evidence, &disposable)
+            || path_is_ancestor_or_same_v1(&evidence.canonical_path, &proof_driver.canonical_path)
+            || path_is_ancestor_or_same_v1(&disposable.canonical_path, &proof_driver.canonical_path)
         {
             return Err(DockerLocalRuntimeProofEnvironmentErrorV1::Rejected);
         }
