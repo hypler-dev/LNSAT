@@ -11,6 +11,7 @@ use crate::docker_local_runtime_proof_driver_admission::{
     DockerLocalRuntimeProofDriverAdmissionInputV1, DockerLocalRuntimeProofDriverAdmissionOutputV1,
     admit_docker_local_runtime_proof_driver_v1, prefixed_sha256_v1,
 };
+use crate::docker_local_runtime_proof_driver_environment_preflight::DockerLocalRuntimeProofEnvironmentGuardV1;
 use crate::docker_local_runtime_proof_run_manifest::{
     DockerLocalRuntimeProofPathIdentityV1, DockerLocalRuntimeProofRunManifestOutputV1,
     DockerLocalRuntimeProofTargetDeclarationV1,
@@ -55,6 +56,16 @@ pub struct DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'a> {
     pub claim_handle: Phase11DockerRuntimeCompositionClaimHandleV1,
     pub raw_session_token: &'a str,
     pub raw_csrf_token: &'a str,
+}
+
+/// Filesystem-only source, proof-driver, and evidence identities carried from
+/// pre-claim preflight to the supervisor's final process boundary.
+#[derive(Clone, Copy)]
+pub(crate) struct DockerLocalProofEnvironmentFinalInputV1<'a> {
+    pub guard: &'a DockerLocalRuntimeProofEnvironmentGuardV1,
+    pub proof_driver_executable: &'a Path,
+    pub source_root: &'a Path,
+    pub private_evidence_root: &'a Path,
 }
 
 /// Private source-only guard after structural admission and durable re-read.
@@ -213,6 +224,7 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
     store: &mut SqliteStore,
     guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
     supervisor_input: &DockerLocalSupervisorInputV1<'_>,
+    environment: DockerLocalProofEnvironmentFinalInputV1<'_>,
 ) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
     let operation_id = guard_input
         .claim_handle
@@ -235,6 +247,16 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
     let result = supervise_docker_local_git_execution_with_final_authorization_v1(
         supervisor_input,
         |context| {
+            environment
+                .guard
+                .revalidate(
+                    guard_input.run_manifest,
+                    environment.proof_driver_executable,
+                    environment.source_root,
+                    environment.private_evidence_root,
+                    &context.disposable_root,
+                )
+                .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)?;
             if !run_manifest_matches_final_supervisor_v1(
                 guard_input.run_manifest,
                 guard_input.loaded_profile,
@@ -242,8 +264,10 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
             ) {
                 return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
             }
-            guard_docker_local_runtime_proof_pre_supervisor_v1(store, guard_input)
-                .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)
+            let durable_guard =
+                guard_docker_local_runtime_proof_pre_supervisor_v1(store, guard_input)
+                    .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)?;
+            Ok((environment.guard, durable_guard))
         },
     );
     if result.is_err() {

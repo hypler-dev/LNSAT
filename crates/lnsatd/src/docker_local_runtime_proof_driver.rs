@@ -8,7 +8,9 @@
 
 use crate::adapter_process_protocol::DockerLocalAdapterProcessRequestInputV1;
 use crate::docker_local_execution_payload::build_docker_local_execution_payload_request_v1;
+use crate::docker_local_runtime_proof_driver_environment_preflight::preflight_docker_local_runtime_proof_environment_v1;
 use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
+    DockerLocalProofEnvironmentFinalInputV1,
     DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1,
     supervise_docker_local_runtime_proof_with_final_guard_v1,
 };
@@ -31,6 +33,9 @@ pub(crate) struct DockerLocalRuntimeProofDriverInputV1<'a> {
     pub loaded_profile: &'a LoadedDockerLocalRuntimeProfileV1,
     pub run_manifest: &'a DockerLocalRuntimeProofRunManifestOutputV1,
     pub docker_executable: &'a Path,
+    pub proof_driver_executable: &'a Path,
+    pub source_root: &'a Path,
+    pub private_evidence_root: &'a Path,
 }
 
 /// Closed, secret-free driver failure families.
@@ -87,6 +92,17 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
     };
     let consumption = handle.claim().consumption.clone();
     let operation_id = redemption.operation_id;
+    let environment_guard = preflight_docker_local_runtime_proof_environment_v1(
+        input.run_manifest,
+        input.proof_driver_executable,
+        input.source_root,
+        input.private_evidence_root,
+        input.docker_input.disposable_root,
+    )
+    .map_err(|_| {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(operation_id);
+        DockerLocalRuntimeProofDriverErrorV1::OutcomeUnknown
+    })?;
     let supervised = supervise_docker_local_runtime_proof_with_final_guard_v1(
         store,
         DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
@@ -103,6 +119,12 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
             docker_executable: input.docker_executable,
             verifier_git_executable: input.docker_input.verifier_git_executable,
             disposable_root: input.docker_input.disposable_root,
+        },
+        DockerLocalProofEnvironmentFinalInputV1 {
+            guard: &environment_guard,
+            proof_driver_executable: input.proof_driver_executable,
+            source_root: input.source_root,
+            private_evidence_root: input.private_evidence_root,
         },
     );
     let Ok(supervised) = supervised else {

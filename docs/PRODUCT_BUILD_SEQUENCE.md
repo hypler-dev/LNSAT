@@ -335,7 +335,9 @@ with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
 configures or invokes Docker. A private source-only driver composition now
 joins atomic created-handle/replay disposition -> canonical payload ->
-final-supervisor durable guard -> independently host-verified receipt. Existing
+physical source/proof-driver/evidence/target preflight -> final-supervisor
+durable guard -> independently host-verified receipt. The preflight repeats at
+the final supervisor callback; exact replay remains metadata-only. Existing
 test-only served fake-runtime integration selects it; no production route, CLI,
 or daemon configuration selects it. No real Docker observation or runnable
 real proof driver exists; all `UNSET_BLOCKING` identities remain closed.
@@ -371,7 +373,12 @@ the guard and supervisor payload/profile inputs and binds the manifest-declared
 Docker client, host Git verifier, local endpoint, and disposable target to the
 supervisor's final exact paths and domain-separated filesystem identities. It
 calls the one-shot durable verifier only after those repeated checks and retains
-the opaque guard across the exact process boundary. Every post-claim failure
+the opaque guards across the exact process boundary. A filesystem-only guard
+also binds the declared source root, proof-driver executable digest, owner-only
+evidence directory, and disposable root; it revalidates their identities and
+physical separation in that final callback. It does not authenticate the
+locked Git revision, real build, daemon, image, or operator authority. Every
+post-claim failure
 marks or preserves `outcome_unknown`. Hermetic tests use the existing fake
 executable and temporary Unix socket. No route, CLI, daemon configuration,
 package, or release selects the seam, so it is not a runnable proof driver or

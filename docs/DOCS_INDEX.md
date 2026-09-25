@@ -105,10 +105,14 @@ immediately before process creation. Exact success returns a bound
 pre-supervisor guard; a caller-supplied snapshot, public read API, or admission
 digest never does.
 The private source-only driver composition now joins atomic created-handle/replay
-disposition, canonical payload, final-supervisor durable guard, and
+disposition, canonical payload, physical filesystem preflight,
+final-supervisor durable guard, and
 independently host-verified receipt. The final-supervisor seam invokes that
 verifier after repeated target, executable, and endpoint checks and retains the
-opaque guard across the exact process boundary. Existing test-only served
+opaque guards across the exact process boundary. The filesystem guard checks
+source, proof-driver executable, private evidence, and target identities after
+created claims and repeats at that boundary; replay remains metadata-only.
+Existing test-only served
 fake-runtime integration selects this composition; no production route, CLI, or
 daemon configuration selects it. Hermetic tests use the existing fake
 executable and temporary Unix socket. No real Docker observation or runnable

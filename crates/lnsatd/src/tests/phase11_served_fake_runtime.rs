@@ -5,7 +5,11 @@ use crate::adapter_process_protocol::{
 };
 use crate::docker_local_execution_payload::build_docker_local_execution_payload_request_v1;
 use crate::docker_local_runtime_proof::build_docker_local_runtime_proof_plan_v1;
+use crate::docker_local_runtime_proof_driver_environment_preflight::{
+    DockerLocalRuntimeProofEnvironmentGuardV1, preflight_docker_local_runtime_proof_environment_v1,
+};
 use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
+    DockerLocalProofEnvironmentFinalInputV1,
     DockerLocalRuntimeProofDriverPreSupervisorGuardErrorV1,
     DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1,
     guard_docker_local_runtime_proof_pre_supervisor_v1, runtime_path_identity_declaration_v1,
@@ -42,6 +46,7 @@ use lnsat_store::{
 use serde_json::json;
 use sha2::{Digest as _, Sha256};
 use std::os::unix::fs::PermissionsExt as _;
+use std::os::unix::fs::symlink;
 use std::os::unix::net::UnixListener;
 use std::process::{Command, Stdio};
 
@@ -115,6 +120,9 @@ struct ServedFakeRuntimeFixture {
     config: DaemonConfigV1,
     git: GitFixture,
     fake_docker_executable: PathBuf,
+    proof_driver_executable: PathBuf,
+    source_root: PathBuf,
+    private_evidence_root: PathBuf,
     docker_socket: PathBuf,
     invocation_log: PathBuf,
     requester_cookie: String,
@@ -153,6 +161,24 @@ impl ServedFakeRuntimeFixture {
             .expect("fake Docker mode");
         let fake_docker_executable =
             fs::canonicalize(&fake_docker_executable).expect("canonical fake Docker path");
+        let proof_driver_executable = directory.path.join("inert-proof-driver");
+        fs::write(&proof_driver_executable, b"#!/bin/sh\nexit 97\n")
+            .expect("inert proof-driver fixture");
+        fs::set_permissions(&proof_driver_executable, fs::Permissions::from_mode(0o700))
+            .expect("inert proof-driver mode");
+        let proof_driver_executable =
+            fs::canonicalize(&proof_driver_executable).expect("canonical proof-driver fixture");
+        let source_root = directory.path.join("proof-source");
+        fs::create_dir(&source_root).expect("proof-source fixture");
+        fs::set_permissions(&source_root, fs::Permissions::from_mode(0o700))
+            .expect("proof-source mode");
+        let source_root = fs::canonicalize(&source_root).expect("canonical proof-source fixture");
+        let private_evidence_root = directory.path.join("private-evidence");
+        fs::create_dir(&private_evidence_root).expect("private-evidence fixture");
+        fs::set_permissions(&private_evidence_root, fs::Permissions::from_mode(0o700))
+            .expect("private-evidence mode");
+        let private_evidence_root =
+            fs::canonicalize(&private_evidence_root).expect("canonical private-evidence fixture");
 
         let docker_socket = directory.path.join("d.sock");
         let socket_listener = UnixListener::bind(&docker_socket).expect("disposable Unix socket");
@@ -165,6 +191,9 @@ impl ServedFakeRuntimeFixture {
             &fake_docker_executable,
             &docker_socket,
             &git,
+            &proof_driver_executable,
+            &source_root,
+            &private_evidence_root,
         );
 
         let packet;
@@ -287,7 +316,13 @@ impl ServedFakeRuntimeFixture {
             .expect("Phase 8 runtime")
             .with_docker_local_runtime_profile(profile.clone())
             .expect("D2 profile selection")
-            .with_phase11_served_fake_docker_runtime(&fake_docker_executable, run_manifest)
+            .with_phase11_served_fake_docker_runtime(
+                &fake_docker_executable,
+                &proof_driver_executable,
+                &source_root,
+                &private_evidence_root,
+                run_manifest,
+            )
             .expect("fake-only served runtime");
         let daemon = ServedDaemon::start(&config);
         let owner_cookie = cookie(&owner_session);
@@ -464,6 +499,9 @@ impl ServedFakeRuntimeFixture {
             config,
             git,
             fake_docker_executable,
+            proof_driver_executable,
+            source_root,
+            private_evidence_root,
             docker_socket,
             invocation_log,
             requester_cookie,
@@ -476,6 +514,32 @@ impl ServedFakeRuntimeFixture {
             capability,
             profile,
             payload,
+        }
+    }
+
+    fn environment_guard(
+        &self,
+        manifest: &DockerLocalRuntimeProofRunManifestOutputV1,
+    ) -> DockerLocalRuntimeProofEnvironmentGuardV1 {
+        preflight_docker_local_runtime_proof_environment_v1(
+            manifest,
+            &self.proof_driver_executable,
+            &self.source_root,
+            &self.private_evidence_root,
+            &self.git.root,
+        )
+        .expect("physical fake environment must preflight")
+    }
+
+    fn final_environment_input<'a>(
+        &'a self,
+        guard: &'a DockerLocalRuntimeProofEnvironmentGuardV1,
+    ) -> DockerLocalProofEnvironmentFinalInputV1<'a> {
+        DockerLocalProofEnvironmentFinalInputV1 {
+            guard,
+            proof_driver_executable: &self.proof_driver_executable,
+            source_root: &self.source_root,
+            private_evidence_root: &self.private_evidence_root,
         }
     }
 
@@ -546,6 +610,13 @@ impl ServedFakeRuntimeFixture {
                 .to_str()
                 .expect("fake executable UTF-8"),
             self.docker_socket.to_str().expect("socket UTF-8"),
+            self.proof_driver_executable
+                .to_str()
+                .expect("proof driver executable UTF-8"),
+            self.source_root.to_str().expect("source root UTF-8"),
+            self.private_evidence_root
+                .to_str()
+                .expect("private evidence root UTF-8"),
         ] {
             assert!(
                 !response.contains(forbidden),
@@ -620,12 +691,21 @@ fn phase11_served_fake_runtime_manifest_drift_never_spawns() {
     let fixture = ServedFakeRuntimeFixture::new("served-final-guard-drift", FakeMode::Success);
     let mut declarations = final_supervisor_guard_declarations(&fixture);
     declarations.docker_client.absolute_path = "/private/substituted/docker".to_owned();
-    let drifted_manifest =
-        pre_supervisor_guard_manifest_with_declarations(&fixture.profile, declarations);
+    let drifted_manifest = pre_supervisor_guard_manifest_with_source_and_declarations(
+        &fixture.profile,
+        &final_supervisor_guard_manifest(&fixture).manifest().source,
+        declarations,
+    );
     let config = fixture
         .config
         .clone()
-        .with_phase11_served_fake_docker_runtime(&fixture.fake_docker_executable, drifted_manifest)
+        .with_phase11_served_fake_docker_runtime(
+            &fixture.fake_docker_executable,
+            &fixture.proof_driver_executable,
+            &fixture.source_root,
+            &fixture.private_evidence_root,
+            drifted_manifest,
+        )
         .expect("fake-only runtime selection");
     let daemon = ServedDaemon::start(&config);
     let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
@@ -635,6 +715,82 @@ fn phase11_served_fake_runtime_manifest_drift_never_spawns() {
     let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
     assert_eq!(operation["operation"]["state"], "outcome_unknown");
     assert!(operation["operation"]["receipt"].is_null());
+    daemon.stop();
+}
+
+#[test]
+fn phase11_served_fake_runtime_rejects_environment_drift_without_spawn() {
+    assert_served_environment_drift_rejected("env-driver-bytes", |fixture| {
+        fs::write(&fixture.proof_driver_executable, b"#!/bin/sh\nexit 98\n")
+            .expect("replace proof-driver bytes");
+    });
+    assert_served_environment_drift_rejected("env-driver-symlink", |fixture| {
+        let backup = fixture.directory.path.join("inert-proof-driver-backup");
+        fs::rename(&fixture.proof_driver_executable, &backup).expect("move proof driver");
+        symlink(&backup, &fixture.proof_driver_executable).expect("substitute symlink");
+    });
+    assert_served_environment_drift_rejected("env-source-mode", |fixture| {
+        fs::set_permissions(&fixture.source_root, fs::Permissions::from_mode(0o777))
+            .expect("weaken source mode");
+    });
+    assert_served_environment_drift_rejected("env-evidence-mode", |fixture| {
+        fs::set_permissions(
+            &fixture.private_evidence_root,
+            fs::Permissions::from_mode(0o755),
+        )
+        .expect("weaken evidence mode");
+    });
+    assert_served_environment_drift_rejected("env-target-mode", |fixture| {
+        fs::set_permissions(&fixture.git.root, fs::Permissions::from_mode(0o755))
+            .expect("weaken disposable mode");
+    });
+}
+
+fn assert_served_environment_drift_rejected(
+    label: &str,
+    mutate: impl FnOnce(&ServedFakeRuntimeFixture),
+) {
+    let fixture = ServedFakeRuntimeFixture::new(label, FakeMode::Success);
+    mutate(&fixture);
+    let daemon = ServedDaemon::start(&fixture.config);
+    let response = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+    response_json(&response, "HTTP/1.1 403 Forbidden\r\n");
+    fixture.assert_public_safe(&response);
+    assert_eq!(fixture.run_count(), 0);
+    let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
+    assert_eq!(operation["operation"]["state"], "outcome_unknown");
+    assert!(operation["operation"]["receipt"].is_null());
+    let replay = response_json(
+        &fixture.execute(&daemon, EXECUTE_IDEMPOTENCY),
+        "HTTP/1.1 200 OK\r\n",
+    );
+    assert_eq!(replay["created"], false);
+    assert_eq!(replay["operation"]["state"], "outcome_unknown");
+    assert_eq!(fixture.run_count(), 0);
+    daemon.stop();
+}
+
+#[test]
+fn phase11_served_fake_runtime_replay_ignores_later_environment_drift() {
+    let fixture = ServedFakeRuntimeFixture::new("env-replay", FakeMode::Success);
+    let daemon = ServedDaemon::start(&fixture.config);
+    let initial = response_json(
+        &fixture.execute(&daemon, EXECUTE_IDEMPOTENCY),
+        "HTTP/1.1 200 OK\r\n",
+    );
+    assert_eq!(initial["created"], true);
+    assert_eq!(fixture.run_count(), 1);
+    fs::set_permissions(
+        &fixture.proof_driver_executable,
+        fs::Permissions::from_mode(0o600),
+    )
+    .expect("disable proof-driver execution after consequence");
+    let replay = response_json(
+        &fixture.execute(&daemon, EXECUTE_IDEMPOTENCY),
+        "HTTP/1.1 200 OK\r\n",
+    );
+    assert_eq!(replay["created"], false);
+    assert_eq!(fixture.run_count(), 1);
     daemon.stop();
 }
 
@@ -825,6 +981,7 @@ fn final_supervisor_guard_re_reads_durable_state_at_process_boundary() {
     let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
     let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
     let manifest = final_supervisor_guard_manifest(&fixture);
+    let environment_guard = fixture.environment_guard(&manifest);
     let supervised = supervise_docker_local_runtime_proof_with_final_guard_v1(
         &mut store,
         DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
@@ -842,6 +999,7 @@ fn final_supervisor_guard_re_reads_durable_state_at_process_boundary() {
             verifier_git_executable: Path::new(GIT_EXECUTABLE),
             disposable_root: &fixture.git.root,
         },
+        fixture.final_environment_input(&environment_guard),
     )
     .expect("fresh durable guard must cross exact fake process boundary");
     assert_eq!(
@@ -860,11 +1018,50 @@ fn final_supervisor_guard_re_reads_durable_state_at_process_boundary() {
 }
 
 #[test]
+fn final_supervisor_guard_rejects_environment_replacement_after_preflight() {
+    let fixture = ServedFakeRuntimeFixture::new("final-env-drift", FakeMode::Success);
+    let manifest = final_supervisor_guard_manifest(&fixture);
+    let environment_guard = fixture.environment_guard(&manifest);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    fs::set_permissions(
+        &fixture.private_evidence_root,
+        fs::Permissions::from_mode(0o755),
+    )
+    .expect("weaken evidence mode after preflight");
+    assert_eq!(
+        supervise_docker_local_runtime_proof_with_final_guard_v1(
+            &mut store,
+            DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
+                run_manifest: &manifest,
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                claim_handle: handle,
+                raw_session_token: &fixture.requester_session_token,
+                raw_csrf_token: &fixture.requester_csrf,
+            },
+            &DockerLocalSupervisorInputV1 {
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                docker_executable: &fixture.fake_docker_executable,
+                verifier_git_executable: Path::new(GIT_EXECUTABLE),
+                disposable_root: &fixture.git.root,
+            },
+            fixture.final_environment_input(&environment_guard),
+        ),
+        Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
+    );
+    assert_eq!(fixture.run_count(), 0);
+    assert_phase11_unknown(&store, &fixture.operation_id);
+}
+
+#[test]
 fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
     let fixture = ServedFakeRuntimeFixture::new("final-guard-auth-reject", FakeMode::Success);
     let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
     let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
     let manifest = final_supervisor_guard_manifest(&fixture);
+    let environment_guard = fixture.environment_guard(&manifest);
     assert_eq!(
         supervise_docker_local_runtime_proof_with_final_guard_v1(
             &mut store,
@@ -883,6 +1080,7 @@ fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
                 verifier_git_executable: Path::new(GIT_EXECUTABLE),
                 disposable_root: &fixture.git.root,
             },
+            fixture.final_environment_input(&environment_guard),
         ),
         Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
     );
@@ -893,6 +1091,7 @@ fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
     let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
     let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
     let manifest = final_supervisor_guard_manifest(&fixture);
+    let environment_guard = fixture.environment_guard(&manifest);
     let drifted_profile = drifted_profile(&fixture);
     assert_eq!(
         supervise_docker_local_runtime_proof_with_final_guard_v1(
@@ -912,6 +1111,7 @@ fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
                 verifier_git_executable: Path::new(GIT_EXECUTABLE),
                 disposable_root: &fixture.git.root,
             },
+            fixture.final_environment_input(&environment_guard),
         ),
         Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
     );
@@ -922,6 +1122,7 @@ fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
     let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
     let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
     let manifest = final_supervisor_guard_manifest(&fixture);
+    let environment_guard = fixture.environment_guard(&manifest);
     let missing_docker = fixture.directory.path.join("missing-docker");
     assert_eq!(
         supervise_docker_local_runtime_proof_with_final_guard_v1(
@@ -941,6 +1142,7 @@ fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
                 verifier_git_executable: Path::new(GIT_EXECUTABLE),
                 disposable_root: &fixture.git.root,
             },
+            fixture.final_environment_input(&environment_guard),
         ),
         Err(DockerLocalSupervisorErrorV1::DockerExecutableInvalid)
     );
@@ -979,7 +1181,12 @@ fn assert_final_manifest_substitution_rejected(
     let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
     let mut declarations = final_supervisor_guard_declarations(&fixture);
     mutate(&mut declarations);
-    let manifest = pre_supervisor_guard_manifest_with_declarations(&fixture.profile, declarations);
+    let manifest = pre_supervisor_guard_manifest_with_source_and_declarations(
+        &fixture.profile,
+        &final_supervisor_guard_manifest(&fixture).manifest().source,
+        declarations,
+    );
+    let environment_guard = fixture.environment_guard(&final_supervisor_guard_manifest(&fixture));
     assert_eq!(
         supervise_docker_local_runtime_proof_with_final_guard_v1(
             &mut store,
@@ -998,6 +1205,7 @@ fn assert_final_manifest_substitution_rejected(
                 verifier_git_executable: Path::new(GIT_EXECUTABLE),
                 disposable_root: &fixture.git.root,
             },
+            fixture.final_environment_input(&environment_guard),
         ),
         Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
     );
@@ -1088,6 +1296,9 @@ fn final_supervisor_guard_manifest(
         &fixture.fake_docker_executable,
         &fixture.docker_socket,
         &fixture.git,
+        &fixture.proof_driver_executable,
+        &fixture.source_root,
+        &fixture.private_evidence_root,
     )
 }
 
@@ -1096,14 +1307,26 @@ fn final_supervisor_guard_manifest_from_parts(
     fake_docker_executable: &Path,
     docker_socket: &Path,
     git: &GitFixture,
+    proof_driver_executable: &Path,
+    source_root: &Path,
+    private_evidence_root: &Path,
 ) -> DockerLocalRuntimeProofRunManifestOutputV1 {
-    pre_supervisor_guard_manifest_with_declarations(
+    pre_supervisor_guard_manifest_with_source_and_declarations(
         profile,
+        &DockerLocalRuntimeProofRunManifestSourceBindingV1 {
+            repository_absolute_path: source_root.to_str().expect("UTF-8 source root").to_owned(),
+            repository_identity_digest: runtime_path_identity_declaration_v1(source_root, None)
+                .expect("physical source identity")
+                .stable_identity_digest,
+            revision: "a".repeat(40),
+            proof_driver_executable_digest: file_digest(proof_driver_executable),
+        },
         final_supervisor_guard_declarations_from_parts(
             profile,
             fake_docker_executable,
             docker_socket,
             git,
+            private_evidence_root,
         ),
     )
 }
@@ -1116,6 +1339,7 @@ fn final_supervisor_guard_declarations(
         &fixture.fake_docker_executable,
         &fixture.docker_socket,
         &fixture.git,
+        &fixture.private_evidence_root,
     )
 }
 
@@ -1124,6 +1348,7 @@ fn final_supervisor_guard_declarations_from_parts(
     fake_docker_executable: &Path,
     docker_socket: &Path,
     git: &GitFixture,
+    private_evidence_root: &Path,
 ) -> DockerLocalRuntimeProofRunManifestSourceInputV1 {
     let supervisor = profile.supervisor().expect("schema-2 supervisor");
     let mut declarations = pre_supervisor_guard_declarations(profile);
@@ -1143,11 +1368,32 @@ fn final_supervisor_guard_declarations_from_parts(
     declarations.disposable_target =
         runtime_target_identity_declaration_v1(&disposable_root, &git.identity)
             .expect("disposable target identity");
+    declarations.private_evidence.absolute_location = private_evidence_root
+        .to_str()
+        .expect("UTF-8 evidence root")
+        .to_owned();
     declarations
 }
 
 fn pre_supervisor_guard_manifest_with_declarations(
     profile: &LoadedDockerLocalRuntimeProfileV1,
+    declarations: DockerLocalRuntimeProofRunManifestSourceInputV1,
+) -> DockerLocalRuntimeProofRunManifestOutputV1 {
+    pre_supervisor_guard_manifest_with_source_and_declarations(
+        profile,
+        &DockerLocalRuntimeProofRunManifestSourceBindingV1 {
+            repository_absolute_path: "/private/guard/source".to_owned(),
+            repository_identity_digest: guard_sha('a'),
+            revision: "a".repeat(40),
+            proof_driver_executable_digest: guard_sha('b'),
+        },
+        declarations,
+    )
+}
+
+fn pre_supervisor_guard_manifest_with_source_and_declarations(
+    profile: &LoadedDockerLocalRuntimeProfileV1,
+    source: &DockerLocalRuntimeProofRunManifestSourceBindingV1,
     declarations: DockerLocalRuntimeProofRunManifestSourceInputV1,
 ) -> DockerLocalRuntimeProofRunManifestOutputV1 {
     let plan = build_docker_local_runtime_proof_plan_v1(profile).expect("plan");
@@ -1159,12 +1405,7 @@ fn pre_supervisor_guard_manifest_with_declarations(
         &plan,
         &requirements,
         &harness,
-        &DockerLocalRuntimeProofRunManifestSourceBindingV1 {
-            repository_absolute_path: "/private/guard/source".to_owned(),
-            repository_identity_digest: guard_sha('a'),
-            revision: "a".repeat(40),
-            proof_driver_executable_digest: guard_sha('b'),
-        },
+        source,
         declarations,
     )
     .expect("guard manifest")
@@ -1245,6 +1486,10 @@ fn create_git_fixture(directory: &TestDirectory) -> GitFixture {
     let root = directory.path.join("disposable-git-root");
     let repository = root.join("repository");
     fs::create_dir_all(&repository).expect("Git fixture directory");
+    fs::set_permissions(&root, fs::Permissions::from_mode(0o700))
+        .expect("disposable Git root mode");
+    let root = fs::canonicalize(root).expect("canonical disposable Git root");
+    let repository = root.join("repository");
     git_output(&repository, &["init", "-b", "main"], &[], &[]);
     fs::write(
         repository.join(PHASE7_GIT_FIXTURE_MARKER_V1),
