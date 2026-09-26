@@ -87,14 +87,25 @@ execution host's clock, source lock, or owner decision.
 
 The [runtime observation proposal](phase11-runtime-observation/spec.md)
 records the missing derivation and verification contract for daemon, image,
-configuration, provenance, entrypoint, and in-image adapter identities. It is
-proposed, not accepted or implemented. A Docker image inspection response or
-caller-supplied digest alone cannot satisfy those blocking identities; the
-source lock and every `UNSET_BLOCKING` value in this packet remain unchanged.
-The current schema-2 `image_digest` is passed to `docker run`, but this packet
-does not yet distinguish a local configuration-based image ID from an OCI image
-manifest digest. No later observer may infer that equivalence without a
-reviewed, versioned binding decision.
+configuration, provenance, entrypoint, and in-image adapter identities. The
+owner accepted its narrow image-identity design on 2026-09-26: schema-2
+`profile.image_digest` denotes the local OCI configuration ImageID used by the
+existing `docker run` argument; an OCI manifest digest and optional index
+digest require separate typed bindings and verification. The overall observer,
+raw-byte custody, provenance policy, and adapter-byte mechanism remain proposed
+and unimplemented. A Docker image inspection response or caller-supplied
+digest alone cannot satisfy those blocking identities; the source lock and
+every `UNSET_BLOCKING` value in this packet remain unchanged. The existing
+run-manifest v1 does not distinguish these identities and is ineligible as
+real-proof image authority.
+A source-only successor v2 private manifest now nests the validated v1
+declarations and binds distinct typed local ImageID, OCI config digest, required
+manifest digest, optional index digest, platform selection, and provenance
+verifier commitments in a separate canonical digest. Parsing requires an
+expected image declaration supplied outside the manifest bytes. This checks
+declaration consistency only: no raw OCI bytes, descriptor sizes, provenance,
+in-image adapter bytes, or Docker state are observed or verified. No real driver
+selects v2, and every blocking runtime identity remains unset.
 
 The source-only supervisor now places the exact operation ID and computed
 launch-contract digest in two launch labels. It refuses forced CID-based

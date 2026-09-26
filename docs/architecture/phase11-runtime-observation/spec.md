@@ -5,7 +5,7 @@
 Status: proposed
 Intent: [Phase 11 operator run packet](../PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
 Owner: LNSAT maintainers
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Behavior
 
@@ -57,15 +57,16 @@ which values came from the CLI, which came from independently verified
 provenance, and which are only supplemental runtime observations.
 
 The current schema-2 profile's `image_digest` is passed to `docker run` as an
-image reference, and the private run manifest requires the same value. Neither
-contract defines whether that value denotes a manifest digest or the local
-configuration-based image ID. The implementation must not silently choose one
-meaning. A versioned, reviewed binding decision must name both identities and
-their comparison before the observer can accept an image.
+image reference, and the private run manifest requires the same value. The
+accepted image-identity decision below gives that profile field one exact
+meaning. The existing v1 run manifest remains insufficient as real-proof image
+authority; a successor contract must bind the other image identities separately.
 
-### Proposed image-identity binding decision
+### Accepted image-identity binding decision
 
-**Owner decision pending.** For the first real disposable proof, use one
+**Owner accepted this image-identity choice and successor field contract on
+2026-09-26.** This acceptance is limited to the source-only design. For the
+first real disposable proof, use one
 platform-specific OCI image manifest and its referenced OCI image configuration.
 The approved artifact may be that manifest directly or an OCI image index
 whose verified platform descriptor selects exactly that manifest.
@@ -118,12 +119,19 @@ self-reported hash, or syntactically matching digest can replace those checks.
 Until the provenance format, verifier, trust root, adapter-byte observation,
 and custody policy are accepted, the observer rejects before any real CLI call.
 
-Acceptance requires explicit owner approval of this image-identity choice and
-the successor manifest field contract. A source-only test implementation must
-then prove distinct manifest/config digest handling, raw-byte and descriptor
-verification, platform and entrypoint checks, cross-kind substitution denial,
-and zero fake-CLI calls for incomplete authority. Independent review and the
-operator packet's new source lock and run authority remain separate gates.
+The owner has accepted this image-identity choice and successor manifest field
+contract. A source-only declaration parser can bind the separately named
+identities without claiming that their raw bytes or provenance were verified.
+A source-only v2 private run-manifest parser now provides that declaration
+binding. It nests validated v1 metadata, retains v1's real-proof ineligibility,
+uses distinct Rust digest types, and requires a separately supplied expected
+image declaration when parsing. Its canonical digest proves no external
+authority or OCI content; the expected declaration is not authenticated by
+this parser.
+A later observer must prove raw-byte and descriptor verification, platform and
+entrypoint checks, cross-kind substitution denial, and zero fake-CLI calls for
+incomplete authority. Independent review and the operator packet's new source
+lock and run authority remain separate gates.
 
 Missing, malformed, substituted, mutable, platform-incompatible, or unstable
 identity rejects before process creation. Missing provenance or adapter identity
@@ -278,10 +286,8 @@ implementation or real proof:
 - How is the host-built adapter bound to the exact in-image executable when
   arbitrary in-image byte hashing is unavailable or unsafe?
 - Which Docker CLI/API versions and platform-specific OCI fields are supported?
-- Does schema-2 `profile.image_digest` mean the local OCI config image ID or a
-  manifest digest, and how is the other identity bound without an implicit
-  compatibility change? The candidate decision above chooses the local config
-  ImageID plus a successor private manifest; owner acceptance is pending.
+- Which exact mechanism obtains bounded raw OCI index, manifest, and config
+  bytes and verifies them against the accepted separate identity fields?
 - Which bounded mechanism can inspect the adapter without granting it socket,
   network, credentials, or broader filesystem access?
 - Which private evidence custodian and reviewer may see raw observations, and
