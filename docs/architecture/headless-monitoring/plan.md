@@ -46,7 +46,9 @@ fixtures, and frozen legacy fixtures are excluded.
 3. Add exact identifier validation and by-ID store read seams that recover the
    stored project scope and reuse existing project-scoped rederivation.
 4. Add the three route families after API-wide version/Host gates and before
-   overlapping mutation dispatch, preserving route order and generic denial.
+   overlapping mutation dispatch. Enforce the specified route-local header
+   admission and existing optional-exact `Origin` read policy without changing
+   older routes; preserve route order and generic denial.
 5. Add dedicated read response serializers and bodyless `HEAD` handling.
 6. Add focused store, parser, authorization, response, oracle, redaction, and
    regression tests.
@@ -86,7 +88,8 @@ accepted intent/spec, exact diff, focused test evidence, full gate results, and
 scanner summaries. Review must assess:
 
 - route ambiguity and collision with approval mutation paths;
-- auth, role, session, origin, Host, version, and `GET`/`HEAD` parity;
+- auth, role, session, optional-exact `Origin`, Host, version, route-local
+  header admission, and `GET`/`HEAD` parity;
 - exact-ID validation, non-enumeration, project-scope recovery, and complete
   rederivation;
 - response closure, metadata exposure, redaction, generic denial, side-effect
@@ -138,5 +141,11 @@ None. Proposed plan only.
   inventory check (2,122 occurrences across 295 files), and Git diff checks
   passed. Fresh read-only `gpt_reviewer` (Terra xhigh, OpenAI) reported no
   actionable P1/P2/P3 finding on the proposal diff against public main.
+- 2026-09-26: fresh read-only security/correctness review found two P2 design
+  gaps in header admission and `Origin` semantics. The proposed intent and spec
+  now preserve the existing optional-exact read-origin policy, require a
+  route-local authority/control-header check, and enumerate negative tests.
+  The same reviewer re-reviewed the corrected diff and reported no remaining
+  P1/P2/P3. Owner acceptance remains pending; no source implementation opened.
 - Source implementation, source validation/scanning/review, implementation PR,
   merge, runtime, build, and release evidence: pending.

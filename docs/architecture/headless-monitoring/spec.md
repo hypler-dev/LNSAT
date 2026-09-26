@@ -19,8 +19,10 @@ LNSAT-Contract-Version: lnsat.contracts.v1_0
 ```
 
 The routes use the existing API-wide numeric-loopback peer, exact bound `Host`,
-exact contract-version, same-origin, two-header session authentication,
-session-validity, and fixed `ReadEvidence` gates. Both
+exact contract-version, `Sec-Fetch-Site: same-origin`, two-header session
+authentication, session-validity, and fixed `ReadEvidence` gates. `Origin` may
+be absent on `GET`/`HEAD`; when present it must equal the exact bound origin.
+This preserves the existing read policy for headless clients. Both
 `X-LNSAT-Local-Session-Token` and independent
 `X-LNSAT-Local-Session-Proof` are required; browser cookies grant no
 authentication. Owner, operator, and auditor roles may read.
@@ -51,9 +53,21 @@ authority, execution state, and runtime remain unchanged.
   otherwise ambiguous targets fail closed.
 - Only `GET` and `HEAD` are accepted. Other methods return `405` with
   `Allow: GET, HEAD` after exact route recognition.
-- Bodies, transfer encoding, nonzero or ambiguous content length, content type,
-  CSRF headers, caller idempotency keys, forwarded headers, and product-surface
-  selectors are forbidden.
+- Bodies and transfer encoding are forbidden. `Content-Length` may be absent
+  or exactly `0`; any other or ambiguous value rejects.
+- The only headers that may influence routing or authority are `Host`,
+  `LNSAT-Contract-Version`, `Sec-Fetch-Site`, optional `Origin`, and the exact
+  `X-LNSAT-Local-Session-Token` and
+  `X-LNSAT-Local-Session-Proof` pair. A route-local admission check rejects
+  `Content-Type`, `Cookie`, `Set-Cookie`, `Authorization`,
+  `Proxy-Authorization`, `Idempotency-Key`, `X-Idempotency-Key`,
+  `LNSAT-Product-Surface-Contract`, `Forwarded`, every `X-Forwarded-*`, and
+  every other `X-LNSAT-*` header, including `X-LNSAT-CSRF` and
+  `X-LNSAT-Session-Intent`. Header names are compared case-insensitively;
+  duplicates reject under the shared parser. Other ordinary HTTP
+  representation headers may be present but are ignored and grant no
+  authority. This check applies to all three routes on both `GET` and `HEAD`
+  without changing existing routes.
 - No response emits CORS permission, `WWW-Authenticate`, or `Set-Cookie`.
 
 ### Response contracts
@@ -206,9 +220,14 @@ unchanged.
 - Route parser tests: exact three shapes; lowercase length/prefix; query,
   encoding, fragment, slash, suffix, and family-confusion negatives.
 - Authentication tests: owner/operator/auditor success; missing, malformed,
-  expired, revoked, wrong-origin, remote-peer, Host drift, Fetch-Metadata drift,
-  cookie-only replay, duplicate or mismatched session headers, and
-  forbidden-CSRF negatives.
+  expired, revoked, wrong-origin, absent-Origin success, remote-peer, Host
+  drift, Fetch-Metadata drift, cookie-only replay, duplicate or mismatched
+  session headers, and forbidden-CSRF negatives.
+- Header tests: on each route and both methods, reject every named forbidden
+  header and representative case variants, `X-Forwarded-*` and unrecognized
+  `X-LNSAT-*` members, duplicate control headers, and nonzero or ambiguous
+  `Content-Length`; accept inert representation headers without changing the
+  result or authority fields.
 - Response tests: closed fields, stable domain values, sorted collections,
   nullable audit links, false authority fields, no mutation/replay claims,
   `GET`/`HEAD` status and `Content-Length` parity, and bodyless `HEAD`.
@@ -232,6 +251,8 @@ remain closed until separately accepted HCFG-4B/HCFG-4C contracts define them.
 
 No product question remains inside HCFG-4A after owner acceptance. Acceptance
 specifically confirms installation-wide exact-known-ID access for existing
-`ReadEvidence` roles. If the owner requires project-scoped read grants, this
-proposal must be revised before source implementation because the current role
-model cannot enforce that boundary.
+`ReadEvidence` roles and the existing read-origin rule: absent `Origin` is
+allowed only with exact loopback, bound `Host`, `Sec-Fetch-Site: same-origin`,
+and the session-token/proof pair; a present `Origin` must match exactly. If the
+owner requires project-scoped read grants or mandatory `Origin` on reads, this
+proposal must be revised before source implementation.

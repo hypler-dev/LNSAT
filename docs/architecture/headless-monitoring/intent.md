@@ -48,13 +48,21 @@ v1 byte remain unchanged.
 
 - Gateway remains the only served authority boundary. No direct database,
   Fastify local-beta fixture, console fixture, or alternate API becomes truth.
-- All successful reads require an active same-origin local browser session
-  authenticated by the bearer/proof header pair and the existing fixed
-  `ReadEvidence` permission. Cookies grant no authentication.
+- All successful reads require a numeric-loopback peer, the exact bound `Host`,
+  `Sec-Fetch-Site: same-origin`, an active local session authenticated by the
+  bearer/proof header pair, and the existing fixed `ReadEvidence` permission.
+  `Origin` may be absent on `GET`/`HEAD`; when present it must equal the exact
+  bound origin. This preserves the current authenticated-read policy for
+  headless clients. Cookies grant no authentication.
 - Exact content-bound identifiers are the only selectors. There is no list,
   prefix, query, pagination, or search surface.
 - Only `GET` and `HEAD` are accepted. Request bodies, query strings, CSRF input,
   and caller idempotency keys are forbidden.
+- Route-local header admission rejects authority and request-control headers
+  outside the exact version and session-token/proof pair. In particular it
+  rejects `Content-Type`, cookies, alternate authorization headers, forwarded
+  headers, product-surface selectors, CSRF/session-intent headers, and
+  idempotency headers. Ordinary representation headers are inert.
 - `HEAD` performs the same authentication and evidence checks as `GET`, reports
   the same representation length, and emits no body bytes.
 - One generic contract-specific `403` covers missing authentication, inactive
@@ -122,8 +130,9 @@ v1 byte remain unchanged.
 - Focused store tests prove exact-ID validation, complete rederivation, generic
   absence, and no prefix/list behavior.
 - Served `lnsatd` tests prove all three roles, `GET`/`HEAD` parity, exact route
-  shapes, same-origin authentication, fixed version negotiation, closed success
-  fields, redaction canaries, and generic denials.
+  shapes, the exact read-origin policy including absent `Origin`, fixed version
+  negotiation, route-local header admission, closed success fields, redaction
+  canaries, and generic denials.
 - Negative tests cover malformed, uppercase, short, percent-encoded, nested,
   query-bearing, unknown, cross-record, tampered, unauthenticated, inactive,
   remote/Host/origin/Fetch-Metadata, method, body, and duplicate-header cases.
