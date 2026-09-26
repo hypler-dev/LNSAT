@@ -144,6 +144,103 @@ Missing, malformed, substituted, mutable, platform-incompatible, or unstable
 identity rejects before process creation. Missing provenance or adapter identity
 is a rejection even when `docker image inspect` returns successfully.
 
+### Proposed first-proof raw OCI byte acquisition and custody contract
+
+The first proof should acquire raw OCI objects from a pre-positioned, private
+OCI image-layout directory supplied by the operator. This is a proposal for the
+bounded source of bytes; it is not an accepted implementation or a substitute
+for the private authority gate. The layout follows the OCI image-layout
+contract ([OCI image layout](https://github.com/opencontainers/image-spec/blob/main/image-layout.md))
+and contains `oci-layout`, `index.json`, and digest-addressed objects under
+`blobs/sha256/<hex>`. The observer must not run Docker image save or pull, use a
+registry, resolve a tag, or make a network request during this observation.
+
+The private authority must separately name the exact layout-root identity and
+the accepted typed digest declarations. It must name the root's absolute path,
+device, inode, UID, and mode `0700`, and must specify the artifact kind (OCI
+index or direct single-platform manifest), approved platform, and typed
+`oci_index_digest` when an index is approved, `oci_manifest_digest`, and
+`oci_config_digest`. A path or directory supplied after authority review cannot
+replace that exact root identity. Every child directory on a selected path
+must have the root device, the authority's UID, and mode `0700`. Every selected
+regular file must have the root device, the authority's UID, mode `0600`, and
+link count `1`. Any symlink, hardlink, mount crossing, device mismatch, UID or
+mode mismatch, or unstable device/inode identity rejects the run.
+
+`oci-layout` must be the exact version `1.0.0`. `index.json` is always the
+layout's transport wrapper. On the OCI-index artifact path, its exact bytes
+must hash to the separately approved `oci_index_digest`; exactly one descriptor
+may select the approved platform and its digest must equal the approved
+`oci_manifest_digest`. Nonselected descriptors may differ and are never
+fetched; the parser must inspect enough descriptor metadata to reject a second
+descriptor matching the approved platform. On the direct-manifest path,
+`index.json` is still required as the layout wrapper and must contain exactly
+one matching manifest descriptor for the approved platform and
+`oci_manifest_digest`, but it is not itself an approved artifact digest. A
+direct path must not silently promote the wrapper's digest to
+`oci_index_digest`, and an index path must not use an index digest where a
+manifest digest is required.
+
+For selected objects read into proof evidence, accept only these OCI v1 media
+types: image index, single-platform image manifest, and image configuration.
+Layer descriptors remain unverified metadata, including their media types;
+they never authorize reading or claiming layer payload bytes. Reject nested
+indexes, unknown or Docker-private selected-object media types,
+multiple matching platform descriptors, absent or ambiguous platform evidence,
+mutable tags, external blob fulfillment, and any descriptor that does not
+resolve to the approved digest and declared size for the selected index,
+manifest, or config chain. The selected manifest's `config` descriptor must
+resolve to the approved configuration digest and its exact declared size. Its
+layer descriptors may be parsed as selected-manifest
+metadata, but layer payload bytes are outside this proposal and must not be
+fetched or claimed as verified. No candidate may be chosen by filename,
+directory order, annotation, or a best-effort platform match.
+
+The observer must open the layout root before reading any object and then use
+root-relative, no-follow regular-file handles for `oci-layout`, `index.json`,
+and only the selected manifest/config paths at
+`blobs/sha256/<hex>`. It must reject symlink, hardlink, path traversal, mount
+or device substitutions, unsafe permissions, non-regular files, changing
+device/inode identity, and an object whose size or SHA-256 digest changes
+between open, read, and admission. The implementation must verify that every
+opened object remains beneath the pre-authorized root and that every path
+component meets the root/child-directory/file predicates above; the exact
+portable syscall strategy requires security review before implementation.
+
+Apply fixed hard ceilings to each validation pass: `oci-layout` at most 1 KiB,
+`index.json` at most 4 MiB, each selected manifest and configuration at most
+4 MiB, and at most 16 MiB total bytes read per pass. Permit at most five
+validation passes per run, for an 80 MiB whole-run ceiling: initial admission,
+pre-driver admission, final pre-spawn, post-launch, and pre-cleanup. The private
+authority must state per-run caps for each limit; a cap may only lower the
+corresponding hard ceiling and may never raise it or introduce an unbounded
+override. Reject duplicate JSON members, malformed JSON, unsupported fields
+that alter identity, oversized objects, descriptor-size mismatch, digest
+mismatch, and any read that exceeds either the authority cap or fixed ceiling.
+
+The selected-chain evidence must identify the exact root tuple, `oci-layout`
+version, wrapper bytes and identity, selected platform descriptor, optional
+approved index bytes and identity, selected manifest bytes and identity,
+configuration descriptor and bytes, all declared sizes and media types, and the
+validation-pass number and cap counters. Nonselected descriptors are metadata
+only and do not become evidence.
+
+After every accepted read, retain only private typed evidence for the exact
+bytes, size, digest, media type, descriptor link, filesystem identity, and
+authority tuple. Recheck the selected bytes and filesystem identities
+immediately before driver admission, final pre-spawn, post-launch observation,
+and pre-cleanup. Any changed object, root, descriptor, platform selection,
+authority tuple, or cap rejects before process creation or yields
+`outcome_unknown` after launch; it must never trigger a blind retry. These
+reads and rechecks prove only that bounded selected-object bytes were observed
+at those stages. They do not prove continuous custody, provenance, host-built
+adapter bytes, daemon image content, or execution authority, all of which
+remain separate accepted gates.
+
+Security review and explicit owner acceptance are required before adding code,
+changing the packet's blocking fields, or treating this proposal as runtime
+proof.
+
 ## Interfaces and contracts
 
 The source-only interface is a bounded parser around a fakeable command
@@ -293,8 +390,11 @@ implementation or real proof:
 - How is the host-built adapter bound to the exact in-image executable when
   arbitrary in-image byte hashing is unavailable or unsafe?
 - Which Docker CLI/API versions and platform-specific OCI fields are supported?
-- Which exact mechanism obtains bounded raw OCI index, manifest, and config
-  bytes and verifies them against the accepted separate identity fields?
+- The proposed first-proof mechanism is a pre-positioned, private OCI
+  image-layout directory with root-relative no-follow reads and digest-derived
+  blob paths, as specified above. Is this exact acquisition, custody, and
+  revalidation contract accepted, including its media types and conservative
+  size caps?
 - Which bounded mechanism can inspect the adapter without granting it socket,
   network, credentials, or broader filesystem access?
 - Which private evidence custodian and reviewer may see raw observations, and
