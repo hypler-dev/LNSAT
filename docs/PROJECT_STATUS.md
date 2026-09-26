@@ -274,10 +274,26 @@ adapter; traverse Gateway -> D4B2A -> D3/D4A -> supervisor; and use
 daemon/client/endpoint-revalidated, launch-label-bound inspect-before-remove
 cleanup.
 The [runtime observation proposal](architecture/phase11-runtime-observation/spec.md)
-records the still-unaccepted evidence mapping decisions needed for daemon,
-image, provenance, entrypoint, and in-image adapter preflight. No observer or real
-image verification is implemented, and the operator packet remains the status
-authority.
+records the remaining evidence mapping decisions for daemon, image,
+provenance, entrypoint, and in-image adapter preflight. The owner accepted its
+narrow image-identity choice on 2026-09-26: schema-2 `profile.image_digest`
+means the local OCI configuration ImageID, while manifest and optional index
+digests require separate bindings. No observer, raw OCI-byte verification, or
+real image verification is implemented. The operator packet remains the status
+authority; its source lock and blocking identities have not moved.
+A source-only v2 private run-manifest parser now nests validated v1 metadata and
+binds distinct local ImageID, config, manifest, optional index, platform, and
+provenance-verifier declarations against a separately supplied expected image
+declaration. Its canonical digest and negative tests establish declaration
+consistency only. It reads no raw OCI bytes, proves no provenance, and is not
+selected by the served driver.
+A separate pure v2 helper checks the digest of caller-supplied config,
+manifest, or optional index bytes against the corresponding typed declaration.
+It compares length only with a caller-supplied expected size, not an
+authenticated descriptor size. It does not acquire bytes, validate OCI JSON or
+descriptor links, authenticate the declaration, or prove provenance, platform,
+custody, adapter identity, or runtime state. The operator packet's blocking
+fields remain unset.
 The source-only supervisor now binds operation and launch-contract labels into
 its exact run arguments. It no longer force-removes a CID after an ambiguous
 result: a CID file plus client/socket checks cannot establish daemon and

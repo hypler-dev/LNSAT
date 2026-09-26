@@ -15,11 +15,20 @@ use lnsatd::docker_local_runtime_proof_run_manifest::{
     DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_EXECUTION_PERMISSIONS_V1,
     DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_OBSERVATION_PERMISSIONS_V1,
     DockerLocalRuntimeProofDaemonDeclarationV1, DockerLocalRuntimeProofImageDeclarationV1,
+    DockerLocalRuntimeProofImageIdentityV2, DockerLocalRuntimeProofLocalImageIdV2,
+    DockerLocalRuntimeProofOciBlobKindV2, DockerLocalRuntimeProofOciBlobVerificationErrorV2,
+    DockerLocalRuntimeProofOciConfigDigestV2, DockerLocalRuntimeProofOciIndexDigestV2,
+    DockerLocalRuntimeProofOciManifestDigestV2, DockerLocalRuntimeProofOciPlatformSelectionV2,
     DockerLocalRuntimeProofPathIdentityV1, DockerLocalRuntimeProofPrivateEvidenceDeclarationV1,
-    DockerLocalRuntimeProofRunManifestErrorV1, DockerLocalRuntimeProofRunManifestSourceBindingV1,
+    DockerLocalRuntimeProofProvenanceVerifierCommitmentV2,
+    DockerLocalRuntimeProofRunManifestErrorV1, DockerLocalRuntimeProofRunManifestErrorV2,
+    DockerLocalRuntimeProofRunManifestSourceBindingV1,
     DockerLocalRuntimeProofRunManifestSourceInputV1, DockerLocalRuntimeProofRunWindowV1,
     DockerLocalRuntimeProofTargetDeclarationV1, build_docker_local_runtime_proof_run_manifest_v1,
+    build_docker_local_runtime_proof_run_manifest_v2,
     parse_docker_local_runtime_proof_run_manifest_v1,
+    parse_docker_local_runtime_proof_run_manifest_v2,
+    verify_docker_local_runtime_proof_oci_blob_v2,
 };
 use lnsatd::runtime_profile::{
     LoadedDockerLocalRuntimeProfileV1, parse_docker_local_runtime_profile_v1,
@@ -301,6 +310,413 @@ fn builder_and_canonical_parser_reject_source_target_overlap() {
     }
 }
 
+#[test]
+fn v2_binds_typed_image_identity_to_profile_and_trusted_declaration() {
+    let (plan, requirements, harness) = inputs();
+    let source = source();
+    let expected = image_identity();
+    let built = build_docker_local_runtime_proof_run_manifest_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        declarations(),
+        expected.clone(),
+        &expected,
+    )
+    .expect("v2 manifest");
+    let parsed = parse_docker_local_runtime_proof_run_manifest_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        &expected,
+        built.canonical_json().as_bytes(),
+    )
+    .expect("canonical v2 parse");
+    let v1 = build_docker_local_runtime_proof_run_manifest_v1(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        declarations(),
+    )
+    .expect("v1 manifest");
+
+    assert_eq!(parsed.manifest(), built.manifest());
+    assert_eq!(parsed.digest(), built.digest());
+    assert_ne!(parsed.digest_text(), v1.digest_text(), "v2 digest domain");
+    assert_eq!(
+        parsed.manifest().declared_image_identity.local_image_id.0,
+        parsed.manifest().v1_manifest.bindings.image_digest
+    );
+    assert_eq!(
+        parsed
+            .manifest()
+            .declared_image_identity
+            .oci_config_digest
+            .0,
+        parsed.manifest().v1_manifest.bindings.image_digest
+    );
+    assert_eq!(
+        parsed
+            .manifest()
+            .declared_image_identity
+            .oci_manifest_digest
+            .0,
+        sha('b')
+    );
+    assert_eq!(
+        parsed
+            .manifest()
+            .declared_image_identity
+            .oci_index_digest
+            .as_ref()
+            .map(|value| value.0.clone()),
+        Some(sha('c'))
+    );
+    assert_no_runtime_surface_v2(parsed.canonical_json());
+
+    let mut direct_manifest = image_identity();
+    direct_manifest.oci_index_digest = None;
+    let direct = build_docker_local_runtime_proof_run_manifest_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        declarations(),
+        direct_manifest.clone(),
+        &direct_manifest,
+    )
+    .expect("direct manifest v2");
+    assert!(
+        direct
+            .manifest()
+            .declared_image_identity
+            .oci_index_digest
+            .is_none()
+    );
+}
+
+#[test]
+fn v2_parser_rejects_noncanonical_duplicate_and_unknown_inputs() {
+    let (plan, requirements, harness) = inputs();
+    let source = source();
+    let expected = image_identity();
+    let built = build_docker_local_runtime_proof_run_manifest_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        declarations(),
+        expected.clone(),
+        &expected,
+    )
+    .expect("v2 manifest");
+    reject_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        &expected,
+        &serde_json::to_string_pretty(built.manifest()).expect("pretty"),
+    );
+    reject_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        &expected,
+        &format!(
+            "{{\"schema_id\":\"duplicate\",{}",
+            &built.canonical_json()[1..]
+        ),
+    );
+    let duplicate_nested = built.canonical_json().replacen(
+        &format!("\"oci_config_digest\":\"{}\"", sha('a')),
+        &format!(
+            "\"oci_config_digest\":\"{}\",\"oci_config_digest\":\"{}\"",
+            sha('a'),
+            sha('a')
+        ),
+        1,
+    );
+    reject_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        &expected,
+        &duplicate_nested,
+    );
+    reject_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        &expected,
+        &format!(
+            "{},\"unknown\":false}}",
+            &built.canonical_json()[..built.canonical_json().len() - 1]
+        ),
+    );
+}
+
+#[test]
+fn v2_builder_and_parser_cap_oversize_legal_inputs() {
+    let (plan, requirements, harness) = inputs();
+    let source = source();
+    let expected = image_identity();
+    let built = build_docker_local_runtime_proof_run_manifest_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        declarations(),
+        expected.clone(),
+        &expected,
+    )
+    .expect("v2 manifest");
+    assert_eq!(
+        parse_docker_local_runtime_proof_run_manifest_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            &expected,
+            format!("{}0{}", "[".repeat(65), "]".repeat(65)).as_bytes(),
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestTooDeep)
+    );
+    let overlong_legal_json = format!(
+        "{}{}",
+        built.canonical_json(),
+        " ".repeat(32 * 1024 - built.canonical_json().len() + 1)
+    );
+    assert_eq!(
+        parse_docker_local_runtime_proof_run_manifest_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            &expected,
+            overlong_legal_json.as_bytes(),
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestTooLarge)
+    );
+    let mut overlong_declarations = declarations();
+    overlong_declarations.private_evidence.absolute_location =
+        format!("/private/{}", "e".repeat(32 * 1024));
+    assert_eq!(
+        build_docker_local_runtime_proof_run_manifest_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            overlong_declarations,
+            expected.clone(),
+            &expected,
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestTooLarge)
+    );
+}
+
+#[test]
+fn v2_builder_rejects_profile_and_cross_kind_substitution() {
+    let (plan, requirements, harness) = inputs();
+    let source = source();
+    let expected = image_identity();
+    let mut local_config_substitution = expected.clone();
+    local_config_substitution.local_image_id = DockerLocalRuntimeProofLocalImageIdV2(sha('d'));
+    assert_eq!(
+        build_docker_local_runtime_proof_run_manifest_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            declarations(),
+            local_config_substitution.clone(),
+            &local_config_substitution,
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)
+    );
+    let mut manifest_config_substitution = expected.clone();
+    manifest_config_substitution.oci_manifest_digest =
+        DockerLocalRuntimeProofOciManifestDigestV2(sha('a'));
+    assert_eq!(
+        build_docker_local_runtime_proof_run_manifest_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            declarations(),
+            manifest_config_substitution.clone(),
+            &manifest_config_substitution,
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)
+    );
+    let mut index_manifest_substitution = expected.clone();
+    index_manifest_substitution.oci_index_digest =
+        Some(DockerLocalRuntimeProofOciIndexDigestV2(sha('b')));
+    assert_eq!(
+        build_docker_local_runtime_proof_run_manifest_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            declarations(),
+            index_manifest_substitution.clone(),
+            &index_manifest_substitution,
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)
+    );
+}
+
+#[test]
+fn v2_oci_blob_verifier_accepts_exact_supplied_bytes_for_each_typed_identity() {
+    let identity = raw_byte_image_identity();
+    for (kind, bytes) in [
+        (
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abc".as_slice(),
+        ),
+        (
+            DockerLocalRuntimeProofOciBlobKindV2::Manifest,
+            b"hello".as_slice(),
+        ),
+        (
+            DockerLocalRuntimeProofOciBlobKindV2::Index,
+            b"hello world".as_slice(),
+        ),
+    ] {
+        assert_eq!(
+            verify_docker_local_runtime_proof_oci_blob_v2(&identity, kind, bytes.len(), bytes),
+            Ok(())
+        );
+    }
+}
+
+#[test]
+fn v2_oci_blob_verifier_rejects_size_digest_kind_index_and_identity_drift() {
+    let identity = raw_byte_image_identity();
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abc".len(),
+            b"ab",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ByteSizeMismatch)
+    );
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abd".len(),
+            b"abd",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::DigestMismatch)
+    );
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"hello".len(),
+            b"hello",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::DigestMismatch)
+    );
+    let mut no_index = identity.clone();
+    no_index.oci_index_digest = None;
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &no_index,
+            DockerLocalRuntimeProofOciBlobKindV2::Index,
+            0,
+            b"",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::IndexIdentityAbsent)
+    );
+    let mut invalid_identity = identity;
+    invalid_identity.oci_manifest_digest =
+        DockerLocalRuntimeProofOciManifestDigestV2(invalid_identity.oci_config_digest.0.clone());
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &invalid_identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abc".len(),
+            b"abc",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ImageIdentityInvalid)
+    );
+}
+
+#[test]
+fn v2_parser_rejects_expected_platform_provenance_and_identity_drift() {
+    let (plan, requirements, harness) = inputs();
+    let source = source();
+    let expected = image_identity();
+    let built = build_docker_local_runtime_proof_run_manifest_v2(
+        &plan,
+        &requirements,
+        &harness,
+        &source,
+        declarations(),
+        expected.clone(),
+        &expected,
+    )
+    .expect("v2 manifest");
+
+    for (path, value) in [
+        ("declared_image_identity.local_image_id", json!(sha('d'))),
+        ("declared_image_identity.oci_config_digest", json!(sha('d'))),
+        (
+            "declared_image_identity.oci_manifest_digest",
+            json!(sha('a')),
+        ),
+        ("declared_image_identity.oci_index_digest", json!(sha('b'))),
+        (
+            "declared_image_identity.platform.architecture",
+            json!("AMD64"),
+        ),
+        (
+            "declared_image_identity.provenance_verifier.verifier_version",
+            json!("verifier\nsubstituted"),
+        ),
+        (
+            "trusted_expected_image.oci_manifest_digest",
+            json!(sha('d')),
+        ),
+        ("v1_manifest.bindings.image_digest", json!(sha('d'))),
+    ] {
+        let mut value_json: Value =
+            serde_json::from_str(built.canonical_json()).expect("canonical");
+        set_value(&mut value_json, path, value);
+        reject_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            &expected,
+            &serde_json::to_string(&value_json).expect("drift"),
+        );
+    }
+
+    let mut wrong_expected = expected.clone();
+    wrong_expected.provenance_verifier.trust_policy_digest = sha('f');
+    assert_eq!(
+        parse_docker_local_runtime_proof_run_manifest_v2(
+            &plan,
+            &requirements,
+            &harness,
+            &source,
+            &wrong_expected,
+            built.canonical_json().as_bytes(),
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)
+    );
+}
+
 fn inputs() -> (
     DockerLocalRuntimeProofPlanOutputV1,
     DockerLocalRuntimeProofEvidenceRequirementsOutputV1,
@@ -390,6 +806,50 @@ fn source() -> DockerLocalRuntimeProofRunManifestSourceBindingV1 {
         proof_driver_executable_digest: sha('b'),
     }
 }
+fn image_identity() -> DockerLocalRuntimeProofImageIdentityV2 {
+    DockerLocalRuntimeProofImageIdentityV2 {
+        local_image_id: DockerLocalRuntimeProofLocalImageIdV2(sha('a')),
+        oci_config_digest: DockerLocalRuntimeProofOciConfigDigestV2(sha('a')),
+        oci_manifest_digest: DockerLocalRuntimeProofOciManifestDigestV2(sha('b')),
+        oci_index_digest: Some(DockerLocalRuntimeProofOciIndexDigestV2(sha('c'))),
+        platform: DockerLocalRuntimeProofOciPlatformSelectionV2 {
+            os: "linux".to_owned(),
+            architecture: "amd64".to_owned(),
+            variant: None,
+        },
+        provenance_verifier: DockerLocalRuntimeProofProvenanceVerifierCommitmentV2 {
+            verifier_identity_digest: sha('d'),
+            verifier_version: "v1".to_owned(),
+            trust_policy_digest: sha('e'),
+        },
+    }
+}
+fn raw_byte_image_identity() -> DockerLocalRuntimeProofImageIdentityV2 {
+    DockerLocalRuntimeProofImageIdentityV2 {
+        local_image_id: DockerLocalRuntimeProofLocalImageIdV2(
+            "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".to_owned(),
+        ),
+        oci_config_digest: DockerLocalRuntimeProofOciConfigDigestV2(
+            "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".to_owned(),
+        ),
+        oci_manifest_digest: DockerLocalRuntimeProofOciManifestDigestV2(
+            "sha256:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824".to_owned(),
+        ),
+        oci_index_digest: Some(DockerLocalRuntimeProofOciIndexDigestV2(
+            "sha256:b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9".to_owned(),
+        )),
+        platform: DockerLocalRuntimeProofOciPlatformSelectionV2 {
+            os: "linux".to_owned(),
+            architecture: "amd64".to_owned(),
+            variant: None,
+        },
+        provenance_verifier: DockerLocalRuntimeProofProvenanceVerifierCommitmentV2 {
+            verifier_identity_digest: sha('d'),
+            verifier_version: "v1".to_owned(),
+            trust_policy_digest: sha('e'),
+        },
+    }
+}
 fn sha(byte: char) -> String {
     format!("sha256:{}", byte.to_string().repeat(64))
 }
@@ -412,6 +872,26 @@ fn reject(
             text.as_bytes()
         ),
         Err(DockerLocalRuntimeProofRunManifestErrorV1::ManifestInvalid)
+    );
+}
+fn reject_v2(
+    plan: &DockerLocalRuntimeProofPlanOutputV1,
+    requirements: &DockerLocalRuntimeProofEvidenceRequirementsOutputV1,
+    harness: &DockerLocalRuntimeProofExecutionHarnessOutputV1,
+    source: &DockerLocalRuntimeProofRunManifestSourceBindingV1,
+    expected: &DockerLocalRuntimeProofImageIdentityV2,
+    text: &str,
+) {
+    assert_eq!(
+        parse_docker_local_runtime_proof_run_manifest_v2(
+            plan,
+            requirements,
+            harness,
+            source,
+            expected,
+            text.as_bytes(),
+        ),
+        Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)
     );
 }
 fn set_value(value: &mut Value, path: &str, replacement: Value) {
@@ -446,4 +926,13 @@ fn assert_no_runtime_surface(canonical: &str) {
     assert_eq!(value["contract"]["side_effects"], json!([]));
     assert_eq!(value["contract"]["runtime_execution"], false);
     assert_eq!(value["contract"]["proves_human_authority"], false);
+}
+fn assert_no_runtime_surface_v2(canonical: &str) {
+    let value: Value = serde_json::from_str(canonical).expect("JSON");
+    assert_eq!(value["contract"]["side_effects"], json!([]));
+    assert_eq!(value["contract"]["runtime_execution"], false);
+    assert_eq!(value["contract"]["proves_human_authority"], false);
+    assert_no_runtime_surface(
+        &serde_json::to_string(&value["v1_manifest"]).expect("v1 manifest JSON"),
+    );
 }

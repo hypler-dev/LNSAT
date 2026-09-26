@@ -806,3 +806,428 @@ impl<'de> Visitor<'de> for UniqueJsonVisitorV1 {
         Ok(UniqueJsonValueV1(Value::Object(values)))
     }
 }
+
+/// Exact private successor contract for typed OCI image identity declarations.
+pub const DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_CONTRACT_ID_V2: &str =
+    "lnsat.docker_local_runtime_proof_run_manifest.v2";
+/// Exact schema identity for canonical private successor manifests.
+pub const DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_SCHEMA_ID_V2: &str =
+    "lnsat.phase11_docker_local_runtime_proof_run_manifest.schema.v2_0";
+/// Maximum accepted successor-manifest bytes.
+pub const MAX_DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_BYTES_V2: usize = 32 * 1024;
+
+const RUN_MANIFEST_DIGEST_DOMAIN_V2: &[u8] = b"lnsat.docker-local-runtime-proof-run-manifest.v2";
+
+/// Platform selection is a declaration only. This source contract does not
+/// inspect an OCI index, image configuration, or Docker runtime.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DockerLocalRuntimeProofOciPlatformSelectionV2 {
+    pub os: String,
+    pub architecture: String,
+    pub variant: Option<String>,
+}
+
+/// Identity commitments for a future separately approved provenance verifier.
+/// They bind no provenance statement and verify no raw bytes in this module.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DockerLocalRuntimeProofProvenanceVerifierCommitmentV2 {
+    pub verifier_identity_digest: String,
+    pub verifier_version: String,
+    pub trust_policy_digest: String,
+}
+
+/// Typed OCI image identities for one platform-specific manifest. The local
+/// image ID and configuration digest intentionally name the same config object.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct DockerLocalRuntimeProofLocalImageIdV2(pub String);
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct DockerLocalRuntimeProofOciConfigDigestV2(pub String);
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct DockerLocalRuntimeProofOciManifestDigestV2(pub String);
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct DockerLocalRuntimeProofOciIndexDigestV2(pub String);
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DockerLocalRuntimeProofImageIdentityV2 {
+    pub local_image_id: DockerLocalRuntimeProofLocalImageIdV2,
+    pub oci_config_digest: DockerLocalRuntimeProofOciConfigDigestV2,
+    pub oci_manifest_digest: DockerLocalRuntimeProofOciManifestDigestV2,
+    pub oci_index_digest: Option<DockerLocalRuntimeProofOciIndexDigestV2>,
+    pub platform: DockerLocalRuntimeProofOciPlatformSelectionV2,
+    pub provenance_verifier: DockerLocalRuntimeProofProvenanceVerifierCommitmentV2,
+}
+
+/// Selects one supplied OCI blob against its typed v2 image identity.
+///
+/// The caller supplies the bytes and their expected size. This enum does not
+/// acquire bytes, parse OCI JSON, or establish provenance or custody.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DockerLocalRuntimeProofOciBlobKindV2 {
+    Config,
+    Manifest,
+    Index,
+}
+
+/// Stable result for the pure supplied-byte OCI blob verifier.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DockerLocalRuntimeProofOciBlobVerificationErrorV2 {
+    ImageIdentityInvalid,
+    IndexIdentityAbsent,
+    ByteSizeMismatch,
+    DigestMismatch,
+}
+
+impl DockerLocalRuntimeProofOciBlobVerificationErrorV2 {
+    #[must_use]
+    pub const fn code(self) -> &'static str {
+        match self {
+            Self::ImageIdentityInvalid => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_image_identity_invalid"
+            }
+            Self::IndexIdentityAbsent => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_index_identity_absent"
+            }
+            Self::ByteSizeMismatch => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_byte_size_mismatch"
+            }
+            Self::DigestMismatch => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_digest_mismatch"
+            }
+        }
+    }
+}
+
+impl fmt::Display for DockerLocalRuntimeProofOciBlobVerificationErrorV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.code())
+    }
+}
+
+impl std::error::Error for DockerLocalRuntimeProofOciBlobVerificationErrorV2 {}
+
+/// Verifies caller-supplied raw bytes against exactly one typed OCI digest.
+///
+/// This pure helper only compares a caller-supplied byte count and SHA-256
+/// digest. It does not obtain bytes, parse OCI JSON, inspect a runtime, or
+/// prove provenance, custody, adapter binding, or authority. The private run
+/// manifest declaration parser likewise verifies no OCI bytes.
+///
+/// # Errors
+///
+/// Returns a stable error when the image identity is invalid, an index is not
+/// declared, supplied bytes have a different size, or their SHA-256 digest does
+/// not equal the selected typed identity.
+pub fn verify_docker_local_runtime_proof_oci_blob_v2(
+    image_identity: &DockerLocalRuntimeProofImageIdentityV2,
+    kind: DockerLocalRuntimeProofOciBlobKindV2,
+    expected_byte_size: usize,
+    supplied_raw_bytes: &[u8],
+) -> Result<(), DockerLocalRuntimeProofOciBlobVerificationErrorV2> {
+    if !valid_image_identity_v2(image_identity) {
+        return Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ImageIdentityInvalid);
+    }
+    let expected_digest = match kind {
+        DockerLocalRuntimeProofOciBlobKindV2::Config => &image_identity.oci_config_digest.0,
+        DockerLocalRuntimeProofOciBlobKindV2::Manifest => &image_identity.oci_manifest_digest.0,
+        DockerLocalRuntimeProofOciBlobKindV2::Index => image_identity
+            .oci_index_digest
+            .as_ref()
+            .map(|value| &value.0)
+            .ok_or(DockerLocalRuntimeProofOciBlobVerificationErrorV2::IndexIdentityAbsent)?,
+    };
+    if supplied_raw_bytes.len() != expected_byte_size {
+        return Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ByteSizeMismatch);
+    }
+    let actual_digest: [u8; 32] = Sha256::digest(supplied_raw_bytes).into();
+    if prefixed_sha256_v1(&actual_digest) != *expected_digest {
+        return Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::DigestMismatch);
+    }
+    Ok(())
+}
+
+/// Canonical private successor manifest. `v1_manifest` preserves v1 metadata
+/// and validation without changing the meaning of any v1 image field.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DockerLocalRuntimeProofRunManifestV2 {
+    pub schema_id: String,
+    pub contract_version: String,
+    pub schema_version: u32,
+    pub status: String,
+    pub contract: DockerLocalRuntimeProofRunManifestContractV1,
+    pub v1_manifest: DockerLocalRuntimeProofRunManifestV1,
+    pub declared_image_identity: DockerLocalRuntimeProofImageIdentityV2,
+    /// Serialized mirror for canonical binding; parse requires its own trusted input.
+    pub trusted_expected_image: DockerLocalRuntimeProofImageIdentityV2,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DockerLocalRuntimeProofRunManifestOutputV2 {
+    manifest: DockerLocalRuntimeProofRunManifestV2,
+    canonical_json: String,
+    digest: [u8; 32],
+}
+
+impl DockerLocalRuntimeProofRunManifestOutputV2 {
+    #[must_use]
+    pub const fn manifest(&self) -> &DockerLocalRuntimeProofRunManifestV2 {
+        &self.manifest
+    }
+    #[must_use]
+    pub fn canonical_json(&self) -> &str {
+        &self.canonical_json
+    }
+    #[must_use]
+    pub const fn digest(&self) -> [u8; 32] {
+        self.digest
+    }
+    #[must_use]
+    pub fn digest_text(&self) -> String {
+        prefixed_sha256_v1(&self.digest)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DockerLocalRuntimeProofRunManifestErrorV2 {
+    InputInvalid,
+    ManifestTooLarge,
+    ManifestTooDeep,
+    ManifestInvalid,
+    CanonicalizationFailed,
+}
+
+impl DockerLocalRuntimeProofRunManifestErrorV2 {
+    #[must_use]
+    pub const fn code(self) -> &'static str {
+        match self {
+            Self::InputInvalid => "docker_local_runtime_proof_run_manifest.v2_input_invalid",
+            Self::ManifestTooLarge => {
+                "docker_local_runtime_proof_run_manifest.v2_manifest_too_large"
+            }
+            Self::ManifestTooDeep => "docker_local_runtime_proof_run_manifest.v2_manifest_too_deep",
+            Self::ManifestInvalid => "docker_local_runtime_proof_run_manifest.v2_manifest_invalid",
+            Self::CanonicalizationFailed => {
+                "docker_local_runtime_proof_run_manifest.v2_canonicalization_failed"
+            }
+        }
+    }
+}
+impl fmt::Display for DockerLocalRuntimeProofRunManifestErrorV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.code())
+    }
+}
+impl std::error::Error for DockerLocalRuntimeProofRunManifestErrorV2 {}
+
+/// Builds a canonical v2 private manifest. It serializes a deterministic mirror
+/// of `trusted_expected_image`; that mirror is untrusted on parse. The parser
+/// requires a caller-supplied expected image and never trusts the serialized
+/// mirror by itself. This function performs no Docker or provenance I/O.
+///
+/// # Errors
+///
+/// Returns a stable v2 error for invalid inherited metadata or image identity
+/// commitments.
+pub fn build_docker_local_runtime_proof_run_manifest_v2(
+    proof_plan: &DockerLocalRuntimeProofPlanOutputV1,
+    requirements: &DockerLocalRuntimeProofEvidenceRequirementsOutputV1,
+    harness: &DockerLocalRuntimeProofExecutionHarnessOutputV1,
+    source: &DockerLocalRuntimeProofRunManifestSourceBindingV1,
+    declarations: DockerLocalRuntimeProofRunManifestSourceInputV1,
+    declared_image_identity: DockerLocalRuntimeProofImageIdentityV2,
+    trusted_expected_image: &DockerLocalRuntimeProofImageIdentityV2,
+) -> Result<DockerLocalRuntimeProofRunManifestOutputV2, DockerLocalRuntimeProofRunManifestErrorV2> {
+    let v1_manifest = build_docker_local_runtime_proof_run_manifest_v1(
+        proof_plan,
+        requirements,
+        harness,
+        source,
+        declarations,
+    )
+    .map_err(|_| DockerLocalRuntimeProofRunManifestErrorV2::InputInvalid)?
+    .manifest;
+    let manifest = DockerLocalRuntimeProofRunManifestV2 {
+        schema_id: DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_SCHEMA_ID_V2.to_owned(),
+        contract_version: CONTRACT_VERSION_V1_0.to_owned(),
+        schema_version: 2,
+        status: PROPOSED_SOURCE_ONLY_STATUS_V1.to_owned(),
+        contract: DockerLocalRuntimeProofRunManifestContractV1 {
+            contract_id: DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_CONTRACT_ID_V2.to_owned(),
+            output: "canonical_private_run_manifest_digest".to_owned(),
+            side_effects: Vec::new(),
+            runtime_execution: false,
+            proves_human_authority: false,
+        },
+        v1_manifest,
+        declared_image_identity,
+        trusted_expected_image: trusted_expected_image.clone(),
+    };
+    finalize_manifest_v2(manifest)
+}
+
+/// Parses and revalidates one canonical v2 private manifest without runtime I/O.
+///
+/// # Errors
+///
+/// Returns a stable v2 error when bytes are oversized, too deep, duplicate,
+/// unknown, noncanonical, or inconsistent with the trusted expected image.
+pub fn parse_docker_local_runtime_proof_run_manifest_v2(
+    proof_plan: &DockerLocalRuntimeProofPlanOutputV1,
+    requirements: &DockerLocalRuntimeProofEvidenceRequirementsOutputV1,
+    harness: &DockerLocalRuntimeProofExecutionHarnessOutputV1,
+    expected_source: &DockerLocalRuntimeProofRunManifestSourceBindingV1,
+    trusted_expected_image: &DockerLocalRuntimeProofImageIdentityV2,
+    bytes: &[u8],
+) -> Result<DockerLocalRuntimeProofRunManifestOutputV2, DockerLocalRuntimeProofRunManifestErrorV2> {
+    if bytes.len() > MAX_DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_BYTES_V2 {
+        return Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestTooLarge);
+    }
+    let text = std::str::from_utf8(bytes)
+        .map_err(|_| DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)?;
+    validate_json_nesting_v2(text)?;
+    let unique: UniqueJsonValueV1 = serde_json::from_str(text)
+        .map_err(|_| DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)?;
+    let manifest: DockerLocalRuntimeProofRunManifestV2 = serde_json::from_value(unique.0)
+        .map_err(|_| DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)?;
+    let output = build_docker_local_runtime_proof_run_manifest_v2(
+        proof_plan,
+        requirements,
+        harness,
+        expected_source,
+        manifest.v1_manifest.declarations,
+        manifest.declared_image_identity,
+        trusted_expected_image,
+    )
+    .map_err(|_| DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid)?;
+    if text != output.canonical_json {
+        return Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid);
+    }
+    Ok(output)
+}
+
+fn finalize_manifest_v2(
+    manifest: DockerLocalRuntimeProofRunManifestV2,
+) -> Result<DockerLocalRuntimeProofRunManifestOutputV2, DockerLocalRuntimeProofRunManifestErrorV2> {
+    validate_manifest_v2(&manifest)?;
+    let value = serde_json::to_value(&manifest)
+        .map_err(|_| DockerLocalRuntimeProofRunManifestErrorV2::CanonicalizationFailed)?;
+    let canonical_json = canonical_json_value_v1(&value)
+        .map_err(|()| DockerLocalRuntimeProofRunManifestErrorV2::CanonicalizationFailed)?;
+    if canonical_json.len() > MAX_DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_BYTES_V2 {
+        return Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestTooLarge);
+    }
+    let digest = digest_fields_v1(RUN_MANIFEST_DIGEST_DOMAIN_V2, &[canonical_json.as_bytes()]);
+    Ok(DockerLocalRuntimeProofRunManifestOutputV2 {
+        manifest,
+        canonical_json,
+        digest,
+    })
+}
+
+fn validate_manifest_v2(
+    manifest: &DockerLocalRuntimeProofRunManifestV2,
+) -> Result<(), DockerLocalRuntimeProofRunManifestErrorV2> {
+    let profile_image_digest = &manifest.v1_manifest.bindings.image_digest;
+    if manifest.schema_id != DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_SCHEMA_ID_V2
+        || manifest.contract_version != CONTRACT_VERSION_V1_0
+        || manifest.schema_version != 2
+        || manifest.status != PROPOSED_SOURCE_ONLY_STATUS_V1
+        || manifest.contract.contract_id != DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_CONTRACT_ID_V2
+        || manifest.contract.output != "canonical_private_run_manifest_digest"
+        || !manifest.contract.side_effects.is_empty()
+        || manifest.contract.runtime_execution
+        || manifest.contract.proves_human_authority
+        || validate_manifest_v1(&manifest.v1_manifest).is_err()
+        || !valid_image_identity_v2(&manifest.declared_image_identity)
+        || !valid_image_identity_v2(&manifest.trusted_expected_image)
+        || manifest.declared_image_identity != manifest.trusted_expected_image
+        || manifest.declared_image_identity.local_image_id.0 != *profile_image_digest
+        || manifest.declared_image_identity.oci_config_digest.0 != *profile_image_digest
+    {
+        return Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestInvalid);
+    }
+    Ok(())
+}
+
+fn valid_image_identity_v2(value: &DockerLocalRuntimeProofImageIdentityV2) -> bool {
+    let no_cross_kind_substitution = value.oci_manifest_digest.0 != value.oci_config_digest.0
+        && value.oci_index_digest.as_ref().is_none_or(|index| {
+            index.0 != value.oci_manifest_digest.0 && index.0 != value.oci_config_digest.0
+        });
+    value.local_image_id.0 == value.oci_config_digest.0
+        && valid_sha256_v1(&value.local_image_id.0)
+        && valid_sha256_v1(&value.oci_config_digest.0)
+        && valid_sha256_v1(&value.oci_manifest_digest.0)
+        && value
+            .oci_index_digest
+            .as_ref()
+            .is_none_or(|value| valid_sha256_v1(&value.0))
+        && no_cross_kind_substitution
+        && valid_platform_selection_v2(&value.platform)
+        && valid_provenance_verifier_commitment_v2(&value.provenance_verifier)
+}
+
+fn valid_platform_selection_v2(value: &DockerLocalRuntimeProofOciPlatformSelectionV2) -> bool {
+    valid_platform_token_v2(&value.os)
+        && valid_platform_token_v2(&value.architecture)
+        && value
+            .variant
+            .as_ref()
+            .is_none_or(|value| valid_platform_token_v2(value))
+}
+
+fn valid_platform_token_v2(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 64
+        && value.bytes().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'_' | b'-')
+        })
+}
+
+fn valid_provenance_verifier_commitment_v2(
+    value: &DockerLocalRuntimeProofProvenanceVerifierCommitmentV2,
+) -> bool {
+    valid_sha256_v1(&value.verifier_identity_digest)
+        && valid_bounded_text_v1(&value.verifier_version)
+        && valid_sha256_v1(&value.trust_policy_digest)
+}
+
+fn validate_json_nesting_v2(text: &str) -> Result<(), DockerLocalRuntimeProofRunManifestErrorV2> {
+    let mut depth = 0_usize;
+    let mut quoted = false;
+    let mut escaped = false;
+    for byte in text.bytes() {
+        if quoted {
+            if escaped {
+                escaped = false;
+            } else if byte == b'\\' {
+                escaped = true;
+            } else if byte == b'"' {
+                quoted = false;
+            }
+            continue;
+        }
+        match byte {
+            b'"' => quoted = true,
+            b'{' | b'[' => {
+                depth += 1;
+                if depth > MAX_DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_JSON_NESTING_V1 {
+                    return Err(DockerLocalRuntimeProofRunManifestErrorV2::ManifestTooDeep);
+                }
+            }
+            b'}' | b']' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+    }
+    Ok(())
+}

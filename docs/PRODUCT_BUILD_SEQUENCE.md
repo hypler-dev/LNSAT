@@ -417,6 +417,19 @@ the proof source nor product/source version `0.1.0`. Its runnable-driver
 boundary and all live runtime identities remain blocking. A new exact authority
 decision is required before Docker observation or execution, and later release
 gates remain unchanged.
+The owner accepted the narrow source-only image-identity design on 2026-09-26:
+the profile's local OCI configuration ImageID is distinct from separately
+verified manifest and optional index digests. This does not accept the
+provenance, raw-byte custody, adapter-byte, or runtime observation mechanisms.
+A source-only successor private run-manifest v2 now binds those typed image
+declarations to a separately supplied expected identity; it verifies no OCI
+bytes or provenance and is not selected by a runnable driver.
+A pure source-only helper can check the SHA-256 digest of caller-supplied
+config, manifest, or optional index bytes against their typed declarations.
+It compares length only with a caller-supplied expected size, not an
+authenticated descriptor size. Byte acquisition, OCI descriptor linkage,
+provenance, custody, adapter identity, and real runtime observation remain
+separate unaccepted gates; this helper supplies no execution authority.
 
 P7-K1, P7-S1, P7-V1, and P7-I1 remain optional, blocked, and nonblocking for
 this local-v1 critical path.
