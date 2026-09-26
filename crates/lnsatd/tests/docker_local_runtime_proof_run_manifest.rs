@@ -16,6 +16,7 @@ use lnsatd::docker_local_runtime_proof_run_manifest::{
     DOCKER_LOCAL_RUNTIME_PROOF_RUN_MANIFEST_OBSERVATION_PERMISSIONS_V1,
     DockerLocalRuntimeProofDaemonDeclarationV1, DockerLocalRuntimeProofImageDeclarationV1,
     DockerLocalRuntimeProofImageIdentityV2, DockerLocalRuntimeProofLocalImageIdV2,
+    DockerLocalRuntimeProofOciBlobKindV2, DockerLocalRuntimeProofOciBlobVerificationErrorV2,
     DockerLocalRuntimeProofOciConfigDigestV2, DockerLocalRuntimeProofOciIndexDigestV2,
     DockerLocalRuntimeProofOciManifestDigestV2, DockerLocalRuntimeProofOciPlatformSelectionV2,
     DockerLocalRuntimeProofPathIdentityV1, DockerLocalRuntimeProofPrivateEvidenceDeclarationV1,
@@ -27,6 +28,7 @@ use lnsatd::docker_local_runtime_proof_run_manifest::{
     build_docker_local_runtime_proof_run_manifest_v2,
     parse_docker_local_runtime_proof_run_manifest_v1,
     parse_docker_local_runtime_proof_run_manifest_v2,
+    verify_docker_local_runtime_proof_oci_blob_v2,
 };
 use lnsatd::runtime_profile::{
     LoadedDockerLocalRuntimeProfileV1, parse_docker_local_runtime_profile_v1,
@@ -571,6 +573,85 @@ fn v2_builder_rejects_profile_and_cross_kind_substitution() {
 }
 
 #[test]
+fn v2_oci_blob_verifier_accepts_exact_supplied_bytes_for_each_typed_identity() {
+    let identity = raw_byte_image_identity();
+    for (kind, bytes) in [
+        (
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abc".as_slice(),
+        ),
+        (
+            DockerLocalRuntimeProofOciBlobKindV2::Manifest,
+            b"hello".as_slice(),
+        ),
+        (
+            DockerLocalRuntimeProofOciBlobKindV2::Index,
+            b"hello world".as_slice(),
+        ),
+    ] {
+        assert_eq!(
+            verify_docker_local_runtime_proof_oci_blob_v2(&identity, kind, bytes.len(), bytes),
+            Ok(())
+        );
+    }
+}
+
+#[test]
+fn v2_oci_blob_verifier_rejects_size_digest_kind_index_and_identity_drift() {
+    let identity = raw_byte_image_identity();
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abc".len(),
+            b"ab",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ByteSizeMismatch)
+    );
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abd".len(),
+            b"abd",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::DigestMismatch)
+    );
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"hello".len(),
+            b"hello",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::DigestMismatch)
+    );
+    let mut no_index = identity.clone();
+    no_index.oci_index_digest = None;
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &no_index,
+            DockerLocalRuntimeProofOciBlobKindV2::Index,
+            0,
+            b"",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::IndexIdentityAbsent)
+    );
+    let mut invalid_identity = identity;
+    invalid_identity.oci_manifest_digest =
+        DockerLocalRuntimeProofOciManifestDigestV2(invalid_identity.oci_config_digest.0.clone());
+    assert_eq!(
+        verify_docker_local_runtime_proof_oci_blob_v2(
+            &invalid_identity,
+            DockerLocalRuntimeProofOciBlobKindV2::Config,
+            b"abc".len(),
+            b"abc",
+        ),
+        Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ImageIdentityInvalid)
+    );
+}
+
+#[test]
 fn v2_parser_rejects_expected_platform_provenance_and_identity_drift() {
     let (plan, requirements, harness) = inputs();
     let source = source();
@@ -731,6 +812,32 @@ fn image_identity() -> DockerLocalRuntimeProofImageIdentityV2 {
         oci_config_digest: DockerLocalRuntimeProofOciConfigDigestV2(sha('a')),
         oci_manifest_digest: DockerLocalRuntimeProofOciManifestDigestV2(sha('b')),
         oci_index_digest: Some(DockerLocalRuntimeProofOciIndexDigestV2(sha('c'))),
+        platform: DockerLocalRuntimeProofOciPlatformSelectionV2 {
+            os: "linux".to_owned(),
+            architecture: "amd64".to_owned(),
+            variant: None,
+        },
+        provenance_verifier: DockerLocalRuntimeProofProvenanceVerifierCommitmentV2 {
+            verifier_identity_digest: sha('d'),
+            verifier_version: "v1".to_owned(),
+            trust_policy_digest: sha('e'),
+        },
+    }
+}
+fn raw_byte_image_identity() -> DockerLocalRuntimeProofImageIdentityV2 {
+    DockerLocalRuntimeProofImageIdentityV2 {
+        local_image_id: DockerLocalRuntimeProofLocalImageIdV2(
+            "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".to_owned(),
+        ),
+        oci_config_digest: DockerLocalRuntimeProofOciConfigDigestV2(
+            "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".to_owned(),
+        ),
+        oci_manifest_digest: DockerLocalRuntimeProofOciManifestDigestV2(
+            "sha256:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824".to_owned(),
+        ),
+        oci_index_digest: Some(DockerLocalRuntimeProofOciIndexDigestV2(
+            "sha256:b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9".to_owned(),
+        )),
         platform: DockerLocalRuntimeProofOciPlatformSelectionV2 {
             os: "linux".to_owned(),
             architecture: "amd64".to_owned(),

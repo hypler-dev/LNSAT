@@ -287,6 +287,13 @@ provenance-verifier declarations against a separately supplied expected image
 declaration. Its canonical digest and negative tests establish declaration
 consistency only. It reads no raw OCI bytes, proves no provenance, and is not
 selected by the served driver.
+A separate pure v2 helper checks the digest of caller-supplied config,
+manifest, or optional index bytes against the corresponding typed declaration.
+It compares length only with a caller-supplied expected size, not an
+authenticated descriptor size. It does not acquire bytes, validate OCI JSON or
+descriptor links, authenticate the declaration, or prove provenance, platform,
+custody, adapter identity, or runtime state. The operator packet's blocking
+fields remain unset.
 The source-only supervisor now binds operation and launch-contract labels into
 its exact run arguments. It no longer force-removes a CID after an ambiguous
 result: a CID file plus client/socket checks cannot establish daemon and

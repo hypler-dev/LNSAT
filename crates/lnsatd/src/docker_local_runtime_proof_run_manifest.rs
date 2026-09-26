@@ -867,6 +867,94 @@ pub struct DockerLocalRuntimeProofImageIdentityV2 {
     pub provenance_verifier: DockerLocalRuntimeProofProvenanceVerifierCommitmentV2,
 }
 
+/// Selects one supplied OCI blob against its typed v2 image identity.
+///
+/// The caller supplies the bytes and their expected size. This enum does not
+/// acquire bytes, parse OCI JSON, or establish provenance or custody.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DockerLocalRuntimeProofOciBlobKindV2 {
+    Config,
+    Manifest,
+    Index,
+}
+
+/// Stable result for the pure supplied-byte OCI blob verifier.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DockerLocalRuntimeProofOciBlobVerificationErrorV2 {
+    ImageIdentityInvalid,
+    IndexIdentityAbsent,
+    ByteSizeMismatch,
+    DigestMismatch,
+}
+
+impl DockerLocalRuntimeProofOciBlobVerificationErrorV2 {
+    #[must_use]
+    pub const fn code(self) -> &'static str {
+        match self {
+            Self::ImageIdentityInvalid => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_image_identity_invalid"
+            }
+            Self::IndexIdentityAbsent => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_index_identity_absent"
+            }
+            Self::ByteSizeMismatch => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_byte_size_mismatch"
+            }
+            Self::DigestMismatch => {
+                "docker_local_runtime_proof_run_manifest.v2_oci_blob_digest_mismatch"
+            }
+        }
+    }
+}
+
+impl fmt::Display for DockerLocalRuntimeProofOciBlobVerificationErrorV2 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.code())
+    }
+}
+
+impl std::error::Error for DockerLocalRuntimeProofOciBlobVerificationErrorV2 {}
+
+/// Verifies caller-supplied raw bytes against exactly one typed OCI digest.
+///
+/// This pure helper only compares a caller-supplied byte count and SHA-256
+/// digest. It does not obtain bytes, parse OCI JSON, inspect a runtime, or
+/// prove provenance, custody, adapter binding, or authority. The private run
+/// manifest declaration parser likewise verifies no OCI bytes.
+///
+/// # Errors
+///
+/// Returns a stable error when the image identity is invalid, an index is not
+/// declared, supplied bytes have a different size, or their SHA-256 digest does
+/// not equal the selected typed identity.
+pub fn verify_docker_local_runtime_proof_oci_blob_v2(
+    image_identity: &DockerLocalRuntimeProofImageIdentityV2,
+    kind: DockerLocalRuntimeProofOciBlobKindV2,
+    expected_byte_size: usize,
+    supplied_raw_bytes: &[u8],
+) -> Result<(), DockerLocalRuntimeProofOciBlobVerificationErrorV2> {
+    if !valid_image_identity_v2(image_identity) {
+        return Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ImageIdentityInvalid);
+    }
+    let expected_digest = match kind {
+        DockerLocalRuntimeProofOciBlobKindV2::Config => &image_identity.oci_config_digest.0,
+        DockerLocalRuntimeProofOciBlobKindV2::Manifest => &image_identity.oci_manifest_digest.0,
+        DockerLocalRuntimeProofOciBlobKindV2::Index => image_identity
+            .oci_index_digest
+            .as_ref()
+            .map(|value| &value.0)
+            .ok_or(DockerLocalRuntimeProofOciBlobVerificationErrorV2::IndexIdentityAbsent)?,
+    };
+    if supplied_raw_bytes.len() != expected_byte_size {
+        return Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::ByteSizeMismatch);
+    }
+    let actual_digest: [u8; 32] = Sha256::digest(supplied_raw_bytes).into();
+    if prefixed_sha256_v1(&actual_digest) != *expected_digest {
+        return Err(DockerLocalRuntimeProofOciBlobVerificationErrorV2::DigestMismatch);
+    }
+    Ok(())
+}
+
 /// Canonical private successor manifest. `v1_manifest` preserves v1 metadata
 /// and validation without changing the meaning of any v1 image field.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

@@ -106,6 +106,13 @@ expected image declaration supplied outside the manifest bytes. This checks
 declaration consistency only: no raw OCI bytes, descriptor sizes, provenance,
 in-image adapter bytes, or Docker state are observed or verified. No real driver
 selects v2, and every blocking runtime identity remains unset.
+A separate source-only helper checks the SHA-256 digest of caller-supplied
+bytes against a selected typed v2 config, manifest, or optional index digest.
+It compares byte length only with a caller-supplied expected size, not an
+authenticated descriptor size. It does not acquire those bytes or verify OCI
+JSON, descriptor linkage, platform, provenance, custody, or in-image adapter bytes.
+The declaration parser itself does not read OCI bytes. The helper cannot clear
+any blocking identity or authorize a real driver.
 
 The source-only supervisor now places the exact operation ID and computed
 launch-contract digest in two launch labels. It refuses forced CID-based

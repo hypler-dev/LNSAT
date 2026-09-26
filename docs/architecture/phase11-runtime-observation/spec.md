@@ -128,6 +128,13 @@ uses distinct Rust digest types, and requires a separately supplied expected
 image declaration when parsing. Its canonical digest proves no external
 authority or OCI content; the expected declaration is not authenticated by
 this parser.
+A separate pure helper may check the SHA-256 digest of caller-supplied bytes
+against the typed config, manifest, or optional index declaration. It compares
+the byte count only with a caller-supplied expected size; no v2 declaration
+contains an authenticated OCI descriptor size. That check does not obtain
+bytes, validate OCI JSON or descriptor links, authenticate the expected
+declaration, establish platform selection, or prove provenance or custody. It
+is not selected by the served driver.
 A later observer must prove raw-byte and descriptor verification, platform and
 entrypoint checks, cross-kind substitution denial, and zero fake-CLI calls for
 incomplete authority. Independent review and the operator packet's new source
