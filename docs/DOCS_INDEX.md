@@ -53,6 +53,8 @@ subsystem or proposal.
   — proposed durable event order, bounded cursor/resume, and watch scope.
 - [Proposed HCFG-5A protected configuration transitions](architecture/headless-protected-control/intent.md)
   — online apply authority design; owner security decision and implementation pending.
+- [Proposed HCFG-5B atomic local bootstrap](architecture/headless-local-bootstrap/intent.md)
+  — one-time first configuration and selected-store path/file admission binding; owner decision pending.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
