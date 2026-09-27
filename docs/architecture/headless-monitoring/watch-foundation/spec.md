@@ -13,9 +13,12 @@ An additive store migration creates a separate reference-only monitor journal
 and one durable store epoch. Source-evidence append paths named in the accepted
 implementation inventory append exactly one journal entry per committed source
 event inside the same SQLite transaction. Entries have one increasing local
-sequence. A failed index insert rolls back the source append; a failed source
-append produces no index entry. Retries that return an already committed source
-record create no duplicate journal entry.
+sequence. When one transaction appends several included source records, their
+journal sequences follow the actual source-append order and become visible
+together at commit. Family names, timestamps, or identifiers never reorder
+them. A failed index insert rolls back the source append; a failed source append
+produces no index entry. Retries that return an already committed source record
+create no duplicate journal entry.
 
 The first journal event is a post-migration commit. Pre-existing evidence is
 not backfilled, guessed from timestamps, or assigned a synthetic sequence.
@@ -34,14 +37,23 @@ is a closed enum. `source_id` is the exact stable source identifier for that
 family. No raw evidence body or caller-provided metadata is copied.
 
 The implementation inventory must identify every canonical commit path for
-approval requests, approval decisions, audit events, operation lifecycle
-events, operation attempts, receipts, and reconciliations. If any family lacks
-an immutable exact source identifier or an atomic append path, the producer
-stops and revises the accepted scope before coding that family. No partial
-family coverage may be described as the complete HCFG-4 watch. Local identity,
-session lifecycle, and session activity events are explicitly excluded from
-this consequential-action journal, including activity appended by exact reads.
-They require a separate family and retention decision before any watch claims
+approval requests, approval decisions, audit events, Phase 7 authorization
+attempts, authorization nonces, execution authorizations, capability
+consumptions, operations, operation attempts, receipts, reconciliations, and
+all Phase 7 state events. State-event targets include authorization nonce,
+execution authorization, operation, and operation attempt. In particular,
+one-time capability consumption and its `execution_authorization=consumed`
+state must enter the journal in the same transaction; no later operation state
+event stands in for them. If any included family lacks an immutable exact
+source identifier or an atomic append path, the producer stops and revises
+the accepted scope before coding that family. No partial family coverage may
+be described as the complete HCFG-4 watch. Local identity, session lifecycle,
+and session activity events are explicitly excluded from this
+consequential-action journal, including activity appended by exact reads.
+Other supporting evidence families, including packet envelopes, policy
+decisions, and recovery inspection, remain available through their existing
+contracts and are not claimed as watch events by HCFG-4B. Excluded families
+require separate scope and retention decisions before any watch claims
 coverage of them.
 
 A cursor is a versioned, strictly parsed `(store_epoch, last_sequence)` pair.
@@ -120,17 +132,25 @@ without interpreting transport loss as an outcome.
 
 - Migration tests: old store upgrades without synthetic history; metadata,
   epoch, and guard drift fail closed.
-- Atomicity tests: every inventoried append path, rollback, deduplication,
-  concurrent writers, and index failure.
+- Atomicity and ordering tests: every inventoried append path, rollback,
+  deduplication, concurrent writers, and index failure. Assert exact sequence
+  within each multi-record transaction, including nonce then active nonce
+  state; execution authorization then active authorization state then operation
+  then prepared operation state; capability consumption then consumed
+  authorization state; and receipt then reconciliation then attempt state then
+  operation state. Other inventoried multi-record paths need equivalent tests.
 - Replay tests: 100-entry page boundary, 10,000-entry retention boundary,
   contiguous order, empty tip, old/future/foreign/malformed cursors, restart,
   source drift, tampered/unknown family, malformed source ID, duplicate or
   missing sequence, and no partial page.
 - Exhaustion tests: seed the signed-integer boundary and prove no wrap, epoch
   reset, source commit, or index omission when the next sequence is unavailable.
-- Scope tests: session activity and identity/session lifecycle appends never
-  enter this journal or consume its bounded window. A copied database retains
-  its in-database epoch, documenting the separate restore gate.
+- Scope tests: every named Phase 7 primary family and all four state-event
+  target kinds enter the journal exactly once per new committed record. A
+  capability consumption and its consumed authorization state both enter in
+  transaction order. Session activity and identity/session lifecycle appends
+  never enter or consume the bounded window. A copied database retains its
+  in-database epoch, documenting the separate restore gate.
 - Regression tests: exact reads, evidence retention, approval mutation,
   operation lifecycle, and Phase 7/8/9/10/11 source gates.
 - Named full source, docs, public, migration, inventory, scanner, and

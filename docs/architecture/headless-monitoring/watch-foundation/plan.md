@@ -18,20 +18,40 @@ remain closed.
 
 ## Files and ownership
 
-- One source producer: `crates/lnsat-store/src/lib.rs` and a new numbered store
-  migration under `crates/lnsat-store/migrations/`, plus focused store tests.
+- One source producer: `crates/lnsat-store/src/lib.rs`,
+  `crates/lnsat-store/src/phase7_persistence.rs`,
+  `crates/lnsat-store/src/phase7_nonce.rs`,
+  `crates/lnsat-store/src/phase7_consumption.rs`,
+  `crates/lnsat-store/src/phase7_git_adapter.rs`, a new numbered store migration
+  under `crates/lnsat-store/migrations/`, and focused store tests. The producer
+  must revise this ownership list if the append-path inventory finds another
+  included writer; no journal integration may silently omit it.
 - One docs producer: this intent/spec/plan and minimal index/status links after
   implementation evidence. The Phase 11 operator packet remains the authority
   for runtime-proof state.
 - Inventory checksum changes only if required by the source-tree validator.
   No daemon, CLI, TypeScript, dependency, or product-surface file is in scope.
 
+## Pre-implementation source inventory
+
+The current source places approval request/decision and audit append paths in
+`lib.rs`; authorization attempts in `phase7_persistence.rs`; authorization
+nonces and nonce state events in `phase7_nonce.rs`; execution authorizations,
+capability consumptions, operations, and authorization/operation state events
+in `phase7_consumption.rs`; and operation attempts, receipts,
+reconciliations, and attempt/operation state events in
+`phase7_git_adapter.rs`. The shared `lnsat_phase7_state_events` table has all
+four target kinds. These locations establish file ownership, not proof that
+every call site, retry path, or transaction boundary has been enumerated.
+Step 2 must produce that exact inventory before a migration or source edit.
+
 ## Sequence
 
 1. Obtain human acceptance of this intent/spec; do not infer it from PR #33's
    HCFG-4A acceptance or green CI.
-2. Inventory every canonical source append and its transaction boundary.
-   Stop on missing exact identifiers, non-atomic paths, or family ambiguity.
+2. Inventory every canonical source append, its transaction boundary, and the
+   order of included records within each multi-record transaction. Stop on
+   missing exact identifiers, non-atomic paths, or family ambiguity.
 3. Add additive migration and drift guards for epoch, sequence, floor, closed
    family enum, exact source ID, and index immutability apart from bounded prune.
 4. Integrate each source append and journal insert in one transaction; preserve
@@ -107,3 +127,15 @@ None. Record any proposed scope change here before implementation.
   and reported PASS with no remaining P1/P2/P3 finding. Owner acceptance,
   source implementation, and merge remain pending; a proposal commit or push
   does not accept the contract.
+- 2026-09-26: source-path inspection found the original file ownership list
+  omitted `phase7_consumption.rs` and `phase7_git_adapter.rs`. Fresh read-only
+  GPT-5 Codex/OpenAI review found a P1: excluding capability consumption and
+  execution-authorization state would omit a committed one-time consumption
+  before any operation or attempt state event. The proposed family set and
+  file ownership now cover the named Phase 7 lifecycle records and all four
+  state-event targets. Exact append-call and rederivation inventory remains an
+  implementation prerequisite; this correction has no source behavior effect.
+- 2026-09-26: the same reviewer found a P2 test gap: contiguous journal
+  sequences alone would not prove the order of records committed together.
+  The spec now requires source-append order within each transaction and named
+  tests for nonce, authorization/operation, consumption, and receipt paths.
