@@ -118,6 +118,9 @@ supervisor's repeated target, executable, and endpoint checks and retains the
 opaque guard across the exact process boundary. It also binds the run-manifest
 Docker client, host Git verifier, local endpoint, and disposable-target paths
 and domain-separated filesystem identities to the supervisor's final context.
+The production seam rejects Docker or host Git paths that are symlinked,
+non-root-owned, or writable by the unprivileged daemon; host root is the local
+trust boundary. A test-only helper admits the fake user-owned executable.
 Hermetic tests use the existing fake executable and temporary Unix socket. No
 route, CLI, daemon configuration, package, or release selects the seam; it
 remains neither a runnable proof driver nor real Docker evidence.

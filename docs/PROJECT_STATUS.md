@@ -332,7 +332,10 @@ authenticated durable re-read only after the supervisor repeats those checks
 and retains the opaque guard across process creation and the supervised
 exchange. Every failure after claim commit marks or preserves
 `outcome_unknown`. Hermetic tests use the existing fake executable and
-temporary Unix socket. No route, CLI, daemon configuration, package, or release
+temporary Unix socket through a test-only helper. The production seam requires
+root-owned, non-writable Docker and host Git executable chains and an
+unprivileged daemon, with host root as the local trust boundary. No route, CLI,
+daemon configuration, package, or release
 selects this seam; it is not a runnable proof driver or real Docker evidence.
 Phase 11 remains incomplete; real Docker proof and later Phase 13/14 release
 gates remain separately closed.

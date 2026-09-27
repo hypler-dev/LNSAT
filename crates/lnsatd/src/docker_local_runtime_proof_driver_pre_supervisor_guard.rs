@@ -28,6 +28,12 @@ use lnsat_store::{
     Phase11DockerRuntimeCompositionClaimHandleV1, Phase11DockerRuntimeCompositionClaimV1,
     SqliteStore,
 };
+#[cfg(unix)]
+use nix::errno::Errno;
+#[cfg(unix)]
+use nix::fcntl::{AT_FDCWD, AtFlags};
+#[cfg(unix)]
+use nix::unistd::{AccessFlags, faccessat, geteuid};
 use sha2::{Digest, Sha256};
 use std::fmt;
 use std::fs;
@@ -214,6 +220,56 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
     guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
     supervisor_input: &DockerLocalSupervisorInputV1<'_>,
 ) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_runtime_proof_with_interposition_v1(
+        store,
+        guard_input,
+        supervisor_input,
+        validate_trusted_executable_path_v1,
+        |_| {},
+    )
+}
+
+/// Uses test-owned fake executables only in crate tests. Production always
+/// requires an immutable root-owned executable path before any Git or Docker
+/// client process can be reached through the final-guard seam.
+#[cfg(test)]
+pub(crate) fn supervise_docker_local_runtime_proof_with_fake_executables_v1(
+    store: &mut SqliteStore,
+    guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
+    supervisor_input: &DockerLocalSupervisorInputV1<'_>,
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_runtime_proof_with_interposition_v1(
+        store,
+        guard_input,
+        supervisor_input,
+        |_| Ok(()),
+        |_| {},
+    )
+}
+
+#[cfg(test)]
+pub(crate) fn supervise_docker_local_runtime_proof_with_test_interposition_v1(
+    store: &mut SqliteStore,
+    guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
+    supervisor_input: &DockerLocalSupervisorInputV1<'_>,
+    before_durable_guard: impl FnOnce(&mut SqliteStore),
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_runtime_proof_with_interposition_v1(
+        store,
+        guard_input,
+        supervisor_input,
+        |_| Ok(()),
+        before_durable_guard,
+    )
+}
+
+fn supervise_docker_local_runtime_proof_with_interposition_v1(
+    store: &mut SqliteStore,
+    guard_input: DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1<'_>,
+    supervisor_input: &DockerLocalSupervisorInputV1<'_>,
+    validate_executable_trust: impl Fn(&Path) -> Result<(), ()>,
+    before_durable_guard: impl FnOnce(&mut SqliteStore),
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
     let operation_id = guard_input
         .claim_handle
         .claim()
@@ -231,6 +287,12 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
         let _ = store.mark_phase11_docker_outcome_unknown_v1(&operation_id);
         return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
     }
+    if validate_executable_trust(supervisor_input.docker_executable).is_err()
+        || validate_executable_trust(supervisor_input.verifier_git_executable).is_err()
+    {
+        let _ = store.mark_phase11_docker_outcome_unknown_v1(&operation_id);
+        return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
+    }
 
     let result = supervise_docker_local_git_execution_with_final_authorization_v1(
         supervisor_input,
@@ -242,6 +304,7 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
             ) {
                 return Err(DockerLocalSupervisorErrorV1::OutcomeUnknown);
             }
+            before_durable_guard(store);
             guard_docker_local_runtime_proof_pre_supervisor_v1(store, guard_input)
                 .map_err(|_| DockerLocalSupervisorErrorV1::OutcomeUnknown)
         },
@@ -250,6 +313,59 @@ pub(crate) fn supervise_docker_local_runtime_proof_with_final_guard_v1(
         let _ = store.mark_phase11_docker_outcome_unknown_v1(&operation_id);
     }
     result
+}
+
+/// Requires an executable object and every ancestor to be outside the daemon
+/// user's write authority. Root is the local host-owner trust boundary; this
+/// check deliberately rejects root execution and user-owned test binaries.
+fn validate_trusted_executable_path_v1(path: &Path) -> Result<(), ()> {
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+        Err(())
+    }
+    #[cfg(unix)]
+    {
+        if !path.is_absolute()
+            || geteuid().is_root()
+            || fs::canonicalize(path).map_err(|_| ())? != path
+        {
+            return Err(());
+        }
+        let mut component = Some(path);
+        let mut executable = true;
+        while let Some(current) = component {
+            let metadata = fs::symlink_metadata(current).map_err(|_| ())?;
+            if metadata.file_type().is_symlink()
+                || metadata.uid() != 0
+                || metadata.mode() & 0o022 != 0
+            {
+                return Err(());
+            }
+            if executable {
+                if !metadata.file_type().is_file() || metadata.mode() & 0o111 == 0 {
+                    return Err(());
+                }
+            } else if !metadata.file_type().is_dir() {
+                return Err(());
+            }
+            if !matches!(
+                faccessat(AT_FDCWD, current, AccessFlags::W_OK, AtFlags::AT_EACCESS),
+                Err(Errno::EACCES | Errno::EPERM | Errno::EROFS)
+            ) {
+                return Err(());
+            }
+            component = current.parent();
+            executable = false;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(all(test, unix))]
+#[test]
+fn final_guard_accepts_root_owned_system_git_trust_chain() {
+    assert!(validate_trusted_executable_path_v1(Path::new("/usr/bin/git")).is_ok());
 }
 
 fn run_manifest_matches_final_supervisor_v1(

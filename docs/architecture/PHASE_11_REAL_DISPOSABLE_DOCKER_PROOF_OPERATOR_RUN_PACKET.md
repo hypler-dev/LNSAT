@@ -64,6 +64,13 @@ selects it. That missing runnable driver boundary is still blocking. A
 source-only manifest, admission digest, or unselected seam never substitutes
 for either requirement.
 
+The production seam rejects Docker client or host Git verifier executables
+unless their files and every ancestor directory are root-owned, non-symlinked,
+and not writable by the unprivileged daemon. Host root is the local trust
+boundary. The test-only helper admits a user-owned fake executable; it grants
+no production launch authority. A later run must verify this host trust chain
+as well as the exact executable digests.
+
 ## Required authenticated durable-store admission boundary
 
 After structural admission and a successful D4B2A claim commit, the later
@@ -101,8 +108,8 @@ reconciliation, never a blind Docker retry.
 | Public source revision                            | `b41aa756bccd85843ac540abfd927e8c5693d5fe`               | locked           | before build and immediately before process creation         |
 | Public source tree                                | `fecb4303cfe1b5224d3c1f1fbd8f2c86008e389c`               | locked           | before build and immediately before process creation         |
 | Proof-driver executable SHA-256                   | one built executable from the locked source              | `UNSET_BLOCKING` | stable file identity plus digest before process creation     |
-| Docker client executable SHA-256                  | one absolute regular executable                          | `UNSET_BLOCKING` | before preflight, launch, inspection, and cleanup            |
-| Host Git verifier executable SHA-256              | one absolute regular executable                          | `UNSET_BLOCKING` | before preflight, consequence inspection, and reconciliation |
+| Docker client executable SHA-256                  | one root-owned trusted-chain absolute regular executable | `UNSET_BLOCKING` | before preflight, launch, inspection, and cleanup            |
+| Host Git verifier executable SHA-256              | one root-owned trusted-chain absolute regular executable | `UNSET_BLOCKING` | before preflight, consequence inspection, and reconciliation |
 | Schema-2 profile digest                           | canonical `lnsat.runtime_profile.docker_local.v1` digest | `UNSET_BLOCKING` | load, admission, and immediately before process creation     |
 | Authority-configuration digest                    | exact profile-to-authority binding                       | `UNSET_BLOCKING` | admission and immediately before process creation            |
 | Adapter reference                                 | `adapter:docker-local:git-commit`                        | locked           | profile load, admission, launch, and result validation       |

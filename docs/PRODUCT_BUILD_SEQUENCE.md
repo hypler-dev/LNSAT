@@ -367,7 +367,10 @@ supervisor's final exact paths and domain-separated filesystem identities. It
 calls the one-shot durable verifier only after those repeated checks and retains
 the opaque guard across the exact process boundary. Every post-claim failure
 marks or preserves `outcome_unknown`. Hermetic tests use the existing fake
-executable and temporary Unix socket. No route, CLI, daemon configuration,
+executable and temporary Unix socket through a test-only helper. The production
+seam first requires root-owned, non-writable Docker and host Git executable
+chains and an unprivileged daemon; host root is the local trust boundary. No
+route, CLI, daemon configuration,
 package, or release selects the seam, so it is not a runnable proof driver or
 real Docker evidence.
 

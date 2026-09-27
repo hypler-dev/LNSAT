@@ -264,6 +264,11 @@ It binds the same payload and loaded-profile identities plus the run-manifest
 Docker client, host Git verifier, local endpoint, and disposable-target paths
 and domain-separated filesystem identities. It retains the opaque guard through
 the supervised exchange and marks every post-claim failure `outcome_unknown`.
+The production seam requires an unprivileged daemon and root-owned Docker and
+host Git executable files and ancestor directories that the daemon cannot
+write. It rejects symlinks and writable executable chains before supervisor
+preflight. This treats host root as the local trust boundary; the fake
+user-owned executable is admitted only by the test-only helper.
 Hermetic tests use only the existing fake executable and temporary Unix socket.
 No route, CLI, daemon configuration, package, or release selects the seam, so
 it is not a runnable proof driver or real Docker evidence.

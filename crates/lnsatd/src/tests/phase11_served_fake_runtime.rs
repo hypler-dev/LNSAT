@@ -10,7 +10,9 @@ use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
     DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1,
     guard_docker_local_runtime_proof_pre_supervisor_v1, runtime_path_identity_declaration_v1,
     runtime_target_identity_declaration_v1,
+    supervise_docker_local_runtime_proof_with_fake_executables_v1,
     supervise_docker_local_runtime_proof_with_final_guard_v1,
+    supervise_docker_local_runtime_proof_with_test_interposition_v1,
 };
 use crate::docker_local_runtime_proof_evidence::build_docker_local_runtime_proof_evidence_requirements_v1;
 use crate::docker_local_runtime_proof_execution_harness::build_docker_local_runtime_proof_execution_harness_v1;
@@ -41,7 +43,8 @@ use lnsat_store::{
 };
 use serde_json::json;
 use sha2::{Digest as _, Sha256};
-use std::os::unix::fs::PermissionsExt as _;
+use std::io::{Seek as _, SeekFrom};
+use std::os::unix::fs::{MetadataExt as _, PermissionsExt as _};
 use std::os::unix::net::UnixListener;
 use std::process::{Command, Stdio};
 
@@ -796,7 +799,7 @@ fn final_supervisor_guard_re_reads_durable_state_at_process_boundary() {
     let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
     let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
     let manifest = final_supervisor_guard_manifest(&fixture);
-    let supervised = supervise_docker_local_runtime_proof_with_final_guard_v1(
+    let supervised = supervise_docker_local_runtime_proof_with_fake_executables_v1(
         &mut store,
         DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
             run_manifest: &manifest,
@@ -831,13 +834,120 @@ fn final_supervisor_guard_re_reads_durable_state_at_process_boundary() {
 }
 
 #[test]
+fn final_supervisor_guard_rejects_durable_change_after_preflight_without_spawn() {
+    let fixture = ServedFakeRuntimeFixture::new("final-guard-durable-gap", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let manifest = final_supervisor_guard_manifest(&fixture);
+    let database_path = fixture.database_path.clone();
+    let operation_id = fixture.operation_id.clone();
+    let mut interposed = false;
+
+    assert_eq!(
+        supervise_docker_local_runtime_proof_with_test_interposition_v1(
+            &mut store,
+            DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
+                run_manifest: &manifest,
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                claim_handle: handle,
+                raw_session_token: &fixture.requester_session_token,
+                raw_csrf_token: &fixture.requester_csrf,
+            },
+            &DockerLocalSupervisorInputV1 {
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                docker_executable: &fixture.fake_docker_executable,
+                verifier_git_executable: Path::new(GIT_EXECUTABLE),
+                disposable_root: &fixture.git.root,
+            },
+            |_| {
+                interposed = true;
+                let mut other =
+                    SqliteStore::open(&database_path).expect("independent connection must open");
+                other
+                    .mark_phase11_docker_outcome_unknown_v1(&operation_id)
+                    .expect("durable state change must commit");
+            },
+        ),
+        Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
+    );
+    assert!(
+        interposed,
+        "change must occur after final filesystem preflight"
+    );
+    assert_eq!(fixture.run_count(), 0);
+    assert_phase11_unknown(&store, &fixture.operation_id);
+    let operation = store
+        .read_phase8_operation_v1(&fixture.operation_id)
+        .expect("operation read must work")
+        .expect("operation must exist");
+    assert!(operation.receipt_id.is_none());
+    assert!(operation.reconciliation_id.is_none());
+}
+
+#[test]
+fn final_supervisor_guard_rejects_same_inode_same_size_user_owned_rewrite() {
+    let fixture =
+        ServedFakeRuntimeFixture::new("final-guard-executable-rewrite", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let manifest = final_supervisor_guard_manifest(&fixture);
+    let before = fs::metadata(&fixture.fake_docker_executable).expect("original executable");
+    let digest_before = file_digest(&fixture.fake_docker_executable);
+    let bytes = fs::read(&fixture.fake_docker_executable).expect("original executable bytes");
+    let offset = bytes
+        .windows(b"set -eu".len())
+        .position(|window| window == b"set -eu")
+        .expect("fake executable shell option");
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .open(&fixture.fake_docker_executable)
+        .expect("same object must open for write");
+    file.seek(SeekFrom::Start(u64::try_from(offset + 4).unwrap()))
+        .expect("seek to shell option");
+    file.write_all(b"+").expect("rewrite same-size byte");
+    file.sync_all().expect("persist substituted byte");
+    let after = fs::metadata(&fixture.fake_docker_executable).expect("rewritten executable");
+    assert_eq!(
+        (before.dev(), before.ino(), before.len()),
+        (after.dev(), after.ino(), after.len())
+    );
+    assert_ne!(file_digest(&fixture.fake_docker_executable), digest_before);
+
+    assert_eq!(
+        supervise_docker_local_runtime_proof_with_final_guard_v1(
+            &mut store,
+            DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
+                run_manifest: &manifest,
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                claim_handle: handle,
+                raw_session_token: &fixture.requester_session_token,
+                raw_csrf_token: &fixture.requester_csrf,
+            },
+            &DockerLocalSupervisorInputV1 {
+                payload: &fixture.payload,
+                loaded_profile: &fixture.profile,
+                docker_executable: &fixture.fake_docker_executable,
+                verifier_git_executable: Path::new(GIT_EXECUTABLE),
+                disposable_root: &fixture.git.root,
+            },
+        ),
+        Err(DockerLocalSupervisorErrorV1::OutcomeUnknown)
+    );
+    assert_eq!(fixture.run_count(), 0);
+    assert_phase11_unknown(&store, &fixture.operation_id);
+}
+
+#[test]
 fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
     let fixture = ServedFakeRuntimeFixture::new("final-guard-auth-reject", FakeMode::Success);
     let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
     let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
     let manifest = final_supervisor_guard_manifest(&fixture);
     assert_eq!(
-        supervise_docker_local_runtime_proof_with_final_guard_v1(
+        supervise_docker_local_runtime_proof_with_fake_executables_v1(
             &mut store,
             DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
                 run_manifest: &manifest,
@@ -866,7 +976,7 @@ fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
     let manifest = final_supervisor_guard_manifest(&fixture);
     let drifted_profile = drifted_profile(&fixture);
     assert_eq!(
-        supervise_docker_local_runtime_proof_with_final_guard_v1(
+        supervise_docker_local_runtime_proof_with_fake_executables_v1(
             &mut store,
             DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
                 run_manifest: &manifest,
@@ -895,7 +1005,7 @@ fn final_supervisor_guard_rejects_auth_or_cross_input_drift_without_spawn() {
     let manifest = final_supervisor_guard_manifest(&fixture);
     let missing_docker = fixture.directory.path.join("missing-docker");
     assert_eq!(
-        supervise_docker_local_runtime_proof_with_final_guard_v1(
+        supervise_docker_local_runtime_proof_with_fake_executables_v1(
             &mut store,
             DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
                 run_manifest: &manifest,
@@ -952,7 +1062,7 @@ fn assert_final_manifest_substitution_rejected(
     mutate(&mut declarations);
     let manifest = pre_supervisor_guard_manifest_with_declarations(&fixture.profile, declarations);
     assert_eq!(
-        supervise_docker_local_runtime_proof_with_final_guard_v1(
+        supervise_docker_local_runtime_proof_with_fake_executables_v1(
             &mut store,
             DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
                 run_manifest: &manifest,
