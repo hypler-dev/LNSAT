@@ -26,7 +26,7 @@ Local installation owners, operators, `lnsatctl`, `lnsatd` Gateway, the SQLite a
 - Initial bootstrap, offline backup, inert restore, and owner recovery remain local-only host-owner-proof exceptions under the [accepted V1 requirement](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control). Their exact new authority contracts require separate decisions.
 - HCFG-3 content identity is not authenticated ownership, resource identity, OS enforcement, or activation evidence.
 - No activation occurs until HCFG-6 proves the selected platform's exact resource controls and grant/use identity checks. Unsupported or unverifiable controls deny activation.
-- Apply must not clear a stop or revocation. A future activation implementation must prove clone and stale-restore refusal with a trusted store anchor outside SQLite; this packet cannot receive activation acceptance until that anchor contract is approved.
+- Apply must not clear a stop or revocation. New-path copies and official restores of an initialized store must remain inert under the separately accepted HCFG-5B local bootstrap and selected-store path/file admission binding. SQLite evidence is not an independent anti-rollback root against the trusted host owner; same-location manual replacement by that actor is outside the V1 claim.
 - New mutation authority needs a separately accepted security decision and source packet before implementation. Human acceptance of this intent does not authorize merge, Docker proof, production use, packaging, or release.
 
 ## Non-goals
@@ -42,11 +42,11 @@ This design packet implements no route, store migration, CLI mutation, local boo
 
 ## Risks
 
-Highest risks are self-approval, stale or substituted declarations, target replacement after validation, active-pointer races, rollback regrant, copied-store replay, loss of audit evidence, and false claims that cancelling in-flight work proves non-execution. Failure must leave no newly active authority; the remaining state must be inspectable and recoverable through separately authorized paths. The copied-store and restore threat cannot be closed by a SQLite row or content digest alone.
+Highest risks are self-approval, stale or substituted declarations, target replacement after validation, active-pointer races, rollback regrant, new-path copied-store replay, loss of audit evidence, and false claims that cancelling in-flight work proves non-execution. Failure must leave no newly active authority; the remaining state must be inspectable and recoverable through separately authorized paths. Official restore publishes a fresh inert path; an initialized-store copy cannot pass the original path/file binding. Trusted host-owner manual same-location rollback is outside this local V1 claim.
 
 ## Acceptance evidence
 
-- Human owner acceptance of activation remains unavailable until separate exact records define the store-anchor lifecycle, initial bootstrap trust root, and fresh owner-decision challenge. This design can be reviewed now; only the pure non-activating comparator is eligible for a later bounded source proposal.
+- Human owner acceptance of activation remains unavailable until separate exact records define and receive acceptance for HCFG-5B atomic local bootstrap and the fresh owner-decision challenge, and selected-platform HCFG-6 enforcement is proven. This design can be reviewed now; only the pure non-activating comparator is eligible for a later bounded source proposal.
 - Contract review checks every transition class, denial case, generation comparison, audit atomicity, revocation, rollback, and in-flight outcome rule.
 - Later source packets supply focused store/Gateway/CLI tests, race and platform identity tests, broad repo gates, and fresh independent review. HCFG-6 and selected-target runtime proof remain separate release gates.
 
