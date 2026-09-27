@@ -51,6 +51,8 @@ subsystem or proposal.
   — proposed atomic current-state inventory and watch cutover.
 - [Proposed HCFG-4C monitoring watch](architecture/headless-monitoring-watch/intent.md)
   — proposed durable event order, bounded cursor/resume, and watch scope.
+- [Proposed HCFG-5A protected configuration transitions](architecture/headless-protected-control/intent.md)
+  — online apply authority design; owner security decision and implementation pending.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
