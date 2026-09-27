@@ -5,7 +5,7 @@
 Status: proposed
 Authority: [Versioned monitoring evidence-subject snapshot intent](intent.md)
 Owner: LNSAT project owner
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Scope and protected lanes
 
@@ -22,8 +22,9 @@ Protected lanes:
   project/resource scope before any implementation starts.
 - State and journal publication must remain one SQLite transaction; no second
   authorization or mutation path may be introduced.
-- The exact evidence-family mapping must be accepted before source work; this
-  proposal does not invent family names.
+- The exact evidence-to-subject mapping, immutable representative binding,
+  and served evidence readback must be accepted before source work; this
+  proposal does not invent family names or equate evidence and subject IDs.
 - The exact transport method, route, and fields remain owner-reviewable.
 - The snapshot must remain an evidence-subject ID inventory at one cutover.
   It represents only accepted currently unresolved subjects. Audit history
@@ -51,9 +52,10 @@ name exact source, test, migration, and documentation paths before editing.
    limits, transport mapping, transactional cutover, token, expiry, and
    redaction decisions.
 3. Create a separate source implementation packet naming the state tables,
-   per-family current-unresolved predicates and immutable representatives,
-   journal writer, snapshot materialization boundary, cleanup strategy, and
-   exact tests. Confirm the watch packet's exclusive cursor semantics
+   per-family current-unresolved predicates, trusted server cutover time,
+   immutable representatives and their served exact readback, journal writer,
+   snapshot materialization boundary, cleanup strategy, and exact tests.
+   Confirm the watch packet's exclusive cursor semantics
    (`sequence > cutover_cursor`) and store-activation reset behavior.
 4. Implement the bounded read handle and materialized pages in one SQLite
    transaction with the journal cutover watermark. Add deterministic fake data
@@ -125,3 +127,17 @@ expansion.
   remain owner decisions. A volatile store-activation generation now guards
   snapshot cutover cursors against copied-database lineage. No source work or
   owner acceptance is inferred from this amendment.
+- 2026-09-26: source inventory found state-event IDs distinct from monitored
+  subject IDs and approval expiry without a durable event. Revised proposal
+  binds both IDs, uses one trusted cutover time, and requires refresh at known
+  expiry boundaries. The earlier owner-acceptance request for PR #52 was
+  withdrawn; revised intent/spec, mapping, and read scope remain pending.
+- 2026-09-26: fresh review found nonce and execution-authorization expiry may
+  also pass before a read materializes an event. Time-derived predicates and
+  exact expiry readback are now required per accepted family; missing served
+  nonce read and mutating authorization read remain blockers. No owner
+  acceptance or implementation inferred.
+- 2026-09-26: revised six-document contract passed artifact validation,
+  Prettier, direction/public/inventory checks, and whitespace check. Fresh
+  independent GPT read-only review resolved the expiry/readback findings and
+  returned PASS with no remaining P1/P2/P3. Owner acceptance remains pending.

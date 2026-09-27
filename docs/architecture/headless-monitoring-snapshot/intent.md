@@ -6,7 +6,7 @@ Status: proposed
 Authority: this file
 Owner: LNSAT project owner
 Accepted by: pending
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Problem and evidence
 
@@ -30,8 +30,8 @@ Define a proposed, owner-reviewable, read-only snapshot contract that:
   permission, with installation-wide versus narrower scope recorded as an
   explicit owner decision;
 - materializes a bounded, deterministic inventory of currently unresolved
-  evidence subjects under one SQLite transaction that also records an opaque
-  journal cutover watermark;
+  evidence subjects under one SQLite transaction that also records one trusted
+  server observation time and an opaque journal cutover watermark;
 - paginates that inventory with opaque snapshot and page tokens, finite TTL and
   capacity, and explicit success, failure, and expiry results;
 - lets a client start the later watch strictly after the cutover watermark
@@ -58,12 +58,22 @@ handle does not approve, deny, activate, revoke, mutate, or widen authority.
   scope does not accept this enumerating snapshot.
 - The owner must choose installation-wide `ReadEvidence` access or a narrower
   project/resource scope. This packet does not make that choice implicitly.
-- The owner must accept the exact evidence-family mapping. Until then, this
-  packet does not claim which subject families are inventoryable.
+- The owner must accept the exact evidence-to-subject family mapping and a
+  served readback path that proves each selected immutable representative.
+  Until then, this packet does not claim which subject families are
+  inventoryable. Evidence IDs and subject IDs may differ.
 - The owner must accept a per-family current-unresolved membership predicate.
   Terminal and historical evidence remains subject to its accepted exact
   known-ID read path; absent paths remain an explicit implementation gap.
   Snapshot capacity must not grow monotonically with all retained history.
+- Approval-request expiry has no durable state event; nonce and execution
+  authorization expiry can pass before a read materializes an expiry event.
+  Every time-derived family predicate must use one trusted server cutover
+  time, expose an accepted non-mutating served exact expiry read, and define
+  boundary refresh. Existing nonce and authorization reads may materialize
+  expiry state and do not silently satisfy that read-only prerequisite.
+  Snapshot plus watch cannot claim continuously current eligibility as time
+  passes; absent qualifying readback blocks inclusion of that family.
 - The proposed transport route, method, and request/response fields remain
   owner-reviewable; this packet does not make them implementation-ready.
 - Snapshot rows and metadata are produced from one consistent SQLite
@@ -130,6 +140,10 @@ must never silently widen option 2 to installation-wide access.
   must not present that capacity error as an empty or successful recovery.
 - A retention gap may be mistaken for an outcome or complete audit history.
   The response fields and acceptance tests keep those claims closed.
+- Time-only expiry can change current eligibility before any journal event.
+  The cutover time, exact expiry readback, and refresh rule prevent a watch
+  consumer from treating a stale snapshot as current or an expired subject as
+  having a proved outcome.
 - A scope error could expose installation-wide evidence. Scope is an owner
   decision, checked at open and page time, and must fail closed.
 

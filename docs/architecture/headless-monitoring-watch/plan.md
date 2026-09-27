@@ -5,7 +5,7 @@
 Status: proposed
 Authority: [HCFG-4C monitoring watch intent](intent.md)
 Owner: LNSAT project owner
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Scope and protected lanes
 
@@ -22,6 +22,9 @@ Protected lanes:
   valid first or post-gap cursor exists.
 - The owner must choose installation-wide `ReadEvidence` or a narrower
   project/resource scope before source work begins.
+- The complete selected evidence-to-subject family map and served exact
+  evidence readback must be accepted before source work. Missing attempt and
+  nonce routes, plus unproved historical state/receipt readback, remain gates.
 - No new approval, control, configuration mutation, bootstrap, revocation,
   emergency, or action-authority path may be added.
 - No Docker, runtime observation, installer, release, deployment, production,
@@ -67,9 +70,11 @@ and test each multi-record commit before a migration or served route is added.
    retention, cursor, event-family mapping, and authorization decisions that
    are currently open.
 3. Create a separate source implementation packet with exact module ownership,
-   accepted event-family/source-ID/read-path table, current-unresolved snapshot
-   projection, transport framing, migration evidence, and a store-activation
-   generation that invalidates served cursors on restart or store reopen.
+   accepted evidence-family/source-ID/subject-ID/read-path table,
+   current-unresolved snapshot projection and trusted cutover time, transport
+   framing, migration evidence, and a store-activation generation that
+   invalidates served cursors on restart or store reopen. Close missing served
+   exact reads before claiming complete watch coverage.
 4. Implement journal append and publication atomically, then add the bounded
    read-only long-poll page and focused store/served tests. Cover every named
    multi-record transaction in source-append order and copied/restored store
@@ -158,3 +163,22 @@ cursor semantics, or source scope must be recorded here before expansion.
   passed with local loopback access. The first check's earlier source gates
   through Phase 11 readiness passed; no single subsequent `npm run check`
   exit-zero result is claimed.
+- 2026-09-26: read-only source inventory found immutable `ste_` state-event
+  IDs differ from their target subject IDs; `cpc_`, `rcp_`, and `rec_` records
+  also target other subjects. Attempt and nonce exact served reads are absent,
+  and existing aggregate reads require proof of historical event coverage.
+  Approval expiry is time-derived, not a journal append. The earlier PR #52
+  owner-acceptance request was withdrawn. No source work opened.
+- 2026-09-26: fresh independent review identified time-only nonce and
+  execution-authorization expiry before materialization. The companion
+  snapshot now requires a per-family non-mutating exact expiry read and
+  boundary refresh; no served nonce read exists and the existing authorization
+  read may mutate. This design remains proposed.
+- 2026-09-26: six artifact validators, Prettier, `docs:direction:check`
+  (31/31), `public:check` (871 files), legacy inventory (2,122 occurrences in
+  295 files), and `git diff --check` passed on the revised seven-file diff.
+  Fresh independent GPT read-only reviewer returned PASS, no remaining
+  P1/P2/P3 after the expiry/readback corrections. PR #52's prior exact head
+  `288745c` passed CI run `36296555867`; revised-head CI remains pending.
+  Owner acceptance, source implementation, merge, runtime, and release remain
+  separately closed.

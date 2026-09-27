@@ -5,7 +5,7 @@
 Status: proposed
 Intent: [Versioned monitoring evidence-subject snapshot intent](intent.md)
 Owner: LNSAT project owner
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Protocol and limits
 
@@ -101,6 +101,7 @@ snapshot.opened.v1 {
   item_count: nonnegative-integer <= 10000,
   page_count: positive-integer <= 200,
   cutover_cursor: opaque-string,
+  cutover_observed_at: RFC3339-string,
   expires_at: RFC3339-string,
   audit_history_complete: false,
   inventory_semantics: "unresolved_evidence_subject_ids_at_cutover"
@@ -141,6 +142,7 @@ snapshot.page.v1 {
   done: boolean,
   items: [snapshot.item.v1],
   cutover_cursor: opaque-string,
+  cutover_observed_at: RFC3339-string,
   expires_at: RFC3339-string,
   audit_history_complete: false,
   inventory_semantics: "unresolved_evidence_subject_ids_at_cutover"
@@ -162,48 +164,80 @@ the token usable for that retry and never advances the client.
 
 ```text
 snapshot.item.v1 {
-  family: accepted-versioned-family-string,
+  subject_family: accepted-versioned-subject-family-string,
   subject_id: opaque-string,
+  evidence_family: accepted-versioned-evidence-family-string,
+  evidence_id: opaque-string,
   evidence_digest: "sha256:" plus 64 lowercase hex characters
 }
 ```
 
-`family` must be one of the exact versioned evidence families accepted by the
-owner. The mapping is currently **OPEN**; no implementation may invent or
-silently broaden it. `subject_id` identifies the evidence subject under that
-family. `evidence_digest` is mandatory and uses the same domain-separated
-canonical public-safe evidence representation as the HCFG-4C watch. The
-snapshot contains no generic state object, optional evidence reference,
-source bytes, or mutable domain object. Each `(family, subject_id)` appears
-exactly once. The subject ID must equal the exact identifier of the
-independently rederived immutable source-evidence record for that family;
-the digest is computed only after that equality and all linked evidence are
-verified. A duplicate, missing source, rederivation failure, family mismatch,
-or digest mismatch aborts the entire open before a handle is published.
-Mutable aggregate views cannot be snapshot items.
+Both families must belong to the accepted closed mapping. The mapping remains
+**OPEN**; no implementation may invent or silently broaden it. `subject_id`
+names the monitored primary subject. `evidence_id` names the immutable record
+selected to represent that subject at cutover. They may be equal, but equality
+is not a general invariant: state events have their own immutable IDs. The
+source read must rederive the evidence record, its digest, and its binding to
+the subject. `evidence_digest` uses the same domain-separated canonical
+public-safe evidence representation as HCFG-4C. The snapshot contains no
+generic state object, source bytes, or mutable domain object. Each
+`(subject_family, subject_id)` appears exactly once. A duplicate, missing
+source, rederivation failure, subject-binding mismatch, family mismatch, or
+digest mismatch aborts the entire open before a handle is published.
 
 Membership is a **current-unresolved projection**, not every retained
-immutable evidence record. For each accepted family, the owner must accept an
-exact predicate over current canonical state and a deterministic rule selecting
-one immutable record that represents each unresolved subject. A terminal
-subject leaves the next snapshot inventory. Its source evidence remains
-available only through an accepted exact known-ID path; any missing path is an
-implementation gap. The predicate must cover pending approval and
+immutable evidence record. For each accepted subject family, the owner must
+accept an exact predicate over canonical state and a deterministic rule
+selecting one immutable record that represents each included subject. A
+terminal subject leaves the next snapshot inventory. Its source evidence
+remains available only through an accepted exact known-ID path; any missing
+path is an implementation gap. The predicate must cover pending approval and
 uncertain operation/authorization states in the accepted family set; a missing
 predicate or unsupported source binding blocks implementation of that family.
+
+The snapshot samples one trusted server `cutover_observed_at` and uses it for
+all time-based predicates. The accepted family map must name every expiry or
+other time-derived membership predicate, its canonical timestamp source, and
+an authenticated non-mutating served exact read that exposes the next relevant
+boundary. Absent that read, the family cannot be included or called current. A request
+with no decision and `expires_at > cutover_observed_at` may be currently
+pending; an expired request is outside that active pending predicate, but is
+not thereby decided or erased from exact historical evidence. Existing
+approval-request rows have immutable `requested` status and no durable expiry
+event. Nonce and execution-authorization expiry can also pass before a later
+read or transition materializes a durable `expired` event. That later event
+cannot retroactively make the watch continuously current across the boundary.
+
+Time passing after cutover is not itself a journal append. Snapshot plus watch
+therefore does **not** maintain a continuously current eligibility view. For
+an approval-request subject, clients must exact-read that request by
+`subject_id` through the accepted HCFG-4A route to learn its expiry, regardless
+of the snapshot representative. For a nonce or execution-authorization
+subject, clients need a separately accepted non-mutating served expiry read.
+The nonce route is missing and the existing authorization read may materialize
+`expired` state, so neither qualifies under this proposed read-only contract.
+A denied,
+missing, drifted, or failed exact read leaves current eligibility unknown.
+Clients must refresh the server snapshot by the 15-minute handle expiry and at
+each known subject-expiry boundary, and must not claim current eligibility if
+expiry is unknown. A missing time-derived item never implies an outcome. A
+later durable expiry-event design requires separate owner acceptance and a
+compatibility review.
+
 The 10,000-item cap applies to this current projection. If it is exceeded,
 `capacity_exceeded` blocks snapshot recovery rather than silently truncating
 the inventory; a supported V1 claim must document and test that capacity limit.
 
-Items are sorted by canonical UTF-8 byte order of `family`, then
-`subject_id`, then `evidence_digest`. Clients must not infer semantic priority
-from this order. Later exact reads may reveal new related evidence, but this
-snapshot item's bound immutable record and digest cannot change. Missing or
+Items are sorted by canonical UTF-8 byte order of `subject_family`, then
+`subject_id`, then `evidence_family`, `evidence_id`, and `evidence_digest`.
+Clients must not infer semantic priority from this order. Later exact reads
+may reveal new related evidence, but this snapshot item's bound immutable
+record and digest cannot change. Missing or
 drifted source evidence fails closed at page read.
 
 Every page read independently rederives each included source record through
-the accepted read path and rechecks the stored family, subject ID, and digest.
-One missing or drifted record fails the whole page with no partial items or
+the accepted read path and rechecks both families, evidence ID, subject
+binding, and digest. One missing or drifted record fails the whole page with no partial items or
 continuation token. The materialized item cannot substitute for source truth.
 
 The family mapping and digest calculation are subject to the accepted HCFG-4A
@@ -246,8 +280,9 @@ path, token contents, or evidence payload beyond the closed fields shown.
 Opening a snapshot must use one bounded SQLite `IMMEDIATE` transaction, or an
 equivalent serializing boundary, that:
 
-1. establishes the accepted scope and reads the complete bounded current-
-   unresolved evidence-subject ID inventory;
+1. establishes the accepted scope, samples one trusted
+   `cutover_observed_at`, and reads the complete bounded current-unresolved
+   subject inventory using that timestamp for every time-based predicate;
 2. materializes the canonical item order and the finite page count;
 3. records the journal epoch and the current opaque journal watermark; and
 4. publishes the ephemeral handle only after all three values are consistent.
@@ -255,8 +290,10 @@ equivalent serializing boundary, that:
 The snapshot projection and watch event-family mapping must be reconciled in
 one accepted table. The snapshot maps each currently unresolved subject to an
 immutable representative record; the watch covers every accepted new source
-event, including terminal transitions. Historical and terminal records are
-not promised in the snapshot. State changes that publish monitoring journal
+event, including durable terminal transitions. Historical and terminal records
+are not promised in the snapshot. Time-only expiry after cutover is outside
+the event journal and requires a fresh snapshot before a client claims current
+eligibility. State changes that publish monitoring journal
 entries must update the evidence state and journal in the same SQLite
 transaction. A writer that commits before the snapshot transaction's cutover
 is reflected in the current-state projection, whether that means inclusion,
@@ -310,10 +347,18 @@ The implementation packet must provide focused deterministic tests for:
 - accepted scope and active authorization at open and every page;
 - a complete bounded inventory under one SQLite transaction;
 - accepted per-family current-unresolved predicates, deterministic immutable
-  representative binding, terminal removal, and explicit over-capacity denial;
+  representative binding, terminal removal, one trusted cutover time, and
+  over-capacity denial; for approval requests, nonces, and execution
+  authorizations, expiry at/before versus after cutover, post-cutover
+  time-only expiry without an event, read-triggered expiry materialization,
+  exact-read denial, missing/drifted evidence, refresh at an expiry boundary,
+  and no current-eligibility claim after unknown expiry or absent non-mutating
+  served read; existing read-triggered state changes cannot satisfy a
+  read-only exact-read prerequisite;
 - deterministic ordering and page boundaries across repeated opens;
-- unique exact `(family, subject_id)` binding to an independently rederived
-  immutable record and matching `sha256:` digest at open and page time;
+- unique exact `(subject_family, subject_id)` binding to an independently
+  rederived `(evidence_family, evidence_id)` and matching `sha256:` digest at
+  open and page time;
 - `next_page_token` iff a page is nonterminal, byte-identical retry until
   expiry, and no client advancement after a failed or lost page;
 - opaque token handling, protocol/epoch binding, and no existence oracle;

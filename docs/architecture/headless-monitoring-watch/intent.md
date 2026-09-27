@@ -6,7 +6,7 @@ Status: proposed
 Authority: this file
 Owner: LNSAT project owner
 Accepted by: pending
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Problem and evidence
 
@@ -32,6 +32,11 @@ current-state inventory and cutover cursor before the first watch request or
 after a retention gap. The watch then gives an authenticated reader an opaque
 resume cursor, a durable total order, explicit gaps, and bounded page behavior.
 Neither the snapshot nor the watch may infer an outcome from a missing event.
+The snapshot is current only at its trusted server cutover time. Approval,
+nonce, and execution-authorization expiry can cross a boundary without a
+journal entry until a later read or transition. A consumer must refresh at
+known expiry boundaries and cannot derive continuously current eligibility
+from the watch alone.
 
 The contract remains compatible with a later `lnsatctl` JSONL consumer. It does
 not itself add a mutation authority, runtime integration, installer behavior,
@@ -52,6 +57,12 @@ or a supported-platform claim.
 - PR #33's source implementation and the proposed HCFG-4B snapshot remain
   prerequisites. Acceptance of exact known-ID reads does not accept watch or
   snapshot enumeration.
+- Every selected evidence family needs an accepted source-to-subject binding
+  and served readback that substantiates that immutable event. Existing subject
+  reads do not automatically expose historical state-event bytes. Missing
+  authorization-attempt and nonce reads block a complete served family set;
+  nonce and authorization expiry also need non-mutating readback or a separately
+  accepted durable-expiry writer.
 - The watch is read-only. It cannot approve, deny, activate, revoke, mutate
   configuration, or widen action authority.
 - The server is the source of event order and cursor meaning. Client clocks,
@@ -109,6 +120,9 @@ or a supported-platform claim.
 - Authorization changes during a watch can expose later evidence. Each emitted
   event must pass the active read check; denial or authorization uncertainty
   terminates the stream without implying an event outcome.
+- A journal that omits a consequential source family can advance past an
+  unseen event. The accepted family map and its exact readback must be proved
+  before a complete HCFG-4 watch claim.
 
 ## Acceptance evidence
 
@@ -118,7 +132,8 @@ specification, and authorize a separate source implementation packet. Its
 tests must prove atomic evidence binding, total ordering, exclusive resume,
 retention gaps, unknown cursors, disconnects, bounded long-poll resources,
 active authorization, redaction, and the rule that missing events never imply
-outcome.
+outcome. They must also prove complete selected-family coverage and distinct
+evidence/subject IDs where source records target another aggregate.
 
 ## Source-of-truth links
 

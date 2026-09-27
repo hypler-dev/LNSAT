@@ -5,7 +5,7 @@
 Status: proposed
 Intent: [HCFG-4C watch intent](intent.md)
 Owner: LNSAT project owner
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Behavior
 
@@ -29,15 +29,16 @@ visibility, not missing historical event continuity. The gap remains visible to
 the operator. PR #33's accepted exact-ID readback cannot by itself establish a
 complete inventory or cutover cursor.
 
-Every event binds one closed subject family and exact subject ID to one
-independently rederived immutable source-evidence record and its mandatory
-canonical digest. The subject ID and referenced record ID must be identical.
-The journal row contains no raw payload. Before returning an event, the server
-rederives the source record through its accepted read path and compares family,
-ID, and digest. Missing, drifted, or mismatched evidence fails the whole page
-closed. A watch event does not itself establish approval, execution, receipt,
-reconciliation, or container cleanup; clients use exact evidence readback for
-those claims.
+Every event binds one immutable source-evidence record to one monitored
+subject and a mandatory canonical digest. The source evidence ID and subject
+ID are distinct when the record is a state event, consumption, receipt, or
+reconciliation. The journal row contains no raw payload; its subject binding
+comes from the canonical writer, never a caller-supplied field. Before
+returning an event, the server rederives the source record, subject binding,
+and digest through an accepted read path. Missing,
+drifted, or mismatched evidence fails the whole page closed. A watch event
+does not itself establish approval, execution, receipt, reconciliation, or
+container cleanup; clients use accepted exact readback for current claims.
 
 ## Interfaces and contracts
 
@@ -75,15 +76,16 @@ A successful page has only these top-level fields:
 }
 ```
 
-Each event has exactly `cursor`, `family`, `subject_id`, and
-`evidence_digest`. `family` comes from an accepted closed enum; `subject_id`
-uses that family's exact content-bound identifier; `evidence_digest` is
-`sha256:` plus 64 lowercase hex characters over the same domain-separated
+Each event has exactly `cursor`, `evidence_family`, `evidence_id`,
+`subject_family`, `subject_id`, and `evidence_digest`. Both families come from
+the accepted closed map. `evidence_id` is the immutable source-record ID;
+`subject_id` is the exact identifier of the monitored primary subject.
+`evidence_digest` is `sha256:` plus 64 lowercase hex characters over the same domain-separated
 canonical public-safe evidence representation used by HCFG-4B. The full
 source-evidence record must still rederive exactly before that digest is
 emitted. No raw record, path, actor/session secret, command,
 configuration, or private Docker evidence appears in a watch page. The exact
-initial family-to-source-record mapping remains an owner decision; no source
+initial evidence-to-subject/readback mapping remains an owner decision; no source
 implementation may add a family before that mapping is accepted and tested.
 
 The implementation inventory must resolve the candidate consequential-action
@@ -96,8 +98,47 @@ entries in their source transaction; a later operation event cannot stand in
 for either. Local identity/session lifecycle and session-activity records are
 excluded from this proposed watch. Other support records require separate
 scope review. The accepted mapping must name each family's exact immutable
-source ID, rederivation path, and current-unresolved snapshot predicate or
-explicit reason that the family has no current-state representative.
+source ID, subject binding, rederivation path, served exact evidence readback,
+and current-unresolved snapshot predicate or explicit reason that the family
+has no current-state representative.
+
+### Candidate source-to-subject map and readback gaps
+
+This is an inventory for owner review, not an accepted family enum. `ste_`
+records all use the shared Phase 7 state-event table; their subject IDs are
+their target IDs, not their own event IDs. Existing served reads of a current
+subject do not prove the bytes of every earlier state event.
+
+| Candidate evidence                                                    | Immutable evidence ID              | Monitored subject ID  | Existing served related read (event coverage unproved)                              |
+| --------------------------------------------------------------------- | ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------- |
+| Approval request                                                      | `apr_…`                            | request `apr_…`       | PR #33 exact approval-request read, unmerged                                        |
+| Approval decision                                                     | `apd_…`                            | request `apr_…`       | PR #33 exact decision read by `apd_…`, unmerged                                     |
+| Audit event                                                           | `aud_…`                            | audit event `aud_…`   | PR #33 exact audit-event read, unmerged                                             |
+| Authorization attempt                                                 | `aat_…`                            | attempt `aat_…`       | **Missing served exact read**                                                       |
+| Authorization nonce and nonce state                                   | `non_…`, `ste_…`                   | nonce `non_…`         | **Missing served exact read**                                                       |
+| Execution authorization, consumed capability, and authorization state | `xau_…`, `cpc_…`, `ste_…`          | authorization `xau_…` | Existing exact authorization read may materialize expiry; non-mutating read missing |
+| Operation, operation state, receipt, and reconciliation               | `opn_…`, `ste_…`, `rcp_…`, `rec_…` | operation `opn_…`     | Existing exact operation read; verify each linked record                            |
+| Operation attempt and attempt state                                   | `opa_…`, `ste_…`                   | attempt `opa_…`       | Existing operation-scoped exact attempt read; verify each linked transition         |
+
+The missing authorization-attempt and nonce reads block served inclusion of
+those candidate families. A separate accepted exact-read packet may add them;
+this proposal cannot silently omit them from a claimed complete HCFG-4 watch
+or advance a cursor past them. The implementation inventory must prove which
+historical receipt/reconciliation and state records existing aggregate reads
+actually expose. If current aggregate readback cannot substantiate a selected
+family, add a separately accepted exact evidence read or revise the owner-
+accepted family set before source implementation.
+
+Approval, nonce, and execution-authorization expiry can cross a time boundary
+without a journal append; nonce and authorization expiry events may be
+materialized by a later read. The accepted family map must record every such
+time-derived predicate and non-mutating served exact expiry read. The existing
+nonce read is unserved; the served authorization read may append an expiry
+event, so it cannot silently satisfy that read-only prerequisite. A separately
+accepted non-mutating read or durable-expiry writer is needed before either
+family can join a complete current-state claim. HCFG-4B clients refresh at
+known boundaries; a watch event alone cannot prove continuous current
+eligibility.
 
 The request cursor denotes the **last delivered event**, or the atomic
 snapshot cutover position. The server returns only events with sequence greater
@@ -202,8 +243,9 @@ separately accepted filter, cursor binding, and snapshot contract; this spec
 must be revised before implementation. Existing session headers authorize
 each request. Cursor possession grants nothing. Do not log raw cursors, session
 headers, event IDs, or evidence contents; diagnostics may record fixed error
-codes and bounded counts. Journal storage contains only family, exact subject
-ID, canonical evidence digest, sequence, epoch, and publication metadata.
+codes and bounded counts. Journal storage contains only accepted evidence and
+subject families/IDs, canonical evidence digest, sequence, epoch, and
+publication metadata.
 
 ## Compatibility and migration
 
@@ -234,8 +276,9 @@ source-record mappings, then prove:
   including nonce/state, authorization/state/operation/state,
   consumption/consumed-state, and receipt/reconciliation/attempt-state/
   operation-state; signed sequence exhaustion rolls back source and journal;
-- exact subject family/ID and canonical digest rederive before publication and
-  before every page; mismatches and tampering return no event;
+- exact evidence family/ID, subject family/ID binding, and canonical digest
+  rederive before publication and before every page; mismatches and tampering
+  return no event; every selected family has served exact evidence readback;
 - one total order under concurrent writers, with no timestamp ordering claim;
 - snapshot cutover has no gap to the first watch page; exclusive cursor resume,
   crash replay, empty-page cursor stability, and no skip on partial delivery;
