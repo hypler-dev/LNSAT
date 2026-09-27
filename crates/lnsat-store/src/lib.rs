@@ -4031,6 +4031,30 @@ impl SqliteStore {
             .transpose()
     }
 
+    /// Reads one exact approval request after recovering its persisted project.
+    ///
+    /// Invalid and absent identifiers return the same absence. The recovered
+    /// scope is passed through the existing project-scoped rederivation path;
+    /// no raw row or caller-selected project is exposed.
+    ///
+    /// # Errors
+    ///
+    /// Returns stable error when database access fails or persisted evidence
+    /// no longer rederives exactly.
+    pub fn read_approval_request_by_id_v1(
+        &self,
+        approval_request_id: &str,
+    ) -> Result<Option<ApprovalRequestStoreRecordV1>, ApprovalRequestStoreErrorV1> {
+        if !is_exact_evidence_id_v1(approval_request_id, "apr_") {
+            return Ok(None);
+        }
+        let Some(row) = select_approval_request_by_id(&self.connection, approval_request_id)?
+        else {
+            return Ok(None);
+        };
+        self.read_approval_request_v1(&row.project_ref, approval_request_id)
+    }
+
     /// Reads one approval request through exact project and resource scope.
     ///
     /// Cross-scope and missing records are indistinguishable.
@@ -4146,6 +4170,29 @@ impl SqliteStore {
         row.as_ref()
             .map(|value| decode_approval_decision_record(&self.connection, value))
             .transpose()
+    }
+
+    /// Reads one exact approval decision through its persisted project scope.
+    ///
+    /// Invalid and absent identifiers return the same absence; the existing
+    /// project-scoped path rederives every linked source before returning.
+    ///
+    /// # Errors
+    ///
+    /// Returns stable error when database access fails or persisted evidence
+    /// no longer rederives exactly.
+    pub fn read_approval_decision_by_id_v1(
+        &self,
+        approval_decision_id: &str,
+    ) -> Result<Option<ApprovalDecisionStoreRecordV1>, ApprovalDecisionStoreErrorV1> {
+        if !is_exact_evidence_id_v1(approval_decision_id, "apd_") {
+            return Ok(None);
+        }
+        let Some(row) = select_approval_decision_by_id(&self.connection, approval_decision_id)?
+        else {
+            return Ok(None);
+        };
+        self.read_approval_decision_v1(&row.project_ref, approval_decision_id)
     }
 
     /// Reads one approval decision through exact project and resource scope.
@@ -4265,6 +4312,28 @@ impl SqliteStore {
         row.as_ref()
             .map(|value| decode_audit_event_record(&self.connection, value))
             .transpose()
+    }
+
+    /// Reads one exact audit event through its persisted project scope.
+    ///
+    /// Invalid and absent identifiers return the same absence; the existing
+    /// project-scoped path rederives the complete source chain before return.
+    ///
+    /// # Errors
+    ///
+    /// Returns stable error when database access fails or persisted evidence
+    /// no longer rederives exactly.
+    pub fn read_audit_event_by_id_v1(
+        &self,
+        event_id: &str,
+    ) -> Result<Option<AuditEventStoreRecordV1>, AuditEventStoreErrorV1> {
+        if !is_exact_evidence_id_v1(event_id, "aud_") {
+            return Ok(None);
+        }
+        let Some(row) = select_audit_event_by_id(&self.connection, event_id)? else {
+            return Ok(None);
+        };
+        self.read_audit_event_v1(&row.project_ref, event_id)
     }
 
     /// Reads one audit event through exact project and resource scope.
@@ -8339,6 +8408,15 @@ fn is_sha256_identity(value: &str) -> bool {
         && value[7..]
             .bytes()
             .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
+}
+
+fn is_exact_evidence_id_v1(value: &str, prefix: &str) -> bool {
+    value.len() == prefix.len() + 64
+        && value.strip_prefix(prefix).is_some_and(|digest| {
+            digest
+                .bytes()
+                .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
+        })
 }
 
 fn recovery_disposition_from_str(value: &str) -> Option<SqliteRecoveryDispositionV1> {
@@ -16346,6 +16424,34 @@ mod tests {
             .append_approval_request_v1(&request)
             .expect("approval request must append");
 
+        assert_eq!(
+            store
+                .read_approval_request_by_id_v1(&request.approval_request_id)
+                .expect("exact request read must succeed")
+                .expect("request must exist")
+                .request,
+            request
+        );
+        for invalid in [
+            "apr_",
+            "apd_0000000000000000000000000000000000000000000000000000000000000000",
+            "apr_000000000000000000000000000000000000000000000000000000000000000G",
+            "apr_0000000000000000000000000000000000000000000000000000000000000000/extra",
+        ] {
+            assert!(
+                store
+                    .read_approval_request_by_id_v1(invalid)
+                    .unwrap()
+                    .is_none()
+            );
+        }
+        assert!(
+            store
+                .read_approval_request_by_id_v1(&format!("apr_{}", "0".repeat(64)))
+                .unwrap()
+                .is_none()
+        );
+
         assert!(
             store
                 .read_approval_request_v1("project:other", &request.approval_request_id)
@@ -16373,6 +16479,43 @@ mod tests {
                 .expect("scoped approval request must exist")
                 .request,
             request
+        );
+    }
+
+    #[test]
+    fn malformed_exact_evidence_ids_never_query_storage() {
+        let database = TestDatabase::new("malformed-exact-evidence-id");
+        let store = SqliteStore::open(&database.path).expect("database must bootstrap");
+        store
+            .connection
+            .execute_batch(
+                "DROP TABLE lnsat_approval_requests;
+                 DROP TABLE lnsat_approval_decisions;
+                 DROP TABLE lnsat_audit_events;",
+            )
+            .expect("test must remove evidence tables");
+
+        assert!(
+            store
+                .read_approval_request_by_id_v1("apr_invalid")
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            store
+                .read_approval_decision_by_id_v1("apd_invalid")
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            store
+                .read_audit_event_by_id_v1("aud_invalid")
+                .unwrap()
+                .is_none()
+        );
+        assert_eq!(
+            store.read_approval_request_by_id_v1(&format!("apr_{}", "0".repeat(64))),
+            Err(ApprovalRequestStoreErrorV1::PersistenceFailed)
         );
     }
 
@@ -16428,6 +16571,10 @@ mod tests {
             .expect("test must create request drift");
         assert_eq!(
             store.read_approval_request_v1(&request.project_ref, &request.approval_request_id),
+            Err(ApprovalRequestStoreErrorV1::EvidenceDrift)
+        );
+        assert_eq!(
+            store.read_approval_request_by_id_v1(&request.approval_request_id),
             Err(ApprovalRequestStoreErrorV1::EvidenceDrift)
         );
     }
@@ -16608,6 +16755,34 @@ mod tests {
             .append_approval_decision_evidence_for_test_v1(&decision)
             .expect("approval decision must append");
 
+        assert_eq!(
+            store
+                .read_approval_decision_by_id_v1(&decision.approval_decision_id)
+                .expect("exact decision read must succeed")
+                .expect("decision must exist")
+                .decision,
+            decision
+        );
+        for invalid in [
+            "apd_",
+            "apr_0000000000000000000000000000000000000000000000000000000000000000",
+            "apd_000000000000000000000000000000000000000000000000000000000000000G",
+            "apd_0000000000000000000000000000000000000000000000000000000000000000/extra",
+        ] {
+            assert!(
+                store
+                    .read_approval_decision_by_id_v1(invalid)
+                    .unwrap()
+                    .is_none()
+            );
+        }
+        assert!(
+            store
+                .read_approval_decision_by_id_v1(&format!("apd_{}", "0".repeat(64)))
+                .unwrap()
+                .is_none()
+        );
+
         assert!(
             store
                 .read_approval_decision_v1("project:other", &decision.approval_decision_id)
@@ -16726,6 +16901,10 @@ mod tests {
             .expect("test must create decision drift");
         assert_eq!(
             store.read_approval_decision_v1(&request.project_ref, &decision.approval_decision_id,),
+            Err(ApprovalDecisionStoreErrorV1::EvidenceDrift)
+        );
+        assert_eq!(
+            store.read_approval_decision_by_id_v1(&decision.approval_decision_id),
             Err(ApprovalDecisionStoreErrorV1::EvidenceDrift)
         );
     }
@@ -16945,6 +17124,29 @@ mod tests {
             .append_audit_event_v1(event)
             .expect("audit event must append");
 
+        assert_eq!(
+            store
+                .read_audit_event_by_id_v1(&event.event_id)
+                .expect("exact audit read must succeed")
+                .expect("audit event must exist")
+                .event,
+            *event
+        );
+        for invalid in [
+            "aud_",
+            "apr_0000000000000000000000000000000000000000000000000000000000000000",
+            "aud_000000000000000000000000000000000000000000000000000000000000000G",
+            "aud_0000000000000000000000000000000000000000000000000000000000000000/extra",
+        ] {
+            assert!(store.read_audit_event_by_id_v1(invalid).unwrap().is_none());
+        }
+        assert!(
+            store
+                .read_audit_event_by_id_v1(&format!("aud_{}", "0".repeat(64)))
+                .unwrap()
+                .is_none()
+        );
+
         assert!(
             store
                 .read_audit_event_v1("project:other", &event.event_id)
@@ -17052,6 +17254,10 @@ mod tests {
             .expect("test must create audit drift");
         assert_eq!(
             store.read_audit_event_v1(&event.project_ref, &event.event_id),
+            Err(AuditEventStoreErrorV1::EvidenceDrift)
+        );
+        assert_eq!(
+            store.read_audit_event_by_id_v1(&event.event_id),
             Err(AuditEventStoreErrorV1::EvidenceDrift)
         );
     }

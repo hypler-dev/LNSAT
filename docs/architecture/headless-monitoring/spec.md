@@ -2,10 +2,10 @@
 
 # Specification: HCFG-4A exact approval and audit evidence readback
 
-Status: proposed
+Status: accepted
 Intent: [HCFG-4A exact evidence-readback intent](intent.md)
 Owner: LNSAT maintainers
-Last updated: 2026-09-24
+Last updated: 2026-09-26
 
 ## Behavior
 

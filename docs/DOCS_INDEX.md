@@ -43,10 +43,10 @@ subsystem or proposal.
 - [Headless declaration composition](architecture/headless-configuration/spec.md)
   — exact source-only resource/action ceilings and remaining activation boundary.
 - [HCFG-4A exact evidence-readback intent](architecture/headless-monitoring/intent.md)
-  — proposed authenticated approval/audit exact-object read scope; owner
-  acceptance is pending and no route is open.
+  — accepted source-only authenticated approval/audit exact-object read scope.
 - [HCFG-4A exact evidence-readback specification](architecture/headless-monitoring/spec.md)
-  — proposed route, response, generic-denial, redaction, and validation contract.
+  — implemented source route, response, generic-denial, redaction, and
+  validation contract; runtime and release remain closed.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)

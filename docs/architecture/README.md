@@ -150,12 +150,12 @@ P10-A1 through P10-A4 implement experimental target-neutral source surfaces;
 P10-X1 freezes their source conformance. Phase 10 completion claims no stable
 support, package, target path, service lifecycle, or artifact.
 
-## Proposals and Future Design
+## Accepted Source Contracts And Future Design
 
 - [HCFG-4A exact approval and audit evidence readback](headless-monitoring/intent.md)
-  — proposed source packet; owner acceptance and implementation remain pending
+  — accepted source-only packet; three exact authenticated read routes implemented
 - [HCFG-4A exact evidence-readback specification](headless-monitoring/spec.md)
-  — proposed exact routes, permissions, response closure, and security negatives
+  — exact routes, permissions, response closure, and security negatives
 - [Agent configuration, skill, and context management](AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)
 - [UI and framework expansion](UI_AND_FRAMEWORK.md)
 - [Persistence schema plan](PERSISTENCE_SCHEMA_PLAN.md)

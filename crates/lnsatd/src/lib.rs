@@ -36,15 +36,15 @@ use lnsat_contracts::{
 #[cfg(test)]
 use lnsat_store::LocalSessionVerificationV1;
 use lnsat_store::{
-    ApprovalDecisionStoreWriteV1, ApprovalRequestStoreWriteV1,
-    AuthenticatedPacketIntakeStoreWriteV1, LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1,
-    LocalControlPermissionV1, LocalDaemonDatabaseLeaseV1, LocalIdentityCreateInputV1,
-    LocalIdentityCredentialRecordV1, LocalIdentityDisablementResultV1, LocalIdentityEventV1,
-    LocalIdentityRoleV1, LocalIdentityStatusV1, LocalIdentityStoreErrorV1,
-    LocalPasswordRotationInputV1, LocalPasswordRotationResultV1,
-    LocalSessionActivityVerificationV1, LocalSessionEventV1, LocalSessionFamilyRevocationV1,
-    LocalSessionIssueInputV1, LocalSessionIssueResultV1, LocalSessionRecordV1,
-    LocalSessionRevocationReasonV1, LocalSessionRotationResultV1,
+    ApprovalDecisionStoreRecordV1, ApprovalDecisionStoreWriteV1, ApprovalRequestStoreRecordV1,
+    ApprovalRequestStoreWriteV1, AuditEventStoreRecordV1, AuthenticatedPacketIntakeStoreWriteV1,
+    LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1, LocalControlPermissionV1,
+    LocalDaemonDatabaseLeaseV1, LocalIdentityCreateInputV1, LocalIdentityCredentialRecordV1,
+    LocalIdentityDisablementResultV1, LocalIdentityEventV1, LocalIdentityRoleV1,
+    LocalIdentityStatusV1, LocalIdentityStoreErrorV1, LocalPasswordRotationInputV1,
+    LocalPasswordRotationResultV1, LocalSessionActivityVerificationV1, LocalSessionEventV1,
+    LocalSessionFamilyRevocationV1, LocalSessionIssueInputV1, LocalSessionIssueResultV1,
+    LocalSessionRecordV1, LocalSessionRevocationReasonV1, LocalSessionRotationResultV1,
     PHASE11_DOCKER_GIT_ADAPTER_REF_V1, PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1,
     Phase7AuthorizationAttemptPrepareInputV1, Phase7AuthorizationNonceIssueInputV1,
     Phase7CapabilityConsumptionWriteV1, Phase7CapabilityRedemptionInputV1,
@@ -226,6 +226,13 @@ const GATEWAY_APPROVAL_DECISION_ACTIVITY_SIDE_EFFECT_V1: &str =
 const GATEWAY_APPROVAL_DECISION_EVIDENCE_SIDE_EFFECT_V1: &str =
     "approval_decision_evidence_appended";
 const GATEWAY_APPROVAL_DECISION_FAILURE_SIDE_EFFECT_V1: &str = "authentication_limiter_may_advance";
+const LOCAL_APPROVAL_DECISION_READ_GATEWAY_PREFIX_V1: &str = "/v1/approval-decisions/";
+const LOCAL_AUDIT_EVENT_READ_GATEWAY_PREFIX_V1: &str = "/v1/audit-events/";
+const GATEWAY_APPROVAL_REQUEST_READ_CONTRACT_V1: &str = "lnsat.gateway.approval_request_read.v1_0";
+const GATEWAY_APPROVAL_DECISION_READ_CONTRACT_V1: &str =
+    "lnsat.gateway.approval_decision_read.v1_0";
+const GATEWAY_AUDIT_EVENT_READ_CONTRACT_V1: &str = "lnsat.gateway.audit_event_read.v1_0";
+const GATEWAY_EVIDENCE_READ_ACTIVITY_SIDE_EFFECT_V1: &str = "session_activity_evidence_may_append";
 const LOCAL_PACKET_INTAKE_GATEWAY_PATH_V1: &str = "/v1/packets";
 const GATEWAY_PACKET_INTAKE_CONTRACT_V1: &str = "lnsat.gateway.action_intake.v1_0";
 const GATEWAY_PACKET_INTAKE_ERROR_CODE_V1: &str = "gateway.action_intake.denied";
@@ -2361,6 +2368,63 @@ enum RequestReadV1 {
     BodyTooLarge,
 }
 
+#[derive(Clone, Copy)]
+enum ExactEvidenceReadFamilyV1 {
+    ApprovalRequest,
+    ApprovalDecision,
+    AuditEvent,
+}
+
+impl ExactEvidenceReadFamilyV1 {
+    const fn contract(self) -> &'static str {
+        match self {
+            Self::ApprovalRequest => GATEWAY_APPROVAL_REQUEST_READ_CONTRACT_V1,
+            Self::ApprovalDecision => GATEWAY_APPROVAL_DECISION_READ_CONTRACT_V1,
+            Self::AuditEvent => GATEWAY_AUDIT_EVENT_READ_CONTRACT_V1,
+        }
+    }
+
+    const fn scope(self) -> &'static str {
+        match self {
+            Self::ApprovalRequest => "exact_approval_request",
+            Self::ApprovalDecision => "exact_approval_decision",
+            Self::AuditEvent => "exact_audit_event",
+        }
+    }
+
+    const fn object_key(self) -> &'static str {
+        match self {
+            Self::ApprovalRequest => "approval_request",
+            Self::ApprovalDecision => "approval_decision",
+            Self::AuditEvent => "audit_event",
+        }
+    }
+
+    const fn error_code(self) -> &'static str {
+        match self {
+            Self::ApprovalRequest => "gateway.approval_request_read.denied",
+            Self::ApprovalDecision => "gateway.approval_decision_read.denied",
+            Self::AuditEvent => "gateway.audit_event_read.denied",
+        }
+    }
+
+    const fn error_path(self) -> &'static str {
+        match self {
+            Self::ApprovalRequest => "/approval-requests/{approval_request_id}",
+            Self::ApprovalDecision => "/approval-decisions/{approval_decision_id}",
+            Self::AuditEvent => "/audit-events/{audit_event_id}",
+        }
+    }
+
+    const fn error_message(self) -> &'static str {
+        match self {
+            Self::ApprovalRequest => "Approval request read denied.",
+            Self::ApprovalDecision => "Approval decision read denied.",
+            Self::AuditEvent => "Audit event read denied.",
+        }
+    }
+}
+
 enum HttpResponseV1 {
     Ready,
     AuthenticatedHealth {
@@ -2417,6 +2481,22 @@ enum HttpResponseV1 {
     ApprovalRequestRejected,
     ApprovalDecisionRecorded(ApprovalDecisionStoreWriteV1),
     ApprovalDecisionRejected,
+    ApprovalRequestRead {
+        record: ApprovalRequestStoreRecordV1,
+        head_only: bool,
+    },
+    ApprovalDecisionRead {
+        record: ApprovalDecisionStoreRecordV1,
+        head_only: bool,
+    },
+    AuditEventRead {
+        record: AuditEventStoreRecordV1,
+        head_only: bool,
+    },
+    EvidenceReadRejected {
+        family: ExactEvidenceReadFamilyV1,
+        head_only: bool,
+    },
     ExecutionAuthorizationIssued(LocalBrowserPhase7AuthorizationIssueResponseV1),
     ExecutionAuthorizationRead(Phase7ExecutionAuthorizationRecordV1),
     ExecutionAuthorizationTransitioned(Phase7ExecutionAuthorizationTransitionV1),
@@ -2594,6 +2674,7 @@ struct ParsedRequestHeadV1<'a> {
     product_surface_contract: Option<&'a str>,
     product_surface_contract_duplicate: bool,
     forwarded_present: bool,
+    evidence_read_forbidden_header_present: bool,
 }
 
 struct ParsedRequestHeadersV1<'a> {
@@ -2610,6 +2691,7 @@ struct ParsedRequestHeadersV1<'a> {
     product_surface_contract: Option<&'a str>,
     product_surface_contract_duplicate: bool,
     forwarded_present: bool,
+    evidence_read_forbidden_header_present: bool,
 }
 
 fn parse_request_headers_v1<'a>(
@@ -2630,6 +2712,7 @@ fn parse_request_headers_v1<'a>(
         product_surface_contract: None,
         product_surface_contract_duplicate: false,
         forwarded_present: false,
+        evidence_read_forbidden_header_present: false,
     };
     for (index, line) in lines.enumerate() {
         if index >= MAX_HEADER_COUNT_V1 {
@@ -2656,6 +2739,9 @@ fn parse_request_headers_v1<'a>(
         }
         header_names.push(name);
         let value = value.trim_matches([' ', '\t']);
+        if is_evidence_read_forbidden_header_v1(name) {
+            headers.evidence_read_forbidden_header_present = true;
+        }
         if name.eq_ignore_ascii_case("transfer-encoding") {
             return Err(());
         }
@@ -2748,7 +2834,32 @@ fn parse_request_head_v1(request: &[u8]) -> Result<ParsedRequestHeadV1<'_>, ()> 
         product_surface_contract: headers.product_surface_contract,
         product_surface_contract_duplicate: headers.product_surface_contract_duplicate,
         forwarded_present: headers.forwarded_present,
+        evidence_read_forbidden_header_present: headers.evidence_read_forbidden_header_present,
     })
+}
+
+fn is_evidence_read_forbidden_header_v1(name: &str) -> bool {
+    [
+        "content-type",
+        "cookie",
+        "set-cookie",
+        "authorization",
+        "proxy-authorization",
+        "idempotency-key",
+        "x-idempotency-key",
+        "lnsat-product-surface-contract",
+        "forwarded",
+    ]
+    .iter()
+    .any(|forbidden| name.eq_ignore_ascii_case(forbidden))
+        || name
+            .get(..12)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case("x-forwarded-"))
+        || (name
+            .get(..8)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case("x-lnsat-"))
+            && !name.eq_ignore_ascii_case(LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1)
+            && !name.eq_ignore_ascii_case(LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1))
 }
 
 fn parse_content_length_v1(value: &str) -> Option<usize> {
@@ -2911,16 +3022,23 @@ fn classify_request(
             );
         }
     };
-    let Ok(selected_product_surface_contract) = select_product_surface_contract_v1(
-        request.target,
-        request.product_surface_contract,
-        request.product_surface_contract_duplicate,
-    ) else {
-        return ClassifiedHttpResponseV1::versioned(
-            HttpResponseV1::ProductSurfaceContractRejected { head_only },
-            version,
-        );
-    };
+    let selected_product_surface_contract =
+        if exact_evidence_read_route_v1(request.target).is_some() {
+            // These routes reject the selector through their own generic denial.
+            None
+        } else {
+            let Ok(selected) = select_product_surface_contract_v1(
+                request.target,
+                request.product_surface_contract,
+                request.product_surface_contract_duplicate,
+            ) else {
+                return ClassifiedHttpResponseV1::versioned(
+                    HttpResponseV1::ProductSurfaceContractRejected { head_only },
+                    version,
+                );
+            };
+            selected
+        };
     let classified = ClassifiedHttpResponseV1::versioned(
         classify_versioned_gateway_route_v1(
             request_bytes,
@@ -3010,6 +3128,16 @@ fn classify_versioned_gateway_route_v1(
             context.store,
             context.authentication_limiter,
         );
+    }
+    if let Some(response) = classify_exact_evidence_read_route_v1(
+        request_bytes,
+        request,
+        body,
+        peer_address,
+        context.bound_address,
+        context.store,
+    ) {
+        return response;
     }
     if request.target == LOCAL_APPROVAL_REQUEST_GATEWAY_PATH_V1 {
         return classify_local_approval_request_v1(
@@ -3109,6 +3237,95 @@ fn classify_versioned_gateway_route_v1(
         );
     }
     classify_readiness_or_unknown_v1(request, body, context.bound_address)
+}
+
+fn exact_evidence_read_route_v1(target: &str) -> Option<(ExactEvidenceReadFamilyV1, &str)> {
+    if let Some(id) = target.strip_prefix(LOCAL_APPROVAL_REQUEST_GATEWAY_PREFIX_V1) {
+        if id.ends_with(LOCAL_APPROVAL_DECISION_GATEWAY_SUFFIX_V1) {
+            return None;
+        }
+        return Some((ExactEvidenceReadFamilyV1::ApprovalRequest, id));
+    }
+    if let Some(id) = target.strip_prefix(LOCAL_APPROVAL_DECISION_READ_GATEWAY_PREFIX_V1) {
+        return Some((ExactEvidenceReadFamilyV1::ApprovalDecision, id));
+    }
+    target
+        .strip_prefix(LOCAL_AUDIT_EVENT_READ_GATEWAY_PREFIX_V1)
+        .map(|id| (ExactEvidenceReadFamilyV1::AuditEvent, id))
+}
+
+fn valid_exact_evidence_read_id_v1(family: ExactEvidenceReadFamilyV1, id: &str) -> bool {
+    let prefix = match family {
+        ExactEvidenceReadFamilyV1::ApprovalRequest => "apr_",
+        ExactEvidenceReadFamilyV1::ApprovalDecision => "apd_",
+        ExactEvidenceReadFamilyV1::AuditEvent => "aud_",
+    };
+    id.len() == prefix.len() + 64
+        && id.strip_prefix(prefix).is_some_and(|digest| {
+            digest
+                .bytes()
+                .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
+        })
+}
+
+fn classify_exact_evidence_read_route_v1(
+    request_bytes: &[u8],
+    request: ParsedRequestHeadV1<'_>,
+    body: &[u8],
+    peer_address: IpAddr,
+    bound_address: SocketAddr,
+    store: &Arc<Mutex<SqliteStore>>,
+) -> Option<HttpResponseV1> {
+    let (family, id) = exact_evidence_read_route_v1(request.target)?;
+    let head_only = request.method == "HEAD";
+    if !valid_exact_evidence_read_id_v1(family, id) {
+        return Some(if matches!(request.method, "GET" | "HEAD") {
+            HttpResponseV1::EvidenceReadRejected { family, head_only }
+        } else {
+            HttpResponseV1::NotFound
+        });
+    }
+    if !matches!(request.method, "GET" | "HEAD") {
+        return Some(HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" });
+    }
+    if !body.is_empty()
+        || request.content_length.is_some_and(|length| length != 0)
+        || request.evidence_read_forbidden_header_present
+    {
+        return Some(HttpResponseV1::EvidenceReadRejected { family, head_only });
+    }
+    let read = parse_local_browser_transport_request_v1(request_bytes, peer_address, bound_address)
+        .and_then(|transport| {
+            let mut store = store
+                .lock()
+                .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let authorized = authorize_local_browser_transport_request_v1(&mut store, &transport)?;
+            if authorized.target != request.target
+                || authorized.class != LocalBrowserRequestClassV1::ReadOnly
+                || !authorized
+                    .session
+                    .role
+                    .allows_control(LocalControlPermissionV1::ReadEvidence)
+            {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
+            match family {
+                ExactEvidenceReadFamilyV1::ApprovalRequest => store
+                    .read_approval_request_by_id_v1(id)
+                    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?
+                    .map(|record| HttpResponseV1::ApprovalRequestRead { record, head_only }),
+                ExactEvidenceReadFamilyV1::ApprovalDecision => store
+                    .read_approval_decision_by_id_v1(id)
+                    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?
+                    .map(|record| HttpResponseV1::ApprovalDecisionRead { record, head_only }),
+                ExactEvidenceReadFamilyV1::AuditEvent => store
+                    .read_audit_event_by_id_v1(id)
+                    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?
+                    .map(|record| HttpResponseV1::AuditEventRead { record, head_only }),
+            }
+            .ok_or(LocalBrowserTransportErrorV1::Rejected)
+        });
+    Some(read.unwrap_or(HttpResponseV1::EvidenceReadRejected { family, head_only }))
 }
 
 fn classify_authenticated_product_read_route_v1(
@@ -4604,6 +4821,34 @@ fn compose_http_response_v1(
             approval_decision_response_parts_v1(&value)
         }
         HttpResponseV1::ApprovalDecisionRejected => approval_decision_denied_parts_v1(),
+        HttpResponseV1::ApprovalRequestRead { record, head_only } => (
+            "200 OK",
+            exact_approval_request_read_body_v1(&record),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::ApprovalDecisionRead { record, head_only } => (
+            "200 OK",
+            exact_approval_decision_read_body_v1(&record),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::AuditEventRead { record, head_only } => (
+            "200 OK",
+            exact_audit_event_read_body_v1(&record),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::EvidenceReadRejected { family, head_only } => (
+            "403 Forbidden",
+            exact_evidence_read_denied_body_v1(family),
+            None,
+            head_only,
+            None,
+        ),
         HttpResponseV1::ExecutionAuthorizationIssued(mut value) => {
             execution_authorization_issue_response_parts_v1(&mut value)
         }
@@ -5017,6 +5262,172 @@ fn approval_request_denied_parts_v1() -> HttpResponsePartsTupleV1 {
         None,
         false,
         None,
+    )
+}
+
+fn exact_evidence_read_success_body_v1(
+    family: ExactEvidenceReadFamilyV1,
+    object: serde_json::Value,
+) -> String {
+    let mut envelope = serde_json::json!({
+        "contract": family.contract(),
+        "contract_version": CONTRACT_VERSION_V1_0,
+        "ok": true,
+        "status": "evidence_read",
+        "scope": family.scope(),
+        "authorization": {
+            "source": "local_session",
+            "permission": "read_evidence",
+            "actor_session_bound": true,
+        },
+        "side_effects": [GATEWAY_EVIDENCE_READ_ACTIVITY_SIDE_EFFECT_V1],
+        "approval_request_state_changed": false,
+        "approval_decision_state_changed": false,
+        "audit_state_changed": false,
+        "session_authority_state_changed": false,
+        "execution_authorized": false,
+        "mutation_authority": false,
+    });
+    envelope
+        .as_object_mut()
+        .expect("fixed read envelope must be an object")
+        .insert(family.object_key().to_owned(), object);
+    envelope.to_string()
+}
+
+fn exact_evidence_read_denied_body_v1(family: ExactEvidenceReadFamilyV1) -> String {
+    let mut envelope = serde_json::json!({
+        "contract": family.contract(),
+        "contract_version": CONTRACT_VERSION_V1_0,
+        "ok": false,
+        "errors": [{
+            "code": family.error_code(),
+            "path": family.error_path(),
+            "message": family.error_message(),
+            "severity": "error",
+        }],
+        "side_effects": [GATEWAY_EVIDENCE_READ_ACTIVITY_SIDE_EFFECT_V1],
+        "approval_request_state_changed": false,
+        "approval_decision_state_changed": false,
+        "audit_state_changed": false,
+        "session_authority_state_changed": false,
+        "execution_authorized": false,
+        "mutation_authority": false,
+    });
+    envelope
+        .as_object_mut()
+        .expect("fixed denial envelope must be an object")
+        .insert(family.object_key().to_owned(), serde_json::Value::Null);
+    envelope.to_string()
+}
+
+fn exact_approval_request_read_body_v1(record: &ApprovalRequestStoreRecordV1) -> String {
+    let request = &record.request;
+    exact_evidence_read_success_body_v1(
+        ExactEvidenceReadFamilyV1::ApprovalRequest,
+        serde_json::json!({
+            "contract_version": &request.contract_version,
+            "schema_id": &request.schema_id,
+            "approval_request_id": &request.approval_request_id,
+            "status": &request.status,
+            "policy_decision_ref": {
+                "schema_id": &request.policy_decision_ref.schema_id,
+                "decision_id": &request.policy_decision_ref.decision_id,
+                "packet_hash": &request.policy_decision_ref.packet_hash,
+            },
+            "requester_ref": &request.requester_ref,
+            "session_ref": &request.session_ref,
+            "project_ref": &request.project_ref,
+            "resource_refs": &request.resource_refs,
+            "requested_capabilities": &request.requested_capabilities,
+            "policy_reason_codes": request.policy_reason_codes.iter().map(|reason| reason.code()).collect::<Vec<_>>(),
+            "requested_at": &request.requested_at,
+            "expires_at": &request.expires_at,
+            "side_effects": [],
+        }),
+    )
+}
+
+fn exact_approval_decision_read_body_v1(record: &ApprovalDecisionStoreRecordV1) -> String {
+    let decision = &record.decision;
+    exact_evidence_read_success_body_v1(
+        ExactEvidenceReadFamilyV1::ApprovalDecision,
+        serde_json::json!({
+            "contract_version": &decision.contract_version,
+            "schema_id": &decision.schema_id,
+            "approval_decision_id": &decision.approval_decision_id,
+            "approval_request_ref": {
+                "schema_id": &decision.approval_request_ref.schema_id,
+                "approval_request_id": &decision.approval_request_ref.approval_request_id,
+                "policy_decision_id": &decision.approval_request_ref.policy_decision_id,
+            },
+            "approver_ref": &decision.approver_ref,
+            "approver_session_ref": &decision.approver_session_ref,
+            "decision": decision.decision.as_str(),
+            "reason_code": decision.reason.code(),
+            "decided_at": &decision.decided_at,
+            "expires_at": &decision.expires_at,
+            "approval_gate_satisfied": decision.approval_gate_satisfied,
+            "execution_authorized": false,
+            "side_effects": [],
+        }),
+    )
+}
+
+fn exact_audit_event_read_body_v1(record: &AuditEventStoreRecordV1) -> String {
+    let event = &record.event;
+    exact_evidence_read_success_body_v1(
+        ExactEvidenceReadFamilyV1::AuditEvent,
+        serde_json::json!({
+            "contract_version": &event.contract_version,
+            "schema_id": &event.schema_id,
+            "event_id": &event.event_id,
+            "event_type": event.event_type.as_str(),
+            "result_status": event.result_status.as_str(),
+            "actor_ref": &event.actor_ref,
+            "session_ref": &event.session_ref,
+            "project_ref": &event.project_ref,
+            "resource_refs": &event.resource_refs,
+            "packet_ref": {
+                "schema_id": &event.packet_ref.schema_id,
+                "packet_id": &event.packet_ref.packet_id,
+                "packet_hash": &event.packet_ref.packet_hash,
+                "idempotency_key": &event.packet_ref.idempotency_key,
+            },
+            "policy_ref": {
+                "schema_id": &event.policy_ref.schema_id,
+                "decision_id": &event.policy_ref.decision_id,
+                "decision": event.policy_ref.decision.as_str(),
+            },
+            "approval_request_ref": event.approval_request_ref.as_ref().map(|reference| serde_json::json!({
+                "schema_id": &reference.schema_id,
+                "approval_request_id": &reference.approval_request_id,
+                "status": &reference.status,
+            })),
+            "approval_decision_ref": event.approval_decision_ref.as_ref().map(|reference| serde_json::json!({
+                "schema_id": &reference.schema_id,
+                "approval_decision_id": &reference.approval_decision_id,
+                "decision": reference.decision.as_str(),
+                "approver_ref": &reference.approver_ref,
+                "approver_session_ref": &reference.approver_session_ref,
+            })),
+            "reason_codes": &event.reason_codes,
+            "source_evidence_hash": &event.source_evidence_hash,
+            "idempotency_key": &event.idempotency_key,
+            "event_at": &event.event_at,
+            "observed_at": &event.observed_at,
+            "retention_class": &event.retention_class,
+            "redaction": {
+                "raw_rejected_command": &event.redaction.raw_rejected_command,
+                "raw_rejected_value": &event.redaction.raw_rejected_value,
+                "raw_invalid_payload_content": &event.redaction.raw_invalid_payload_content,
+                "secret_like_values": &event.redaction.secret_like_values,
+            },
+            "authenticated_provenance": event.authenticated_provenance,
+            "persistence_requested": false,
+            "execution_authorized": false,
+            "side_effects": [],
+        }),
     )
 }
 
@@ -6250,7 +6661,10 @@ pub const fn daemon_usage_v1() -> &'static str {
         "  GET|HEAD /v1/sessions/<session-id>/events (authenticated evidence read)\n",
         "  POST /v1/packets (authenticated packet and policy intake)\n",
         "  POST /v1/approval-requests (authenticated pending request)\n",
-        "  POST /v1/approval-requests/{approval_request_id}/decision (authenticated human decision)\n\n",
+        "  POST /v1/approval-requests/{approval_request_id}/decision (authenticated human decision)\n",
+        "  GET|HEAD /v1/approval-requests/{approval_request_id} (authenticated exact evidence read)\n",
+        "  GET|HEAD /v1/approval-decisions/{approval_decision_id} (authenticated exact evidence read)\n",
+        "  GET|HEAD /v1/audit-events/{audit_event_id} (authenticated exact evidence read)\n\n",
         "  POST /v1/execution-authorizations (authenticated authorization issue)\n",
         "  GET /v1/execution-authorizations/{authorization_id} (authenticated evidence read)\n",
         "  POST /v1/execution-authorizations/{authorization_id}/cancel (requester mutation)\n",
@@ -6474,6 +6888,79 @@ mod tests {
             "Access-Control-Allow-",
         ] {
             assert!(!response.contains(forbidden));
+        }
+    }
+
+    struct ExactEvidenceReadFixtureIds {
+        request: String,
+        decision: String,
+        audit: String,
+    }
+
+    fn seed_exact_evidence_read_chain_v1(
+        fixture: &ServedSessionGatewayFixture,
+    ) -> ExactEvidenceReadFixtureIds {
+        let request = fixture.seed_approval_request("identity:agent:codex");
+        let decision_body = serde_json::json!({
+            "project_ref": &request.project_ref,
+            "decision": "approved",
+            "reason": "approval.operator_approved",
+        })
+        .to_string();
+        let decision_response = request_at(
+            fixture.address,
+            fixture
+                .approval_decision_request(&request.approval_request_id, &decision_body)
+                .as_bytes(),
+        );
+        assert!(decision_response.starts_with("HTTP/1.1 201 Created\r\n"));
+        let (_, decision_response_body) = decision_response
+            .split_once("\r\n\r\n")
+            .expect("decision response must have a head boundary");
+        let decision_value: serde_json::Value =
+            serde_json::from_str(decision_response_body).expect("decision response must be JSON");
+        let approval_decision_id = decision_value["decision"]["approval_decision_id"]
+            .as_str()
+            .expect("decision identity must exist")
+            .to_owned();
+
+        let mut store = SqliteStore::open(fixture.directory.database_path())
+            .expect("evidence store should reopen");
+        let policy = store
+            .read_policy_decision_v1(
+                &request.project_ref,
+                &request.policy_decision_ref.decision_id,
+            )
+            .expect("policy should read")
+            .expect("policy should exist")
+            .decision;
+        let packet = store
+            .read_packet_envelope_v1(&request.project_ref, &policy.packet_ref.packet_id)
+            .expect("packet should read")
+            .expect("packet should exist")
+            .packet;
+        let decision = store
+            .read_approval_decision_v1(&request.project_ref, &approval_decision_id)
+            .expect("decision should read")
+            .expect("decision should exist")
+            .decision;
+        let audit = lnsat_contracts::create_audit_event_v1(
+            &lnsat_contracts::AuditEventV1Input::ApprovalDecision {
+                packet: Box::new(packet),
+                policy_decision: Box::new(policy),
+                approval_request: Box::new(request.clone()),
+                approval_decision: Box::new(decision.clone()),
+            },
+            &decision.decided_at,
+        )
+        .expect("audit event should derive");
+        store
+            .append_audit_event_v1(&audit)
+            .expect("audit event should persist");
+        ExactEvidenceReadFixtureIds {
+            request: request.approval_request_id,
+            decision: approval_decision_id,
+            audit: audit.event_id,
         }
     }
 
@@ -7116,6 +7603,7 @@ mod tests {
         server_thread: Option<thread::JoinHandle<Result<(), DaemonErrorV1>>>,
         issued: LocalBrowserSessionIssueResponseV1,
         expired_session_token: String,
+        expired_session_proof: String,
         session_token: String,
         csrf_token: String,
         cookie: String,
@@ -7168,6 +7656,7 @@ mod tests {
                 server_thread: Some(server_thread),
                 issued,
                 expired_session_token: expired.raw_session_token,
+                expired_session_proof: expired.raw_csrf_token,
                 session_token,
                 csrf_token,
                 cookie,
@@ -9836,6 +10325,486 @@ mod tests {
                 .expect("second approval request should read")
                 .is_some()
         );
+        fixture.stop();
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn served_hcfg4a_exact_reads_are_role_bound_closed_and_head_equivalent() {
+        let fixture = ServedSessionGatewayFixture::start("hcfg4a-exact-read-success");
+        let ids = seed_exact_evidence_read_chain_v1(&fixture);
+        let routes = [
+            (
+                format!("/v1/approval-requests/{}", ids.request),
+                ExactEvidenceReadFamilyV1::ApprovalRequest,
+                ids.request.as_str(),
+                "approval_request_id",
+            ),
+            (
+                format!("/v1/approval-decisions/{}", ids.decision),
+                ExactEvidenceReadFamilyV1::ApprovalDecision,
+                ids.decision.as_str(),
+                "approval_decision_id",
+            ),
+            (
+                format!("/v1/audit-events/{}", ids.audit),
+                ExactEvidenceReadFamilyV1::AuditEvent,
+                ids.audit.as_str(),
+                "event_id",
+            ),
+        ];
+
+        let mut roles = vec![(fixture.session_token.clone(), fixture.csrf_token.clone())];
+        for (identity, role, password) in [
+            (
+                "identity:human:read-operator",
+                LocalIdentityRoleV1::Operator,
+                "read operator bounded password",
+            ),
+            (
+                "identity:human:read-auditor",
+                LocalIdentityRoleV1::Auditor,
+                "read auditor bounded password",
+            ),
+        ] {
+            fixture.create_non_owner(identity, identity, role, password);
+            let issue_body = serde_json::json!({
+                "identity_ref": identity,
+                "password": password,
+                "lifetime_seconds": 300,
+            })
+            .to_string();
+            let issued = request_at(
+                fixture.address,
+                fixture.session_issue_request(&issue_body).as_bytes(),
+            );
+            assert!(issued.starts_with("HTTP/1.1 201 Created\r\n"));
+            roles.push(browser_session_response_secrets_v1(&issued));
+        }
+
+        for (token, proof) in &roles {
+            for (path, family, id, id_key) in &routes {
+                let get = request_at(
+                    fixture.address,
+                    fixture
+                        .product_read_request("GET", path, token, proof)
+                        .as_bytes(),
+                );
+                assert!(get.starts_with("HTTP/1.1 200 OK\r\n"), "{path}: {get}");
+                let (get_head, get_body) = get.split_once("\r\n\r\n").unwrap();
+                let value: serde_json::Value = serde_json::from_str(get_body).unwrap();
+                assert_eq!(value["contract"], family.contract());
+                assert_eq!(value["status"], "evidence_read");
+                assert_eq!(value["scope"], family.scope());
+                assert_eq!(value[family.object_key()][id_key], *id);
+                assert_eq!(value["authorization"]["permission"], "read_evidence");
+                assert_eq!(
+                    value["side_effects"],
+                    serde_json::json!([GATEWAY_EVIDENCE_READ_ACTIVITY_SIDE_EFFECT_V1])
+                );
+                for absent in [
+                    "recorded",
+                    "replayed",
+                    "csrf_verified",
+                    "approval_recorded",
+                    "replay_semantics",
+                ] {
+                    assert!(value.get(absent).is_none(), "{absent} must be absent");
+                }
+                for false_field in [
+                    "approval_request_state_changed",
+                    "approval_decision_state_changed",
+                    "audit_state_changed",
+                    "session_authority_state_changed",
+                    "execution_authorized",
+                    "mutation_authority",
+                ] {
+                    assert_eq!(value[false_field], false, "{false_field}");
+                }
+                assert!(get_head.contains(&format!("Content-Length: {}\r\n", get_body.len())));
+                assert!(!get.contains(token));
+                assert!(!get.contains(proof));
+                assert!(!get.contains("Set-Cookie:"));
+                assert!(!get.contains("Access-Control-Allow-"));
+                assert!(!get.contains("WWW-Authenticate:"));
+
+                let head = request_at(
+                    fixture.address,
+                    fixture
+                        .product_read_request("HEAD", path, token, proof)
+                        .as_bytes(),
+                );
+                let (head_headers, head_body) = head.split_once("\r\n\r\n").unwrap();
+                assert!(head_headers.starts_with("HTTP/1.1 200 OK\r\n"));
+                assert!(head_headers.contains(&format!("Content-Length: {}\r\n", get_body.len())));
+                assert!(head_body.is_empty());
+            }
+        }
+
+        let audit = request_at(
+            fixture.address,
+            fixture
+                .product_read_request(
+                    "GET",
+                    &routes[2].0,
+                    &fixture.session_token,
+                    &fixture.csrf_token,
+                )
+                .as_bytes(),
+        );
+        let (_, audit_body) = audit.split_once("\r\n\r\n").unwrap();
+        let audit_value: serde_json::Value = serde_json::from_str(audit_body).unwrap();
+        assert_eq!(
+            audit_value["audit_event"]["redaction"],
+            serde_json::json!({
+                "raw_rejected_command": "not_present",
+                "raw_rejected_value": "not_present",
+                "raw_invalid_payload_content": "not_present",
+                "secret_like_values": "not_present",
+            })
+        );
+        assert_eq!(audit_value["audit_event"]["persistence_requested"], false);
+        assert_eq!(
+            audit_value["audit_event"]["side_effects"],
+            serde_json::json!([])
+        );
+        let revoked_at =
+            canonical_system_time_v1(SystemTime::now()).expect("revocation clock should format");
+        let mut store = SqliteStore::open(fixture.directory.database_path())
+            .expect("revocation store should reopen");
+        assert!(
+            store
+                .revoke_local_session_v1(
+                    &roles[2].0,
+                    &roles[2].1,
+                    &revoked_at,
+                    LocalSessionRevocationReasonV1::SignOut,
+                )
+                .expect("auditor session revocation should persist")
+        );
+        for (path, family, _, _) in &routes {
+            let response = request_at(
+                fixture.address,
+                fixture
+                    .product_read_request("GET", path, &roles[2].0, &roles[2].1)
+                    .as_bytes(),
+            );
+            assert_eq!(
+                response.split_once("\r\n\r\n").unwrap().1,
+                exact_evidence_read_denied_body_v1(*family)
+            );
+        }
+        fixture.stop();
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn served_hcfg4a_reads_deny_ambiguity_headers_and_oracles() {
+        let fixture = ServedSessionGatewayFixture::start("hcfg4a-exact-read-denials");
+        let ids = seed_exact_evidence_read_chain_v1(&fixture);
+        let routes = [
+            (
+                format!("/v1/approval-requests/{}", ids.request),
+                "/v1/approval-requests/",
+                ExactEvidenceReadFamilyV1::ApprovalRequest,
+            ),
+            (
+                format!("/v1/approval-decisions/{}", ids.decision),
+                "/v1/approval-decisions/",
+                ExactEvidenceReadFamilyV1::ApprovalDecision,
+            ),
+            (
+                format!("/v1/audit-events/{}", ids.audit),
+                "/v1/audit-events/",
+                ExactEvidenceReadFamilyV1::AuditEvent,
+            ),
+        ];
+        for (path, prefix, family) in &routes {
+            let invalid_targets = [
+                (*prefix).to_owned(),
+                format!("{prefix}short"),
+                format!(
+                    "{prefix}{}",
+                    path.rsplit('/').next().unwrap().to_ascii_uppercase()
+                ),
+                format!("{path}/extra"),
+                format!("{path}?project_ref=project:other"),
+                format!("{prefix}%61pr_{}", "0".repeat(64)),
+            ];
+            let unknown = format!(
+                "{prefix}{}{}",
+                match family {
+                    ExactEvidenceReadFamilyV1::ApprovalRequest => "apr_",
+                    ExactEvidenceReadFamilyV1::ApprovalDecision => "apd_",
+                    ExactEvidenceReadFamilyV1::AuditEvent => "aud_",
+                },
+                "0".repeat(64)
+            );
+            let expected_body = exact_evidence_read_denied_body_v1(*family);
+            for invalid in invalid_targets.into_iter().chain(std::iter::once(unknown)) {
+                let response = request_at(
+                    fixture.address,
+                    fixture
+                        .product_read_request(
+                            "GET",
+                            &invalid,
+                            &fixture.session_token,
+                            &fixture.csrf_token,
+                        )
+                        .as_bytes(),
+                );
+                assert!(
+                    response.starts_with("HTTP/1.1 403 Forbidden\r\n"),
+                    "{invalid}: {response}"
+                );
+                assert_eq!(response.split_once("\r\n\r\n").unwrap().1, expected_body);
+                assert!(!response.contains(&invalid));
+            }
+
+            let no_auth = request_at(
+                fixture.address,
+                fixture
+                    .product_read_request("GET", path, "invalid-session", "invalid-proof")
+                    .as_bytes(),
+            );
+            assert_eq!(no_auth.split_once("\r\n\r\n").unwrap().1, expected_body);
+            let expired = request_at(
+                fixture.address,
+                fixture
+                    .product_read_request(
+                        "GET",
+                        path,
+                        &fixture.expired_session_token,
+                        &fixture.expired_session_proof,
+                    )
+                    .as_bytes(),
+            );
+            assert_eq!(expired.split_once("\r\n\r\n").unwrap().1, expected_body);
+            let no_auth_head = request_at(
+                fixture.address,
+                fixture
+                    .product_read_request("HEAD", path, "invalid-session", "invalid-proof")
+                    .as_bytes(),
+            );
+            let (head_headers, head_body) = no_auth_head.split_once("\r\n\r\n").unwrap();
+            assert!(head_headers.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+            assert!(head_headers.contains(&format!("Content-Length: {}\r\n", expected_body.len())));
+            assert!(head_body.is_empty());
+
+            let exact_origin = fixture
+                .product_read_request("GET", path, &fixture.session_token, &fixture.csrf_token)
+                .replacen(
+                    "Connection: close\r\n",
+                    &format!(
+                        "Origin: http://{}\r\nConnection: close\r\n",
+                        fixture.address
+                    ),
+                    1,
+                );
+            assert!(
+                request_at(fixture.address, exact_origin.as_bytes())
+                    .starts_with("HTTP/1.1 200 OK\r\n")
+            );
+            let wrong_origin = fixture
+                .product_read_request("GET", path, &fixture.session_token, &fixture.csrf_token)
+                .replacen(
+                    "Connection: close\r\n",
+                    "Origin: http://127.0.0.1:1\r\nConnection: close\r\n",
+                    1,
+                );
+            assert_eq!(
+                request_at(fixture.address, wrong_origin.as_bytes())
+                    .split_once("\r\n\r\n")
+                    .unwrap()
+                    .1,
+                expected_body
+            );
+            let inert_accept = fixture
+                .product_read_request("GET", path, &fixture.session_token, &fixture.csrf_token)
+                .replacen(
+                    "Connection: close\r\n",
+                    "Accept: application/json\r\nConnection: close\r\n",
+                    1,
+                );
+            assert!(
+                request_at(fixture.address, inert_accept.as_bytes())
+                    .starts_with("HTTP/1.1 200 OK\r\n")
+            );
+
+            for method in ["GET", "HEAD"] {
+                for forbidden in [
+                    "cOnTeNt-TyPe: application/json",
+                    "Cookie: session=secret-canary",
+                    "Set-Cookie: session=secret-canary",
+                    "Authorization: Bearer secret-canary",
+                    "Proxy-Authorization: Bearer secret-canary",
+                    "Idempotency-Key: secret-canary",
+                    "X-Idempotency-Key: secret-canary",
+                    "Forwarded: host=evil.example",
+                    "X-Forwarded-Unknown: evil.example",
+                    "X-LNSAT-CSRF: secret-canary",
+                    "X-LNSAT-Session-Intent: secret-canary",
+                    "X-LNSAT-Other: secret-canary",
+                ] {
+                    let request = fixture
+                        .product_read_request(
+                            method,
+                            path,
+                            &fixture.session_token,
+                            &fixture.csrf_token,
+                        )
+                        .replacen(
+                            "Connection: close\r\n",
+                            &format!("{forbidden}\r\nConnection: close\r\n"),
+                            1,
+                        );
+                    let response = request_at(fixture.address, request.as_bytes());
+                    assert!(
+                        response.starts_with("HTTP/1.1 403 Forbidden\r\n"),
+                        "{method} {path} {forbidden}: {response}"
+                    );
+                    let (_, body) = response.split_once("\r\n\r\n").unwrap();
+                    if method == "GET" {
+                        assert_eq!(body, expected_body);
+                    } else {
+                        assert!(body.is_empty());
+                    }
+                    assert!(!response.contains("secret-canary"));
+                }
+            }
+            let valid = fixture.product_read_request(
+                "GET",
+                path,
+                &fixture.session_token,
+                &fixture.csrf_token,
+            );
+            for missing in [
+                valid.replace(
+                    &format!(
+                        "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                        fixture.session_token
+                    ),
+                    "",
+                ),
+                valid.replace(
+                    &format!(
+                        "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                        fixture.csrf_token
+                    ),
+                    "",
+                ),
+                valid
+                    .replace(
+                        &format!(
+                            "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: {}\r\n",
+                            fixture.session_token
+                        ),
+                        "",
+                    )
+                    .replace(
+                        &format!(
+                            "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                            fixture.csrf_token
+                        ),
+                        "Cookie: session=secret-canary\r\n",
+                    ),
+                valid.replace("Sec-Fetch-Site: same-origin", "Sec-Fetch-Site: cross-site"),
+            ] {
+                let response = request_at(fixture.address, missing.as_bytes());
+                assert_eq!(response.split_once("\r\n\r\n").unwrap().1, expected_body);
+                assert!(!response.contains("secret-canary"));
+            }
+            let zero_length = valid.replacen(
+                "Connection: close\r\n",
+                "Content-Length: 0\r\nConnection: close\r\n",
+                1,
+            );
+            assert!(
+                request_at(fixture.address, zero_length.as_bytes())
+                    .starts_with("HTTP/1.1 200 OK\r\n")
+            );
+            let nonzero_body = valid.replacen(
+                "Connection: close\r\n\r\n",
+                "Content-Length: 1\r\nConnection: close\r\n\r\nx",
+                1,
+            );
+            assert_eq!(
+                request_at(fixture.address, nonzero_body.as_bytes())
+                    .split_once("\r\n\r\n")
+                    .unwrap()
+                    .1,
+                expected_body
+            );
+            for bad_framing in [
+                valid.replacen(
+                    "Connection: close\r\n",
+                    "Content-Length: 00\r\nConnection: close\r\n",
+                    1,
+                ),
+                valid.replacen(
+                    "Connection: close\r\n",
+                    "Transfer-Encoding: chunked\r\nConnection: close\r\n",
+                    1,
+                ),
+                valid.replacen(
+                    "Connection: close\r\n",
+                    &format!(
+                        "{LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1}: duplicate\r\nConnection: close\r\n"
+                    ),
+                    1,
+                ),
+            ] {
+                assert!(request_at(fixture.address, bad_framing.as_bytes())
+                    .starts_with("HTTP/1.1 400 Bad Request\r\n"));
+            }
+            for method in ["GET", "HEAD"] {
+                let selected = fixture.product_read_request(
+                    method,
+                    path,
+                    &fixture.session_token,
+                    &fixture.csrf_token,
+                );
+                let product_selector = selected.replacen(
+                    "Connection: close\r\n",
+                    "LNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nConnection: close\r\n",
+                    1,
+                );
+                let selector_response = request_at(fixture.address, product_selector.as_bytes());
+                let (headers, body) = selector_response.split_once("\r\n\r\n").unwrap();
+                assert!(headers.starts_with("HTTP/1.1 403 Forbidden\r\n"));
+                if method == "HEAD" {
+                    assert!(body.is_empty());
+                    assert!(
+                        headers.contains(&format!("Content-Length: {}\r\n", expected_body.len()))
+                    );
+                } else {
+                    assert_eq!(body, expected_body);
+                }
+            }
+            let unsupported_method = request_at(
+                fixture.address,
+                fixture
+                    .product_read_request("PUT", path, &fixture.session_token, &fixture.csrf_token)
+                    .as_bytes(),
+            );
+            assert!(unsupported_method.starts_with("HTTP/1.1 405 Method Not Allowed\r\n"));
+            assert!(unsupported_method.contains("Allow: GET, HEAD\r\n"));
+        }
+
+        let mutation_path = format!("/v1/approval-requests/{}/decision", ids.request);
+        let legacy_mutation = request_at(
+            fixture.address,
+            fixture
+                .product_read_request(
+                    "GET",
+                    &mutation_path,
+                    &fixture.session_token,
+                    &fixture.csrf_token,
+                )
+                .as_bytes(),
+        );
+        assert!(legacy_mutation.starts_with("HTTP/1.1 405 Method Not Allowed\r\n"));
+        assert!(legacy_mutation.contains("Allow: POST\r\n"));
         fixture.stop();
     }
 

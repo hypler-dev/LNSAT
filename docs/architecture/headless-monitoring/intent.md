@@ -2,11 +2,11 @@
 
 # Intent: HCFG-4A exact approval and audit evidence readback
 
-Status: proposed
+Status: accepted
 Authority: this file
 Owner: LNSAT maintainers
-Accepted by: pending
-Last updated: 2026-09-24
+Accepted by: LNSAT owner, 2026-09-26 task reply approving the revised PR #33 intent/spec at `241aeb2`
+Last updated: 2026-09-26
 
 ## Problem and evidence
 
@@ -148,5 +148,5 @@ v1 byte remain unchanged.
 - Observable contract: [HCFG-4A specification](spec.md).
 - Execution and evidence plan: [HCFG-4A plan](plan.md).
 - Product ordering: [Product build sequence](../../PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order).
-- Merged source status: [Project status](../../PROJECT_STATUS.md).
+- Source implementation status: [Project status](../../PROJECT_STATUS.md).
 - Existing security boundary: [Threat model](../THREAT_MODEL.md).

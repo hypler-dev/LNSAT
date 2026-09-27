@@ -103,9 +103,31 @@ same closed result without side effects.
 The exact command contract, redaction, invalid-input behavior, deterministic
 formats, and no-side-effect boundary are covered by focused CLI tests and the
 [headless configuration specification](architecture/headless-configuration/spec.md).
-Merge remains a separate owner decision. HCFG-4 monitoring, HCFG-5 protected
-control, HCFG-6 enforcement/conformance, runtime proof, artifacts, and release
-remain incomplete and separately gated.
+Merge remains a separate owner decision. The remaining HCFG-4 monitoring scope,
+HCFG-5 protected control, HCFG-6 enforcement/conformance, runtime proof,
+artifacts, and release remain incomplete and separately gated.
+
+## HCFG-4A Exact Evidence Readback
+
+The owner accepted the revised [HCFG-4A intent](architecture/headless-monitoring/intent.md)
+and [specification](architecture/headless-monitoring/spec.md) for source
+implementation on 2026-09-26. The isolated PR #33 branch implements three
+authenticated exact-object `GET|HEAD` routes for approval requests, approval
+decisions, and audit events. Each route requires the existing loopback browser
+session header pair and `ReadEvidence` permission. The store recovers the
+persisted project scope from an exact identifier and rederives the full linked
+evidence chain before returning one stable, redacted domain object. Generic
+denial hides missing records, drift, and storage failure.
+
+Focused served/store tests, pinned full-workspace Rust tests and Clippy,
+`npm run source:check`, documentation checks, public readiness, inventory, and
+fresh independent review passed on the isolated branch. Exact-head CI and
+merge remain pending in the draft PR. This source work does not add list,
+search, watch, cursor, CLI, schema, mutation, runtime, package, or release
+behavior. Phase 11's
+[operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+remains the runtime-proof status authority; no real Docker proof or production
+authorization follows from these reads.
 
 ## Current Build Position
 

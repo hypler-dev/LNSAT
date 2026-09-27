@@ -2,10 +2,10 @@
 
 # Plan: HCFG-4A exact approval and audit evidence readback
 
-Status: proposed
+Status: accepted
 Authority: [HCFG-4A intent](intent.md)
 Owner: LNSAT maintainers
-Last updated: 2026-09-24
+Last updated: 2026-09-26
 
 ## Scope and protected lanes
 
@@ -32,6 +32,7 @@ One source producer owns these overlapping paths:
   during implementation without scope expansion.
 - `docs/architecture/headless-monitoring/plan.md`: evidence ledger.
 - `docs/PROJECT_STATUS.md`: implemented source status only after evidence.
+- `README.md`: public source-maturity summary after implementation evidence.
 - `docs/DOCS_INDEX.md` and `docs/architecture/README.md`: canonical links and
   maturity classification.
 
@@ -113,7 +114,11 @@ unexpected dependency change, failed security invariant, or owner rejection.
 
 ## Deviations
 
-None. Proposed plan only.
+The repository's legacy inventory checksum was refreshed because changed
+tracked source and documentation alter its source-tree digest. Its 2,122
+identifier occurrences across 295 files did not change. This generated
+inventory file is the only additional path; the implementation remains limited
+to the accepted intent and specification.
 
 ## Evidence ledger
 
@@ -147,5 +152,36 @@ None. Proposed plan only.
   route-local authority/control-header check, and enumerate negative tests.
   The same reviewer re-reviewed the corrected diff and reported no remaining
   P1/P2/P3. Owner acceptance remains pending; no source implementation opened.
-- Source implementation, source validation/scanning/review, implementation PR,
-  merge, runtime, build, and release evidence: pending.
+- 2026-09-26: LNSAT owner accepted the revised PR #33 intent/spec at `241aeb2`
+  in this task, opening only the three exact authenticated `GET|HEAD` source
+  reads. Docker, merge, release, deployment, and production remain closed.
+- 2026-09-26: source implementation added exact-ID store reads with persisted
+  project-scope recovery and full rederivation, three served `GET|HEAD` route
+  families, closed response serializers, and focused negative/role tests.
+- 2026-09-26: pinned focused store approval tests passed 16/16 and audit tests
+  passed 19/19. Served HCFG-4A tests passed 2/2 with local listener binding.
+  Pinned `cargo test --workspace --all-targets --all-features --locked` and
+  pinned full-workspace Clippy with `-D warnings` passed.
+- 2026-09-26: `npm run source:check` passed with local listener binding; it
+  includes `npm run check`, `npm run public:check`, docs direction, source-only
+  Phase 11 readiness, workspace typechecking/tests, Rust checks, release
+  metadata, and build. The initial sandboxed run failed served tests with
+  `ListenFailed`; the complete listener-capable rerun passed.
+- 2026-09-26: intent/spec/plan artifact validators, focused Prettier,
+  `npm run docs:direction:check` (31 tests), `npm run public:check` (868 files),
+  `npm run legacy:inventory:check` (2,122 occurrences across 295 files), and
+  `git diff --check` passed.
+- 2026-09-26: installed Semgrep scanned the two changed Rust files with two
+  named local rules. Its one finding is an existing test-only SQL statement
+  with an `INSERT`/`INSERT OR REPLACE` literal selector; no caller-controlled
+  SQL enters the statement. Gitleaks scanned the worktree with full redaction
+  and generated Rust output excluded. Its 16 candidates are existing test
+  fixtures, contract field names, or generated JavaScript; none lies in a
+  changed source hunk. OSV was not run because manifests and lockfiles did not
+  change. Scanner reports are outside the repository.
+- 2026-09-26: a fresh read-only Terra xhigh/OpenAI reviewer found one P2:
+  the shared product-surface selector returned `400` before the route-local
+  generic `403`. The source and served `GET|HEAD` assertions were corrected;
+  the reviewer re-reviewed the correction and reported no remaining P1/P2/P3.
+- Implementation PR #33 remains draft. Exact-head CI, merge, runtime proof,
+  build candidate, and release remain separately pending.
