@@ -134,9 +134,10 @@ authorization follows from these reads.
 
 ## Proposed HCFG-4B/4C And HCFG-5 Contracts
 
-[Draft PR #52](https://github.com/hypler-dev/LNSAT/pull/52) proposes a bounded
-current-unresolved evidence snapshot and versioned watch. It is a design
-record only. Enumeration scope, immutable evidence-to-subject mapping, exact
+[PR #52](https://github.com/hypler-dev/LNSAT/pull/52) merged the proposed
+bounded current-unresolved evidence snapshot and versioned watch design at
+`dcbbdfec75ce614ab6f330ed5cb0940517613c3c`. It remains a design record
+only. Enumeration scope, immutable evidence-to-subject mapping, exact
 served readback, non-mutating expiry proof, and source implementation require
 separate owner acceptance. Merged HCFG-4A exact reads do not grant them.
 Authorization-attempt, nonce, historical state-event, consumption, receipt,
