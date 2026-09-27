@@ -360,7 +360,19 @@ immediately before process creation. Only exact live state may return a bound
 pre-supervisor guard; a post-claim failure preserves or marks `outcome_unknown`
 and cannot redispatch. This evaluator performs no store write, route,
 filesystem/process/Docker I/O, receipt, evidence persistence, selector, or
-runtime execution.
+runtime execution. A private source-only final-supervisor seam now cross-checks
+the guard and supervisor payload/profile inputs and binds the manifest-declared
+Docker client, host Git verifier, local endpoint, and disposable target to the
+supervisor's final exact paths and domain-separated filesystem identities. It
+calls the one-shot durable verifier only after those repeated checks and retains
+the opaque guard across the exact process boundary. Every post-claim failure
+marks or preserves `outcome_unknown`. Hermetic tests use the existing fake
+executable and temporary Unix socket through a test-only helper. The production
+seam first requires root-owned, non-writable Docker and host Git executable
+chains and an unprivileged daemon; host root is the local trust boundary. No
+route, CLI, daemon configuration,
+package, or release selects the seam, so it is not a runnable proof driver or
+real Docker evidence.
 
 A source-only proof-readiness plan now defines one canonical, side-effect-free
 identity bundle for the loaded schema-2 profile and freezes eight required
