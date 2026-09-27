@@ -168,6 +168,7 @@ support, package, target path, service lifecycle, or artifact.
 - [HCFG-5B atomic local bootstrap intent](headless-local-bootstrap/intent.md)
 - [HCFG-5B atomic local bootstrap specification](headless-local-bootstrap/spec.md)
 - [HCFG-5B atomic local bootstrap plan](headless-local-bootstrap/plan.md)
+- [HCFG-5C exact owner-decision specification](headless-owner-decision/spec.md)
 - [Agent configuration, skill, and context management](AGENT_CONFIGURATION_SKILL_AND_CONTEXT_MANAGEMENT.md)
 - [UI and framework expansion](UI_AND_FRAMEWORK.md)
 - [Persistence schema plan](PERSISTENCE_SCHEMA_PLAN.md)

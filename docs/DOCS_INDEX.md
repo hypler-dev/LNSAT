@@ -55,6 +55,8 @@ subsystem or proposal.
   — online apply authority design; owner security decision and implementation pending.
 - [Proposed HCFG-5B atomic local bootstrap](architecture/headless-local-bootstrap/intent.md)
   — one-time first configuration and selected-store path/file admission binding; owner decision pending.
+- [Proposed HCFG-5C exact owner decision](architecture/headless-owner-decision/spec.md)
+  — separate fresh-credential challenge for configuration widening; owner decision pending.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
