@@ -6,16 +6,17 @@ Status: proposed
 Authority: this file
 Owner: LNSAT project owner
 Accepted by: pending
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Problem and evidence
 
 HCFG-4 requires authenticated monitoring evidence before it can provide a
 versioned watch with cursor/resume and bounded retention. A watch client needs
 an explicit bootstrap path after first connection and a recovery path after a
-retention gap. The HCFG-4A exact-ID read intent/spec in [PR #33](https://github.com/hypler-dev/LNSAT/pull/33)
-has owner acceptance for source implementation. The PR remains draft and
-unmerged. Its known-ID reads do not authorize enumerating evidence subjects.
+retention gap. The HCFG-4A exact-ID reads in [PR #33](https://github.com/hypler-dev/LNSAT/pull/33)
+merged at `bd9016a48e8d675d8f52c406a4b7103b16c708f3` after separate owner
+merge authorization. Those known-ID reads do not authorize enumerating evidence
+subjects.
 
 An inventory assembled from separate reads has no single cutover point.
 It can also leave a client unable to distinguish an empty inventory, an expired
@@ -54,7 +55,7 @@ handle does not approve, deny, activate, revoke, mutate, or widen authority.
 
 - This is a proposed source contract only. It authorizes no schema, server,
   CLI, storage, or runtime implementation.
-- PR #33 remains an unmerged source prerequisite; its accepted exact-read
+- Merged PR #33 supplies the source-only exact-read prerequisite; its accepted
   scope does not accept this enumerating snapshot.
 - The owner must choose installation-wide `ReadEvidence` access or a narrower
   project/resource scope. This packet does not make that choice implicitly.
@@ -118,8 +119,8 @@ must never silently widen option 2 to installation-wide access.
   cursor/resume, ordering, disconnect, and backpressure tests.
 - **Verified:** current project status records monitoring and later headless V1
   gates as incomplete.
-- **Verified:** PR #33's HCFG-4A intent/spec have owner source acceptance;
-  merge and snapshot enumeration remain separate decisions.
+- **Verified:** PR #33's HCFG-4A source merged at `bd9016a`; snapshot
+  enumeration remains a separate owner decision.
 - **Assumption:** state changes and their monitoring journal entries can share
   one SQLite transaction; the implementation packet must prove this with a
   writer/snapshot race test.
@@ -166,6 +167,6 @@ semantics; this packet owns bootstrap inventory and cutover metadata.
 
 The [Product Build Sequence](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 owns the HCFG-4 requirement and [Project Status](../../PROJECT_STATUS.md#current-build-position)
-owns current project status. PR #33's owner-accepted, unmerged HCFG-4A packet is a supporting
+owns current project status. PR #33's owner-accepted, merged HCFG-4A packet is a supporting
 dependency. This file owns the proposed HCFG-4B snapshot intent and does not
 replace those records.

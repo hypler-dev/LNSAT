@@ -5,7 +5,7 @@
 Status: proposed
 Intent: [HCFG-4C watch intent](intent.md)
 Owner: LNSAT project owner
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Behavior
 
@@ -111,9 +111,9 @@ subject do not prove the bytes of every earlier state event.
 
 | Candidate evidence                                                    | Immutable evidence ID              | Monitored subject ID  | Existing served related read (event coverage unproved)                              |
 | --------------------------------------------------------------------- | ---------------------------------- | --------------------- | ----------------------------------------------------------------------------------- |
-| Approval request                                                      | `apr_…`                            | request `apr_…`       | PR #33 exact approval-request read, unmerged                                        |
-| Approval decision                                                     | `apd_…`                            | request `apr_…`       | PR #33 exact decision read by `apd_…`, unmerged                                     |
-| Audit event                                                           | `aud_…`                            | audit event `aud_…`   | PR #33 exact audit-event read, unmerged                                             |
+| Approval request                                                      | `apr_…`                            | request `apr_…`       | PR #33 exact approval-request read, merged source-only at `bd9016a`                 |
+| Approval decision                                                     | `apd_…`                            | request `apr_…`       | PR #33 exact decision read by `apd_…`, merged source-only at `bd9016a`              |
+| Audit event                                                           | `aud_…`                            | audit event `aud_…`   | PR #33 exact audit-event read, merged source-only at `bd9016a`                      |
 | Authorization attempt                                                 | `aat_…`                            | attempt `aat_…`       | **Missing served exact read**                                                       |
 | Authorization nonce and nonce state                                   | `non_…`, `ste_…`                   | nonce `non_…`         | **Missing served exact read**                                                       |
 | Execution authorization, consumed capability, and authorization state | `xau_…`, `cpc_…`, `ste_…`          | authorization `xau_…` | Existing exact authorization read may materialize expiry; non-mutating read missing |

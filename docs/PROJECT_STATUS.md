@@ -111,7 +111,10 @@ artifacts, and release remain incomplete and separately gated.
 
 The owner accepted the revised [HCFG-4A intent](architecture/headless-monitoring/intent.md)
 and [specification](architecture/headless-monitoring/spec.md) for source
-implementation on 2026-09-26. The isolated PR #33 branch implements three
+implementation on 2026-09-26. [PR #33](https://github.com/hypler-dev/LNSAT/pull/33)
+merged the reviewed head `da8d5fae1829f8aa99158342a477a324b3c70b01`
+into public `main` at `bd9016a48e8d675d8f52c406a4b7103b16c708f3`
+on 2026-09-27 after separate owner merge authorization. It implements three
 authenticated exact-object `GET|HEAD` routes for approval requests, approval
 decisions, and audit events. Each route requires the existing loopback browser
 session header pair and `ReadEvidence` permission. The store recovers the
@@ -120,14 +123,34 @@ evidence chain before returning one stable, redacted domain object. Generic
 denial hides missing records, drift, and storage failure.
 
 Focused served/store tests, pinned full-workspace Rust tests and Clippy,
-`npm run source:check`, documentation checks, public readiness, inventory, and
-fresh independent review passed on the isolated branch. Exact-head CI and
-merge remain pending in the draft PR. This source work does not add list,
-search, watch, cursor, CLI, schema, mutation, runtime, package, or release
-behavior. Phase 11's
+`npm run source:check`, documentation checks, public readiness, inventory,
+fresh independent review, and exact-head CI passed before merge. Fetched
+public-main ancestry confirms the reviewed head as the merge parent. This
+source work does not add list, search, watch, cursor, CLI, schema, mutation,
+runtime, package, or release behavior. Phase 11's
 [operator run packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
 remains the runtime-proof status authority; no real Docker proof or production
 authorization follows from these reads.
+
+## Proposed HCFG-4B/4C And HCFG-5 Contracts
+
+[Draft PR #52](https://github.com/hypler-dev/LNSAT/pull/52) proposes a bounded
+current-unresolved evidence snapshot and versioned watch. It is a design
+record only. Enumeration scope, immutable evidence-to-subject mapping, exact
+served readback, non-mutating expiry proof, and source implementation require
+separate owner acceptance. Merged HCFG-4A exact reads do not grant them.
+Authorization-attempt, nonce, historical state-event, consumption, receipt,
+and reconciliation evidence still lack complete read-only served projections;
+current aggregate reads cannot establish a complete watch family.
+
+Draft [HCFG-5A](https://github.com/hypler-dev/LNSAT/pull/61),
+[HCFG-5B](https://github.com/hypler-dev/LNSAT/pull/62), and
+[HCFG-5C](https://github.com/hypler-dev/LNSAT/pull/63) propose protected
+online configuration transitions, atomic local bootstrap, and an exact fresh
+owner-decision challenge. Their reviewed design heads have green exact-head CI,
+but owner intent/security acceptance, source implementation, selected-platform
+HCFG-6 enforcement, and activation remain pending. No configuration mutation
+or resource access is opened by these proposals.
 
 ## Current Build Position
 

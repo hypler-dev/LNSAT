@@ -5,7 +5,7 @@
 Status: proposed
 Authority: [HCFG-4C monitoring watch intent](intent.md)
 Owner: LNSAT project owner
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Scope and protected lanes
 
@@ -15,11 +15,10 @@ contract and acceptance work only.
 
 Protected lanes:
 
-- [PR #33](https://github.com/hypler-dev/LNSAT/pull/33) HCFG-4A intent/spec and
-  the [HCFG-4B snapshot](../headless-monitoring-snapshot/intent.md) are
-  prerequisites. PR #33 has owner source acceptance but remains draft and
-  unmerged; HCFG-4B still needs owner acceptance and implementation before a
-  valid first or post-gap cursor exists.
+- [PR #33](https://github.com/hypler-dev/LNSAT/pull/33) HCFG-4A exact reads
+  merged at `bd9016a`. The [HCFG-4B snapshot](../headless-monitoring-snapshot/intent.md)
+  still needs owner acceptance and implementation before a valid first or
+  post-gap cursor exists.
 - The owner must choose installation-wide `ReadEvidence` or a narrower
   project/resource scope before source work begins.
 - The complete selected evidence-to-subject family map and served exact
@@ -34,7 +33,7 @@ Protected lanes:
 
 ## Files and ownership
 
-This proposal owns exactly these six documentation paths:
+The core watch proposal owns these six documentation paths:
 
 - `docs/architecture/headless-monitoring-watch/intent.md`
 - `docs/architecture/headless-monitoring-watch/spec.md`
@@ -44,10 +43,11 @@ This proposal owns exactly these six documentation paths:
 - `docs/reference/legacy-identifier-inventory.json`: deterministic source-tree
   inventory regeneration required by the new proposal documents.
 
-The HCFG-4A packet in PR #33, product status, and build sequence remain owned
-by their existing records. A later implementation packet must name its exact
-source, test, and documentation files before editing them. One writer owns
-overlapping files.
+The PR #33 merge reconciliation also updates `docs/PROJECT_STATUS.md` and
+`docs/architecture/headless-monitoring/plan.md` to record current source truth.
+The HCFG-4A contract and Product Build Sequence remain owned by their existing
+records. A later implementation packet must name its exact source, test, and
+documentation files before editing them. One writer owns overlapping files.
 
 ## Source inventory to verify before implementation
 
@@ -64,12 +64,14 @@ and test each multi-record commit before a migration or served route is added.
 
 ## Sequence
 
-1. Verify PR #33's separately authorized source merge and exact-read scope.
+1. Verify PR #33's separately authorized source merge at `bd9016a` and exact-read scope.
    Accept and implement HCFG-4B snapshot/cutover before served watch.
 2. Obtain owner acceptance of this watch intent/spec, including transport,
    retention, cursor, event-family mapping, and authorization decisions that
    are currently open.
-3. Create a separate source implementation packet with exact module ownership,
+3. First close the exact read-only served evidence projections and non-mutating
+   expiry readback needed by the complete consequential-action family set.
+   Create a separate source implementation packet with exact module ownership,
    accepted evidence-family/source-ID/subject-ID/read-path table,
    current-unresolved snapshot projection and trusted cutover time, transport
    framing, migration evidence, and a store-activation generation that
@@ -122,19 +124,23 @@ evidence data as rollback.
 
 ## Deviations
 
-None. Any change to the open authorization decision, transport, retention,
-cursor semantics, or source scope must be recorded here before expansion.
+The 2026-09-27 PR #33 merge reconciliation adds the two currentness files named
+above and updates HCFG-4B/C references from pending merge to merged source.
+It changes no snapshot/watch acceptance or source authority. Any later change
+to the open authorization decision, transport, retention, cursor semantics, or
+source scope must be recorded here before expansion.
 
 ## Evidence ledger
 
 - Authority checked: `docs/PRODUCT_BUILD_SEQUENCE.md` HCFG-4 requirement and
   `docs/PROJECT_STATUS.md` current build position.
-- Dependency: PR #33 HCFG-4A intent/spec have owner source acceptance; its
-  draft source implementation remains unmerged.
+- Dependency: PR #33 HCFG-4A exact-read source merged at `bd9016a`; this
+  does not accept snapshot or watch enumeration.
 - Initial proposal paths: the six files listed in **Files and ownership**.
 - The companion HCFG-4B snapshot proposal owns three additional files under
-  `docs/architecture/headless-monitoring-snapshot/`; this combined draft changes
-  nine documentation paths in total.
+  `docs/architecture/headless-monitoring-snapshot/`; the initial combined
+  design changed nine documentation paths before the later two-file source
+  status reconciliation.
 - This 2026-09-26 amendment changes those six intent/spec/plan files plus the
   deterministic `docs/reference/legacy-identifier-inventory.json` checksum.
 - Validation: six artifact validators, Prettier, `docs:direction:check`
@@ -178,7 +184,20 @@ cursor semantics, or source scope must be recorded here before expansion.
   (31/31), `public:check` (871 files), legacy inventory (2,122 occurrences in
   295 files), and `git diff --check` passed on the revised seven-file diff.
   Fresh independent GPT read-only reviewer returned PASS, no remaining
-  P1/P2/P3 after the expiry/readback corrections. PR #52's prior exact head
-  `288745c` passed CI run `36296555867`; revised-head CI remains pending.
+  P1/P2/P3 after the expiry/readback corrections. PR #52's prior exact heads
+  `288745c` and `c3c31e9` passed CI runs `36296555867` and `36298277937`.
   Owner acceptance, source implementation, merge, runtime, and release remain
   separately closed.
+- 2026-09-27: PR #33 exact-read source merged at `bd9016a`; PR #52 rebases on
+  that public-main truth without granting enumeration, source implementation,
+  runtime, or release. The previous exact-head CI claim is historical and
+  must be replaced by CI on the rebased head before merge review.
+- 2026-09-27: read-only source inventory confirms served exact HCFG-4A reads
+  for `apr_`, `apd_`, and `aud_`. Authorization attempts and nonces have no
+  served exact route; the nonce and execution-authorization reads may
+  materialize expiry. Existing operation/attempt responses expose latest
+  aggregate state, not every historical `ste_` event. `cpc_`, `rcp_`, and
+  `rec_` have no complete standalone served projection. A later accepted
+  exact-read packet must close those gaps without narrowing the final HCFG-4
+  family claim before journal/snapshot/watch source can assert complete V1
+  monitoring.

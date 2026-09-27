@@ -6,7 +6,7 @@ Status: proposed
 Authority: this file
 Owner: LNSAT project owner
 Accepted by: pending
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Problem and evidence
 
@@ -15,9 +15,9 @@ readback, then provide a versioned watch with bounded retention, cursor/resume,
 ordering, disconnect, and backpressure tests. The build sequence records that
 requirement, while the current status records monitoring and the remaining
 headless V1 work as incomplete. The HCFG-4A exact-ID read intent/spec in
-[PR #33](https://github.com/hypler-dev/LNSAT/pull/33) have owner acceptance
-for source implementation. That PR remains draft and unmerged. Known-ID reads
-do not authorize watch enumeration.
+[PR #33](https://github.com/hypler-dev/LNSAT/pull/33) merged at
+`bd9016a48e8d675d8f52c406a4b7103b16c708f3` after separate owner merge
+authorization. Known-ID reads do not authorize watch enumeration.
 
 Without a server-sourced journal contract, a client cannot tell whether an
 event was absent because no event exists, because its cursor expired, or because
@@ -54,7 +54,7 @@ or a supported-platform claim.
 
 - This is a proposed source contract only. No schema, server, CLI, storage,
   or runtime implementation is authorized by this document.
-- PR #33's source implementation and the proposed HCFG-4B snapshot remain
+- Merged PR #33's source implementation and the proposed HCFG-4B snapshot remain
   prerequisites. Acceptance of exact known-ID reads does not accept watch or
   snapshot enumeration.
 - Every selected evidence family needs an accepted source-to-subject binding
@@ -78,7 +78,7 @@ or a supported-platform claim.
 
 ## Non-goals
 
-- implementing HCFG-4A routes or accepting PR #33;
+- changing HCFG-4A routes or treating PR #33's merge as watch acceptance;
 - adding list/search, mutation, approval, audit-writing, or control endpoints;
 - promising lossless delivery across a retention boundary;
 - treating a watch stream as a durable queue, command channel, or audit store;
@@ -94,7 +94,7 @@ or a supported-platform claim.
 - **Verified:** current project status says monitoring and later headless V1
   gates remain incomplete.
 - **Verified:** [PR #33](https://github.com/hypler-dev/LNSAT/pull/33)'s HCFG-4A
-  intent/spec have owner source acceptance; merge remains separate.
+  source merged at `bd9016a`; watch enumeration remains a separate decision.
 - **Assumption:** a future server implementation can atomically assign one
   monotonic journal position and bind it to the newly persisted source evidence
   before making the event visible to readers. This must be proven by tests.
@@ -139,6 +139,6 @@ evidence/subject IDs where source records target another aggregate.
 
 The [Product Build Sequence](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 is the canonical requirement and [Project Status](../../PROJECT_STATUS.md#current-build-position)
-is the canonical status record. PR #33's owner-accepted, unmerged HCFG-4A intent/spec are
+is the canonical status record. PR #33's owner-accepted, merged HCFG-4A intent/spec are
 supporting prerequisites. This file owns the proposed HCFG-4C watch intent;
 it does not replace either canonical record.

@@ -5,7 +5,7 @@
 Status: proposed
 Authority: [Versioned monitoring evidence-subject snapshot intent](intent.md)
 Owner: LNSAT project owner
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Scope and protected lanes
 
@@ -15,9 +15,9 @@ production, or supported-platform implementation.
 
 Protected lanes:
 
-- [PR #33](https://github.com/hypler-dev/LNSAT/pull/33) HCFG-4A intent/spec
-  have owner source acceptance; its draft source implementation must be merged
-  separately before snapshot or watch source work depends on its exact reads.
+- [PR #33](https://github.com/hypler-dev/LNSAT/pull/33) HCFG-4A exact reads
+  merged at `bd9016a`; snapshot enumeration still needs separate owner
+  acceptance before source work.
 - The owner must choose installation-wide `ReadEvidence` or a narrower
   project/resource scope before any implementation starts.
 - State and journal publication must remain one SQLite transaction; no second
@@ -46,8 +46,8 @@ name exact source, test, migration, and documentation paths before editing.
 
 ## Sequence
 
-1. Verify PR #33's exact-read source merge and recorded scope; its owner
-   acceptance does not authorize enumeration.
+1. Verify PR #33's exact-read source merge at `bd9016a` and recorded scope;
+   its owner acceptance does not authorize enumeration.
 2. Obtain owner acceptance of this snapshot intent/spec, including scope,
    limits, transport mapping, transactional cutover, token, expiry, and
    redaction decisions.
@@ -105,9 +105,11 @@ journal data as rollback.
 
 ## Deviations
 
-None. Any change to scope, limits, token semantics, transaction boundary,
-retention recovery, redaction, or source ownership must be recorded here before
-expansion.
+The 2026-09-27 PR #33 merge reconciliation updates this proposal's stale
+dependency wording and the canonical Project Status plus HCFG-4A plan. It
+does not change snapshot scope, limits, token semantics, transaction boundary,
+retention recovery, redaction, or source authority. Any later change to those
+decisions must be recorded here before expansion.
 
 ## Evidence ledger
 
@@ -141,3 +143,7 @@ expansion.
   Prettier, direction/public/inventory checks, and whitespace check. Fresh
   independent GPT read-only review resolved the expiry/readback findings and
   returned PASS with no remaining P1/P2/P3. Owner acceptance remains pending.
+- 2026-09-27: PR #33 exact-read source merged at `bd9016a` and public main
+  ancestry was fetched. This removes the source-merge prerequisite only;
+  snapshot enumeration, owner scope, source implementation, runtime, and
+  release remain unaccepted.
