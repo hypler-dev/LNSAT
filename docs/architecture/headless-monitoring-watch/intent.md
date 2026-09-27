@@ -14,10 +14,10 @@ HCFG-4 requires LNSAT to complete authenticated operations and approvals/audit
 readback, then provide a versioned watch with bounded retention, cursor/resume,
 ordering, disconnect, and backpressure tests. The build sequence records that
 requirement, while the current status records monitoring and the remaining
-headless V1 work as incomplete. The proposed HCFG-4A exact-ID read packet in
-[PR #33](https://github.com/hypler-dev/LNSAT/pull/33) is a prerequisite for the
-watch's event subjects; its intent and spec remain proposed and require owner
-acceptance.
+headless V1 work as incomplete. The HCFG-4A exact-ID read intent/spec in
+[PR #33](https://github.com/hypler-dev/LNSAT/pull/33) have owner acceptance
+for source implementation. That PR remains draft and unmerged. Known-ID reads
+do not authorize watch enumeration.
 
 Without a server-sourced journal contract, a client cannot tell whether an
 event was absent because no event exists, because its cursor expired, or because
@@ -49,8 +49,9 @@ or a supported-platform claim.
 
 - This is a proposed source contract only. No schema, server, CLI, storage,
   or runtime implementation is authorized by this document.
-- PR #33 HCFG-4A and the proposed HCFG-4B snapshot remain prerequisites and
-  may not be treated as accepted or implemented.
+- PR #33's source implementation and the proposed HCFG-4B snapshot remain
+  prerequisites. Acceptance of exact known-ID reads does not accept watch or
+  snapshot enumeration.
 - The watch is read-only. It cannot approve, deny, activate, revoke, mutate
   configuration, or widen action authority.
 - The server is the source of event order and cursor meaning. Client clocks,
@@ -82,8 +83,7 @@ or a supported-platform claim.
 - **Verified:** current project status says monitoring and later headless V1
   gates remain incomplete.
 - **Verified:** [PR #33](https://github.com/hypler-dev/LNSAT/pull/33)'s HCFG-4A
-  intent/spec are proposed and require owner acceptance before source
-  implementation.
+  intent/spec have owner source acceptance; merge remains separate.
 - **Assumption:** a future server implementation can atomically assign one
   monotonic journal position and bind it to the newly persisted source evidence
   before making the event visible to readers. This must be proven by tests.
@@ -124,6 +124,6 @@ outcome.
 
 The [Product Build Sequence](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 is the canonical requirement and [Project Status](../../PROJECT_STATUS.md#current-build-position)
-is the canonical status record. PR #33's proposed HCFG-4A intent/spec are
+is the canonical status record. PR #33's owner-accepted, unmerged HCFG-4A intent/spec are
 supporting prerequisites. This file owns the proposed HCFG-4C watch intent;
 it does not replace either canonical record.

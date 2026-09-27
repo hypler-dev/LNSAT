@@ -16,8 +16,8 @@ production, or supported-platform implementation.
 Protected lanes:
 
 - [PR #33](https://github.com/hypler-dev/LNSAT/pull/33) HCFG-4A intent/spec
-  must be accepted before snapshot or watch source work depends on its exact
-  evidence-read contract.
+  have owner source acceptance; its draft source implementation must be merged
+  separately before snapshot or watch source work depends on its exact reads.
 - The owner must choose installation-wide `ReadEvidence` or a narrower
   project/resource scope before any implementation starts.
 - State and journal publication must remain one SQLite transaction; no second
@@ -26,8 +26,8 @@ Protected lanes:
   proposal does not invent family names.
 - The exact transport method, route, and fields remain owner-reviewable.
 - The snapshot must remain an evidence-subject ID inventory at one cutover.
-  Audit history completeness and historical event continuity are separate
-  gates.
+  It represents only accepted currently unresolved subjects. Audit history
+  completeness and historical event continuity are separate gates.
 - No real evidence, credentials, secrets, or production payloads enter tests,
   fixtures, logs, tokens, or review artifacts.
 
@@ -45,15 +45,16 @@ name exact source, test, migration, and documentation paths before editing.
 
 ## Sequence
 
-1. Obtain owner acceptance of the HCFG-4A intent/spec and record its exact read
-   scope.
+1. Verify PR #33's exact-read source merge and recorded scope; its owner
+   acceptance does not authorize enumeration.
 2. Obtain owner acceptance of this snapshot intent/spec, including scope,
    limits, transport mapping, transactional cutover, token, expiry, and
    redaction decisions.
 3. Create a separate source implementation packet naming the state tables,
+   per-family current-unresolved predicates and immutable representatives,
    journal writer, snapshot materialization boundary, cleanup strategy, and
    exact tests. Confirm the watch packet's exclusive cursor semantics
-   (`sequence > cutover_cursor`).
+   (`sequence > cutover_cursor`) and store-activation reset behavior.
 4. Implement the bounded read handle and materialized pages in one SQLite
    transaction with the journal cutover watermark. Add deterministic fake data
    tests only; do not add runtime or Docker proof.
@@ -76,7 +77,7 @@ For this docs-only proposal:
   exist and do not require runtime or Docker.
 
 Expected evidence is successful artifact validation, no whitespace errors, an
-exact three-file diff, explicit proposed/pending markers, and no source,
+exact owned-path diff, explicit proposed/pending markers, and no source,
 runtime, package, Docker, or release claim.
 
 ## Independent review
@@ -118,3 +119,9 @@ expansion.
   corrections. Final verdict: PASS, no P1/P2/P3 finding.
 - Owner acceptance, source implementation, runtime, and release evidence:
   pending.
+- 2026-09-26: proposed membership narrowed to currently unresolved subjects
+  after review identified permanent capacity failure from an all-history
+  immutable inventory. A per-family predicate and immutable representative
+  remain owner decisions. A volatile store-activation generation now guards
+  snapshot cutover cursors against copied-database lineage. No source work or
+  owner acceptance is inferred from this amendment.

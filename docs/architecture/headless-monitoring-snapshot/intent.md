@@ -13,9 +13,9 @@ Last updated: 2026-09-25
 HCFG-4 requires authenticated monitoring evidence before it can provide a
 versioned watch with cursor/resume and bounded retention. A watch client needs
 an explicit bootstrap path after first connection and a recovery path after a
-retention gap. The proposed HCFG-4A exact-ID read packet in [PR #33](https://github.com/hypler-dev/LNSAT/pull/33)
-is a prerequisite for the evidence subjects and remains proposed pending owner
-acceptance.
+retention gap. The HCFG-4A exact-ID read intent/spec in [PR #33](https://github.com/hypler-dev/LNSAT/pull/33)
+has owner acceptance for source implementation. The PR remains draft and
+unmerged. Its known-ID reads do not authorize enumerating evidence subjects.
 
 An inventory assembled from separate reads has no single cutover point.
 It can also leave a client unable to distinguish an empty inventory, an expired
@@ -29,8 +29,9 @@ Define a proposed, owner-reviewable, read-only snapshot contract that:
 - authenticates an owner, operator, or auditor using the existing evidence-read
   permission, with installation-wide versus narrower scope recorded as an
   explicit owner decision;
-- materializes a bounded, deterministic evidence-subject ID inventory under one
-  SQLite transaction that also records an opaque journal cutover watermark;
+- materializes a bounded, deterministic inventory of currently unresolved
+  evidence subjects under one SQLite transaction that also records an opaque
+  journal cutover watermark;
 - paginates that inventory with opaque snapshot and page tokens, finite TTL and
   capacity, and explicit success, failure, and expiry results;
 - lets a client start the later watch strictly after the cutover watermark
@@ -53,11 +54,16 @@ handle does not approve, deny, activate, revoke, mutate, or widen authority.
 
 - This is a proposed source contract only. It authorizes no schema, server,
   CLI, storage, or runtime implementation.
-- PR #33 remains a prerequisite and is not treated as accepted.
+- PR #33 remains an unmerged source prerequisite; its accepted exact-read
+  scope does not accept this enumerating snapshot.
 - The owner must choose installation-wide `ReadEvidence` access or a narrower
   project/resource scope. This packet does not make that choice implicitly.
 - The owner must accept the exact evidence-family mapping. Until then, this
   packet does not claim which subject families are inventoryable.
+- The owner must accept a per-family current-unresolved membership predicate.
+  Terminal and historical evidence remains subject to its accepted exact
+  known-ID read path; absent paths remain an explicit implementation gap.
+  Snapshot capacity must not grow monotonically with all retained history.
 - The proposed transport route, method, and request/response fields remain
   owner-reviewable; this packet does not make them implementation-ready.
 - Snapshot rows and metadata are produced from one consistent SQLite
@@ -102,7 +108,8 @@ must never silently widen option 2 to installation-wide access.
   cursor/resume, ordering, disconnect, and backpressure tests.
 - **Verified:** current project status records monitoring and later headless V1
   gates as incomplete.
-- **Verified:** PR #33's HCFG-4A intent/spec are proposed and acceptance-pending.
+- **Verified:** PR #33's HCFG-4A intent/spec have owner source acceptance;
+  merge and snapshot enumeration remain separate decisions.
 - **Assumption:** state changes and their monitoring journal entries can share
   one SQLite transaction; the implementation packet must prove this with a
   writer/snapshot race test.
@@ -118,7 +125,9 @@ must never silently widen option 2 to installation-wide access.
   One transaction and an explicit cutover watermark are mandatory.
 - An unbounded inventory, page queue, or token lifetime could exhaust storage or
   memory. The contract therefore requires finite item, page, handle, and TTL
-  limits and explicit capacity results.
+  limits and explicit capacity results. More than 10,000 concurrently unresolved
+  subjects still makes this proposed snapshot unavailable; an implementation
+  must not present that capacity error as an empty or successful recovery.
 - A retention gap may be mistaken for an outcome or complete audit history.
   The response fields and acceptance tests keep those claims closed.
 - A scope error could expose installation-wide evidence. Scope is an owner
@@ -143,6 +152,6 @@ semantics; this packet owns bootstrap inventory and cutover metadata.
 
 The [Product Build Sequence](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control)
 owns the HCFG-4 requirement and [Project Status](../../PROJECT_STATUS.md#current-build-position)
-owns current project status. PR #33's proposed HCFG-4A packet is a supporting
+owns current project status. PR #33's owner-accepted, unmerged HCFG-4A packet is a supporting
 dependency. This file owns the proposed HCFG-4B snapshot intent and does not
 replace those records.

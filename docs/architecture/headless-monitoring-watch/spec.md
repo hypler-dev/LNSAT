@@ -14,15 +14,19 @@ created monitoring evidence. It assigns one strictly increasing journal sequence
 inside the same SQLite transaction that creates the referenced source evidence.
 A replay or no-op writes no second journal event. Publication follows commit;
 failed transactions publish nothing. Timestamps and client arrival order never
-supply cross-family order.
+supply cross-family order. When one transaction creates several included source
+records, journal sequences follow their actual source-append order and become
+visible together at commit. A journal-index failure rolls back the source
+transaction. Sequences never wrap; exhaustion of SQLite's signed integer range
+fails the source append closed rather than omitting a journal entry.
 
 The [proposed HCFG-4B snapshot](../headless-monitoring-snapshot/spec.md) is a
-required prerequisite. An authenticated snapshot supplies a current-state
-inventory and a cutover cursor from one atomic database boundary. That cursor
+required prerequisite. An authenticated snapshot supplies a current-unresolved
+subject inventory and a cutover cursor from one atomic database boundary. That cursor
 is the only way to begin a watch without a prior cursor. After a retention gap,
 a new snapshot supplies a new cutover cursor; it restores current-state
 visibility, not missing historical event continuity. The gap remains visible to
-the operator. PR #33's proposed exact-ID readback cannot by itself establish a
+the operator. PR #33's accepted exact-ID readback cannot by itself establish a
 complete inventory or cutover cursor.
 
 Every event binds one closed subject family and exact subject ID to one
@@ -82,6 +86,19 @@ configuration, or private Docker evidence appears in a watch page. The exact
 initial family-to-source-record mapping remains an owner decision; no source
 implementation may add a family before that mapping is accepted and tested.
 
+The implementation inventory must resolve the candidate consequential-action
+families: approval requests and decisions, audit events, Phase 7 authorization
+attempts, nonces, execution authorizations, capability consumptions,
+operations, operation attempts, receipts, reconciliations, and Phase 7 state
+events for nonce, execution authorization, operation, and operation attempt.
+One-time consumption and its consumed-authorization state both need journal
+entries in their source transaction; a later operation event cannot stand in
+for either. Local identity/session lifecycle and session-activity records are
+excluded from this proposed watch. Other support records require separate
+scope review. The accepted mapping must name each family's exact immutable
+source ID, rederivation path, and current-unresolved snapshot predicate or
+explicit reason that the family has no current-state representative.
+
 The request cursor denotes the **last delivered event**, or the atomic
 snapshot cutover position. The server returns only events with sequence greater
 than that cursor, in strictly increasing sequence. `next_cursor` equals the
@@ -108,6 +125,9 @@ cursor**. A partial HTTP response or disconnect grants no cursor advancement.
 - `409` `retention_gap` contains no cursor or events. A client must record the
   gap and take a new HCFG-4B snapshot. That snapshot cannot erase the
   historical continuity loss.
+- `409` `continuity_reset` contains no cursor or events. It means the served
+  store activation changed; a client records unknown continuity and obtains a
+  new snapshot rather than trusting a copied database's stored epoch.
 - `429` `watch_busy` means the fixed concurrent-waiter cap is reached. It has
   no events or cursor advancement; the client may retry its prior cursor.
 - `503` `journal_unavailable` covers storage, integrity, or source-rederivation
@@ -141,6 +161,19 @@ outside the journal's historical order and is represented only through the
 HCFG-4B snapshot. A cursor from another epoch or installation is rejected.
 Changing the journal epoch cannot silently reset a client to the beginning or
 latest position.
+
+An epoch stored only in the database is insufficient to identify a copied or
+restored database: a byte copy carries the same epoch and plausible sequence.
+The proposed served cursor also binds to a fresh, volatile store-activation
+generation shared by snapshot and watch and rotated whenever the daemon opens
+or reopens its canonical store, including restart or replacement. A cursor from
+an earlier activation receives `409 continuity_reset` with no events or new
+cursor and requires a fresh snapshot. The gap is recorded as continuity
+unknown even if the retained journal might still contain the interval. A live
+database replacement must be detected and denied before any cursor is served;
+the daemon cannot silently rebind an open store to replacement bytes. Exact
+generation encoding and replacement detection need owner acceptance and
+source tests before this can be a supported resume claim.
 
 ## Retention, limits, and backpressure
 
@@ -197,13 +230,19 @@ source-record mappings, then prove:
 
 - created source evidence and its bound journal row commit atomically; replay,
   rollback, crash, and write failure publish no duplicate or orphan event;
+- every accepted multi-record transaction preserves source-append order,
+  including nonce/state, authorization/state/operation/state,
+  consumption/consumed-state, and receipt/reconciliation/attempt-state/
+  operation-state; signed sequence exhaustion rolls back source and journal;
 - exact subject family/ID and canonical digest rederive before publication and
   before every page; mismatches and tampering return no event;
 - one total order under concurrent writers, with no timestamp ordering claim;
 - snapshot cutover has no gap to the first watch page; exclusive cursor resume,
   crash replay, empty-page cursor stability, and no skip on partial delivery;
 - explicit gap, wrong epoch, malformed/unknown cursor, pruning, and no implicit
-  start; post-gap snapshot preserves the recorded continuity loss;
+  start; post-gap snapshot preserves the recorded continuity loss; process
+  restart, store reopen, copied database, and live replacement cannot validate
+  an old served cursor merely because the database epoch was copied;
 - session, role, origin, Host, version, revocation-during-wait, and generic
   denial behavior match the accepted read scope;
 - page, byte, wait, write-deadline, per-session, and global waiter bounds; and

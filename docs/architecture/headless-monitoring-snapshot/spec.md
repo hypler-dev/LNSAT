@@ -30,8 +30,9 @@ the opened response. It must never silently increase them.
 
 ## Behavior
 
-Opening a snapshot captures a bounded evidence-subject ID inventory and one
-journal cutover watermark. Pages expose only that materialized inventory until
+Opening a snapshot captures a bounded inventory of currently unresolved
+evidence subjects and one journal cutover watermark. Pages expose only that
+materialized inventory until
 the handle expires. Later exact reads may show additional related evidence;
 later watch events cover changes after the cutover. A missing, delayed, empty,
 failed, or expired page never establishes an outcome. The cutover cursor is a
@@ -102,7 +103,7 @@ snapshot.opened.v1 {
   cutover_cursor: opaque-string,
   expires_at: RFC3339-string,
   audit_history_complete: false,
-  inventory_semantics: "evidence_subject_ids_at_cutover"
+  inventory_semantics: "unresolved_evidence_subject_ids_at_cutover"
 }
 ```
 
@@ -110,8 +111,9 @@ snapshot.opened.v1 {
 are not a promise about later state or historical event count. The fixed
 `audit_history_complete: false` field prevents a subject inventory from
 being mistaken for a complete audit history. The cutover cursor is usable as
-the later watch's exclusive `after_cursor` only when its protocol and journal
-epoch match. Events with journal sequence strictly greater than the cutover
+the later watch's exclusive `after_cursor` only when its protocol, journal
+epoch, and volatile store-activation generation match. Events with journal
+sequence strictly greater than the cutover
 are eligible for that watch.
 
 ### Page request
@@ -141,7 +143,7 @@ snapshot.page.v1 {
   cutover_cursor: opaque-string,
   expires_at: RFC3339-string,
   audit_history_complete: false,
-  inventory_semantics: "evidence_subject_ids_at_cutover"
+  inventory_semantics: "unresolved_evidence_subject_ids_at_cutover"
 }
 ```
 
@@ -179,6 +181,19 @@ the digest is computed only after that equality and all linked evidence are
 verified. A duplicate, missing source, rederivation failure, family mismatch,
 or digest mismatch aborts the entire open before a handle is published.
 Mutable aggregate views cannot be snapshot items.
+
+Membership is a **current-unresolved projection**, not every retained
+immutable evidence record. For each accepted family, the owner must accept an
+exact predicate over current canonical state and a deterministic rule selecting
+one immutable record that represents each unresolved subject. A terminal
+subject leaves the next snapshot inventory. Its source evidence remains
+available only through an accepted exact known-ID path; any missing path is an
+implementation gap. The predicate must cover pending approval and
+uncertain operation/authorization states in the accepted family set; a missing
+predicate or unsupported source binding blocks implementation of that family.
+The 10,000-item cap applies to this current projection. If it is exceeded,
+`capacity_exceeded` blocks snapshot recovery rather than silently truncating
+the inventory; a supported V1 claim must document and test that capacity limit.
 
 Items are sorted by canonical UTF-8 byte order of `family`, then
 `subject_id`, then `evidence_digest`. Clients must not infer semantic priority
@@ -231,21 +246,23 @@ path, token contents, or evidence payload beyond the closed fields shown.
 Opening a snapshot must use one bounded SQLite `IMMEDIATE` transaction, or an
 equivalent serializing boundary, that:
 
-1. establishes the accepted scope and reads the complete bounded evidence-
-   subject ID inventory;
+1. establishes the accepted scope and reads the complete bounded current-
+   unresolved evidence-subject ID inventory;
 2. materializes the canonical item order and the finite page count;
 3. records the journal epoch and the current opaque journal watermark; and
 4. publishes the ephemeral handle only after all three values are consistent.
 
-The accepted family mapping must be identical for snapshot inventory and watch
-events. Every retained source-evidence subject from those families appears in
-the inventory at cutover; a family omitted from either surface blocks HCFG-4
-source acceptance. State changes that publish monitoring journal entries must
-update the evidence state and journal in the same SQLite transaction. A writer that commits before
-the snapshot transaction's cutover is included in the inventory and has a
-sequence less than or equal to the returned watermark. A writer that commits
-after the cutover is excluded from the inventory and has a sequence strictly
-greater than the returned watermark in the later watch. SQLite transaction
+The snapshot projection and watch event-family mapping must be reconciled in
+one accepted table. The snapshot maps each currently unresolved subject to an
+immutable representative record; the watch covers every accepted new source
+event, including terminal transitions. Historical and terminal records are
+not promised in the snapshot. State changes that publish monitoring journal
+entries must update the evidence state and journal in the same SQLite
+transaction. A writer that commits before the snapshot transaction's cutover
+is reflected in the current-state projection, whether that means inclusion,
+replacement, or removal; its journal sequence is at or below the returned
+watermark. A writer that commits after the cutover has a sequence strictly
+greater than the watermark and is eligible for the later watch. SQLite transaction
 serialization, the journal epoch, and the watermark must be tested together;
 the implementation must exercise the writer/snapshot race and prove that no
 committed event falls between those cases.
@@ -255,8 +272,11 @@ The first watch request uses the returned `cutover_cursor` as an exclusive
 eligible. Each later watch request uses the last delivered cursor as its
 exclusive `after_cursor`. The snapshot does not replay historical events and
 does not promise that evidence before the journal epoch is present. If the
-cursor is expired or from another epoch, the watch returns its typed gap or
-unsupported-cursor result; the client must obtain a fresh snapshot/read path.
+cursor is expired, from another epoch, or from an earlier store activation, the
+watch returns its typed gap, continuity-reset, or unsupported-cursor result;
+the client must obtain a fresh snapshot/read path. Store activation rotates on
+daemon start or canonical store reopen, so a copied database cannot validate
+an old served cursor by copying its in-database epoch.
 
 A retention gap says only that continuity is no longer available. It never
 establishes an outcome for a missing event. A snapshot item likewise does not
@@ -275,8 +295,9 @@ tokens before returning data.
 
 ## Compatibility and migration
 
-The protocol version and journal epoch are part of token validation. A v1 token
-must not be reinterpreted under another protocol version or epoch. Unsupported
+The protocol version, journal epoch, and volatile store-activation generation
+are part of token validation. A v1 token must not be reinterpreted under
+another protocol version, epoch, or activation. Unsupported
 versions return `unsupported_version`. Migration begins a new epoch; pre-epoch
 state is available only through a new snapshot/read path and is not fabricated
 as ordered watch history. Rollback removes the implementation or routes to the
@@ -288,6 +309,8 @@ The implementation packet must provide focused deterministic tests for:
 
 - accepted scope and active authorization at open and every page;
 - a complete bounded inventory under one SQLite transaction;
+- accepted per-family current-unresolved predicates, deterministic immutable
+  representative binding, terminal removal, and explicit over-capacity denial;
 - deterministic ordering and page boundaries across repeated opens;
 - unique exact `(family, subject_id)` binding to an independently rederived
   immutable record and matching `sha256:` digest at open and page time;
@@ -313,6 +336,7 @@ The non-goals are implementation, mutation authority, Docker/runtime proof,
 release, deployment, complete audit-history replay, and any implied outcome
 from missing data. Open decisions are the authorization scope, exact transport
 method/path/fields, durable materialization mechanism, journal epoch
-representation, and the exact evidence-family mapping. These choices require
+representation, store-replacement detection, and the exact watch-family and
+current-unresolved projection mappings. These choices require
 owner acceptance before an implementation packet can claim readiness and must
 not be inferred from fixtures.

@@ -16,9 +16,10 @@ contract and acceptance work only.
 Protected lanes:
 
 - [PR #33](https://github.com/hypler-dev/LNSAT/pull/33) HCFG-4A intent/spec and
-  the [HCFG-4B snapshot](../headless-monitoring-snapshot/intent.md) must be
-  accepted and implemented before this watch can provide a valid first or
-  post-gap cursor.
+  the [HCFG-4B snapshot](../headless-monitoring-snapshot/intent.md) are
+  prerequisites. PR #33 has owner source acceptance but remains draft and
+  unmerged; HCFG-4B still needs owner acceptance and implementation before a
+  valid first or post-gap cursor exists.
 - The owner must choose installation-wide `ReadEvidence` or a narrower
   project/resource scope before source work begins.
 - No new approval, control, configuration mutation, bootstrap, revocation,
@@ -45,18 +46,34 @@ by their existing records. A later implementation packet must name its exact
 source, test, and documentation files before editing them. One writer owns
 overlapping files.
 
+## Source inventory to verify before implementation
+
+Candidate append paths are `crates/lnsat-store/src/lib.rs` for approval
+request/decision and audit, `phase7_persistence.rs` for authorization attempts,
+`phase7_nonce.rs` for nonces and nonce state, `phase7_consumption.rs` for
+execution authorizations, capability consumptions, operations, and their state,
+and `phase7_git_adapter.rs` for operation attempts, receipts, reconciliations,
+and attempt/operation state. The shared Phase 7 state-event table has four
+target kinds. This file list is a source-location inventory, not proof that
+every call site, immutable ID, exact read path, or transaction boundary is
+covered. The implementation packet must resolve the accepted family mapping
+and test each multi-record commit before a migration or served route is added.
+
 ## Sequence
 
-1. Obtain owner acceptance of the HCFG-4A intent/spec and record its exact
-   read scope. Accept and implement HCFG-4B snapshot/cutover before watch.
+1. Verify PR #33's separately authorized source merge and exact-read scope.
+   Accept and implement HCFG-4B snapshot/cutover before served watch.
 2. Obtain owner acceptance of this watch intent/spec, including transport,
    retention, cursor, event-family mapping, and authorization decisions that
    are currently open.
 3. Create a separate source implementation packet with exact module ownership,
-   data-store choice, transport framing, and migration evidence.
+   accepted event-family/source-ID/read-path table, current-unresolved snapshot
+   projection, transport framing, migration evidence, and a store-activation
+   generation that invalidates served cursors on restart or store reopen.
 4. Implement journal append and publication atomically, then add the bounded
-   read-only long-poll page and focused store/served tests. Do not use runtime
-   or Docker proof.
+   read-only long-poll page and focused store/served tests. Cover every named
+   multi-record transaction in source-append order and copied/restored store
+   denial. Do not use runtime or Docker proof.
 5. Add the later `lnsatctl` JSONL consumer only through a separately accepted
    packet or an explicit extension to the implementation packet.
 6. Run validators, obtain a fresh independent review, reconcile findings, and
@@ -75,7 +92,7 @@ For this docs-only proposal:
   `npm run public:check`, and `npm run legacy:inventory:check`.
 
 Expected evidence is successful artifact validation, no whitespace errors, an
-exact six-file diff, and explicit proposed/pending markers. No source,
+exact owned-path diff, and explicit proposed/pending markers. No source,
 runtime, Docker, or package proof is claimed by these checks.
 
 ## Independent review
@@ -107,11 +124,14 @@ cursor semantics, or source scope must be recorded here before expansion.
 
 - Authority checked: `docs/PRODUCT_BUILD_SEQUENCE.md` HCFG-4 requirement and
   `docs/PROJECT_STATUS.md` current build position.
-- Dependency: PR #33 HCFG-4A intent/spec are proposed and acceptance-pending.
-- Changed paths: exactly the six files listed in **Files and ownership**.
+- Dependency: PR #33 HCFG-4A intent/spec have owner source acceptance; its
+  draft source implementation remains unmerged.
+- Initial proposal paths: the six files listed in **Files and ownership**.
 - The companion HCFG-4B snapshot proposal owns three additional files under
   `docs/architecture/headless-monitoring-snapshot/`; this combined draft changes
   nine documentation paths in total.
+- This 2026-09-26 amendment changes those six intent/spec/plan files plus the
+  deterministic `docs/reference/legacy-identifier-inventory.json` checksum.
 - Validation: six artifact validators, Prettier, `docs:direction:check`
   (31/31 tests), `public:check` (872 project files), legacy inventory
   (2,122 occurrences across 295 files), relative links (zero missing across
@@ -121,3 +141,20 @@ cursor semantics, or source scope must be recorded here before expansion.
   reviewer returned PASS with no P1/P2/P3 finding on 2026-09-25.
 - Owner acceptance, source implementation, merge, runtime, deploy, release,
   and production evidence: pending.
+- 2026-09-26: PR #60 was closed as duplicate HCFG-4B design authority; this
+  PR remains the single proposed HCFG-4B snapshot and HCFG-4C watch contract.
+  The amendment names the candidate source-family inventory, source-append
+  order, signed sequence exhaustion, and a served cursor reset on store
+  activation change. Exact family IDs/read paths and owner scope acceptance
+  remain open. No source implementation is authorized.
+- 2026-09-26: six artifact validators, Prettier, `docs:direction:check`
+  (31/31), `public:check` (871 files), legacy inventory (2,122/295), and
+  `git diff --check` passed. Fresh independent GPT reviewer reported PASS with
+  no P1/P2/P3 on the six-file contract amendment. The first broad
+  `npm run check` reached workspace typecheck, then failed because borrowed
+  `node_modules` lacked `fastify`. After offline `npm ci`, workspace typecheck
+  and all workspace tests passed. Rust tests initially failed on sandbox
+  `ListenFailed`; one focused test and the complete `npm run rust:check`
+  passed with local loopback access. The first check's earlier source gates
+  through Phase 11 readiness passed; no single subsequent `npm run check`
+  exit-zero result is claimed.
