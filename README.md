@@ -142,6 +142,13 @@ the resulting declarative configuration and computes effective authority;
 presets cannot silently grant access, and an unverifiable OS restriction cannot
 be advertised as enforced.
 
+HCFG-4A adds source-only, authenticated exact-object `GET|HEAD` readback for
+approval requests, approval decisions, and audit events. Its
+[intent](docs/architecture/headless-monitoring/intent.md) and
+[specification](docs/architecture/headless-monitoring/spec.md) define the
+bounded contract. This source implementation grants no runtime, build,
+publication, deployment, or release authority.
+
 `lnsatctl` will expose permission changes, approvals, activity evidence,
 emergency disablement, recovery, declarative configuration, validation, and
 status through protected interfaces. The existing React console remains an
