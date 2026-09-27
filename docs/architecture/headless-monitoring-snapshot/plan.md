@@ -1,0 +1,149 @@
+<!-- intent-driven-delivery:plan:v1 -->
+
+# Plan: Versioned monitoring evidence-subject snapshot
+
+Status: proposed
+Authority: [Versioned monitoring evidence-subject snapshot intent](intent.md)
+Owner: LNSAT project owner
+Last updated: 2026-09-27
+
+## Scope and protected lanes
+
+This packet defines contract and acceptance work only. It authorizes no source,
+schema, storage, server, CLI, runtime, Docker, deployment, release, installer,
+production, or supported-platform implementation.
+
+Protected lanes:
+
+- [PR #33](https://github.com/hypler-dev/LNSAT/pull/33) HCFG-4A exact reads
+  merged at `bd9016a`; snapshot enumeration still needs separate owner
+  acceptance before source work.
+- The owner must choose installation-wide `ReadEvidence` or a narrower
+  project/resource scope before any implementation starts.
+- State and journal publication must remain one SQLite transaction; no second
+  authorization or mutation path may be introduced.
+- The exact evidence-to-subject mapping, immutable representative binding,
+  and served evidence readback must be accepted before source work; this
+  proposal does not invent family names or equate evidence and subject IDs.
+- The exact transport method, route, and fields remain owner-reviewable.
+- The snapshot must remain an evidence-subject ID inventory at one cutover.
+  It represents only accepted currently unresolved subjects. Audit history
+  completeness and historical event continuity are separate gates.
+- No real evidence, credentials, secrets, or production payloads enter tests,
+  fixtures, logs, tokens, or review artifacts.
+
+## Files and ownership
+
+This proposal owns exactly:
+
+- `docs/architecture/headless-monitoring-snapshot/intent.md`
+- `docs/architecture/headless-monitoring-snapshot/spec.md`
+- `docs/architecture/headless-monitoring-snapshot/plan.md`
+
+The HCFG-4A packet, HCFG-4C watch packet, product status, and build sequence
+remain owned by their existing records. A later implementation packet must
+name exact source, test, migration, and documentation paths before editing.
+
+## Sequence
+
+1. Verify PR #33's exact-read source merge at `bd9016a` and recorded scope;
+   its owner acceptance does not authorize enumeration.
+2. Obtain owner acceptance of this snapshot intent/spec, including scope,
+   limits, transport mapping, transactional cutover, token, expiry, and
+   redaction decisions.
+3. Create a separate source implementation packet naming the state tables,
+   per-family current-unresolved predicates, trusted server cutover time,
+   immutable representatives and their served exact readback, journal writer,
+   snapshot materialization boundary, cleanup strategy, and exact tests.
+   Confirm the watch packet's exclusive cursor semantics
+   (`sequence > cutover_cursor`) and store-activation reset behavior.
+4. Implement the bounded read handle and materialized pages in one SQLite
+   transaction with the journal cutover watermark. Add deterministic fake data
+   tests only; do not add runtime or Docker proof.
+5. Integrate the later HCFG-4C watch by starting strictly after the cutover
+   cursor and testing concurrent writer, reconnect, retention-gap, and
+   unknown-outcome behavior. Keep audit-history completeness separately gated.
+6. Run focused validators, obtain fresh independent review from a different
+   provider/model, reconcile findings, and present the isolated result for
+   owner merge authorization. Merge, release, and production remain separate.
+
+## Validators
+
+For this docs-only proposal:
+
+- `python3 <intent-driven-delivery-skill>/scripts/validate_artifact.py docs/architecture/headless-monitoring-snapshot/intent.md`
+- `python3 <intent-driven-delivery-skill>/scripts/validate_artifact.py docs/architecture/headless-monitoring-snapshot/spec.md`
+- `python3 <intent-driven-delivery-skill>/scripts/validate_artifact.py docs/architecture/headless-monitoring-snapshot/plan.md`
+- `git diff --check -- docs/architecture/headless-monitoring-snapshot/intent.md docs/architecture/headless-monitoring-snapshot/spec.md docs/architecture/headless-monitoring-snapshot/plan.md`
+- repository-native docs/readiness checks named by the packet owner, if they
+  exist and do not require runtime or Docker.
+
+Expected evidence is successful artifact validation, no whitespace errors, an
+exact owned-path diff, explicit proposed/pending markers, and no source,
+runtime, package, Docker, or release claim.
+
+## Independent review
+
+Before source implementation, a fresh reviewer from a different provider or
+model must inspect all three files against HCFG-4, Project Status, PR #33, and
+the later watch contract. Review must report actionable P1/P2/P3 findings for
+transactional cutover, deterministic pages, limits, expiry, authorization,
+privacy, retention gaps, and scope drift. The producer cannot approve its own
+proposal.
+
+Owner acceptance remains distinct from reviewer PASS, CI green, merge,
+release, and production authority.
+
+## Rollback and recovery
+
+This proposal is documentation-only and reversible by removing the three new
+files before acceptance. Do not remove or rewrite existing status,
+build-sequence, HCFG-4A, or watch records. If a later implementation fails a
+gate, stop before merge, preserve evidence, and revert only its isolated source
+packet using normal reviewable history. Never delete accepted evidence or
+journal data as rollback.
+
+## Deviations
+
+The 2026-09-27 PR #33 merge reconciliation updates this proposal's stale
+dependency wording and the canonical Project Status plus HCFG-4A plan. It
+does not change snapshot scope, limits, token semantics, transaction boundary,
+retention recovery, redaction, or source authority. Any later change to those
+decisions must be recorded here before expansion.
+
+## Evidence ledger
+
+- 2026-09-25: all six HCFG-4B/C intent/spec/plan artifact validators passed.
+- 2026-09-25: Prettier on the combined proposal, `docs:direction:check`
+  (31/31 tests), `public:check` (872 project files), legacy inventory check
+  (2,122 occurrences across 295 files), relative-link check (zero missing
+  across eight Markdown files), and `git diff --check` passed.
+- 2026-09-25: fresh independent GPT Terra xhigh read-only review found and
+  rechecked bootstrap, evidence binding, pagination, digest, and resource-bound
+  corrections. Final verdict: PASS, no P1/P2/P3 finding.
+- Owner acceptance, source implementation, runtime, and release evidence:
+  pending.
+- 2026-09-26: proposed membership narrowed to currently unresolved subjects
+  after review identified permanent capacity failure from an all-history
+  immutable inventory. A per-family predicate and immutable representative
+  remain owner decisions. A volatile store-activation generation now guards
+  snapshot cutover cursors against copied-database lineage. No source work or
+  owner acceptance is inferred from this amendment.
+- 2026-09-26: source inventory found state-event IDs distinct from monitored
+  subject IDs and approval expiry without a durable event. Revised proposal
+  binds both IDs, uses one trusted cutover time, and requires refresh at known
+  expiry boundaries. The earlier owner-acceptance request for PR #52 was
+  withdrawn; revised intent/spec, mapping, and read scope remain pending.
+- 2026-09-26: fresh review found nonce and execution-authorization expiry may
+  also pass before a read materializes an event. Time-derived predicates and
+  exact expiry readback are now required per accepted family; missing served
+  nonce read and mutating authorization read remain blockers. No owner
+  acceptance or implementation inferred.
+- 2026-09-26: revised six-document contract passed artifact validation,
+  Prettier, direction/public/inventory checks, and whitespace check. Fresh
+  independent GPT read-only review resolved the expiry/readback findings and
+  returned PASS with no remaining P1/P2/P3. Owner acceptance remains pending.
+- 2026-09-27: PR #33 exact-read source merged at `bd9016a` and public main
+  ancestry was fetched. This removes the source-merge prerequisite only;
+  snapshot enumeration, owner scope, source implementation, runtime, and
+  release remain unaccepted.

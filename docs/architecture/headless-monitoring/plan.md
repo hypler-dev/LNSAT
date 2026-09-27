@@ -183,5 +183,9 @@ to the accepted intent and specification.
   the shared product-surface selector returned `400` before the route-local
   generic `403`. The source and served `GET|HEAD` assertions were corrected;
   the reviewer re-reviewed the correction and reported no remaining P1/P2/P3.
-- Implementation PR #33 remains draft. Exact-head CI, merge, runtime proof,
-  build candidate, and release remain separately pending.
+- 2026-09-27: PR #33 exact head `da8d5fae1829f8aa99158342a477a324b3c70b01`
+  passed CI run `36287275526` and merged at
+  `bd9016a48e8d675d8f52c406a4b7103b16c708f3` after separate owner
+  authorization. Fetched public-main ancestry confirms the reviewed head as
+  merge parent. Snapshot enumeration, watch, runtime proof, build candidate,
+  and release remain separate pending gates.
