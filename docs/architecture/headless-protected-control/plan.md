@@ -9,7 +9,7 @@ Last updated: 2026-09-27
 
 ## Scope and protected lanes
 
-This plan prepares the online apply contract for a previously bootstrapped installation. It does not authorize activation source implementation, a migration, route, OS permission change, Docker proof, merge, publication, or release. The [specification](spec.md) remains proposed and cannot receive activation acceptance until separate exact bootstrap, distinct-person approver, and external store-anchor decisions are accepted. A pure non-activating comparator may be proposed as a later bounded source slice. Bootstrap, emergency stop/resume, offline recovery, HCFG-6 enforcement, and selected-target runtime proof remain independent required V1 work.
+This plan prepares the online apply contract for a previously bootstrapped installation. It does not authorize activation source implementation, a migration, route, OS permission change, Docker proof, merge, publication, or release. The [specification](spec.md) remains proposed and cannot receive activation acceptance until separate exact bootstrap, fresh owner-decision challenge, and external store-anchor decisions are accepted. A pure non-activating comparator may be proposed as a later bounded source slice. Bootstrap, emergency stop/resume, offline recovery, HCFG-6 enforcement, and selected-target runtime proof remain independent required V1 work.
 
 ## Files and ownership
 
@@ -17,7 +17,7 @@ Design files: `docs/architecture/headless-protected-control/{intent,spec,plan}.m
 
 ## Sequence
 
-1. Resolve three pending owner security decisions in separate exact records: local bootstrap trust root and one-time first-generation binding; configuration-approver enrollment and distinct-person proof; external store-anchor creation, bind/update ordering, clone/restore refusal, and loss recovery. Each record must include denial and interruption acceptance tests. The current generic approval permission is insufficient by itself. Only then seek acceptance of active apply.
+1. Resolve three pending owner security decisions in separate exact records: local bootstrap trust root and one-time first-generation binding; fresh owner-credential/challenge decision including single-owner manual use and agent/client denial; external store-anchor creation, bind/update ordering, clone/restore refusal, and loss recovery. Each record must include denial and interruption acceptance tests. The current generic action-approval permission is insufficient by itself. Only then seek acceptance of active apply.
 2. Reconcile HCFG-4 authenticated evidence readback before using watch or status as apply outcome proof. A missing or disconnected event never settles a mutation outcome; exact durable readback does.
 3. After a separately accepted pure-comparator slice, implement `lnsat.headless_config.comparison.v1` with canonical snapshot/summary digests and the exact partial order in the specification. It has no persistence or activation. Test every widening and identity-substitution edge.
 4. Specify and review the new store schema/activation generation, owner/installation binding, immutable transition/audit linkage, idempotency, compare-and-swap, stop/revocation precedence, and copied-store behavior before any migration lands. Initialize existing stores with no active generation.
@@ -38,11 +38,11 @@ The design proposal can be withdrawn without product effect. Later source rollba
 
 ## Deviations
 
-No deviation approved. If implementation reveals that external OS control cannot be prepared before active-pointer commit or rechecked at use, stop activation work and revise the contract for owner review. If distinct-person proof cannot be established, retain online widening denial rather than weakening to a second session.
+The proposed owner-decision rule changed after checking the accepted V1 requirement: a sole owner may approve a manual increase through a fresh exact-change step-up. This avoids making a second human a prerequisite for usable local V1 while keeping agent/client self-approval closed. If implementation cannot establish a fresh credential/challenge boundary or external OS control cannot be prepared before active-pointer commit and rechecked at use, retain widening denial and return for owner review.
 
 ## Evidence ledger
 
 - 2026-09-27: Public `main` `f669181a1eaf574b1891a5c3fcc838870097e176`; design branch created from that commit in an isolated public checkout. HCFG-3 has no active generation or apply route; existing Gateway sessions, approval, owner recovery, and immediate-transaction audit are foundations only.
 - Validation: local intent/spec/plan artifact checks passed 3/3; Prettier passed on six touched files; `docs:direction:check` passed 31/31 tests; `public:check` passed on 868 files; legacy inventory passed with 2,122 occurrences in 295 files; staged `git diff --check` passed. Source and Rust tests were not needed for this docs-only proposal.
-- Independent review: first pass found copied-store trust, comparison, audit, acceptance, and authority-wording gaps. Corrections passed a fresh read-only re-review with no remaining P1/P2/P3. This is design review only, not future source approval.
+- Independent review: first pass found copied-store trust, comparison, audit, acceptance, and authority-wording gaps; corrected re-review passed. A later single-owner step-up revision received a fresh read-only review with two P2 and one P3; challenge consumption, credential-generation binding, secret intake, and record separation corrections passed staged re-review with no remaining P1/P2/P3. This is design review only, not future source approval.
 - Source implementation, merge, Docker, production, package, and release: none.

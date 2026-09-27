@@ -14,11 +14,11 @@ The accepted V1 headless requirement needs authenticated configuration changes, 
 
 ## Desired outcome
 
-After a separately proven initial bootstrap, an installation owner can apply a bounded active configuration through `lnsatctl` and the versioned Gateway API. A change cannot widen resource access or agent action authority without an explicit decision by a different authorized human. Every accepted transition is bound to the exact installation, declaration, resource identities, prior generation, decision, and durable audit record. Disablement and revocation remain higher-priority authority state and cannot be cleared by apply.
+After a separately proven initial bootstrap, an installation owner can apply a bounded active configuration through `lnsatctl` and the versioned Gateway API. A change cannot widen resource access or agent action authority without a fresh authenticated owner decision on the exact change. The sole owner may make that decision after an explicit step-up; an agent or client request cannot approve itself. Every accepted transition is bound to the exact installation, declaration, resource identities, prior generation, decision, and durable audit record. Disablement and revocation remain higher-priority authority state and cannot be cleared by apply.
 
 ## Users and systems
 
-Local installation owners, designated human approvers, operators, `lnsatctl`, `lnsatd` Gateway, the SQLite authority store, and platform resource-enforcement adapters. The core remains product-neutral.
+Local installation owners, operators, `lnsatctl`, `lnsatd` Gateway, the SQLite authority store, and platform resource-enforcement adapters. The core remains product-neutral.
 
 ## Constraints
 
@@ -38,7 +38,7 @@ This design packet implements no route, store migration, CLI mutation, local boo
 - Verified: HCFG-3's parser and composition return an unverified declared ceiling and a content digest; its CLI loader checks stable regular-file identity on Linux and macOS. See the [HCFG-3 specification](../headless-configuration/spec.md).
 - Verified: active local sessions and approval decisions already use independent proof and immediate SQLite transactions; the existing approval decision does not itself authorize execution. See [Gateway approval decision](../GATEWAY_V1_APPROVAL_DECISION.md).
 - Verified: local owner recovery already uses an exclusive database-path lease and grants no browser or action authority. See [Local owner recovery](../LOCAL_OWNER_RECOVERY.md).
-- Assumption for review: a designated second human can be enrolled before an online privilege increase. A single-owner installation may bootstrap an initial least-privilege configuration and narrow it, but cannot widen it online without that second human.
+- Assumption for review: the authenticated local owner may both request and approve a configuration increase, but only through two separate durable steps with fresh credential proof and explicit exact-change confirmation. A client or agent holding only a request/session capability cannot complete the owner-decision step. This does not weaken the separate distinct-actor rule for action approvals.
 
 ## Risks
 
@@ -46,7 +46,7 @@ Highest risks are self-approval, stale or substituted declarations, target repla
 
 ## Acceptance evidence
 
-- Human owner acceptance of activation remains unavailable until separate exact records define the store-anchor lifecycle, initial bootstrap trust root, approver enrollment, and distinct-person proof. This design can be reviewed now; only the pure non-activating comparator is eligible for a later bounded source proposal.
+- Human owner acceptance of activation remains unavailable until separate exact records define the store-anchor lifecycle, initial bootstrap trust root, and fresh owner-decision challenge. This design can be reviewed now; only the pure non-activating comparator is eligible for a later bounded source proposal.
 - Contract review checks every transition class, denial case, generation comparison, audit atomicity, revocation, rollback, and in-flight outcome rule.
 - Later source packets supply focused store/Gateway/CLI tests, race and platform identity tests, broad repo gates, and fresh independent review. HCFG-6 and selected-target runtime proof remain separate release gates.
 
