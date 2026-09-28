@@ -68,8 +68,12 @@ source root, proof-driver executable digest, owner-only private evidence
 directory, and disposable root after a created claim. It revalidates those
 identities and their physical separation before and after the fresh durable
 read in the final supervisor callback; exact replay stays metadata-only. This
-does not pin paths through Docker resolution. This test-only seam does not verify the
-locked Git revision or real proof-driver build, inspect Docker or an image,
+does not pin paths through Docker resolution. A separate source-only guard uses the
+declared host Git verifier to reject dirty or unsafe standalone source storage
+and require exact separately supplied source revision and tree before the fake
+process and again in that final callback. This test-only seam does not by
+itself authenticate this packet's locked source revision/tree or a real
+proof-driver build, inspect Docker or an image,
 or grant operator authority. No route, CLI, daemon configuration, package, or release
 selects it for production. No real Docker observation exists, and all
 `UNSET_BLOCKING` identities remain blocking. A source-only manifest, admission
@@ -82,6 +86,10 @@ and not writable by the unprivileged daemon. Host root is the local trust
 boundary. The test-only helper admits a user-owned fake executable; it grants
 no production launch authority. A later run must verify this host trust chain
 as well as the exact executable digests.
+
+The lock above predates these later source-only guards. Any future proof built
+from a different source revision or tree requires a new reviewed source lock
+and separate authority decision; this record does not move its existing lock.
 
 ## Required authenticated durable-store admission boundary
 
