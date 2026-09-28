@@ -444,6 +444,74 @@ describe("Phase 9 operation readback client", () => {
     }
   });
 
+  it("keeps the same deadline through optional attempt fetch and body reads", async () => {
+    vi.useFakeTimers();
+    try {
+      for (const stalledStage of ["fetch", "body"] as const) {
+        let attemptSignal: AbortSignal | undefined;
+        const fetch = vi.fn<ControlCenterFetchV1>((_input, init) => {
+          if (fetch.mock.calls.length === 1) {
+            return new Promise((resolve) => {
+              setTimeout(
+                () =>
+                  resolve(
+                    okJson(
+                      operationEnvelope(
+                        "dispatching",
+                        attemptValue("dispatching"),
+                        null,
+                      ),
+                    ),
+                  ),
+                3_000,
+              );
+            });
+          }
+          if (fetch.mock.calls.length === 2) {
+            return new Promise((resolve) => {
+              setTimeout(
+                () => resolve(okJson(authorizationEnvelope("consumed", false))),
+                4_000,
+              );
+            });
+          }
+          attemptSignal = init.signal ?? undefined;
+          if (stalledStage === "fetch") return new Promise(() => {});
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => new Promise(() => {}),
+          });
+        });
+        let settled = false;
+        const pending = loadControlCenterLiveOperationV1(operationId, {
+          fetch,
+          now,
+          session,
+        });
+        void pending.finally(() => {
+          settled = true;
+        });
+
+        await vi.advanceTimersByTimeAsync(9_999);
+        expect(fetch).toHaveBeenCalledTimes(3);
+        expect(settled).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+        await expect(pending).resolves.toMatchObject({
+          ok: false,
+          failure: {
+            kind: "unavailable",
+            code: "control_center.live.transport_unavailable",
+          },
+        });
+        expect(attemptSignal?.aborted).toBe(true);
+        expect(vi.getTimerCount()).toBe(0);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("bounds a stalled response body and relays caller cancellation", async () => {
     vi.useFakeTimers();
     try {
