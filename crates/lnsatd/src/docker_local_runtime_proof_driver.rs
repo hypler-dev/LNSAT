@@ -8,10 +8,11 @@
 
 use crate::adapter_process_protocol::DockerLocalAdapterProcessRequestInputV1;
 use crate::docker_local_execution_payload::build_docker_local_execution_payload_request_v1;
-use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::{
-    DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1,
-    supervise_docker_local_runtime_proof_with_final_guard_v1,
-};
+use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1;
+#[cfg(test)]
+use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::supervise_docker_local_runtime_proof_with_fake_executables_v1 as supervise_docker_local_runtime_proof_for_driver_v1;
+#[cfg(not(test))]
+use crate::docker_local_runtime_proof_driver_pre_supervisor_guard::supervise_docker_local_runtime_proof_with_final_guard_v1 as supervise_docker_local_runtime_proof_for_driver_v1;
 use crate::docker_local_runtime_proof_run_manifest::DockerLocalRuntimeProofRunManifestOutputV1;
 use crate::docker_local_supervisor::DockerLocalSupervisorInputV1;
 use crate::runtime_profile::LoadedDockerLocalRuntimeProfileV1;
@@ -87,7 +88,7 @@ pub(crate) fn execute_docker_local_runtime_proof_driver_v1(
     };
     let consumption = handle.claim().consumption.clone();
     let operation_id = redemption.operation_id;
-    let supervised = supervise_docker_local_runtime_proof_with_final_guard_v1(
+    let supervised = supervise_docker_local_runtime_proof_for_driver_v1(
         store,
         DockerLocalRuntimeProofDriverPreSupervisorGuardInputV1 {
             run_manifest: input.run_manifest,
