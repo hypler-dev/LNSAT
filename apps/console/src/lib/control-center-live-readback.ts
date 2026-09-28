@@ -24,6 +24,7 @@ const LOCAL_IDENTITY_PATTERN = /^identity:human:[^\s\u0000-\u001f\u007f]+$/u;
 const OPERATION_ID_PATTERN = /^opn_[0-9a-f]{64}$/;
 const AUTHORIZATION_ID_PATTERN = /^xau_[0-9a-f]{64}$/;
 const ATTEMPT_ID_PATTERN = /^opa_[0-9a-f]{64}$/;
+const LIVE_READBACK_DEADLINE_MS = 10_000;
 
 type FetchResponseV1 = {
   ok: boolean;
@@ -292,13 +293,17 @@ export async function loadControlCenterLiveOperationV1(
   ) {
     return unavailable("control_center.live.session_invalid", observed_at);
   }
+  if (options.signal?.aborted) {
+    return unavailable("control_center.live.transport_unavailable", observed_at);
+  }
   const fetchImpl = options.fetch ?? (fetch as ControlCenterFetchV1);
+  const deadline = createLiveReadbackDeadlineV1(options.signal);
   try {
     const operationResult = await fetchGatewayJsonV1(
       fetchImpl,
       `/v1/operations/${operation_id}`,
       options.session,
-      options.signal,
+      deadline,
     );
     if (!operationResult.ok) return failureFromFetch(operationResult, observed_at);
     const operation = parseOperationEnvelopeV1(operationResult.value, operation_id);
@@ -310,7 +315,7 @@ export async function loadControlCenterLiveOperationV1(
       fetchImpl,
       `/v1/execution-authorizations/${operation.authorization_id}`,
       options.session,
-      options.signal,
+      deadline,
     );
     if (!authorizationResult.ok) {
       return failureFromFetch(authorizationResult, observed_at);
@@ -340,7 +345,7 @@ export async function loadControlCenterLiveOperationV1(
         fetchImpl,
         `/v1/operations/${operation_id}/attempts/${operation.attempt.operation_attempt_id}`,
         options.session,
-        options.signal,
+        deadline,
       );
       if (!attemptResult.ok) return failureFromFetch(attemptResult, observed_at);
       attempt = parseAttemptEnvelopeV1(
@@ -370,7 +375,49 @@ export async function loadControlCenterLiveOperationV1(
     return { ok: true, snapshot };
   } catch {
     return unavailable("control_center.live.transport_unavailable", observed_at);
+  } finally {
+    deadline.cleanup();
   }
+}
+
+type LiveReadbackDeadlineV1 = {
+  signal: AbortSignal;
+  wait<T>(promise: Promise<T>): Promise<T>;
+  cleanup(): void;
+};
+
+function createLiveReadbackDeadlineV1(
+  callerSignal: AbortSignal | undefined,
+): LiveReadbackDeadlineV1 {
+  const controller = new AbortController();
+  let rejectDeadline: (reason: Error) => void = () => {};
+  const deadline = new Promise<never>((_resolve, reject) => {
+    rejectDeadline = reject;
+  });
+  const abort = (reason: Error): void => {
+    controller.abort();
+    rejectDeadline(reason);
+  };
+  const timeout = setTimeout(() => {
+    abort(new Error("control center live readback deadline exceeded"));
+  }, LIVE_READBACK_DEADLINE_MS);
+  const abortFromCaller = (): void => {
+    abort(new Error("control center live readback caller aborted"));
+  };
+  if (callerSignal?.aborted) {
+    abortFromCaller();
+  } else {
+    callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
+  }
+  return {
+    signal: controller.signal,
+    wait: async <T>(promise: Promise<T>): Promise<T> =>
+      Promise.race([promise, deadline]),
+    cleanup: () => {
+      clearTimeout(timeout);
+      callerSignal?.removeEventListener("abort", abortFromCaller);
+    },
+  };
 }
 
 type GatewayFetchResultV1 =
@@ -383,22 +430,24 @@ async function fetchGatewayJsonV1(
   fetchImpl: ControlCenterFetchV1,
   path: string,
   session: ControlCenterLocalSessionV1,
-  signal: AbortSignal | undefined,
+  deadline: LiveReadbackDeadlineV1,
 ): Promise<GatewayFetchResultV1> {
-  const response = await fetchImpl(path, {
-    method: "GET",
-    credentials: "omit",
-    cache: "no-store",
-    redirect: "error",
-    referrerPolicy: "no-referrer",
-    headers: {
-      Accept: "application/json",
-      "LNSAT-Contract-Version": LIVE_GATEWAY_CONTRACT_VERSION,
-      [LOCAL_SESSION_TOKEN_HEADER]: session.token,
-      [LOCAL_SESSION_PROOF_HEADER]: session.proof,
-    },
-    ...(signal === undefined ? {} : { signal }),
-  });
+  const response = await deadline.wait(
+    fetchImpl(path, {
+      method: "GET",
+      credentials: "omit",
+      cache: "no-store",
+      redirect: "error",
+      referrerPolicy: "no-referrer",
+      headers: {
+        Accept: "application/json",
+        "LNSAT-Contract-Version": LIVE_GATEWAY_CONTRACT_VERSION,
+        [LOCAL_SESSION_TOKEN_HEADER]: session.token,
+        [LOCAL_SESSION_PROOF_HEADER]: session.proof,
+      },
+      signal: deadline.signal,
+    }),
+  );
   if (!isPlainObject(response) || typeof response.ok !== "boolean") {
     return { ok: false, kind: "missing_response" };
   }
@@ -413,8 +462,11 @@ async function fetchGatewayJsonV1(
     return { ok: false, kind: "missing_response" };
   }
   try {
-    return { ok: true, value: await response.json() };
-  } catch {
+    return { ok: true, value: await deadline.wait(response.json()) };
+  } catch (error) {
+    if (deadline.signal.aborted || !(error instanceof SyntaxError)) {
+      throw new Error("control center live readback transport failed");
+    }
     return { ok: false, kind: "invalid_json" };
   }
 }
