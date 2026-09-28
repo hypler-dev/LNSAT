@@ -257,21 +257,23 @@ A caller-supplied claim snapshot, public read API, or admission digest cannot
 satisfy this gate. Failure after the durable claim commit rejects before spawn,
 preserves or marks `outcome_unknown`, and never redispatches.
 
-A private source-only composition seam now calls that one-shot verifier only
-after the supervisor repeats its disposable-target, executable, and local
-endpoint checks, immediately before command construction and process creation.
-It binds the same payload and loaded-profile identities plus the run-manifest
-Docker client, host Git verifier, local endpoint, and disposable-target paths
-and domain-separated filesystem identities. It retains the opaque guard through
+A private source-only driver composition now joins atomic created-handle/replay
+disposition, canonical payload, final-supervisor durable guard, and
+independently host-verified receipt. It calls that one-shot verifier only after
+the supervisor repeats its disposable-target, executable, and local endpoint
+checks, immediately before command construction and process creation. It binds
+the same payload and loaded-profile identities plus the run-manifest Docker
+client, host Git verifier, local endpoint, and disposable-target paths and
+domain-separated filesystem identities. It retains the opaque guard through
 the supervised exchange and marks every post-claim failure `outcome_unknown`.
 The production seam requires an unprivileged daemon and root-owned Docker and
 host Git executable files and ancestor directories that the daemon cannot
 write. It rejects symlinks and writable executable chains before supervisor
-preflight. This treats host root as the local trust boundary; the fake
-user-owned executable is admitted only by the test-only helper.
-Hermetic tests use only the existing fake executable and temporary Unix socket.
-No route, CLI, daemon configuration, package, or release selects the seam, so
-it is not a runnable proof driver or real Docker evidence.
+preflight. Host root is the local trust boundary. Existing test-only served
+fake-runtime integration admits its user-owned fake executable through the
+test-only helper. No production route, CLI, daemon configuration, package, or
+release selects this composition. No real Docker observation or runnable real
+proof driver exists; live run identities remain `UNSET_BLOCKING`.
 
 The execution-harness contract has
 [independent source review](docs/reference/public-history-reviews/PHR-0005/review.json),
