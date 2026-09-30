@@ -128,12 +128,15 @@
     "body-parser": "2.3.0",
     "esbuild": "0.28.1",
     "express-rate-limit": "8.5.2",
+    "fast-uri@^3.0.0": "3.1.8",
+    "fast-uri@^4.0.0": "4.2.1",
     "hono": "4.13.5",
-    "ip-address": "10.4.0",
+    "ip-address": "10.7.2",
     "qs": "6.16.0",
     "sharp": "0.35.4",
+    "undici@^7.0.0": "7.30.0",
     "vite": "7.3.6",
-    "next@16.3.4": {
+    "next@16.3.8": {
       "sharp": "0.35.4"
     }
   },
