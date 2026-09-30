@@ -195,6 +195,9 @@ conformance remain LNSAT concerns.
 - [Why LNSAT Is Public](WHY_PUBLIC_NOW.md)
 - [Legacy identifier inventory](reference/LEGACY_IDENTIFIER_INVENTORY.md)
 - [Product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md)
+- [Agent standards and V1 gap review](reference/AGENT_STANDARDS_AND_V1_GAP_REVIEW.md)
+  — dated primary-source research, existing V1 gate mapping, and proposed
+  interoperability follow-up; no runtime, release, or support authority.
 - [Pinned Rust toolchain](RUST_TOOLCHAIN.md)
 - [Governance](../GOVERNANCE.md)
 - [Maintainers](../MAINTAINERS.md)
