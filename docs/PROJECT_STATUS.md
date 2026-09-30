@@ -411,8 +411,11 @@ production listener, state-changing tool, real IdP/SPIRE/HSM/KMS integration,
 signer activation, real key/trust material, execution path, or production
 support exists.
 
-Dependency remediation pins Vitest 4.1.11, Next.js 16.3.4, Hono 4.13.5,
-and Sharp 0.35.4. The npm audit gate rejects every reported vulnerability;
+Dependency remediation pins Vitest 4.1.11, Next.js 16.3.8, Hono 4.13.5,
+and Sharp 0.35.4. The 2026-09-30 source maintenance also constrains fast-uri
+majors 3 and 4 separately to 3.1.8 and 4.2.1, ip-address to 10.7.2, and undici
+major 7 to 7.30.0. These revisions address the newly reported dependency
+advisories without introducing a major-version migration. The npm audit gate rejects every reported vulnerability;
 no advisory exception remains. This is source dependency maintenance and
 opens no runtime, deployment, package, or supported-release claim.
 
