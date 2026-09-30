@@ -2,16 +2,26 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   closeSync,
+  cpSync,
   constants,
   fstatSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
   openSync,
+  opendirSync,
   readSync,
   realpathSync,
+  readdirSync,
+  rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
+import { performance } from "node:perf_hooks";
 import { TextDecoder } from "node:util";
 import { fileURLToPath } from "node:url";
-import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import { evaluateNpmAudit, evaluateNpmSignatures } from "./npm-audit-rules.mjs";
 
@@ -20,6 +30,10 @@ const UTF8_DECODER = new TextDecoder("utf-8", { fatal: true });
 export const MAX_AUDIT_JSON_BYTES = 8 * 1024 * 1024;
 export const MAX_AUDIT_JSON_DEPTH = 64;
 export const NPM_AUDIT_TIMEOUT_MS = 120_000;
+export const MAX_AUDIT_SNAPSHOT_BYTES = 768 * 1024 * 1024;
+export const MAX_AUDIT_SNAPSHOT_FILE_BYTES = 128 * 1024 * 1024;
+export const MAX_AUDIT_SNAPSHOT_ENTRIES = 50_000;
+export const MAX_AUDIT_SNAPSHOT_MS = 60_000;
 export const NPM_AUDIT_KILL_SIGNAL = "SIGKILL";
 export const NPM_AUDIT_REGISTRY = "https://registry.npmjs.org/";
 export const NPM_AUDIT_PROJECT_CONFIG = [
@@ -61,9 +75,46 @@ export function runNpmAuditCheckV1(
   const projectConfig = resolveTrustedNpmProjectConfigV1(runtime);
   if (!projectConfig.ok) return failed("Trusted npm project config is unavailable.");
 
+  let snapshot;
+  try {
+    snapshot = (runtime?.createSnapshot ?? createNpmAuditSnapshotV1)(
+      projectConfig,
+      runtime,
+    );
+  } catch {
+    return failed("Private npm audit snapshot is unavailable.");
+  }
+  if (!snapshot?.ok) return failed("Private npm audit snapshot is unavailable.");
+
+  let outcome;
+  try {
+    outcome = runNpmAuditInSnapshotV1(
+      signatureMode,
+      spawn,
+      runtime,
+      invocation,
+      snapshot,
+    );
+  } catch {
+    outcome = failed("npm audit process could not be started.");
+  }
+  try {
+    snapshot.cleanup();
+  } catch {
+    return failed("Private npm audit snapshot could not be removed.");
+  }
+  return outcome;
+}
+
+function runNpmAuditInSnapshotV1(signatureMode, spawn, runtime, invocation, snapshot) {
+  if (snapshot.validate && !snapshot.validate()) {
+    return failed("Private npm audit snapshot is unavailable.");
+  }
   const auditEnvironment = createNpmAuditEnvironmentV1(invocation, {
     ...runtime,
-    projectConfigPath: projectConfig.path,
+    projectConfigPath: snapshot.projectConfigPath,
+    cachePath: snapshot.cachePath,
+    workingDirectory: snapshot.repositoryRoot,
   });
   if (!auditEnvironment.ok) return failed("Trusted npm environment is unavailable.");
 
@@ -74,7 +125,7 @@ export function runNpmAuditCheckV1(
     invocation.nodeExecutable,
     [invocation.npmCliPath, ...auditArgs],
     {
-      cwd: projectConfig.repositoryRoot,
+      cwd: snapshot.repositoryRoot,
       encoding: "buffer",
       env: auditEnvironment.environment,
       killSignal: NPM_AUDIT_KILL_SIGNAL,
@@ -115,7 +166,13 @@ export function runNpmAuditCheckV1(
 
 export function createNpmAuditEnvironmentV1(
   invocation,
-  { environment = process.env, platform = process.platform, projectConfigPath } = {},
+  {
+    environment = process.env,
+    platform = process.platform,
+    projectConfigPath,
+    cachePath,
+    workingDirectory,
+  } = {},
 ) {
   if (
     !invocation?.ok ||
@@ -125,6 +182,12 @@ export function createNpmAuditEnvironmentV1(
     !isAbsolute(invocation.npmCliPath) ||
     typeof projectConfigPath !== "string" ||
     !isAbsolute(projectConfigPath) ||
+    typeof cachePath !== "string" ||
+    !isAbsolute(cachePath) ||
+    typeof workingDirectory !== "string" ||
+    !isAbsolute(workingDirectory) ||
+    dirname(projectConfigPath) !== workingDirectory ||
+    dirname(cachePath) !== workingDirectory ||
     (platform !== "win32" && platform !== "linux" && platform !== "darwin")
   ) {
     return { ok: false };
@@ -144,10 +207,12 @@ export function createNpmAuditEnvironmentV1(
   Object.assign(childEnvironment, {
     NO_COLOR: "1",
     npm_config_audit: "true",
+    npm_config_cache: cachePath,
     npm_config_color: "false",
     npm_config_fund: "false",
     npm_config_globalconfig: nullDevice,
     npm_config_ignore_scripts: "true",
+    npm_config_prefix: workingDirectory,
     npm_config_registry: NPM_AUDIT_REGISTRY,
     npm_config_update_notifier: "false",
     npm_config_userconfig: projectConfigPath,
@@ -161,6 +226,8 @@ export function createNpmAuditEnvironmentV1(
     arguments: [
       "--json",
       "--ignore-scripts",
+      `--prefix=${workingDirectory}`,
+      `--cache=${cachePath}`,
       `--registry=${NPM_AUDIT_REGISTRY}`,
       `--userconfig=${projectConfigPath}`,
       `--globalconfig=${nullDevice}`,
@@ -169,6 +236,303 @@ export function createNpmAuditEnvironmentV1(
       "--update-notifier=false",
     ],
   };
+}
+
+export function createNpmAuditSnapshotV1(
+  projectConfig,
+  {
+    temporaryRoot = tmpdir(),
+    platform = process.platform,
+    maxSnapshotBytes = MAX_AUDIT_SNAPSHOT_BYTES,
+    maxSnapshotEntries = MAX_AUDIT_SNAPSHOT_ENTRIES,
+    maxSnapshotMs = MAX_AUDIT_SNAPSHOT_MS,
+  } = {},
+) {
+  if (
+    !projectConfig?.ok ||
+    typeof projectConfig.repositoryRoot !== "string" ||
+    !isAbsolute(projectConfig.repositoryRoot) ||
+    projectConfig.path !== resolve(projectConfig.repositoryRoot, ".npmrc") ||
+    typeof temporaryRoot !== "string" ||
+    !isAbsolute(temporaryRoot) ||
+    (platform !== "linux" && platform !== "darwin") ||
+    !Number.isSafeInteger(maxSnapshotBytes) ||
+    maxSnapshotBytes < 1 ||
+    maxSnapshotBytes > MAX_AUDIT_SNAPSHOT_BYTES ||
+    !Number.isSafeInteger(maxSnapshotEntries) ||
+    maxSnapshotEntries < 1 ||
+    maxSnapshotEntries > MAX_AUDIT_SNAPSHOT_ENTRIES ||
+    !Number.isSafeInteger(maxSnapshotMs) ||
+    maxSnapshotMs < 1 ||
+    maxSnapshotMs > MAX_AUDIT_SNAPSHOT_MS
+  ) {
+    return { ok: false };
+  }
+
+  let snapshotRoot;
+  try {
+    const budget = {
+      bytes: 0,
+      entries: 0,
+      deadline: performance.now() + maxSnapshotMs,
+      maxBytes: maxSnapshotBytes,
+      maxEntries: maxSnapshotEntries,
+    };
+    const canonicalTemporaryRoot = realpathSync(temporaryRoot);
+    if (pathIsInside(projectConfig.repositoryRoot, canonicalTemporaryRoot)) {
+      return { ok: false };
+    }
+    assertTemporaryParentCustodyV1(canonicalTemporaryRoot);
+    snapshotRoot = mkdtempSync(join(canonicalTemporaryRoot, "lnsat-npm-audit-"));
+    const snapshotMetadata = statSync(snapshotRoot);
+    if (
+      !snapshotMetadata.isDirectory() ||
+      snapshotMetadata.uid !== process.getuid() ||
+      (snapshotMetadata.mode & 0o077) !== 0
+    ) {
+      throw new Error("Private snapshot directory is unavailable.");
+    }
+    countSnapshotEntryV1(snapshotMetadata, budget);
+
+    const stageDirectory = (path) => {
+      countSnapshotEntryV1({ isFile: () => false }, budget);
+      mkdirSync(path, { mode: 0o700 });
+    };
+
+    const stageFile = (relativePath, maxBytes) => {
+      const sourcePath = resolve(projectConfig.repositoryRoot, relativePath);
+      const destinationPath = resolve(snapshotRoot, relativePath);
+      const bytes = readBoundedRegularFileV1(sourcePath, maxBytes);
+      countSnapshotEntryV1({ isFile: () => true, size: bytes.length }, budget);
+      writeFileSync(destinationPath, bytes, { flag: "wx", mode: 0o600 });
+      return bytes;
+    };
+
+    countSnapshotEntryV1(
+      { isFile: () => true, size: Buffer.byteLength(NPM_AUDIT_PROJECT_CONFIG) },
+      budget,
+    );
+    writeFileSync(join(snapshotRoot, ".npmrc"), NPM_AUDIT_PROJECT_CONFIG, {
+      flag: "wx",
+      mode: 0o600,
+    });
+    const rootManifest = JSON.parse(stageFile("package.json", 1024 * 1024));
+    stageFile("package-lock.json", 8 * 1024 * 1024);
+    if (
+      !Array.isArray(rootManifest.workspaces) ||
+      rootManifest.workspaces.length !== 2 ||
+      rootManifest.workspaces[0] !== "apps/*" ||
+      rootManifest.workspaces[1] !== "packages/*"
+    ) {
+      throw new Error("Unexpected workspace inventory.");
+    }
+
+    const installedTrees = [];
+    for (const parent of ["apps", "packages"]) {
+      const sourceParent = join(projectConfig.repositoryRoot, parent);
+      const snapshotParent = join(snapshotRoot, parent);
+      stageDirectory(snapshotParent);
+      for (const entry of readDirectoryEntriesV1(sourceParent)) {
+        countSnapshotEntryV1({ isFile: () => false }, budget);
+        if (!entry.isDirectory()) {
+          if (entry.isSymbolicLink()) throw new Error("Linked workspace directory.");
+          continue;
+        }
+        const packagePath = join(sourceParent, entry.name, "package.json");
+        let metadata;
+        try {
+          metadata = lstatSync(packagePath);
+        } catch (error) {
+          if (error?.code === "ENOENT") continue;
+          throw error;
+        }
+        if (!metadata.isFile()) throw new Error("Invalid workspace manifest.");
+        const destinationDirectory = join(snapshotParent, entry.name);
+        stageDirectory(destinationDirectory);
+        stageFile(join(parent, entry.name, "package.json"), 1024 * 1024);
+        const installedPath = join(sourceParent, entry.name, "node_modules");
+        try {
+          const installedMetadata = lstatSync(installedPath);
+          if (!installedMetadata.isDirectory()) {
+            throw new Error("Invalid installed dependency tree.");
+          }
+          installedTrees.push([
+            installedPath,
+            join(destinationDirectory, "node_modules"),
+          ]);
+        } catch (error) {
+          if (error?.code !== "ENOENT") throw error;
+        }
+      }
+    }
+
+    const rootInstalledPath = join(projectConfig.repositoryRoot, "node_modules");
+    if (!lstatSync(rootInstalledPath).isDirectory()) {
+      throw new Error("Invalid installed dependency tree.");
+    }
+    installedTrees.push([rootInstalledPath, join(snapshotRoot, "node_modules")]);
+
+    const preflight = { ...budget };
+    for (const [sourcePath] of installedTrees) {
+      inspectInstalledTreeV1(sourcePath, preflight);
+    }
+    const copying = { ...budget };
+    for (const [sourcePath, destinationPath] of installedTrees) {
+      copyInstalledTreeV1(sourcePath, destinationPath, copying);
+    }
+    assertSnapshotLinksStayInsideV1(snapshotRoot, snapshotRoot, budget.deadline);
+    const cachePath = join(snapshotRoot, "cache");
+    countSnapshotEntryV1({ isFile: () => false }, copying);
+    mkdirSync(cachePath, { mode: 0o700 });
+    return {
+      ok: true,
+      repositoryRoot: snapshotRoot,
+      projectConfigPath: join(snapshotRoot, ".npmrc"),
+      cachePath,
+      validate: () => {
+        try {
+          assertTemporaryParentCustodyV1(canonicalTemporaryRoot);
+          const current = lstatSync(snapshotRoot);
+          return (
+            current.isDirectory() &&
+            current.uid === snapshotMetadata.uid &&
+            current.dev === snapshotMetadata.dev &&
+            current.ino === snapshotMetadata.ino &&
+            (current.mode & 0o077) === 0
+          );
+        } catch {
+          return false;
+        }
+      },
+      cleanup: () => rmSync(snapshotRoot, { recursive: true, force: true }),
+    };
+  } catch {
+    if (snapshotRoot) {
+      try {
+        rmSync(snapshotRoot, { recursive: true, force: true });
+      } catch {
+        // The caller receives a closed failure without exposing a filesystem path.
+      }
+    }
+    return { ok: false };
+  }
+}
+
+function assertTemporaryParentCustodyV1(directory) {
+  const uid = process.getuid();
+  let current = directory;
+  for (;;) {
+    const metadata = lstatSync(current);
+    const rootOwnedSticky = metadata.uid === 0 && (metadata.mode & 0o1000) !== 0;
+    if (
+      !metadata.isDirectory() ||
+      (metadata.uid !== 0 && metadata.uid !== uid) ||
+      ((metadata.mode & 0o022) !== 0 && !rootOwnedSticky)
+    ) {
+      throw new Error("Unsafe temporary directory custody.");
+    }
+    const parent = dirname(current);
+    if (parent === current) return;
+    current = parent;
+  }
+}
+
+function* readDirectoryEntriesV1(directory) {
+  const handle = opendirSync(directory);
+  try {
+    let entry;
+    while ((entry = handle.readSync()) !== null) yield entry;
+  } finally {
+    handle.closeSync();
+  }
+}
+
+function countSnapshotEntryV1(metadata, budget) {
+  if (performance.now() > budget.deadline) {
+    throw new Error("Dependency snapshot timed out.");
+  }
+  budget.entries += 1;
+  budget.bytes += metadata.isFile() ? metadata.size : 0;
+  if (budget.entries > budget.maxEntries || budget.bytes > budget.maxBytes) {
+    throw new Error("Dependency snapshot exceeds limit.");
+  }
+}
+
+function countInstalledEntryV1(sourcePath, budget) {
+  if (performance.now() > budget.deadline) {
+    throw new Error("Installed dependency snapshot timed out.");
+  }
+  const metadata = lstatSync(sourcePath);
+  if (!metadata.isFile() && !metadata.isDirectory() && !metadata.isSymbolicLink()) {
+    throw new Error("Invalid installed dependency entry.");
+  }
+  if (metadata.isFile() && metadata.size > MAX_AUDIT_SNAPSHOT_FILE_BYTES) {
+    throw new Error("Installed dependency file exceeds snapshot limit.");
+  }
+  countSnapshotEntryV1(metadata, budget);
+  return metadata;
+}
+
+function inspectInstalledTreeV1(sourcePath, budget) {
+  const metadata = countInstalledEntryV1(sourcePath, budget);
+  if (metadata.isDirectory()) {
+    for (const entry of readdirSync(sourcePath)) {
+      inspectInstalledTreeV1(join(sourcePath, entry), budget);
+    }
+  }
+}
+
+function copyInstalledTreeV1(sourcePath, destinationPath, budget) {
+  cpSync(sourcePath, destinationPath, {
+    recursive: true,
+    dereference: false,
+    verbatimSymlinks: true,
+    mode: constants.COPYFILE_FICLONE,
+    filter: (candidate) => {
+      countInstalledEntryV1(candidate, budget);
+      return true;
+    },
+  });
+}
+
+function assertSnapshotLinksStayInsideV1(snapshotRoot, directory, deadline) {
+  if (performance.now() > deadline) {
+    throw new Error("Installed dependency snapshot timed out.");
+  }
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const candidate = join(directory, entry.name);
+    if (entry.isSymbolicLink()) {
+      if (!pathIsInside(snapshotRoot, realpathSync(candidate))) {
+        throw new Error("Installed dependency link escapes the snapshot.");
+      }
+    } else if (entry.isDirectory()) {
+      assertSnapshotLinksStayInsideV1(snapshotRoot, candidate, deadline);
+    }
+  }
+}
+
+function readBoundedRegularFileV1(path, maxBytes) {
+  const descriptor = openSync(
+    path,
+    constants.O_RDONLY | constants.O_NONBLOCK | (constants.O_NOFOLLOW ?? 0),
+  );
+  try {
+    const metadata = fstatSync(descriptor);
+    if (!metadata.isFile() || metadata.size > maxBytes) {
+      throw new Error("Invalid manifest file.");
+    }
+    const bytes = Buffer.alloc(metadata.size + 1);
+    let length = 0;
+    while (length < bytes.length) {
+      const count = readSync(descriptor, bytes, length, bytes.length - length, null);
+      if (count === 0) break;
+      length += count;
+    }
+    if (length !== metadata.size) throw new Error("Manifest file changed during read.");
+    return bytes.subarray(0, length);
+  } finally {
+    closeSync(descriptor);
+  }
 }
 
 export function resolveTrustedNpmProjectConfigV1({
