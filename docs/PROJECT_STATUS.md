@@ -153,6 +153,37 @@ but owner intent/security acceptance, source implementation, selected-platform
 HCFG-6 enforcement, and activation remain pending. No configuration mutation
 or resource access is opened by these proposals.
 
+### HCFG-5A bounded pure comparison model
+
+Canonical implementation record: this section. The owner accepted the
+[bounded pure-model specification](architecture/headless-comparison-model/spec.md)
+at PR #67 head `7166ee6d2ab0e213e7f565eedc3b86dd1204763f` in the
+2026-09-30 development conversation. The isolated source draft implements a
+structural Rust comparison model with private fields, sealed declaration
+recomposition, bounded per-side evidence, independent mode and budget ordering,
+exact canonical commitments, explicit in-memory change summaries, and redacted
+diagnostics. The 37 focused headless regressions include 18 comparison tests,
+an independent 65-state/4,225-pair mode and budget oracle, and a manually
+specified canonical golden vector checked against a real model result. Pinned
+Rust formatting, strict Clippy, full `npm run check`, public/documentation and
+inventory checks, installed local Rust/secret scans, and fresh independent
+source/test/documentation review passed. This remains an unmerged source draft;
+it supplies no authenticated comparison, owner decision, or activation.
+Acceptance covers pure Rust comparison mathematics and tests only. The
+assertions cannot authenticate
+resource identity, policy, current effective authority, or enforcement. The
+model must always retain `authority_comparison: unverifiable`,
+`identity_verified: false`, `activation_available: false`, and
+`grants_action_authority: false`.
+
+The initial compatibility binding recognizes the existing source contract
+`lnsat.runtime_profile.docker_local.v1` exactly and rejects other asserted
+profile versions. This conditional compatibility check supplies no platform
+proof or execution permission. HCFG-5B/5C owner acceptance, authenticated
+active-generation derivation, HCFG-6, monitoring, activation, merge, and release
+remain separate gates. The Phase 11 operator packet remains runtime authority;
+its source-only preparation verdict is unchanged.
+
 ## Current Build Position
 
 Complete headless setup and access-management through the versioned API and
@@ -411,13 +442,26 @@ production listener, state-changing tool, real IdP/SPIRE/HSM/KMS integration,
 signer activation, real key/trust material, execution path, or production
 support exists.
 
-Dependency remediation pins Vitest 4.1.11, Next.js 16.3.8, Hono 4.13.5,
+Dependency remediation pins Vitest 4.1.11, Next.js 16.3.8, Hono 4.13.7,
 and Sharp 0.35.4. The 2026-09-30 source maintenance also constrains fast-uri
 majors 3 and 4 separately to 3.1.8 and 4.2.1, ip-address to 10.7.2, and undici
 major 7 to 7.30.0. These revisions address the newly reported dependency
 advisories without introducing a major-version migration. The npm audit gate rejects every reported vulnerability;
 no advisory exception remains. This is source dependency maintenance and
 opens no runtime, deployment, package, or supported-release claim.
+
+The pure-comparison draft's first exact-head CI run caught additional Fastify
+and Hono advisories in the live npm audit. Its separate maintenance follow-up
+pins Fastify 5.12.5 and Hono 4.13.7 within their existing major versions. The
+Fastify patch preserves the same transitive requirements; the lock records the
+verified registry tarball identity and integrity. No audit suppression, model
+contract change, or runtime authority follows from these patches. Exact-lock
+installation, full `npm run source:check`, live dependency/signature audits with
+zero vulnerabilities and no exceptions, offline npm/crates.io/PyPI advisory
+scanning, and worktree secret scanning passed. Fresh independent maintenance
+review found no remaining findings. Offline scanning does not establish Python
+transitive coverage or runtime exploitability. The draft remains unmerged; exact
+published-head CI is tracked on its pull request.
 
 See [MCP interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md)
 and [Phase 8 adapter authority conformance](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).

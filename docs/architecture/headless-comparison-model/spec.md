@@ -1,6 +1,6 @@
-# Proposal: HCFG-5A pure comparison model
+# HCFG-5A pure comparison model
 
-Status: proposed; owner acceptance pending
+Status: bounded pure-source design accepted; implementation status in Project Status
 Owner: LNSAT maintainers
 Last updated: 2026-09-30
 Authority: [Product Build Sequence, HCFG-5](../../PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order)
@@ -8,10 +8,10 @@ Parent intent: [proposed HCFG-5A intent at PR #61 head 360c42cb](https://github.
 
 ## Outcome and boundary
 
-Prepare the deterministic comparison mathematics needed by the proposed
+Implement the deterministic comparison mathematics needed by the proposed
 `lnsat.headless_config.comparison.v1` contract. The bounded source slice would
 compare two supplied envelopes and report conditional semantic equality,
-narrowing, or widening. It would perform no resource inspection, authentication,
+narrowing, or widening. It performs no resource inspection, authentication,
 policy admission, store access, I/O, CLI operation, or activation.
 
 This model does not produce an authenticated `comparison.v1` result or an owner
@@ -21,8 +21,10 @@ that an envelope is current effective authority. Even a well-formed model result
 has `authority_comparison: unverifiable`, `identity_verified: false`,
 `activation_available: false`, and `grants_action_authority: false`.
 
-The parent activation design remains proposed. Acceptance of this bounded model
-would authorize only its pure source implementation and tests. HCFG-5B bootstrap,
+The parent activation design remains proposed. The owner accepted PR #67's
+bounded design at `7166ee6d2ab0e213e7f565eedc3b86dd1204763f` in the
+2026-09-30 development conversation. That acceptance authorizes only its pure
+source implementation and tests. HCFG-5B bootstrap,
 HCFG-5C owner decisions, authenticated active-generation derivation, HCFG-6
 enforcement, merge, runtime proof, packaging, and release remain separate gates.
 This proposal does not change any existing declaration or Gateway contract.
@@ -68,7 +70,13 @@ Use HCFG-3 reference and digest grammar. The current generation reference uses
 the exact `generation:` prefix with the same bounded v1 opaque-reference grammar.
 Policy/floor and enforcement profile versions use one to 128 ASCII characters
 matching `^[a-z0-9][a-z0-9._:-]{0,127}$`; there is no implicit `latest`, fallback,
-or version range. Epochs and budgets are safe unsigned integers, at
+or version range. The initial implementation recognizes exactly the existing
+source profile contract `lnsat.runtime_profile.docker_local.v1` for conditional
+model compatibility. A syntactically valid but unrecognized profile is
+unverifiable. Recognition does not prove platform support, authenticate
+enforcement evidence, or authorize Docker use. Additional profile recognition
+requires a separately reviewed source change; there is no caller-selected
+allowlist or fallback. Epochs and budgets are safe unsigned integers, at
 most 9007199254740991. Zero never means unlimited. Preserve the existing 65536
 byte declaration limit, 128 resources and five layers per declaration, and 256
 rules per layer. Bound an effective envelope to 128 resources and 1280 rules;
@@ -183,7 +191,7 @@ Future integration needs new review; source math tests cannot prove it.
 
 ## Bounded source plan and acceptance
 
-After explicit human acceptance of this bounded proposal, assign
+Following explicit human acceptance of this bounded design, assign
 one writer the `crates/lnsat-contracts/src/headless_config/` comparison module,
 its tests, and minimal module exports. Existing parser/composition APIs retain
 their diagnostic semantics. No other production module is in scope. Update
@@ -211,4 +219,5 @@ must verify conditional-model wording, limits, digest coverage, privacy, and the
 absence of store/route/CLI effects. Design-only changes use focused docs/public/
 inventory/format checks. Record exact results in the PR. Project Status remains
 implementation authority and the Phase 11 operator packet remains runtime-proof
-authority; this proposal creates neither a status ledger nor acceptance.
+authority; this specification creates no competing implementation or runtime
+status ledger.
