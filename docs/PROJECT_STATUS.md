@@ -442,13 +442,26 @@ production listener, state-changing tool, real IdP/SPIRE/HSM/KMS integration,
 signer activation, real key/trust material, execution path, or production
 support exists.
 
-Dependency remediation pins Vitest 4.1.11, Next.js 16.3.8, Hono 4.13.5,
+Dependency remediation pins Vitest 4.1.11, Next.js 16.3.8, Hono 4.13.7,
 and Sharp 0.35.4. The 2026-09-30 source maintenance also constrains fast-uri
 majors 3 and 4 separately to 3.1.8 and 4.2.1, ip-address to 10.7.2, and undici
 major 7 to 7.30.0. These revisions address the newly reported dependency
 advisories without introducing a major-version migration. The npm audit gate rejects every reported vulnerability;
 no advisory exception remains. This is source dependency maintenance and
 opens no runtime, deployment, package, or supported-release claim.
+
+The pure-comparison draft's first exact-head CI run caught additional Fastify
+and Hono advisories in the live npm audit. Its separate maintenance follow-up
+pins Fastify 5.12.5 and Hono 4.13.7 within their existing major versions. The
+Fastify patch preserves the same transitive requirements; the lock records the
+verified registry tarball identity and integrity. No audit suppression, model
+contract change, or runtime authority follows from these patches. Exact-lock
+installation, full `npm run source:check`, live dependency/signature audits with
+zero vulnerabilities and no exceptions, offline npm/crates.io/PyPI advisory
+scanning, and worktree secret scanning passed. Fresh independent maintenance
+review found no remaining findings. Offline scanning does not establish Python
+transitive coverage or runtime exploitability. The draft remains unmerged; exact
+published-head CI is tracked on its pull request.
 
 See [MCP interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md)
 and [Phase 8 adapter authority conformance](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).
