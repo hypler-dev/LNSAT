@@ -60,6 +60,42 @@ The first accepted source packet (B1) is limited to a read-only, exhaustive sche
 
 The public diagnostic `inspect_headless_bootstrap_store_v1` exposes only private-field inspection methods and returns `authority_empty=true`, `initialization_available=false`, and `grants_action_authority=false` when the snapshot classification passes. Static error codes are `headless_bootstrap.not_authority_empty` and `headless_bootstrap.unverifiable_store`. B1 creates no schema, migration, owner, installation, configuration, audit record, CLI, or route. The later initializer must repeat a private gate inside its own immediate transaction and additionally prove the host owner, canonical path/file identity, exclusive lease, declaration, and HCFG-6 selected-platform controls. No fake proof is accepted; future source packets must freeze the actual initialization schema, lease, and OS enforcement evidence.
 
+## Source packet B2: transaction-local owner preparation seam
+
+B2 freezes the private owner portion that a later headless initializer may reuse
+inside its larger atomic transaction. Preparation validates and copies the
+identity reference, display name, and creation time, derives the credential ID,
+and holds the verifier in a zeroizing private field. The prepared value has no
+`Debug` or `Clone` implementation, no wire representation, and no plaintext
+password field. The caller may drop its password bytes after preparation; the
+original metadata cannot be swapped before insertion.
+
+The private insert helper accepts `&rusqlite::Transaction` only. It never begins,
+commits, or rolls back a transaction. The caller must use an immediate
+transaction and abort that entire transaction on any error. The helper writes
+the existing three owner rows (identity, credential, and identity event),
+preserving current validation, public API and error behavior, and single-owner
+semantics. It is a reusable owner credential/event construction seam, not
+headless initialization: it creates no installation, configuration, generation,
+binding, route, migration, CLI, OS proof, or new authority.
+
+### B2 focused acceptance
+
+- Prepared metadata remains the validated original after caller buffers are
+  changed; password bytes may be dropped before the transaction begins.
+- An independent reader observes zero rows before caller commit and all three
+  owner rows after commit.
+- Caller rollback erases identity, credential, and identity-event rows.
+- An injected credential or audit insert failure may expose earlier partial rows
+  inside the open transaction, but outer rollback erases all three tables.
+- Existing owner validation, public bootstrap API/errors, and exactly-one-owner
+  behavior remain unchanged.
+
+The focused acceptance set is four existing owner-bootstrap tests plus three B2
+transaction tests. Full repository checks and independent review remain separate
+gates recorded by the task owner in Project Status; this design artifact does
+not claim those gates are complete.
+
 ## Interfaces and contracts
 
 The proposed command is `lnsatctl bootstrap initialize --database <absolute-path> --declaration <absolute-path> --owner-ref <identity-ref> --owner-name <display-name> --confirm-digest <sha256:...> --owner-password-stdin`. Exact spelling and private schema versions are frozen in the later accepted source packet; the transport, one-time semantics, denial conditions, and secret channel above are part of this design. There is no online bootstrap fallback or alternate identity authority.

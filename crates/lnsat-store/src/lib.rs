@@ -35,6 +35,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 mod headless_bootstrap;
+mod owner_bootstrap;
 mod phase7_consumption;
 mod phase7_git_adapter;
 mod phase7_nonce;
@@ -2398,16 +2399,7 @@ impl SqliteStore {
         &mut self,
         input: &LocalOwnerBootstrapInputV1<'_>,
     ) -> Result<LocalOwnerBootstrapRecordV1, LocalIdentityStoreErrorV1> {
-        validate_local_owner_bootstrap_input_v1(input)?;
-        let verifier = create_local_password_verifier_v1(input.password).map_err(|error| {
-            if error == LocalPasswordErrorV1::InvalidPassword {
-                LocalIdentityStoreErrorV1::InvalidInput
-            } else {
-                LocalIdentityStoreErrorV1::PersistenceFailed
-            }
-        })?;
-        let credential_id =
-            local_password_credential_id_v1(input.identity_ref, 1, &verifier, input.created_at);
+        let prepared = owner_bootstrap::prepare_local_owner_bootstrap_v1(input)?;
 
         self.verify_schema()
             .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
@@ -2415,78 +2407,7 @@ impl SqliteStore {
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        let (identity_count, owner_count) = transaction
-            .query_row(
-                "SELECT count(*),
-                        coalesce(sum(CASE WHEN role = 'owner' THEN 1 ELSE 0 END), 0)
-                 FROM lnsat_local_identities",
-                [],
-                |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
-            )
-            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        if owner_count > 0 {
-            let owner_ref = transaction
-                .query_row(
-                    "SELECT identity_ref
-                     FROM lnsat_local_identities
-                     WHERE role = 'owner'",
-                    [],
-                    |row| row.get::<_, String>(0),
-                )
-                .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
-            select_local_owner_bootstrap_record_v1(&transaction, &owner_ref)?
-                .ok_or(LocalIdentityStoreErrorV1::EvidenceDrift)?;
-            return Err(LocalIdentityStoreErrorV1::OwnerAlreadyBootstrapped);
-        }
-        if identity_count != 0 {
-            return Err(LocalIdentityStoreErrorV1::EvidenceDrift);
-        }
-
-        transaction
-            .execute(
-                "INSERT INTO lnsat_local_identities (
-                    identity_ref, display_name, role, owner_singleton,
-                    status, created_at
-                 ) VALUES (?1, ?2, 'owner', 1, 'active', ?3)",
-                params![input.identity_ref, input.display_name, input.created_at],
-            )
-            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        transaction
-            .execute(
-                "INSERT INTO lnsat_local_password_credentials (
-                    credential_id, identity_ref, credential_version,
-                    verifier_profile, password_verifier, created_at
-                ) VALUES (?1, ?2, 1, ?3, ?4, ?5)",
-                params![
-                    &credential_id,
-                    input.identity_ref,
-                    LOCAL_PASSWORD_PROFILE_V1,
-                    verifier,
-                    input.created_at
-                ],
-            )
-            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        insert_local_identity_event_v1(
-            &transaction,
-            input.identity_ref,
-            LocalIdentityEventKindV1::OwnerBootstrapped,
-            None,
-            Some(1),
-            &credential_id,
-            input.created_at,
-        )?;
-
-        let record = select_local_owner_bootstrap_record_v1(&transaction, input.identity_ref)?
-            .ok_or(LocalIdentityStoreErrorV1::EvidenceDrift)?;
-        if record.identity.display_name != input.display_name
-            || record.identity.created_at != input.created_at
-            || record.identity.role != LocalIdentityRoleV1::Owner
-            || record.identity.status != LocalIdentityStatusV1::Active
-            || record.credential_profile != LOCAL_PASSWORD_PROFILE_V1
-            || record.credential_version != 1
-        {
-            return Err(LocalIdentityStoreErrorV1::EvidenceDrift);
-        }
+        let record = owner_bootstrap::insert_local_owner_bootstrap_v1(&transaction, &prepared)?;
         transaction
             .commit()
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
@@ -18364,6 +18285,7 @@ mod tests {
     }
 
     mod headless_bootstrap;
+    mod owner_bootstrap_transaction;
     mod phase7_atomic_consumption;
     mod phase7_git_adapter;
     mod phase7_local_authorization;
