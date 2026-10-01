@@ -153,6 +153,37 @@ but owner intent/security acceptance, source implementation, selected-platform
 HCFG-6 enforcement, and activation remain pending. No configuration mutation
 or resource access is opened by these proposals.
 
+### HCFG-5A bounded pure comparison model
+
+Canonical implementation record: this section. The owner accepted the
+[bounded pure-model specification](architecture/headless-comparison-model/spec.md)
+at PR #67 head `7166ee6d2ab0e213e7f565eedc3b86dd1204763f` in the
+2026-09-30 development conversation. The isolated source draft implements a
+structural Rust comparison model with private fields, sealed declaration
+recomposition, bounded per-side evidence, independent mode and budget ordering,
+exact canonical commitments, explicit in-memory change summaries, and redacted
+diagnostics. The 37 focused headless regressions include 18 comparison tests,
+an independent 65-state/4,225-pair mode and budget oracle, and a manually
+specified canonical golden vector checked against a real model result. Pinned
+Rust formatting, strict Clippy, full `npm run check`, public/documentation and
+inventory checks, installed local Rust/secret scans, and fresh independent
+source/test/documentation review passed. This remains an unmerged source draft;
+it supplies no authenticated comparison, owner decision, or activation.
+Acceptance covers pure Rust comparison mathematics and tests only. The
+assertions cannot authenticate
+resource identity, policy, current effective authority, or enforcement. The
+model must always retain `authority_comparison: unverifiable`,
+`identity_verified: false`, `activation_available: false`, and
+`grants_action_authority: false`.
+
+The initial compatibility binding recognizes the existing source contract
+`lnsat.runtime_profile.docker_local.v1` exactly and rejects other asserted
+profile versions. This conditional compatibility check supplies no platform
+proof or execution permission. HCFG-5B/5C owner acceptance, authenticated
+active-generation derivation, HCFG-6, monitoring, activation, merge, and release
+remain separate gates. The Phase 11 operator packet remains runtime authority;
+its source-only preparation verdict is unchanged.
+
 ## Current Build Position
 
 Complete headless setup and access-management through the versioned API and

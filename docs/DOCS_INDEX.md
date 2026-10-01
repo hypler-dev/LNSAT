@@ -51,7 +51,7 @@ subsystem or proposal.
   — proposed atomic current-state inventory and watch cutover.
 - [Proposed HCFG-4C monitoring watch](architecture/headless-monitoring-watch/intent.md)
   — proposed durable event order, bounded cursor/resume, and watch scope.
-- [Proposed HCFG-5A pure comparison model](architecture/headless-comparison-model/spec.md)
+- [HCFG-5A pure comparison model](architecture/headless-comparison-model/spec.md)
   — conditional source mathematics; no authenticated comparison, owner decision,
   or activation authority.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
