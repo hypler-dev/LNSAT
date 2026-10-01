@@ -180,3 +180,14 @@ support, package, target path, service lifecycle, or artifact.
 
 Proposal content is roadmap input only. It must not be used as evidence that a
 feature, certification, deployment mode, artifact, or support commitment exists.
+
+## Accepted headless bootstrap
+
+- [HCFG-5B intent](headless-local-bootstrap/intent.md)
+- [HCFG-5B specification](headless-local-bootstrap/spec.md)
+- [HCFG-5B plan](headless-local-bootstrap/plan.md)
+
+[Project Status](../PROJECT_STATUS.md) owns live acceptance and implementation
+truth. The bootstrap design is accepted; B1 is a read-only prerequisite, and
+actual initialization, selected-platform enforcement, and runtime proof remain
+incomplete.

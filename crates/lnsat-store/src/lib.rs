@@ -34,10 +34,13 @@ use std::io::{self, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+mod headless_bootstrap;
 mod phase7_consumption;
 mod phase7_git_adapter;
 mod phase7_nonce;
 mod phase7_persistence;
+
+pub use headless_bootstrap::{HeadlessBootstrapStoreErrorV1, HeadlessBootstrapStoreInspectionV1};
 
 pub use phase7_consumption::{
     PHASE7_AUTHORIZATION_TTL_SECONDS_V1, PHASE7_CAPABILITY_BYTES_V1,
@@ -18360,6 +18363,7 @@ mod tests {
         }
     }
 
+    mod headless_bootstrap;
     mod phase7_atomic_consumption;
     mod phase7_git_adapter;
     mod phase7_local_authorization;
