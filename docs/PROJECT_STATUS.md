@@ -236,6 +236,42 @@ The Phase 11 operator packet and source-only runtime verdict are unchanged.
 Bootstrap and V1 remain incomplete; this prerequisite does not initialize a
 usable installation.
 
+### HCFG-5B B2 transaction-local owner foundation
+
+Canonical implementation record: this section. Under the accepted bootstrap
+contract and standing owner authorization, B2 extracts the existing owner
+credential and identity-event construction into a private transaction-local
+helper. The public owner-bootstrap API, errors, single-owner checks, schema
+verification, immediate transaction, and commit behavior remain unchanged.
+
+Preparation validates and copies the exact identity, display name, and time;
+it owns the credential ID and a zeroizing verifier, retains no plaintext
+password, and has no debug, clone, or wire representation. The insert helper
+accepts only an existing SQLite transaction and never starts, commits, or
+rolls back one. Its caller must use an immediate transaction and abort the
+whole operation on any error. A later initializer can therefore compose owner,
+installation, generation, and linked audit writes in one transaction instead
+of committing an owner first.
+
+Seven focused owner-bootstrap tests and strict store Clippy pass. Three new
+tests prove owned metadata cannot be substituted after preparation, the caller
+can drop the password before the transaction, no owner rows are externally
+visible before caller commit, and outer rollback erases all identity,
+credential, and event rows after success or injected later-insert failure.
+Full `npm run check` passed on unchanged source bytes. Fresh independent
+read-only source and documentation review found no actionable defects. Local
+secret scanning found no leaks; the named Rust static scan reported two
+unchanged test-helper informational findings and no new production findings.
+Git-bound review evidence is tracked as `PHR-0007` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+
+This changes no schema, migration, public API, CLI, route, installation,
+generation, configuration audit, resource verifier, OS control, or activation.
+The existing owner-only foundation remains legacy/inert for headless setup.
+Selected-store binding, real resource/enforcement proof, and the complete
+atomic initializer remain open source work. Phase 11 runtime authority and
+V1 readiness are unchanged.
+
 ## Current Build Position
 
 Complete headless setup and access-management through the versioned API and
