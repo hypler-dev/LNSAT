@@ -272,6 +272,53 @@ Selected-store binding, real resource/enforcement proof, and the complete
 atomic initializer remain open source work. Phase 11 runtime authority and
 V1 readiness are unchanged.
 
+### HCFG-5B B3A observed selected-store custody prerequisite
+
+Canonical implementation record: this section. Under the accepted bootstrap
+contract and standing human source authorization, B3A adds an explicitly
+selected existing-store read-only inspection on Linux/macOS. It observes equal
+nonzero real/effective host UID, an owner-owned exact `0700` parent, and regular
+single-link owner-owned exact `0600` database and shared lease. Private held
+parent/database/lease files retain device/inode identity and revalidate current
+path, owner, mode, type, and link observations. The shared daemon/offline lease
+remains held until after the SQLite connection closes. Ordinary store opening,
+owner bootstrap, schema, and existing lease APIs retain their behavior.
+
+A conservative held-file 100-byte header precheck requires SQLite magic,
+WAL-format bytes, and checkpointed schema 17 before opening SQLite. A schema
+version existing only in uncheckpointed WAL is conservatively denied; no
+immutable flag ignores WAL. The subsequent connection is read-only, without
+create, migration, or journal-mode assignment, and verifies current schema,
+integrity, WAL and connection posture. Valid read-only SQLite reads may create
+WAL/SHM coordination files. These are not owner, configuration, audit, or
+initialization writes; this API does not promise zero filesystem writes.
+
+Fourteen focused source tests pass. They prove shared-lease contention in both
+directions, ordinary-owner compatibility, read-only owner-write rejection,
+path/file/lease/parent drift denial, malformed/old/non-WAL header rejection,
+conservative pending-WAL denial, and unchanged DB/WAL/SHM snapshots for the
+specified early-denial cases. A retained read transaction demonstrably blocks
+a separate writer's truncate checkpoint; during custody drop that checkpoint
+succeeds while the shared lease is still busy, then the lease becomes available.
+Latest strict store Clippy and full `npm run check` pass on unchanged source
+bytes. The full check required disposable loopback/Unix socket permissions;
+the initial sandbox denial is retained, not counted as a source pass. Fresh
+independent source/test/documentation review found no actionable P1/P2/P3.
+Secret scanning found no leaks. The named Rust scan reported two unchanged
+test-helper INFO findings and one private-fixture INFO finding, with no new
+production findings. Offline OSV scanning could not load a cached vulnerability
+database; no OSV pass or vulnerability-free dependency claim is made. The only
+dependency change reuses the existing pinned `nix` version and checksum.
+Git-bound review evidence is tracked as `PHR-0008` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+
+This verifies observed POSIX custody only. A SQLite filename is not its internal
+opened-descriptor identity; POSIX mode is not effective extended-ACL isolation.
+Real descriptor/resource/OS enforcement, complete atomic initialization,
+admission, configuration activation, CLI, runtime and packaging remain open.
+No serializable permit, injectable production verifier, or authority conversion
+exists. Phase 11 runtime verdict and V1 readiness are unchanged.
+
 ## Current Build Position
 
 Complete headless setup and access-management through the versioned API and

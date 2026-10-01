@@ -372,6 +372,7 @@ dependencies = [
  "getrandom",
  "lnsat-auth",
  "lnsat-contracts",
+ "nix",
  "rusqlite",
  "serde_json",
  "sha2",
