@@ -54,6 +54,12 @@ subsystem or proposal.
 - [HCFG-5A pure comparison model](architecture/headless-comparison-model/spec.md)
   — conditional source mathematics; no authenticated comparison, owner decision,
   or activation authority.
+- [Accepted HCFG-5B atomic local bootstrap](architecture/headless-local-bootstrap/intent.md)
+  — accepted host-owner design and current read-only fresh-store prerequisite.
+- [HCFG-5B bootstrap specification](architecture/headless-local-bootstrap/spec.md)
+  — atomic initialization contract, inert restore, and bounded B1 source scope.
+- [HCFG-5C owner-decision design](https://github.com/hypler-dev/LNSAT/pull/63)
+  — accepted exact confirmation and credential/challenge contract; source pending.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)

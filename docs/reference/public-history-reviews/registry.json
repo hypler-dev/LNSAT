@@ -47,6 +47,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0005/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0006",
+      "subject_id": "headless-bootstrap-fresh-store-b1",
+      "review_subject_ids": ["headless-bootstrap-fresh-store-b1"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0006/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }

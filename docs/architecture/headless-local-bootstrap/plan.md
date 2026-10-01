@@ -1,0 +1,50 @@
+<!-- intent-driven-delivery:plan:v1 -->
+
+# Plan: HCFG-5B atomic local bootstrap
+
+Status: accepted
+Authority: [HCFG-5B intent](intent.md) under the [accepted HCFG-5 requirement](../../PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order)
+Owner: LNSAT maintainers
+Accepted by: human owner in development conversation on 2026-09-30
+Last updated: 2026-09-30
+
+## Scope and protected lanes
+
+Design authority: one atomic local owner/installation/first-configuration bootstrap, selected-store admission binding, and inert official restore. Human owner acceptance of the [specification](spec.md) authorizes a later source implementation packet within these bounds. This packet itself opens no source mutation, migration, route, OS permission, Docker operation, merge, production action, package, or release. HCFG-5A online apply, fresh owner decision, emergency stop, restored-store recovery activation, HCFG-6 platform enforcement, and Phase 11 runtime proof retain separate gates.
+
+## Files and ownership
+
+This proposal owns only `docs/architecture/headless-local-bootstrap/{intent,spec,plan}.md`. The [Product Build Sequence](../../PRODUCT_BUILD_SEQUENCE.md) remains requirement/sequencing authority; [Project Status](../../PROJECT_STATUS.md) remains implementation/acceptance authority. Later source packets assign one writer per overlapping store/migration, CLI, Gateway, and platform-verifier module. The canonical checkout's unrelated dirty files remain untouched.
+
+## Sequence
+
+1. Review this design against the accepted V1 host-owner threat model, existing owner-bootstrap transaction, daemon-shared lease, inert restore, HCFG-3 parser, and HCFG-6 proof boundary. Resolve P1/P2 findings against the accepted design.
+2. Reconcile the HCFG-5A online-apply packet with this local bootstrap design. Remove its external-anchor prerequisite and limit clone/rollback claims to the accepted host-owner boundary, selected-store binding, inert official restore, and current stop/revocation floor. Obtain fresh independent review of the paired proposals.
+3. Human owner accepts the exact atomic fresh-store bootstrap, authority-empty eligibility, path/file admission binding, and inert-restore posture. This acceptance occurred in the 2026-09-30 development conversation and is separate from merge, Docker proof, runtime proof, package, and release.
+4. In source packet B1, implement only read-only exhaustive schema-17 fresh-store inspection: all main SQLite object identities, exactly 31 tables and exactly 218 bounded schema objects, 28 empty authority/evidence tables, exact immutable compiled migration and retention seeds after full schema/policy verification, and rejection of unknown or altered tables/views/indexes/triggers, `sqliteX` prefixes, temporary shadow objects, and attached databases. Bound the aggregate schema text to 256 KiB, each SQL definition to 65,536 bytes, and each object name to 1,024 bytes; hash canonical DDL with domain `lnsat.headless_bootstrap.schema.v17` followed by one LF byte (`0x0a`) and the independent Python hash recorded in [the specification](spec.md). Use one deferred read snapshot with no writes or serializable permit; mark it stale after another write. Expose `inspect_headless_bootstrap_store_v1` with private-field inspection methods and the fixed fields/errors defined in [the specification](spec.md). Add no schema, migration, owner, installation, configuration, audit, CLI, or route. The later initializer must repeat its private gate inside its own immediate transaction plus host-owner, path/file, lease, declaration, and HCFG-6 proof.
+5. In a later source packet, freeze selected-platform file identity and exhaustive schema table inventory; refactor owner creation so owner, installation, first generation, active pointer, and audit commit in one immediate transaction. Add local CLI proof and protected stdin without an online bootstrap route.
+6. Add startup/use admission binding and selected-platform HCFG-6 checks before enabling any headless authority. Prove every failure and interruption edge with focused Rust tests and fresh independent source review.
+7. Implement HCFG-5A online apply so it preserves current installation binding, stop/revocation floor, and authority epoch in one protected transaction. Treat restored-store activation as a separate future recovery contract. Do not interpret HCFG-3 diagnostic output as a grant.
+
+## Validators
+
+Design-only: validate the three artifact shapes, run Prettier on the exact touched files, `npm run docs:direction:check`, `npm run public:check`, deterministic `npm run legacy:inventory:check`, and staged `git diff --check`; validation results belong to Project Status. B1 source validation must prove the exact 31-table/218-object and 28-empty schema manifest, immutable seeds, object rejection, deferred snapshot/no-write behavior, stale-after-write behavior, fixed diagnostic fields, and static errors. A later source packet runs focused pinned Rust tests, `npm run check`, `npm run public:check`, inventory, installed local Semgrep/Gitleaks, and OSV-Scanner if dependency manifests change. HCFG-6 and Phase 13 require selected-target evidence beyond source tests. Green CI never grants merge or release authority.
+
+## Independent review
+
+A fresh read-only reviewer receives the exact staged design diff, accepted V1 requirement, HCFG-3 source contract, owner-bootstrap/lease/restore facts, and Phase 11 status boundary. Review for P1/P2/P3 authority gaps, especially first-bootstrap replay, owner-only legacy migration, fresh-path restore, substitution, atomically linked audit, secret intake, and unsupported OS proof. Resolve findings and rerun validators. Design review does not replace source validation or independent source review.
+
+## Rollback and recovery
+
+The proposal can be withdrawn without product effect. A failed future initialization leaves an empty inert authority store unless the entire transaction committed; exact local readback under the lease resolves unknown response. No partial owner or generation becomes active. Orphaned zero-authority OS preparation requires proved cleanup before retry. Official restored initialized stores remain inert until a separately accepted recovery-activation procedure; authority-empty restored snapshots may be explicitly initialized as new stores. Source rollback cannot silently admit an unverifiable generation or erase stop, revocation, audit, or unknown-consequence evidence.
+
+## Deviations
+
+An earlier draft proposed an external owner-only authority sidecar and a two-medium pending/commit protocol. Independent review found it did not supply an independent trust boundary against the accepted host owner and added interruption states. This revision uses one atomic fresh-store transaction and explicitly limits the path/file binding claim. No sidecar or adversarial host-owner anti-rollback guarantee is part of V1.
+
+## Evidence ledger
+
+- 2026-09-27: Public `main` `f669181a1eaf574b1891a5c3fcc838870097e176`; this proposal is stacked on corrected draft HCFG-5A head `a345fd230397712b882094848cc8967ea9e83793`. Existing owner bootstrap, daemon-shared lease, and inert restore inspected in source and docs. No active configuration exists.
+- Initial sidecar draft: prior design history records an artifact-shape and review cycle that found one P1 and four P2; that draft was withdrawn before commit or push.
+- Revised atomic design: prior design history records review findings and corrections. The historical combined design was reviewed and had green CI at the exact accepted PR #62 head; current source validation and review are tracked in Project Status.
+- B1 source implementation is in progress under owner acceptance; live evidence belongs to Project Status. Merge, Docker, production, package, and release remain closed.

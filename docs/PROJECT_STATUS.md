@@ -132,7 +132,7 @@ runtime, package, or release behavior. Phase 11's
 remains the runtime-proof status authority; no real Docker proof or production
 authorization follows from these reads.
 
-## Proposed HCFG-4B/4C And HCFG-5 Contracts
+## HCFG-4B/4C And HCFG-5 Contracts
 
 [PR #52](https://github.com/hypler-dev/LNSAT/pull/52) merged the proposed
 bounded current-unresolved evidence snapshot and versioned watch design at
@@ -148,10 +148,22 @@ Draft [HCFG-5A](https://github.com/hypler-dev/LNSAT/pull/61),
 [HCFG-5B](https://github.com/hypler-dev/LNSAT/pull/62), and
 [HCFG-5C](https://github.com/hypler-dev/LNSAT/pull/63) propose protected
 online configuration transitions, atomic local bootstrap, and an exact fresh
-owner-decision challenge. Their reviewed design heads have green exact-head CI,
-but owner intent/security acceptance, source implementation, selected-platform
-HCFG-6 enforcement, and activation remain pending. No configuration mutation
-or resource access is opened by these proposals.
+owner-decision challenge. Their reviewed design heads have green exact-head CI.
+On 2026-09-30 the human owner authorized the controller to accept the reviewed
+contracts needed for V1 and proceed with bounded source implementation. This
+is human acceptance of HCFG-5B at
+`662fc5f489d70d735d9d612e9f8cce6ed3a2b593` and HCFG-5C at
+`0d5db17a1de7fdbd40abcfe4ddf901a39e89e160`, not an agent self-approval.
+The accepted [bootstrap contract](architecture/headless-local-bootstrap/intent.md)
+records the host-owner assumption, atomic first initialization, selected-store
+binding, and inert-restore policy. The owner-decision contract retains exact
+change-view confirmation, credential rechecks, bounded challenges, and one-use
+consumption. Routine design and implementation choices within these reviewed
+contracts no longer await another owner acceptance. Named validation and fresh
+independent source review remain required. HCFG-6 enforcement and actual
+initialization/activation require their own implementation and proof. Runtime
+proof, merge, package, and release retain separate gates. No configuration
+mutation or resource access follows from the design acceptance alone.
 
 ### HCFG-5A bounded pure comparison model
 
@@ -179,10 +191,50 @@ model must always retain `authority_comparison: unverifiable`,
 The initial compatibility binding recognizes the existing source contract
 `lnsat.runtime_profile.docker_local.v1` exactly and rejects other asserted
 profile versions. This conditional compatibility check supplies no platform
-proof or execution permission. HCFG-5B/5C owner acceptance, authenticated
+proof or execution permission. HCFG-5B/5C source implementation, authenticated
 active-generation derivation, HCFG-6, monitoring, activation, merge, and release
 remain separate gates. The Phase 11 operator packet remains runtime authority;
 its source-only preparation verdict is unchanged.
+
+### HCFG-5B B1 fresh-store prerequisite
+
+Canonical implementation record: this section. Under the accepted bootstrap
+contract, B1 adds only a store-owned read-only schema-17 inspection. It verifies
+one complete main-schema identity (31 tables and 218 objects), rejects temporary
+objects and attached databases, rechecks native schema/migration/immutable
+retention seeds and integrity, and requires all 28 authority/evidence tables to
+be empty in one deferred read transaction. Schema identity includes tables,
+views, triggers, indexes, and autoindexes, including names a wildcard filter
+could otherwise overlook. Only exact compiled migration, store metadata, and
+preserve-only retention seeds may pre-exist. Unknown or altered state denies.
+
+The result is a private-field snapshot diagnostic with
+`initialization_available: false` and `grants_action_authority: false`; it has
+no wire serializer or authority conversion. It may become stale after any
+writer commits. The later initializer must repeat the private gate inside its
+own immediate transaction together with host-owner, file/path, lease,
+declaration, and selected-platform enforcement checks. This adds no migration,
+owner credential, installation, generation, configuration audit, command,
+route, OS verifier, or activation. Current source has no HCFG-6 verifier that
+can authenticate all declared resources and enforce the selected controls.
+
+Nine focused bootstrap tests, strict store Clippy, and full `npm run check`
+passed on unchanged source bytes. Documentation, public readiness, inventory,
+and local dependency/signature checks passed. Fresh independent source review
+found no source defects; its stale-inventory validation finding was resolved by
+refreshing the inventory and rerunning the full check on frozen files. Local
+secret scanning found no leaks. The Rust scan reported two pre-existing
+test-helper findings and no finding in the new production module.
+
+Git-bound independent review evidence is tracked as `PHR-0006` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+This remains an unmerged source-only prerequisite. The next source work must
+establish selected-store file/owner/lease binding and real selected-platform
+resource/enforcement proof before atomic initialization can admit authority.
+Matching a SQLite filename alone is not proof of its opened file identity.
+The Phase 11 operator packet and source-only runtime verdict are unchanged.
+Bootstrap and V1 remain incomplete; this prerequisite does not initialize a
+usable installation.
 
 ## Current Build Position
 

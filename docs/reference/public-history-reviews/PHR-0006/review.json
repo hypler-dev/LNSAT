@@ -1,0 +1,76 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0006-independent-implementation-review-c41b4acc",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-bootstrap-fresh-store-b1"],
+  "base_revision": "ed95d78204589618eadec6523e50267d5f8be9e4",
+  "reviewed_revision": "c41b4acc09044c9999aac25b9a02031e454e4269",
+  "reviewed_tree_oid": "d24be0f74938512b33cd0117753f58dff9f20c8f",
+  "diff_sha256": "sha256:9747db0e8e0a9a4ccc8ae79c36389b3b2ad7251d5e6ab68ee88141a3b878fb31",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/headless_bootstrap.rs",
+      "sha256": "sha256:75ed3e50445acb7e4c3585907719a66b78b47b134ada6849878867d98feb8124"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:076c0bd47c9f7e004b791585d7437011cd106cbda46ee758e2ce4bb706009e6f"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/headless_bootstrap.rs",
+      "sha256": "sha256:c138edada3df2b308cf537084db99476add2fba91bb57a468d201b55157773d5"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:1e182d63adc479a25e323e93fd9938f5ceab7bf81957b44b37f2aefafce291a2"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:873143197b0b4c70f671321e7f2ca1b1df05f6b09925be5806f383abeab1ae6f"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "sha256": "sha256:cd4677200354d42bc5724e0e468aa8b078d0122d3bc81c1fe9ed7291885e32ae"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/intent.md",
+      "sha256": "sha256:0c92bb90517eaa3421b9bfc3f963b4c4f9fd5452dc692c4a32e451415b71a1ac"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/plan.md",
+      "sha256": "sha256:69fc42b048633715faf319a70c453ceea9c6876db98023a5b0ed249d013ea135"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/spec.md",
+      "sha256": "sha256:18221c8c7ba8677af92e74b9452b9164eeb76c91e127856fba9525dfa7f2ef81"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:843876bd402c46cb4ea6a23d5b37bef6209c032c0ca1aa154ed287409c236f2e"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:fe6d1cf47ef7ffb9b7600fc8441d9cdc7601b27bf701e18cc17d389f9b89bf98"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/bootstrap_gate_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only exact-source, tests, documentation, validation, and Git-custody review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0006-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The first full validation run encountered stale legacy inventory during documentation editing. The inventory was regenerated, full npm run check passed on frozen source bytes, and final inventory and native staged-review checks passed. No source defect remained.",
+      "resolution_revision": "c41b4acc09044c9999aac25b9a02031e454e4269"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
