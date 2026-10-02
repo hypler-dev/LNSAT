@@ -1,0 +1,104 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0008-independent-implementation-review-4651247a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-bootstrap-selected-store-custody-b3a"],
+  "base_revision": "d73a780cc8fc1bab446448dc37d8ebc157f04048",
+  "reviewed_revision": "4651247ad0ffad79acd53b867e17b78fbac0df31",
+  "reviewed_tree_oid": "5f6666d441ff63befde6b21fc7293311f155853a",
+  "diff_sha256": "sha256:7ce5448ca091ab431ed5b4dcb0d94cd5b318a7f277b5c247a286167f1cf77799",
+  "protected_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:7312ea06da2998c975ec1c7177af30b9c55beddadb2fd08fd36f9e7a838a119d"
+    },
+    {
+      "path": "crates/lnsat-store/Cargo.toml",
+      "sha256": "sha256:01f678f887648cfc96a75554fc8cc7d711cc42811c62bd637297a37a1943a366"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:199e426e5ef871abfd1d7ef71c38fb55716ca77e4fbf0c313e6fdf54248d7c75"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:1e4bd1bed061a60e5e430715d3fd0487894c1742b485a738cb8baec1964bd081"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/selected_store.rs",
+      "sha256": "sha256:7b0daebc6eda7fd15530d6ab076982a55bac34b6d8998e42dda5b9063b714c65"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:3558487f13fa6f0b2eca0f07d27a6a0c1f78b3544025b02cb5dccc838f413716"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/plan.md",
+      "sha256": "sha256:07e09869eec2e93818e39fc2cd210baf2711d3dc670dd09acfc2cb98daab2a7c"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/spec.md",
+      "sha256": "sha256:a0651e97a895877409c78bbd5d822a1b00ba2400a7a75491039c00155b401b70"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:913b315bbbffdef60abd479ccc61d8b5ea1986fcaf7881a04e04c18e6a248383"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:e8ebc02304b22f1f92178b572f8108d7c2a012d877fb07ee9d7dea6355b7379f"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/bootstrap_gate_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only exact-source, tests, documentation, validation, and Git-custody review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0008-F1",
+      "severity": "P1",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Ordinary store opening could create, migrate, or change journal mode before custody denial. The selected opener now uses dedicated read-only/no-create opening, held-file header checks, early custody revalidation, and unchanged-file rejection tests.",
+      "resolution_revision": "4651247ad0ffad79acd53b867e17b78fbac0df31"
+    },
+    {
+      "finding_id": "PHR-0008-F2",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Lease release could precede SQLite connection closure. Field drop order now retains custody after connection closure; the checkpoint and shared-lease test verifies the actual ordering.",
+      "resolution_revision": "4651247ad0ffad79acd53b867e17b78fbac0df31"
+    },
+    {
+      "finding_id": "PHR-0008-F3",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The fault-injection callback was compiled into production. The callback is now test-only; production uses a private custody-taking function without an injectable provider.",
+      "resolution_revision": "4651247ad0ffad79acd53b867e17b78fbac0df31"
+    },
+    {
+      "finding_id": "PHR-0008-F4",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Strict Clippy evidence described an older source state. The latest strict check and full repository check passed on the five frozen source hashes, independently compared against the reviewed candidate.",
+      "resolution_revision": "4651247ad0ffad79acd53b867e17b78fbac0df31"
+    },
+    {
+      "finding_id": "PHR-0008-F5",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "An include-untracked cleanup stash introduced a second public Git root. The WIP was preserved and verified in an external bundle and bare archive before only its two owned public refs were removed; the native history gate and separate independent custody review passed.",
+      "resolution_revision": "4651247ad0ffad79acd53b867e17b78fbac0df31"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

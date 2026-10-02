@@ -40,8 +40,10 @@ mod phase7_consumption;
 mod phase7_git_adapter;
 mod phase7_nonce;
 mod phase7_persistence;
+mod selected_store;
 
 pub use headless_bootstrap::{HeadlessBootstrapStoreErrorV1, HeadlessBootstrapStoreInspectionV1};
+pub use selected_store::SelectedLocalStoreErrorV1;
 
 pub use phase7_consumption::{
     PHASE7_AUTHORIZATION_TTL_SECONDS_V1, PHASE7_CAPABILITY_BYTES_V1,
@@ -2279,6 +2281,8 @@ pub struct SqliteStore {
     database_path: PathBuf,
     connection: Connection,
     authentication_dummy_verifier: String,
+    // Declaration-order drop closes SQLite before releasing custody/lease.
+    selected_store_custody: Option<selected_store::SelectedStoreCustodyV1>,
 }
 
 /// Acquires the process-lifetime exclusive database lease required by
@@ -2320,6 +2324,47 @@ pub fn acquire_offline_owner_recovery_authority_v1(
 }
 
 impl SqliteStore {
+    /// Opens one explicitly selected, existing schema-17 store read-only while
+    /// retaining observed process/file/parent custody and the shared lease.
+    ///
+    /// This never migrates or initializes a store. Main `SQLite` descriptor
+    /// metadata is observed in place without an extra database handle. This
+    /// does not prove artifact identity, effective ACL isolation, resource
+    /// enforcement, or action authority. Ordinary `open` behavior is unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Denies unsupported platforms, root/set-ID processes, noncanonical or
+    /// insecure selections, lease contention, custody drift, and unverifiable
+    /// schema/posture. Errors contain no caller path or database content.
+    pub fn open_selected_local_store_inspection_v1(
+        path: impl AsRef<Path>,
+    ) -> Result<Self, SelectedLocalStoreErrorV1> {
+        selected_store::open_inspection(path.as_ref())
+    }
+
+    /// Rechecks the retained process, selected-file, directory, and lease
+    /// custody. This diagnostic never grants initialization or action authority.
+    ///
+    /// # Errors
+    ///
+    /// Denies ordinary unbound stores and changed or unverifiable custody.
+    pub fn verify_selected_local_store_custody_v1(&self) -> Result<(), SelectedLocalStoreErrorV1> {
+        let custody = self
+            .selected_store_custody
+            .as_ref()
+            .ok_or(SelectedLocalStoreErrorV1::UnboundStore)?;
+        custody.verify_connection(&self.connection)?;
+        if self.connection.path() != self.database_path.to_str()
+            || !self
+                .connection
+                .is_readonly(rusqlite::MAIN_DB)
+                .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?
+        {
+            return Err(SelectedLocalStoreErrorV1::CustodyChanged);
+        }
+        Ok(())
+    }
     /// Opens or atomically bootstraps one explicit durable database.
     ///
     /// # Errors
@@ -2340,6 +2385,7 @@ impl SqliteStore {
             database_path: database_path.to_path_buf(),
             connection,
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+            selected_store_custody: None,
         };
         store.apply_pending_migrations()?;
         store.verify_schema()?;
@@ -8940,6 +8986,20 @@ fn file_size(path: &Path, failure: SqliteRecoveryErrorV1) -> Result<u64, SqliteR
         .map_err(|_| failure)
 }
 
+fn local_database_lease_path_v1(
+    canonical_database_path: &Path,
+) -> Result<PathBuf, LocalOwnerRecoveryErrorV1> {
+    let database_name = canonical_database_path
+        .file_name()
+        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?;
+    let mut lease_name = database_name.to_os_string();
+    lease_name.push(".lnsat.lock");
+    Ok(canonical_database_path
+        .parent()
+        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?
+        .join(lease_name))
+}
+
 fn acquire_exclusive_database_file_v1(
     path: &Path,
     create_if_missing: bool,
@@ -8961,15 +9021,7 @@ fn acquire_exclusive_database_file_v1(
     let canonical_database_path = path
         .canonicalize()
         .map_err(|_| LocalOwnerRecoveryErrorV1::InvalidInput)?;
-    let database_name = canonical_database_path
-        .file_name()
-        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?;
-    let mut lease_name = database_name.to_os_string();
-    lease_name.push(".lnsat.lock");
-    let lease_path = canonical_database_path
-        .parent()
-        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?
-        .join(lease_name);
+    let lease_path = local_database_lease_path_v1(&canonical_database_path)?;
     match symlink_metadata(&lease_path) {
         Ok(lease_metadata) => {
             if lease_metadata.file_type().is_symlink() || !lease_metadata.is_file() {
@@ -13339,6 +13391,7 @@ mod tests {
             database_path: database.path.clone(),
             connection,
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+            selected_store_custody: None,
         };
         let (packet, policy, request, decision) = approval_decision_fixture();
         persist_approval_chain(&mut store, &packet, &policy, &request, &decision);
@@ -18291,4 +18344,6 @@ mod tests {
     mod phase7_local_authorization;
     mod phase7d_signed_candidate;
     mod phase8_runtime_composition;
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    mod selected_store;
 }

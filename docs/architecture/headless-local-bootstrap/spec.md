@@ -6,7 +6,7 @@ Status: accepted
 Intent: [HCFG-5B intent](intent.md)
 Owner: LNSAT maintainers
 Accepted by: human owner in development conversation on 2026-09-30
-Last updated: 2026-09-30
+Last updated: 2026-10-01
 
 ## Behavior
 
@@ -95,6 +95,74 @@ The focused acceptance set is four existing owner-bootstrap tests plus three B2
 transaction tests. Full repository checks and independent review remain separate
 gates recorded by the task owner in Project Status; this design artifact does
 not claim those gates are complete.
+
+## Source packet B3B: selected main SQLite descriptor observation and lock safety
+
+B3B replaces B3A's extra database descriptor and header-read design. It adds an
+explicitly selected, existing absolute canonical UTF-8 database path for
+read-only schema-17 inspection on Linux and macOS. Parent and named database
+custody use filesystem metadata only: owner, regular type, exact mode, single
+link, and device/inode. The shared `.lnsat.lock` is validated and exclusively
+locked before any SQLite open. No database `File` is retained or opened for a
+header read.
+
+SQLite opens through a source-pinned fixed Unix VFS, read-only and no-create,
+from the repository's bundled SQLite 3.53.2 build. The private connection
+registers no external functions, extensions, alternate VFS, or caller SQL.
+Direct builtin function/source checks are capability checks, not artifact
+authentication. Runtime capability absence or strict-result failure denies with
+the existing static selected-local-store codes. Ordinary `SqliteStore::open`,
+legacy owner behavior, and existing lease APIs remain unchanged; this inspection
+cannot bootstrap an owner or grant initialization/action authority.
+
+The native main-database descriptor is observed only through the actual SQLite
+main connection. A bounded native `sqlite_filestat` diagnostic uses
+`SQLITE_LIMIT_LENGTH` fixed at 4096 before allocation and restores the prior
+limit on every success and error path. Results decode into a small private typed
+value with a checked nonnegative fd. Exact metadata is compared against the
+pre-open named path, then the named path and native main descriptor are compared
+again immediately after open and at custody use. The safe exact-filesystem Nix
+0.29 `fstat` path operates in place; no `/dev/fd`, `/proc/self/fd`, extra
+database handle, alias, descriptor escape, `Debug`, `Clone`, wire form, or
+serializable permit exists.
+
+This observes main-database metadata only. It does not attest artifact
+authenticity, effective ACL isolation, journal/WAL/SHM descriptors, resources,
+verifiers, initialization, admission, or authority. The trusted developer
+toolchain, SDK, Cargo configuration, and host PATH remain the stated boundary;
+runtime capability absence denies. No artifact-authenticated claim is added.
+
+SQLite read-only opening may create WAL/SHM coordination files and may deny old,
+malformed, or otherwise unreadable stores after that coordination attempt. A
+schema-17 state present in WAL remains valid. Main database bytes, authority
+rows, owner/configuration rows, and initialization state remain unmodified by
+this diagnostic. Busy early denial must preserve database/WAL/SHM snapshots,
+including absent sidecars. No immutable-file flag is used, and zero database
+rows or main-byte writes does not mean zero filesystem writes.
+
+### B3B focused acceptance
+
+- Valid selected schema-17 store opens read-only through the fixed Unix VFS and
+  remains authority-free; ordinary open remains unbound and owner API behavior
+  remains unchanged.
+- Relative, missing, symlink, hard-link, nonregular, wrong-owner, broad-mode,
+  noncanonical, unsafe-lease, missing-capability, native-origin, VFS, bounded
+  result, old-schema, and malformed selections deny with static codes and no
+  raw diagnostic values.
+- Parent and named database metadata are checked before open; native main
+  metadata is checked after open and on repeated custody verification. No extra
+  database descriptor is opened or retained.
+- Ordinary and selected connections coexist without losing POSIX byte locks;
+  a second selected lease is busy, post-open verification denial is bounded,
+  repeated verification succeeds when custody is stable, and selected
+  destruction while an ordinary reader remains alive does not release the
+  ordinary SQLite lock early.
+- The actual child-process `F_SETLK` proof covers ordinary plus selected
+  coexistence, second-selected busy, post-open denial, bounded failure,
+  repeated verification, and destruction while an ordinary reader remains.
+
+The B3B source design has a focused test set. Full repository checks and
+independent review remain separate gates; no pass claim is recorded here.
 
 ## Interfaces and contracts
 

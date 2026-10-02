@@ -1,2 +1,5 @@
 [net]
 offline = true
+
+[env]
+LIBSQLITE3_FLAGS = { value = "SQLITE_ENABLE_FILESTAT", force = true }
