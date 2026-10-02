@@ -1,8 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  FILESTAT_FLAGS,
+  verifyNativeEnvironment,
+  verifyNativeGraph,
+} from "./sqlite-native-build-policy.mjs";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const defaultRustupHome = join(homedir(), ".local", "share", "lnsat-rustup");
@@ -19,6 +24,7 @@ const toolEnv = {
   CARGO_HOME: cargoHome,
   RUSTUP_AUTO_INSTALL: "0",
   CARGO_NET_OFFLINE: "true",
+  LIBSQLITE3_FLAGS: FILESTAT_FLAGS,
 };
 
 const commands = {
@@ -50,8 +56,50 @@ if (!Object.hasOwn(commands, action)) {
   process.exit(2);
 }
 
+try {
+  verifyNativeEnvironment(
+    process.env,
+    readFileSync(join(repoRoot, ".cargo/config.toml"), "utf8"),
+  );
+} catch {
+  console.error("sqlite_native.build_policy_rejected");
+  process.exit(1);
+}
+
+// Keep the frozen package.json source-gate graph intact. The existing format
+// entry point runs this deterministic native-policy suite before Cargo.
+if (action === "fmt") {
+  const policyTests = spawnSync(
+    process.execPath,
+    ["--test", join(repoRoot, "scripts/sqlite-native-build-policy.test.mjs")],
+    { cwd: repoRoot, env: process.env, stdio: "inherit" },
+  );
+  if (policyTests.error || policyTests.status !== 0) {
+    console.error("sqlite_native.policy_tests_failed");
+    process.exit(1);
+  }
+}
+
 verifyPinnedTool(cargo, ["--version"], /^cargo 1\.97\.1\b/u, "Cargo 1.97.1");
 verifyPinnedTool(rustc, ["--version"], /^rustc 1\.97\.1\b/u, "rustc 1.97.1");
+
+const metadataResult = spawnSync(
+  cargo,
+  ["metadata", "--format-version", "1", "--locked", "--offline"],
+  {
+    cwd: repoRoot,
+    env: toolEnv,
+    encoding: "utf8",
+    maxBuffer: 8 * 1024 * 1024,
+  },
+);
+try {
+  if (metadataResult.error || metadataResult.status !== 0) throw new Error();
+  verifyNativeGraph(JSON.parse(metadataResult.stdout));
+} catch {
+  console.error("sqlite_native.locked_graph_unverifiable");
+  process.exit(1);
+}
 
 const result = spawnSync(cargo, commands[action], {
   cwd: repoRoot,

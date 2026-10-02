@@ -96,61 +96,73 @@ transaction tests. Full repository checks and independent review remain separate
 gates recorded by the task owner in Project Status; this design artifact does
 not claim those gates are complete.
 
-## Source packet B3A: selected-store custody and read-only inspection
+## Source packet B3B: selected main SQLite descriptor observation and lock safety
 
-B3A adds a new explicitly selected, existing absolute canonical UTF-8 database
-path for read-only schema-17 inspection on Linux and macOS. It is a diagnostic
-custody path only. Ordinary `SqliteStore::open` behavior, legacy owner behavior,
-and the existing lease APIs remain unchanged; this inspection cannot bootstrap
-an owner or grant initialization/action authority.
+B3B replaces B3A's extra database descriptor and header-read design. It adds an
+explicitly selected, existing absolute canonical UTF-8 database path for
+read-only schema-17 inspection on Linux and macOS. Parent and named database
+custody use filesystem metadata only: owner, regular type, exact mode, single
+link, and device/inode. The shared `.lnsat.lock` is validated and exclusively
+locked before any SQLite open. No database `File` is retained or opened for a
+header read.
 
-The process must have a nonzero real UID equal to its effective UID. The selected
-parent must be the exact owner-owned `0700` directory. The database and shared
-`.lnsat.lock` lease must each be regular, owner-owned, single-link `0600` files.
-The private custody object retains opened parent, database, and lease file
-descriptors plus path, device/inode, UID, mode, type, and link-count evidence.
-It revalidates those observations before SQLite open and on explicit custody
-verification. The shared exclusive lease remains held for the full SQLite store
-lifetime; declaration order closes the SQLite connection before releasing the
-lease. Static public-safe errors are limited to the selected-local-store enum
-codes; error values contain no path or database content.
+SQLite opens through a source-pinned fixed Unix VFS, read-only and no-create,
+from the repository's bundled SQLite 3.53.2 build. The private connection
+registers no external functions, extensions, alternate VFS, or caller SQL.
+Direct builtin function/source checks are capability checks, not artifact
+authentication. Runtime capability absence or strict-result failure denies with
+the existing static selected-local-store codes. Ordinary `SqliteStore::open`,
+legacy owner behavior, and existing lease APIs remain unchanged; this inspection
+cannot bootstrap an owner or grant initialization/action authority.
 
-Before SQLite open, the held database descriptor must pass a conservative
-100-byte checkpointed SQLite header precheck: SQLite format magic, current
-read/write header format, and schema version 17. This can false-deny a schema-17
-database whose current version exists only in uncheckpointed WAL; it is not a
-freshness proof. It never ignores WAL. A valid read may create SQLite WAL/SHM
-coordination files, so zero authority rows and zero database-row writes do not
-mean zero filesystem writes. No immutable-file flag is used.
+The native main-database descriptor is observed only through the actual SQLite
+main connection. A bounded native `sqlite_filestat` diagnostic uses
+`SQLITE_LIMIT_LENGTH` fixed at 4096 before allocation and restores the prior
+limit on every success and error path. Results decode into a small private typed
+value with a checked nonnegative fd. Exact metadata is compared against the
+pre-open named path, then the named path and native main descriptor are compared
+again immediately after open and at custody use. The safe exact-filesystem Nix
+0.29 `fstat` path operates in place; no `/dev/fd`, `/proc/self/fd`, extra
+database handle, alias, descriptor escape, `Debug`, `Clone`, wire form, or
+serializable permit exists.
 
-The subsequent connection is `SQLITE_OPEN_READ_ONLY`, with no create, migration,
-or journal-mode assignment. It verifies read-only posture, WAL mode, compiled
-schema, integrity, and current `user_version` 17. SQLite remains responsible for
-WAL coordination. The private custody value has no serializable permit, wire representation,
-`Debug`, or `Clone`. This source packet contains no unsafe code or injectable
-production verifier and adds no initialization, CLI, HTTP route, migration,
-schema change, effective ACL proof, OS resource enforcement, or SQLite descriptor
-attestation.
+This observes main-database metadata only. It does not attest artifact
+authenticity, effective ACL isolation, journal/WAL/SHM descriptors, resources,
+verifiers, initialization, admission, or authority. The trusted developer
+toolchain, SDK, Cargo configuration, and host PATH remain the stated boundary;
+runtime capability absence denies. No artifact-authenticated claim is added.
 
-### B3A focused acceptance
+SQLite read-only opening may create WAL/SHM coordination files and may deny old,
+malformed, or otherwise unreadable stores after that coordination attempt. A
+schema-17 state present in WAL remains valid. Main database bytes, authority
+rows, owner/configuration rows, and initialization state remain unmodified by
+this diagnostic. Busy early denial must preserve database/WAL/SHM snapshots,
+including absent sidecars. No immutable-file flag is used, and zero database
+rows or main-byte writes does not mean zero filesystem writes.
 
-- Valid selected schema-17 store opens read-only and remains authority-free;
-  ordinary open remains unbound and owner API behavior remains unchanged.
+### B3B focused acceptance
+
+- Valid selected schema-17 store opens read-only through the fixed Unix VFS and
+  remains authority-free; ordinary open remains unbound and owner API behavior
+  remains unchanged.
 - Relative, missing, symlink, hard-link, nonregular, wrong-owner, broad-mode,
-  noncanonical, and unsafe-lease selections deny without SQLite open or
-  migration.
-- Held database, parent, and lease replacement or custody drift fails closed;
-  static error codes contain no path.
-- Daemon/offline-recovery lease contention is exclusive in both directions.
-- A retained read transaction makes an independent `TRUNCATE` checkpoint return
-  `busy=1`; after custody drop, SQLite closes first (`busy=0`) while the daemon
-  lease remains busy, then the lease becomes available.
-- A schema-16 or malformed header denies before SQLite open and preserves the
-  existing database bytes.
+  noncanonical, unsafe-lease, missing-capability, native-origin, VFS, bounded
+  result, old-schema, and malformed selections deny with static codes and no
+  raw diagnostic values.
+- Parent and named database metadata are checked before open; native main
+  metadata is checked after open and on repeated custody verification. No extra
+  database descriptor is opened or retained.
+- Ordinary and selected connections coexist without losing POSIX byte locks;
+  a second selected lease is busy, post-open verification denial is bounded,
+  repeated verification succeeds when custody is stable, and selected
+  destruction while an ordinary reader remains alive does not release the
+  ordinary SQLite lock early.
+- The actual child-process `F_SETLK` proof covers ordinary plus selected
+  coexistence, second-selected busy, post-open denial, bounded failure,
+  repeated verification, and destruction while an ordinary reader remains.
 
-The candidate focused set contains 14 B3A tests. Full repository checks and
-independent review remain separate gates; live pass evidence belongs in Project
-Status and is not asserted here.
+The B3B source design has a focused test set. Full repository checks and
+independent review remain separate gates; no pass claim is recorded here.
 
 ## Interfaces and contracts
 

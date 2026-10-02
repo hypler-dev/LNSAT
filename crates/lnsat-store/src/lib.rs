@@ -2327,8 +2327,9 @@ impl SqliteStore {
     /// Opens one explicitly selected, existing schema-17 store read-only while
     /// retaining observed process/file/parent custody and the shared lease.
     ///
-    /// This never migrates or initializes a store. POSIX custody does not prove
-    /// `SQLite` internal descriptor identity, effective ACL isolation, resource
+    /// This never migrates or initializes a store. Main `SQLite` descriptor
+    /// metadata is observed in place without an extra database handle. This
+    /// does not prove artifact identity, effective ACL isolation, resource
     /// enforcement, or action authority. Ordinary `open` behavior is unchanged.
     ///
     /// # Errors
@@ -2353,7 +2354,7 @@ impl SqliteStore {
             .selected_store_custody
             .as_ref()
             .ok_or(SelectedLocalStoreErrorV1::UnboundStore)?;
-        custody.verify()?;
+        custody.verify_connection(&self.connection)?;
         if self.connection.path() != self.database_path.to_str()
             || !self
                 .connection

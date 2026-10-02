@@ -272,52 +272,93 @@ Selected-store binding, real resource/enforcement proof, and the complete
 atomic initializer remain open source work. Phase 11 runtime authority and
 V1 readiness are unchanged.
 
-### HCFG-5B B3A observed selected-store custody prerequisite
+### HCFG-5B B3A custody readiness withdrawn
+
+Historical B3A source and independent review are preserved by immutable
+[PHR-0008](reference/public-history-reviews/PHR-0008/review.json).
+Draft [PR #71](https://github.com/hypler-dev/LNSAT/pull/71), exact head
+`437db8058feaa93df1f9bad551f70727fbd73a27`, failed source CI run
+`36944404753` on its Linux nonregular-path fixture. More importantly, subsequent
+cross-process evidence confirmed that opening and closing an additional database
+`File` can cancel POSIX locks belonging to another live SQLite connection in the
+same process. Keeping that extra handle until custody drop or checking a WAL
+checkpoint does not resolve this hazard. Source readiness is withdrawn; the
+historical Mac validation and review do not prove the correction. Prior review
+manifests are not rewritten.
+
+### HCFG-5B B3B main descriptor observation and lock correction
 
 Canonical implementation record: this section. Under the accepted bootstrap
-contract and standing human source authorization, B3A adds an explicitly
-selected existing-store read-only inspection on Linux/macOS. It observes equal
-nonzero real/effective host UID, an owner-owned exact `0700` parent, and regular
-single-link owner-owned exact `0600` database and shared lease. Private held
-parent/database/lease files retain device/inode identity and revalidate current
-path, owner, mode, type, and link observations. The shared daemon/offline lease
-remains held until after the SQLite connection closes. Ordinary store opening,
-owner bootstrap, schema, and existing lease APIs retain their behavior.
+contract and standing human source authorization, the isolated corrective
+candidate removes every direct selected-store database handle and checkpointed
+header read. It retains an owner-owned exact `0700` parent and regular
+single-link exact `0600` named database and shared lease, device/inode
+observations, and nonzero equal real/effective host UID. The exclusive shared
+lease is validated and locked before any SQLite open. Busy callers cannot open
+SQLite or create its WAL/SHM coordination files.
 
-A conservative held-file 100-byte header precheck requires SQLite magic,
-WAL-format bytes, and checkpointed schema 17 before opening SQLite. A schema
-version existing only in uncheckpointed WAL is conservatively denied; no
-immutable flag ignores WAL. The subsequent connection is read-only, without
-create, migration, or journal-mode assignment, and verifies current schema,
-integrity, WAL and connection posture. Valid read-only SQLite reads may create
-WAL/SHM coordination files. These are not owner, configuration, audit, or
-initialization writes; this API does not promise zero filesystem writes.
+A fresh private read-only/no-create connection uses the fixed native Unix VFS.
+Exact SQLite `3.53.2` source identity, non-debug posture, and unique builtin
+function origin are checked before the native `sqlite_filestat('main')` call.
+The native string allocator is bounded by a temporary 4096-byte
+`SQLITE_LIMIT_LENGTH` before allocation; the original connection limit is
+restored on success and denial. SQL NULL and malformed, duplicate, unknown,
+out-of-range or other-VFS diagnostic shapes deny with static errors. A private
+typed decode keeps the main descriptor internal. Safe in-place `fstat` observes
+that actual descriptor's owner, mode, regular type, link count and device/inode
+without opening, duplicating or closing any database alias. Native and named
+metadata are checked twice and rechecked on explicit custody use.
 
-Fourteen focused source tests pass. They prove shared-lease contention in both
-directions, ordinary-owner compatibility, read-only owner-write rejection,
-path/file/lease/parent drift denial, malformed/old/non-WAL header rejection,
-conservative pending-WAL denial, and unchanged DB/WAL/SHM snapshots for the
-specified early-denial cases. A retained read transaction demonstrably blocks
-a separate writer's truncate checkpoint; during custody drop that checkpoint
-succeeds while the shared lease is still busy, then the lease becomes available.
-Latest strict store Clippy and full `npm run check` pass on unchanged source
-bytes. The full check required disposable loopback/Unix socket permissions;
-the initial sandbox denial is retained, not counted as a source pass. Fresh
-independent source/test/documentation review found no actionable P1/P2/P3.
-Secret scanning found no leaks. The named Rust scan reported two unchanged
-test-helper INFO findings and one private-fixture INFO finding, with no new
-production findings. Offline OSV scanning could not load a cached vulnerability
-database; no OSV pass or vulnerability-free dependency claim is made. The only
-dependency change reuses the existing pinned `nix` version and checksum.
-Git-bound review evidence is tracked as `PHR-0008` in the
+The repository forces the FILESTAT compile flag and rejects named ambient
+compiler, target, flags, wrapper, native-source and link overrides before Cargo.
+Locked full Cargo metadata requires the single pinned bundled SQLite package and
+exact native features and the exact fs-only production Nix alias. Developer-host compiler/SDK binaries, PATH and Cargo
+configuration remain trusted; these checks do not authenticate a release
+artifact. External consumers lacking the required capability fail closed.
+Existing Nix `0.31.3` remains unchanged; an exact fs-only Nix `0.29.0` alias
+supplies the safe raw-descriptor metadata API without relaxing unsafe-code
+prohibition. Existing locked Serde is reused for private typed decoding.
+
+The header prefilter is removed. A current schema held in uncheckpointed WAL is
+read normally, with no checkpoint, migration or journal assignment. Malformed
+and old-schema read-only denials may create coordination files or the lease;
+they write no main database or authority rows. Source coverage includes a real
+child-process POSIX byte-lock contender across ordinary/selected coexistence,
+second-selection denial, bounded-native failure, repeated observation,
+post-open schema denial and selected destruction while the ordinary reader
+remains alive. The prior checkpoint test remains a separate check of connection
+closure before shared-lease release.
+
+Nineteen focused selected-store regressions passed locally on macOS; the one
+normally ignored child-only harness was invoked by the lock regression. Six
+native build-policy tests passed. An initial full repository check failed in an
+existing served fake-runtime test: 99 daemon tests passed and one returned
+`gateway.runtime_composition.denied` instead of success. The exact test passed
+alone, then the normal parallel daemon suite passed 100/100 on unchanged source.
+A subsequent full `npm run check` passed on the same frozen candidate, including
+100/100 daemon tests twice and 240 store tests with the child harness normally
+ignored but explicitly invoked by its parent regression. Workspace Clippy,
+formatting, source metadata and `npm run build` passed. The cause of the initial
+intermittent denial was not identified; no correction of that reliability
+history is claimed.
+
+Independent source review closed the validation finding after the terminal
+unchanged full-check pass. Review provenance is tracked as `PHR-0009` in the
 [public-history review registry](reference/public-history-reviews/registry.json).
+New exact-head Linux CI remains a separate gate. Gitleaks found no leaks;
+named Rust and JavaScript Semgrep scans found no new confirmed production
+defect, with unchanged informational Rust findings locally triaged. Native npm
+dependency and signature checks passed. Recursive offline OSV remained
+unverified because its vulnerability database was unavailable; a separate
+public-coordinate query returned no advisories for the one new Nix version.
+That narrow query is not full dependency coverage or a vulnerability-free claim.
 
-This verifies observed POSIX custody only. A SQLite filename is not its internal
-opened-descriptor identity; POSIX mode is not effective extended-ACL isolation.
-Real descriptor/resource/OS enforcement, complete atomic initialization,
-admission, configuration activation, CLI, runtime and packaging remain open.
-No serializable permit, injectable production verifier, or authority conversion
-exists. Phase 11 runtime verdict and V1 readiness are unchanged.
+This observes main database metadata only. It does not prove release-artifact
+identity, effective ACL isolation, journal/WAL/SHM descriptor custody, resource
+identity or OS enforcement. No serializable permit, production proof injection,
+initializer, configuration activation, CLI, route, schema or migration is added.
+Complete atomic initialization and V1 remain incomplete. The Phase 11 operator
+packet remains runtime authority and its source-only verdict is unchanged.
 
 ## Current Build Position
 

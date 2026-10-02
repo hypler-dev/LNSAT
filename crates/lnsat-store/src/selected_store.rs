@@ -1,6 +1,7 @@
 //! Observed POSIX selected-store custody for read-only preflight.
 //!
-//! This is not `SQLite` descriptor attestation, effective ACL isolation, a
+//! Main descriptor metadata is observed in place; this is not artifact
+//! attestation, effective ACL isolation, a
 //! serializable permit, or initialization/action authority.
 
 use std::fmt;
@@ -24,12 +25,13 @@ use rusqlite::{
         SQLITE_DBCONFIG_DEFENSIVE, SQLITE_DBCONFIG_DQS_DDL, SQLITE_DBCONFIG_DQS_DML,
         SQLITE_DBCONFIG_TRUSTED_SCHEMA,
     },
+    limits::Limit,
 };
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::{
     fs::{self, File, Metadata, OpenOptions, TryLockError},
     io,
-    os::unix::fs::{FileExt, MetadataExt, OpenOptionsExt},
+    os::unix::fs::{MetadataExt, OpenOptionsExt},
     path::PathBuf,
 };
 
@@ -100,7 +102,6 @@ pub(super) struct SelectedStoreCustodyV1 {
     database_identity: FileIdentity,
     parent_identity: FileIdentity,
     lease_identity: FileIdentity,
-    database_file: File,
     parent_file: File,
     lease_file: File,
     #[cfg(test)]
@@ -186,6 +187,45 @@ fn verify_held(
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 impl SelectedStoreCustodyV1 {
+    pub(super) fn verify_connection(
+        &self,
+        connection: &Connection,
+    ) -> Result<(), SelectedLocalStoreErrorV1> {
+        self.verify()?;
+        let first = observe_native_main(connection, NATIVE_DIAGNOSTIC_BOUND)?;
+        self.verify_native_metadata(first)?;
+        self.verify()?;
+        let second = observe_native_main(connection, NATIVE_DIAGNOSTIC_BOUND)?;
+        self.verify_native_metadata(second)?;
+        if first != second {
+            return Err(SelectedLocalStoreErrorV1::CustodyChanged);
+        }
+        self.verify()
+    }
+
+    fn verify_native_metadata(&self, descriptor: i32) -> Result<(), SelectedLocalStoreErrorV1> {
+        // Safe upstream fstat(RawFd): never opens, duplicates, owns or closes
+        // SQLite's descriptor. A separate close could clear other connections'
+        // process-wide POSIX locks, even while those connections remain alive.
+        let stat = nix_stat::sys::stat::fstat(descriptor)
+            .map_err(|_| SelectedLocalStoreErrorV1::CustodyChanged)?;
+        #[cfg(target_os = "macos")]
+        let device =
+            u64::try_from(stat.st_dev).map_err(|_| SelectedLocalStoreErrorV1::CustodyChanged)?;
+        #[cfg(target_os = "linux")]
+        let device = stat.st_dev;
+        if stat.st_uid != self.owner_uid
+            || stat.st_mode & nix_stat::libc::S_IFMT != nix_stat::libc::S_IFREG
+            || stat.st_mode & 0o7777 != 0o600
+            || stat.st_nlink != 1
+            || device != self.database_identity.device
+            || stat.st_ino != self.database_identity.inode
+        {
+            return Err(SelectedLocalStoreErrorV1::CustodyChanged);
+        }
+        Ok(())
+    }
+
     fn acquire(path: &Path) -> Result<Self, SelectedLocalStoreErrorV1> {
         let owner_uid = current_owner()?;
         if !path.is_absolute()
@@ -211,9 +251,6 @@ impl SelectedStoreCustodyV1 {
             fs::symlink_metadata(path).map_err(|_| SelectedLocalStoreErrorV1::InvalidSelection)?;
         validate_metadata(&database_metadata, owner_uid, false)?;
         let database_identity = FileIdentity::of(&database_metadata);
-        let database_file = open_held(path, false)?;
-        verify_held(path, &database_file, &database_identity, owner_uid, false)?;
-        verify_checkpointed_header(&database_file)?;
         let lease_path = local_database_lease_path_v1(path)
             .map_err(|_| SelectedLocalStoreErrorV1::InvalidSelection)?;
         let mut options = OpenOptions::new();
@@ -253,7 +290,6 @@ impl SelectedStoreCustodyV1 {
             database_identity,
             parent_identity,
             lease_identity,
-            database_file,
             parent_file,
             lease_file,
             #[cfg(test)]
@@ -281,13 +317,13 @@ impl SelectedStoreCustodyV1 {
             self.owner_uid,
             true,
         )?;
-        verify_held(
-            &self.database_path,
-            &self.database_file,
-            &self.database_identity,
-            self.owner_uid,
-            false,
-        )?;
+        let database_metadata = fs::symlink_metadata(&self.database_path)
+            .map_err(|_| SelectedLocalStoreErrorV1::CustodyChanged)?;
+        validate_metadata(&database_metadata, self.owner_uid, false)
+            .map_err(|_| SelectedLocalStoreErrorV1::CustodyChanged)?;
+        if FileIdentity::of(&database_metadata) != self.database_identity {
+            return Err(SelectedLocalStoreErrorV1::CustodyChanged);
+        }
         verify_held(
             &self.lease_path,
             &self.lease_file,
@@ -298,28 +334,164 @@ impl SelectedStoreCustodyV1 {
     }
 }
 
-// Reject pending/unknown checkpointed formats without opening SQLite or its
-// WAL coordination files. This is only a conservative prefilter: SQLite must
-// still verify the actual schema and integrity, including WAL state.
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
+impl SelectedStoreCustodyV1 {
+    pub(super) fn verify_connection(
+        &self,
+        _connection: &rusqlite::Connection,
+    ) -> Result<(), SelectedLocalStoreErrorV1> {
+        Err(SelectedLocalStoreErrorV1::UnsupportedPlatform)
+    }
+}
+
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn verify_checkpointed_header(file: &File) -> Result<(), SelectedLocalStoreErrorV1> {
-    let mut header = [0_u8; 100];
-    file.read_exact_at(&mut header, 0)
-        .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
-    let version = u32::from_be_bytes([header[60], header[61], header[62], header[63]]);
-    if &header[..16] != b"SQLite format 3\0"
-        || header[18..20] != [2, 2]
-        || i64::from(version) != SQLITE_SCHEMA_VERSION
-    {
+const NATIVE_DIAGNOSTIC_BOUND: i32 = 4096;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+const NATIVE_SOURCE_ID: &str =
+    "2026-06-03 19:12:13 d6e03d8c777cfa2d35e3b60d8ec3e0187f3e9f99d8e2ee9cac695fd6fcdf1a24";
+
+// Decode only the two values used to observe main metadata. Known additional
+// native diagnostic fields are consumed without retaining their contents.
+// Unknown/duplicate fields, invalid types and out-of-range descriptors deny.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NativeFileStat {
+    db: NativeMainFileStat,
+    #[serde(default, rename = "journal")]
+    _journal: Option<serde::de::IgnoredAny>,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NativeMainFileStat {
+    h: i32,
+    vfs: String,
+    #[serde(default, rename = "eFileLock")]
+    _lock: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "pal")]
+    _posix_locks: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "shm")]
+    _shm: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "mmapSize")]
+    _mmap_size: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "nFetchOut")]
+    _fetch_count: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "inode")]
+    _inode: Option<serde::de::IgnoredAny>,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
+    if text.len() > usize::try_from(NATIVE_DIAGNOSTIC_BOUND).unwrap_or(0) {
+        return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+    }
+    let stat: NativeFileStat =
+        serde_json::from_str(text).map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
+    if stat.db.h < 0 || stat.db.vfs != "unix" {
+        return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+    }
+    Ok(stat.db.h)
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn verify_native_origin(connection: &Connection) -> Result<(), SelectedLocalStoreErrorV1> {
+    let fail = |_| SelectedLocalStoreErrorV1::StoreUnverifiable;
+    if rusqlite::version_number() != 3_053_002 {
+        return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+    }
+    // Direct PRAGMA avoids a caller/schema object shadowing a table-valued
+    // pragma. Private production connections never register external functions.
+    let mut statement = connection.prepare("PRAGMA function_list").map_err(fail)?;
+    let mut rows = statement.query([]).map_err(fail)?;
+    let required = [
+        ("sqlite_filestat", 1),
+        ("sqlite_source_id", 0),
+        ("sqlite_compileoption_used", 1),
+    ];
+    let mut found = [0; 3];
+    let mut count = 0;
+    while let Some(row) = rows.next().map_err(fail)? {
+        count += 1;
+        if count > 1024 {
+            return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+        }
+        let name = row.get::<_, String>(0).map_err(fail)?;
+        for (index, (expected, arity)) in required.iter().enumerate() {
+            if !name.eq_ignore_ascii_case(expected) {
+                continue;
+            }
+            if row.get::<_, i64>(1).map_err(fail)? != 1
+                || row.get::<_, String>(2).map_err(fail)? != "s"
+                || row.get::<_, String>(3).map_err(fail)? != "utf8"
+                || row.get::<_, i64>(4).map_err(fail)? != *arity
+            {
+                return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+            }
+            found[index] += 1;
+        }
+    }
+    if found != [1; 3] {
+        return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+    }
+    let source: String = connection
+        .query_row("SELECT sqlite_source_id()", [], |row| row.get(0))
+        .map_err(fail)?;
+    let debug: i64 = connection
+        .query_row("SELECT sqlite_compileoption_used('DEBUG')", [], |row| {
+            row.get(0)
+        })
+        .map_err(fail)?;
+    if source != NATIVE_SOURCE_ID || debug != 0 {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
     Ok(())
 }
-#[cfg(not(any(target_os = "linux", target_os = "macos")))]
-impl SelectedStoreCustodyV1 {
-    pub(super) fn verify(&self) -> Result<(), SelectedLocalStoreErrorV1> {
-        Err(SelectedLocalStoreErrorV1::UnsupportedPlatform)
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn observe_native_main(
+    connection: &Connection,
+    maximum: i32,
+) -> Result<i32, SelectedLocalStoreErrorV1> {
+    let fail = |_| SelectedLocalStoreErrorV1::StoreUnverifiable;
+    if maximum <= 0 || maximum > NATIVE_DIAGNOSTIC_BOUND {
+        return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
+    // Bound sqlite3_str_new BEFORE the native function allocates its JSON.
+    // A bound failure may return SQL NULL; it is an ordinary static denial.
+    let prior = connection
+        .set_limit(Limit::SQLITE_LIMIT_LENGTH, maximum)
+        .map_err(fail)?;
+    let result = (|| {
+        if connection.limit(Limit::SQLITE_LIMIT_LENGTH).map_err(fail)? > maximum {
+            return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+        }
+        verify_native_origin(connection)?;
+        let text: String = connection
+            .query_row("SELECT sqlite_filestat('main')", [], |row| row.get(0))
+            .map_err(fail)?;
+        decode_native_main(&text)
+    })();
+    // Always restore before schema/integrity checks and before returning even
+    // a failure. No temporary native bound leaks into the connection's caller.
+    connection
+        .set_limit(Limit::SQLITE_LIMIT_LENGTH, prior)
+        .map_err(fail)?;
+    result
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+pub(super) fn test_observe_native_main(
+    connection: &Connection,
+    maximum: i32,
+) -> Result<i32, SelectedLocalStoreErrorV1> {
+    observe_native_main(connection, maximum)
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+pub(super) fn test_decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
+    decode_native_main(text)
 }
 
 // Only test builds observe drop sequencing. Production fields still drop in
@@ -347,17 +519,9 @@ pub(super) fn open_inspection(path: &Path) -> Result<SqliteStore, SelectedLocalS
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn configure_read_only(connection: &Connection) -> Result<(), SelectedLocalStoreErrorV1> {
+fn configure_native_boundary(connection: &Connection) -> Result<(), SelectedLocalStoreErrorV1> {
     let fail = |_| SelectedLocalStoreErrorV1::StoreUnverifiable;
     connection.busy_timeout(SQLITE_BUSY_TIMEOUT).map_err(fail)?;
-    for (name, value) in [
-        ("foreign_keys", "ON"),
-        ("recursive_triggers", "ON"),
-        ("synchronous", "FULL"),
-        ("trusted_schema", "OFF"),
-    ] {
-        connection.pragma_update(None, name, value).map_err(fail)?;
-    }
     if !connection
         .set_db_config(SQLITE_DBCONFIG_DEFENSIVE, true)
         .map_err(fail)?
@@ -372,6 +536,20 @@ fn configure_read_only(connection: &Connection) -> Result<(), SelectedLocalStore
         if connection.set_db_config(disabled, false).map_err(fail)? {
             return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
         }
+    }
+    Ok(())
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn configure_read_only(connection: &Connection) -> Result<(), SelectedLocalStoreErrorV1> {
+    let fail = |_| SelectedLocalStoreErrorV1::StoreUnverifiable;
+    for (name, value) in [
+        ("foreign_keys", "ON"),
+        ("recursive_triggers", "ON"),
+        ("synchronous", "FULL"),
+        ("trusted_schema", "OFF"),
+    ] {
+        connection.pragma_update(None, name, value).map_err(fail)?;
     }
     let journal = connection
         .query_row("PRAGMA main.journal_mode", [], |row| {
@@ -407,9 +585,16 @@ fn open_under_custody(
     custody: SelectedStoreCustodyV1,
 ) -> Result<SqliteStore, SelectedLocalStoreErrorV1> {
     custody.verify()?;
-    let connection =
-        Connection::open_with_flags(&custody.database_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
-            .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
+    // acquire() locked the shared lease before this first SQLite open. Busy
+    // callers cannot open SQLite or touch its WAL/SHM coordination files.
+    let connection = Connection::open_with_flags_and_vfs(
+        &custody.database_path,
+        OpenFlags::SQLITE_OPEN_READ_ONLY,
+        "unix",
+    )
+    .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
+    configure_native_boundary(&connection)?;
+    custody.verify_connection(&connection)?;
     configure_read_only(&connection)?;
     preflight_schema(&connection).map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
     let store = SqliteStore {

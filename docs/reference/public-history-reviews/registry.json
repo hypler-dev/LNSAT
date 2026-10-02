@@ -71,6 +71,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0008/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0009",
+      "subject_id": "headless-bootstrap-main-descriptor-custody-b3b",
+      "review_subject_ids": ["headless-bootstrap-main-descriptor-custody-b3b"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0009/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

@@ -1,5 +1,9 @@
 use super::*;
-use crate::selected_store::{checked_process_owner, open_inspection_with_hook, validate_metadata};
+use crate::selected_store::{
+    checked_process_owner, open_inspection_with_hook,
+    test_decode_native_main as decode_native_main, test_observe_native_main as observe_native_main,
+    validate_metadata,
+};
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt, symlink};
 use std::sync::atomic::AtomicBool;
 
@@ -186,13 +190,18 @@ fn selected_store_rejects_relative_missing_alias_and_nonregular_paths_before_ope
     symlink(&fixture.path, &alias).unwrap();
     let parent_alias = fixture.directory.join("parent-alias");
     symlink(&fixture.directory, &parent_alias).unwrap();
+    let directory_selection = fixture.directory.join("directory.sqlite");
+    fs::DirBuilder::new()
+        .mode(0o700)
+        .create(&directory_selection)
+        .unwrap();
     for path in [
         PathBuf::from("store.sqlite"),
         fixture.directory.join("missing.sqlite"),
         alias,
         fixture.directory.join(".").join("store.sqlite"),
         parent_alias.join("store.sqlite"),
-        fixture.directory.clone(),
+        directory_selection,
     ] {
         assert_eq!(
             open_error(&path),
@@ -257,7 +266,7 @@ fn selected_store_denies_old_schema_without_migration_or_journal_change() {
         open_error(&fixture.path),
         SelectedLocalStoreErrorV1::StoreUnverifiable
     );
-    assert_eq!(fixture.database_bytes(), before);
+    assert_eq!(fixture.database_bytes()[0], before[0]);
     let reader =
         Connection::open_with_flags(&fixture.path, OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
     assert_eq!(pragma_i64(&reader, "user_version"), Ok(16));
@@ -393,7 +402,7 @@ fn selected_store_errors_expose_only_closed_static_codes() {
 }
 
 #[test]
-fn selected_store_malformed_and_nonwal_headers_deny_before_lease_or_sqlite_open() {
+fn selected_store_malformed_and_nonwal_databases_deny_without_database_writes() {
     for malformed in [true, false] {
         let fixture = PrivateDatabase::current();
         let mut bytes = fs::read(&fixture.path).unwrap();
@@ -409,22 +418,261 @@ fn selected_store_malformed_and_nonwal_headers_deny_before_lease_or_sqlite_open(
             open_error(&fixture.path),
             SelectedLocalStoreErrorV1::StoreUnverifiable
         );
-        assert_eq!(fixture.database_bytes(), before);
-        assert!(!fixture.lease_path().exists());
+        assert_eq!(fixture.database_bytes()[0], before[0]);
+        assert!(fixture.lease_path().exists());
     }
 }
 
 #[test]
-fn selected_store_pending_wal_schema_is_conservatively_denied_without_checkpoint() {
+fn selected_store_current_schema_in_pending_wal_is_read_without_checkpoint() {
     let fixture = PrivateDatabase::new();
     create_version_sixteen_database(&fixture.path);
-    let store = SqliteStore::open(&fixture.path).unwrap();
-    assert_eq!(pragma_i64(&store.connection, "user_version"), Ok(17));
+    let ordinary = SqliteStore::open(&fixture.path).unwrap();
+    assert_eq!(pragma_i64(&ordinary.connection, "user_version"), Ok(17));
     let before = fixture.database_bytes();
+    let selected = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
+    assert_eq!(pragma_i64(&selected.connection, "user_version"), Ok(17));
+    assert_eq!(selected.verify_selected_local_store_custody_v1(), Ok(()));
+    assert_eq!(fixture.database_bytes()[0], before[0]);
+    assert_eq!(fixture.database_bytes()[1], before[1]);
+}
+
+// Only a child process can test the parent's process-wide POSIX locks. A WAL
+// checkpoint assertion in the same process does not cover this failure mode.
+#[test]
+#[ignore = "invoked explicitly by the cross-process lock regression"]
+fn selected_store_posix_lock_child() {
+    use nix::fcntl::{FcntlArg, fcntl};
+    use nix::libc;
+    let path = std::env::var_os("LNSAT_SELECTED_LOCK_TEST_PATH").unwrap();
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let lock = libc::flock {
+        l_start: 0,
+        l_len: 0,
+        l_pid: 0,
+        l_type: lock_short(libc::F_WRLCK),
+        l_whence: lock_short(libc::SEEK_SET),
+    };
+    match fcntl(&file, FcntlArg::F_SETLK(&lock)) {
+        Ok(_) => println!("POSIX_LOCK_ACQUIRED"),
+        Err(nix::errno::Errno::EACCES | nix::errno::Errno::EAGAIN) => {
+            println!("POSIX_LOCK_BLOCKED");
+        }
+        Err(error) => panic!("unexpected lock test failure: {error}"),
+    }
+}
+
+fn lock_short(value: impl TryInto<i16>) -> i16 {
+    value.try_into().ok().expect("lock constant must fit")
+}
+
+fn assert_external_lock(path: &Path, blocked: bool) {
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--ignored",
+            "--exact",
+            "tests::selected_store::selected_store_posix_lock_child",
+            "--nocapture",
+            "--test-threads=1",
+        ])
+        .env("LNSAT_SELECTED_LOCK_TEST_PATH", path)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "lock child failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(
+        stdout.contains(if blocked {
+            "POSIX_LOCK_BLOCKED"
+        } else {
+            "POSIX_LOCK_ACQUIRED"
+        }),
+        "unexpected child result: {stdout}"
+    );
+}
+
+#[test]
+fn selected_store_inplace_observation_denial_and_drop_preserve_other_sqlite_posix_locks() {
+    let fixture = PrivateDatabase::current();
+    let ordinary = SqliteStore::open(&fixture.path).unwrap();
+    ordinary
+        .connection
+        .execute_batch("BEGIN DEFERRED; SELECT count(*) FROM main.sqlite_schema;")
+        .unwrap();
+    assert_external_lock(&fixture.path, true);
+    let selected = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
+    assert_external_lock(&fixture.path, true);
+    assert_eq!(
+        open_error(&fixture.path),
+        SelectedLocalStoreErrorV1::DatabaseBusy
+    );
+    assert_external_lock(&fixture.path, true);
+    let prior = selected
+        .connection
+        .limit(rusqlite::limits::Limit::SQLITE_LIMIT_LENGTH)
+        .unwrap();
+    assert_eq!(
+        observe_native_main(&selected.connection, 32),
+        Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+    );
+    assert_eq!(
+        selected
+            .connection
+            .limit(rusqlite::limits::Limit::SQLITE_LIMIT_LENGTH)
+            .unwrap(),
+        prior
+    );
+    assert_external_lock(&fixture.path, true);
+    for _ in 0..32 {
+        assert_eq!(selected.verify_selected_local_store_custody_v1(), Ok(()));
+    }
+    assert_eq!(
+        selected
+            .connection
+            .limit(rusqlite::limits::Limit::SQLITE_LIMIT_LENGTH)
+            .unwrap(),
+        prior
+    );
+    assert_external_lock(&fixture.path, true);
+    drop(selected);
+    assert_external_lock(&fixture.path, true);
+    // A fresh post-open schema denial also must not clear the reader's lock.
+    ordinary.connection.execute_batch("ROLLBACK; CREATE TABLE selected_denial_fixture(v); BEGIN DEFERRED; SELECT count(*) FROM main.sqlite_schema;").unwrap();
     assert_eq!(
         open_error(&fixture.path),
         SelectedLocalStoreErrorV1::StoreUnverifiable
     );
+    assert_external_lock(&fixture.path, true);
+    drop(ordinary);
+    assert_external_lock(&fixture.path, false);
+}
+
+#[test]
+fn selected_store_busy_denial_does_not_open_sqlite_or_create_coordination_files() {
+    let fixture = PrivateDatabase::current();
+    let daemon = acquire_local_daemon_database_lease_v1(&fixture.path).unwrap();
+    let before = fixture.database_bytes();
+    assert_eq!(before[1], None);
+    assert_eq!(before[2], None);
+    assert_eq!(
+        open_error(&fixture.path),
+        SelectedLocalStoreErrorV1::DatabaseBusy
+    );
     assert_eq!(fixture.database_bytes(), before);
-    assert!(!fixture.lease_path().exists());
+    drop(daemon);
+}
+
+#[test]
+fn selected_store_native_origin_rejects_local_and_case_insensitive_overrides() {
+    use rusqlite::functions::FunctionFlags;
+    for (name, arity) in [
+        ("sqlite_filestat", 1),
+        ("SQLITE_SOURCE_ID", 0),
+        ("sqlite_compileoption_used", 1),
+    ] {
+        let fixture = PrivateDatabase::current();
+        let store = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
+        let forged = match name {
+            "sqlite_filestat" => rusqlite::types::Value::Text(
+                store
+                    .connection
+                    .query_row("SELECT sqlite_filestat('main')", [], |row| row.get(0))
+                    .unwrap(),
+            ),
+            "SQLITE_SOURCE_ID" => rusqlite::types::Value::Text(
+                store
+                    .connection
+                    .query_row("SELECT sqlite_source_id()", [], |row| row.get(0))
+                    .unwrap(),
+            ),
+            _ => rusqlite::types::Value::Integer(0),
+        };
+        store
+            .connection
+            .create_scalar_function(name, arity, FunctionFlags::SQLITE_UTF8, move |_| {
+                Ok(forged.clone())
+            })
+            .unwrap();
+        assert_eq!(
+            store.verify_selected_local_store_custody_v1(),
+            Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+        );
+        // Production never registers functions and does not rehabilitate a
+        // tainted connection. A newly opened private connection is eligible.
+        drop(store);
+        let fresh = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
+        assert_eq!(fresh.verify_selected_local_store_custody_v1(), Ok(()));
+    }
+}
+
+#[test]
+fn selected_store_native_decode_rejects_unknown_duplicate_null_and_out_of_range_values() {
+    assert_eq!(decode_native_main(r#"{"db":{"h":7,"vfs":"unix"}}"#), Ok(7));
+    for invalid in [
+        "{}",
+        r#"{"db":null}"#,
+        r#"{"db":{"h":-1,"vfs":"unix"}}"#,
+        r#"{"db":{"h":2147483648,"vfs":"unix"}}"#,
+        r#"{"db":{"h":7,"vfs":"unix-none"}}"#,
+        r#"{"db":{"h":7,"h":8,"vfs":"unix"}}"#,
+        r#"{"db":{"h":"7","vfs":"unix"}}"#,
+        r#"{"db":{"h":7,"vfs":"unix","unknown":1}}"#,
+        r#"{"db":{"h":7,"vfs":"unix"},"unknown":1}"#,
+    ] {
+        assert_eq!(
+            decode_native_main(invalid),
+            Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+        );
+    }
+    assert_eq!(
+        decode_native_main(&" ".repeat(4097)),
+        Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+    );
+    let memory = Connection::open_in_memory().unwrap();
+    assert_eq!(
+        observe_native_main(&memory, 4096),
+        Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+    );
+}
+
+#[test]
+fn selected_store_native_filestat_allocation_is_bounded_and_other_vfs_denies() {
+    use rusqlite::{limits::Limit, types::Type};
+    let fixture = PrivateDatabase::current();
+    let store = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
+    let prior = store
+        .connection
+        .set_limit(Limit::SQLITE_LIMIT_LENGTH, 32)
+        .unwrap();
+    let result =
+        store
+            .connection
+            .query_row::<String, _, _>("SELECT sqlite_filestat('main')", [], |row| row.get(0));
+    store
+        .connection
+        .set_limit(Limit::SQLITE_LIMIT_LENGTH, prior)
+        .unwrap();
+    assert!(matches!(
+        result,
+        Err(rusqlite::Error::InvalidColumnType(0, _, Type::Null))
+    ));
+    assert_eq!(store.verify_selected_local_store_custody_v1(), Ok(()));
+    drop(store);
+    let other = Connection::open_with_flags_and_vfs(
+        &fixture.path,
+        OpenFlags::SQLITE_OPEN_READ_ONLY,
+        "unix-none",
+    )
+    .unwrap();
+    assert_eq!(
+        observe_native_main(&other, 4096),
+        Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+    );
 }
