@@ -345,7 +345,9 @@ history is claimed.
 Independent source review closed the validation finding after the terminal
 unchanged full-check pass. Review provenance is tracked as `PHR-0009` in the
 [public-history review registry](reference/public-history-reviews/registry.json).
-New exact-head Linux CI remains a separate gate. Gitleaks found no leaks;
+Exact-head Linux source CI run `36957301014` completed successfully at
+`59396f5927a7e5f657d9a4983748ac084701181c`. This closes the hosted source
+gate only; the historical failed run remains failure evidence. Gitleaks found no leaks;
 named Rust and JavaScript Semgrep scans found no new confirmed production
 defect, with unchanged informational Rust findings locally triaged. Native npm
 dependency and signature checks passed. Recursive offline OSV remained
@@ -359,6 +361,52 @@ identity or OS enforcement. No serializable permit, production proof injection,
 initializer, configuration activation, CLI, route, schema or migration is added.
 Complete atomic initialization and V1 remain incomplete. The Phase 11 operator
 packet remains runtime authority and its source-only verdict is unchanged.
+
+## HCFG-6 Resource And Runtime Enforcement Design
+
+Canonical work record: this section. The accepted V1 requirement needs real
+nonempty resource identity and selected OS enforcement at grant and use. The
+new [intent](architecture/headless-resource-enforcement/intent.md),
+[specification](architecture/headless-resource-enforcement/spec.md), and
+[plan](architecture/headless-resource-enforcement/plan.md) propose the next
+complete verification boundary; **owner acceptance is pending**. HCFG-5B/5C
+acceptance and green PR71 source CI do not accept this new authority design.
+
+Current Docker-local source verifies configuration, executable/endpoint metadata
+and a marked disposable Git target before launch, then writes the approved
+action payload immediately after spawn. Restrictive argv and a configured
+mount source do not prove the workload's actual target inode, namespaces,
+privilege, seccomp or cgroup controls. No authenticated startup observation
+barrier or HCFG owner-binding inventory is implemented.
+
+The proposal uses an explicit owner-controlled resource binding, current host
+metadata and a separately versioned trusted-adapter startup barrier with private
+daemon/kernel observations. The first engineering backend is same-host Linux
+Docker Engine 29.8.2/API 1.56 rootful with a nonempty marked Git repository and exact runtime profile;
+other resource kinds/mappings fail closed. This selects no package OS/architecture
+row and supplies no supported runtime. An explicit proposed amendment to bootstrap’s no-resource-open rule, resource-free
+bootstrap probe, trusted-daemon boundary, staging, revocation and cleanup need
+the named owner decision and subsequent exact source specification/review.
+No boolean, caller JSON, mocked observer or empty-only initializer completes
+HCFG-6. Atomic bootstrap, protected control, monitoring, actual runtime and V1
+remain incomplete.
+
+This is documentation only. Current profile/protocol/source/CLI/schema are
+unchanged. The Phase 11 packet's locked source/launch contract and
+`PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY` verdict remain unchanged. No Docker,
+permission mutation, initialization, activation, merge, release, publication,
+deployment or production action is opened. Initial design review found a P1 bootstrap-order conflict and P2 backend/journal
+identity gaps. The revised proposal explicitly requests a metadata-observation amendment while
+preserving the current accepted bootstrap rule, names one exact Docker Engine
+backend, and allocates a fresh precommit preparation ID before installation
+creation. Fresh independent OpenAI Terra xhigh read-only design re-review found
+no actionable P1/P2/P3 after those corrections. Artifact-shape, documentation,
+public-readiness, formatting, inventory and native review-evidence checks passed;
+the unchanged Phase 11 readiness suite passed 43/43. This is a design review and
+documentation evidence, not an owner decision or actual enforcement proof.
+The exact source/run freeze still requires real component/template identities
+and bounded implementation details before activation. Human acceptance of this
+new contract and bootstrap amendment remains pending.
 
 ## Current Build Position
 
