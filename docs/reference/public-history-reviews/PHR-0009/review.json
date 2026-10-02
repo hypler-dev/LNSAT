@@ -1,0 +1,128 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0009-independent-implementation-review-3e3643a7",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-bootstrap-main-descriptor-custody-b3b"],
+  "base_revision": "437db8058feaa93df1f9bad551f70727fbd73a27",
+  "reviewed_revision": "3e3643a7cebea4f58c15800e69caccd102414358",
+  "reviewed_tree_oid": "e369f901849eb698f738ba7f9855da281323703d",
+  "diff_sha256": "sha256:25d4b3dcc3e8002bc91cf8d209889389a558c56517479260a49eedc62f37385e",
+  "protected_files": [
+    {
+      "path": ".cargo/config.toml",
+      "sha256": "sha256:90307e25c9e8a09f599586e9b781150409dee7581ced3b147f90aed867e8f185"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:d9d3b91bc21a8c86f0fc2eceb6a31ea19bec54cc38d3ba6bdb73d7abbb62ec74"
+    },
+    {
+      "path": "crates/lnsat-store/Cargo.toml",
+      "sha256": "sha256:449e3cfba06d1033d0f7dfb02fbae88ca98c7570d084569973cf711c4ae23bb1"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:0a29599a0a67f69d62172da59a38de1b9b37d44ad809da04fdf91dd33da15727"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:5bd8466cc92155fbfd03ff6fac883ff44a59907719e3f14af57bf5d299ee93a7"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/selected_store.rs",
+      "sha256": "sha256:263705ab9a48610a9b8f582350d427ca50cb52796236f82aa6ea036ce908aeca"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d8731ba25416c1bca710ff9a468756df9af10a8fe698f6e66a9d58d8ae151e21"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/plan.md",
+      "sha256": "sha256:5b55fc8eaba9dc743db1965ed22cad702e21cb5751d8ac2b6b5d0c451f2db669"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/spec.md",
+      "sha256": "sha256:e4dfd73699e6c8ae2daaf39199847e62ead6d68cdb938e49e6bd03fb07bbe854"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:477d53a6936d16745882c90477daa2690cb34e27c56e27f12c0f3ea1aa793ae7"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:d79906b6aad6ae776d7bfe3fccf3aa22b9ece444cfe3f9107a63cfad95f80da5"
+    },
+    {
+      "path": "scripts/run-rust-workspace.mjs",
+      "sha256": "sha256:c75fe3a2a988ef97dc9e7d1068973fc21e5843157940cfa03f174d107b2d3235"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.mjs",
+      "sha256": "sha256:9e3163517f787e76097edd56821aee4e5a0da88b8fd1020f55584ba00bd9a97b"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.test.mjs",
+      "sha256": "sha256:cd307d904897dc57606bc6124b8ea1695ac045ba062fb1608b6ea6e249010441"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/bootstrap_gate_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only exact-source, tests, documentation, validation and Git-custody review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0009-F1",
+      "severity": "P1",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The prior selected custody opened an additional database File whose close could cancel another live SQLite connection POSIX locks. Corrected custody observes SQLite main descriptor metadata through bounded native diagnostics and safe in-place fstat without any database alias handle; actual child-process F_SETLK tests cover success, denial, repeated verification and selected destruction with a retained ordinary reader.",
+      "resolution_revision": "3e3643a7cebea4f58c15800e69caccd102414358"
+    },
+    {
+      "finding_id": "PHR-0009-F2",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The Linux nonregular-path fixture inherited root-owned temporary-parent validation. The test now selects a private owned child directory, preserving runtime error ordering and exercising the intended nonregular-target rejection. Source tests pass; new exact-head Linux CI remains a separate provider result.",
+      "resolution_revision": "3e3643a7cebea4f58c15800e69caccd102414358"
+    },
+    {
+      "finding_id": "PHR-0009-F3",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Native graph policy initially omitted the exact safe Nix alias. It now verifies the single registry Nix0.29.0 fs-only resolved node and exact production nix_stat platform alias, with source/version/features/duplicate/remap/dev/target negative cases.",
+      "resolution_revision": "3e3643a7cebea4f58c15800e69caccd102414358"
+    },
+    {
+      "finding_id": "PHR-0009-F4",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Initial native inventory was generated before new scripts were staged, leaving the existing hostile-PATH inventory gate stale. The staged native inventory was regenerated without changing the validator and the focused failed gate passed. The subsequent exact unchanged full gate passed; the initial failed runs remain recorded in Project Status.",
+      "resolution_revision": "3e3643a7cebea4f58c15800e69caccd102414358"
+    },
+    {
+      "finding_id": "PHR-0009-F5",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "An initial package script change violated the frozen Phase 11 source-gate graph. The package file was restored byte-exact and the native-policy suite integrated through the existing Rust format entry point after environment rejection and before Cargo. The frozen graph, Phase 11 tests and integrated policy/format checks pass; neither packet nor validator was weakened.",
+      "resolution_revision": "3e3643a7cebea4f58c15800e69caccd102414358"
+    },
+    {
+      "finding_id": "PHR-0009-F6",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The initial candidate lacked a passing full repository gate. Its exact unchanged source subsequently passed the full check, including the previously failing fake-runtime case and both complete daemon suites; final status preserves the initial 403 and states that its intermittent cause was not identified. The validation-evidence finding is closed, without claiming a correction of the prior reliability history or weakening production policy/tests.",
+      "resolution_revision": "3e3643a7cebea4f58c15800e69caccd102414358"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
