@@ -43,11 +43,12 @@ Native-host/VM/remote execution; unrestricted service/connector/device access; a
 - Verified in source: `docker_local_supervisor.rs` constructs one writable target bind and restrictive process argv, then sends the current request after `spawn`; it has no ready/challenge/observation barrier.
 - Verified in source: `phase7_git_adapter.rs` verifies a marked disposable Git target, not an arbitrary repository/service resource resolver.
 - Engineering proposal: same-host Linux identity-mapped bind mounts permit independently comparing the held host root's device/inode with the trusted adapter's mounted-root observation. Unsupported mappings and Docker Desktop cross-VM filesystems must deny this backend; they are not presumed equivalent.
+- Feasibility evidence: HCFG-3 missing/denied action rules produce zero limits; Docker profiles require positive process ceilings. The proposal therefore distinguishes fixed owner preparation limits from action limits without granting an agent action. Existing pinned Nix APIs cover safe directory metadata but do not supply mount-ID or ACL observation; genuine bounded kernel metadata and a reviewed effective-ACL method remain source-freeze prerequisites.
 - The owner must explicitly accept the proposed amendment to HCFG-5B’s no-resource-open rule, and the staged-process distinction described in the specification. The accepted bootstrap rule remains unchanged until that decision. No target action is permitted during bootstrap or the startup barrier.
 
 ## Risks
 
-Path-to-mount races, recursive submounts, external hard links, copied identity claims, extra image volumes/environment, daemon or endpoint substitution, UID remapping, fake probe frames, stale generation/epoch, revocation during startup, launch timeout, and orphaned preparation can widen reachability or misstate outcomes. Kernel flag values alone cannot prove a particular filter or limit; selected-target behavior and profile/implementation identity remain required.
+Path-to-mount races, recursive submounts, external hard links, copied identity claims, extra image volumes/environment, daemon or endpoint substitution, UID remapping, fake probe frames, stale generation/epoch, revocation during startup, launch timeout, and orphaned preparation can widen reachability or misstate outcomes. Persisting a transient mount token, reusing a preparation budget for an agent action, or mistaking configured limits for live enforcement can also misstate the boundary. Kernel flag values alone cannot prove a particular filter or limit; selected-target behavior and profile/implementation identity remain required.
 
 ## Acceptance evidence
 

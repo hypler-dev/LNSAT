@@ -408,6 +408,20 @@ The exact source/run freeze still requires real component/template identities
 and bounded implementation details before activation. Human acceptance of this
 new contract and bootstrap amendment remains pending.
 
+A subsequent source/kernel feasibility pass distinguishes persistent resource
+identity from live mount/namespace tokens, a fixed finite owner-preparation
+budget from HCFG-3's zero denied-action budget, and actual cgroup controller
+observations from configured limits. Startup and the action share one bounded
+budget without a reset at release. Existing safe metadata APIs do not establish
+mount or effective-ACL proof; those observation methods remain required in the
+source freeze. These are proposed contract clarifications, not implemented
+enforcement or owner acceptance. The prior exact-head design CI run
+`36960914241` completed successfully at
+`ee50d8f8d06c8a3081d03879d80192c1f4958708`; it does not cover later edits.
+Fresh independent OpenAI Terra xhigh read-only review of these feasibility
+clarifications found no actionable P1/P2/P3. Real kernel/daemon observations,
+the accepted source freeze and owner acceptance remain outstanding.
+
 ## Current Build Position
 
 Complete headless setup and access-management through the versioned API and
