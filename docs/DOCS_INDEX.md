@@ -59,7 +59,11 @@ subsystem or proposal.
 - [HCFG-5B bootstrap specification](architecture/headless-local-bootstrap/spec.md)
   — atomic initialization contract, inert restore, and bounded B1 source scope.
 - [HCFG-5C owner-decision design](https://github.com/hypler-dev/LNSAT/pull/63)
-  — accepted exact confirmation and credential/challenge contract; source pending.
+  — accepted exact confirmation and credential/challenge contract; source
+  implementation remains bounded by the accepted design.
+- [HCFG-5C C1 credential source specification](architecture/headless-owner-decision/credential-source-spec.md)
+  — current owner credential prerequisite is source implemented; independent
+  review and full source validation passed; no configuration authority.
 - [Accepted HCFG-6 resource/runtime enforcement](architecture/headless-resource-enforcement/intent.md)
   — explicit owner binding and observed nonempty target/OS control boundary;
   owner design accepted; detailed source freeze and full enforcement implementation pending.

@@ -601,6 +601,8 @@ fn open_under_custody(
         database_path: custody.database_path.clone(),
         connection,
         authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+        owner_decision_credential_scope:
+            super::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
         selected_store_custody: Some(custody),
     };
     store
