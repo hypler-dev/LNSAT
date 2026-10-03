@@ -436,10 +436,50 @@ matching, canonical path syntax, lexical overlap rejection, separate
 commitments, asserted-identity pairing, and redacted diagnostics are covered
 by fifteen focused Rust tests.
 
-Fifteen focused Rust tests, Rustfmt, strict Clippy and the complete pinned `npm run check` passed. Documentation/public checks and inventory passed; the unchanged Phase 11 readiness suite passed 43/43. Local Semgrep `p/rust` ran eleven rules on ten Rust files with zero findings or parse errors, and Gitleaks reported zero worktree findings. Fresh independent OpenAI Terra xhigh read-only review resolved a plan-order conflict and missing test proofs, then found no remaining actionable P1/P2/P3. The first broad check stopped on sandbox-denied disposable socket fixtures (`Operation not permitted`); the complete rerun with disposable local fixtures allowed exited zero. Hosted exact-head CI remains pending for this source draft. This S1 draft is a pure input prerequisite and does not
+Fifteen focused Rust tests, Rustfmt, strict Clippy and the complete pinned `npm run check` passed. Documentation/public checks and inventory passed; the unchanged Phase 11 readiness suite passed 43/43. Local Semgrep `p/rust` ran eleven rules on ten Rust files with zero findings or parse errors, and Gitleaks reported zero worktree findings. Fresh independent OpenAI Terra xhigh read-only review resolved a plan-order conflict and missing test proofs, then found no remaining actionable P1/P2/P3. The first broad check stopped on sandbox-denied disposable socket fixtures (`Operation not permitted`); the complete rerun with disposable local fixtures allowed exited zero. Draft PR #74 is at exact head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`. GitHub readback confirmed exact-head CI run `37102692708` and its source-gate job `111145197193` completed successfully. This S1 draft is a pure input prerequisite and does not
 complete the HCFG-6 source freeze, native/wire/daemon/synchronization
 contracts, verifier, bootstrap, runtime, package, release, or V1 gates.
 Current profile/protocol and Phase 11 source-lock truth remain unchanged.
+
+### HCFG-6 native source-freeze proposal checkpoint
+
+The supporting [native source specification](architecture/headless-resource-enforcement/native-source-spec.md)
+and [preparation/store specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
+were added on 2026-10-02 in an isolated public checkout based on PR #74's exact
+source head. They specify private native ownership, held-object and ACL bounds,
+genuine procfs/mount/cgroup association, a separate preparation protocol without
+an unborn installation ID, profile 3/protocol 2, finite private daemon transport,
+immutable preparation revisions, exact cleanup and installation-wide release/
+revocation serialization. They change documentation only.
+
+Independent OpenAI Terra xhigh native feasibility review found a feasible
+non-root path within the accepted trusted-root model after two P2 corrections:
+require a present exact-controller socket ACL observed with safe bounded
+no-follow path reads under held root-controlled ancestry, and name the daemon
+identity bridge as root-provisioned artifact attestation tied to current kernel
+peer credentials, peer pidfd, boot ID, start ticks and socket identity. No direct
+non-root hash of a running root daemon's ptrace-protected executable is claimed.
+Inherited/proxied listeners, generic ACL-absence positives and unsupported
+native observations deny. The proposed safe Rust ACL dependency is not added.
+
+**The complete source freeze remains pending.** Ordinary-object kernel/LSM ACL
+absence classification, exact nested native wire fields, API security-field
+projections, immutable built-in mount/device/security recipes and actual
+component/kernel/image pins still require complete review before behavioral
+integration. Actual pins remain `UNSET_BLOCKING`; no source activation may
+proceed while unset. This checkpoint supplies no native verifier, journal,
+migration, bootstrap, release guard, protected control, watch or runtime proof.
+The Phase 11 packet remains runtime authority; full HCFG-6 and V1 remain open.
+
+For this documentation checkpoint, artifact shapes, exact-doc formatting,
+documentation alignment (31 tests, 170 Markdown files), public readiness
+(901 files), refreshed inventory (2,122 occurrences across 295 files) and the
+unchanged Phase 11 readiness suite (43/43) passed. Fresh independent OpenAI
+Terra xhigh proposal review resolved frame-size, nullable-index and review-base
+ambiguities, then found no remaining actionable P1/P2/P3. That PASS covers this
+proposal checkpoint only. The complete source freeze and behavioral integration
+remain gated, and hosted CI for this subsequent documentation head is separate
+from green PR #74 source CI.
 
 ### HCFG-6 acceptance reconciliation checkpoint
 

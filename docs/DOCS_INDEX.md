@@ -71,6 +71,12 @@ subsystem or proposal.
   native/wire/daemon/synchronization freeze and runtime gates still open.
 - [HCFG-6 enforcement plan](architecture/headless-resource-enforcement/plan.md)
   — source specification, independent review and actual proof gates.
+- [HCFG-6 native source-freeze proposal](architecture/headless-resource-enforcement/native-source-spec.md)
+  — proposed bounded native, profile and startup transport seams; full freeze,
+  source integration and runtime proof remain pending.
+- [HCFG-6 preparation/store source specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
+  — inert journal custody, atomic bootstrap and release/revocation serialization;
+  no implementation or authority follows from this document.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
