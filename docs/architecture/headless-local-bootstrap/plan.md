@@ -50,3 +50,11 @@ An earlier draft proposed an external owner-only authority sidecar and a two-med
 - Initial sidecar draft: prior design history records an artifact-shape and review cycle that found one P1 and four P2; that draft was withdrawn before commit or push.
 - Revised atomic design: prior design history records review findings and corrections. The historical combined design was reviewed and had green CI at the exact accepted PR #62 head; current source validation and review are tracked in Project Status.
 - B1 source implementation is in progress under owner acceptance; live evidence belongs to Project Status. Merge, Docker, production, package, and release remain closed.
+
+## HCFG-6 metadata-only amendment
+
+The human owner accepted the narrow HCFG-6 bootstrap amendment on 2026-10-01 at [PR #72](https://github.com/hypler-dev/LNSAT/pull/72), exact head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design) records the decision; the original bootstrap design acceptance remains dated 2026-09-30.
+
+Next, complete and independently review the exact HCFG-6 source freeze. Reconcile the metadata-only host handles/read bounds, lease-before-observation order, retained handle lifetime through transaction rechecks and cleanup on every exit. Keep the separately designed resource-free probe and its finite owner preparation budget distinct from denied agent action limits. Freeze the random precommit preparation ID, owner-only durable journal, exact orphan custody/quarantine and later atomic installation/audit binding before implementing behavior.
+
+No current source, schema, CLI, B1/B2/B3B behavior or Phase 11 lock changes in this acceptance reconciliation. Named local validators, inventory refresh and fresh independent review remain required before draft submission. Docker observation/execution, initialization, activation, merge, release, publication, deployment and production remain separately closed.

@@ -345,7 +345,9 @@ history is claimed.
 Independent source review closed the validation finding after the terminal
 unchanged full-check pass. Review provenance is tracked as `PHR-0009` in the
 [public-history review registry](reference/public-history-reviews/registry.json).
-New exact-head Linux CI remains a separate gate. Gitleaks found no leaks;
+Exact-head Linux source CI run `36957301014` completed successfully at
+`59396f5927a7e5f657d9a4983748ac084701181c`. This closes the hosted source
+gate only; the historical failed run remains failure evidence. Gitleaks found no leaks;
 named Rust and JavaScript Semgrep scans found no new confirmed production
 defect, with unchanged informational Rust findings locally triaged. Native npm
 dependency and signature checks passed. Recursive offline OSV remained
@@ -359,6 +361,90 @@ identity or OS enforcement. No serializable permit, production proof injection,
 initializer, configuration activation, CLI, route, schema or migration is added.
 Complete atomic initialization and V1 remain incomplete. The Phase 11 operator
 packet remains runtime authority and its source-only verdict is unchanged.
+
+## HCFG-6 Resource And Runtime Enforcement Design
+
+Canonical work record: this section. The accepted V1 requirement needs real
+nonempty resource identity and selected OS enforcement at grant and use.
+**The human owner accepted HCFG-6 for bounded source implementation on
+2026-10-01**, replying `accepted` directly to the request for draft PR #72 at
+exact reviewed head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`.
+The [intent](architecture/headless-resource-enforcement/intent.md),
+[specification](architecture/headless-resource-enforcement/spec.md) and
+[plan](architecture/headless-resource-enforcement/plan.md) record that accepted
+design. HCFG-5B/5C acceptance and green CI were prerequisites, not the source
+of this new human decision.
+
+Acceptance includes the first same-host Linux Docker Engine 29.8.2/API 1.56
+rootful engineering backend, explicit trusted host/kernel/daemon boundary,
+nonempty marked Git repository and exact runtime profile, owner-controlled
+binding, private daemon/kernel startup observations, resource-free bootstrap
+probe and inert trusted-adapter staging. Unsupported kinds/mappings deny.
+This selects no package OS/architecture row and supplies no supported runtime.
+
+The owner also accepted the narrow amendment to bootstrap's no-resource-open
+rule: metadata-only held directory handles and bounded host-side marker/Git
+identity reads after the selected-store lease and declaration/binding checks.
+The [bootstrap intent](architecture/headless-local-bootstrap/intent.md),
+[specification](architecture/headless-local-bootstrap/spec.md) and
+[plan](architecture/headless-local-bootstrap/plan.md) reconcile that exception,
+handle lifetime, finite owner preparation budget, random precommit preparation
+ID, durable journal and later atomic installation/audit binding. No Git
+subprocess, target-mounted workload, target action or action grant is permitted
+during bootstrap. Existing B1/B2/B3B source behavior is unchanged.
+
+Current Docker-local source verifies configuration, executable/endpoint metadata
+and a marked disposable Git target before launch, then writes the approved
+action payload immediately after spawn. Restrictive argv and a configured
+mount source do not prove the workload's actual target inode, namespaces,
+privilege, seccomp or cgroup controls. No authenticated startup observation
+barrier or HCFG owner-binding inventory is implemented. No boolean, caller JSON,
+mocked observer or empty-only initializer completes HCFG-6. Atomic bootstrap,
+protected control, monitoring, actual runtime and V1 remain incomplete.
+
+Initial design review found a P1 bootstrap-order conflict and P2 backend/journal
+identity gaps. The revised design named the exact backend, explicitly sought
+the metadata amendment and allocated preparation identity before installation.
+Fresh independent OpenAI Terra xhigh read-only review of the final feasibility
+clarifications found no actionable P1/P2/P3. At the accepted head, design
+artifact, docs, formatting, public-readiness, inventory and native review-evidence
+checks passed; the unchanged Phase 11 readiness suite passed 43/43. GitHub
+connector verification after the human decision confirmed draft PR #72 at the
+same exact head and CI run `36963652146` completed successfully. Those results
+cover that accepted head, not subsequent acceptance-document edits.
+
+**Next source gate: complete and independently review the exact source freeze
+before behavioral integration.** It must resolve genuine native mount and
+effective-ACL observation, immutable component/template and kernel recipe
+identities, bounded wire/daemon/native formats, cleanup custody and
+store/admission/revocation linearization. Persistent resource identity is
+distinct from live mount/namespace tokens. The finite resource-free owner
+preparation budget is distinct from HCFG-3's zero denied-action budget; startup
+and action share one bounded action budget without resetting it at release.
+Real kernel/daemon observations and later runtime/package proof remain required.
+
+This reconciliation changes documentation only; current profile/protocol,
+source, CLI and schema are unchanged. The initial acceptance update on
+2026-10-01 failed before command startup with `Resource temporarily unavailable
+(os error 35)`, including a read-only unsandboxed attempt; that failure remains
+historical evidence. Command execution recovered on 2026-10-02. The public
+checkout remains at the accepted exact head with public origin, and fetched
+public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`.
+For the reconciled acceptance files, all six intent/spec/plan shape checks,
+documentation alignment, Phase 11 readiness tests (43/43), refreshed inventory
+(2,122 occurrences across 295 files) and the complete pinned `npm run check`
+passed on 2026-10-02. Unlike the earlier clean-revision audit's environment
+failure, this full source-check invocation reached terminal exit zero on the
+reconciled worktree. Fresh independent OpenAI Terra xhigh read-only review
+found no actionable P1/P2/P3. The result-only status update receives proportional
+documentation/public/inventory validation before commit. Hosted CI remains
+a separate exact-head gate; no new CI success, merge or runtime proof is claimed.
+
+The Phase 11 operator packet remains runtime authority with its locked
+source/launch contract and `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY` verdict.
+Acceptance opens bounded source design work, not Docker observation/execution,
+host permission mutation, initialization, activation, merge, release,
+publication, deployment or production.
 
 ## Current Build Position
 

@@ -60,6 +60,14 @@ subsystem or proposal.
   — atomic initialization contract, inert restore, and bounded B1 source scope.
 - [HCFG-5C owner-decision design](https://github.com/hypler-dev/LNSAT/pull/63)
   — accepted exact confirmation and credential/challenge contract; source pending.
+- [Accepted HCFG-6 resource/runtime enforcement](architecture/headless-resource-enforcement/intent.md)
+  — explicit owner binding and observed nonempty target/OS control boundary;
+  owner design accepted; detailed source freeze and implementation pending.
+- [HCFG-6 enforcement specification](architecture/headless-resource-enforcement/spec.md)
+  — accepted private startup observation, revocation and cleanup contract;
+  no current runtime or platform proof.
+- [HCFG-6 enforcement plan](architecture/headless-resource-enforcement/plan.md)
+  — source specification, independent review and actual proof gates.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)

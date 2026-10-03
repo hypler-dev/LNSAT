@@ -6,7 +6,7 @@ Status: accepted
 Authority: [Product Build Sequence, HCFG-5](../../PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order)
 Owner: LNSAT maintainers
 Accepted by: human owner in development conversation on 2026-09-30
-Last updated: 2026-09-30
+Last updated: 2026-10-01
 
 ## Problem and evidence
 
@@ -57,3 +57,11 @@ Old owner-only stores, copied databases, wrong local paths, symlinks, hard links
 ## Source-of-truth links
 
 [Product Build Sequence](../../PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control) owns the V1 requirement and sequence. [Project Status](../../PROJECT_STATUS.md#current-build-position) owns implementation and live acceptance truth. This packet is the accepted HCFG-5B design; [HCFG-5A](https://github.com/hypler-dev/LNSAT/blob/360c42cb10b4f615d6cf424a33eec714c1684b94/docs/architecture/headless-protected-control/intent.md) owns online transitions. The [Phase 11 operator packet](../PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md) remains Phase 11 runtime status authority.
+
+## HCFG-6 metadata-only amendment
+
+The human owner accepted the narrow HCFG-6 bootstrap amendment on 2026-10-01 at [PR #72](https://github.com/hypler-dev/LNSAT/pull/72), exact head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design) records the decision; the original bootstrap design acceptance remains dated 2026-09-30.
+
+The amendment permits only LNSAT's bounded host-side metadata observations after the exclusive selected-store lease and declaration/binding checks: metadata-only directory handles and bounded marker/Git identity reads. It permits no Git subprocess, target-mounted workload, target action or grant during bootstrap. A separate finite resource-free zero-authority platform probe is part of the accepted HCFG-6 design within the trusted same-host rootful daemon boundary; Docker observation/execution remains separately closed.
+
+The exact handle order/lifetime, genuine native observation methods, immutable probe/recipe identities, finite preparation budget, precommit preparation journal and later atomic installation/audit binding must pass the HCFG-6 source freeze and independent review before behavioral integration. Existing B1/B2/B3B source behavior remains unchanged. Design acceptance does not authorize initialization, activation, merge, release, publication, deployment or production.
