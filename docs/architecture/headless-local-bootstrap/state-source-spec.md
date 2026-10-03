@@ -24,6 +24,9 @@ are retained: `headless_installations`, `headless_generations`,
 `headless_active` and `headless_config_audit`. Current source remains schema 17
 and contains none of them. The next mandatory migration is provisionally 18,
 as that supporting contract states; no migration is registered here.
+The [B5 schema proposal](schema-source-spec.md) supplies exact candidate SQL,
+seed handling and static object expectations without executing or registering
+that SQL. Full source freeze and actual pinned schema evidence remain required.
 
 ## Identity and confirmed input
 
@@ -197,6 +200,14 @@ policy descriptor. Stored fields or a model constructor cannot select an older
 floor. Resource evidence is a commitment to verified observations, not durable
 freshness proof; startup and each use must reobserve current identity and
 enforcement through the accepted HCFG-6 boundary.
+
+The native HCFG-6 proposal selects profile contract
+`lnsat.runtime_profile.docker_local.v2` at schema version 3. A future durable
+generation must bind that actual verified profile identity; the current pure
+comparison model's recognition of asserted v1 is not a mapping or fallback.
+A separately reviewed pure-model compatibility change is required before
+authenticated comparison can function for the selected native backend.
+The existing B4 synthetic framing vectors make no native-profile support claim.
 
 `generation_digest` commits the ordered columns excluding itself. It includes
 the installation digest and both declared/effective commitments. Recomposition

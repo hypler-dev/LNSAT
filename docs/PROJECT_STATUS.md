@@ -502,6 +502,12 @@ direction (31 tests, 183 Markdown files), public readiness, inventory
 execution closed) passed. This remains a proposed supporting contract, not
 complete source-freeze acceptance or implementation evidence.
 
+Draft PR #78 remains unmerged at exact head
+`751c14811fda380adcc00e3f036baab89e836725`. GitHub readback confirmed CI run
+`37152111406`, attempt 1, and source-gate job `111287942648` completed
+successfully at `2026-10-03T20:54:17Z`. This validates the source draft; no
+merge, initialization or runtime authority follows.
+
 The proposed next headless migration 18 cannot silently import the unrelated
 historical Phase 7d signed-evidence v18 test-only layout. Actual registration
 requires reconciliation of the compiled schema, exhaustive eligibility and
@@ -509,6 +515,46 @@ legacy truth labels; optional signing remains blocked. The complete native/
 wire/daemon/store freeze and pending HCFG-6 source-order amendment retain their
 gates. No Stage-A implementation, initialization, activation, Docker, host ACL,
 artifact build, merge, release or production action follows from this record.
+
+### HCFG-5B B5 schema and verification contract
+
+Canonical work record: this subsection. The [B5 schema source proposal](architecture/headless-local-bootstrap/schema-source-spec.md)
+specifies exact candidate SQL for the B4 root/generation/audit/pointer layout.
+It executes no new SQL, adds no migration file or registry entry, and leaves
+current schema 17 and ordinary store behavior unchanged. Its migration-body
+text identity is separate from the still-unset actual SQLite schema digest.
+The pending source-order amendment and full integration gate remain closed.
+
+The proposal rejects occupancy in all 28 existing non-seed tables before any
+lasting migration change. Metadata and retention rebuilding are explicit
+seed mechanics: retain all 28 current preserve-only families and add four.
+It adds four STRICT empty headless tables, exact unique indexes, deferred
+cyclic foreign keys, immutable-history triggers and pointer genesis/monotonic
+guards. Static expectations are 35 tables, 32 non-seed tables and 242 main
+objects; these counts are not observed SQLite output. Actual candidate
+execution, full emitted-object verification and the new schema digest remain
+unproven. No legacy owner or restored authority acquires headless authority.
+
+Source inspection also found a profile compatibility dependency. HCFG-6's
+native proposal selects contract `lnsat.runtime_profile.docker_local.v2` at
+schema version 3; the existing conditional comparison model recognizes only
+asserted v1. A future generation must retain the actual native profile
+identity. Authenticated comparison remains blocked until a separately
+reviewed pure-model compatibility change; relabeling v2 as v1 or an
+always-denying placeholder cannot close that requirement. B5 changes no
+comparison source or native behavior.
+
+Independent OpenAI Terra xhigh contract review passed with no findings. A
+separate Luna medium static inventory confirmed the B4 column ordering,
+foreign-key parent keys, guard/retention families, named indexes/triggers and
+exact proposed SQL-text hash. Neither review executed SQL or established its
+syntax, emitted SQLite objects or a schema-manifest digest. Artifact shape,
+formatting, documentation direction (31 tests, 184 Markdown files), public
+readiness, inventory (2,122 occurrences across 295 files), schema-17 truth,
+public-history evidence (11 attested, zero pending), and unchanged Phase 11
+readiness (43 tests, execution closed) passed. These are documentation/static
+checks; the unchanged parent source gate passed in PR #78. Actual candidate
+SQL execution, source implementation and runtime proof remain unperformed.
 
 ## HCFG-6 Resource And Runtime Enforcement Design
 
