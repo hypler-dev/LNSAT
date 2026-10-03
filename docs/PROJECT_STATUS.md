@@ -228,8 +228,13 @@ tests passed. The first restricted run failed 55 daemon listener tests
 when disposable loopback/Unix test sockets were permitted. No production or
 Docker endpoint was used. Local named `p/rust` Semgrep and redacted worktree
 Gitleaks found zero findings; no source/report upload or tool installation
-occurred. Public-history-native exact-byte provenance is required before
-handoff; it grants no runtime or supported-release authority.
+occurred. PHR-0012 binds the independently reviewed source commit
+`e3a2cb063ef1827c966939f44e7867de6704579e` to its direct-child attestation
+`65a5441f661c35fcf4ac102d9b5a46346c36197d`. Committed native provenance
+passed with 12 attested records and zero pending. Draft PR #80 remains
+unmerged at that exact head. Hosted source CI run `37157277947` and job
+`111303156585` completed successfully at `2026-10-03T22:24:24Z`. These are
+source review/validation results, not runtime or supported-release authority.
 
 This is within the existing accepted pure comparison boundary, not acceptance
 of online apply or native execution. Physical profile/schema verification,
@@ -604,6 +609,48 @@ Draft PR #79 is unmerged at exact head
 source-gate CI run `37154531103` and job `111295076082` succeeded at
 `2026-10-03T21:34:42Z`. It validates the supporting source draft, not candidate
 SQL execution, schema identity, initialization or runtime authority.
+
+### HCFG-5B B6 selected-write and migration custody contract
+
+Canonical work record: this subsection. The [B6 selected-write source proposal](architecture/headless-local-bootstrap/selected-write-source-spec.md)
+specifies private writable connection ownership and selected migration ordering
+needed by complete atomic setup. Source inspection confirmed that B3B remains
+read-only main-descriptor custody, ordinary `SqliteStore::open` remains unbound
+and automatically migrates its legacy list, and B2/C1 supply only owner and
+credential prerequisites. None implements this writable initializer.
+
+The proposal keeps candidate schema 18 outside the ordinary migration list,
+requires the lease before a no-create fixed-VFS writable open, repeats exact
+schema/empty-state checks inside explicit immediate transactions, and preserves
+actual main-descriptor observation without an extra database alias. WAL/SHM
+named-path/lifecycle evidence is explicitly distinct from descriptor-bound
+proof; the concrete observer and full writer/mutex freeze remain outstanding.
+No source, schema, pragma or existing ordinary-open behavior changes here.
+
+Migration commits before preparation. The proposed preparation store digest
+binds actual B4 file/path custody to schema 18 and its future exact manifest;
+no precommit installation UUID or schema-17 journal is repurposed. Preparation
+and cleanup precede one atomic owner/root/generation/audit/pointer transaction.
+Credential scopes follow the actual connection, unknown commits require exact
+readback, and connection closure precedes lease release. Journals, diagnostics
+and copied state never become authority.
+
+Fresh independent OpenAI Terra xhigh contract review found no actionable
+P1/P2/P3. Artifact shape, formatting, documentation direction (31 tests,
+185 Markdown files), public readiness, inventory (2,122 occurrences across
+295 files), schema-17 truth, committed native provenance (12 attested,
+zero pending) and unchanged Phase 11 readiness (43 tests, execution closed)
+passed. These validate documentation and existing source boundaries; no
+candidate SQL or new source test ran. The unchanged parent source gate passed
+at exact draft PR #80 head `65a5441f661c35fcf4ac102d9b5a46346c36197d`.
+
+This is supporting contract work under accepted HCFG-5B/HCFG-6 baselines, not
+complete freeze acceptance or implementation. The pending source-order
+amendment still requires explicit owner acceptance. Stage-A source, candidate
+SQL execution, initialization, activation, Docker, host mutation, merge,
+artifact builds, signing, release, deploy and production remain closed. V1 and
+enterprise/government readiness are incomplete. The Phase 11 operator packet
+retains its locked source and source-only runtime verdict.
 
 ## HCFG-6 Resource And Runtime Enforcement Design
 

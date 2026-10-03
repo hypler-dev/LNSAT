@@ -51,6 +51,9 @@ boundary. It remains absent from the global MIGRATIONS array. The later
 integration packet must freeze explicit selected-custody migration admission
 and deny unbound ordinary stores access to headless mutation or authority.
 Do not change current ordinary opens or the B1/B3B read-only diagnostics here.
+The [B6 selected-write proposal](selected-write-source-spec.md) supplies the
+private connection and selected migration ordering contract. It provides no
+writable implementation or authorization for candidate SQL execution.
 
 ### Structural checks and semantic checks
 

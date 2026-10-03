@@ -64,6 +64,9 @@ subsystem or proposal.
 - [HCFG-5B B5 schema source contract](architecture/headless-local-bootstrap/schema-source-spec.md)
   — proposed exact SQL, seed/manifest checks and profile compatibility gate;
   no SQL execution, registration or initializer.
+- [HCFG-5B B6 selected-write custody contract](architecture/headless-local-bootstrap/selected-write-source-spec.md)
+  — proposed private writable connection, selected migration admission and
+  journal/bootstrap lifetime; no implementation, SQL execution or authority.
 - [HCFG-5C owner-decision design](https://github.com/hypler-dev/LNSAT/pull/63)
   — accepted exact confirmation and credential/challenge contract; source
   implementation remains bounded by the accepted design.
