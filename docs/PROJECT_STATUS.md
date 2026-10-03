@@ -436,10 +436,349 @@ matching, canonical path syntax, lexical overlap rejection, separate
 commitments, asserted-identity pairing, and redacted diagnostics are covered
 by fifteen focused Rust tests.
 
-Fifteen focused Rust tests, Rustfmt, strict Clippy and the complete pinned `npm run check` passed. Documentation/public checks and inventory passed; the unchanged Phase 11 readiness suite passed 43/43. Local Semgrep `p/rust` ran eleven rules on ten Rust files with zero findings or parse errors, and Gitleaks reported zero worktree findings. Fresh independent OpenAI Terra xhigh read-only review resolved a plan-order conflict and missing test proofs, then found no remaining actionable P1/P2/P3. The first broad check stopped on sandbox-denied disposable socket fixtures (`Operation not permitted`); the complete rerun with disposable local fixtures allowed exited zero. Hosted exact-head CI remains pending for this source draft. This S1 draft is a pure input prerequisite and does not
+Fifteen focused Rust tests, Rustfmt, strict Clippy and the complete pinned `npm run check` passed. Documentation/public checks and inventory passed; the unchanged Phase 11 readiness suite passed 43/43. Local Semgrep `p/rust` ran eleven rules on ten Rust files with zero findings or parse errors, and Gitleaks reported zero worktree findings. Fresh independent OpenAI Terra xhigh read-only review resolved a plan-order conflict and missing test proofs, then found no remaining actionable P1/P2/P3. The first broad check stopped on sandbox-denied disposable socket fixtures (`Operation not permitted`); the complete rerun with disposable local fixtures allowed exited zero. Draft PR #74 is at exact head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`. GitHub readback confirmed exact-head CI run `37102692708` and its source-gate job `111145197193` completed successfully. This S1 draft is a pure input prerequisite and does not
 complete the HCFG-6 source freeze, native/wire/daemon/synchronization
 contracts, verifier, bootstrap, runtime, package, release, or V1 gates.
 Current profile/protocol and Phase 11 source-lock truth remain unchanged.
+
+### HCFG-6 native source-freeze proposal checkpoint
+
+The supporting [native source specification](architecture/headless-resource-enforcement/native-source-spec.md)
+and [preparation/store specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
+were added on 2026-10-02 in an isolated public checkout based on PR #74's exact
+source head. They specify private native ownership, held-object and ACL bounds,
+genuine procfs/mount/cgroup association, a separate preparation protocol without
+an unborn installation ID, profile 3/protocol 2, finite private daemon transport,
+immutable preparation revisions, exact cleanup and installation-wide release/
+revocation serialization. They change documentation only.
+
+Independent OpenAI Terra xhigh native feasibility review found a feasible
+non-root path within the accepted trusted-root model after two P2 corrections:
+require a present exact-controller socket ACL observed with safe bounded
+no-follow path reads under held root-controlled ancestry, and name the daemon
+identity bridge as root-provisioned artifact attestation tied to current kernel
+peer credentials, peer pidfd, boot ID, start ticks and socket identity. No direct
+non-root hash of a running root daemon's ptrace-protected executable is claimed.
+Inherited/proxied listeners, generic ACL-absence positives and unsupported
+native observations deny. The proposed safe Rust ACL dependency is not added.
+
+**The complete source freeze remains pending.** Ordinary-object kernel/LSM ACL
+absence classification, exact nested native wire fields, API security-field
+projections, immutable built-in mount/device/security recipes and actual
+component/kernel/image pins still require complete review before behavioral
+integration. Actual pins remain `UNSET_BLOCKING`; no source activation may
+proceed while unset. This checkpoint supplies no native verifier, journal,
+migration, bootstrap, release guard, protected control, watch or runtime proof.
+The Phase 11 packet remains runtime authority; full HCFG-6 and V1 remain open.
+
+For this documentation checkpoint, artifact shapes, exact-doc formatting,
+documentation alignment (31 tests, 170 Markdown files), public readiness
+(901 files), refreshed inventory (2,122 occurrences across 295 files) and the
+unchanged Phase 11 readiness suite (43/43) passed. Fresh independent OpenAI
+Terra xhigh proposal review resolved frame-size, nullable-index and review-base
+ambiguities, then found no remaining actionable P1/P2/P3. That PASS covers this
+proposal checkpoint only. The complete source freeze and behavioral integration
+remain gated, and hosted CI for this subsequent documentation head is separate
+from green PR #74 source CI.
+
+### HCFG-6 exact native/wire/daemon research checkpoint
+
+On 2026-10-03, GitHub readback confirmed draft PR #75 head
+`60460a33291b621836d73f1bb746bf4c384b59a5` and exact-head CI run `37104768503`
+completed successfully. That result covers the earlier documentation proposal,
+not this subsequent delta. Fetched public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8`; the canonical checkpoint remains
+clean and its private archive remote is not public-main authority.
+
+The supporting [wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
+now specifies schema-3 profile fields, separate precommit/action contexts,
+native fields, canonical domains and frame bounds. The
+[Docker proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
+resolves API 1.56 against exact Moby 29.8.2 commit
+`8af9fe3a36bab3e039862a2ab1cef1880c9b4d03`, finite request/framing controls,
+generated readonly metadata and rootful namespace/device assumptions. The
+[native proposal](architecture/headless-resource-enforcement/native-source-spec.md)
+adds the stock-ext4 no-reachable-ENOSYS predicate, manifest bootstrap ordering
+and explicit trusted-root idmapped-mount attestation. Mountinfo does not expose
+an idmapped flag. Selected-store ACL evidence is associated named-path proof,
+not a database alias or fd-bound ACL read.
+
+Independent exact-source review found that Moby always repeats the primary
+GID in the workload's supplementary list. The proposed positive predicate is
+exactly one copy of that same effective GID; every distinct group denies. The
+host controller's list stays empty. This corrects an impossible empty-workload
+list without adding a distinct effective group-access class. The accepted
+specification explains the correction; recorded human acceptance stays at
+exact PR #72 head. Full-freeze review still gates behavioral integration.
+
+**This remains a documentation proposal checkpoint.** Closed nested API
+response projections, manifest anchor/provenance fields, realized immutable
+mount/device/environment and negative-probe recipe, actual component/kernel/
+image pins and coherent full-freeze review remain required. Synthetic golden
+vectors establish proposed byte commitments only. No native verifier, journal,
+migration, atomic bootstrap, protected control, watch, runtime or V1 completion
+is supplied by this delta. Phase 11 runtime authority and all execution gates
+remain unchanged.
+
+For the 2026-10-03 proposal delta, documentation alignment passed 31 tests
+with 174 Markdown files, public readiness checked 905 files, legacy inventory
+remained 2,122 occurrences across 295 files, and unchanged Phase 11 readiness
+passed 43/43 with execution closed. Fresh independent OpenAI Terra xhigh
+native/wire/Docker/vector review found no remaining actionable P1/P2/P3.
+These checks and review cover documentation and synthetic commitments only;
+the full native source freeze remains pending. Hosted CI must be checked on
+the subsequently committed exact head.
+
+### HCFG-6 root manifest and OCI custody proposal checkpoint
+
+Exact draft PR #75 head `c74b9b5607453a738813b91b3a93eab54cd046ed` passed
+hosted source CI run `37109900511` on 2026-10-03. Complete local pinned source
+validation for that head passed 1,471 workspace tests and 541 Rust tests with
+one ignored case. Those results cover that head, not this subsequent proposal.
+
+The [root manifest/OCI companion](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
+now defines a strict root-controlled anchor, canonical manifest commitment,
+current daemon/kernel instance association, exact artifact/provenance records
+and raw OCI config/manifest/optional-index parent links. Profile/caller digests
+are content expectations, not root authority. A hashed provenance file binds
+its identity; its build/current-instance assertion uses the accepted trusted
+root boundary. No signature, remote attestation, hostile-host protection,
+certification or actual installed-image proof is claimed.
+
+Exact Moby create/start/Inspect source confirms a pre-start `none` endpoint
+placeholder, allocated Ports/Networks objects and a tracked-only Mounts array.
+Generated metadata/OCI mounts require native observations; API image Config
+re-encoding cannot authenticate raw config ImageID or parent links. The
+[Docker companion](architecture/headless-resource-enforcement/docker-source-spec.md)
+records these positive-case corrections and source-defined omission/default
+limits. Complete nested projections and exact selected normalization still
+remain open.
+
+This is documentation only. Full native source freeze still requires the
+closed nested API allowlist, complete immutable realized mount/device/environment
+and negative-probe recipe, actual reviewed pins and coherent independent
+review. No native verifier, preparation journal, atomic bootstrap, protected
+generation/epoch/stop/revocation, monitoring, runtime, package or V1 completion
+is supplied. Phase 11 status authority and execution gates remain unchanged.
+For this documentation delta, artifact-shape checks passed 3/3, exact-doc
+formatting and diff checks passed, direction validation passed 31 tests with
+175 Markdown files, public readiness checked 906 files, and refreshed inventory
+remained 2,122 occurrences across 295 files. Unchanged Phase 11 readiness passed
+43/43 with execution closed. Fresh independent OpenAI Terra xhigh read-only
+review of the complete eight-file proposal found no remaining actionable
+P1/P2/P3 after the controller clarified the ext4-versus-native virtual-filesystem
+scope and explicit current-kernel trust bridge. This PASS covers the proposed
+grammar/source facts only; full source freeze and new exact-head hosted CI
+remain separate gates. Unchanged source suites are the prior exact-head
+results above, not newly run tests of a live verifier.
+
+### HCFG-6 closed response proposal checkpoint
+
+Exact draft PR #75 head `4f9955a5fcab9cb5fadf1c26913e0821a631ff47` passed
+hosted source CI run `37113024699` with source-gate job `111174452417`.
+Those terminal results cover the preceding root/OCI proposal, not the following
+documentation delta. Public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after a fresh fetch.
+
+The [closed Docker response proposal](architecture/headless-resource-enforcement/docker-response-source-spec.md)
+adds explicit nested types, compare/discard/forbid paths and source-normalized
+empty/null/omitted rules. Its pinned mechanical appendix inventories 47 types
+and 368 fields; this extraction is not a permission or runtime proof. Exact
+served routing, image merge, create defaults, Inspect construction and null
+network source resolve successful empty warnings, Args/Cmd separation, copied
+masked/readonly defaults, omitted mount options, inactive Swarm, disabled NRI,
+stock runtime aliases and uname-versus-Go architecture. The proposed first
+recipe explicitly fixes ShmSize and empty daemon default ulimits; no host
+configuration is observed or changed.
+
+This remains a source-contract proposal. Actual immutable component/kernel/
+image pins, complete realized mount/device/environment/security values,
+negative-probe procedures and coherent independent full-freeze review remain
+required before behavioral integration. No native verifier, journal, atomic
+bootstrap, active generation, protected control, watch or runtime is added.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; V1 and enterprise/
+government deployment readiness remain incomplete.
+
+For this documentation delta, artifact-shape checks passed 3/3, exact-doc
+formatting and diff checks passed, direction validation passed 31 tests with
+176 Markdown files, public readiness checked 907 files and refreshed inventory
+remained 2,122 occurrences across 295 files. Unchanged Phase 11 readiness
+passed 43/43 with execution closed. A separate mechanical check matched all
+47 type sections, 368 source field references and copied snapshot hashes.
+Fresh independent OpenAI Terra xhigh read-only review found no remaining
+actionable P1/P2/P3 after correcting an ambiguous string-size override,
+documentation index descriptions and explicit fixed HostConfig response
+values. The component predicate names the complete stock
+Engine/containerd/runc/docker-init call path. No Go serialization canary was
+run because no Go compiler is installed; no installation occurred. These are
+source-contract and documentation results, not parser/enforcement tests or
+full-freeze approval. New exact-head hosted CI remains separate from the
+preceding green result; unchanged runtime source retains its prior evidence.
+
+### HCFG-6 realized recipe proposal checkpoint
+
+Exact draft PR #75 head `033323b276e1fc874a6fae43c88551275eacc913` passed
+hosted source CI run `37116570533`. This terminal result covers the preceding
+closed-response checkpoint, not the following documentation proposal. Freshly
+fetched public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` and is
+an ancestor of this source chain; the canonical archive checkout remains clean.
+
+The [realized recipe proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md)
+defines finite mount/device predicates, exact initial image/process environment
+and five challenged native denial sentinels. Exact runc v1.5.2 peeled source
+resolves shared directory-mask tmpfs aliases, potentially writable private
+null-device file masks, standard nodes/symlinks, no-TTY setup and mknod-to-host-
+bind fallback. That fallback is excluded from the proposed positive recipe.
+The private wire adds bounded initial environment observations; updated
+synthetic vectors remain unverified encoding examples. CPU bandwidth units are
+explicitly millicores, distinct from wall time and total CPU consumption.
+
+Complete source freeze remains open: actual component/kernel/template/image
+pins are `UNSET_BLOCKING`; the exact registry and derived commitment layouts,
+selected snapshotter/kernel mount normalization, immutable image/library/Git
+inventory, current root-attested mask layout, safe probe methods and controlled
+resource-pressure procedures require further source review. Five sentinels
+cannot prove every denied syscall or resource ceiling. No behavior, native
+verifier, journal, bootstrap, protected control, monitoring or runtime is added.
+There is no change to accepted design or the separate activation gates.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; V1 and enterprise/
+government readiness remain incomplete.
+
+For this documentation delta, artifact-shape checks passed 3/3, direction
+validation passed 31 tests with 177 Markdown files, public readiness checked
+908 files, and inventory remained 2,122 occurrences across 295 files.
+Unchanged Phase 11 readiness passed 43/43 with execution closed. A pinned
+Node verifier reconstructed the displayed synthetic inputs, commitments and
+frame byte counts; a separate structural check covered all 32 recipe table
+rows. Fresh independent OpenAI Terra xhigh review found no remaining P1/P2/P3
+after two vector corrections and one malformed table row were fixed. The
+first vector verifier incorrectly replaced displayed release inputs with
+derived values; it was tightened to reject those mismatches. Its earlier PASS
+is superseded, not enforcement evidence. No native syscall, pressure,
+Docker or live environment test was run. New exact-head hosted CI remains
+separate; prior CI is not evidence for this proposal delta.
+
+### HCFG-6 proposed source-freeze staging amendment
+
+Canonical decision record: this subsection. Independent read-only gate audit
+found a P2 ordering cycle: actual new adapter/probe/image pins are required
+before behavioral integration, while implementing those candidates and
+constructing the image are both closed before that same complete freeze.
+Source/artifact/runtime evidence must not be substituted for one another.
+
+The [proposed staging decision](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+would permit reviewed inert private candidate modules after their exact module
+contracts, then require separately authorized artifact capture and one complete
+source/pin/positive-feasibility freeze before product integration or activation.
+**Owner acceptance is pending.** The existing gates remain controlling; no
+candidate implementation, Docker operation, image build, permission change,
+initializer, merge, release or runtime action is authorized by this proposal.
+The original HCFG-6 acceptance is unchanged; this is a distinct proposed
+amendment to source ordering, not self-acceptance or a new runtime authority.
+
+Exact Moby source also establishes root-owned `0710` containers/per-container
+metadata ancestors and `0644` generated files. Same-UID access does not prove
+non-root controller access to the accepted rootful daemon. Required native
+metadata custody needs a reviewed feasible preprovisioned ACL or other exact
+accepted method; no privileged helper, automatic permission change or procfs
+magic-link fallback is inferred. This remains a full-freeze feasibility item.
+
+The preceding exact recipe head `a73d9d7068c48f7a6acabe0451ef4ab26967dbff`
+passed hosted source CI run `37118861695`. For this proposed decision,
+documentation direction passed 31 tests (178 Markdown files), public readiness
+checked 909 files, inventory remained 2,122 occurrences across 295 files, and
+unchanged Phase 11 readiness passed 43/43 with execution closed. Exact-doc
+formatting and diff checks passed. Fresh independent OpenAI Terra xhigh review
+found no remaining P1/P2/P3 after separating complete source/artifact freeze
+from later live activation observations, avoiding another ordering cycle.
+This review covers the proposed amendment only; owner acceptance and new
+exact-head hosted CI remain separate. No Stage-A source implementation began.
+
+### HCFG-6 generated daemon metadata custody proposal checkpoint
+
+Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed
+hosted source CI run `37120253071` with job `111194814745`. This result covers
+the preceding staging proposal; its human acceptance remains pending. Public
+main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after a fresh fetch,
+and the canonical checkpoint remains clean. No Stage-A implementation began.
+
+The [generated metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
+specifies a conditional non-root path through rootful daemon metadata ancestry:
+exact inherited access/default ACLs, search-only O_PATH identities, bounded
+named ACL observations and readable own-container generated-file handles.
+Exact source distinguishes Docker's data-root chmod normalization, `fdget`'s
+O_PATH rejection, special POSIX ACL syscall routing and in-place metadata
+writes. Requested `0644` files can inherit the proposed observed `0640` ACL
+shape; creation mode alone is not current inode evidence.
+
+The root-manifest proposal adds exact current daemon/container-root identities
+and an explicit trusted-root dedicated-data-root assertion. ACL inheritance
+below the container repository grants controller metadata access beyond one
+new directory; shared workload roots are excluded by this proposed recipe.
+LNSAT performs no automatic permission provisioning, directory inventory,
+foreign-container read, procfs magic-link reopen or privileged-helper call.
+Root-mediated transient replacement and the dedication assertion retain the
+accepted trusted-root boundary; no atomic named-read or hostile-root assurance
+is claimed. Full source/pin/positive-feasibility freeze and later actual
+provisioning, activation, runtime, package and security assurance remain open.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`.
+
+For this documentation proposal, artifact shapes passed 3/3, documentation
+direction passed 31 tests (179 Markdown files), public readiness checked 910
+files, inventory remained 2,122 occurrences across 295 files, and unchanged
+Phase 11 readiness passed 43/43 with execution closed. Exact-doc formatting
+and diff checks passed; all seven copied Linux source hashes matched their
+research report. The first bounded hash extractor omitted the digit in `ext4`
+and matched six names; correcting the filename pattern verified all seven,
+without a source/hash mismatch. Fresh independent OpenAI Terra xhigh contract
+review found no remaining P1/P2/P3 after the controller explicitly separated
+precreate, created, post-start and terminal-cleanup metadata predicates.
+This PASS covers the conditional proposed custody method, not complete native
+freeze, current host proof or the pending staging acceptance. No dependency,
+source, CLI, schema or runtime behavior changed. New exact-head hosted CI is
+separate from the preceding green result; unchanged source was not rebuilt for
+this docs-only delta. The resulting exact head
+`3a1971860d370c08a16a575ef7e1a8cf3c87ebbd` subsequently passed hosted source
+CI [run `37122640734`](https://github.com/hypler-dev/LNSAT/actions/runs/37122640734),
+job `111201633544`, on 2026-10-03. Draft PR #75 remains open; this result does
+not accept the source-order amendment or complete native freeze.
+
+### HCFG-6 controlled resource-pressure proposal checkpoint
+
+Exact draft PR #75 head `6c65a2bd5e388222e149ad2d5250516bf7b9afe6` passed
+hosted source CI [run `37123949018`](https://github.com/hypler-dev/LNSAT/actions/runs/37123949018),
+job `111205384429`, on 2026-10-03. This covers the preceding result-only
+dependency checkpoint, not the following procedure proposal. Fetched public
+main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`; canonical checkpoint
+is clean. The source-order amendment remains pending human acceptance.
+
+The [pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
+defines three fixed future test-only CPU/memory/PID cases with positive anchors,
+finite stimuli and independent host kernel/cgroup evidence. Linux v6.8 source
+distinguishes period bandwidth, local/hierarchical memory events, any-source
+OOM kill counts and PID denial caused by a leaf or ancestor. Limits, errnos,
+sampled usage or helper output alone do not pass. Exact own-case identity,
+bounded current observations, controlled host/ancestor eligibility and
+cleanup/quarantine are required; an inconclusive result stops the series.
+
+Normal preparation remains one thread with its five non-destructive sentinels.
+The proposed pressure helper never enters the product registry, startup wire,
+ordinary preparation journal or bootstrap transaction. Exact test-only source/
+decoder/custody review, pending staging acceptance, immutable artifact pins
+and separately authorized disposable proof remain required. No source helper,
+pressure, Docker, host configuration or runtime result is added. Full native
+freeze, actual startup/action proof, package and enterprise/government assurance
+remain incomplete. Phase 11 stays `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`.
+
+For this procedure proposal, artifact shapes passed 3/3, direction passed 31
+tests (180 Markdown files), public readiness checked 911 files, inventory
+remained 2,122 occurrences across 295 files, and unchanged Phase 11 readiness
+passed 43/43 with execution closed. Exact-doc formatting and diff checks
+passed; all four copied Linux research-source hashes matched. Fresh independent
+OpenAI Terra xhigh review found no actionable P1/P2/P3 in the seven-file proposal.
+This is conditional procedure/source-feasibility evidence, not an actual
+pressure outcome, accepted source-order amendment or complete native freeze.
+New exact-head hosted CI remains a separate gate.
 
 ### HCFG-6 acceptance reconciliation checkpoint
 
@@ -465,6 +804,62 @@ source/launch contract and `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY` verdict.
 Acceptance opens bounded source design work, not Docker observation/execution,
 host permission mutation, initialization, activation, merge, release,
 publication, deployment or production.
+
+## Enterprise And Government Security Direction
+
+Canonical work record: this section. On 2026-10-03 the human owner required
+advanced security for enterprise/government use alongside the active V1 build.
+The [supporting requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
+extend the existing Phase 13/14 hardening work with explicit human identity,
+assurance/crypto/key, audit/privacy, supply-chain and resilience acceptance
+evidence. They do not mark these capabilities implemented or certify LNSAT.
+Jurisdiction, information class and deployment boundary remain unresolved;
+the current U.S. mapping is provisional. Detailed protected/public-contract
+behavior requires its own exact accepted specification and independent review.
+
+Inspected local source has Argon2id password/session/CSRF foundations and scoped
+roles. Phishing-resistant MFA/federation and a FIPS-validated crypto provider
+are not established; optional Ed25519 approval verification is not an activated
+signing/custody path. Signed artifact/update, SBOM/provenance and selected-target
+assurance remain Phase 13/14 gates. Hashes/export do not independently prove
+trusted-host-owner anti-tamper protection. The active HCFG/native/bootstrap/
+control/runtime build remains mandatory. No SaaS/fleet/HA/multi-tenant scope,
+Docker, host mutation, merge, release or production action opens here.
+
+Fresh independent OpenAI Terra xhigh security review found no P1/P2 in the
+requirements or supporting hardening proposal. Two P3 evidence issues were
+corrected: the strict Ed25519 source locator and the integrity registry's
+binding to the final status/requirements/sequence documents. The retained
+hardening analysis supplies two explicit options and their tradeoffs; it is
+derived design evidence, not a vulnerability scan or compliance assessment.
+Detailed identity/provider selection and implementation remain open.
+
+### Dependency advisory checkpoint
+
+On 2026-10-03 a fresh `npm run audit:dependencies:check` passed on exact draft
+head `3a1971860d370c08a16a575ef7e1a8cf3c87ebbd`, reporting zero vulnerable
+packages and no advisory exceptions. This is the npm registry's known-advisory
+result for that lock, not a complete source/runtime vulnerability assessment.
+
+A separate read-only comparison evaluated all 12 open GitHub Dependabot alert
+ranges against every matching instance in that head's npm lock and fetched
+public-main `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`. Exact Git blobs and
+lock hashes were checked before strict semver evaluation. None of those 12
+ranges includes a draft locked instance; all 12 include a public-main instance.
+
+| Package      | Draft locked versions                   | Fetched public-main versions            |
+| ------------ | --------------------------------------- | --------------------------------------- |
+| `fast-uri`   | `3.1.8` (two nested instances), `4.2.1` | `3.1.6` (two nested instances), `4.1.3` |
+| `ip-address` | `10.7.2`                                | `10.4.0`                                |
+| `undici`     | `7.30.0`                                | `7.29.0`                                |
+
+The alerts remain open and public main remains affected by those reported
+ranges. No alert was dismissed and no dependency, lock, runtime or public-main
+byte changed in this checkpoint. Fresh independent OpenAI Terra xhigh review
+found no actionable P1/P2/P3 in the exact comparison and its evidence. Source dependency
+maintenance, merged-main remediation, runtime security and supported release
+are separate states; these checks supply no enterprise/government assurance
+or certification claim.
 
 ## Current Build Position
 

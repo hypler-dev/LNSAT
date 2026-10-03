@@ -71,9 +71,45 @@ subsystem or proposal.
   native/wire/daemon/synchronization freeze and runtime gates still open.
 - [HCFG-6 enforcement plan](architecture/headless-resource-enforcement/plan.md)
   — source specification, independent review and actual proof gates.
+- [HCFG-6 native source-freeze proposal](architecture/headless-resource-enforcement/native-source-spec.md)
+  — proposed bounded native, profile and startup transport seams; full freeze,
+  source integration and runtime proof remain pending.
+- [HCFG-6 preparation/store source specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
+  — inert journal custody, atomic bootstrap and release/revocation serialization;
+  no implementation or authority follows from this document.
+- [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
+  — exact proposed schema-3 fields, native payload and separate startup contexts;
+  complete freeze review and implementation remain pending.
+- [HCFG-6 Docker transport/recipe proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
+  — exact tagged API, HTTP/mux framing and positive control assumptions;
+  realized recipe and source/run pins remain incomplete.
+- [HCFG-6 closed Docker response proposal](architecture/headless-resource-enforcement/docker-response-source-spec.md)
+  — nested response types, typed compare/discard/forbid paths and exact source
+  normalization; no live parser, verifier or complete-freeze approval.
+- [HCFG-6 realized mount/device/environment/probe proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md)
+  — finite built-in predicates, actual environment observation and five narrow
+  preparation sentinels; pins, literal kernel/snapshotter normalization,
+  image inventory, pressure procedures and complete-freeze review remain open.
+- [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
+  — search-only held ancestry, exact inherited ACLs, named ACL reads and current
+  daemon-root association; provisioning, complete freeze and runtime remain gated.
+- [HCFG-6 controlled resource-pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
+  — separate future CPU/memory/PID cases, bounded stimuli, independent events
+  and exact cleanup; no normal preparation pressure or actual conformance run.
+- [Proposed HCFG-6 source-freeze staging amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+  — reviewed inert source, separately authorized artifact capture, complete
+  source/pin freeze before integration; owner acceptance remains pending.
+- [HCFG-6 root manifest/OCI custody proposal](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
+  — root-controlled anchor, current daemon/artifact association and raw OCI
+  parent links; no provisioning, live proof or full-freeze approval.
+- [HCFG-6 synthetic startup vectors](architecture/headless-resource-enforcement/startup-golden-vectors.md)
+  — reproducible proposed encoding examples; no OS observation or authority.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
+- [Enterprise/government security requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
+  — requested assurance, crypto, audit/privacy and supply-chain work;
+  implementation, deployment scope and certification evidence remain pending.
 - [Loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [Packet model](architecture/PACKET_MODEL.md)
 - [Policy and audit](architecture/POLICY_AND_AUDIT.md)

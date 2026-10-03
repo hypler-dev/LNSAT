@@ -242,6 +242,12 @@ support profile makes it required.
    migration, recovery, update, rollback, revocation, dependency, secret,
    fuzzing, and known-limitation gates. Freeze one exact RC source identity,
    version, changelog, and build recipe.
+   The owner's enterprise/government security direction adds explicit
+   identity assurance, crypto/key evidence, audit/privacy and supply-chain
+   acceptance requirements; see the
+   [security requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md).
+   Jurisdiction/deployment tailoring is pending. No certification or government
+   deployment claim follows from source conformance or a profile label.
 7. **Phase 14 candidate-build authorization.** Select one or two exact
    OS/architecture core-target rows. Build immutable canonical candidate components
    once per selected target. Candidate-build
