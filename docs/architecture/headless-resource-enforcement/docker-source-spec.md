@@ -290,6 +290,14 @@ and cgroup, and readonly generated `/etc/hosts`, `/etc/hostname` and
 They must be associated with exact inspected root-owned daemon metadata paths.
 No extra writable metadata bind is introduced.
 
+Use the [generated metadata custody proposal](docker-metadata-source-spec.md)
+for the rootful `0710` ancestry. Compare `Info.DockerRootDir` with the current
+root-manifest directory record, construct only this attempt's three exact
+generated paths, and observe inherited ACLs/held host identities before comparing
+challenged container bind identities. Requested file mode `0644` is distinct
+from the proposed ACL-derived observed `0640`. Configured or Inspect paths
+alone do not establish reachability or actual mount association.
+
 Default masked paths are exactly the tagged source's fixed list plus its
 host-dependent thermal-throttle paths for possible CPUs. The root run manifest
 must freeze that current finite list; no absent path is invented as a mount.

@@ -694,6 +694,51 @@ from later live activation observations, avoiding another ordering cycle.
 This review covers the proposed amendment only; owner acceptance and new
 exact-head hosted CI remain separate. No Stage-A source implementation began.
 
+### HCFG-6 generated daemon metadata custody proposal checkpoint
+
+Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed
+hosted source CI run `37120253071` with job `111194814745`. This result covers
+the preceding staging proposal; its human acceptance remains pending. Public
+main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after a fresh fetch,
+and the canonical checkpoint remains clean. No Stage-A implementation began.
+
+The [generated metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
+specifies a conditional non-root path through rootful daemon metadata ancestry:
+exact inherited access/default ACLs, search-only O_PATH identities, bounded
+named ACL observations and readable own-container generated-file handles.
+Exact source distinguishes Docker's data-root chmod normalization, `fdget`'s
+O_PATH rejection, special POSIX ACL syscall routing and in-place metadata
+writes. Requested `0644` files can inherit the proposed observed `0640` ACL
+shape; creation mode alone is not current inode evidence.
+
+The root-manifest proposal adds exact current daemon/container-root identities
+and an explicit trusted-root dedicated-data-root assertion. ACL inheritance
+below the container repository grants controller metadata access beyond one
+new directory; shared workload roots are excluded by this proposed recipe.
+LNSAT performs no automatic permission provisioning, directory inventory,
+foreign-container read, procfs magic-link reopen or privileged-helper call.
+Root-mediated transient replacement and the dedication assertion retain the
+accepted trusted-root boundary; no atomic named-read or hostile-root assurance
+is claimed. Full source/pin/positive-feasibility freeze and later actual
+provisioning, activation, runtime, package and security assurance remain open.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`.
+
+For this documentation proposal, artifact shapes passed 3/3, documentation
+direction passed 31 tests (179 Markdown files), public readiness checked 910
+files, inventory remained 2,122 occurrences across 295 files, and unchanged
+Phase 11 readiness passed 43/43 with execution closed. Exact-doc formatting
+and diff checks passed; all seven copied Linux source hashes matched their
+research report. The first bounded hash extractor omitted the digit in `ext4`
+and matched six names; correcting the filename pattern verified all seven,
+without a source/hash mismatch. Fresh independent OpenAI Terra xhigh contract
+review found no remaining P1/P2/P3 after the controller explicitly separated
+precreate, created, post-start and terminal-cleanup metadata predicates.
+This PASS covers the conditional proposed custody method, not complete native
+freeze, current host proof or the pending staging acceptance. No dependency,
+source, CLI, schema or runtime behavior changed. New exact-head hosted CI is
+separate from the preceding green result; unchanged source was not rebuilt for
+this docs-only delta.
+
 ### HCFG-6 acceptance reconciliation checkpoint
 
 The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,

@@ -90,6 +90,9 @@ subsystem or proposal.
   — finite built-in predicates, actual environment observation and five narrow
   preparation sentinels; pins, literal kernel/snapshotter normalization,
   image inventory, pressure procedures and complete-freeze review remain open.
+- [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
+  — search-only held ancestry, exact inherited ACLs, named ACL reads and current
+  daemon-root association; provisioning, complete freeze and runtime remain gated.
 - [Proposed HCFG-6 source-freeze staging amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
   — reviewed inert source, separately authorized artifact capture, complete
   source/pin freeze before integration; owner acceptance remains pending.

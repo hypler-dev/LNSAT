@@ -9,7 +9,8 @@ owns acceptance and implementation truth. This document and the linked
 [Docker recipe specification](docker-source-spec.md), its
 [closed response grammar](docker-response-source-spec.md), the
 [realized mount/device/environment/probe predicates](realized-recipe-source-spec.md) and the
-[root manifest/OCI custody specification](root-manifest-source-spec.md), form one freeze. No
+[root manifest/OCI custody specification](root-manifest-source-spec.md), together with
+[generated daemon metadata custody](docker-metadata-source-spec.md), form one freeze. No
 companion independently opens activation or runtime execution.
 
 ## Source ownership and integration order
@@ -152,6 +153,15 @@ descriptor before/after. It must never open, duplicate or close a database
 alias; doing so can release process-associated record locks.
 This is named-path ACL evidence associated with the existing SQLite descriptor,
 not an fd-bound ACL read. The explicit trusted-owner/root boundary applies.
+
+The three exact rootful daemon metadata directory classes use the separate
+[metadata custody predicate](docker-metadata-source-spec.md): `O_PATH` held
+directory identity with bounded named `lgetxattr`, under root-controlled
+search-only inherited ACLs. `O_PATH` cannot supply `fgetxattr`; do not pretend
+these are readable directory handles. Only the three own-container generated
+regular files use readable handles and fd-bound ACL reads. This exception
+belongs to the proposed complete freeze; it opens no arbitrary named resource
+read or current provisioning. Existing owner/resource custody is unchanged.
 
 ### Procfs, mount and cgroup bounds
 
