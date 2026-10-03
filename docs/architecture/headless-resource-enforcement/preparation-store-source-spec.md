@@ -122,6 +122,11 @@ array are separate encodings: the object is struct-order JSON plus one LF;
 the digest input is domain LF plus compact positional JSON with no LF. The
 `store_digest` binds selected-store path/file custody and current schema/store
 instance evidence; it is not a digest of a caller-supplied path string.
+The [B6 selected-write proposal](../headless-local-bootstrap/selected-write-source-spec.md#preparation-and-bootstrap-transaction)
+defines its exact precommit physical binding and schema-18 framing. The
+installation/store-instance UUIDs do not exist until atomic bootstrap.
+Migration commits before preparation; schema-17 candidate/journal evidence
+cannot be relabeled after migration.
 `recipe_digest` binds the immutable resource-free preparation recipe. The
 journal `phase` is descriptive custody state and is never used as authority.
 A stale or valid journal digest cannot replace fresh store or live resource
