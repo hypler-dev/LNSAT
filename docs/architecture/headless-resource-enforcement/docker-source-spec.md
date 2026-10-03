@@ -116,9 +116,10 @@ remain empty. This repeats the existing effective file-access GID and adds
 no distinct group authority; the complete freeze must review this correction
 to the accepted design's technically infeasible empty-workload-list wording.
 
-Environment is the fixed ordered image-recipe list, with Docker's predictable
-`HOSTNAME=lnsat` contribution accounted for. No host/agent environment is
-merged. The exact list, helper/Git artifacts, labels and image configuration
+Config.Env is the fixed ordered image-recipe list. Docker adds runtime
+PATH/HOSTNAME defaults separately; the complete process-environment recipe
+must account for them without mistaking Config.Env for the actual environment.
+No host/agent environment is merged. The exact list, helper/Git artifacts, labels and image configuration
 must be independently frozen with the immutable image recipe; this proposal
 does not invent their actual bytes. Labels are a closed private object for
 contract version, role, owner UID, candidate/profile/recipe digest, challenge
@@ -135,14 +136,17 @@ GroupAdd=[], Binds=[], VolumesFrom=[], Devices=[], DeviceRequests=[],
 DeviceCgroupRules=[], Tmpfs={}, Sysctls={}, StorageOpt={}, Annotations={},
 Dns=[], DnsOptions=[], DnsSearch=[], ExtraHosts=[], Links=[], PortBindings={},
 PublishAllPorts=false, AutoRemove=false, Init=false, Runtime="runc",
-LogConfig={"Type":"none","Config":{}},
+LogConfig={"Type":"none","Config":{}}, ShmSize=67108864, Ulimits=[],
 RestartPolicy={"Name":"no","MaximumRetryCount":0},
 MaskedPaths=null, ReadonlyPaths=null
 ```
 
 Null MaskedPaths/ReadonlyPaths select the pinned daemon's defaults; empty arrays
 would disable them and are forbidden. The root manifest must freeze actual
-defaults and all remaining daemon resource/ulimit/cgroup-parent defaults.
+defaults and all remaining daemon resource/cgroup-parent defaults. The proposed
+deterministic first recipe fixes daemon DefaultUlimits empty; an empty request
+alone does not suppress daemon defaults. This remains a complete-freeze review
+item, not an observed host configuration.
 No user-selected sysctl, annotation, port, device, restart policy or runtime
 is accepted. Empty Sysctls does not mean no effective sysctls: exact Moby
 `WithSysctls` injects `net.ipv4.ping_group_range=0 2147483647` and, when the
@@ -201,10 +205,11 @@ Image RootFS layer DiffIDs and platform/config projections must agree with the
 held raw config and complete reviewed image recipe. Tags/RepoDigests remain
 non-authoritative. Root/daemon trust and later actual image proof still apply.
 
-The exact API-schema informational-path allowlist, daemon-normalized nullable
-shapes and remaining nested NetworkSettings/resource defaults are still review
-items. This table does not silently treat the entire schema as harmless
-metadata or claim those remaining projections are frozen.
+The [closed response companion](docker-response-source-spec.md) specifies
+exact nested paths/types, typed informational dictionaries, forbidden branches
+and source-normalized empty/null/omitted forms. Its source inventory is not an
+acceptance allowlist. Complete realized recipe values, actual pins and coherent
+full-freeze review still gate behavioral integration.
 
 ### Exact Inspect construction facts
 
@@ -227,9 +232,10 @@ maps `none` to the `none` predefined network. Before first start, Networks
 contains exactly that placeholder; SandboxID/SandboxKey are empty. The
 [start path](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/start.go)
 creates the sandbox and sets its IDs before OCI spec construction. After start,
-endpoint operational fields need their source-defined comparison; do not
-require Networks `{}` or guess empty IDs. Native private-network/loopback
-observations remain necessary.
+endpoint operational fields follow the response companion: generated IDs are
+nonempty after null-driver join, while its IP/MAC/gateway fields remain empty.
+Do not require Networks `{}` or guess empty IDs. Native private-network/
+loopback observations remain necessary.
 
 Inspect `Mounts` comes from
 [`GetMountPoints`](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/container_unix.go),

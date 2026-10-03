@@ -5,8 +5,9 @@ review are required before behavioral integration. The accepted HCFG-6 intent
 is unchanged. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 owns acceptance and implementation truth. This document and the linked
 [preparation/store specification](preparation-store-source-spec.md),
-[startup wire specification](startup-wire-source-spec.md) and
-[Docker recipe specification](docker-source-spec.md), with the
+[startup wire specification](startup-wire-source-spec.md),
+[Docker recipe specification](docker-source-spec.md), its
+[closed response grammar](docker-response-source-spec.md) and the
 [root manifest/OCI custody specification](root-manifest-source-spec.md), form one freeze. No
 companion independently opens activation or runtime execution.
 

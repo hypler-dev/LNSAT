@@ -572,6 +572,49 @@ grammar/source facts only; full source freeze and new exact-head hosted CI
 remain separate gates. Unchanged source suites are the prior exact-head
 results above, not newly run tests of a live verifier.
 
+### HCFG-6 closed response proposal checkpoint
+
+Exact draft PR #75 head `4f9955a5fcab9cb5fadf1c26913e0821a631ff47` passed
+hosted source CI run `37113024699` with source-gate job `111174452417`.
+Those terminal results cover the preceding root/OCI proposal, not the following
+documentation delta. Public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after a fresh fetch.
+
+The [closed Docker response proposal](architecture/headless-resource-enforcement/docker-response-source-spec.md)
+adds explicit nested types, compare/discard/forbid paths and source-normalized
+empty/null/omitted rules. Its pinned mechanical appendix inventories 47 types
+and 368 fields; this extraction is not a permission or runtime proof. Exact
+served routing, image merge, create defaults, Inspect construction and null
+network source resolve successful empty warnings, Args/Cmd separation, copied
+masked/readonly defaults, omitted mount options, inactive Swarm, disabled NRI,
+stock runtime aliases and uname-versus-Go architecture. The proposed first
+recipe explicitly fixes ShmSize and empty daemon default ulimits; no host
+configuration is observed or changed.
+
+This remains a source-contract proposal. Actual immutable component/kernel/
+image pins, complete realized mount/device/environment/security values,
+negative-probe procedures and coherent independent full-freeze review remain
+required before behavioral integration. No native verifier, journal, atomic
+bootstrap, active generation, protected control, watch or runtime is added.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; V1 and enterprise/
+government deployment readiness remain incomplete.
+
+For this documentation delta, artifact-shape checks passed 3/3, exact-doc
+formatting and diff checks passed, direction validation passed 31 tests with
+176 Markdown files, public readiness checked 907 files and refreshed inventory
+remained 2,122 occurrences across 295 files. Unchanged Phase 11 readiness
+passed 43/43 with execution closed. A separate mechanical check matched all
+47 type sections, 368 source field references and copied snapshot hashes.
+Fresh independent OpenAI Terra xhigh read-only review found no remaining
+actionable P1/P2/P3 after correcting an ambiguous string-size override,
+documentation index descriptions and explicit fixed HostConfig response
+values. The component predicate names the complete stock
+Engine/containerd/runc/docker-init call path. No Go serialization canary was
+run because no Go compiler is installed; no installation occurred. These are
+source-contract and documentation results, not parser/enforcement tests or
+full-freeze approval. New exact-head hosted CI remains separate from the
+preceding green result; unchanged runtime source retains its prior evidence.
+
 ### HCFG-6 acceptance reconciliation checkpoint
 
 The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,

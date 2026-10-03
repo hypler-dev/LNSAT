@@ -83,6 +83,9 @@ subsystem or proposal.
 - [HCFG-6 Docker transport/recipe proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
   — exact tagged API, HTTP/mux framing and positive control assumptions;
   realized recipe and source/run pins remain incomplete.
+- [HCFG-6 closed Docker response proposal](architecture/headless-resource-enforcement/docker-response-source-spec.md)
+  — nested response types, typed compare/discard/forbid paths and exact source
+  normalization; no live parser, verifier or complete-freeze approval.
 - [HCFG-6 root manifest/OCI custody proposal](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
   — root-controlled anchor, current daemon/artifact association and raw OCI
   parent links; no provisioning, live proof or full-freeze approval.
