@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0013-independent-implementation-review-5e04c391",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["local-session-private-generation-buffers"],
+  "base_revision": "59bbb92f9df96afdf0b4e7166c38cb92134be27f",
+  "reviewed_revision": "5e04c3910a9dfd140b837c1824a37c8fd5f446cb",
+  "reviewed_tree_oid": "d29ae1d12ffc8db6d496eb662a97512cf371a5bc",
+  "diff_sha256": "sha256:4315fcff0855e0c59e2b130e0704d39f678ba325d90f36a837f53ac68c7567c1",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-auth/README.md",
+      "sha256": "sha256:cab152a19eb7c948a3060bec6419a9e2eec81b100db62634946e4ecf9d358d0f"
+    },
+    {
+      "path": "crates/lnsat-auth/src/lib.rs",
+      "sha256": "sha256:4b89c42ecde8470b949109183551e15e3a04b4ead57ffe131dab74dc414caa6d"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d07d8adc9d59a971fe86f1101faad201bb927fa2cb24f3bbe8b4eb2f13113475"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:f3b899a84ac50e4e4e687320ee9a925f91e1dc5c1c3ac582552ee4d10ba8e84a"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:5b8e41f796cedcbdcddbf0802e6c695db101fbfaefbcf44ffd267d9c1ea9df6c"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/auth_entropy_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only authentication source, caller compatibility, documentation, validation and exact Git binding review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

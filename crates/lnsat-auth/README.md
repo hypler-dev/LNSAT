@@ -14,14 +14,21 @@ Current behavior:
   before credential verification;
 - creates independent 128-bit session IDs, 256-bit bearer secrets, and 256-bit
   anti-CSRF secrets from the operating-system random source;
+- holds temporary random-byte arrays and the intermediate bearer hex string in
+  zeroizing owners, including early error paths;
 - exposes only domain-separated SHA-256 digests for persistence and uses
   constant-time digest comparison;
-- composes bounded host-only strict same-site cookie field values whose
-  secret-bearing buffers are zeroized when dropped;
+- composes exact browser session-token and independent-proof header values
+  whose private secret-bearing buffers are zeroized when dropped;
 - evaluates exact numeric-loopback Host, same-origin Fetch Metadata, Origin,
   JSON mutation method, and independent anti-CSRF facts without opening an HTTP
   route;
 - returns only public-safe error classes.
+
+Returned `LocalSessionSecretsV1` fields retain their existing owned `String`
+API. Callers still own their raw-secret lifetime and copies; private temporary
+buffer cleanup is not universal memory erasure. The daemon scrubs its original
+issue/rotation result fields after constructing the zeroizing response holder.
 
 This crate creates one-time session secret material but does not create
 identities, persist credentials/sessions, parse HTTP headers, write HTTP

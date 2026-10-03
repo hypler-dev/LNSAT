@@ -28,6 +28,44 @@ global login-limiter lockout findings. It withdraws Unix bearer reads before the
 first supported release, preserves browser header-pair transport, and still
 requires focused validation and independent review before release judgment.
 
+### Session creation private buffer lifetime
+
+Canonical work record: this subsection. Under the existing local-authentication
+remediation and enterprise/government security direction, the bounded source
+hardening wraps session generation's three temporary entropy arrays and its
+intermediate bearer hex string in the already pinned `Zeroizing` owner.
+Those private allocations are scrubbed on drop, including an early random-
+provider error. The OS random source, entropy sizes, token grammar, digest
+domains, authentication behavior and all public fields/errors remain unchanged.
+This creates no identity, session, transport or action authority.
+
+`LocalSessionSecretsV1` retains its existing movable public `String` fields.
+Adding a public `Drop` implementation would break existing field moves and is
+outside this slice. Callers retain responsibility for returned raw secrets and
+their copies. Existing daemon issue/rotation paths explicitly scrub original
+result fields after creating the private zeroizing browser-header holder.
+This private-buffer improvement is not universal memory erasure, a confirmed
+vulnerability assessment, MFA, FIPS/provider assurance or government readiness.
+
+Pinned auth tests passed (13/13), and the full `npm run check` passed with
+1,471 TypeScript workspace tests, 139/139 TypeScript contract comparisons,
+251 store tests (one intentionally ignored child helper), and 100 daemon
+tests. The initial full run stopped on stale generated inventory; it was
+retained as failed evidence, refreshed, and rerun successfully. Named local
+Semgrep `p/rust` and redacted Gitleaks worktree scans reported zero findings;
+dependency files are unchanged. Fresh independent source review covers the
+private-buffer change and existing caller handoff. Public-history-native
+review binding uses `PHR-0013`; it grants no runtime or release authority.
+
+Parent selected-write contract PR #81 passed exact-head source CI
+`37159123843`, job `111308655772`, at
+`59bbb92f9df96afdf0b4e7166c38cb92134be27f` on `2026-10-03T22:49:02Z`.
+That evidence covers the proposed contract, not selected-write implementation.
+
+The pending HCFG-6 source-order decision and Phase 11 packet are unchanged.
+No native/profile/journal/store Stage-A code, candidate SQL, Docker, host
+mutation, artifact build, merge, release, deployment or production opens here.
+
 Repository source is public through the independently audited fresh-history
 cutover recorded in [public source readiness](PUBLIC_READINESS.md). Public
 visibility does not change this maturity, publish an artifact, or establish

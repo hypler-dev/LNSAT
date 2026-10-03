@@ -105,6 +105,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0012/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0013",
+      "subject_id": "local-session-private-generation-buffers",
+      "review_subject_ids": ["local-session-private-generation-buffers"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0013/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }
