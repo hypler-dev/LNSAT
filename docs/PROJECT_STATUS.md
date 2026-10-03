@@ -658,6 +658,42 @@ is superseded, not enforcement evidence. No native syscall, pressure,
 Docker or live environment test was run. New exact-head hosted CI remains
 separate; prior CI is not evidence for this proposal delta.
 
+### HCFG-6 proposed source-freeze staging amendment
+
+Canonical decision record: this subsection. Independent read-only gate audit
+found a P2 ordering cycle: actual new adapter/probe/image pins are required
+before behavioral integration, while implementing those candidates and
+constructing the image are both closed before that same complete freeze.
+Source/artifact/runtime evidence must not be substituted for one another.
+
+The [proposed staging decision](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+would permit reviewed inert private candidate modules after their exact module
+contracts, then require separately authorized artifact capture and one complete
+source/pin/positive-feasibility freeze before product integration or activation.
+**Owner acceptance is pending.** The existing gates remain controlling; no
+candidate implementation, Docker operation, image build, permission change,
+initializer, merge, release or runtime action is authorized by this proposal.
+The original HCFG-6 acceptance is unchanged; this is a distinct proposed
+amendment to source ordering, not self-acceptance or a new runtime authority.
+
+Exact Moby source also establishes root-owned `0710` containers/per-container
+metadata ancestors and `0644` generated files. Same-UID access does not prove
+non-root controller access to the accepted rootful daemon. Required native
+metadata custody needs a reviewed feasible preprovisioned ACL or other exact
+accepted method; no privileged helper, automatic permission change or procfs
+magic-link fallback is inferred. This remains a full-freeze feasibility item.
+
+The preceding exact recipe head `a73d9d7068c48f7a6acabe0451ef4ab26967dbff`
+passed hosted source CI run `37118861695`. For this proposed decision,
+documentation direction passed 31 tests (178 Markdown files), public readiness
+checked 909 files, inventory remained 2,122 occurrences across 295 files, and
+unchanged Phase 11 readiness passed 43/43 with execution closed. Exact-doc
+formatting and diff checks passed. Fresh independent OpenAI Terra xhigh review
+found no remaining P1/P2/P3 after separating complete source/artifact freeze
+from later live activation observations, avoiding another ordering cycle.
+This review covers the proposed amendment only; owner acceptance and new
+exact-head hosted CI remain separate. No Stage-A source implementation began.
+
 ### HCFG-6 acceptance reconciliation checkpoint
 
 The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,

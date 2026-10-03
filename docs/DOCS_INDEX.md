@@ -90,6 +90,9 @@ subsystem or proposal.
   — finite built-in predicates, actual environment observation and five narrow
   preparation sentinels; pins, literal kernel/snapshotter normalization,
   image inventory, pressure procedures and complete-freeze review remain open.
+- [Proposed HCFG-6 source-freeze staging amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+  — reviewed inert source, separately authorized artifact capture, complete
+  source/pin freeze before integration; owner acceptance remains pending.
 - [HCFG-6 root manifest/OCI custody proposal](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
   — root-controlled anchor, current daemon/artifact association and raw OCI
   parent links; no provisioning, live proof or full-freeze approval.
