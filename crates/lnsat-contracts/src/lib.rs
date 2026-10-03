@@ -51,6 +51,12 @@ pub use headless_config::{
     MAX_HEADLESS_CONFIG_BYTES_V1, compare_headless_config_v1,
     compose_headless_config_declaration_v1, parse_headless_config_declaration_v1,
 };
+pub use headless_config::{
+    HEADLESS_RESOURCE_BINDINGS_SCHEMA_V1, HeadlessResourceBindingKindV1, HeadlessResourceBindingV1,
+    HeadlessResourceBindingsErrorV1, HeadlessResourceBindingsV1,
+    MAX_HEADLESS_RESOURCE_BINDING_PATH_BYTES_V1, MAX_HEADLESS_RESOURCE_BINDINGS_BYTES_V1,
+    MAX_HEADLESS_RESOURCE_BINDINGS_ROWS_V1, parse_headless_resource_bindings_v1,
+};
 pub use idempotency::{
     AUDIT_EVENT_IDEMPOTENCY_MAX_PRIOR_ENTRIES, AuditEventIdempotencyDecisionV1,
     AuditEventIdempotencyErrorV1, AuditEventIdempotencyOutcomeV1, AuditEventIdempotencyRefV1,
