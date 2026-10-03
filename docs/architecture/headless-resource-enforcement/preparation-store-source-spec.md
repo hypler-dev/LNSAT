@@ -185,8 +185,12 @@ schema version 17. Migration 18 must add the inactive tables
 `headless_installations`, `headless_generations`, `headless_active`, and
 `headless_config_audit`, with strict keys, foreign keys, and the journal
 binding required to link the exact preparation and digest chain. It must not
-invent or silently rewrite older schema tables or create authority in an
-existing store. Existing schema-17 stores, owner-only stores, and restored
+rewrite older authority/evidence tables or create authority in an
+existing store. Explicit metadata-version and retention-seed rebuilding is
+required by their current closed SQL checks; the
+[B5 schema proposal](../headless-local-bootstrap/schema-source-spec.md)
+limits that mechanic to exact seeds and four new preserve-only families.
+Existing schema-17 stores, owner-only stores, and restored
 initialized stores remain ineligible for first headless initialization unless
 a separately accepted migration says otherwise.
 
@@ -195,7 +199,8 @@ specifies logical columns, canonical domains and bootstrap linkage. It keeps
 the confirmed declaration reference distinct from the newly generated
 installation UUID; the immutable root/audit bind both without rewriting the
 preparation candidate. Exact DDL/schema inventory and the complete source
-freeze remain required. Historical Phase 7d's unrelated v18 test-only proposal
+freeze remain required. B5 proposes exact SQL and static object expectations,
+but its actual pinned schema manifest remains unset. Historical Phase 7d's unrelated v18 test-only proposal
 does not supply or authorize this migration.
 
 After successful resource-free preparation and verified cleanup, one immediate

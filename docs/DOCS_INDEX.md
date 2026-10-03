@@ -61,6 +61,9 @@ subsystem or proposal.
 - [HCFG-5B B4 durable-state source contract](architecture/headless-local-bootstrap/state-source-spec.md)
   — proposed root/generation/audit/current-pointer bindings; no schema or
   trusted-state implementation.
+- [HCFG-5B B5 schema source contract](architecture/headless-local-bootstrap/schema-source-spec.md)
+  — proposed exact SQL, seed/manifest checks and profile compatibility gate;
+  no SQL execution, registration or initializer.
 - [HCFG-5C owner-decision design](https://github.com/hypler-dev/LNSAT/pull/63)
   — accepted exact confirmation and credential/challenge contract; source
   implementation remains bounded by the accepted design.
