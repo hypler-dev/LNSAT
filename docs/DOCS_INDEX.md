@@ -58,6 +58,9 @@ subsystem or proposal.
   — accepted host-owner design and current read-only fresh-store prerequisite.
 - [HCFG-5B bootstrap specification](architecture/headless-local-bootstrap/spec.md)
   — atomic initialization contract, inert restore, and bounded B1 source scope.
+- [HCFG-5B B4 durable-state source contract](architecture/headless-local-bootstrap/state-source-spec.md)
+  — proposed root/generation/audit/current-pointer bindings; no schema or
+  trusted-state implementation.
 - [HCFG-5C owner-decision design](https://github.com/hypler-dev/LNSAT/pull/63)
   — accepted exact confirmation and credential/challenge contract; source
   implementation remains bounded by the accepted design.
