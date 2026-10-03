@@ -737,7 +737,11 @@ This PASS covers the conditional proposed custody method, not complete native
 freeze, current host proof or the pending staging acceptance. No dependency,
 source, CLI, schema or runtime behavior changed. New exact-head hosted CI is
 separate from the preceding green result; unchanged source was not rebuilt for
-this docs-only delta.
+this docs-only delta. The resulting exact head
+`3a1971860d370c08a16a575ef7e1a8cf3c87ebbd` subsequently passed hosted source
+CI [run `37122640734`](https://github.com/hypler-dev/LNSAT/actions/runs/37122640734),
+job `111201633544`, on 2026-10-03. Draft PR #75 remains open; this result does
+not accept the source-order amendment or complete native freeze.
 
 ### HCFG-6 acceptance reconciliation checkpoint
 
@@ -792,6 +796,33 @@ binding to the final status/requirements/sequence documents. The retained
 hardening analysis supplies two explicit options and their tradeoffs; it is
 derived design evidence, not a vulnerability scan or compliance assessment.
 Detailed identity/provider selection and implementation remain open.
+
+### Dependency advisory checkpoint
+
+On 2026-10-03 a fresh `npm run audit:dependencies:check` passed on exact draft
+head `3a1971860d370c08a16a575ef7e1a8cf3c87ebbd`, reporting zero vulnerable
+packages and no advisory exceptions. This is the npm registry's known-advisory
+result for that lock, not a complete source/runtime vulnerability assessment.
+
+A separate read-only comparison evaluated all 12 open GitHub Dependabot alert
+ranges against every matching instance in that head's npm lock and fetched
+public-main `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`. Exact Git blobs and
+lock hashes were checked before strict semver evaluation. None of those 12
+ranges includes a draft locked instance; all 12 include a public-main instance.
+
+| Package      | Draft locked versions                   | Fetched public-main versions            |
+| ------------ | --------------------------------------- | --------------------------------------- |
+| `fast-uri`   | `3.1.8` (two nested instances), `4.2.1` | `3.1.6` (two nested instances), `4.1.3` |
+| `ip-address` | `10.7.2`                                | `10.4.0`                                |
+| `undici`     | `7.30.0`                                | `7.29.0`                                |
+
+The alerts remain open and public main remains affected by those reported
+ranges. No alert was dismissed and no dependency, lock, runtime or public-main
+byte changed in this checkpoint. Fresh independent OpenAI Terra xhigh review
+found no actionable P1/P2/P3 in the exact comparison and its evidence. Source dependency
+maintenance, merged-main remediation, runtime security and supported release
+are separate states; these checks supply no enterprise/government assurance
+or certification claim.
 
 ## Current Build Position
 
