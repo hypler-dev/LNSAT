@@ -203,10 +203,11 @@ enforcement through the accepted HCFG-6 boundary.
 
 The native HCFG-6 proposal selects profile contract
 `lnsat.runtime_profile.docker_local.v2` at schema version 3. A future durable
-generation must bind that actual verified profile identity; the current pure
-comparison model's recognition of asserted v1 is not a mapping or fallback.
-A separately reviewed pure-model compatibility change is required before
-authenticated comparison can function for the selected native backend.
+generation must bind that actual verified profile identity. The separately
+recorded [pure comparison compatibility slice](../../PROJECT_STATUS.md#hcfg-5a-exact-asserted-profile-compatibility)
+recognizes exact asserted v1/v2 strings without mapping or fallback. It does
+not verify native profile/schema bytes or current state. Authenticated
+comparison still requires the private verified-native/current-state builder.
 The existing B4 synthetic framing vectors make no native-profile support claim.
 
 `generation_digest` commits the ordered columns excluding itself. It includes

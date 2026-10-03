@@ -2,7 +2,7 @@
 
 Status: bounded pure-source design accepted; implementation status in Project Status
 Owner: LNSAT maintainers
-Last updated: 2026-09-30
+Last updated: 2026-10-03
 Authority: [Product Build Sequence, HCFG-5](../../PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order)
 Parent intent: [proposed HCFG-5A intent at PR #61 head 360c42cb](https://github.com/hypler-dev/LNSAT/blob/360c42cb10b4f615d6cf424a33eec714c1684b94/docs/architecture/headless-protected-control/intent.md)
 
@@ -70,13 +70,21 @@ Use HCFG-3 reference and digest grammar. The current generation reference uses
 the exact `generation:` prefix with the same bounded v1 opaque-reference grammar.
 Policy/floor and enforcement profile versions use one to 128 ASCII characters
 matching `^[a-z0-9][a-z0-9._:-]{0,127}$`; there is no implicit `latest`, fallback,
-or version range. The initial implementation recognizes exactly the existing
-source profile contract `lnsat.runtime_profile.docker_local.v1` for conditional
-model compatibility. A syntactically valid but unrecognized profile is
-unverifiable. Recognition does not prove platform support, authenticate
-enforcement evidence, or authorize Docker use. Additional profile recognition
-requires a separately reviewed source change; there is no caller-selected
-allowlist or fallback. Epochs and budgets are safe unsigned integers, at
+or version range. The initial implementation recognized exactly the existing
+source profile contract `lnsat.runtime_profile.docker_local.v1`. The separately
+reviewed compatibility source slice admits exactly that asserted contract and
+`lnsat.runtime_profile.docker_local.v2`, the selected HCFG-6 profile identity.
+The latter's native schema version 3 is not an input or validation claim of
+this pure model. Both sides must assert the same exact profile string; mixed
+v1/v2 contexts remain unverifiable. The actual string remains in canonical
+model/view commitments; historical v1 bytes and commitments are unchanged.
+A syntactically valid but unrecognized profile is unverifiable, with no
+commitment, summary or view. Recognition does not prove platform support,
+authenticate profile bytes or enforcement evidence, or authorize Docker use.
+Each additional profile recognition requires a separately reviewed source
+change; there is no caller-selected allowlist or fallback. The canonical
+[compatibility source record](../../PROJECT_STATUS.md#hcfg-5a-exact-asserted-profile-compatibility)
+owns current review and implementation evidence. Epochs and budgets are safe unsigned integers, at
 most 9007199254740991. Zero never means unlimited. Preserve the existing 65536
 byte declaration limit, 128 resources and five layers per declaration, and 256
 rules per layer. Bound an effective envelope to 128 resources and 1280 rules;

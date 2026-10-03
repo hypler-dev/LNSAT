@@ -15,6 +15,7 @@ const A: &str = "resource:repo-a";
 const B: &str = "resource:repo-b";
 const DIGEST_A: &str = "sha256:1111111111111111111111111111111111111111111111111111111111111111";
 const DIGEST_B: &str = "sha256:2222222222222222222222222222222222222222222222222222222222222222";
+const ASSERTED_PROFILE_V2: &str = "lnsat.runtime_profile.docker_local.v2";
 
 fn declaration(value: &Value) -> super::HeadlessConfigDeclarationV1 {
     parse_headless_config_declaration_v1(&serde_json::to_vec(&value).unwrap()).unwrap()
@@ -207,6 +208,154 @@ fn equal_is_unverifiable_authority_and_has_stable_commitment() {
         assert_eq!(diagnostic[marker], false);
     }
     assert!(!format!("{result:?}").contains("resource:repo-a"));
+}
+
+#[test]
+fn exact_v2_profile_supports_comparison_without_authority() {
+    let equal = compare_headless_config_v1(
+        side(
+            serde_json::from_str(FIXTURE).unwrap(),
+            vec![A, B],
+            HeadlessComparisonRuleModeV1::Allow,
+            100,
+            ASSERTED_PROFILE_V2,
+            "generation:current",
+            false,
+        ),
+        side(
+            serde_json::from_str(FIXTURE).unwrap(),
+            vec![A, B],
+            HeadlessComparisonRuleModeV1::Allow,
+            100,
+            ASSERTED_PROFILE_V2,
+            "generation:current",
+            false,
+        ),
+    );
+    let narrowing = compare_headless_config_v1(
+        side(
+            serde_json::from_str(FIXTURE).unwrap(),
+            vec![A, B],
+            HeadlessComparisonRuleModeV1::Allow,
+            100,
+            ASSERTED_PROFILE_V2,
+            "generation:current",
+            false,
+        ),
+        side(
+            serde_json::from_str(FIXTURE).unwrap(),
+            vec![A],
+            HeadlessComparisonRuleModeV1::ApprovalRequired,
+            1,
+            ASSERTED_PROFILE_V2,
+            "generation:current",
+            false,
+        ),
+    );
+    let widening = compare_headless_config_v1(
+        side(
+            serde_json::from_str(FIXTURE).unwrap(),
+            vec![A],
+            HeadlessComparisonRuleModeV1::ApprovalRequired,
+            1,
+            ASSERTED_PROFILE_V2,
+            "generation:current",
+            false,
+        ),
+        side(
+            serde_json::from_str(FIXTURE).unwrap(),
+            vec![A, B],
+            HeadlessComparisonRuleModeV1::Allow,
+            100,
+            ASSERTED_PROFILE_V2,
+            "generation:current",
+            false,
+        ),
+    );
+
+    for (result, class) in [
+        (equal, HeadlessComparisonModelClassV1::Equal),
+        (narrowing, HeadlessComparisonModelClassV1::Narrowing),
+        (widening, HeadlessComparisonModelClassV1::WideningOrMixed),
+    ] {
+        assert_eq!(result.model_class(), class);
+        assert!(result.summary().is_some());
+        assert!(result.model_commitment().is_some());
+        let diagnostic = result.redacted_diagnostic();
+        assert_eq!(diagnostic["authority_comparison"], "unverifiable");
+        for marker in [
+            "identity_verified",
+            "activation_available",
+            "grants_action_authority",
+        ] {
+            assert_eq!(diagnostic[marker], false);
+        }
+    }
+}
+
+#[test]
+fn asserted_profile_is_exact_shared_context_commitment_material() {
+    let build = |profile, stopped| {
+        side(
+            serde_json::from_str(FIXTURE).unwrap(),
+            vec![A, B],
+            HeadlessComparisonRuleModeV1::Allow,
+            100,
+            profile,
+            "generation:current",
+            stopped,
+        )
+    };
+
+    let v1 = compare_headless_config_v1(
+        build(HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V1, false),
+        build(HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V1, false),
+    );
+    let v2 = compare_headless_config_v1(
+        build(ASSERTED_PROFILE_V2, false),
+        build(ASSERTED_PROFILE_V2, false),
+    );
+    assert_eq!(v1.model_class(), HeadlessComparisonModelClassV1::Equal);
+    assert_eq!(v2.model_class(), HeadlessComparisonModelClassV1::Equal);
+    assert_ne!(v1.model_commitment(), v2.model_commitment());
+    assert_ne!(
+        v1.view_model().unwrap().view_commitment(),
+        v2.view_model().unwrap().view_commitment()
+    );
+
+    for (old_profile, candidate_profile) in [
+        (
+            HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V1,
+            ASSERTED_PROFILE_V2,
+        ),
+        (
+            ASSERTED_PROFILE_V2,
+            HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V1,
+        ),
+    ] {
+        assert_fixed_unverifiable(&compare_headless_config_v1(
+            build(old_profile, false),
+            build(candidate_profile, false),
+        ));
+    }
+
+    for unknown_or_near_match in [
+        "lnsat.runtime_profile.docker_local.v3",
+        "lnsat.runtime_profile.docker_local.v2x",
+        "lnsat.runtime_profile.docker_local.v02",
+        "lnsat.runtime_profile.docker_local.v2.schema3",
+        "lnsat.runtime_profile.docker_local.v2 ",
+    ] {
+        assert_fixed_unverifiable(&compare_headless_config_v1(
+            build(unknown_or_near_match, false),
+            build(unknown_or_near_match, false),
+        ));
+    }
+
+    assert_fixed_unverifiable(&compare_headless_config_v1(
+        build(ASSERTED_PROFILE_V2, true),
+        build(ASSERTED_PROFILE_V2, true),
+    ));
 }
 
 #[test]
