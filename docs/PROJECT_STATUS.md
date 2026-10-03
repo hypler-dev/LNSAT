@@ -362,7 +362,11 @@ matches its pinned library source; no application secret was found and no rule
 was suppressed. Dependencies, lockfiles and schema 17 are unchanged. Git-bound
 independent source review is registered as `PHR-0011` in the
 [public-history review registry](reference/public-history-reviews/registry.json).
-This remains an unmerged source draft; exact-head hosted CI is a separate gate.
+Draft PR #77 remains unmerged at exact head
+`7ee3422e3ff8b67458e159cfab21807fd272fbc9`. GitHub readback confirmed CI run
+`37148971399`, attempt 1, and source-gate job `111278633780` completed
+successfully at `2026-10-03T19:55:05Z`. CI supplies source validation; it does
+not grant merge or runtime authority.
 
 C2 creates no authenticated server view, current-state derivation, consent,
 confirmation, challenge, session, decision, candidate generation, or action
@@ -459,6 +463,52 @@ identity or OS enforcement. No serializable permit, production proof injection,
 initializer, configuration activation, CLI, route, schema or migration is added.
 Complete atomic initialization and V1 remain incomplete. The Phase 11 operator
 packet remains runtime authority and its source-only verdict is unchanged.
+
+### HCFG-5B B4 durable-state contract
+
+Canonical work record: this subsection. The [proposed durable-state source
+contract](architecture/headless-local-bootstrap/state-source-spec.md) fills the
+installation/generation/current-pointer/bootstrap-audit details required by the
+accepted HCFG-5B and HCFG-6 designs. It is supporting contract work, not an
+initializer or trusted-state implementation. Current schema remains 17; no
+table, migration, state reader, route, CLI or mutation is added.
+
+The contract retains the four planned `headless_installations`,
+`headless_generations`, `headless_active` and `headless_config_audit` families.
+It separates the owner's confirmed declaration reference from the new random
+installation/store-instance UUIDs. Both are bound by the immutable root and
+bootstrap event; confirmed declaration/binding/preparation bytes are preserved.
+The pure model uses the stored declaration reference, while a future private
+authenticated comparison must also bind the actual UUID/store/file root.
+
+Ordered columns, distinct hash domains, bounded canonical text, null genesis,
+noncircular root/generation/audit linkage and same-transaction readback are
+specified. Current-state derivation must recheck selected-store custody,
+complete audit/generation evidence, actual compiled policy, epochs/stop and
+fresh native resource/enforcement proof. Existing transaction-local session/
+CSRF checks and the C1 current-owner credential recheck are reused; neither
+creates installation authority.
+
+Two synthetic store vectors were recomputed independently to check canonical
+framing, ordered column counts and the distinct root/generation/audit
+commitments for one shared declaration reference. They do not prove Rust
+parser execution, credential/event rederivation, native observations, store
+custody or a trusted-state reader. Fresh independent OpenAI Terra xhigh
+contract review resolved a rendered credential-generation invariant error;
+the corrected value is exactly `1`. Artifact-shape, formatting, documentation
+direction (31 tests, 183 Markdown files), public readiness, inventory
+(2,122 occurrences across 295 files), schema-17 truth, public-history evidence
+(11 attested, zero pending), and unchanged Phase 11 readiness (43 tests,
+execution closed) passed. This remains a proposed supporting contract, not
+complete source-freeze acceptance or implementation evidence.
+
+The proposed next headless migration 18 cannot silently import the unrelated
+historical Phase 7d signed-evidence v18 test-only layout. Actual registration
+requires reconciliation of the compiled schema, exhaustive eligibility and
+legacy truth labels; optional signing remains blocked. The complete native/
+wire/daemon/store freeze and pending HCFG-6 source-order amendment retain their
+gates. No Stage-A implementation, initialization, activation, Docker, host ACL,
+artifact build, merge, release or production action follows from this record.
 
 ## HCFG-6 Resource And Runtime Enforcement Design
 

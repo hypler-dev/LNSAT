@@ -190,6 +190,14 @@ existing store. Existing schema-17 stores, owner-only stores, and restored
 initialized stores remain ineligible for first headless initialization unless
 a separately accepted migration says otherwise.
 
+The supporting [B4 durable-state contract](../headless-local-bootstrap/state-source-spec.md)
+specifies logical columns, canonical domains and bootstrap linkage. It keeps
+the confirmed declaration reference distinct from the newly generated
+installation UUID; the immutable root/audit bind both without rewriting the
+preparation candidate. Exact DDL/schema inventory and the complete source
+freeze remain required. Historical Phase 7d's unrelated v18 test-only proposal
+does not supply or authorize this migration.
+
 After successful resource-free preparation and verified cleanup, one immediate
 SQLite transaction performs all initialization writes. It creates the random
 installation UUID, store-instance identity, generation 1, and epoch 1, then
@@ -297,7 +305,8 @@ authorized by this document alone.
 
 The following exact details require the primary controller's final source-freeze
 decision before implementation: the literal domain-label constants and
-canonical JSON framing; migration-18 table/column names and audit schema; the
+canonical JSON framing; migration-18 exact DDL/schema inventory and later audit
+variant payloads (B4 specifies bootstrap logical columns/domains); the
 native lock primitive and bounded deadline values; and the complete set of
 installation-wide writer call sites that must join the lock. If source or
 accepted artifacts expose a semantic conflict in these details, stop and

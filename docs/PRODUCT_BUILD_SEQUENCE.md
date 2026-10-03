@@ -163,7 +163,11 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 1. ADR-0006 makes portable signed approval optional for local v1. Private keys
    remain user controlled outside LNSAT. Core schema v16 plus corrective v17
    serve local authorization; optional signed-evidence persistence belongs to
-   separately approved v18 work.
+   separately approved signed-evidence work. The historical v18 candidate is
+   unregistered test-only SQL; it is not the proposed mandatory headless v18
+   layout. Before headless migration registration, reconcile schema/truth
+   records without opening optional signing. A later optional proposal must
+   target the then-current schema rather than importing that historical layout.
 2. Phase 7 source packets through P7-X1 are complete. They prove the authority
    chain and disposable Git consequence in source tests, but no served/public
    execution-authorization or adapter mutation route, runtime dispatch,
