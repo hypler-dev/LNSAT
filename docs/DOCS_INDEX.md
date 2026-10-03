@@ -77,9 +77,20 @@ subsystem or proposal.
 - [HCFG-6 preparation/store source specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
   — inert journal custody, atomic bootstrap and release/revocation serialization;
   no implementation or authority follows from this document.
+- [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
+  — exact proposed schema-3 fields, native payload and separate startup contexts;
+  complete freeze review and implementation remain pending.
+- [HCFG-6 Docker transport/recipe proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
+  — exact tagged API, HTTP/mux framing and positive control assumptions;
+  realized recipe and source/run pins remain incomplete.
+- [HCFG-6 synthetic startup vectors](architecture/headless-resource-enforcement/startup-golden-vectors.md)
+  — reproducible proposed encoding examples; no OS observation or authority.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
+- [Enterprise/government security requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
+  — requested assurance, crypto, audit/privacy and supply-chain work;
+  implementation, deployment scope and certification evidence remain pending.
 - [Loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [Packet model](architecture/PACKET_MODEL.md)
 - [Policy and audit](architecture/POLICY_AND_AUDIT.md)

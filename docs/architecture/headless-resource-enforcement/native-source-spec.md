@@ -4,8 +4,10 @@ Status: proposed supporting source freeze; independent feasibility and source
 review are required before behavioral integration. The accepted HCFG-6 intent
 is unchanged. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 owns acceptance and implementation truth. This document and the linked
-[preparation/store specification](preparation-store-source-spec.md) form one
-freeze. Neither document independently opens activation or runtime execution.
+[preparation/store specification](preparation-store-source-spec.md),
+[startup wire specification](startup-wire-source-spec.md) and
+[Docker recipe specification](docker-source-spec.md) form one freeze. No
+companion independently opens activation or runtime execution.
 
 ## Source ownership and integration order
 
@@ -37,9 +39,13 @@ rootful same-host identity mapping and default AppArmor/seccomp remain exact.
 No current host is claimed to satisfy them. The implementation recipe adds
 these narrow native prerequisites:
 
-- A reviewed exact kernel build/configuration and provenance digest, with the
-  Linux 6.8 POSIX ACL call-path semantics verified for that build. A version
-  prefix alone is insufficient. An unreviewed distribution patch denies.
+- A reviewed exact upstream Linux v6.8 source/build/configuration and provenance
+  digest. `CONFIG_EXT4_FS`, `CONFIG_EXT4_FS_POSIX_ACL` and `CONFIG_FS_POSIX_ACL`
+  are enabled. Provenance must cover ext4's registered ACL getter, inode-body,
+  EA-block and EA-inode xattr read paths: no reachable `ENOSYS` producer is
+  admitted. Ext4's getter deliberately maps `ENOSYS` to a null ACL, so checking
+  the VFS alone is insufficient. A version prefix or unreviewed distribution
+  patch denies. Time namespaces are enabled and observed.
 - Ext4 with POSIX ACL support for the selected store, bindings, repository,
   profile, manifest, socket and their observed ancestry; no idmapped mount,
   network/FUSE filesystem, overlay-backed owner object or filesystem fallback.
@@ -50,8 +56,10 @@ these narrow native prerequisites:
 - The active LSM list and exact kernel build must establish that reads of
   `system.posix_acl_access` and `system.posix_acl_default` cannot disguise a
   permission denial as `ENODATA`. The researched candidate list is capability,
-  yama, apparmor and landlock; additional/modified LSMs, BPF LSM programs and
-  unproved hooks deny. This classification requires review, not caller flags.
+  yama, apparmor and landlock; each has no `inode_get_acl` hook in the selected
+  source. Read the exact active list from genuine held securityfs and compare
+  it with the root-attested recipe. Additional/modified LSMs, BPF LSM programs
+  and unproved hooks deny. This classification requires review, not caller flags.
 - The nonzero real/effective/saved UID and GID agree with the owner-selected
   controller identity; supplementary groups are empty. All controller native
   reads run under that unchanged identity.
@@ -105,8 +113,11 @@ unreadable, malformed, overflowing or ambiguous ACLs deny.
 
 Only after the exact authenticated kernel/filesystem/LSM recipe above is
 established may `ENODATA` mean a genuinely absent POSIX ACL and mode bits supply
-its effective access. Generic `getxattr` absence never passes. Other errors,
-including `ENOTSUP`, deny. An absent default ACL is classified by the same
+its effective access for ordinary regular files/directories with the ext4
+getter installed. Authenticate the no-reachable-`ENOSYS` source predicate;
+`ENODATA` is not itself that proof. Generic `getxattr` absence never passes.
+`ENOSYS`, `ENOTSUP`, `EOPNOTSUPP`, permission/read errors and all other errors
+deny. An absent default ACL is classified by the same
 recipe; an existing default ACL must not grant untrusted access to descendants.
 
 Owner-private objects permit effective read/write/search only to the exact
@@ -136,6 +147,8 @@ accepted custody seam. ACL inspection uses the stable exact named path under
 the already held owner-private parent and verifies association with that same
 descriptor before/after. It must never open, duplicate or close a database
 alias; doing so can release process-associated record locks.
+This is named-path ACL evidence associated with the existing SQLite descriptor,
+not an fd-bound ACL read. The explicit trusted-owner/root boundary applies.
 
 ### Procfs, mount and cgroup bounds
 
@@ -166,6 +179,15 @@ link, alternate Git directory/worktree/object path or incomplete scan. Do not
 run Git during bootstrap. At actual use, reuse the closed semantic Git verifier
 on the same held/path identity without changing its disposable-only scope.
 
+Mountinfo does not report whether a mount is idmapped. Do not invent an
+`idmapped` optional field or treat its absence as proof. The root manifest
+explicitly attests `idmapped=false` for each selected ext4 mount, bound to the
+current boot, host user/mount namespaces, held mount ID, device, mount root and
+mount point. Current fdinfo/mountinfo/fstatfs observations associate that
+attestation with the exact live object. This is trusted-root attestation, not
+an independent kernel query for idmapping. No generic ext4 `noacl` mount option
+is inferred; selected upstream config/source establish ACL support.
+
 After exact daemon create/inspect, associate its positive host PID/start ticks
 with genuine host cgroup membership. The immutable adapter reports its own
 genuine procfs, namespace, mapping, target device/inode and descriptor mount
@@ -182,8 +204,10 @@ proc/sys/dev/tmpfs/engine metadata recipe plus that one repository. The recipe
 enumerates individual writable synthetic mounts and device nodes; unexplained
 writable host paths, image volumes, propagated mounts, additional resources or
 Docker endpoints deny. Container mount IDs need not equal host mount IDs.
-UID/GID match, all capability sets are zero, groups empty, NoNewPrivs is 1,
-Seccomp is 2, no host namespaces, network none and only loopback interfaces.
+UID/GID match, all capability sets are zero, workload groups contain exactly
+one copy of its primary GID and no distinct GID, NoNewPrivs is 1,
+Seccomp is 2, private execution namespaces with the explicitly shared host user
+namespace, network none and only loopback interfaces.
 Seccomp mode is not a filter hash; manifest origin and negative behavior remain
 necessary. Live cgroup ceilings are finite and within the narrowed action
 budget: checked `quota*1000 <= millicores*period`, `cpu.max.burst=0`, finite
@@ -191,6 +215,17 @@ budget: checked `quota*1000 <= millicores*period`, `cpu.max.burst=0`, finite
 files and membership are rechecked before release; usage/weights do not pass.
 
 ## Root implementation manifest and current daemon association
+
+Manifest bootstrap cannot use the ACL-absence classifier it is about to
+authenticate. Start from the separately reviewed explicit root-manifest anchor,
+hold the no-follow prefix chain and check root ownership, type, mode and mount
+association without treating prefix `ENODATA` as a positive. The manifest
+itself requires a present parsed ACL with root write, exact controller read and
+no untrusted write. Verify anchored bytes/current-instance association, then
+authenticate kernel/LSM/mount provenance and recheck the entire prefix chain
+using full effective-ACL rules. No selected-store/resource/native guard exists
+during bootstrap. Root `/` need not have an extended ACL. Missing provisioning
+or an unset anchor denies; LNSAT never provisions it.
 
 One explicit absolute root-provisioned regular single-link manifest, at most
 64 KiB, is stable, read-only to the controller and under held root-controlled
@@ -232,93 +267,15 @@ executable observation, actual host evidence or full source-freeze approval.
 
 ## Separate profile 3 and protocol 2
 
-New profile contract is `lnsat.runtime_profile.docker_local.v2`,
-`contract_version=lnsat.contracts.v1_0`, `schema_version=3`; family remains
-`docker_local`, adapter version is `v2`. Preserve the closed existing Git
-capability floor and audience. Retain existing filesystem/isolation/positive
-limit field meanings; add exactly one `headless` object:
-
-```text
-installation_ref, binding_digest, implementation_manifest_path,
-implementation_manifest_digest, recipe_digest, probe_executable_digest,
-image_manifest_digest, image_index_digest
-```
-
-All digests are lowercase prefixed SHA-256; `image_index_digest` is required
-nullable. `image_digest` retains the accepted local OCI config ImageID meaning.
-Manifest and optional index association are verified separately. Profile bytes
-remain at most 16 KiB. Unknown, duplicate and missing fields deny; null denies
-for every field except required `image_index_digest`, where explicit JSON null
-means no selected image index. Both explicit null and a selected index digest
-occupy that same required slot in canonical profile/authority commitments.
-Private
-paths are never exported in audit or diagnostics. No old profile parser is
-widened or auto-upgraded. Domain labels are `lnsat.hcfg_profile.v3` and
-`lnsat.hcfg_profile_authority.v3`, each followed by LF and canonical JSON.
-
-The new contract is exactly `lnsat.adapter_process.docker_local.v2`, distinct
-from old `lnsat.adapter_process_protocol.docker_local.v1`. Each frame is one
-canonical UTF-8 JSON object plus one LF, no extra whitespace/frames. Challenge,
-observation and result each have a 64 KiB ceiling; the action-release payload
-has the separately specified 8 MiB ceiling. Typed re-encoding must equal incoming bytes; duplicate/unknown/missing
-fields, unsupported types/versions and extra objects deny. A control exchange
-has exactly `startup_challenge`, `startup_observation`, `action_release`, then
-`action_result`; no action fields exist in the first two messages.
-
-Every frame contains `contract_id`, `contract_version`, `schema_version=2`,
-`message_type`, `context`, and `payload`. Context is a closed object with
-`installation_id`, `generation`, `authority_epoch`, `operation_id`,
-`authorization_id`, `attempt_sequence=1`, `candidate_digest`, `profile_digest`,
-`recipe_digest`, `container_id`, `channel_id`, `challenge`. The private host
-creates independent 32-byte random lowercase-hex channel/challenge values
-after the original durable claim and binds the exact created container. No
-action credentials, request contents or target action are sent before release.
-
-This action protocol is not the precommit preparation protocol: no installation
-exists before atomic bootstrap. Resource-free preparation uses the separate
-closed contract `lnsat.preparation_probe.docker_local.v1`, schema 1, with exactly
-`probe_challenge` and `probe_observation`, each at most 64 KiB. Its context has
-only `preparation_id`, `candidate_digest`, `profile_digest`, `recipe_digest`,
-`container_id`, `channel_id` and `challenge`; its payload uses the same bounded
-native facts and finite administrative limits. It has no action-release frame,
-installation, generation, epoch, authorization or execution-request field.
-The immutable probe entrypoint is separate from the adapter's action entrypoint;
-the probe cannot parse or execute an action. Exact artifact entrypoints and
-digests remain part of the required immutable run recipe.
-
-- Challenge payload: exact positive narrowed `limits` and `startup_digest`.
-- Observation payload: `startup_digest`, `observation_digest`, `native`.
-  `native` is a closed typed object containing the bounded procfs/mount/UID/
-  cgroup facts above; exact nested field layout must be fixed by the source
-  producer before protocol implementation and reviewed with its golden bytes.
-- Release payload: `startup_digest`, `observation_digest`, `release_id`,
-  `release_audit_digest`, `execution_request`, `target_digest`,
-  `tool_arguments_digest`, `repository_mount_path`. The execution request is
-  rederived by the unchanged closed Git request validator. Approved action
-  payloads retain the existing 8 MiB canonical ceiling; the 64 KiB control
-  ceiling does not incorrectly reject approved patch payloads. Release is one
-  frame of at most 8 MiB, not an old D4A wrapper or a second authorization.
-- Result payload: `release_id`, `release_audit_digest`, `outcome`,
-  `result_digest` (required nullable); exact completion or outcome unknown,
-  with existing receipt/reconciliation meaning. No duplicate result/release.
-
-Commitment domains, each followed by LF, are
-`lnsat.hcfg_startup_context.v2`, `lnsat.hcfg_startup_observation.v2`,
-`lnsat.hcfg_action_release.v2` and `lnsat.hcfg_action_result.v2`.
-Context/startup/observation canonical arrays preserve the listed field order;
-protocol object encoding uses declared struct order and fixed nested structs,
-never generic caller map iteration. No authority type has Clone, Debug,
-Serialize, Deserialize or a caller constructor. The private live guard holds
-owned channel/container/resource custody and can be consumed once by release.
-
-The adapter is inert until one exact valid release on its challenged channel.
-It performs native startup metadata reads only, never parses/executes action
-arguments early, and rejects trailing input, stale context and pre-release EOF.
-Startup and action share one monotonic deadline and output/CPU/memory/PIDs
-budget without resetting counters at release. Before integration the exact
-native payload fields, profile canonical bytes and immutable mount/device
-recipe must complete independent review; this proposed record does not claim
-those remaining details already frozen.
+The [startup wire companion](startup-wire-source-spec.md) defines every field,
+nullable value, bound, domain and commitment array. It is the sole field-layout
+definition within this freeze. Schema 3 has separate `engine` and `headless`
+objects and no Docker-CLI `supervisor`; the old schemas stay unchanged. New
+profile/protocol objects use recursively sorted ASCII keys. Journal objects
+retain their independently specified struct-order codec; do not share encoders.
+Private paths and native facts never enter public audit/diagnostics. The live
+guard remains private, nonserializable and consumable exactly once. Complete
+golden bytes and independent review still precede protocol implementation.
 
 ## Private Docker transport and finite preparation
 
@@ -345,7 +302,7 @@ Each finite administrative call has a five-second deadline. Preparation has
 10 seconds total startup/probe time plus a separate five-second cleanup bound,
 64 MiB memory, 16 tasks, 250 millicores, 64 KiB stdout and zero stderr. Every
 positive process ceiling must fit the exact runtime profile; a smaller profile
-denies. The probe uses no resources, socket, device, action frame, credentials
+denies. The probe uses no resource binding, host socket/device, action frame, credentials
 or host environment. It may run only the frozen immutable native observation
 and negative-control checks. No borrowed zero action budget or widened limit.
 
@@ -386,6 +343,13 @@ continues to own runtime truth; runtime/package/publication remain closed.
   a selected installed kernel or every active hook.
 - [Linux proc executable permissions](https://man7.org/linux/man-pages/man5/proc_pid_exe.5.html)
   explain why a non-root root-daemon executable read cannot be assumed.
+- [Ext4 xattr reads](https://github.com/torvalds/linux/blob/v6.8/fs/ext4/xattr.c),
+  [inode reads](https://github.com/torvalds/linux/blob/v6.8/fs/ext4/inode.c)
+  and [block reads](https://github.com/torvalds/linux/blob/v6.8/fs/ext4/super.c)
+  complete the reviewed stock-source no-`ENOSYS` predicate. Authentication of
+  exact installed provenance is still required.
+- [Linux mountinfo](https://man7.org/linux/man-pages/man5/proc_pid_mountinfo.5.html)
+  defines live mount association without an idmapped-mount flag.
 
 These source-derived recipe choices are LNSAT design inferences. Research does
 not provide owner acceptance of a material design change or runtime evidence.

@@ -6,7 +6,7 @@ Status: accepted
 Intent: [HCFG-6 intent](intent.md)
 Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
-Last updated: 2026-10-02
+Last updated: 2026-10-03
 
 The bounded S1 pure decoder prerequisite is specified separately in
 [HCFG-6 S1 source specification](bindings-source-spec.md). That document
@@ -32,7 +32,26 @@ The owner must select a nonempty repository plus its runtime profile. Allowed ac
 
 ### Exact initial backend
 
-The only accepted positive engineering backend is Docker Engine **29.8.2**, rootful daemon on the same Linux host, pinned Engine API **1.56**, cgroup v2 with systemd-managed CPU/memory/PIDs controllers, Docker’s bundled containerd **2.3.6** and runc **1.5.2**, default seccomp and default AppArmor enabled. This is a dated engineering recipe, not an installed-host observation or support promise. Alternate engines/generic OCI, rootless/userns remapping, Docker Desktop, remote daemons, other API/implementation versions, disabled/modified default security profiles and unavailable controllers deny. The controller and adapter run with the same explicitly selected nonzero host-mapped UID/GID; supplementary groups are empty. No automatic API negotiation, privileged LNSAT helper or alternate backend fallback is allowed.
+The only accepted positive engineering backend is Docker Engine **29.8.2**, rootful daemon on the same Linux host, pinned Engine API **1.56**, cgroup v2 with systemd-managed CPU/memory/PIDs controllers, Docker’s bundled containerd **2.3.6** and runc **1.5.2**, default seccomp and default AppArmor enabled. This is a dated engineering recipe, not an installed-host observation or support promise. Alternate engines/generic OCI, rootless/userns remapping, Docker Desktop, remote daemons, other API/implementation versions, disabled/modified default security profiles and unavailable controllers deny. The controller and adapter run with the same explicitly selected nonzero host-mapped UID/GID. Host controller supplementary groups are empty. The proposed exact-source correction below requires the workload group list to contain only its existing primary GID; no distinct supplementary GID is accepted. No automatic API negotiation, privileged LNSAT helper or alternate backend fallback is allowed.
+
+#### Exact-source group-list correction
+
+Independent source feasibility review on 2026-10-03 found that the accepted
+empty-workload-Groups wording cannot pass the pinned backend. Moby 29.8.2
+always seeds OCI AdditionalGids with the selected primary GID, and runc 1.5.2
+applies it with setgroups. Explicit numeric `uid:gid` plus empty GroupAdd
+avoids image-derived extra memberships. The proposed native positive check is
+therefore exactly `[selected_primary_gid]`, with real/effective/saved/fs GIDs
+all equal that same value. Any distinct group, duplicate or extra entry denies;
+the host controller still requires an empty supplementary list.
+
+This source correction preserves the accepted no-supplementary-authority
+outcome: the effective filesystem GID already supplies that same group-access
+class. It introduces no new group or capability, socket access, action kind or
+backend. The complete source freeze must independently review this predicate;
+source research or this correction alone does not open behavioral integration.
+The recorded human acceptance remains exact PR #72 head, not a new acceptance
+inferred from reviewer output.
 
 The endpoint is the single explicitly selected absolute Unix socket in the new schema-3 profile. Its private physical path is supplied by a future owner-selected run manifest, never discovered or committed here. Require stable named/opened endpoint identity, root peer UID from `SO_PEERCRED`, root-controlled non-writable path ancestry, and kernel-observed socket access restricted to root/trusted administrators and the exact nonzero controller UID. Unverifiable ACL/group membership or a proxy with another peer identity denies. An effective ACL may permit this exact controller; the installer never creates or relaxes that ACL automatically. The rootful daemon, root administrator and kernel are explicitly trusted host components; agents and container processes have no such socket permission.
 

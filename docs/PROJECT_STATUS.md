@@ -481,6 +481,54 @@ proposal checkpoint only. The complete source freeze and behavioral integration
 remain gated, and hosted CI for this subsequent documentation head is separate
 from green PR #74 source CI.
 
+### HCFG-6 exact native/wire/daemon research checkpoint
+
+On 2026-10-03, GitHub readback confirmed draft PR #75 head
+`60460a33291b621836d73f1bb746bf4c384b59a5` and exact-head CI run `37104768503`
+completed successfully. That result covers the earlier documentation proposal,
+not this subsequent delta. Fetched public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8`; the canonical checkpoint remains
+clean and its private archive remote is not public-main authority.
+
+The supporting [wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
+now specifies schema-3 profile fields, separate precommit/action contexts,
+native fields, canonical domains and frame bounds. The
+[Docker proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
+resolves API 1.56 against exact Moby 29.8.2 commit
+`8af9fe3a36bab3e039862a2ab1cef1880c9b4d03`, finite request/framing controls,
+generated readonly metadata and rootful namespace/device assumptions. The
+[native proposal](architecture/headless-resource-enforcement/native-source-spec.md)
+adds the stock-ext4 no-reachable-ENOSYS predicate, manifest bootstrap ordering
+and explicit trusted-root idmapped-mount attestation. Mountinfo does not expose
+an idmapped flag. Selected-store ACL evidence is associated named-path proof,
+not a database alias or fd-bound ACL read.
+
+Independent exact-source review found that Moby always repeats the primary
+GID in the workload's supplementary list. The proposed positive predicate is
+exactly one copy of that same effective GID; every distinct group denies. The
+host controller's list stays empty. This corrects an impossible empty-workload
+list without adding a distinct effective group-access class. The accepted
+specification explains the correction; recorded human acceptance stays at
+exact PR #72 head. Full-freeze review still gates behavioral integration.
+
+**This remains a documentation proposal checkpoint.** Closed nested API
+response projections, manifest anchor/provenance fields, realized immutable
+mount/device/environment and negative-probe recipe, actual component/kernel/
+image pins and coherent full-freeze review remain required. Synthetic golden
+vectors establish proposed byte commitments only. No native verifier, journal,
+migration, atomic bootstrap, protected control, watch, runtime or V1 completion
+is supplied by this delta. Phase 11 runtime authority and all execution gates
+remain unchanged.
+
+For the 2026-10-03 proposal delta, documentation alignment passed 31 tests
+with 174 Markdown files, public readiness checked 905 files, legacy inventory
+remained 2,122 occurrences across 295 files, and unchanged Phase 11 readiness
+passed 43/43 with execution closed. Fresh independent OpenAI Terra xhigh
+native/wire/Docker/vector review found no remaining actionable P1/P2/P3.
+These checks and review cover documentation and synthetic commitments only;
+the full native source freeze remains pending. Hosted CI must be checked on
+the subsequently committed exact head.
+
 ### HCFG-6 acceptance reconciliation checkpoint
 
 The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,
@@ -505,6 +553,35 @@ source/launch contract and `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY` verdict.
 Acceptance opens bounded source design work, not Docker observation/execution,
 host permission mutation, initialization, activation, merge, release,
 publication, deployment or production.
+
+## Enterprise And Government Security Direction
+
+Canonical work record: this section. On 2026-10-03 the human owner required
+advanced security for enterprise/government use alongside the active V1 build.
+The [supporting requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
+extend the existing Phase 13/14 hardening work with explicit human identity,
+assurance/crypto/key, audit/privacy, supply-chain and resilience acceptance
+evidence. They do not mark these capabilities implemented or certify LNSAT.
+Jurisdiction, information class and deployment boundary remain unresolved;
+the current U.S. mapping is provisional. Detailed protected/public-contract
+behavior requires its own exact accepted specification and independent review.
+
+Inspected local source has Argon2id password/session/CSRF foundations and scoped
+roles. Phishing-resistant MFA/federation and a FIPS-validated crypto provider
+are not established; optional Ed25519 approval verification is not an activated
+signing/custody path. Signed artifact/update, SBOM/provenance and selected-target
+assurance remain Phase 13/14 gates. Hashes/export do not independently prove
+trusted-host-owner anti-tamper protection. The active HCFG/native/bootstrap/
+control/runtime build remains mandatory. No SaaS/fleet/HA/multi-tenant scope,
+Docker, host mutation, merge, release or production action opens here.
+
+Fresh independent OpenAI Terra xhigh security review found no P1/P2 in the
+requirements or supporting hardening proposal. Two P3 evidence issues were
+corrected: the strict Ed25519 source locator and the integrity registry's
+binding to the final status/requirements/sequence documents. The retained
+hardening analysis supplies two explicit options and their tradeoffs; it is
+derived design evidence, not a vulnerability scan or compliance assessment.
+Detailed identity/provider selection and implementation remain open.
 
 ## Current Build Position
 
