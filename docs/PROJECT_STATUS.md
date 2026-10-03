@@ -529,6 +529,49 @@ These checks and review cover documentation and synthetic commitments only;
 the full native source freeze remains pending. Hosted CI must be checked on
 the subsequently committed exact head.
 
+### HCFG-6 root manifest and OCI custody proposal checkpoint
+
+Exact draft PR #75 head `c74b9b5607453a738813b91b3a93eab54cd046ed` passed
+hosted source CI run `37109900511` on 2026-10-03. Complete local pinned source
+validation for that head passed 1,471 workspace tests and 541 Rust tests with
+one ignored case. Those results cover that head, not this subsequent proposal.
+
+The [root manifest/OCI companion](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
+now defines a strict root-controlled anchor, canonical manifest commitment,
+current daemon/kernel instance association, exact artifact/provenance records
+and raw OCI config/manifest/optional-index parent links. Profile/caller digests
+are content expectations, not root authority. A hashed provenance file binds
+its identity; its build/current-instance assertion uses the accepted trusted
+root boundary. No signature, remote attestation, hostile-host protection,
+certification or actual installed-image proof is claimed.
+
+Exact Moby create/start/Inspect source confirms a pre-start `none` endpoint
+placeholder, allocated Ports/Networks objects and a tracked-only Mounts array.
+Generated metadata/OCI mounts require native observations; API image Config
+re-encoding cannot authenticate raw config ImageID or parent links. The
+[Docker companion](architecture/headless-resource-enforcement/docker-source-spec.md)
+records these positive-case corrections and source-defined omission/default
+limits. Complete nested projections and exact selected normalization still
+remain open.
+
+This is documentation only. Full native source freeze still requires the
+closed nested API allowlist, complete immutable realized mount/device/environment
+and negative-probe recipe, actual reviewed pins and coherent independent
+review. No native verifier, preparation journal, atomic bootstrap, protected
+generation/epoch/stop/revocation, monitoring, runtime, package or V1 completion
+is supplied. Phase 11 status authority and execution gates remain unchanged.
+For this documentation delta, artifact-shape checks passed 3/3, exact-doc
+formatting and diff checks passed, direction validation passed 31 tests with
+175 Markdown files, public readiness checked 906 files, and refreshed inventory
+remained 2,122 occurrences across 295 files. Unchanged Phase 11 readiness passed
+43/43 with execution closed. Fresh independent OpenAI Terra xhigh read-only
+review of the complete eight-file proposal found no remaining actionable
+P1/P2/P3 after the controller clarified the ext4-versus-native virtual-filesystem
+scope and explicit current-kernel trust bridge. This PASS covers the proposed
+grammar/source facts only; full source freeze and new exact-head hosted CI
+remain separate gates. Unchanged source suites are the prior exact-head
+results above, not newly run tests of a live verifier.
+
 ### HCFG-6 acceptance reconciliation checkpoint
 
 The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,

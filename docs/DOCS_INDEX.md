@@ -83,6 +83,9 @@ subsystem or proposal.
 - [HCFG-6 Docker transport/recipe proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
   — exact tagged API, HTTP/mux framing and positive control assumptions;
   realized recipe and source/run pins remain incomplete.
+- [HCFG-6 root manifest/OCI custody proposal](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
+  — root-controlled anchor, current daemon/artifact association and raw OCI
+  parent links; no provisioning, live proof or full-freeze approval.
 - [HCFG-6 synthetic startup vectors](architecture/headless-resource-enforcement/startup-golden-vectors.md)
   — reproducible proposed encoding examples; no OS observation or authority.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)

@@ -62,6 +62,12 @@ The separate `engine` object has exactly:
 | `verifier_git_executable_path`   | Canonical absolute path, at most 4,096 bytes; approved stable host Git executable for later semantic use, never bootstrap. |
 | `verifier_git_executable_digest` | Exact installed verifier artifact digest, checked before/after actual use.                                                 |
 
+The [root manifest companion](root-manifest-source-spec.md) defines the
+implementation-manifest digest domain and root-controlled custody, recipe
+registry, current daemon association and OCI raw-byte parent links. Profile
+path/digest fields alone are content expectations, not evidence of root trust.
+Its actual pins remain unset and block activation.
+
 The separate `headless` object has exactly:
 
 ```text

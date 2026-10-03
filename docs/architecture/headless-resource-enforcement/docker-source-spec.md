@@ -188,12 +188,78 @@ Required security projections are:
 | Image    | Id equal config ImageID; exact config/manifest/optional-index association and platform; immutable Entrypoint/Cmd/User/Env/WorkingDir/Volumes/Healthcheck/OnBuild/Shell/labels matched to recipe. Tags or RepoDigests alone do not authenticate association.                                              |
 | Create   | Exactly one Id and Warnings empty; returned ID then undergoes full own-object inspection.                                                                                                                                                                                                                |
 | Inspect  | Id, Name, Image, Path/Args, State, Config, HostConfig, Mounts, AppArmorProfile, ProcessLabel/MountLabel, NetworkSettings, RestartCount and image-manifest descriptor match recipe/current object. Host PID/start ticks and cgroup/native namespace associations are independently observed.              |
-| Wait     | Exactly StatusCode plus Error (absent/null or exact documented nullable Message shape). Normal completion requires 0 and no error; termination/uncertainty never produces success.                                                                                                                       |
+| Wait     | Normal completion is exactly `{"StatusCode":0}`. The tagged response omits a nil Error pointer; present/null Error or another exit status denies success. Termination/uncertainty never produces success.                                                                                                |
+
+The [root manifest/OCI companion](root-manifest-source-spec.md) defines the
+authenticated raw config/manifest/optional-index parent-link comparison that
+the fixed Image Inspect call cannot supply. Exact source's
+[image response type](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image_inspect.go)
+makes `Descriptor` conditional on the multi-platform store; `Manifests` also
+requires an option this private request never sends. Do not require those
+fields unconditionally, or reconstruct a config ImageID from API Config JSON.
+Image RootFS layer DiffIDs and platform/config projections must agree with the
+held raw config and complete reviewed image recipe. Tags/RepoDigests remain
+non-authoritative. Root/daemon trust and later actual image proof still apply.
 
 The exact API-schema informational-path allowlist, daemon-normalized nullable
-shapes, image-manifest/index readback and nested NetworkSettings/resource
-defaults remain review items. This table does not silently treat the entire
-schema as harmless metadata or claim those remaining projections are frozen.
+shapes and remaining nested NetworkSettings/resource defaults are still review
+items. This table does not silently treat the entire schema as harmless
+metadata or claim those remaining projections are frozen.
+
+### Exact Inspect construction facts
+
+The tagged [Wait response](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/wait_response.go)
+has required int64 StatusCode and an omitempty Error pointer. Parse error
+objects only through the closed Message field, bound/discard their text and
+deny success; an Error field containing null is not the positive nil encoding.
+
+The tagged [Inspect builder](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/inspect.go)
+copies current Config/HostConfig/State, merges daemon Ulimits into HostConfig,
+allocates Ports and Networks maps, and copies non-null endpoint configurations.
+Thus Ports is an object, not null; an empty create-time network map must not be
+invented for this request. The tagged
+[create path](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/create.go)
+calls `updateContainerNetworkSettings`, whose
+[implementation](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container_operations.go)
+inserts a non-null empty EndpointSettings object under NetworkName. The
+[Linux helper](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig_unix.go)
+maps `none` to the `none` predefined network. Before first start, Networks
+contains exactly that placeholder; SandboxID/SandboxKey are empty. The
+[start path](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/start.go)
+creates the sandbox and sets its IDs before OCI spec construction. After start,
+endpoint operational fields need their source-defined comparison; do not
+require Networks `{}` or guess empty IDs. Native private-network/loopback
+observations remain necessary.
+
+Inspect `Mounts` comes from
+[`GetMountPoints`](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/container_unix.go),
+which allocates a non-null empty slice and enumerates only tracked MountPoints.
+Preparation therefore expects `[]`; action expects exactly the tracked owner
+bind. Generated `/etc/hosts`, `/etc/hostname`, `/etc/resolv.conf` and built-in
+OCI mounts are absent from that array. The same source's NetworkMounts builds
+the generated metadata mounts readonly for this readonly-root/no-override
+recipe. Their actual rows, sources and flags require native observation.
+MountPoint has no response flag proving requested NonRecursive; actual mount
+inventory must exclude inherited submounts.
+
+Most [HostConfig/Resources fields](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go)
+have no omitempty. Nil arrays/pointers serialize null; zero Windows-specific
+scalars still serialize on Linux. Do not forbid their keys by platform or
+accept missing/null/empty interchangeably. The tagged
+[Linux create normalization](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/create_unix.go)
+fills nil MaskedPaths/ReadonlyPaths with OCI defaults. Inspect merges daemon
+Ulimits even if the request list is empty. Exact selected normalization and
+daemon defaults must be accounted for before the complete projection passes.
+
+Info SecurityOptions uses exact tagged strings, including
+`name=apparmor,profile=default` when the daemon has no custom AppArmor path,
+plus `name=seccomp,profile=<selected source value>` and conditional cgroupns.
+The [constructor](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/info.go)
+also conditionally emits SELinux/userns/rootless/no-new-privileges entries;
+the entire ordered array must match the reviewed recipe. Info's Architecture
+and Version's Go Arch need the exact selected mapping. Runtime options,
+authorization/CDI/NRI hooks and storage mode cannot be discarded as generic
+informational maps; their explicit closed paths remain a full-freeze item.
 
 State inspection before start requires created/not running, positive fixed
 object association and no health/restart/exec activity. After start require
@@ -245,9 +311,10 @@ generic "all namespaces private" claim is made.
 ## Remaining full-freeze evidence
 
 This source contract resolves routes, framing, positive create controls and
-exact-source namespace/device assumptions. It does not complete the full
-freeze. Remaining items are the closed nested response-path allowlist,
-root-manifest field/anchor/provenance grammar, complete realized mount/device
+exact-source namespace/device assumptions. The root companion now specifies
+the proposed manifest field/anchor/provenance and raw OCI parent-link grammar.
+Neither completes the full freeze. Remaining items are the closed nested
+response-path allowlist, complete realized mount/device
 and environment recipe, fixed negative-probe procedures, independent golden
 profile/wire bytes, actual artifact pins and coherent independent review.
 Any unset artifact/recipe/anchor blocks activation and runtime proof. No

@@ -6,7 +6,8 @@ is unchanged. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runti
 owns acceptance and implementation truth. This document and the linked
 [preparation/store specification](preparation-store-source-spec.md),
 [startup wire specification](startup-wire-source-spec.md) and
-[Docker recipe specification](docker-source-spec.md) form one freeze. No
+[Docker recipe specification](docker-source-spec.md), with the
+[root manifest/OCI custody specification](root-manifest-source-spec.md), form one freeze. No
 companion independently opens activation or runtime execution.
 
 ## Source ownership and integration order
@@ -215,6 +216,12 @@ budget: checked `quota*1000 <= millicores*period`, `cpu.max.burst=0`, finite
 files and membership are rechecked before release; usage/weights do not pass.
 
 ## Root implementation manifest and current daemon association
+
+The [root manifest companion](root-manifest-source-spec.md) owns the exact
+envelope, canonical commitment, artifact records, current-instance tokens and
+raw OCI custody/parent-link grammar. This section owns the native observation
+method. Both must agree; neither caller bytes nor a profile digest authenticates
+root provenance. Its strict registry and actual artifact pins remain unset.
 
 Manifest bootstrap cannot use the ACL-absence classifier it is about to
 authenticate. Start from the separately reviewed explicit root-manifest anchor,
