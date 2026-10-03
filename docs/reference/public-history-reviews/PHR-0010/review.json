@@ -1,0 +1,68 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0010-independent-implementation-review-82ff783d",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-owner-current-credential-c1"],
+  "base_revision": "fadb6d91e07c7a247badd4174ca7accb87d8c84f",
+  "reviewed_revision": "82ff783d4ab8d09deeac52ae50ad157190be7cfd",
+  "reviewed_tree_oid": "f9aed8fc02750664c11072a605e431f77385753b",
+  "diff_sha256": "sha256:6b327ea3c06417dac55e8ba17265bdc3ff5fb2345356e94d43373764193c0378",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:0d6f6a0294fe05de160530f20c12413e4cb52ff73c46111d588ab39cbac2db63"
+    },
+    {
+      "path": "crates/lnsat-store/src/owner_decision_credential.rs",
+      "sha256": "sha256:70ede73a3660d8cd07b5b4ef7e62189f4b9273b7978beeb5450bf4409172f041"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:711f9056292bb32ae88ff94fdcba655c0091acf16e25412ed07c4aee55a610e6"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/owner_decision_credential.rs",
+      "sha256": "sha256:e74a1be361117668781d26ac73f446d15b375b727b6fba09d05a778159d272a8"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:a750b30e6d8d76ed96cbc62272555bebae897a8716559adcef9b5076d6855098"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:555a2ef388ae779c82ea0a55783a05e512712f6597889354465a9277473d12e5"
+    },
+    {
+      "path": "docs/architecture/headless-owner-decision/credential-source-spec.md",
+      "sha256": "sha256:14e4892f5759bb4490afa8c0faca01357f9503e3abb8eff32a6cf47d3e83523e"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:750976ed24d082d413d51b002fdd7d4798469cf5598522352f8fbe92501df4f1"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:ff396c1af2acad59daec09f1f306fbd1720a500dafe5f3e4790e0c59629d657b"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/hcfg5c_c1_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only exact-source, tests, documentation, validation and Git binding review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0010-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The documentation index retained pending review and broad validation text after Project Status recorded terminal source review and full-check success. Corrected the index in the unpublished reviewed source commit and regenerated its inventory; production and test blobs remain byte-exact to the fully validated source.",
+      "resolution_revision": "82ff783d4ab8d09deeac52ae50ad157190be7cfd"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
