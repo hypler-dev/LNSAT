@@ -305,6 +305,13 @@ runtime/conformance work, not passed by the five sentinels above. An external
 RLIMIT/allocation failure is not cgroup proof; a missing positive/negative
 resource result must never be converted to PASS.
 
+The [controlled pressure proof proposal](pressure-proof-source-spec.md)
+defines three fixed future test-only cases, independent host/counter
+observations, positive anchors, finite stimuli and own-object cleanup.
+It leaves normal preparation and action protocols unchanged. Exact helper/
+driver source review, immutable pins, feasible actual outcomes and explicit
+disposable conformance authorization remain required; no pressure ran here.
+
 ## Remaining complete-freeze gates
 
 This companion supplies a bounded target for implementation review. Before

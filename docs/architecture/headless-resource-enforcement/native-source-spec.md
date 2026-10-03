@@ -235,7 +235,10 @@ iteration before any mutation/child, reject invalid UTF-8, excess bytes,
 duplicate/unexpected keys, and compare its exact ordered wire array. Fixed
 non-destructive preparation sentinels do not prove every syscall or cgroup
 pressure behavior. The complete registry, kernel/snapshotter normalization,
-image inventory, safe probe methods and actual pins remain blocking.
+image inventory, safe probe methods and actual pins remain blocking. The
+[pressure proof companion](pressure-proof-source-spec.md) specifies a proposed
+separate test-only lane; its new ancestor/event/membership reads need exact
+private decoder review and never widen ordinary native observation or startup.
 
 ## Root implementation manifest and current daemon association
 

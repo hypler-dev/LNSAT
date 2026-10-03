@@ -743,6 +743,43 @@ CI [run `37122640734`](https://github.com/hypler-dev/LNSAT/actions/runs/37122640
 job `111201633544`, on 2026-10-03. Draft PR #75 remains open; this result does
 not accept the source-order amendment or complete native freeze.
 
+### HCFG-6 controlled resource-pressure proposal checkpoint
+
+Exact draft PR #75 head `6c65a2bd5e388222e149ad2d5250516bf7b9afe6` passed
+hosted source CI [run `37123949018`](https://github.com/hypler-dev/LNSAT/actions/runs/37123949018),
+job `111205384429`, on 2026-10-03. This covers the preceding result-only
+dependency checkpoint, not the following procedure proposal. Fetched public
+main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`; canonical checkpoint
+is clean. The source-order amendment remains pending human acceptance.
+
+The [pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
+defines three fixed future test-only CPU/memory/PID cases with positive anchors,
+finite stimuli and independent host kernel/cgroup evidence. Linux v6.8 source
+distinguishes period bandwidth, local/hierarchical memory events, any-source
+OOM kill counts and PID denial caused by a leaf or ancestor. Limits, errnos,
+sampled usage or helper output alone do not pass. Exact own-case identity,
+bounded current observations, controlled host/ancestor eligibility and
+cleanup/quarantine are required; an inconclusive result stops the series.
+
+Normal preparation remains one thread with its five non-destructive sentinels.
+The proposed pressure helper never enters the product registry, startup wire,
+ordinary preparation journal or bootstrap transaction. Exact test-only source/
+decoder/custody review, pending staging acceptance, immutable artifact pins
+and separately authorized disposable proof remain required. No source helper,
+pressure, Docker, host configuration or runtime result is added. Full native
+freeze, actual startup/action proof, package and enterprise/government assurance
+remain incomplete. Phase 11 stays `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`.
+
+For this procedure proposal, artifact shapes passed 3/3, direction passed 31
+tests (180 Markdown files), public readiness checked 911 files, inventory
+remained 2,122 occurrences across 295 files, and unchanged Phase 11 readiness
+passed 43/43 with execution closed. Exact-doc formatting and diff checks
+passed; all four copied Linux research-source hashes matched. Fresh independent
+OpenAI Terra xhigh review found no actionable P1/P2/P3 in the seven-file proposal.
+This is conditional procedure/source-feasibility evidence, not an actual
+pressure outcome, accepted source-order amendment or complete native freeze.
+New exact-head hosted CI remains a separate gate.
+
 ### HCFG-6 acceptance reconciliation checkpoint
 
 The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,

@@ -93,6 +93,9 @@ subsystem or proposal.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.
+- [HCFG-6 controlled resource-pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
+  — separate future CPU/memory/PID cases, bounded stimuli, independent events
+  and exact cleanup; no normal preparation pressure or actual conformance run.
 - [Proposed HCFG-6 source-freeze staging amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
   — reviewed inert source, separately authorized artifact capture, complete
   source/pin freeze before integration; owner acceptance remains pending.
