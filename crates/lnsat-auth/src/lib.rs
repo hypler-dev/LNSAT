@@ -13,7 +13,7 @@ use core::fmt;
 use sha2::{Digest, Sha256};
 use std::net::IpAddr;
 use subtle::ConstantTimeEq;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 /// Versioned password-verifier profile persisted beside every credential.
 pub const LOCAL_PASSWORD_PROFILE_V1: &str = "lnsat.argon2id.v1";
@@ -487,21 +487,22 @@ pub struct LocalSessionSecretsV1 {
 /// fixed-size profile.
 pub fn create_local_session_secrets_v1() -> Result<LocalSessionSecretsV1, LocalSessionSecretErrorV1>
 {
-    let mut session_id_bytes = [0_u8; LOCAL_SESSION_ID_HEX_BYTES];
-    let mut session_secret_bytes = [0_u8; LOCAL_SESSION_SECRET_BYTES];
-    let mut csrf_secret_bytes = [0_u8; LOCAL_SESSION_SECRET_BYTES];
+    let mut session_id_bytes = Zeroizing::new([0_u8; LOCAL_SESSION_ID_HEX_BYTES]);
+    let mut session_secret_bytes = Zeroizing::new([0_u8; LOCAL_SESSION_SECRET_BYTES]);
+    let mut csrf_secret_bytes = Zeroizing::new([0_u8; LOCAL_SESSION_SECRET_BYTES]);
     OsRng
-        .try_fill_bytes(&mut session_id_bytes)
-        .and_then(|()| OsRng.try_fill_bytes(&mut session_secret_bytes))
-        .and_then(|()| OsRng.try_fill_bytes(&mut csrf_secret_bytes))
+        .try_fill_bytes(session_id_bytes.as_mut_slice())
+        .and_then(|()| OsRng.try_fill_bytes(session_secret_bytes.as_mut_slice()))
+        .and_then(|()| OsRng.try_fill_bytes(csrf_secret_bytes.as_mut_slice()))
         .map_err(|_| LocalSessionSecretErrorV1::CreationFailed)?;
 
     let session_id = format!(
         "{LOCAL_SESSION_ID_PREFIX}{}",
-        encode_lower_hex(&session_id_bytes)
+        encode_lower_hex(session_id_bytes.as_slice())
     );
-    let raw_session_token = format!("{session_id}.{}", encode_lower_hex(&session_secret_bytes));
-    let raw_csrf_token = encode_lower_hex(&csrf_secret_bytes);
+    let session_secret_hex = Zeroizing::new(encode_lower_hex(session_secret_bytes.as_slice()));
+    let raw_session_token = format!("{session_id}.{}", session_secret_hex.as_str());
+    let raw_csrf_token = encode_lower_hex(csrf_secret_bytes.as_slice());
     let session_token_digest =
         domain_separated_sha256("lnsat.local_session.token.v1", &raw_session_token);
     let csrf_token_digest = domain_separated_sha256("lnsat.local_session.csrf.v1", &raw_csrf_token);
