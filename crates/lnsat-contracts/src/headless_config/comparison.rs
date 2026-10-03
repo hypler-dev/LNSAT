@@ -7,6 +7,13 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{self, Write as _};
 
+#[path = "comparison_view.rs"]
+mod view;
+pub use view::{
+    HEADLESS_COMPARISON_VIEW_MODEL_SCHEMA_V1, HeadlessComparisonViewModelV1,
+    MAX_HEADLESS_COMPARISON_VIEW_MODEL_BYTES_V1,
+};
+
 const MAX_SAFE_INTEGER_V1: u64 = 9_007_199_254_740_991;
 const MAX_RESOURCES_V1: usize = 128;
 const MAX_RULES_V1: usize = 1_280;
@@ -616,6 +623,7 @@ pub struct HeadlessComparisonResultV1 {
     class: HeadlessComparisonModelClassV1,
     commitment: Option<String>,
     summary: Option<HeadlessComparisonSummaryV1>,
+    view_model: Option<HeadlessComparisonViewModelV1>,
 }
 
 impl fmt::Debug for HeadlessComparisonResultV1 {
@@ -640,6 +648,12 @@ impl HeadlessComparisonResultV1 {
     #[must_use]
     pub fn summary(&self) -> Option<&HeadlessComparisonSummaryV1> {
         self.summary.as_ref()
+    }
+
+    /// Explicit sensitive model material, not an authenticated owner view or grant.
+    #[must_use]
+    pub fn view_model(&self) -> Option<&HeadlessComparisonViewModelV1> {
+        self.view_model.as_ref()
     }
 
     /// Public-safe metadata only. No refs, identity/evidence digests, context, or declarations escape.
@@ -764,10 +778,12 @@ fn result_from_changes(
         rule_changes,
     };
     let commitment = commitment(old, candidate, class, &summary);
+    let view_model = view::build_view_model(old, candidate, class, &commitment, &summary);
     HeadlessComparisonResultV1 {
         class,
         commitment: Some(commitment),
         summary: Some(summary),
+        view_model,
     }
 }
 
@@ -776,6 +792,7 @@ fn unverifiable() -> HeadlessComparisonResultV1 {
         class: HeadlessComparisonModelClassV1::Unverifiable,
         commitment: None,
         summary: None,
+        view_model: None,
     }
 }
 
