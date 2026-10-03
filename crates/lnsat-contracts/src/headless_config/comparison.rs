@@ -20,12 +20,15 @@ const MAX_RULES_V1: usize = 1_280;
 const MAX_UNION_RESOURCES_V1: usize = 256;
 const MAX_UNION_RULES_V1: usize = 2_560;
 
-/// Only asserted-profile value this source model recognizes.
+/// Existing asserted-profile value this source model recognizes.
 ///
 /// This conditional compatibility check does not inspect Docker, the host, or
 /// any runtime. Unknown values fail closed as `unverifiable`.
 pub const HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V1: &str =
     "lnsat.runtime_profile.docker_local.v1";
+
+const HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V2: &str =
+    "lnsat.runtime_profile.docker_local.v2";
 
 /// Non-authoritative outcome of a pure envelope comparison.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -388,7 +391,11 @@ impl HeadlessComparisonContextV1 {
             && valid_digest(&self.policy_floor_digest)
             && self.stop_revocation_epoch <= MAX_SAFE_INTEGER_V1
             && valid_version(&self.enforcement_profile_version)
-            && self.enforcement_profile_version == HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V1
+            && matches!(
+                self.enforcement_profile_version.as_str(),
+                HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V1
+                    | HEADLESS_COMPARISON_SUPPORTED_ASSERTED_PROFILE_V2
+            )
     }
 
     fn json(&self) -> Value {

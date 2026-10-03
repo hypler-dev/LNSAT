@@ -93,20 +93,22 @@ and authority remain closed.
 
 The HCFG-6 native proposal selects profile contract
 lnsat.runtime_profile.docker_local.v2 with schema_version 3. Persist that actual
-verified contract identity, not the older conditional model's recognized v1
-label. The exact schema, recipe and observed profile bytes must independently
+verified contract identity without mapping it to a v1 label. The exact
+schema, recipe and observed profile bytes must independently
 match the native proof; the version string alone proves none of those facts.
 SQL bounds version syntax; the private native/reader allowlist admits only the
 exact selected backend. Schema2 or a caller-selected version cannot fall back.
 
-Current pure comparison source recognizes only asserted
-lnsat.runtime_profile.docker_local.v1. Authenticated comparison against this
-new backend therefore remains blocked until a separately reviewed bounded
-pure-source compatibility change recognizes the selected exact family while
-retaining every false authority/identity claim. Do not map v2 back to v1 or
-reinterpret a historical generation/profile. No such source change is part
-of B5. This dependency is required for a functioning engine and full source
-freeze, not satisfied by an always-denying authenticated comparison.
+At the B5 design checkpoint pure comparison recognized only asserted v1.
+The separately recorded [pure comparison compatibility slice](../../PROJECT_STATUS.md#hcfg-5a-exact-asserted-profile-compatibility)
+adds exact asserted v2 recognition while retaining every false
+authority/identity claim. This is conditional mathematics, not native
+schema-3 verification or authenticated comparison. The latter still requires
+the private verified-native/current-state builder. Do not map v2 back to v1
+or reinterpret a historical generation/profile. No comparison source change
+is part of B5's SQL contract. These dependencies are required for a functioning
+engine and full source freeze; an always-denying authenticated comparison
+cannot satisfy them.
 
 ### Exact proposed migration body
 

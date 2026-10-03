@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0012-independent-implementation-review-e3a2cb06",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-comparison-exact-asserted-profile-compatibility"],
+  "base_revision": "2fcdbb0d937cddc29f77497e7d38896bb947a23a",
+  "reviewed_revision": "e3a2cb063ef1827c966939f44e7867de6704579e",
+  "reviewed_tree_oid": "0e5ce70d4fe79d93961e176b5468e22774dcff83",
+  "diff_sha256": "sha256:9d59e93940ae4cfe9ee80314b47898b88eb0da5185da23306375729943c8766b",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/comparison.rs",
+      "sha256": "sha256:7706448eb49228a96c5b4e14152465aa0544cab69b88fcd3d932a9e17e6057a8"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/comparison_tests.rs",
+      "sha256": "sha256:a63608516e1c6cd781416bcaeb1be9081250bfb50d5794b30da6ebcfef2110e2"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:6268260157a616f166864913cf8d3c49800fb129b54858189aca0bb7a8972754"
+    },
+    {
+      "path": "docs/architecture/headless-comparison-model/spec.md",
+      "sha256": "sha256:2a7e7b1d1f5dbf31c8f8d5690b208e1a5c7c9b04f9efcaba237e0e0e17157f08"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/schema-source-spec.md",
+      "sha256": "sha256:07ba0cbc962065f42026ae7dad4bca74462489b6ce88c6067b07f6c4509bd223"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/state-source-spec.md",
+      "sha256": "sha256:82197abd852d87f52129563ae7bcd5e8797db28437e258e982ada7ec775e3c06"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:0fe35e499b1abbc2dc32e79e60718aa621cf0cd99cba3068ff7a02622e8b1388"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:fd1cbd4dfe3c84b371fcbc7f3356b9d9231bfa15e0c8843b49a0051bd8c310b8"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/profile_compatibility_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only pure comparison source, tests, documentation, validation and exact Git binding review"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

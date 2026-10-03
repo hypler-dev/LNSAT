@@ -196,6 +196,48 @@ active-generation derivation, HCFG-6, monitoring, activation, merge, and release
 remain separate gates. The Phase 11 operator packet remains runtime authority;
 its source-only preparation verdict is unchanged.
 
+### HCFG-5A exact asserted profile compatibility
+
+Canonical work record: this subsection. The accepted pure-model specification
+requires a separately reviewed source change for each additional recognized
+asserted profile. The bounded V1 prerequisite extends that closed source list
+to exactly `lnsat.runtime_profile.docker_local.v1` and
+`lnsat.runtime_profile.docker_local.v2`. The latter is the selected HCFG-6
+native contract identity. This changes only conditional comparison of supplied
+assertions; it implements no native schema-3 decoder, profile verifier, journal,
+store, initializer or authenticated comparison. It does not accept the pending
+HCFG-6 source-order amendment or open Stage-A implementation.
+
+Both contexts must retain the same exact profile string. Mixed versions and
+unknown or near-match strings deny without a model commitment, summary or
+view. The selected string remains in model/view commitments; existing v1
+golden bytes remain unchanged. Equal, narrowing and widening mathematics must
+work for nonempty matching v2 inputs. Diagnostics retain
+`authority_comparison: unverifiable`, `identity_verified: false`,
+`activation_available: false`, and `grants_action_authority: false`.
+
+The isolated source draft implements this bounded recognition. Thirty focused
+comparison/view tests passed, including unchanged v1 golden commitments,
+nonempty v2 equality/narrowing/widening, both mixed-version directions, matched
+unknown/near-match pairs, stopped v2 and distinct v1/v2 model/view commitments.
+Fresh independent OpenAI Terra xhigh source/test/contract review passed with
+no findings. Full pinned `npm run check` reached terminal exit zero: strict
+Rust formatting/Clippy, all workspace tests/type checks and 1,471 TypeScript
+tests passed. The first restricted run failed 55 daemon listener tests
+(49 `ListenFailed`, six socket `PermissionDenied`); the unchanged suite passed
+when disposable loopback/Unix test sockets were permitted. No production or
+Docker endpoint was used. Local named `p/rust` Semgrep and redacted worktree
+Gitleaks found zero findings; no source/report upload or tool installation
+occurred. Public-history-native exact-byte provenance is required before
+handoff; it grants no runtime or supported-release authority.
+
+This is within the existing accepted pure comparison boundary, not acceptance
+of online apply or native execution. Physical profile/schema verification,
+selected-store custody and current-authority integration remain required.
+The Phase 11 operator packet remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`;
+Docker, host mutation, candidate builds, merge, release and production remain
+closed. V1 and enterprise/government assurance remain incomplete.
+
 ### HCFG-5B B1 fresh-store prerequisite
 
 Canonical implementation record: this section. Under the accepted bootstrap
@@ -537,10 +579,11 @@ unproven. No legacy owner or restored authority acquires headless authority.
 
 Source inspection also found a profile compatibility dependency. HCFG-6's
 native proposal selects contract `lnsat.runtime_profile.docker_local.v2` at
-schema version 3; the existing conditional comparison model recognizes only
-asserted v1. A future generation must retain the actual native profile
-identity. Authenticated comparison remains blocked until a separately
-reviewed pure-model compatibility change; relabeling v2 as v1 or an
+schema version 3; at the B5 checkpoint the conditional comparison model
+recognized only asserted v1. A future generation must retain the actual native
+profile identity. The separately recorded pure-model compatibility slice
+addresses conditional v2 recognition; authenticated comparison still requires
+verified native/current state. Relabeling v2 as v1 or an
 always-denying placeholder cannot close that requirement. B5 changes no
 comparison source or native behavior.
 
@@ -555,6 +598,12 @@ public-history evidence (11 attested, zero pending), and unchanged Phase 11
 readiness (43 tests, execution closed) passed. These are documentation/static
 checks; the unchanged parent source gate passed in PR #78. Actual candidate
 SQL execution, source implementation and runtime proof remain unperformed.
+
+Draft PR #79 is unmerged at exact head
+`2fcdbb0d937cddc29f77497e7d38896bb947a23a`. GitHub readback confirmed
+source-gate CI run `37154531103` and job `111295076082` succeeded at
+`2026-10-03T21:34:42Z`. It validates the supporting source draft, not candidate
+SQL execution, schema identity, initialization or runtime authority.
 
 ## HCFG-6 Resource And Runtime Enforcement Design
 
