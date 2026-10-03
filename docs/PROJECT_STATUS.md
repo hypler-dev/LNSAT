@@ -615,6 +615,49 @@ source-contract and documentation results, not parser/enforcement tests or
 full-freeze approval. New exact-head hosted CI remains separate from the
 preceding green result; unchanged runtime source retains its prior evidence.
 
+### HCFG-6 realized recipe proposal checkpoint
+
+Exact draft PR #75 head `033323b276e1fc874a6fae43c88551275eacc913` passed
+hosted source CI run `37116570533`. This terminal result covers the preceding
+closed-response checkpoint, not the following documentation proposal. Freshly
+fetched public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` and is
+an ancestor of this source chain; the canonical archive checkout remains clean.
+
+The [realized recipe proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md)
+defines finite mount/device predicates, exact initial image/process environment
+and five challenged native denial sentinels. Exact runc v1.5.2 peeled source
+resolves shared directory-mask tmpfs aliases, potentially writable private
+null-device file masks, standard nodes/symlinks, no-TTY setup and mknod-to-host-
+bind fallback. That fallback is excluded from the proposed positive recipe.
+The private wire adds bounded initial environment observations; updated
+synthetic vectors remain unverified encoding examples. CPU bandwidth units are
+explicitly millicores, distinct from wall time and total CPU consumption.
+
+Complete source freeze remains open: actual component/kernel/template/image
+pins are `UNSET_BLOCKING`; the exact registry and derived commitment layouts,
+selected snapshotter/kernel mount normalization, immutable image/library/Git
+inventory, current root-attested mask layout, safe probe methods and controlled
+resource-pressure procedures require further source review. Five sentinels
+cannot prove every denied syscall or resource ceiling. No behavior, native
+verifier, journal, bootstrap, protected control, monitoring or runtime is added.
+There is no change to accepted design or the separate activation gates.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; V1 and enterprise/
+government readiness remain incomplete.
+
+For this documentation delta, artifact-shape checks passed 3/3, direction
+validation passed 31 tests with 177 Markdown files, public readiness checked
+908 files, and inventory remained 2,122 occurrences across 295 files.
+Unchanged Phase 11 readiness passed 43/43 with execution closed. A pinned
+Node verifier reconstructed the displayed synthetic inputs, commitments and
+frame byte counts; a separate structural check covered all 32 recipe table
+rows. Fresh independent OpenAI Terra xhigh review found no remaining P1/P2/P3
+after two vector corrections and one malformed table row were fixed. The
+first vector verifier incorrectly replaced displayed release inputs with
+derived values; it was tightened to reject those mismatches. Its earlier PASS
+is superseded, not enforcement evidence. No native syscall, pressure,
+Docker or live environment test was run. New exact-head hosted CI remains
+separate; prior CI is not evidence for this proposal delta.
+
 ### HCFG-6 acceptance reconciliation checkpoint
 
 The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,

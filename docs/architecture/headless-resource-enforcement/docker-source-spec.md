@@ -116,7 +116,7 @@ remain empty. This repeats the existing effective file-access GID and adds
 no distinct group authority; the complete freeze must review this correction
 to the accepted design's technically infeasible empty-workload-list wording.
 
-Config.Env is the fixed ordered image-recipe list. Docker adds runtime
+Config.Env is the fixed ordered [realized image-recipe list](realized-recipe-source-spec.md#fixed-image-and-actual-process-environment). Docker adds runtime
 PATH/HOSTNAME defaults separately; the complete process-environment recipe
 must account for them without mistaking Config.Env for the actual environment.
 No host/agent environment is merged. The exact list, helper/Git artifacts, labels and image configuration
@@ -306,7 +306,7 @@ mknod and tun device rules. Do not claim its default device cgroup denies every
 host device. No supplied host device node/mount, zero capabilities, immutable
 image inventory and actual finite device/mount observations are all necessary.
 Non-TTY execution has no supplied host console. Exact devpts/ptmx and stdio
-symlinks are part of the still-required realized recipe.
+symlinks are specified by the [realized recipe companion](realized-recipe-source-spec.md#exact-device-and-symlink-inventory).
 
 The tagged Moby default includes a time namespace and removes it only when
 the host reports unsupported. The selected kernel recipe requires it; new
@@ -319,10 +319,14 @@ generic "all namespaces private" claim is made.
 This source contract resolves routes, framing, positive create controls and
 exact-source namespace/device assumptions. The root companion now specifies
 the proposed manifest field/anchor/provenance and raw OCI parent-link grammar.
-Neither completes the full freeze. Remaining items are the closed nested
-response-path allowlist, complete realized mount/device
-and environment recipe, fixed negative-probe procedures, independent golden
-profile/wire bytes, actual artifact pins and coherent independent review.
+Neither completes the full freeze. The response companion now defines the
+closed nested path/type proposal; synthetic vectors define profile/wire
+encoding examples. The realized companion adds finite mount/device/environment
+predicates and five non-destructive probe procedures. Remaining items include
+the complete registry/actual artifact pins, literal selected-kernel/snapshotter
+mount normalization, image/helper inventory, current root-attested mask layout,
+resource-pressure procedures and coherent independent review. Proposal closure
+does not supply a live parser, verifier or actual resource proof.
 Any unset artifact/recipe/anchor blocks activation and runtime proof. No
 behavioral integration starts by treating this proposed companion as PASS.
 

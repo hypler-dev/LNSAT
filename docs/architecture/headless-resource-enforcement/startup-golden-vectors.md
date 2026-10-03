@@ -49,7 +49,7 @@ Each vector is an independent encoding fixture, not a valid startup/release
 sequence. Assertions, native facts, profile/candidate digests and request
 bindings are deliberately unauthenticated. The native example also fails
 actual recipe/budget checks (synthetic AppArmor label, incomplete mounts/devices,
-no loopback and CPU quota above its one-millicore fixture ceiling). A source
+no loopback, and CPU quota above its one-millicore fixture ceiling). A source
 decoder may use its bytes for canonicalization tests; a live observer or
 release guard must reject it. No positive-observation claim follows.
 The UUID values use lowercase UUIDv4 syntax; `channel_id`, `challenge`, and
@@ -208,8 +208,12 @@ context object, and 1189 bytes including LF. The preparation frame uses
 preparation context object, and 984 bytes including LF. Their canonical envelope fields are the
 six exact top-level fields from the wire specification:
 `contract_id`, `contract_version`, `schema_version`, `message_type`,
-`context`, `payload`. The preparation challenge is syntax-only; preparation
-negative-check grammar remains unfrozen.
+`context`, `payload`. The preparation challenge is syntax-only; it has no
+`negative_checks` field. The deferred preparation-observation payload's
+`negative_checks` field now has the exact five-record ordered grammar: each
+record contains only `id` and positive `errno`, with IDs and errno values fixed
+by the realized recipe. This synthetic document does not claim any actual
+syscall result or positive probe evidence.
 
 The exact compact canonical challenge objects (before their one LF frame byte)
 are:
@@ -245,7 +249,19 @@ proof.
     "seccomp_mode": 2,
     "scheduler_policy": 0,
     "executable_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-    "inherited_fds": [0, 1, 2]
+    "inherited_fds": [0, 1, 2],
+    "environment": [
+      "PATH=/usr/bin",
+      "HOSTNAME=lnsat",
+      "LANG=C",
+      "LC_ALL=C",
+      "HOME=/nonexistent",
+      "GIT_CONFIG_NOSYSTEM=1",
+      "GIT_CONFIG_GLOBAL=/dev/null",
+      "GIT_TERMINAL_PROMPT=0",
+      "GIT_NO_REPLACE_OBJECTS=1",
+      "GIT_ATTR_NOSYSTEM=1"
+    ]
   },
   "namespaces": {
     "user": { "device": 10, "inode": 20 },
@@ -313,18 +329,21 @@ proof.
 ```
 
 Observation input is `[action_startup_digest, native]` under domain
-`lnsat.hcfg_startup_observation.v2`. Its canonical input byte count is 1940
+`lnsat.hcfg_startup_observation.v2`. Its canonical input byte count is 2156
 and digest is
-`sha256:2b4a62899363f49272ff211eafa1eda0d12b7d7dd176c858eaa8fcad3859d810`.
-The complete action observation frame is 3042 bytes including LF. The frame
+`sha256:03747186479a16e66c32ade220d0f258838f2a319e43fe9a1fd249237605e57b`.
+The complete action observation frame is 3258 bytes including LF. The frame
 uses the full closed action context object and the specification's
 `startup_digest`, `observation_digest`, and `native` fields.
 
-The preparation observation is intentionally deferred. The current wire spec
-does not freeze the `negative_checks` grammar or exact check IDs, so no vector
-here labels `negative_checks:[]` as a valid probe result. The native object is
-still a decoder fixture; its `[1000]` groups array is not claimed as live
-runtime proof while that review remains open.
+The preparation observation is intentionally deferred. The frozen
+`negative_checks` grammar requires exactly these five ordered records, each
+with only `id` and positive `errno`: `mount_tmpfs_root`/`1`,
+`unshare_mount_namespace`/`1`, `setuid_root`/`1`,
+`create_root_sentinel`/`13` or `30`, and `connect_test_net`/`101`. No vector
+here claims those syscall results or labels any synthetic array as a valid
+probe result. The native object remains a decoder fixture; its `[1000]` groups
+array is not claimed as live runtime proof.
 
 ## Release and result inputs
 
@@ -333,7 +352,7 @@ Release input under `lnsat.hcfg_action_release.v2` is:
 ```json
 [
   "sha256:fc4ed54e6f5120fc10ba25faf79965c03e3299f60d75e643972d33440c3c8829",
-  "sha256:2b4a62899363f49272ff211eafa1eda0d12b7d7dd176c858eaa8fcad3859d810",
+  "sha256:03747186479a16e66c32ade220d0f258838f2a319e43fe9a1fd249237605e57b",
   "550e8400-e29b-41d4-a716-446655440001",
   "sha256:4444444444444444444444444444444444444444444444444444444444444444",
   {
@@ -385,7 +404,7 @@ Release input under `lnsat.hcfg_action_release.v2` is:
 ```
 
 Its digest is
-`sha256:15f55b8f3e656b8a12c195048356899d340bb07632b3664449f8ba7cb4621c04`.
+`sha256:0bbe946c6d81b5aeb1eb0e68eec205ec1230b9d5850fdda167a3a870ed5cbb9b`.
 The canonical action-release frame is 3185 bytes including LF.
 
 Result inputs under `lnsat.hcfg_action_result.v2` are:
@@ -432,7 +451,7 @@ envelope and payload, including the full approved-request object:
 | ----------------------- | -----------------: |
 | `action_challenge`      |               1189 |
 | `preparation_challenge` |                984 |
-| `action_observation`    |               3042 |
+| `action_observation`    |               3258 |
 | `action_release`        |               3185 |
 | `result_completed`      |               1237 |
 | `result_unknown`        |               1174 |

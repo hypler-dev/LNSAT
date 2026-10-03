@@ -86,6 +86,10 @@ subsystem or proposal.
 - [HCFG-6 closed Docker response proposal](architecture/headless-resource-enforcement/docker-response-source-spec.md)
   — nested response types, typed compare/discard/forbid paths and exact source
   normalization; no live parser, verifier or complete-freeze approval.
+- [HCFG-6 realized mount/device/environment/probe proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md)
+  — finite built-in predicates, actual environment observation and five narrow
+  preparation sentinels; pins, literal kernel/snapshotter normalization,
+  image inventory, pressure procedures and complete-freeze review remain open.
 - [HCFG-6 root manifest/OCI custody proposal](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
   — root-controlled anchor, current daemon/artifact association and raw OCI
   parent links; no provisioning, live proof or full-freeze approval.

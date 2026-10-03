@@ -7,7 +7,8 @@ owns acceptance and implementation truth. This document and the linked
 [preparation/store specification](preparation-store-source-spec.md),
 [startup wire specification](startup-wire-source-spec.md),
 [Docker recipe specification](docker-source-spec.md), its
-[closed response grammar](docker-response-source-spec.md) and the
+[closed response grammar](docker-response-source-spec.md), the
+[realized mount/device/environment/probe predicates](realized-recipe-source-spec.md) and the
 [root manifest/OCI custody specification](root-manifest-source-spec.md), form one freeze. No
 companion independently opens activation or runtime execution.
 
@@ -215,6 +216,16 @@ necessary. Live cgroup ceilings are finite and within the narrowed action
 budget: checked `quota*1000 <= millicores*period`, `cpu.max.burst=0`, finite
 `memory.max` and `pids.max`, `memory.swap.max=0`, fair scheduler. Controller
 files and membership are rechecked before release; usage/weights do not pass.
+
+The [realized recipe companion](realized-recipe-source-spec.md) distinguishes
+readonly directory masks from possible writable private `/dev/null` file
+masks, shared mask-tmpfs aliases, runc device-bind fallback and actual initial
+process environment. Observe the latter with bounded native environment
+iteration before any mutation/child, reject invalid UTF-8, excess bytes,
+duplicate/unexpected keys, and compare its exact ordered wire array. Fixed
+non-destructive preparation sentinels do not prove every syscall or cgroup
+pressure behavior. The complete registry, kernel/snapshotter normalization,
+image inventory, safe probe methods and actual pins remain blocking.
 
 ## Root implementation manifest and current daemon association
 
