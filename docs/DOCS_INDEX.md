@@ -64,6 +64,9 @@ subsystem or proposal.
 - [HCFG-5C C1 credential source specification](architecture/headless-owner-decision/credential-source-spec.md)
   — current owner credential prerequisite is source implemented; independent
   review and full source validation passed; no configuration authority.
+- [HCFG-5C C2 complete comparison view specification](architecture/headless-owner-decision/view-source-spec.md)
+  — complete conditional model view source implemented; focused and full source
+  validation passed; no authenticated comparison or owner-decision authority.
 - [Accepted HCFG-6 resource/runtime enforcement](architecture/headless-resource-enforcement/intent.md)
   — explicit owner binding and observed nonempty target/OS control boundary;
   owner design accepted; detailed source freeze and full enforcement implementation pending.

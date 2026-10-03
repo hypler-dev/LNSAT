@@ -312,7 +312,11 @@ dependency directories. Restoring those dependency links required no install,
 manifest or lockfile change. The terminal run covers all 100 daemon tests and
 the complete Rust/TypeScript source gates; neither earlier failure is rewritten
 as a pass or claimed as a code fix. This remains an unmerged source draft, and
-exact-head hosted CI is a separate result.
+exact-head hosted CI run
+[37145456578](https://github.com/hypler-dev/LNSAT/actions/runs/37145456578)
+succeeded for draft PR #76 head
+`cad0d35fe5a20366679557d89dcada217f63dbe3` on 2026-10-03. Hosted source
+verification does not open runtime or support.
 Git-bound review registration is `PHR-0010` in the
 [public-history review registry](reference/public-history-reviews/registry.json).
 
@@ -321,6 +325,50 @@ installation, generation, resource, or activation authority. Runtime/V1/FIPS,
 MFA, and government-assurance gates remain incomplete. Phase 11 packet status
 authority is unchanged, and no merge, release, runtime, production, or
 deployment action follows from this source slice.
+
+### HCFG-5C C2 complete comparison view prerequisite
+
+Canonical implementation record: this section. The [C2 complete-view source
+specification](architecture/headless-owner-decision/view-source-spec.md) is
+frozen under the accepted HCFG-5C baseline at exact head
+`0d5db17a1de7fdbd40abcfe4ddf901a39e89e160`. The bounded C2 source slice is
+implemented. Preliminary contract review passed; independent source review
+found no source defects, and its stale documentation-index wording finding was
+corrected in this packet. This record does not create a second acceptance
+authority or accept new authority.
+
+C2 defines a closed complete conditional model view over the accepted HCFG-5A
+comparison result. The view includes every changed resource and rule field,
+all eight asserted context fields, old and candidate declaration digests, and
+a distinct model-view digest. Resource and rule changes remain complete and
+sorted; nullable sides are explicit, and no filtering, pagination,
+abbreviation, or ellipsis is permitted.
+
+The canonical JSON view has an inclusive 131,072-byte cap and a bounded writer
+that exposes no partial output on overflow. The existing comparison model,
+classifications, commitment, summary, supported asserted profile, and redacted
+diagnostic remain unchanged. The view is source-only in-memory model material;
+it is not a supported wire or profile contract.
+
+Ten focused view tests, strict contract-crate Clippy, pinned Rust formatting
+and full `npm run check` passed. The full gate covered 88 contract unit tests,
+13 contract conformance tests, 251 store tests and all 100 daemon tests, plus
+the complete TypeScript and source-conformance gates. Documentation, public
+readiness and refreshed inventory checks passed. The named local Rust scan
+found no findings. Worktree secret scanning reported one confirmed false
+positive in ignored generated metadata: the pinned Ed25519 library documents
+a PEM begin marker without any key body. The complete documentation line
+matches its pinned library source; no application secret was found and no rule
+was suppressed. Dependencies, lockfiles and schema 17 are unchanged. Git-bound
+independent source review is registered as `PHR-0011` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+This remains an unmerged source draft; exact-head hosted CI is a separate gate.
+
+C2 creates no authenticated server view, current-state derivation, consent,
+confirmation, challenge, session, decision, candidate generation, or action
+authority. No schema, route, storage, migration, runtime, package, release,
+deployment, or production state follows from this prerequisite. Full HCFG-5C,
+HCFG-6, V1, and enterprise/government assurance remain incomplete.
 
 ### HCFG-5B B3A custody readiness withdrawn
 
