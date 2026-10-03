@@ -33,9 +33,11 @@ use std::fs::{self, File, OpenOptions, TryLockError, symlink_metadata};
 use std::io::{self, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
+use zeroize::Zeroizing;
 
 mod headless_bootstrap;
 mod owner_bootstrap;
+mod owner_decision_credential;
 mod phase7_consumption;
 mod phase7_git_adapter;
 mod phase7_nonce;
@@ -2281,6 +2283,7 @@ pub struct SqliteStore {
     database_path: PathBuf,
     connection: Connection,
     authentication_dummy_verifier: String,
+    owner_decision_credential_scope: owner_decision_credential::OwnerDecisionCredentialScopeV1,
     // Declaration-order drop closes SQLite before releasing custody/lease.
     selected_store_custody: Option<selected_store::SelectedStoreCustodyV1>,
 }
@@ -2385,6 +2388,8 @@ impl SqliteStore {
             database_path: database_path.to_path_buf(),
             connection,
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+            owner_decision_credential_scope:
+                crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
             selected_store_custody: None,
         };
         store.apply_pending_migrations()?;
@@ -2624,17 +2629,35 @@ impl SqliteStore {
         identity_ref: &str,
         password: &str,
     ) -> Result<LocalCredentialVerificationV1, LocalIdentityStoreErrorV1> {
-        let verification = self.verify_local_password_credential_v1(identity_ref, password)?;
-        if verification != LocalCredentialVerificationV1::Verified {
-            return Ok(verification);
-        }
-        let Some(identity) = select_local_identity_v1(&self.connection, identity_ref)? else {
-            return Err(LocalIdentityStoreErrorV1::EvidenceDrift);
-        };
-        if identity.role != LocalIdentityRoleV1::Owner {
+        let Some(snapshot) = owner_decision_credential::prepare_current_owner_credential_v1(
+            self,
+            identity_ref,
+            password,
+        )?
+        else {
             return Ok(LocalCredentialVerificationV1::Rejected);
+        };
+        let transaction = self
+            .connection
+            .unchecked_transaction()
+            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
+        self.verify_schema()
+            .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
+        let recheck = owner_decision_credential::recheck_current_owner_credential_v1(
+            self,
+            &transaction,
+            &snapshot,
+        );
+        transaction
+            .rollback()
+            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
+        match recheck {
+            Ok(()) => Ok(LocalCredentialVerificationV1::Verified),
+            Err(LocalIdentityStoreErrorV1::AuthorizationRejected) => {
+                Ok(LocalCredentialVerificationV1::Rejected)
+            }
+            Err(error) => Err(error),
         }
-        Ok(LocalCredentialVerificationV1::Verified)
     }
 
     /// Verifies one active local human credential without role widening.
@@ -4766,13 +4789,12 @@ struct StoredLocalIdentityEventRow {
     event_evidence_digest: String,
 }
 
-#[derive(Debug)]
 struct StoredLocalPasswordCredentialRow {
     credential_id: String,
     identity_ref: String,
     credential_version: i64,
     verifier_profile: String,
-    password_verifier: String,
+    password_verifier: Zeroizing<String>,
     created_at: String,
 }
 
@@ -5008,7 +5030,7 @@ fn select_local_password_credentials_v1(
                 identity_ref: row.get(1)?,
                 credential_version: row.get(2)?,
                 verifier_profile: row.get(3)?,
-                password_verifier: row.get(4)?,
+                password_verifier: Zeroizing::new(row.get(4)?),
                 created_at: row.get(5)?,
             })
         })
@@ -13391,6 +13413,8 @@ mod tests {
             database_path: database.path.clone(),
             connection,
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+            owner_decision_credential_scope:
+                crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
             selected_store_custody: None,
         };
         let (packet, policy, request, decision) = approval_decision_fixture();
@@ -18339,6 +18363,7 @@ mod tests {
 
     mod headless_bootstrap;
     mod owner_bootstrap_transaction;
+    mod owner_decision_credential;
     mod phase7_atomic_consumption;
     mod phase7_git_adapter;
     mod phase7_local_authorization;

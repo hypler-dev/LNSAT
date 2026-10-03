@@ -272,6 +272,56 @@ Selected-store binding, real resource/enforcement proof, and the complete
 atomic initializer remain open source work. Phase 11 runtime authority and
 V1 readiness are unchanged.
 
+### HCFG-5C C1 current owner credential prerequisite
+
+Canonical implementation record: this section. The [C1 credential source
+specification](architecture/headless-owner-decision/credential-source-spec.md)
+defines the bounded implementation details.
+The HCFG-5C design was accepted by the human owner at exact head
+`0d5db17a1de7fdbd40abcfe4ddf901a39e89e160`. C1 is the bounded source
+implementation of its current-owner credential prerequisite; the design is
+accepted, source implementation is complete for this slice, and independent
+source review passed. This record does not self-accept new authority.
+
+C1 prepares a private snapshot only after a valid owner password verifies
+against the current bounded credential chain. The snapshot has no `Debug` or
+`Clone`, wire representation, public constructor, or success-injection seam.
+Each store instance owns a private transient scope marker; recheck requires
+that marker and the actual borrowed SQLite transaction connection to match the
+original store. A different store, reopened store, process, or connection
+cannot reuse the snapshot even when credential bytes match.
+
+The read transaction ends before Argon2id work. The later transaction-local
+recheck reloads the current owner identity and complete bounded credential
+chain, compares exact identity and credential metadata plus the domain-bound
+SHA-256 PHC fingerprint, and writes no rows. PHC row values are held through
+`Zeroizing<String>` on success and error paths. The existing public owner
+password API and result/error family remain unchanged; schema remains 17.
+
+Eleven focused tests and strict store Clippy passed. Coverage includes real
+rotation/recovery, valid same-version verifier replacement, historical-chain
+corruption, immutable identity/role drift, malformed owner status evidence,
+store movement/reopen and cross-wired transaction rejection, absence of
+credential-component row writes, and unchanged session activity. Fresh independent source review found
+no actionable defects. Gitleaks found no leaks; the named Rust static scan
+reported only two unchanged test-helper informational findings and no new
+production finding. Full `npm run check` passed on unchanged source after two
+checkout-environment failures: the first sandboxed run could not bind disposable
+daemon listeners; the socket-enabled run then lacked the existing workspace
+dependency directories. Restoring those dependency links required no install,
+manifest or lockfile change. The terminal run covers all 100 daemon tests and
+the complete Rust/TypeScript source gates; neither earlier failure is rewritten
+as a pass or claimed as a code fix. This remains an unmerged source draft, and
+exact-head hosted CI is a separate result.
+Git-bound review registration is `PHR-0010` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+
+C1 does not implement full configuration, challenge, session, decision,
+installation, generation, resource, or activation authority. Runtime/V1/FIPS,
+MFA, and government-assurance gates remain incomplete. Phase 11 packet status
+authority is unchanged, and no merge, release, runtime, production, or
+deployment action follows from this source slice.
+
 ### HCFG-5B B3A custody readiness withdrawn
 
 Historical B3A source and independent review are preserved by immutable
