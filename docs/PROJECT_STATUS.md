@@ -398,7 +398,7 @@ and a marked disposable Git target before launch, then writes the approved
 action payload immediately after spawn. Restrictive argv and a configured
 mount source do not prove the workload's actual target inode, namespaces,
 privilege, seccomp or cgroup controls. No authenticated startup observation
-barrier or HCFG owner-binding inventory is implemented. No boolean, caller JSON,
+barrier or verified filesystem-backed HCFG owner-binding inventory is implemented. The S1 pure input decoder below does not supply either. No boolean, caller JSON,
 mocked observer or empty-only initializer completes HCFG-6. Atomic bootstrap,
 protected control, monitoring, actual runtime and V1 remain incomplete.
 
@@ -423,7 +423,27 @@ preparation budget is distinct from HCFG-3's zero denied-action budget; startup
 and action share one bounded action budget without resetting it at release.
 Real kernel/daemon observations and later runtime/package proof remain required.
 
-This reconciliation changes documentation only; current profile/protocol,
+### HCFG-6 S1 pure owner-binding decoder source draft
+
+On 2026-10-02, the bounded S1 pure decoder source draft was recorded from the
+exact owner-binding contract in
+[the supporting source specification](architecture/headless-resource-enforcement/bindings-source-spec.md).
+It accepts caller bytes plus a sealed HCFG-3 declaration and returns a sealed
+unverified declaration input. It performs no file loading, path resolution,
+owner or OS observation, selected-store proof, persistence, CLI, route,
+generation, permission grant, or runtime work. Strict bounds, exact inventory
+matching, canonical path syntax, lexical overlap rejection, separate
+commitments, asserted-identity pairing, and redacted diagnostics are covered
+by fifteen focused Rust tests.
+
+Fifteen focused Rust tests, Rustfmt, strict Clippy and the complete pinned `npm run check` passed. Documentation/public checks and inventory passed; the unchanged Phase 11 readiness suite passed 43/43. Local Semgrep `p/rust` ran eleven rules on ten Rust files with zero findings or parse errors, and Gitleaks reported zero worktree findings. Fresh independent OpenAI Terra xhigh read-only review resolved a plan-order conflict and missing test proofs, then found no remaining actionable P1/P2/P3. The first broad check stopped on sandbox-denied disposable socket fixtures (`Operation not permitted`); the complete rerun with disposable local fixtures allowed exited zero. Hosted exact-head CI remains pending for this source draft. This S1 draft is a pure input prerequisite and does not
+complete the HCFG-6 source freeze, native/wire/daemon/synchronization
+contracts, verifier, bootstrap, runtime, package, release, or V1 gates.
+Current profile/protocol and Phase 11 source-lock truth remain unchanged.
+
+### HCFG-6 acceptance reconciliation checkpoint
+
+The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,
 source, CLI and schema are unchanged. The initial acceptance update on
 2026-10-01 failed before command startup with `Resource temporarily unavailable
 (os error 35)`, including a read-only unsandboxed attempt; that failure remains

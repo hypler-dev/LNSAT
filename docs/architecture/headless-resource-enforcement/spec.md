@@ -6,7 +6,13 @@ Status: accepted
 Intent: [HCFG-6 intent](intent.md)
 Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
-Last updated: 2026-10-01
+Last updated: 2026-10-02
+
+The bounded S1 pure decoder prerequisite is specified separately in
+[HCFG-6 S1 source specification](bindings-source-spec.md). That document
+records source-level input grammar and commitments from the exact contract;
+it does not narrow this accepted design or establish verifier, runtime, or V1
+readiness.
 
 ## Behavior
 
