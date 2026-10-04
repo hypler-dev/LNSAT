@@ -1,0 +1,48 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0017-independent-implementation-review-923e44bd",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-preparation-linux-test-lint"],
+  "base_revision": "d1b1d85b40cbc01a802a8a68eac5e1be516e023f",
+  "reviewed_revision": "923e44bde487ce218cc3fb21c348c63bc6ee7ab0",
+  "reviewed_tree_oid": "f8082c7c955f16dfb5f1fb2ba620655f5a4d2fa5",
+  "diff_sha256": "sha256:261d2e990fb382d305baa0cbf8eaa3ad2df6957a3e1413bc29a9dbc6a750bb3b",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_custody_tests.rs",
+      "sha256": "sha256:4443d344cadd3bf849c394f77973d98e8029fb433dfca16b2ea605f31d2df613"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:781e98e705bb02d9c8acb867381076c8abdaea47c97a684f24ee0fd25824f3d1"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:129c55b3c3f7981018dc2b7832a1daff6041d4213557d02d125917e8fd882a6f"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:0e33dd063c68c78ec700e753eeb24e8c44b4ac27761d534b623eb00a2519ec6a"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/linux_lint_fix_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only Linux test lint correction, unchanged fixture scan triage, documentation, validation and exact Git commit and attestation binding review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0017-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Five strict Linux-only Clippy diagnostics from exact source CI run 37191633294 are removed in private custody tests without changing production behavior, test assertions, dependency versions, lint policy or CI; macOS validation remains distinct from required exact-head hosted Linux positive execution.",
+      "resolution_revision": "923e44bde487ce218cc3fb21c348c63bc6ee7ab0"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
