@@ -111,6 +111,27 @@ identity/key providers, customer operations and agency authorization. Physical,
 personnel, procurement and organizational controls are not satisfied by source
 code alone. Classified use is not claimed.
 
+## Independent scrutiny and future certification
+
+On 2026-10-03 the owner required rigorous independent scrutiny and preparation
+for future third-party ISO and government assessment. Each claimed security
+property needs a traceable requirement, exact implementation identity, explicit
+trust assumptions, nonempty positive proof, hostile/failure/race negatives,
+independently reproducible evidence and recorded residual limits. Assertions,
+test counts and a reviewer's credential alone cannot establish a property.
+Formal models or proofs must state their covered semantics and assumptions;
+source tests cannot be labeled a proof of untested native behavior.
+
+[ISO/IEC 27001:2022](https://www.iso.org/standard/27001) addresses an
+organization's information security management system. Product security
+evaluation under [Common Criteria](https://www.commoncriteriaportal.org/)
+requires a selected evaluation scope, security claims, configuration and
+independent scheme/laboratory process. Future scheme, protection profile,
+assurance package, jurisdiction and government procurement controls remain
+unselected. No ISO certificate, Common Criteria level, government approval or
+universal deployment fitness is claimed. Certification and organizational
+operations cannot be completed by changing this repository alone.
+
 ## Delivery order
 
 Complete the accepted HCFG/native/store/control runtime work. In parallel,

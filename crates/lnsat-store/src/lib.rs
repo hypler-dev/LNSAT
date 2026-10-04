@@ -36,6 +36,11 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use zeroize::Zeroizing;
 
 mod headless_bootstrap;
+#[allow(
+    dead_code,
+    reason = "Reviewed Stage-A candidate remains disconnected until complete freeze and integration"
+)]
+mod headless_preparation;
 mod owner_bootstrap;
 mod owner_decision_credential;
 mod phase7_consumption;
