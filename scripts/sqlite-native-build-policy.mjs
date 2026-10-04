@@ -1,5 +1,8 @@
 // Repository build checks assume a trusted developer host and toolchain.
 // They reject named overrides; they do not authenticate a release artifact.
+import { lstatSync, realpathSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+
 export const FILESTAT_FLAGS = "SQLITE_ENABLE_FILESTAT";
 export const SQLITE_CARGO_CONFIG = `[net]
 offline = true
@@ -25,6 +28,11 @@ export const NATIVE_INPUTS = [
   "CC_FORCE_DISABLE",
   "CC_KNOWN_WRAPPER_CUSTOM",
   "CC_SHELL_ESCAPED_FLAGS",
+  "RUSTC",
+  "RUSTDOC",
+  "RUSTC_BOOTSTRAP",
+  "RUSTDOCFLAGS",
+  "CARGO_ENCODED_RUSTDOCFLAGS",
   "RUSTC_WRAPPER",
   "RUSTC_WORKSPACE_WRAPPER",
   "CROSS_COMPILE",
@@ -91,17 +99,62 @@ export function verifyNativeEnvironment(env, config) {
         (base) =>
           key === base || key.startsWith(`${base}_`) || key.endsWith(`_${base}`),
       ) ||
+      [
+        "CARGO_BUILD_",
+        "CARGO_SOURCE_",
+        "CARGO_REGISTRY_",
+        "CARGO_REGISTRIES_",
+        "CARGO_PROFILE_",
+        "CARGO_UNSTABLE_",
+        "CARGO_CONFIG",
+      ].some((prefix) => key.startsWith(prefix)) ||
       key.startsWith("PKG_CONFIG") ||
       key.includes("_PKG_CONFIG") ||
       key.startsWith("VCPKGRS_") ||
       (key.startsWith("CARGO_TARGET_") &&
-        (key.endsWith("_LINKER") || key.endsWith("_RUSTFLAGS"))) ||
+        ["_LINKER", "_RUNNER", "_RUSTFLAGS", "_RUSTDOCFLAGS"].some((suffix) =>
+          key.endsWith(suffix),
+        )) ||
       key.endsWith("_LIBSQLITE3_FLAGS") ||
       key.startsWith("LIBSQLITE3_FLAGS_")
     ) {
       throw new Error("sqlite_native.override_rejected");
     }
   }
+}
+
+// Cargo merges home and ancestor configuration before invoking compilers. Reject
+// those inputs without reading their contents; the developer host remains trusted.
+export function verifyNativeConfigPaths(repoRoot, cargoHome) {
+  const physicalRoot = realpathSync(repoRoot);
+  const ownConfig = join(physicalRoot, ".cargo", "config.toml");
+  if (!lstatSync(ownConfig).isFile()) {
+    throw new Error("sqlite_native.config_rejected");
+  }
+  const absent = (path) => {
+    try {
+      lstatSync(path);
+    } catch (error) {
+      if (error?.code === "ENOENT") return;
+      throw new Error("sqlite_native.config_rejected");
+    }
+    throw new Error("sqlite_native.config_rejected");
+  };
+  absent(join(physicalRoot, ".cargo", "config"));
+  for (const name of ["config", "config.toml"]) {
+    absent(join(resolve(physicalRoot, cargoHome), name));
+  }
+  for (
+    let ancestor = dirname(physicalRoot);
+    ancestor !== physicalRoot;
+    ancestor = dirname(ancestor)
+  ) {
+    for (const name of ["config", "config.toml"]) {
+      absent(join(ancestor, ".cargo", name));
+    }
+    if (dirname(ancestor) === ancestor) break;
+  }
+  return physicalRoot;
 }
 
 export function verifyNativeGraph(metadata) {
@@ -167,7 +220,10 @@ export function verifyNativeGraph(metadata) {
     aliases[0].pkg !== stats[0].id ||
     JSON.stringify(aliases[0].dep_kinds) !==
       JSON.stringify([
-        { kind: null, target: 'cfg(any(target_os = "linux", target_os = "macos"))' },
+        {
+          kind: null,
+          target: 'cfg(any(target_os = "linux", target_os = "macos"))',
+        },
       ])
   ) {
     throw new Error("sqlite_native.graph_rejected");

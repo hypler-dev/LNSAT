@@ -1,19 +1,26 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   FILESTAT_FLAGS,
   verifyNativeEnvironment,
+  verifyNativeConfigPaths,
   verifyNativeGraph,
 } from "./sqlite-native-build-policy.mjs";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+let repoRoot;
+try {
+  repoRoot = realpathSync(join(dirname(fileURLToPath(import.meta.url)), ".."));
+} catch {
+  console.error("sqlite_native.build_policy_rejected");
+  process.exit(1);
+}
 const defaultRustupHome = join(homedir(), ".local", "share", "lnsat-rustup");
 const defaultCargoHome = join(homedir(), ".local", "share", "lnsat-cargo");
 const rustupHome = process.env.LNSAT_RUSTUP_HOME ?? defaultRustupHome;
-const cargoHome = process.env.LNSAT_CARGO_HOME ?? defaultCargoHome;
+const cargoHome = resolve(repoRoot, process.env.LNSAT_CARGO_HOME ?? defaultCargoHome);
 const localCargo = join(cargoHome, "bin", "cargo");
 const cargo = existsSync(localCargo) ? localCargo : "cargo";
 const localRustc = join(cargoHome, "bin", "rustc");
@@ -49,7 +56,7 @@ const commands = {
 };
 
 const action = process.argv[2];
-if (!Object.hasOwn(commands, action)) {
+if (process.argv.length !== 3 || !Object.hasOwn(commands, action)) {
   console.error(
     `usage: node scripts/run-rust-workspace.mjs <${Object.keys(commands).join("|")}>`,
   );
@@ -57,6 +64,7 @@ if (!Object.hasOwn(commands, action)) {
 }
 
 try {
+  verifyNativeConfigPaths(repoRoot, cargoHome);
   verifyNativeEnvironment(
     process.env,
     readFileSync(join(repoRoot, ".cargo/config.toml"), "utf8"),

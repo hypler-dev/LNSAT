@@ -1189,6 +1189,42 @@ route, live initializer, activation, artifact construction, Docker, merge,
 release, deployment or production action is opened. Phase 11 remains
 `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; actual pins remain `UNSET_BLOCKING`.
 
+### Main source integration: native build configuration correction
+
+Canonical implementation record: this subsection. The requested preparation for
+GitHub main integration includes the reviewed linear source chain and the
+private Stage-A custody candidate; unrelated conflicting drafts and failing
+dependency PRs are excluded. This preparation supplies no merge authorization.
+
+Fresh aggregate build review found a P2: the native override gate inspected only
+repository config and process environment while Cargo could also load selected
+home or ancestor configuration. The independently reviewed correction resolves
+the physical repository cwd and effective Cargo home, rejects external config
+presence before tool invocation, requires a regular non-symlink exact repository
+config, closes named direct and Cargo-equivalent native selectors, and rejects
+extra runner arguments. It never reads external config contents or modifies
+operator configuration. Developer-host and toolchain trust remain explicit;
+finite checks supply no release attestation or concurrent hostile-host proof.
+
+The source correction is present. All 10 focused native-policy tests passed,
+including real runner subprocesses that reject wrapper/linker home config,
+ancestor/legacy config, dangling/symlink config and named environment selectors
+before fake Cargo's sentinel is reached. A configuration-free physical-path
+positive reaches that sentinel. The complete pinned `npm run rust:check` passed,
+including strict all-target Clippy, 139 contract comparisons and workspace tests.
+Docs checks passed 31 tests across 189 Markdown files, 33 critical documents and
+14 phases; public checks passed across 945 project files. Named `p/javascript`
+Semgrep returned zero alerts/errors and redacted Gitleaks returned zero findings.
+Dependency versions and lockfiles are unchanged by this correction. Inventory,
+final independent review and history attestation retain their gates.
+
+The preceding custody slice's complete `npm run check` passed at its own reviewed
+checkpoint. Exact-head Ubuntu CI and resolved review threads remain required
+for a concrete main merge decision. Strict crypto, MFA and audit/privacy designs
+remain proposals. Full source/pin/positive-feasibility freeze, behavioral
+integration, Docker, host mutation, schema-18 execution, artifacts, signing,
+release, deployment and production remain closed.
+
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
 Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed

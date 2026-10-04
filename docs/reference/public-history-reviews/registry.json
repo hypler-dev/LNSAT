@@ -129,6 +129,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0015/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0016",
+      "subject_id": "sqlite-native-configuration-custody",
+      "review_subject_ids": ["sqlite-native-configuration-custody"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0016/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

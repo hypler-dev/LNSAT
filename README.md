@@ -189,7 +189,7 @@ and [CLI and OS interfaces](docs/architecture/CLI_AND_OS_OPERATOR_INTERFACE.md).
 ## Evaluate From Source
 
 Use a development checkout and disposable fixtures, not production data.
-Requirements: Node.js 22, npm `10.9.8`, and Rust `1.97.1` with `rustfmt` and
+Requirements: Node.js `22.22.3`, npm `10.9.8`, and Rust `1.97.1` with `rustfmt` and
 `clippy` for the full source checks. PostgreSQL is needed only for optional
 disposable local-beta integration tests. Scripts do not install toolchains or
 start databases implicitly.
@@ -210,6 +210,11 @@ npm run dev -w @lnsat/console
 ```
 
 The preview does not enable agent execution.
+Rust source checks reject external Cargo configuration and named native overrides
+before tool invocation. They require a trusted developer host and toolchain;
+source validation does not attest a release artifact. See
+[Pinned Rust Toolchain](docs/RUST_TOOLCHAIN.md) for the exact configuration gate.
+
 See [Local Development](docs/LOCAL_DEVELOPMENT.md) for configuration, focused
 tests, and troubleshooting. Before proposing a source change, run:
 

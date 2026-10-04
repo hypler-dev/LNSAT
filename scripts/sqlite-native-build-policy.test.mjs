@@ -2,6 +2,19 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
   COMPILER_FAMILIES,
   NATIVE_INPUTS,
   FILESTAT_FLAGS,
@@ -275,3 +288,198 @@ test("runner rejects native override before attempting unavailable Cargo or expo
   assert.equal(result.stderr.trim(), "sqlite_native.build_policy_rejected");
   assert.ok(!result.stderr.includes("private-override-value"));
 });
+
+function configFixture() {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "lnsat-native-config-")));
+  const outer = join(root, "outer");
+  const repo = join(outer, "nested", "repo");
+  const home = join(root, "cargo-home");
+  const marker = join(root, "cargo-invoked");
+  mkdirSync(join(repo, "scripts"), { recursive: true });
+  mkdirSync(join(repo, ".cargo"));
+  mkdirSync(join(home, "bin"), { recursive: true });
+  writeFileSync(join(repo, ".cargo", "config.toml"), SQLITE_CARGO_CONFIG);
+  for (const name of ["run-rust-workspace.mjs", "sqlite-native-build-policy.mjs"]) {
+    writeFileSync(
+      join(repo, "scripts", name),
+      readFileSync(new URL(name, import.meta.url)),
+    );
+  }
+  const cargo = join(home, "bin", "cargo");
+  writeFileSync(cargo, '#!/bin/sh\npwd > "$LNSAT_CONFIG_TEST_MARKER"\nexit 86\n');
+  chmodSync(cargo, 0o700);
+  return { root, outer, repo, home, marker };
+}
+
+function runConfigFixture(fixture, env = {}, args = [], entry = fixture.repo) {
+  return spawnSync(
+    process.execPath,
+    [join(entry, "scripts", "run-rust-workspace.mjs"), "metadata", ...args],
+    {
+      cwd: entry,
+      env: {
+        ...process.env,
+        LNSAT_CARGO_HOME: fixture.home,
+        LNSAT_CONFIG_TEST_MARKER: fixture.marker,
+        ...env,
+      },
+      encoding: "utf8",
+    },
+  );
+}
+
+function assertConfigDenied(fixture, result) {
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr.trim(), "sqlite_native.build_policy_rejected");
+  assert.equal(
+    existsSync(fixture.marker),
+    false,
+    "policy must stop before invoking Cargo",
+  );
+}
+
+// These subprocess regressions prove the real runner checks configuration before
+// version/metadata/build invocation. No Cargo or toolchain is installed or run.
+test(
+  "runner rejects external Cargo configuration before any tool invocation",
+  { skip: process.platform === "win32" },
+  () => {
+    for (const location of ["home", "ancestor", "repo-legacy"]) {
+      for (const name of ["config", "config.toml"]) {
+        if (location === "repo-legacy" && name === "config.toml") continue;
+        for (const bytes of [
+          '[build]\nrustc-wrapper = "private-wrapper"\n',
+          '[target.aarch64-apple-darwin]\nlinker = "private-linker"\n',
+        ]) {
+          const fixture = configFixture();
+          try {
+            const directory =
+              location === "home"
+                ? fixture.home
+                : location === "ancestor"
+                  ? join(fixture.outer, ".cargo")
+                  : join(fixture.repo, ".cargo");
+            mkdirSync(directory, { recursive: true });
+            writeFileSync(join(directory, name), bytes);
+            assertConfigDenied(fixture, runConfigFixture(fixture));
+          } finally {
+            rmSync(fixture.root, { recursive: true, force: true });
+          }
+        }
+      }
+    }
+  },
+);
+
+test(
+  "runner rejects configuration symlinks and selected symlink-home configuration",
+  { skip: process.platform === "win32" },
+  () => {
+    for (const kind of [
+      "home-dangling",
+      "ancestor-dangling",
+      "own-config",
+      "home-alias",
+    ]) {
+      const fixture = configFixture();
+      try {
+        if (kind === "home-dangling") {
+          symlinkSync(join(fixture.root, "missing"), join(fixture.home, "config.toml"));
+        } else if (kind === "ancestor-dangling") {
+          mkdirSync(join(fixture.outer, ".cargo"));
+          symlinkSync(
+            join(fixture.root, "missing"),
+            join(fixture.outer, ".cargo", "config"),
+          );
+        } else if (kind === "own-config") {
+          const target = join(fixture.root, "own-config.toml");
+          writeFileSync(target, SQLITE_CARGO_CONFIG);
+          rmSync(join(fixture.repo, ".cargo", "config.toml"));
+          symlinkSync(target, join(fixture.repo, ".cargo", "config.toml"));
+        } else {
+          const alias = join(fixture.root, "home-alias");
+          symlinkSync(fixture.home, alias);
+          writeFileSync(
+            join(fixture.home, "config"),
+            '[build]\nrustc-wrapper = "private-wrapper"\n',
+          );
+          assertConfigDenied(
+            fixture,
+            runConfigFixture(fixture, { LNSAT_CARGO_HOME: alias }),
+          );
+          continue;
+        }
+        assertConfigDenied(fixture, runConfigFixture(fixture));
+      } finally {
+        rmSync(fixture.root, { recursive: true, force: true });
+      }
+    }
+  },
+);
+
+test(
+  "runner rejects direct and Cargo-equivalent compiler/config selectors before Cargo",
+  { skip: process.platform === "win32" },
+  () => {
+    const fixture = configFixture();
+    try {
+      for (const key of [
+        "RUSTC",
+        "RUSTDOC",
+        "RUSTC_BOOTSTRAP",
+        "RUSTDOCFLAGS",
+        "CARGO_ENCODED_RUSTDOCFLAGS",
+        "CARGO_BUILD_RUSTC",
+        "CARGO_BUILD_RUSTDOC",
+        "CARGO_BUILD_TARGET",
+        "CARGO_BUILD_RUSTC_WRAPPER",
+        "CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER",
+        "CARGO_SOURCE_CRATES_IO_REPLACE_WITH",
+        "CARGO_REGISTRY_DEFAULT",
+        "CARGO_REGISTRIES_CRATES_IO_INDEX",
+        "CARGO_PROFILE_DEV_RUSTFLAGS",
+        "CARGO_UNSTABLE_CONFIG_INCLUDE",
+        "CARGO_CONFIG",
+        "CARGO_CONFIG_PATH",
+        "CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER",
+        "CARGO_TARGET_AARCH64_APPLE_DARWIN_RUNNER",
+        "CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTFLAGS",
+        "CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTDOCFLAGS",
+      ]) {
+        assertConfigDenied(
+          fixture,
+          runConfigFixture(fixture, { [key]: "private-override-value" }),
+        );
+      }
+      const extra = runConfigFixture(fixture, {}, ["--config", "private-config-value"]);
+      assert.equal(extra.status, 2);
+      assert.equal(existsSync(fixture.marker), false);
+      assert.equal(extra.stderr.includes("private-config-value"), false);
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "config-free runner reaches Cargo from the physical repository cwd",
+  { skip: process.platform === "win32" },
+  () => {
+    const fixture = configFixture();
+    try {
+      const alias = join(fixture.root, "repo-alias");
+      symlinkSync(fixture.repo, alias);
+      const result = runConfigFixture(fixture, {}, [], alias);
+      assert.equal(
+        result.status,
+        1,
+        "fake Cargo intentionally rejects version after recording invocation",
+      );
+      assert.equal(result.stderr.includes("build_policy_rejected"), false);
+      assert.equal(readFileSync(fixture.marker, "utf8").trim(), fixture.repo);
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  },
+);
