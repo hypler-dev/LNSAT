@@ -1274,6 +1274,25 @@ human merge/release authorization. A bot result, LLM verdict or source CI pass
 grants no runtime, release or certification authority. The `PHR-0018` source/
 attestation pair and exact final-head CI retain their gates.
 
+The published integration head `41255fd289cef536218d349519ce6b1b53b1fdfd`
+passed the complete pinned local `npm run check`, with 18 public-history-native
+attestations, zero pending and supported-release eligibility false. Exact Ubuntu
+run `37194297972`, job `111412826233`, passed dependency signatures, dependency
+audit, strict Rust lint and actual normal/zero-created Linux custody positives.
+It then failed one store fixture: 275 tests passed, one failed and two child
+helpers were listed ignored but invoked by their parent regressions. The held
+guard correctly rejected a revision replaced by a symlink as retained-baseline
+`journal_custody.changed`; that test expected the fresh-descent
+`journal_custody.io_rejected` classification.
+
+The bounded correction changes only that exact expected fixed error and explains
+baseline-before-descent ordering. Production behavior, rejection requirements,
+assertion strictness, lint/CI, dependencies and runtime boundaries are unchanged.
+The failed run remains evidence; neither its nonempty positives nor the passing
+macOS run supply whole-head CI success. Fresh independent source review, the
+`PHR-0019` source/attestation pair and a new complete exact-head Ubuntu run retain
+their gates before main readiness.
+
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
 Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed

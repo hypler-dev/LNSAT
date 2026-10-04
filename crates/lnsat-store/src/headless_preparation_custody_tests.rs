@@ -501,7 +501,8 @@ fn custody_rejects_actual_revision_file_mutations() {
     write_private_file(&external, b"private external frame");
     fs::remove_file(&revision).expect("owned revision must remove");
     symlink(&external, &revision).expect("revision symlink must create");
-    assert_error(custody.inspect(), "journal_custody.io_rejected");
+    // A held guard rejects retained-baseline drift before fresh frame descent.
+    assert_error(custody.inspect(), "journal_custody.changed");
     drop(custody);
     drop(store);
 
