@@ -1291,9 +1291,50 @@ public readiness passed its three tests, and refreshed legacy inventory retained
 checks passed. The initial inventory check failed because the new document was
 not staged when its tracked-file inventory was first generated; that failed
 receipt is retained and refresh after exact staging passed. Independent review
-is mandatory before commit; hosted exact-head source CI remains separate.
+found no actionable P1/P2/P3 in the final byte-bound proposal; hosted exact-head
+source CI remains separate.
 Broad source tests and code scanners were not rerun for this docs-only slice;
 the unchanged parent source CI above is the separate source evidence.
+
+### Proposed audit/privacy and evidence custody design
+
+Canonical work record: this subsection. The accepted enterprise/government
+direction requires minimized disclosure and reliable decision/outcome evidence.
+The [proposed design](architecture/AUDIT_PRIVACY_AND_EVIDENCE_CUSTODY_DESIGN.md)
+separates private authority records/backups, authorized evidence disclosure,
+optional telemetry and independent custody. It requires explicit coverage,
+failure atomicity, recipient permissions, field semantics, retention and
+inert recovery before implementation or assurance claims.
+
+**Owner acceptance, exact source contracts and implementation are pending.**
+Local content hashes, immutable triggers and exact chain rederivation remain
+useful source integrity evidence. They do not prove complete history, external
+custody, encryption or protection from a malicious host owner. Current schema
+17 retains 28 families with no cleanup. HCFG-4A reads remain installation-wide;
+their stored project decoder scope is not a project authorization grant. The
+telemetry sink can be invoked, but allowed keys and fixed privacy flags cannot
+prove contextual sensitive-data exclusion.
+
+This proposal creates no export route, global sequence, collector, encryption
+provider, permission, schema, stop mechanism or authority transition. The
+HCFG-6 source-order amendment, native/store integration, HCFG-4B/4C, human
+assurance, strict crypto and full V1 remain incomplete. Phase 11 packet/pins
+retain runtime authority. Docker, host mutation, candidate SQL execution,
+actual credential/provider/key work, candidate artifact construction, merge,
+signing, release, deployment and production remain closed.
+
+The design basis is exact draft PR #85 source head
+`ae89f83a8de1ad10359a29ec61e1937befcf4160`; all 18 named raw source/doc blobs
+were verified against that immutable revision. Parent hosted source CI run
+`37167115468`, job `111332234904`, was still running at initial observation;
+no terminal result is inferred. Named proportional documentation validation
+passed 31 tests across 189 Markdown files; public readiness passed three tests,
+and refreshed inventory retained 2,122 occurrences across 295 files. Exact-file
+formatting and staged whitespace checks passed. Fresh independent OpenAI Terra
+xhigh review found no actionable P1/P2/P3 in the proposal. Final byte binding is
+required before commit. Broad source tests and code scanners were not rerun for
+this documentation-only slice. These checks do not establish actual runtime,
+privacy, collector or encryption proof.
 
 ### Dependency advisory checkpoint
 
