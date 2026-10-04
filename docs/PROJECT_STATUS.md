@@ -1211,6 +1211,50 @@ other actionable P1/P2/P3. Broad source tests and code scanners were not rerun
 for this documentation-only slice; parent exact-head source CI is the separate
 source evidence above.
 
+Exact inventory draft PR #83 head
+`87f4fcf85d6a443b6d847109b48d55d6e064edeb` subsequently passed hosted source
+CI run `37163994904`, job `111323064566`, at `2026-10-04T00:26:31Z`.
+This is documentation/source validation, not runtime/module assurance or owner
+acceptance of the separate source-order amendment.
+
+### Proposed strict crypto admission design
+
+Canonical work record: this subsection. The requested enterprise/government
+direction and completed bounded source inventory require exact crypto/provider
+admission design before a strict assurance claim. The
+[proposed design](architecture/STRICT_CRYPTO_ADMISSION_DESIGN.md) makes complete
+selected-operation coverage, exact module/version/environment/approved-mode
+association, validation eligibility, entropy/self-test/error-state evidence and
+key lifecycle explicit. Evidence failure or change denies without weaker
+fallback; crypto admission does not independently grant action authority.
+Actual positive module/environment proof remains required.
+
+**Owner acceptance and implementation are pending.** This is a design proposal,
+not a selected provider, certificate, algorithm, target or deployment. It adds
+no source, configuration field, public API, dependency, schema or executable
+guard. Current Argon2id/session/digest/verification source is unchanged; it does
+not acquire a strict assurance claim. MFA/federation, encryption, protected
+audit, artifact lifecycle, actual runtime and full V1 remain incomplete.
+
+The HCFG-6 source-order amendment is a separate engine gate and remains pending;
+it is not a prerequisite to proposing this independent crypto design. Phase 11
+packet/pins, Docker, host mutation, candidate artifact construction, private-key
+or provider calls, merge, signing, release, deployment and production remain
+closed. This proposal's review or hosted source CI cannot accept either design
+or open those gates.
+
+Post-correction documentation direction passed 31 tests across 187 Markdown
+files; public readiness, generated inventory, exact-file formatting and staged
+whitespace checks passed. The initial unchanged Phase 7d, Phase 11 and native
+history checks also passed; native history remains 13 attested, zero pending
+and ineligible for supported-release evidence. Fresh independent OpenAI Terra
+xhigh review found and resolved two P2 issues: final artifact identities must
+follow reviewed source and separately authorized capture, and unavailable or
+unapproved mode must deny rather than approved mode. No remaining actionable
+P1/P2/P3 was found in the corrected proposal. No broad source tests or code
+scanners were rerun for this documentation-only slice; parent exact-head source
+CI is separate evidence above.
+
 ### Dependency advisory checkpoint
 
 On 2026-10-03 a fresh `npm run audit:dependencies:check` passed on exact draft
