@@ -152,14 +152,22 @@ not this ordering record.
    and revocation races, and close source conformance. The accepted source-order
    amendment permits inert private candidates. The journal codec and Linux
    file-custody source now exist; Project Status records their exact source
-   validation and review. The next bounded Stage-A candidate covers strict Linux
+   validation and review. The following private Stage-A candidate covers strict Linux
    POSIX ACL parsing plus two finite observations from an already held readable
    regular-file or directory descriptor, using a fixed buffer and no named-path
-   fallback. Its parser vectors are synthetic; Linux reads, associated-path and
-   ancestry binding, socket/SQLite exclusion, kernel/LSM classification and
-   present-ACL proof remain future evidence. `ENODATA` stays unclassified and
-   supplies no mode fallback, effective access, or authority. Native observation,
-   complete feasibility, profile freeze and integration remain unfinished.
+   fallback. Its parser vectors are synthetic; bounded descriptor reads have exact-head
+   Linux source evidence. Associated-path and ancestry binding, selected
+   socket/SQLite/O_PATH custody, kernel/LSM classification and present-ACL proof
+   remain future evidence. `ENODATA` stays unclassified and
+   supplies no mode fallback, effective access, or authority. The following
+   private mountinfo candidate is byte-only: it preserves raw non-UTF-8 data and
+   bounds rows, options, escapes and optional tags before any future reader is
+   considered. It performs no procfs or other I/O, path or descriptor work,
+   mount/kernel/namespace/idmapping/ACL-absence classification, or authority
+   proof. A genuine reader later needs separately reviewed filesystem origin,
+   held-root association, no-follow lookup, drift checks and Linux evidence.
+   Native observation, complete feasibility, profile freeze and integration
+   remain unfinished.
    Actual runtime and selected target proof remain separately authorized
    Phase 11/14 gates.
 

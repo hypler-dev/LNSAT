@@ -198,6 +198,12 @@ read or current provisioning. Existing owner/resource custody is unchanged.
 
 ### Procfs, mount and cgroup bounds
 
+The exact Stage-A [private mountinfo byte candidate](native-mountinfo-candidate-source-spec.md)
+is a separate inert representation prerequisite. It reads no procfs, authenticates
+no mounted object or option absence, and completes none of the genuine reader,
+association or complete-freeze requirements below. Project Status owns its
+implementation and evidence.
+
 Open genuine procfs and cgroupfs once, verify filesystem magic and held mount
 association against the reviewed host recipe, and use descriptor-relative
 no-follow reads. Procfs intentional `self`/namespace kernel links are handled

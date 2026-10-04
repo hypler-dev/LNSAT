@@ -14,11 +14,11 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Current bounded engine source lane: the [private readable-object ACL
-candidate](#stage-a-private-readable-object-acl-candidate), following the
-reviewed Linux journal-custody candidate. Its source and
-proof limits are distinct from unfinished V1 integration, enterprise assurance
-and actual runtime gates.
+Current bounded engine source lane: the
+[private mountinfo byte candidate](#stage-a-private-mountinfo-byte-candidate),
+following the reviewed Linux journal-custody and readable-object ACL candidates.
+Its source and proof limits are distinct from unfinished V1 integration,
+enterprise assurance and actual runtime gates.
 
 ## Active Security Remediation
 
@@ -1397,6 +1397,70 @@ independent review, native history attestation and exact-head hosted source
 verification retain their separate gates. Phase 11 packet and all runtime,
 Docker, host change,
 artifact, merge, release and production gates remain unchanged.
+
+### Stage-A private mountinfo byte candidate
+
+Canonical work record: this subsection, under the human-accepted Stage-A
+source-order amendment at exact `5a1338cb31706bde4e1458a5089cfacb28e90917`.
+The [exact byte contract](architecture/headless-resource-enforcement/native-mountinfo-candidate-source-spec.md)
+defines the next private prerequisite after readable-object ACL sampling.
+Fresh independent OpenAI Terra xhigh precode review passed after two P2 test
+coverage gaps were resolved: deterministic denial at every allocation class,
+and the exact per-field hash-escape/non-UTF-8 matrix. The resulting private
+source implements the reviewed finite grammar. Complete native/source/pin/
+positive-feasibility freeze remains open.
+
+The accepted Stage-A lane permits exact reviewed inert source without final
+artifact pins. It does not permit integration or action authority. This slice
+is supplied immutable bytes only: no procfs or descriptor read, path/permission
+classification, authenticated mount/idmapping/ACL-absence result, observer
+permit, serialization, dependency change or active caller. Missing parents,
+stacked mountpoints, ID zero and non-UTF-8 fields are representation cases;
+no row authenticates an installed kernel or live object. A genuine reader and
+held-root association require their own later exact contract and Linux evidence.
+
+The private decoder now preserves byte fields and borrowed opaque option/tag
+regions, permits zero IDs, missing parents and stacked mountpoints, enforces
+inclusive 1 MiB/4,096-row/8 KiB limits, rejects duplicate IDs and malformed
+records, and returns only fixed private data-free errors. No record is Debug-
+formatted or serializable. Source vectors cover field-specific escapes and
+high bytes, exact numeric/field/option/tag bounds, every reservation denial,
+unwind reset and every single-byte substitution in a minimal row.
+
+Pinned local focused tests passed 28/28: 18 new synthetic mountinfo groups,
+nine unchanged ACL syntax groups and the genuine unsupported-platform denial.
+Strict all-target Clippy and full formatting passed after three unsuppressed
+lint corrections. The complete `npm run check` passed in 999.89 seconds:
+1,471 TypeScript tests, 139 contract comparisons, 264 store tests and 128 daemon
+library tests. Both ignored store child helpers remain invoked by parent tests.
+Docs direction passed 31 tests over 191 Markdown files, 33 critical documents
+and 14 phases. Public source and inventory passed; inventory remains 2,122
+occurrences across 295 files. Unchanged Phase 11 readiness passed 43/43.
+
+Installed named `p/rust` Semgrep scanned 27 daemon source files with zero errors
+and six INFO findings, all outside the three changed parser paths. Fresh source
+review confirmed no parser defect; existing argument/test-directory diagnostics
+and the old adapter self-hash retain their bounded source-only trust context,
+not broader security certification. Redacted worktree Gitleaks returned zero
+findings. The first Semgrep invocation could not find the installed binary in
+the pinned runner PATH; the absolute installed path succeeded. No tool was
+installed, source uploaded or rule suppressed. No dependency delta exists;
+no new OSV scan is claimed. Fresh independent OpenAI Terra xhigh exact-source
+review found no actionable P1/P2/P3. Source-commit binding, direct-child native
+history attestation and exact final-head Linux source CI retain their own gates.
+Linux execution of these new pure tests supplies no genuine mount observation.
+The next native gate is the exact genuine procfs/held-mount reader contract;
+filesystem origin, intentional kernel links, held descriptor lifetime,
+fdinfo grammar, no-follow reads, deadlines and drift remain unresolved.
+
+Preceding draft PR #89 head `9139b97987455cab0455f6f9a1992b62e34456ff` passed
+exact-head Linux source run `37219486368`; draft PR #90 head
+`6a383bb48d1a90e4a6b6f32989ded4dcb8fc91ae` passed run `37221003142`.
+The latter is this slice's clean public parent; neither parent run covers new
+parser source. Public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`.
+Phase 11 packet, proof lock and all Docker, host/ACL change, artifact, SQL18,
+initializer, activation, merge, signing, release, deploy and production gates
+remain unchanged and closed.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

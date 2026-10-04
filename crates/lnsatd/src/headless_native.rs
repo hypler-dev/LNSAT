@@ -1,10 +1,12 @@
 //! Private Stage-A native sampling prerequisites, disconnected from product callers.
 //!
-//! Samples and parsed ACLs contain untrusted observations. They authenticate no
+//! Samples, parsed ACLs and mountinfo rows contain untrusted data. They authenticate no
 //! path, kernel, filesystem, LSM, resource ownership or action authority.
 
 #[path = "headless_native_acl.rs"]
 mod acl;
+#[path = "headless_native_mountinfo.rs"]
+mod mountinfo;
 #[path = "headless_native_readable.rs"]
 mod readable;
 

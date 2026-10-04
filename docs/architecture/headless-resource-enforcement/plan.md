@@ -26,18 +26,18 @@ mandatory before product integration. The following original complete-freeze
 steps retain that integration gate; they no longer prohibit separately reviewed
 private candidate source under Stage A.
 
-Current Stage-A candidate: private Linux preparation-journal custody. Scope is
-the actual selected-store lifetime borrow, held-directory descriptor custody,
-and bounded immutable revision append defined in the [preparation/store
-specification](preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract).
-The private source is present; implementation evidence, focused Linux fixtures
-and fresh independent review belong to Project Status. Full integration and
-native/profile feasibility remain pending. The next candidate is the private
-[readable-object ACL parser/sampler](native-acl-candidate-source-spec.md):
-finite genuine descriptor observations, strict byte grammar and unclassified
-absence. It has no named-path/SQLite/socket/O_PATH custody, authenticated
-kernel/LSM classification or activation consumer. Candidate success cannot
-prove cleanup, committed binding, initialization eligibility or runtime authority.
+Current Stage-A sequence: private Linux preparation-journal custody, followed
+by the [readable-object ACL parser/sampler](native-acl-candidate-source-spec.md),
+and the [pure private mountinfo byte candidate](native-mountinfo-candidate-source-spec.md).
+Project Status owns exact source, validation and independent review evidence.
+The parser is a bounded untrusted representation prerequisite; it performs no
+I/O, path/descriptor association, permission classification or authority work.
+The later genuine mount reader still needs filesystem origin, held-root
+association, no-follow lookup, deadlines, drift and actual Linux evidence.
+Present/absent ACL classification, selected SQLite/socket/O_PATH custody and
+complete native/source/pin/positive-feasibility freeze remain open. Candidate
+success cannot prove cleanup, committed binding, initialization eligibility or
+runtime authority.
 
 1. Inspect accepted V1/bootstrap/Phase 11 boundaries and current profile, target, launch and identity code. Verify official Docker/kernel-facing assumptions without opening a Docker endpoint. Separate configured settings from actual observations.
 2. Produce the proposed complete contract: explicit owner binding, nonempty verifier coverage, the proposed bootstrap metadata-only observation exception, resource-free probe preparation, private authenticated startup barrier, grant/use revocation, uncertainty and cleanup. Obtain fresh independent read-only review and resolve P1/P2 before presenting an owner decision.

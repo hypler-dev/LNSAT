@@ -109,9 +109,18 @@ Synthetic parser vectors remain separate from disposable Linux read evidence. `E
 become an empty ACL, a mode fallback, effective access, or authority. Associated
 paths and ancestry, sockets, SQLite descriptors, search-only `O_PATH` handles,
 kernel/LSM classification and present-ACL proof remain later work.
-See the [current source record](docs/PROJECT_STATUS.md#stage-a-private-readable-object-acl-candidate)
+The private Stage-A mountinfo candidate is a byte-only prerequisite. It
+decodes supplied bounded bytes into private rows, preserves raw non-UTF-8 data,
+and validates finite row, option, escape and optional-tag limits without reading
+procfs or performing any path, mount, descriptor, clock or permission operation.
+Rows and options remain untrusted data: no kernel, mount membership, namespace,
+idmapping, ACL absence, freshness or authority proof follows. A later genuine
+reader must separately establish filesystem origin, held-root association,
+no-follow lookup, drift checks and Linux evidence.
+See the [current source record](docs/PROJECT_STATUS.md#stage-a-private-mountinfo-byte-candidate)
 and [custody contract](docs/architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract),
-plus the [ACL candidate contract](docs/architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md).
+plus the [ACL candidate contract](docs/architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md)
+and [mountinfo candidate contract](docs/architecture/headless-resource-enforcement/native-mountinfo-candidate-source-spec.md).
 
 These are not all enabled together as a supported runtime. Real Docker
 execution, complete runtime cleanup proof, supported installation, and release
