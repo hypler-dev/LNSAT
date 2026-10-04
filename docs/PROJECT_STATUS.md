@@ -1249,6 +1249,31 @@ nonempty custody positives before the main candidate is declared ready. No
 failure is waived and no merge, runtime or release authority follows from this
 correction.
 
+### Repository review workflow: owner-accepted CodeRabbit retirement
+
+Canonical acceptance and implementation record: this subsection. On
+2026-10-04, the human owner accepted disabling CodeRabbit from the routine
+LNSAT workflow and using repository-native tools plus fresh independent
+internal LLM review. The bounded source change adds the repository configuration
+and updates contributor guidance and the README review pointer.
+
+The configuration selects disabled automatic/incremental reviews, empty opt-in
+labels/keyword, disabled draft reviews, request-changes/auto-approval behavior,
+review progress/status messages, automatic summaries and ambient chat replies.
+It does not uninstall the app, revoke repository access or block explicit manual
+mentions. Routine contributor work does not invoke CodeRabbit CLI/manual reviews.
+The official provider schema and documentation govern configuration syntax;
+local validation and fresh independent review precede its publication.
+
+Public main protection currently requires the strict, up-to-date `Node and Rust
+source gates` check and conversation resolution; CodeRabbit is not a required
+check. The effective ruleset read contains no additional branch rules. This
+change leaves required checks/protection intact, preserves existing findings and
+immutable review records, and retains independent Git-bound evidence and separate
+human merge/release authorization. A bot result, LLM verdict or source CI pass
+grants no runtime, release or certification authority. The `PHR-0018` source/
+attestation pair and exact final-head CI retain their gates.
+
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
 Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed

@@ -82,6 +82,33 @@ independence remain recorded claims; they are not externally machine-verified.
 Never fabricate, infer, or backfill GitHub approval or reviewer claims. Preserve
 the recorded reviewer identity, findings, dispositions, and reviewed revision.
 
+## Review Workflow
+
+LNSAT uses repository-native validation and fresh independent review for
+meaningful source, contract, documentation-gate and workflow changes. An
+internal LLM reviewer receives the exact diff, accepted intent, constraints and
+named validation evidence; it remains read-only and independent of the producer.
+Record actionable findings and their dispositions before integration. The
+maintainer retains security, compatibility and final integration judgment.
+
+Run focused tests and the full source gate appropriate to the change. Retain
+strict compiler/lint checks, contract conformance, documentation/public/inventory
+checks, dependency audits and installed local secret/static analysis. Review
+findings from each tool against the source; an LLM verdict never replaces those
+checks or the required Git-bound review evidence.
+
+The repository [.coderabbit.yaml](.coderabbit.yaml) disables CodeRabbit automatic
+and incremental reviews, review progress/status messages, automatic summaries
+and ambient chat replies. Routine LNSAT work does not invoke its CLI or manual
+review commands. These settings do not uninstall the GitHub app, revoke its
+access or prevent explicit manual mentions; those remain separate administrative
+controls. See the official [automatic review controls](https://docs.coderabbit.ai/configuration/auto-review)
+and [configuration reference](https://docs.coderabbit.ai/reference/configuration).
+
+Required native CI, resolved review conversations, independent review evidence
+and separate human merge/release authorization remain enforced. Existing review
+findings and immutable historical attestations retain their recorded disposition.
+
 ## Upstream and Downstream Changes
 
 Public LNSAT owns authority semantics, portable interoperability contracts, OS

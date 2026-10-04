@@ -223,6 +223,10 @@ npm run source:check
 npm run audit:dependencies:check
 ```
 
+Meaningful changes also require fresh independent review, including scoped
+internal LLM review with named validation evidence. See the
+[review workflow](CONTRIBUTING.md#review-workflow) for contributor requirements.
+
 Source checks are not supported-release approval. The separate
 [release process](docs/RELEASING.md) requires runtime, security, and artifact
 lifecycle evidence before publication.
