@@ -129,6 +129,9 @@ subsystem or proposal.
 - [Crypto operation/provider source inventory](architecture/CRYPTO_OPERATION_PROVIDER_INVENTORY.md)
   — 17 bounded operation classes and immutable manual source bindings;
   no strict-profile/provider selection, runtime or assurance claim.
+- [Proposed strict crypto admission design](architecture/STRICT_CRYPTO_ADMISSION_DESIGN.md)
+  — complete selected-operation coverage and exact module/environment/health/key
+  evidence; owner acceptance, provider selection and implementation pending.
 - [Loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [Packet model](architecture/PACKET_MODEL.md)
 - [Policy and audit](architecture/POLICY_AND_AUDIT.md)
