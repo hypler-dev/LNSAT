@@ -6,7 +6,7 @@ Status: accepted
 Authority: [HCFG-6 intent](intent.md); current acceptance/implementation belongs to [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
-Last updated: 2026-10-03
+Last updated: 2026-10-04
 
 ## Scope and protected lanes
 
@@ -47,6 +47,68 @@ runtime authority.
 6. After the reviewed source freeze and integration gates, complete atomic bootstrap with that bounded observation and resource-free zero-authority probe preparation, one immediate transaction, durable linked audit, inert restore and orphan quarantine. Complete protected Gateway generation/epoch/stop/revocation admission and one-use startup release before enabling any target. No empty-only initializer or diagnostic-to-active conversion is accepted as the end state.
 7. Prove the complete same-attempt chain through actual selected-target runtime evidence under a new exact operator authorization. Keep old Phase 11 proof source/manifest separate; if that proof runs, it supplies only its locked claim, not the stronger new profile's proof. No current Docker authority is implied.
 8. Close HCFG-6/headless conformance against every requirement, then continue monitoring/protected control/reliability and selected-target package lifecycle in the accepted V1 sequence. Phase 13/14 and publication remain separate; no narrower source milestone closes V1.
+
+## Next genuine procfs reader contract gate
+
+This section bounds the next separate contract draft; it is not an exact reader
+specification, precode approval, implementation or completion record. Project
+Status owns the [current reader gap](../../PROJECT_STATUS.md#stage-a-private-mountinfo-byte-candidate)
+and [V1 command reconciliation](../../PROJECT_STATUS.md#v1-command-and-contract-completion-gates).
+The accepted Stage-A amendment permits an independently reviewed inert candidate;
+the supplied-byte decoder does not authenticate its input source.
+
+The next packet must refine the existing
+[native observation proposal](native-source-spec.md#safe-native-apis-and-held-identity)
+into one exact private procfs/held-mount reader contract. The controller owns its
+security and Linux feasibility decisions. Initially owned documentation is this
+plan, the relevant native-specification section and its canonical Project Status
+subsection; source ownership is assigned only after exact precode review.
+Existing mountinfo parser, ACL sampler, journal, schema-17 behavior and the
+locked Phase 11 packet are preserved.
+
+| Contract question             | Required resolution before reader source                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Inputs and custody            | Name the genuine held procfs root, caller-owned held resource descriptors, same-host process context, ownership and lifetime rules. A displayed path, supplied row or synthetic successful observer cannot replace native origin.                                                                                                                                     |
+| Filesystem and lookup origin  | Freeze exact filesystem-origin and held-root/mount association checks, descriptor-relative no-follow operations and the finite exception for intentional procfs kernel links. No arbitrary resource reopen or procfs magic-link fallback.                                                                                                                             |
+| Read grammar                  | Freeze `self/fdinfo/{held_fd}` and `self/mountinfo` paths, strict required/duplicate/unknown-field rules, inclusive byte/row bounds, terminal EOF and partial-read handling. Reuse the reviewed byte decoder without silently changing its grammar or treating options as authority.                                                                                  |
+| Bounded execution             | Specify safe pinned APIs, fixed/fallible storage, interruption/short-read policy and an enforceable monotonic deadline within the existing uninterrupted preparation/action budget. A byte cap alone does not prove bounded return; no unbounded retry.                                                                                                               |
+| Current association and drift | Specify before/after descriptor, filesystem, process/root/namespace and mount-row checks, the exact fdinfo-to-row association and refusal of missing, ambiguous, replaced or changing observations. Persistent resource identity remains distinct from live mount/namespace tokens.                                                                                   |
+| Output and denial             | Define a private non-serializable observation with fixed data-free errors and no public successful constructor, live observer permit, ACL/idmapping classification or action authority. Unsupported platforms and unavailable origin/association deny.                                                                                                                |
+| Source evidence               | Require actual disposable Linux self-process/held-object positives, malformed/limit/EOF negatives and deterministic drift/lifetime tests. Separate synthetic parser vectors from genuine-reader fixtures; no Docker, selected host, permission mutation, target action or pressure proof.                                                                             |
+| Review and rollback           | Fresh independent read-only precode review must cover every native operation and feasible non-root positive path before implementation. Resulting source needs focused pinned tests, `npm run check`, public/inventory/history checks and separate exact-source/direct-child reviews. Rollback is a reviewed inert-source revert, not journal repair or live cleanup. |
+
+Filesystem origin, intentional-link semantics, fdinfo grammar, held-descriptor
+lifetime, enforceable bounded return, EOF and drift are still unresolved exact
+contracts. This packet must resolve them rather than turning the existing
+proposal into an assumed implementation. Other procfs/cgroup/securityfs readers,
+associated-path ACL classification, socket/SQLite/O_PATH custody and daemon
+association remain separately bounded work. No dependency or feature change is
+preapproved by this gate description.
+
+## Complete native freeze and later gates
+
+The reader contract and its later inert source are prerequisites, not the full
+native freeze. The accepted
+[staging decision](source-freeze-staging-decision.md#c-complete-freeze-before-integration-or-activation)
+requires one coherent independently reviewed source/pin/positive-feasibility
+freeze before product integration. No current host observation or active
+installation is required to exist at that source gate; live association and
+activation are later gates.
+
+| Gate                   | Evidence required; current boundary                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Inert module source    | Exact reviewed native reader and other candidate contracts/source with genuine bounded Linux fixtures. A parser or module PASS supplies only its own source evidence.                                                                                                                                                                                                                                                                                   |
+| Artifact capture       | A separate human-authorized capture packet or equivalent independently reviewable supplied artifact evidence. Actual component, kernel, template, adapter and image bytes/provenance remain `UNSET_BLOCKING`; versions, source SHAs and synthetic digests do not fill them. No construction is authorized here.                                                                                                                                         |
+| Complete source freeze | Review native origin/ACL/LSM/association, profile schema-3 and protocol-2 fields, private daemon/response/realized recipes, root/OCI custody, preparation journal, selected-write/migration/bootstrap contracts and installation-wide admission/stop/revocation linearization together against exact source, captured pins and a feasible non-root positive recipe. Resolve every P1/P2; no single companion or all-denial fixture completes this gate. |
+| Product integration    | Separately review wiring candidates to protected entrypoints, authenticated owner decisions and atomic bootstrap/configuration/release behavior. No diagnostic-to-active conversion, public injected observer or old-protocol fallback.                                                                                                                                                                                                                 |
+| Activation and runtime | A later exact authorization and actual current root/daemon/kernel/image/resource association, selected-store custody, active generation/epoch, persisted stop/revocation and one-use release. Real disposable runtime/cleanup evidence belongs to its operator packet.                                                                                                                                                                                  |
+| V1 and release         | Complete the canonical command/contract gates, Phase 11 proof, Phase 13 RC/security/reliability and every selected Phase 14 core-target lifecycle row. Design acceptance, source review, merge, runtime, candidate build and publication remain separate decisions.                                                                                                                                                                                     |
+
+LNSAT remains neutral and standalone. The selected engineering recipe supplies
+no general OS, package, enterprise or certification claim. Docker observation,
+host/ACL changes, target pressure, credential intake, migration/initializer
+activation, merge/main mutation, supported-artifact construction, release,
+publication, deployment, production and tool installation remain closed.
 
 ## Validators
 
