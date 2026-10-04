@@ -1162,6 +1162,55 @@ hardening analysis supplies two explicit options and their tradeoffs; it is
 derived design evidence, not a vulnerability scan or compliance assessment.
 Detailed identity/provider selection and implementation remain open.
 
+### Crypto operation/provider source inventory
+
+Canonical work record: this subsection. The owner's enterprise/government
+security direction requires the control/crypto inventory in parallel with the
+accepted engine work. The [bounded crypto inventory](architecture/CRYPTO_OPERATION_PROVIDER_INVENTORY.md)
+and [manual source baseline](reference/crypto-operation-provider-inventory.json)
+record 17 operation/boundary classes and SHA-256 bindings for 35 named source,
+manifest, lock and process-document blobs at exact source
+`a92857ed762f28873990bd1f1a921b104363537e`, tree
+`ce08e9bc72e7a66bb9b08a999139d151a0330f1d`.
+
+This distinguishes Rust daemon/SQLite auth and persistence foundations from
+TypeScript local-beta/PostgreSQL, contract and adapter source. It does not
+establish shared token protocols or a shared deployed crypto backend. Named
+source has Argon2id, OS random interfaces, SHA-256 commitments and optional
+Ed25519 verification; signer profiles remain interface-only. OAuth/SPIFFE
+adapters rely on injected verification. Storage/backup checks establish named
+integrity/custody facts, not encryption. Registry review checks metadata shapes;
+source-review hashes are not signatures or produced artifact proof.
+
+The inventory records actual source facts for later provider selection, not a
+strict-profile specification, exhaustive transitive/compiled crypto census,
+control-matrix completion or runtime check. Approved module/version/environment,
+certificate/security policy where required, self-test/error state, entropy
+health, identity/MFA/federation, key lifecycle, encrypted storage/backup,
+protected audit and artifact-signing evidence remain unestablished. No provider
+or profile is selected or activated here; no government assurance follows.
+Detailed protected/public-contract behavior still needs its exact accepted spec.
+
+The parent private session-buffer source PR #82 passed exact-head source CI
+`37161819790`, job `111316664186`, on
+`a92857ed762f28873990bd1f1a921b104363537e` at `2026-10-03T23:46:00Z`.
+This supplies parent source evidence only. This slice changes documentation;
+no Rust/TypeScript behavior, dependency, API, schema or product version changes.
+The source-order amendment, Stage-A implementation, candidate SQL, Phase 11
+packet, Docker, host mutation, artifact construction, merge, release and
+production gates remain unchanged and closed.
+
+Local manual verification passed for all 35 bound blobs and 45 source ranges.
+Documentation direction passed 31 tests across 186 Markdown files; public
+readiness, generated legacy inventory, Phase 7d truth, Phase 11 readiness,
+native public-history evidence, exact-file formatting and whitespace checks
+passed. Native history remains 13 attested, zero pending and ineligible for
+supported-release evidence. Fresh independent OpenAI Terra xhigh review found
+one canonical status-link defect, corrected before final byte binding, and no
+other actionable P1/P2/P3. Broad source tests and code scanners were not rerun
+for this documentation-only slice; parent exact-head source CI is the separate
+source evidence above.
+
 ### Dependency advisory checkpoint
 
 On 2026-10-03 a fresh `npm run audit:dependencies:check` passed on exact draft

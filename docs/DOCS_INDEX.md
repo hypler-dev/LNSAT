@@ -126,6 +126,9 @@ subsystem or proposal.
 - [Enterprise/government security requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
   — requested assurance, crypto, audit/privacy and supply-chain work;
   implementation, deployment scope and certification evidence remain pending.
+- [Crypto operation/provider source inventory](architecture/CRYPTO_OPERATION_PROVIDER_INVENTORY.md)
+  — 17 bounded operation classes and immutable manual source bindings;
+  no strict-profile/provider selection, runtime or assurance claim.
 - [Loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [Packet model](architecture/PACKET_MODEL.md)
 - [Policy and audit](architecture/POLICY_AND_AUDIT.md)

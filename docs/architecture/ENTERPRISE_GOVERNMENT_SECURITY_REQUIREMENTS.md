@@ -30,6 +30,13 @@ completed signed update/artifact pipeline. Source tests are not selected-target
 OS proof. HCFG-6 native enforcement, atomic bootstrap, protected control,
 monitoring and actual runtime remain required alongside these security tasks.
 
+The [crypto operation/provider inventory](CRYPTO_OPERATION_PROVIDER_INVENTORY.md)
+records named application operations and their source/provider boundaries at one
+immutable source revision. Its manual blob bindings prepare provider design;
+they are not a compiled crypto census, strict-profile activation or assurance
+evidence. [Project Status](../PROJECT_STATUS.md#crypto-operation-provider-source-inventory)
+owns that work record.
+
 ## Required work and acceptance evidence
 
 These are proposed implementation requirements, not implemented capabilities.
