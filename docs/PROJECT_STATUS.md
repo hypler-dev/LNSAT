@@ -1225,6 +1225,30 @@ remain proposals. Full source/pin/positive-feasibility freeze, behavioral
 integration, Docker, host mutation, schema-18 execution, artifacts, signing,
 release, deployment and production remain closed.
 
+The main integration candidate is public PR #88, initially published at exact
+head `d1b1d85b40cbc01a802a8a68eac5e1be516e023f`. Its Ubuntu source CI run
+`37191633294` failed strict all-target Clippy on five Linux-only test diagnostics:
+one redundant `Write` import and four needless identifier borrows in the
+private custody fixtures. Dependency signatures and vulnerability checks passed;
+the new Linux custody positives had not run when Clippy stopped the gate. The
+failure remains recorded despite the preceding macOS source checks passing.
+
+The bounded correction removes those five test diagnostics without changing
+production behavior, dependencies, lint policy or CI. The macOS rerun passed
+pinned formatting, strict workspace all-target Clippy and 13 focused Rust
+tests, with the descriptor child helper explicitly invoked by its parent.
+Documentation checks passed 31 tests over 189 Markdown files, 33 critical
+documents and 14 phases; public checks passed over 946 files. Inventory passed
+with 2,122 occurrences across 295 files. Named `p/rust` Semgrep returned two
+unchanged test-fixture alerts and zero errors, independently triaged as
+non-actionable; redacted Gitleaks returned zero findings.
+
+Fresh independent review, the `PHR-0017` source/attestation pair and a new
+exact-head Ubuntu source run retain their gates. The Linux run must execute the
+nonempty custody positives before the main candidate is declared ready. No
+failure is waived and no merge, runtime or release authority follows from this
+correction.
+
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
 Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed

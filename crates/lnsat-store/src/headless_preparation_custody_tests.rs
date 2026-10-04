@@ -12,7 +12,6 @@ use std::{
 
 #[cfg(target_os = "linux")]
 use std::{
-    io::Write as _,
     os::unix::fs::{OpenOptionsExt as _, PermissionsExt as _, symlink},
     path::Path,
 };
@@ -399,15 +398,12 @@ fn custody_rejects_names_types_modes_and_links() {
         create_private_directory(&fixture.root());
         match variant {
             "name" => write_private_file(&fixture.root().join("not-a-preparation"), b"x"),
-            "symlink" => symlink(&fixture.database, fixture.root().join(&id('a')))
+            "symlink" => symlink(&fixture.database, fixture.root().join(id('a')))
                 .expect("fixture symlink must create"),
-            "fifo" => mkfifo(
-                &fixture.root().join(&id('a')),
-                Mode::S_IRUSR | Mode::S_IWUSR,
-            )
-            .expect("fixture fifo must create"),
+            "fifo" => mkfifo(&fixture.root().join(id('a')), Mode::S_IRUSR | Mode::S_IWUSR)
+                .expect("fixture fifo must create"),
             "mode" => {
-                let directory = fixture.root().join(&id('a'));
+                let directory = fixture.root().join(id('a'));
                 create_private_directory(&directory);
                 fs::set_permissions(&directory, fs::Permissions::from_mode(0o755))
                     .expect("fixture mode must change");
@@ -415,7 +411,7 @@ fn custody_rejects_names_types_modes_and_links() {
             "hardlink" => {
                 let source = fixture.root().join("source");
                 write_private_file(&source, b"fixture");
-                fs::hard_link(&source, fixture.root().join(&id('a')))
+                fs::hard_link(&source, fixture.root().join(id('a')))
                     .expect("fixture hard link must create");
             }
             _ => unreachable!(),
