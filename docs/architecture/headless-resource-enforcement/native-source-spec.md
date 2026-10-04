@@ -225,8 +225,12 @@ link, alternate Git directory/worktree/object path or incomplete scan. Do not
 run Git during bootstrap. At actual use, reuse the closed semantic Git verifier
 on the same held/path identity without changing its disposable-only scope.
 
-Mountinfo does not report whether a mount is idmapped. Do not invent an
-`idmapped` optional field or treat its absence as proof. The root manifest
+The reviewed upstream Linux v6.8 mountinfo emitter includes `idmapped` in the
+per-mount options when `is_idmapped_mnt` is true. Its position is the mount
+options field before the tagged optional fields and `-` separator. No
+`idmapped` tagged optional field is defined. That upstream source observation
+does not authenticate the installed kernel or a caller-supplied mount record;
+absence from an untrusted record supplies no idmapping proof. The root manifest
 explicitly attests `idmapped=false` for each selected ext4 mount, bound to the
 current boot, host user/mount namespaces, held mount ID, device, mount root and
 mount point. Current fdinfo/mountinfo/fstatfs observations associate that
@@ -413,8 +417,12 @@ continues to own runtime truth; runtime/package/publication remain closed.
   and [block reads](https://github.com/torvalds/linux/blob/v6.8/fs/ext4/super.c)
   complete the reviewed stock-source no-`ENOSYS` predicate. Authentication of
   exact installed provenance is still required.
-- [Linux mountinfo](https://man7.org/linux/man-pages/man5/proc_pid_mountinfo.5.html)
-  defines live mount association without an idmapped-mount flag.
+- [Linux v6.8 proc namespace source](https://raw.githubusercontent.com/torvalds/linux/v6.8/fs/proc_namespace.c)
+  emits `idmapped` in `show_mnt_opts`, called by `show_mountinfo` for the
+  per-mount options field. The
+  [upstream proc documentation](https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/filesystems/proc.rst)
+  distinguishes that field from the later tagged optional fields. An exact
+  installed-kernel recipe and current authenticated association remain required.
 
 These source-derived recipe choices are LNSAT design inferences. Research does
 not provide owner acceptance of a material design change or runtime evidence.

@@ -839,8 +839,10 @@ resolves API 1.56 against exact Moby 29.8.2 commit
 generated readonly metadata and rootful namespace/device assumptions. The
 [native proposal](architecture/headless-resource-enforcement/native-source-spec.md)
 adds the stock-ext4 no-reachable-ENOSYS predicate, manifest bootstrap ordering
-and explicit trusted-root idmapped-mount attestation. Mountinfo does not expose
-an idmapped flag. Selected-store ACL evidence is associated named-path proof,
+and explicit trusted-root idmapped-mount attestation. The earlier claim about
+mountinfo exposing no idmapped flag is corrected by the
+[mountinfo research reconciliation](#native-mountinfo-research-reconciliation).
+Selected-store ACL evidence is associated named-path proof,
 not a database alias or fd-bound ACL read.
 
 Independent exact-source review found that Moby always repeats the primary
@@ -1366,6 +1368,35 @@ No authority or V1 completion follows from these candidate observations.
 Docker, host/ACL changes, actual pins, schema-18 execution, initializer,
 activation, artifact construction, merge, signing, release, deploy and
 production remain closed. Phase 11 packet status is unchanged.
+
+### Native mountinfo research reconciliation
+
+Canonical work record: this subsection. Follow-up bounded native research found
+a factual gap in the supporting proposal: upstream Linux v6.8
+[`show_mnt_opts`](https://raw.githubusercontent.com/torvalds/linux/v6.8/fs/proc_namespace.c)
+emits `idmapped` when `is_idmapped_mnt` is true, and `show_mountinfo` calls it in
+the per-mount options field. The
+[upstream field documentation](https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/filesystems/proc.rst)
+places the tagged optional fields after those options. The supporting native
+specification now records the source behavior and removes the blanket claim
+that mountinfo exposes no idmapped indication.
+
+This is a factual documentation correction under the accepted inert Stage-A
+work lane. Root-manifest attestation and current authenticated descriptor/mount
+association remain the proposed design requirements. Untrusted supplied bytes
+or an absent invented optional tag prove no mount property; upstream source
+does not authenticate a selected installed kernel. No decoder, native reader,
+permission rule, successful observer, product integration or runtime claim is
+added. The ACL candidate in PR #89 does not consume mountinfo. Complete native
+source/pin/positive-feasibility freeze, exact parser precode review and later
+integration remain open. Pinned docs direction passed 31 tests over the same
+190 Markdown files, 33 critical documents and 14 phases; public source passed.
+The unchanged Phase 11 readiness suite passed 43/43 and retained the locked
+packet status. Exact-file formatting and whitespace checks passed. Fresh
+independent review, native history attestation and exact-head hosted source
+verification retain their separate gates. Phase 11 packet and all runtime,
+Docker, host change,
+artifact, merge, release and production gates remain unchanged.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
