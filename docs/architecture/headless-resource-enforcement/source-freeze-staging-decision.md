@@ -1,8 +1,9 @@
 # HCFG-6 Source-Freeze Staging Decision
 
-Status: proposed owner decision; not accepted. Current gates remain in force.
+Status: human owner accepted the source-order amendment on 2026-10-03 at exact
+reviewed revision `5a1338cb31706bde4e1458a5089cfacb28e90917`.
 [Project Status](../../PROJECT_STATUS.md#hcfg-6-proposed-source-freeze-staging-amendment)
-is the sole acceptance record. This proposal changes source ordering, not the
+is the sole acceptance record. This amendment changes source ordering, not the
 V1 outcome, threat boundary, runtime authority or supported-product claims.
 
 ## Verified ordering conflict
@@ -25,7 +26,7 @@ plan wording nevertheless requires an explicit human amendment.
 
 ### A. Reviewed inert candidate source
 
-After the human accepts this amendment, an exact private module contract and
+Under the human-accepted amendment, an exact private module contract and
 fresh independent review may precede implementation of that inert module,
 without already possessing the final artifact pins. The controller must name
 owned files, invariants, denial/positive cases, validators and integration
@@ -120,15 +121,15 @@ operation is opened by any source-order decision.
 
 ## Owner decision and reconciliation
 
-Requested decision: accept Stage-A inert candidate implementation after exact
+Accepted decision: Stage-A inert candidate implementation follows exact
 module contract/review, with Stage B separately authorized, Stage C requiring
 complete source/pin freeze and Stage D preserving all actual activation/runtime
 gates.
 
-Until an explicit human reply names this proposal, current source ordering
-remains controlling and no Stage-A implementation begins. After acceptance,
-the controller records the exact reviewed proposal head in Project Status and
-reconciles the existing intent/spec/plan/native/recipe gate wording consistently.
-Do not infer acceptance from CI, a reviewer PASS, this proposed text, or the
+The direct human reply and exact reviewed proposal head are recorded in
+Project Status. The controller reconciles existing intent/spec/plan/native/
+recipe gate wording with this accepted source ordering. The full integration
+freeze remains distinct from exact private-module review.
+Do not infer additional acceptance from CI, a reviewer PASS, this text, or the
 general V1 objective. No artifact-capture or runtime permission is bundled
 with this source-order decision.

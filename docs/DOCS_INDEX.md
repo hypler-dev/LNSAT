@@ -91,8 +91,8 @@ subsystem or proposal.
   — proposed bounded native, profile and startup transport seams; full freeze,
   source integration and runtime proof remain pending.
 - [HCFG-6 preparation/store source specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
-  — inert journal custody, atomic bootstrap and release/revocation serialization;
-  no implementation or authority follows from this document.
+  — private Stage-A journal codec contract plus later durable custody, atomic
+  bootstrap and release/revocation requirements; complete integration remains gated.
 - [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
   — exact proposed schema-3 fields, native payload and separate startup contexts;
   complete freeze review and implementation remain pending.
@@ -112,9 +112,9 @@ subsystem or proposal.
 - [HCFG-6 controlled resource-pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
   — separate future CPU/memory/PID cases, bounded stimuli, independent events
   and exact cleanup; no normal preparation pressure or actual conformance run.
-- [Proposed HCFG-6 source-freeze staging amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+- [Accepted HCFG-6 source-freeze staging amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
   — reviewed inert source, separately authorized artifact capture, complete
-  source/pin freeze before integration; owner acceptance remains pending.
+  source/pin freeze before integration; canonical acceptance is in Project Status.
 - [HCFG-6 root manifest/OCI custody proposal](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
   — root-controlled anchor, current daemon/artifact association and raw OCI
   parent links; no provisioning, live proof or full-freeze approval.

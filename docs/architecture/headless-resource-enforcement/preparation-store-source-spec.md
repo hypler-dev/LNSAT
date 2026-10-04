@@ -183,6 +183,89 @@ The normal phase path is `pending` -> `probe_created` ->
 use `pending` -> `cleanup_verified`. Any failure before `bound` enters
 `quarantined`; `bound` is terminal and cannot be reused for a new attempt.
 
+## Stage-A private journal codec contract
+
+The human-accepted [source-order amendment](source-freeze-staging-decision.md)
+permits this exact codec contract to receive fresh independent review before
+implementation. This is the first codec-first preparation-engine candidate,
+not the complete native/store freeze. Primary source ownership is
+`crates/lnsat-store/src/headless_preparation.rs`, its private test module
+`headless_preparation_tests.rs`, and the private module declaration in
+`crates/lnsat-store/src/lib.rs`. No public re-export or active caller is added.
+
+The module decodes the exact 13-field record above, derives the exact candidate
+and journal commitments above, and validates a bounded ordered revision chain.
+Fields and validated objects remain private. Inputs are untrusted assertions;
+success establishes syntax, canonical bytes and internal continuity only.
+It establishes no actual custody, observed cleanup, committed bootstrap,
+current store identity, authority or admission. There is no successful-observer
+injection, database operation, filesystem operation, random-ID generator or
+transition writer in this slice. The scoped dormant-module `dead_code`
+allowance records its disconnected status; unsafe code remains forbidden and
+all other existing source lints remain enforced.
+
+The following codec rules make the existing journal contract precise:
+
+- A record is at most 16,384 bytes including exactly one final LF. Typed
+  canonical re-encoding must match every input byte; alternate whitespace,
+  order, escapes, integer forms, duplicate/unknown/missing fields, extra frames
+  and invalid UTF-8 reject. Nullable fields must be explicitly present.
+- `owner_uid` is a nonzero u32 other than `4294967295`. Revision is an unsigned
+  integer from 0 through 63. Preparation and container IDs have exactly 64
+  lowercase hexadecimal characters. Every digest is exactly the seven ASCII
+  bytes `sha256:` followed by 64 lowercase hexadecimal characters; whitespace,
+  uppercase, alternate prefixes or lengths reject. The six candidate input
+  digests use that same encoding, with the same owner UID rule.
+  `container_name` equals `lnsat-hcfg6-probe-` plus the preparation ID.
+- Revision 0 is `pending` with null previous/container values. Later records
+  are not `pending` and require the preceding digest. `probe_created` requires
+  a container ID. Later phase shape alone is descriptive and cannot prove the
+  observations required by the durable writer.
+- A chain contains 1 through 64 records, with total bytes at most 1 MiB, starts
+  at revision 0, and increments exactly once at each entry. Preparation,
+  candidate, store, recipe, owner, challenge and deterministic name are
+  immutable. Each previous digest equals the actual prior journal digest.
+- Legal phase edges are `pending -> probe_created`,
+  `pending -> cleanup_verified`, `probe_created -> cleanup_verified`, and
+  `cleanup_verified -> bound`. Each nonterminal phase may enter `quarantined`;
+  `bound` and `quarantined` are terminal. Repeated phases and any terminal reuse
+  reject. Offline quarantine resolution is outside this codec.
+- Container identity may first appear on `pending -> probe_created` or
+  `pending -> quarantined`. A direct `pending -> cleanup_verified` retains
+  null. Once an ID exists it cannot change or disappear; other edges retain
+  the previous value. A quarantined ID conveys no ownership or deletion proof.
+- Errors are fixed bounded codes with no raw input, metadata, identifiers,
+  hash values or provider errors. Record types have no diagnostic `Debug`
+  representation or serialization outside the private codec.
+
+The exact error set is `journal.limit_exceeded`, `journal.invalid_frame`,
+`journal.invalid_record`, `journal.invalid_candidate` and
+`journal.invalid_chain`. Errors are five data-free enum variants; `code()`
+returns only the corresponding static ASCII string, at most 25 bytes.
+Record/chain size or count overflow returns the limit
+code before parsing. An empty/non-LF-terminated/noncanonical record returns the
+frame code. JSON/type/field/schema/encoding/initial-shape violations return the
+record code; raw parser errors are discarded. Invalid candidate fields return
+the candidate code. Empty chains, nonconsecutive revisions, altered immutable
+fields, wrong prior digest, forbidden edges or container drift return the chain
+code after each record has passed its own checks. Internal typed serialization
+failure maps to the corresponding record/candidate code without raw detail.
+
+The existing literal digest labels and framing are fixed for this private
+candidate contract. Manual independent golden vectors must test the object
+and positional-array distinction, exact LF boundaries and SHA-256 domains.
+Positive tests cover normal and zero-created cleanup paths and all quarantine
+edges from `pending`, `probe_created` and `cleanup_verified`, including null
+and retained container identity. `pending -> quarantined` has two required
+positive vectors: null container identity and the first valid 64-hex container
+ID. Later quarantine edges cover every permitted null/non-null retention shape.
+Terminal reuse always rejects;
+negative tests cover every field class, alternate encodings, identity drift,
+gaps/replays, altered prior digest, invalid phase edges and bounds. Corpus cases
+exercise hostile parser inputs without accessing live resources. Future durable
+custody, schema-18 writing, bootstrap/release, native observations and actual
+target proof remain separately reviewed implementation steps.
+
 ## Atomic bootstrap and schema migration
 
 The future source packet adds migration 18, derived from the actual current
@@ -313,9 +396,10 @@ proof, merge authority, release readiness, package publication, deployment, or
 production activation. No source, schema, lock, or protocol implementation is
 authorized by this document alone.
 
-The following exact details require the primary controller's final source-freeze
-decision before implementation: the literal domain-label constants and
-canonical JSON framing; migration-18 exact DDL/schema inventory and later audit
+The Stage-A codec contract above fixes its existing literal domain labels and
+canonical framing for private candidate implementation after independent
+review. The following exact details still require the primary controller's
+final complete-freeze decision before integration: migration-18 exact DDL/schema inventory and later audit
 variant payloads (B4 specifies bootstrap logical columns/domains); the
 native lock primitive and bounded deadline values; and the complete set of
 installation-wide writer call sites that must join the lock. If source or

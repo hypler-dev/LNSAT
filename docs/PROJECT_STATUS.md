@@ -62,9 +62,11 @@ Parent selected-write contract PR #81 passed exact-head source CI
 `59bbb92f9df96afdf0b4e7166c38cb92134be27f` on `2026-10-03T22:49:02Z`.
 That evidence covers the proposed contract, not selected-write implementation.
 
-The pending HCFG-6 source-order decision and Phase 11 packet are unchanged.
-No native/profile/journal/store Stage-A code, candidate SQL, Docker, host
-mutation, artifact build, merge, release, deployment or production opens here.
+At this session-buffer checkpoint the HCFG-6 source-order decision was pending;
+its later human acceptance is recorded in the canonical staging subsection.
+This session-buffer change opened no native/profile/journal/store Stage-A code,
+candidate SQL, Docker, host mutation, artifact build, merge, release,
+deployment or production. The Phase 11 packet remains unchanged.
 
 Repository source is public through the independently audited fresh-history
 cutover recorded in [public source readiness](PUBLIC_READINESS.md). Public
@@ -243,8 +245,9 @@ to exactly `lnsat.runtime_profile.docker_local.v1` and
 `lnsat.runtime_profile.docker_local.v2`. The latter is the selected HCFG-6
 native contract identity. This changes only conditional comparison of supplied
 assertions; it implements no native schema-3 decoder, profile verifier, journal,
-store, initializer or authenticated comparison. It does not accept the pending
-HCFG-6 source-order amendment or open Stage-A implementation.
+store, initializer or authenticated comparison. This compatibility change
+accepted no HCFG-6 source-order amendment and opened no Stage-A implementation;
+the later human source-order acceptance is recorded separately below.
 
 Both contexts must retain the same exact profile string. Mixed versions and
 unknown or near-match strings deny without a model commitment, summary or
@@ -597,8 +600,9 @@ The proposed next headless migration 18 cannot silently import the unrelated
 historical Phase 7d signed-evidence v18 test-only layout. Actual registration
 requires reconciliation of the compiled schema, exhaustive eligibility and
 legacy truth labels; optional signing remains blocked. The complete native/
-wire/daemon/store freeze and pending HCFG-6 source-order amendment retain their
-gates. No Stage-A implementation, initialization, activation, Docker, host ACL,
+wire/daemon/store freeze retains its gates. Source-order acceptance was pending
+at this checkpoint and was accepted later in the canonical staging record.
+No Stage-A implementation, initialization, activation, Docker, host ACL,
 artifact build, merge, release or production action follows from this record.
 
 ### HCFG-5B B5 schema and verification contract
@@ -608,7 +612,8 @@ specifies exact candidate SQL for the B4 root/generation/audit/pointer layout.
 It executes no new SQL, adds no migration file or registry entry, and leaves
 current schema 17 and ordinary store behavior unchanged. Its migration-body
 text identity is separate from the still-unset actual SQLite schema digest.
-The pending source-order amendment and full integration gate remain closed.
+Source-order acceptance was pending at this B5 checkpoint; the later accepted
+amendment is recorded below. The full integration gate remains closed.
 
 The proposal rejects occupancy in all 28 existing non-seed tables before any
 lasting migration change. Metadata and retention rebuilding are explicit
@@ -683,10 +688,11 @@ candidate SQL or new source test ran. The unchanged parent source gate passed
 at exact draft PR #80 head `65a5441f661c35fcf4ac102d9b5a46346c36197d`.
 
 This is supporting contract work under accepted HCFG-5B/HCFG-6 baselines, not
-complete freeze acceptance or implementation. The pending source-order
-amendment still requires explicit owner acceptance. Stage-A source, candidate
-SQL execution, initialization, activation, Docker, host mutation, merge,
-artifact builds, signing, release, deploy and production remain closed. V1 and
+complete freeze acceptance or selected-write implementation. Source-order
+acceptance was pending at this B6 checkpoint; the later accepted amendment is
+recorded below. Candidate SQL execution, initialization, activation, Docker,
+host mutation, merge, artifact builds, signing, release, deploy and production
+remain closed at this B6 checkpoint. V1 and
 enterprise/government readiness are incomplete. The Phase 11 operator packet
 retains its locked source and source-only runtime verdict.
 
@@ -994,15 +1000,30 @@ before behavioral integration, while implementing those candidates and
 constructing the image are both closed before that same complete freeze.
 Source/artifact/runtime evidence must not be substituted for one another.
 
-The [proposed staging decision](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
-would permit reviewed inert private candidate modules after their exact module
-contracts, then require separately authorized artifact capture and one complete
-source/pin/positive-feasibility freeze before product integration or activation.
-**Owner acceptance is pending.** The existing gates remain controlling; no
-candidate implementation, Docker operation, image build, permission change,
-initializer, merge, release or runtime action is authorized by this proposal.
-The original HCFG-6 acceptance is unchanged; this is a distinct proposed
-amendment to source ordering, not self-acceptance or a new runtime authority.
+The human owner accepted the
+[staging decision](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+in this development conversation on 2026-10-03 (America/Los_Angeles), replying
+`accepted` to the presented PR #75 source-order amendment at exact reviewed
+revision `5a1338cb31706bde4e1458a5089cfacb28e90917`. The decision bytes at the
+current stack base were verified equal to that reviewed revision. This is a
+direct human acceptance, not controller self-acceptance or inference from CI.
+
+**Source-order acceptance is complete.** Reviewed inert private Stage-A
+candidate modules may follow their exact contracts and fresh independent
+review without final artifact pins. Separately authorized artifact capture and
+one complete source/pin/positive-feasibility freeze remain required before
+product integration. Docker, image/package construction, permission changes,
+initializer, active integration, merge, release and runtime remain closed.
+The original HCFG-6 acceptance is unchanged; this amends source ordering only.
+Earlier checkpoint statements of pending source-order acceptance are historical.
+
+The first selected engine candidate is the
+[private preparation-journal codec](architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-journal-codec-contract),
+following the native plan's codec-first order. Its exact canonical grammar,
+commitments, phase/identity continuity, finite bounds, fixed errors and private
+ownership receive independent contract review before code. Native/file custody,
+schema writes, bootstrap/release and full-freeze integration remain separate;
+codec success cannot prove a current fact or create authority.
 
 Exact Moby source also establishes root-owned `0710` containers/per-container
 metadata ancestors and `0644` generated files. Same-UID access does not prove
@@ -1019,16 +1040,78 @@ unchanged Phase 11 readiness passed 43/43 with execution closed. Exact-doc
 formatting and diff checks passed. Fresh independent OpenAI Terra xhigh review
 found no remaining P1/P2/P3 after separating complete source/artifact freeze
 from later live activation observations, avoiding another ordering cycle.
-This review covers the proposed amendment only; owner acceptance and new
-exact-head hosted CI remain separate. No Stage-A source implementation began.
+That review covered the proposed amendment only. The later human acceptance
+above opens the stated source ordering, not a complete freeze or runtime claim.
+
+Exact parent security-design PR #86 head
+`350abaccf6a2b32e0b4edc01120a763d8d9471d8` passed hosted source CI run
+`37168251752`, job `111335662383`, at `2026-10-04T01:49:25Z`.
+This is exact source/design evidence, not implementation of proposed MFA,
+strict crypto, encrypted storage or independent audit custody.
+
+### Stage-A preparation-journal codec candidate
+
+Canonical implementation record: this subsection under the accepted source-order
+amendment. The private store candidate implements exact journal record syntax,
+candidate/journal commitments and bounded immutable revision-chain validation.
+It follows the accepted codec-first preparation-engine sequence. All module
+functions/types remain private; the scoped dormant-module annotation preserves
+its disconnected state. No public re-export, active caller, file/database
+operation, native observer, random-ID generator or transition writer is added.
+
+Strict parsing requires every field, including explicit nullable members,
+struct-order compact JSON and exactly one LF. It rejects alternate encodings,
+wrong schema/digest/identity/type/bounds, immutable context drift, missing prior
+digest, revision gaps/replays, forbidden phase edges and container substitution.
+Five data-free errors provide fixed bounded codes. Parsed chains are untrusted
+assertions of internal consistency, not evidence of actual custody, cleanup,
+current store identity, completed bootstrap or action authority.
+
+Fresh pre-implementation contract review resolved two P2 ambiguities (digest
+spelling and closed errors) and explicit P3 quarantine-positive coverage before
+source began. Independent Python/manual positional-array goldens anchor the
+commitments. The final focused Rust suite passed 11/11. The complete pinned
+`npm run check` exited zero, including strict workspace Clippy/Rustfmt,
+1,471 TypeScript workspace tests, 139 contract conformance cases, 262 store
+tests (one child helper is marked ignored and invoked by its cross-process
+regression), 100 daemon tests, and unchanged Phase 11 readiness 43/43 with
+execution closed. Documentation direction passed 31 tests over 189 Markdown files;
+public readiness checked 941 files and inventory remained 2,122 occurrences
+across 295 files.
+
+Fresh independent OpenAI Terra xhigh source review resolved historical status
+ambiguity, a missing created-container negative and a phase-type error-class
+defect. The latter already denied admission; the string-only decoder now
+classifies all five tested wrong JSON types as `journal.invalid_record`.
+Public-history-native review binding uses `PHR-0014`; the reviewed source commit
+and its separate attestation child must bind the actual Git tree, canonical
+diff and file hashes. No source/readiness/release approval is inferred from
+that identifier alone.
+
+Named local Semgrep `p/rust` ran eleven rules on eleven Rust files without parse
+errors. Neither new journal file had an alert; five unchanged temp-directory
+alerts elsewhere remain recorded with bounded baseline triage. Redacted
+Gitleaks reported zero worktree leaks. Dependency manifests and locks are
+unchanged. The first full check failed on sandbox-denied disposable sockets;
+the first final-source rerun failed on stale generated inventory. Both failures
+are retained separately. After inventory regeneration, the complete rerun with
+disposable local fixtures allowed passed; no gate was skipped or waived.
+
+Durable file/native custody, selected-store/schema-18 writing, bootstrap/release,
+complete source/pin/positive-feasibility freeze, product integration, monitoring,
+advanced security and real runtime proof remain unfinished. Actual pins remain
+`UNSET_BLOCKING`. This candidate neither narrows the V1 end state nor replaces
+the nonempty engine with a diagnostic/always-denying observer.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
 Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed
 hosted source CI run `37120253071` with job `111194814745`. This result covers
-the preceding staging proposal; its human acceptance remains pending. Public
-main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after a fresh fetch,
-and the canonical checkpoint remains clean. No Stage-A implementation began.
+the preceding staging proposal; its human acceptance was pending at this
+checkpoint and is recorded as accepted in the canonical staging subsection.
+Public main was `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after that fetch,
+and the canonical checkpoint was clean. No Stage-A implementation had begun
+at this documentation checkpoint.
 
 The [generated metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
 specifies a conditional non-root path through rootful daemon metadata ancestry:
@@ -1062,7 +1145,7 @@ without a source/hash mismatch. Fresh independent OpenAI Terra xhigh contract
 review found no remaining P1/P2/P3 after the controller explicitly separated
 precreate, created, post-start and terminal-cleanup metadata predicates.
 This PASS covers the conditional proposed custody method, not complete native
-freeze, current host proof or the pending staging acceptance. No dependency,
+freeze, current host proof or the then-pending staging acceptance. No dependency,
 source, CLI, schema or runtime behavior changed. New exact-head hosted CI is
 separate from the preceding green result; unchanged source was not rebuilt for
 this docs-only delta. The resulting exact head
@@ -1078,7 +1161,8 @@ hosted source CI [run `37123949018`](https://github.com/hypler-dev/LNSAT/actions
 job `111205384429`, on 2026-10-03. This covers the preceding result-only
 dependency checkpoint, not the following procedure proposal. Fetched public
 main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`; canonical checkpoint
-is clean. The source-order amendment remains pending human acceptance.
+was clean. The source-order amendment was pending human acceptance at this
+procedure-proposal checkpoint; later acceptance is recorded above.
 
 The [pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
 defines three fixed future test-only CPU/memory/PID cases with positive anchors,
@@ -1141,6 +1225,11 @@ The [supporting requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIR
 extend the existing Phase 13/14 hardening work with explicit human identity,
 assurance/crypto/key, audit/privacy, supply-chain and resilience acceptance
 evidence. They do not mark these capabilities implemented or certify LNSAT.
+The 2026-10-03 owner clarification requires rigorous independent scrutiny and
+preparation for future third-party ISO/government assessment. The supporting
+requirements now distinguish exact product evaluation from organizational ISMS
+assessment and require traceable claims, reproducible proof, assumptions and
+residual limits. No scheme, assurance level or government approval is selected.
 Jurisdiction, information class and deployment boundary remain unresolved;
 the current U.S. mapping is provisional. Detailed protected/public-contract
 behavior requires its own exact accepted specification and independent review.
@@ -1196,9 +1285,11 @@ The parent private session-buffer source PR #82 passed exact-head source CI
 `a92857ed762f28873990bd1f1a921b104363537e` at `2026-10-03T23:46:00Z`.
 This supplies parent source evidence only. This slice changes documentation;
 no Rust/TypeScript behavior, dependency, API, schema or product version changes.
-The source-order amendment, Stage-A implementation, candidate SQL, Phase 11
-packet, Docker, host mutation, artifact construction, merge, release and
-production gates remain unchanged and closed.
+At this standards-mapping checkpoint, source-order acceptance and Stage-A
+implementation were pending. The later human acceptance and first private
+candidate are recorded above. Candidate SQL, Phase 11 packet, Docker, host
+mutation, artifact construction, merge, release and production gates remain
+unchanged and closed.
 
 Local manual verification passed for all 35 bound blobs and 45 source ranges.
 Documentation direction passed 31 tests across 186 Markdown files; public
@@ -1236,8 +1327,9 @@ guard. Current Argon2id/session/digest/verification source is unchanged; it does
 not acquire a strict assurance claim. MFA/federation, encryption, protected
 audit, artifact lifecycle, actual runtime and full V1 remain incomplete.
 
-The HCFG-6 source-order amendment is a separate engine gate and remains pending;
-it is not a prerequisite to proposing this independent crypto design. Phase 11
+The HCFG-6 source-order amendment is a separate engine decision, accepted later
+in the canonical staging record above; it accepts no strict crypto design.
+Phase 11
 packet/pins, Docker, host mutation, candidate artifact construction, private-key
 or provider calls, merge, signing, release, deployment and production remain
 closed. This proposal's review or hosted source CI cannot accept either design
@@ -1279,9 +1371,11 @@ level, schema or deployment is selected. Existing password/session, roles,
 approval, offline recovery and OAuth/workload adapter behavior is unchanged.
 No MFA, federation, AAL/FAL/IAL or government readiness is established.
 
-The HCFG-6 source-order decision, Stage-A source integration, candidate SQL,
-strict crypto acceptance, audit/privacy, Phase 11 packet/pins and full V1 remain
-open. This documentation adds no route or authority. Docker, host/configuration
+The HCFG-6 source-order decision was pending at this human-auth proposal
+checkpoint and was accepted later in the canonical staging record above.
+Stage-A source integration, candidate SQL, strict crypto acceptance,
+audit/privacy, Phase 11 packet/pins and full V1 remain open.
+This documentation adds no route or authority. Docker, host/configuration
 mutation, actual credential/provider/key work, candidate artifact construction,
 merge, signing, release, deployment and production remain closed.
 
@@ -1317,8 +1411,10 @@ prove contextual sensitive-data exclusion.
 
 This proposal creates no export route, global sequence, collector, encryption
 provider, permission, schema, stop mechanism or authority transition. The
-HCFG-6 source-order amendment, native/store integration, HCFG-4B/4C, human
-assurance, strict crypto and full V1 remain incomplete. Phase 11 packet/pins
+HCFG-6 source-order amendment was pending at this audit proposal checkpoint
+and was accepted later in the canonical staging record above. Native/store
+integration, HCFG-4B/4C, human assurance, strict crypto and full V1 remain
+incomplete. Phase 11 packet/pins
 retain runtime authority. Docker, host mutation, candidate SQL execution,
 actual credential/provider/key work, candidate artifact construction, merge,
 signing, release, deployment and production remain closed.
