@@ -52,6 +52,14 @@ It implements no MFA or federation; its
 [Project Status record](../PROJECT_STATUS.md#proposed-human-authentication-assurance-design)
 owns pending acceptance and implementation.
 
+The [proposed audit/privacy and custody design](AUDIT_PRIVACY_AND_EVIDENCE_CUSTODY_DESIGN.md)
+separates private authority data, authorized disclosure, optional diagnostics
+and independently verified history custody. It defines failure, retention and
+inert restore requirements without selecting or implementing a collector,
+encryption provider or export permission. Its
+[Project Status record](../PROJECT_STATUS.md#proposed-audit-privacy-and-evidence-custody-design)
+owns pending acceptance and exact implementation contracts.
+
 ## Required work and acceptance evidence
 
 These are proposed implementation requirements, not implemented capabilities.
