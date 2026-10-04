@@ -149,8 +149,13 @@ not this ordering record.
    owner-proof foundations; never create a second authority path.
 5. **HCFG-6 — enforcement and headless conformance.** Bind observed OS controls
    to stable capabilities, deny unsupported activation, test target substitution
-   and revocation races, and close source conformance. Actual runtime and selected
-   target proof remain separately authorized Phase 11/14 gates.
+   and revocation races, and close source conformance. The accepted source-order
+   amendment permits inert private candidates. The journal codec and Linux
+   file-custody source now exist; Project Status records their exact source
+   validation and review. Native observation, complete feasibility and
+   integration remain unfinished.
+   Actual runtime and selected target proof remain separately authorized
+   Phase 11/14 gates.
 
 This sequence does not preapprove the later mutation contracts or satisfy the
 headless release gate. Each source packet requires focused validation and fresh

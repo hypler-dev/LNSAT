@@ -31,10 +31,21 @@ source ownership is:
 
 Integrate only after independent review resolves every P1/P2 and demonstrates
 a feasible non-root positive recipe. Implement codecs first, then actual native
-observation and durable custody, then store and startup integration. None of
+observation, then store and startup integration. The codec and private Linux
+journal custody are inert Stage-A source candidates; their file fixtures do
+not supply the full native/profile feasibility freeze. None of
 these steps may turn fixtures into a live permit. Existing profiles, D3/D4A
 frames, schema-17 APIs and the locked Phase 11 driver remain unchanged. Existing
 stores cannot acquire headless authority through a legacy open or initializer.
+
+The first Stage-A custody candidate is now scoped to the private preparation
+journal seam described in the [preparation/store specification](preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract).
+It uses an actual selected-store lifetime borrow and held-directory descriptor
+custody for bounded immutable revisions. Project Status records exact candidate
+implementation, validation and independent review. The complete source/pin/
+positive-feasibility freeze remains open. This does not open native observation, schema-18 SQL,
+the B6 writable connection, a caller, initializer, CLI, route, activation, or
+runtime integration.
 
 ## One explicit Linux recipe
 
@@ -76,6 +87,12 @@ changed automatically. A feasible future provisioned recipe is necessary for
 source freeze; a current selected host and runtime proof are later gates.
 
 ## Safe native APIs and held identity
+
+The store candidate enables the `dir` feature of the existing exact
+`nix 0.31.3` dependency without a version or lock change. Its private safe
+conversion handles that pinned source's error-path descriptor ownership.
+Common custody logic compiles on macOS, but construction/descent denies there;
+no portable filesystem fallback or macOS support claim is added.
 
 Unsafe application code remains forbidden. Use pinned safe `nix 0.31.3` APIs
 for Linux `openat2`, owned close-on-exec descriptors, `fstat`, `fstatfs` and Unix

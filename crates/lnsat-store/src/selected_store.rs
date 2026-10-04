@@ -110,6 +110,51 @@ pub(super) struct SelectedStoreCustodyV1 {
 #[cfg(not(any(target_os = "linux", target_os = "macos")))]
 pub(super) struct SelectedStoreCustodyV1;
 
+/// An exclusive borrow of the actual inspected connection and its held lease.
+/// No caller-selected descriptor or serialized observation can construct this.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(super) struct SelectedPreparationParent<'a> {
+    store: &'a mut SqliteStore,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+impl<'a> SelectedPreparationParent<'a> {
+    pub(super) fn borrow(store: &'a mut SqliteStore) -> Result<Self, SelectedLocalStoreErrorV1> {
+        store.verify_selected_local_store_custody_v1()?;
+        Ok(Self { store })
+    }
+
+    pub(super) fn verify(&self) -> Result<(), SelectedLocalStoreErrorV1> {
+        self.store.verify_selected_local_store_custody_v1()
+    }
+
+    fn custody(&self) -> Result<&SelectedStoreCustodyV1, SelectedLocalStoreErrorV1> {
+        self.verify()?;
+        self.store
+            .selected_store_custody
+            .as_ref()
+            .ok_or(SelectedLocalStoreErrorV1::UnboundStore)
+    }
+
+    pub(super) fn directory(&self) -> Result<&File, SelectedLocalStoreErrorV1> {
+        Ok(&self.custody()?.parent_file)
+    }
+
+    pub(super) fn owner(&self) -> Result<u32, SelectedLocalStoreErrorV1> {
+        Ok(self.custody()?.owner_uid)
+    }
+
+    pub(super) fn journal_root_name(&self) -> Result<String, SelectedLocalStoreErrorV1> {
+        let name = self
+            .custody()?
+            .database_path
+            .file_name()
+            .and_then(std::ffi::OsStr::to_str)
+            .ok_or(SelectedLocalStoreErrorV1::InvalidSelection)?;
+        Ok(format!("{name}.lnsat-preparations"))
+    }
+}
+
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(super) fn checked_process_owner(
     real_uid: u32,

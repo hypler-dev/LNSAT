@@ -46,6 +46,10 @@ Public descriptions may state that current source contains:
 - experimental read-only MCP, CLI, API, and Control Center surfaces;
 - source-level one-time authorization, bounded disposable Git consequence,
   receipt, ambiguity, and reconciliation conformance;
+- private HCFG-6 preparation-journal codec and Linux file-custody candidate
+  source, with actual selected-store lifetime binding and bounded immutable
+  revisions; no operator entrypoint, observed phase facts or action authority;
+  actual native/profile feasibility and complete source/pin freeze remain open;
 - tests, threat models, release gates, and public-safe fixtures.
 
 Descriptions must also state that current source has no supported package,

@@ -30,6 +30,14 @@ completed signed update/artifact pipeline. Source tests are not selected-target
 OS proof. HCFG-6 native enforcement, atomic bootstrap, protected control,
 monitoring and actual runtime remain required alongside these security tasks.
 
+The private headless preparation source includes a strict journal codec and
+Linux descriptor-based file custody under the actual selected-store lease.
+Finite bounds, immutable revisions, retained stat/content baselines and failure
+denial address this source seam only. It does not establish encrypted storage,
+external audit anchoring, observation truth, rollback resistance across restart,
+complete native enforcement or certification. See the
+[canonical implementation record](../PROJECT_STATUS.md#stage-a-private-linux-journal-custody-candidate).
+
 The [crypto operation/provider inventory](CRYPTO_OPERATION_PROVIDER_INVENTORY.md)
 records named application operations and their source/provider boundaries at one
 immutable source revision. Its manual blob bindings prepare provider design;

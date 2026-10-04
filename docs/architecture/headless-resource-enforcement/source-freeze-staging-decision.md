@@ -40,6 +40,13 @@ implementation prerequisites for the actual engine, not alternate diagnostics
 or pure-codec completion. Existing source families and locked Phase 11 source
 remain unchanged.
 
+After the private codec, the Linux journal-custody source candidate follows
+the contract linked from the [preparation/store specification](preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract).
+Its selected-store lifetime borrow, held-directory descriptor custody, and
+bounded immutable revision append remain disconnected from product callers.
+Project Status records exact source validation and independent review; the
+complete source/pin/positive-feasibility freeze remains open.
+
 Candidate implementation stays disconnected from active product entrypoints:
 
 - No recipe registry entry is admitted while any actual pin is unset.

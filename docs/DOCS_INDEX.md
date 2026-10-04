@@ -91,11 +91,12 @@ subsystem or proposal.
   — proposed bounded native, profile and startup transport seams; full freeze,
   source integration and runtime proof remain pending.
 - [HCFG-6 preparation/store source specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
-  — private Stage-A journal codec contract plus later durable custody, atomic
-  bootstrap and release/revocation requirements; complete integration remains gated.
+  — private Stage-A journal codec and Linux file custody source, plus future
+  observation-owning phase writes, atomic bootstrap and release synchronization;
+  Project Status owns exact evidence; integration remains gated.
 - [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
   — exact proposed schema-3 fields, native payload and separate startup contexts;
-  complete freeze review and implementation remain pending.
+  complete wire implementation and full freeze remain pending.
 - [HCFG-6 Docker transport/recipe proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
   — exact tagged API, HTTP/mux framing and positive control assumptions;
   realized recipe and source/run pins remain incomplete.

@@ -94,6 +94,14 @@ The repository contains experimental source for:
 - **Integration contracts:** read-only MCP adapters, SDK/conformance fixtures,
   and transport-neutral authority interfaces.
 
+The headless engine's private source now includes a strict preparation-journal
+codec and Linux file-custody candidate. It holds the actual selected-store lease,
+persists bounded immutable revisions, and rejects changed or malformed journal
+state. It has no operator entrypoint. Journal bytes remain untrusted assertions;
+this does not prove container cleanup, initialize a store or authorize an action.
+See the [current source record](docs/PROJECT_STATUS.md#stage-a-private-linux-journal-custody-candidate)
+and [custody contract](docs/architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract).
+
 These are not all enabled together as a supported runtime. Real Docker
 execution, complete runtime cleanup proof, supported installation, and release
 verification remain separate gates. [Project Status](docs/PROJECT_STATUS.md)

@@ -26,6 +26,15 @@ mandatory before product integration. The following original complete-freeze
 steps retain that integration gate; they no longer prohibit separately reviewed
 private candidate source under Stage A.
 
+Current Stage-A candidate: private Linux preparation-journal custody. Scope is
+the actual selected-store lifetime borrow, held-directory descriptor custody,
+and bounded immutable revision append defined in the [preparation/store
+specification](preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract).
+The private source is present; implementation evidence, focused Linux fixtures
+and fresh independent review belong to Project Status. Full integration and
+native/profile feasibility remain pending. Candidate success cannot prove cleanup, committed
+binding, initialization eligibility, or runtime authority.
+
 1. Inspect accepted V1/bootstrap/Phase 11 boundaries and current profile, target, launch and identity code. Verify official Docker/kernel-facing assumptions without opening a Docker endpoint. Separate configured settings from actual observations.
 2. Produce the proposed complete contract: explicit owner binding, nonempty verifier coverage, the proposed bootstrap metadata-only observation exception, resource-free probe preparation, private authenticated startup barrier, grant/use revocation, uncertainty and cleanup. Obtain fresh independent read-only review and resolve P1/P2 before presenting an owner decision.
 3. Human acceptance is complete: the owner replied `accepted` on 2026-10-01 for exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`. Project Status records the capability/trust/metadata amendment/probe/staging decision; supporting bootstrap artifacts reconcile the exception. Acceptance comes from that human reply, not source checks, old bootstrap acceptance or green CI.
@@ -45,13 +54,24 @@ Fresh native OpenAI Terra xhigh read-only reviewer receives the exact proposed f
 
 ## Rollback and recovery
 
-Withdraw the docs without runtime effect. Future precommit preparation failures leave the authority store empty and either prove cleanup or quarantine. After original attempt claim/create, interruptions retain consumption and evidence; cleanup cannot trigger redispatch or declare non-execution. Post-release outcomes retain existing receipt/unknown/reconciliation semantics. Never clear stop/revocation or rewrite older generation/binding to pass a failed probe. Restored prior authority remains inert.
+A reviewed rollback of the inert candidate removes its private source and
+supporting documentation without changing an active product entrypoint or
+schema. It does not authorize deletion or repair of an operator journal.
+Future precommit preparation failures leave the authority store empty and either prove cleanup or quarantine. After original attempt claim/create, interruptions retain consumption and evidence; cleanup cannot trigger redispatch or declare non-execution. Post-release outcomes retain existing receipt/unknown/reconciliation semantics. Never clear stop/revocation or rewrite older generation/binding to pass a failed probe. Restored prior authority remains inert.
 
 ## Deviations
 
 No approved scope deviation. The first accepted engineering Linux same-host Docker Engine 29.8.2/API 1.56 rootful backend is not a native-host fallback or package support selection. The new startup barrier is deliberately versioned separately from the locked Phase 11 proof; old argv/inspect/fake fixtures are not elevated to OS proof.
 
 ## Evidence ledger
+
+- 2026-10-04: Private Linux journal-custody source follows the codec candidate:
+  actual selected-store/lease lifetime, descriptor-rooted immutable revisions,
+  retained stat/chain baselines, bounded readback and poisoned failure. Local
+  macOS checks cover compilation and explicit platform denial; nonempty Linux
+  fixtures require exact-head source CI. Project Status owns current validation
+  and review evidence. No active initializer, SQL, native-profile feasibility,
+  runtime, artifact, merge or release gate follows from this candidate.
 
 - 2026-10-03: The [controlled resource-pressure proposal](pressure-proof-source-spec.md) defines three fixed future conformance cases with positive anchors, finite CPU/allocation/task stimuli, independent same-leaf events, ancestor/headroom eligibility and exact own-case cleanup. It cannot be called by normal preparation, action, bootstrap or current API/wire/journal. Exact helper/driver decoder/custody review, actual artifact pins and explicitly authorized disposable proof remain separate gates. Source-order acceptance was pending at this proposal checkpoint; the later accepted amendment is linked above. This pressure proposal authorized no pressure or candidate implementation.
 - 2026-10-03: Exact staging-proposal head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed hosted source CI run `37120253071`. The source-order amendment was pending human acceptance at this proposal checkpoint; later acceptance is linked above. A separate [generated metadata custody proposal](docker-metadata-source-spec.md) resolves the source distinction between rootful `0710` search-only ancestry, inherited file ACLs and named ACL reads. Linux `fdget` rejects O_PATH for `fgetxattr`; POSIX ACL syscall reads use `do_get_acl`, not generic file-data xattr permission. Root provisioning, dedicated daemon-root assertion, current root association and complete native feasibility review remain required. No Stage-A implementation, host permission change or current runtime authority follows.

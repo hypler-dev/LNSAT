@@ -1,13 +1,18 @@
 //! Private Stage-A preparation journal syntax and continuity.
 //!
 //! Parsed values are untrusted assertions, not custody or observation proof.
-//! This module performs no I/O, mutation, initialization, cleanup or admission.
-//! Durable writers and native provenance remain separately reviewed work.
+//! The codec performs no I/O. Its private custody child persists untrusted
+//! frames under actual selected-store custody without initialization or admission.
+//! Observation-owning writers and native provenance remain separate work.
 
 use serde::de::{Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fmt;
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "headless_preparation_custody.rs"]
+mod custody;
 
 const MAX_RECORD_BYTES: usize = 16_384;
 const MAX_RECORDS: usize = 64;

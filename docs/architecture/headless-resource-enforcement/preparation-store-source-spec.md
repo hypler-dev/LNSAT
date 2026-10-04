@@ -3,9 +3,11 @@
 Status: supporting source specification for the accepted HCFG-6 design. The
 owner accepted the exact PR #72 decision on 2026-10-01. This document freezes
 the journal, bootstrap transaction, and installation-wide synchronization seam
-for later source implementation. It does not claim that the full source freeze
-has passed, that this behavior exists in the current source, or that Linux,
-Docker, package, release, or production evidence exists.
+for staged source implementation. The private codec and Linux journal-custody
+candidate now exist under the accepted source-order amendment. Atomic bootstrap,
+installation-wide synchronization and the complete native freeze remain future
+work. This document supplies no Docker, selected-target, package, release or
+production evidence.
 
 ## Authority and scope
 
@@ -30,8 +32,9 @@ read-only schema-17 eligibility inspection and explicitly provides no
 initialization authority. `owner_bootstrap.rs` provides transaction-local
 owner preparation and insertion; the caller owns the immediate transaction,
 commit, and rollback. `selected_store.rs` holds selected-store path, identity,
-and lease custody. None of these current seams implements the HCFG-6 journal,
-installation binding, or release synchronization described here.
+and lease custody. The separate private `headless_preparation` codec/custody
+candidate implements the Stage-A portions below; none of these current seams
+implements installation binding or release synchronization.
 
 ## Private preparation directory and journal
 
@@ -262,9 +265,170 @@ ID. Later quarantine edges cover every permitted null/non-null retention shape.
 Terminal reuse always rejects;
 negative tests cover every field class, alternate encodings, identity drift,
 gaps/replays, altered prior digest, invalid phase edges and bounds. Corpus cases
-exercise hostile parser inputs without accessing live resources. Future durable
-custody, schema-18 writing, bootstrap/release, native observations and actual
-target proof remain separately reviewed implementation steps.
+exercise hostile parser inputs without accessing live resources. The subsequent private custody contract below adds filesystem source only.
+Schema-18 writing, bootstrap/release, native observations and actual target
+proof remain separately reviewed implementation steps.
+
+## Stage-A private Linux journal custody contract
+
+This slice follows the human-accepted source-order amendment. Project Status
+remains the sole implementation authority. Primary-owned source files are
+`crates/lnsat-store/src/selected_store.rs`,
+`crates/lnsat-store/src/headless_preparation.rs`, and the new private child
+`crates/lnsat-store/src/headless_preparation_custody.rs`. Its exact disposable
+fixture tests belong to `headless_preparation_custody_tests.rs`. The existing
+pinned `nix = "=0.31.3"` gains only its `dir` feature in the store manifest;
+no package version, lock entry or toolchain is changed. This enables safe
+owned directory enumeration. No other proposed native dependency is adopted.
+Fresh independent review of this contract precedes implementation.
+
+The private journal guard holds an exclusive lifetime-bound mutable borrow of
+an actual `SqliteStore` returned by existing selected read-only inspection.
+Ordinary stores with no selected custody reject. The borrow verifies that
+actual connection's current native main-file association, unchanged read-only
+state, selected parent, main-file identity, owner and held exclusive lease.
+It cannot be constructed from a caller path, UID, descriptor, connection,
+serialized assertion or successful-observer callback. A bridge exposes only a
+borrow of the already-held parent directory, its derived database basename
+and actual non-root owner. Neither the SQLite main descriptor nor lease
+is opened, duplicated, closed or exported. The store/connection/lease must
+outlive the guard; the exclusive borrow prevents two guards on one store.
+Another inspected store must acquire the same actual lease. This is a private
+filesystem candidate, not the B6 writable wrapper or a schema-18 connection.
+
+The guard opens or exclusively creates the exact journal root under that held
+parent, and revalidates named/opened association. All descent and enumeration
+opens use safe Linux `openat2` with `BENEATH`, `NO_SYMLINKS`,
+`NO_MAGICLINKS` and `NO_XDEV`; no fallback or procfs reopen is allowed.
+Readable descriptors use `O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK` and
+directories also use `O_DIRECTORY`. Unsupported syscalls/platforms deny.
+Directory creation uses `mkdirat` only relative to the held parent or root
+descriptor, followed immediately by `openat2` and association revalidation.
+Revision opens use `openat2` only relative to the held preparation descriptor.
+No joined/absolute path API performs journal I/O. Modes are checked, never
+repaired. New directories request `0700`; revision
+files request `0600` with `O_CREAT|O_EXCL`, never truncate or overwrite.
+Creation must flush the new directory and its parent before proceeding.
+The accepted profile's ACL, ancestry, mount and kernel proof remains deferred;
+mode/type/owner checks here cannot certify those separate predicates.
+
+Directory enumeration uses a separately opened `.` descriptor rooted in the
+held directory; dot entries are ignored, other names are bounded and sorted.
+Enumeration stops after at most 66 entries including dot entries; duplicates
+and count overflow reject. Only 64 preparation directories and 64 revisions
+per directory are admitted.
+Revision names are exact eight-decimal-digit indices plus `.json` beginning
+at zero with no gaps. Empty preparation directories, extra/invalid names,
+symlinks, nonregular revisions, foreign owner/ID records and malformed chains
+reject. Total regular-file bytes are at most 1,048,576; each frame is at most
+16,384. Reads are bounded independently of reported file size. The complete
+root is inspected before and after each append; no path-only file read,
+foreign root scan, retry, pruning or cleanup is added. At most one preparation
+and revision file is read at a time; descriptors are owned and scoped.
+
+Each association is checked against its held descriptor using no-follow
+`fstatat`. Type, device, inode, owner/group, mode, link count and ctime are
+stable across each read/enumeration; regular files have one link. Directory
+link counts are checked as normal nonzero directory counts and are never
+used as sole identity. Root/preparation names and held identities are
+rechecked at operation boundaries. Selected-store/native association is
+verified before and after every complete journal operation. A same-owner
+host actor or trusted root can still cause denial; this does not establish
+hostile-root isolation or atomicity with external filesystem mutation.
+
+Within one guard lifetime, retain a private baseline of the actual root,
+every preparation directory and every revision's complete stat stamp, plus
+commitments computed from every actually read chain. Inspect
+or append must first match that baseline; byte-identical inode replacement
+and equal-length canonical rewrites reject. After an append, every older
+revision's stamp and every unrelated directory's stamp must remain exact.
+Only the intended target directory's ctime/size may change; a new preparation
+also changes root ctime/size and its link count by exactly one. Owner/group,
+mode/device/inode and other link counts remain fixed. The only additional
+objects are the one expected new directory (if needed) and exact new revision.
+Every read result uses two bounded whole-root scans, including complete
+re-enumeration and actual metadata/chain commitment comparison after the first
+read, before returning. For inspection, both must match each other and the
+pre-operation baseline. A mismatch returns no snapshot, reports `changed`,
+and poisons the guard. Append's post-flush scans must match each other and an
+expected state derived from the pre-operation baseline with only the listed
+delta: exact new frame and its computed chain commitment, new revision,
+target-directory metadata changes and optional new preparation/root changes.
+Every unaffected stamp and commitment must still match the pre-operation
+baseline. Successful existing- and new-preparation appends must test these
+permitted deltas.
+Update the private baseline only after full write/flush/readback success;
+read-only inspection and failures never update it.
+It is neither serialized nor accepted from a caller. Restart establishes a
+new physical baseline from re-read untrusted bytes; it does not confer
+anti-rollback or rewrite detection across process lifetimes.
+
+The pinned nix directory conversion consumes its `OwnedFd` before calling
+`fdopendir` and does not close that descriptor on its error branch. The private
+conversion wrapper saves `owned.as_raw_fd()` immediately before
+`Dir::from_fd(owned)`, closes that raw descriptor exactly once through safe
+`nix::unistd::close` only on `Err`, and transfers ownership to `Dir` on
+success. There is no close retry or reconstruction of an `OwnedFd`. This narrowly version-bound
+workaround never applies to a borrowed descriptor. Dependency upgrades must
+re-review its ownership rule. A Linux test forces `ENOTDIR`, checks the exact
+rejected descriptor is closed and a separate retained descriptor stays open;
+success/drop ownership is also tested. No application `unsafe` or raw FFI is
+introduced. This branch follows the actual pinned source, rather than its
+inaccurate close-on-failure API documentation.
+
+The private append method accepts one canonical untrusted codec frame. It
+checks actual owner and preparation ID, current complete-root bounds and exact
+chain successor before creating the next revision. For a new ID only revision
+zero is admissible. Existing IDs cannot restart or overwrite. Write the full
+frame, verify file/parent custody, flush the file, verify again, flush the
+preparation directory and verify again, then inspect the complete root and
+actual selected store again. No SQL, migration, audit insertion, random ID,
+Docker operation or phase-observation writer is performed. A successful append
+acknowledges physical persistence and internal continuity only. In particular,
+parsed `cleanup_verified`/`bound` records do not prove actual cleanup,
+committed binding or initialization eligibility. The later observation-owning
+writer must supply that provenance and reconciliation under the full freeze.
+
+Every operation failure poisons the current guard. It returns no partial
+snapshot or success, attempts no deletion, repair, overwrite or automatic retry,
+and retains any partial filesystem state. Reopening rechecks all bytes; a valid
+chain after restart is still an untrusted assertion, never proof that an
+ambiguous earlier flush completed. Any later initializer must separately
+resolve ambiguity and observe cleanup/store state. Persistent quarantine
+semantics and offline recovery are deferred, not silently implemented by a
+Boolean or an invented on-disk certificate. Fixed data-free errors are
+`journal_custody.invalid_journal`, `journal_custody.limit_exceeded`,
+`journal_custody.changed`, `journal_custody.io_rejected` and
+`journal_custody.poisoned`. No paths, frames, metadata, IDs, hashes or OS error
+text appear in these diagnostics. No guard or snapshot has `Debug`, `Clone`,
+public construction, serialization or an authority conversion.
+
+Required source tests cover genuine positive disposable Linux create/read/
+append/reopen, normal and zero-created codec chains, retained store lease,
+ordinary-store rejection, no-clobber/terminal/gap rejection, malformed and
+foreign frames, owner/mode/type/link/name/size/count violations, root and
+preparation replacement, selected-store drift, bounded FIFO/symlink rejection,
+poisoned reuse and partial-state rejection. A test-only one-shot intervention
+between the two scans mutates real disposable files and proves post-read
+replacement/rewrite denial. A second test-only one-shot intervention after
+exclusive revision creation substitutes the real disposable selected DB,
+proving failure before writing, poisoned reuse and empty-revision rejection
+on reopen after restoring that fixture. Neither intervention returns an
+observation, bypasses a check or exists in production. Tests use actual disposable stores
+and syscalls; no successful-observer injection is used. The custody logic is compiled on Linux and macOS so local type/lint checks
+cover it, but construction and descent deny on macOS with no filesystem
+fallback. A nonempty local platform-denial test verifies that boundary. The
+local macOS host cannot execute Linux positives. Its focused existing codec
+and selected-store tests plus strict formatting/lint and broad native checks
+remain required;
+the existing pinned Ubuntu source CI must run the nonempty Linux fixture suite
+on the exact published head. Linux source fixtures do not constitute accepted
+kernel/profile feasibility or Phase 11 runtime proof.
+
+No CLI/route, live initializer, B6 writable custody, schema-18 SQL execution,
+activation, grant, one-use release or runtime integration is opened. Full
+source/pin/positive-feasibility freeze, candidate artifact construction and
+real runtime proof remain separately gated. All pins remain `UNSET_BLOCKING`.
 
 ## Atomic bootstrap and schema migration
 
@@ -391,7 +555,8 @@ reconciliation evidence.
 ## Explicit non-claims and open review questions
 
 This is a source-only supporting contract. It does not claim full HCFG-6 source
-freeze approval, implementation, actual Linux or Docker proof, selected-target
+freeze approval, complete enforcement implementation, actual Linux profile or
+Docker proof, selected-target
 proof, merge authority, release readiness, package publication, deployment, or
 production activation. No source, schema, lock, or protocol implementation is
 authorized by this document alone.

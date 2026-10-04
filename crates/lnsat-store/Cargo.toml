@@ -21,7 +21,7 @@ subtle = { version = "2.6.1", default-features = false }
 zeroize = "1.9.0"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-nix = { version = "=0.31.3", default-features = false, features = ["fs", "user"] }
+nix = { version = "=0.31.3", default-features = false, features = ["dir", "fs", "user"] }
 nix_stat = { package = "nix", version = "=0.29.0", default-features = false, features = ["fs"] }
 
 [dev-dependencies]

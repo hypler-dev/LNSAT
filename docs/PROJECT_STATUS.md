@@ -14,6 +14,11 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
+Current bounded engine source lane: the [private Linux journal-custody
+candidate](#stage-a-private-linux-journal-custody-candidate). Its source and
+proof limits are distinct from unfinished V1 integration, enterprise assurance
+and actual runtime gates.
+
 ## Active Security Remediation
 
 The owner accepted the
@@ -1097,11 +1102,92 @@ the first final-source rerun failed on stale generated inventory. Both failures
 are retained separately. After inventory regeneration, the complete rerun with
 disposable local fixtures allowed passed; no gate was skipped or waived.
 
-Durable file/native custody, selected-store/schema-18 writing, bootstrap/release,
-complete source/pin/positive-feasibility freeze, product integration, monitoring,
-advanced security and real runtime proof remain unfinished. Actual pins remain
+At the codec checkpoint, durable file/native custody and the remaining engine
+work were unfinished. The subsequent private journal-custody candidate is
+recorded below. Native/profile proof, selected-store/schema-18 writing,
+bootstrap/release, complete source/pin/positive-feasibility freeze, product
+integration, monitoring, advanced security and real runtime proof remain
+unfinished. Actual pins remain
 `UNSET_BLOCKING`. This candidate neither narrows the V1 end state nor replaces
 the nonempty engine with a diagnostic/always-denying observer.
+
+### Stage-A private Linux journal custody candidate
+
+Canonical implementation record: this subsection. The human-accepted source-
+order amendment permits the private filesystem candidate after its exact
+contract and fresh precode review. Source is present in the private
+`headless_preparation` child, with a minimal selected-store lifetime bridge.
+All entrypoints remain disconnected; the schema is still 17 and the existing
+ordinary/read-only selected-store APIs retain their behavior.
+
+The guard exclusively borrows an actual inspected read-only `SqliteStore`,
+retains its actual parent and exclusive lease, and rechecks native main-file
+association without duplicating or closing SQLite's descriptor. Safe Linux
+`openat2` descent and descriptor-relative `mkdirat` anchor the owner-private
+root, preparation directories and revision files. Modes are checked, never
+repaired. Canonical untrusted frames use exclusive no-clobber creation, full
+file flush then directory flush, complete bounded readback and fixed errors.
+There is no path-only I/O, procfs fallback, public constructor or successful-
+observer injection.
+
+Private actual stat/chain baselines reject inode replacement and observed
+content drift within one guard lifetime. Each inspection reads the complete
+root twice and compares both results with the retained baseline. Append admits
+only its exact expected delta; older files and unrelated preparations remain
+unchanged. Any failure poisons the guard, returns no partial result, and leaves
+partial files for denial/reconciliation without repair, retry or deletion.
+Restart establishes a new physical baseline from untrusted bytes; it supplies
+no external anti-rollback or earlier-flush success proof. Finite observation
+checks are not atomic with arbitrary same-owner host mutation.
+
+Only the existing exact `nix 0.31.3` gains its `dir` feature; dependency versions,
+locks and toolchains are unchanged. Its actual pinned `Dir::from_fd` error
+branch leaves ownership open despite the API documentation. A narrowly pinned
+safe wrapper closes only that newly owned enumeration descriptor once on
+failure; it never handles a borrowed/main/lease descriptor. Dependency upgrades
+must re-review this rule. Shared logic compiles on macOS; actual construction
+and descent deny there without a fallback.
+
+Precode review resolved creation anchoring, descriptor ownership, retained
+baseline and inspection/post-append comparison ambiguities before their
+implementation. Local focused Rust tests passed 13/13: the existing 11 codec
+groups, a genuine macOS platform-denial case and descriptor ownership checks
+in an isolated child test process. Its ignored helper runs explicitly in that
+child, avoiding descriptor reuse by parallel tests. Strict store all-target
+Clippy and the complete pinned `npm run check` passed: 1,471 TypeScript tests,
+139 cross-language comparisons, 264 store tests and the remaining workspace
+Rust gates. Both ignored store helpers are invoked by their parent regression
+tests. Docs checks covered 189 Markdown files, 33 critical documents and all
+14 roadmap phases; public checks covered 944 project files. Inventory and
+pending-source history validation passed without granting release eligibility.
+
+Fresh independent custody source/docs and aggregate Rust/claims reviews passed.
+The changed Rust files' named Semgrep scan returned two test-only alerts,
+independently reviewed as non-actionable fixture findings. Redacted Gitleaks
+returned zero findings; recursive OSV returned zero known dependency alerts.
+Initial default-cache, lint and scanner certificate failures were corrected
+without installing tools. The first complete check rejected the shared clone's
+Git object alternates; copying its objects locally, removing only that alternate
+reference and passing `git fsck --full` resolved the provenance failure. The
+complete rerun passed; failed attempts remain separate evidence, with no gate
+skipped or waived. Aggregate build review identified a separate Cargo-home
+configuration P2 to correct before main integration.
+
+At this reviewed source checkpoint, nonempty Linux filesystem positives must run on the
+exact published source head in the existing pinned Ubuntu CI; they were not
+executed on the macOS host. Source fixtures do not establish the selected
+kernel/profile, ACL/mount/ancestry feasibility or Phase 11 runtime proof.
+
+This candidate persists untrusted phase assertions only. `cleanup_verified`
+and `bound` do not prove observed cleanup or committed SQL/audit state. The
+observation-owning phase writer, B6 writable connection, schema-18 execution,
+atomic bootstrap, release serialization, all-writer coverage, native profile/
+Docker observation, complete source/pin/positive-feasibility freeze and product
+integration remain unfinished. Watch/monitoring and strict crypto/MFA/audit
+assurance remain their separate accepted or proposed work. No operator CLI,
+route, live initializer, activation, artifact construction, Docker, merge,
+release, deployment or production action is opened. Phase 11 remains
+`PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; actual pins remain `UNSET_BLOCKING`.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

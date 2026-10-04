@@ -142,6 +142,12 @@ cleanup rules in the [preparation/store contract](../headless-resource-enforceme
 Hold journal directory custody under the same selected lease. A valid journal
 cannot become a connection, installation, cleanup proof or permission.
 
+The [Stage-A private Linux journal custody candidate](../headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract)
+borrows an actual selected read-only store and its lease for bounded file
+persistence. It does not implement this B6 writable wrapper, migration 18,
+precommit store commitment or bootstrap. A parsed phase or successful file
+flush cannot substitute for this future actual writable/native/SQL readback.
+
 Before preparation, rederive B4's `store_binding_digest` from current actual
 parent/main-file observations. The preparation `store_digest` is
 domain-separated SHA-256 over exactly this compact positional JSON array:
