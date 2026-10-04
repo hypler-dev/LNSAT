@@ -99,7 +99,15 @@ function isPublicIpAddress(value: string): boolean {
     );
   }
   if (version === 6) {
-    const normalized = value.toLowerCase();
+    let normalized: string;
+    try {
+      // Classify equivalent spellings by one locally parsed IPv6 address.
+      const hostname = new URL(`https://[${value}]/`).hostname;
+      if (!hostname.startsWith("[") || !hostname.endsWith("]")) return false;
+      normalized = hostname.slice(1, -1).toLowerCase();
+    } catch {
+      return false;
+    }
     return !(
       normalized === "::" ||
       normalized === "::1" ||

@@ -94,6 +94,13 @@ The repository contains experimental source for:
 - **Integration contracts:** read-only MCP adapters, SDK/conformance fixtures,
   and transport-neutral authority interfaces.
 
+The Gateway's public HTTPS target contracts canonicalize IPv6 address spellings
+before applying their existing non-public and mapped-address rejection policy.
+Unsupported scoped literals fail closed. This local parsing control and its
+A2A/Registry regression tests establish source-contract behavior; actual outbound
+DNS resolution and connection binding still require separate evidence. See the
+[IPv6 source record](docs/PROJECT_STATUS.md#public-https-ipv6-address-classification).
+
 The headless engine's private source now includes a strict preparation-journal
 codec and Linux file-custody candidate. It holds the actual selected-store lease,
 persists bounded immutable revisions, and rejects changed or malformed journal

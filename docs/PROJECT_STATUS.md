@@ -34,6 +34,40 @@ global login-limiter lockout findings. It withdraws Unix bearer reads before the
 first supported release, preserves browser header-pair transport, and still
 requires focused validation and independent review before release judgment.
 
+### Public HTTPS IPv6 address classification
+
+Canonical work record: this subsection. A supplied sampled review identified a
+P2 defect in the existing Gateway public HTTPS target validator: compressed
+IPv6 rejection predicates were applied to lowercase raw address spellings.
+Equivalent expanded loopback, unspecified and mapped addresses, and padded
+documentation-prefix addresses, could pass the resolved-address contract.
+The bounded source repair applies the existing rejection invariant without
+introducing new policy ranges, permissions, transports or mutation authority.
+
+After `node:net` validates IPv6 syntax, the validator locally parses an IPv6
+literal through the existing Node WHATWG URL parser and classifies its canonical
+hostname. Unsupported scoped literal parsing fails closed with the existing
+`gateway.network.ssrf_blocked` result. IPv4 classification, every previously
+blocked IPv6 class, all mapped IPv4 addresses including public mapped addresses,
+fixed errors, redirect and credential restrictions, and DNS-revalidation flags
+remain intact. Inputs are unchanged. A2A card/push and Registry source contracts
+inherit rejection; blocked card/source targets do not reach their respective
+identity or namespace verifier.
+
+Regression evidence contains 21 failing assertions against the original
+classifier, followed by 76/76 passing focused Gateway tests after repair.
+Gateway typecheck also passed. Cases cover compressed, expanded, padded,
+uppercase and mixed dotted-tail spellings, mixed resolved-address sets,
+scoped/malformed denials, public IPv6 positives, literal URL behavior and
+unchanged IPv4 policy. Full source gates, independent exact-source review and
+public-history-native binding remain required for the reviewed commit.
+
+The source-contract defect is distinct from unproven live SSRF impact. No new
+DNS resolver, fetch or connection implementation, network observation, provider,
+credential, authority, runtime, merge, release or production action follows.
+The Phase 11 operator packet and unfinished native observation/profile freeze
+remain unchanged. This scoped repair establishes no enterprise certification.
+
 ### Session creation private buffer lifetime
 
 Canonical work record: this subsection. Under the existing local-authentication
