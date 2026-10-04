@@ -65,6 +65,9 @@ export const NATIVE_INPUTS = [
   "RUSTFLAGS",
   "CARGO_ENCODED_RUSTFLAGS",
   "CARGO_BUILD_RUSTFLAGS",
+  "CARGO_CFG_MIRI",
+  "CARGO_FEATURE_USE_LIBC",
+  "CARGO_FEATURE_RUSTC_DEP_OF_STD",
 ];
 const EXPECTED_NATIVE_FEATURES = [
   "bundled",
@@ -108,6 +111,7 @@ export function verifyNativeEnvironment(env, config) {
         "CARGO_UNSTABLE_",
         "CARGO_CONFIG",
       ].some((prefix) => key.startsWith(prefix)) ||
+      key.startsWith("CARGO_CFG_RUSTIX_") ||
       key.startsWith("PKG_CONFIG") ||
       key.includes("_PKG_CONFIG") ||
       key.startsWith("VCPKGRS_") ||
@@ -225,6 +229,41 @@ export function verifyNativeGraph(metadata) {
           target: 'cfg(any(target_os = "linux", target_os = "macos"))',
         },
       ])
+  ) {
+    throw new Error("sqlite_native.graph_rejected");
+  }
+  const aclPackages = packages.filter((pkg) => pkg.name === "rustix");
+  const daemons = packages.filter((pkg) => pkg.name === "lnsatd");
+  if (
+    aclPackages.length !== 1 ||
+    aclPackages[0].version !== "1.1.5" ||
+    aclPackages[0].source !== "registry+https://github.com/rust-lang/crates.io-index" ||
+    daemons.length !== 1
+  ) {
+    throw new Error("sqlite_native.graph_rejected");
+  }
+  const aclNodes = nodes.filter((node) => node.id === aclPackages[0].id);
+  const daemonNodes = nodes.filter((node) => node.id === daemons[0].id);
+  if (
+    aclNodes.length !== 1 ||
+    !Array.isArray(aclNodes[0].features) ||
+    JSON.stringify([...aclNodes[0].features].sort()) !== '["alloc","fs","std"]' ||
+    daemonNodes.length !== 1 ||
+    !Array.isArray(daemonNodes[0].deps)
+  ) {
+    throw new Error("sqlite_native.graph_rejected");
+  }
+  const aclEdges = nodes.flatMap((node) =>
+    (node.deps ?? [])
+      .filter((dep) => dep.pkg === aclPackages[0].id)
+      .map((dep) => ({ node, dep })),
+  );
+  if (
+    aclEdges.length !== 1 ||
+    aclEdges[0].node.id !== daemons[0].id ||
+    aclEdges[0].dep.name !== "rustix" ||
+    JSON.stringify(aclEdges[0].dep.dep_kinds) !==
+      JSON.stringify([{ kind: null, target: 'cfg(target_os = "linux")' }])
   ) {
     throw new Error("sqlite_native.graph_rejected");
   }

@@ -47,6 +47,13 @@ positive-feasibility freeze remains open. This does not open native observation,
 the B6 writable connection, a caller, initializer, CLI, route, activation, or
 runtime integration.
 
+The next inert Stage-A native candidate is the private
+[readable-object ACL parser/sampler](native-acl-candidate-source-spec.md).
+It borrows a real readable file/directory and observes bounded ACL bytes and
+metadata without opening a named resource or producing authority. ENODATA
+remains unclassified. Selected-store, socket, O_PATH ancestry, kernel/LSM trust
+and complete native integration remain separate work.
+
 ## One explicit Linux recipe
 
 The accepted Engine 29.8.2/API 1.56, bundled containerd 2.3.6/runc 1.5.2,
@@ -96,10 +103,15 @@ no portable filesystem fallback or macOS support claim is added.
 
 Unsafe application code remains forbidden. Use pinned safe `nix 0.31.3` APIs
 for Linux `openat2`, owned close-on-exec descriptors, `fstat`, `fstatfs` and Unix
-peer credentials. The proposed Linux-only ACL dependency is exact
-`rustix = "=1.1.5"`, default features disabled, `std,alloc,fs` enabled. Its lock delta,
-transitive backend and local vulnerability evidence require source review
-before adoption; no dependency is added by this document. No raw libc FFI,
+peer credentials. The reviewed private ACL candidate adopts the Linux-only
+dependency exactly as
+`rustix = "=1.1.5"`, default features disabled, `std,alloc,fs` enabled. Its exact
+lock delta, backend and
+local vulnerability evidence receive independent review. Its module contract
+is [readable-object ACL sampling](native-acl-candidate-source-spec.md). The
+candidate returns untrusted native samples only; it supplies no authenticated
+absence classification, named-path custody or behavioral integration. No raw
+libc FFI,
 unsound ACL wrapper, dynamic plugin or shell utility supplies proof.
 
 Open the canonical root and each component with owned descriptor-relative
@@ -128,9 +140,13 @@ byte buffer for each exact POSIX ACL name. Do not size-query, grow, or retry on
 `ERANGE`. Parse little-endian Linux ACL xattr version 2, a four-byte header and
 eight-byte entries, at most 1,024 entries. Require exact standard tag order,
 unique sorted named UIDs/GIDs, permissions 0..7, undefined IDs only for base
-entries, required mask for extended ACLs and no trailing bytes. Check base
-owner/other and masked group/named entries against inode mode. Unsupported,
-unreadable, malformed, overflowing or ambiguous ACLs deny.
+entries, required mask for extended ACLs and no trailing bytes. For access ACLs,
+base owner/other entries exactly equal the corresponding inode
+permission triplets; the inode group triplet equals the mask when present,
+otherwise the group-object entry. Named/group-object effective rights are their
+raw permissions intersected with the mask; masked-off raw rights are valid.
+Default ACLs use the same grammar but do not describe the containing directory's
+mode. Unsupported, unreadable, malformed, overflowing or ambiguous ACLs deny.
 
 Only after the exact authenticated kernel/filesystem/LSM recipe above is
 established may `ENODATA` mean a genuinely absent POSIX ACL and mode bits supply

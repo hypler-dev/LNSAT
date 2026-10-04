@@ -94,6 +94,10 @@ subsystem or proposal.
   — private Stage-A journal codec and Linux file custody source, plus future
   observation-owning phase writes, atomic bootstrap and release synchronization;
   Project Status owns exact evidence; integration remains gated.
+- [HCFG-6 Stage-A readable-object ACL candidate](architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md)
+  — exact inert contract for strict Linux POSIX ACL parsing and finite samples
+  from already held readable regular-file or directory descriptors; synthetic
+  parser vectors and future Linux evidence stay separate, with no ACL authority.
 - [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
   — exact proposed schema-3 fields, native payload and separate startup contexts;
   complete wire implementation and full freeze remain pending.

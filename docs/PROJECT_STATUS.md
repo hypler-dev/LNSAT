@@ -14,8 +14,9 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Current bounded engine source lane: the [private Linux journal-custody
-candidate](#stage-a-private-linux-journal-custody-candidate). Its source and
+Current bounded engine source lane: the [private readable-object ACL
+candidate](#stage-a-private-readable-object-acl-candidate), following the
+reviewed Linux journal-custody candidate. Its source and
 proof limits are distinct from unfinished V1 integration, enterprise assurance
 and actual runtime gates.
 
@@ -1292,6 +1293,79 @@ The failed run remains evidence; neither its nonempty positives nor the passing
 macOS run supply whole-head CI success. Fresh independent source review, the
 `PHR-0019` source/attestation pair and a new complete exact-head Ubuntu run retain
 their gates before main readiness.
+
+Exact PR #88 head `86b089761cfb5f8b093ddbf91d6d1b5faea43362` subsequently
+passed complete Ubuntu source CI run `37196415971`, job `111419129063`.
+All 13 actual Linux journal-custody groups passed; 276 store and 100 daemon
+tests passed, with both ignored store helpers invoked by their parent tests.
+Pinned local full validation also passed. This supersedes the earlier failing
+head's gate state without deleting its failure evidence. The published stack
+has 19 attested source slices and no pending tail; source release eligibility
+is false. PR #88 remains unmerged, public main remains `e09a6b0`, and ten
+inherited missing DCO trailers remain documented for owner contribution review.
+This separate ACL candidate does not modify PR #88.
+
+### Stage-A private readable-object ACL candidate
+
+Canonical implementation record: this subsection. The owner-accepted HCFG-6
+source-order amendment permits exact reviewed inert native candidates. The
+[readable-object ACL contract](architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md)
+adds private strict Linux POSIX ACL parsing and finite actual descriptor reads;
+it changes no product entrypoint, profile, public wire or schema. Full
+source/pin/positive-feasibility freeze and later integration remain open.
+
+Precode independent review resolved two items before native implementation:
+ambient rustix backend selectors now reject before Cargo, with an exact
+registry/version/features/Linux-edge check; descriptor test commitments name
+write-only, read-write, missing close-on-exec, O_PATH and non-file inputs.
+The three new exact lock records are rustix 1.1.5, linux-raw-sys 0.12.1 and
+errno 0.3.14. Their downloaded archives match Cargo.lock checksums. The selected
+x86_64 Linux source-CI backend is linux_raw; no other backend is accepted through
+ambient selectors or feature drift. Application unsafe code remains forbidden.
+
+The sampler borrows an actual held readable File without opening, duplicating
+or closing it. Four fixed-buffer access/default ACL reads are each bracketed by
+actual stat/filesystem observations; two complete scans compare raw bytes and
+metadata. No size query, buffer growth, retry, setter, shell utility, named-path
+or procfs fallback exists. Malformed frames, mode inconsistencies, unsupported
+reads and sampled drift reject with fixed data-free errors. Linux ACL masks
+own the inode group permission triplet; masked-off raw rights are valid.
+Default inheritance ACLs are not the containing directory's access mode.
+
+Samples authenticate no associated path, ancestry, owner, kernel, mount, LSM or
+resource. ENODATA remains explicitly unclassified and supplies no empty-ACL,
+mode fallback or effective-access result. Synthetic parser positives are byte
+syntax evidence. No sample is serializable or consumed as an observer permit.
+Selected SQLite, socket and search-only O_PATH custody, authenticated absence,
+current present-ACL proof and full native feasibility remain later work.
+
+Pinned local validation passed all 10 focused macOS groups: nine synthetic
+ACL grammar groups (including all 512 base mode combinations) and genuine
+unsupported-platform denial. Strict all-target Clippy passed after an unused
+platform import and two implementation lint diagnostics were corrected without
+suppression. The complete `npm run check` passed: 1,471 TypeScript tests,
+139 contract comparisons, 264 store tests and 110 daemon tests. Both ignored
+store child helpers remain explicitly invoked by their parent tests.
+Docs direction passed 31 tests over 190 Markdown files, 33 critical documents
+and all 14 phases; public readiness and inventory passed, with the inventory
+unchanged at 2,122 occurrences across 295 files. Full formatting passed.
+
+Installed named `p/rust`/`p/javascript` Semgrep returned one test-only temporary-
+directory INFO and zero errors, independently triaged as non-actionable.
+Redacted Gitleaks returned zero findings. Recursive metadata-only OSV scanned
+436 package coordinates with zero known vulnerability alerts; nine local or
+unscannable exclusions remain unclaimed. The first offline dependency fetch,
+scanner flag invocation and docs-worker Node-version failure were corrected;
+failed evidence is retained separately without installations or a waived gate.
+Fresh independent OpenAI Terra xhigh exact-source review found no remaining
+P1/P2/P3. Native history attestation and exact-head Ubuntu CI retain their gates.
+The five actual Linux read/descriptor/drift groups require that exact source
+run: macOS source compilation and parser tests supply no Linux result.
+
+No authority or V1 completion follows from these candidate observations.
+Docker, host/ACL changes, actual pins, schema-18 execution, initializer,
+activation, artifact construction, merge, signing, release, deploy and
+production remain closed. Phase 11 packet status is unchanged.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

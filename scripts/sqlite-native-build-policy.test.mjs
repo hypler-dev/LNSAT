@@ -126,6 +126,13 @@ function graph() {
         source: "registry+https://github.com/rust-lang/crates.io-index",
       },
       { name: "lnsat-store", version: "0.1.0", id: "store", source: null },
+      {
+        name: "rustix",
+        version: "1.1.5",
+        id: "acl",
+        source: "registry+https://github.com/rust-lang/crates.io-index",
+      },
+      { name: "lnsatd", version: "0.1.0", id: "daemon", source: null },
     ],
     resolve: {
       nodes: [
@@ -156,6 +163,18 @@ function graph() {
                   target: 'cfg(any(target_os = "linux", target_os = "macos"))',
                 },
               ],
+            },
+          ],
+        },
+        { id: "acl", features: ["alloc", "fs", "std"], deps: [] },
+        {
+          id: "daemon",
+          features: [],
+          deps: [
+            {
+              name: "rustix",
+              pkg: "acl",
+              dep_kinds: [{ kind: null, target: 'cfg(target_os = "linux")' }],
             },
           ],
         },
@@ -478,6 +497,83 @@ test(
       );
       assert.equal(result.stderr.includes("build_policy_rejected"), false);
       assert.equal(readFileSync(fixture.marker, "utf8").trim(), fixture.repo);
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  },
+);
+
+test("native graph freezes the private Linux ACL dependency and denies backend feature drift", () => {
+  for (const mutate of [
+    (g) => {
+      g.packages[4].version = "1.1.4";
+    },
+    (g) => {
+      g.packages[4].source = "path+file:///alternate";
+    },
+    (g) => {
+      g.packages.push({ ...g.packages[4], id: "second-acl" });
+    },
+    (g) => {
+      g.packages.splice(4, 1);
+    },
+    (g) => {
+      g.resolve.nodes[4].features = ["std", "fs"];
+    },
+    (g) => {
+      g.resolve.nodes[4].features.push("use-libc");
+    },
+    (g) => {
+      g.resolve.nodes[4].features.push("rustc-dep-of-std");
+    },
+    (g) => {
+      g.resolve.nodes.push({ ...g.resolve.nodes[4] });
+    },
+    (g) => {
+      g.resolve.nodes[5].deps[0].name = "renamed";
+    },
+    (g) => {
+      g.resolve.nodes[5].deps[0].dep_kinds[0].target = null;
+    },
+    (g) => {
+      g.resolve.nodes[5].deps[0].dep_kinds[0].kind = "dev";
+    },
+    (g) => {
+      g.resolve.nodes[3].deps.push({ ...g.resolve.nodes[5].deps[0] });
+    },
+    (g) => {
+      g.resolve.nodes[5].deps = [];
+    },
+  ]) {
+    const candidate = graph();
+    mutate(candidate);
+    assert.throws(
+      () => verifyNativeGraph(candidate),
+      /^Error: sqlite_native.graph_rejected$/,
+    );
+  }
+});
+
+test(
+  "runner rejects private ACL backend selectors before Cargo",
+  { skip: process.platform === "win32" },
+  () => {
+    const fixture = configFixture();
+    try {
+      for (const key of [
+        "CARGO_CFG_RUSTIX_USE_LIBC",
+        "CARGO_CFG_RUSTIX_NO_LINUX_RAW",
+        "CARGO_CFG_RUSTIX_USE_EXPERIMENTAL_FEATURES",
+        "CARGO_CFG_RUSTIX_USE_EXPERIMENTAL_ASM",
+        "CARGO_CFG_RUSTIX_FUTURE_SELECTOR",
+        "CARGO_CFG_MIRI",
+        "CARGO_FEATURE_USE_LIBC",
+        "CARGO_FEATURE_RUSTC_DEP_OF_STD",
+      ]) {
+        for (const value of ["", "private-selector-value"]) {
+          assertConfigDenied(fixture, runConfigFixture(fixture, { [key]: value }));
+        }
+      }
     } finally {
       rmSync(fixture.root, { recursive: true, force: true });
     }

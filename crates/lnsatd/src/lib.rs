@@ -12,6 +12,11 @@ pub mod docker_local_runtime_proof_execution_harness;
 pub mod docker_local_runtime_proof_run_manifest;
 pub mod docker_local_supervisor;
 pub mod headless_config_loader;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A native candidate awaits complete freeze and integration"
+)]
+mod headless_native;
 pub mod product_config;
 pub mod product_output;
 pub mod product_recovery;

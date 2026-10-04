@@ -97,10 +97,21 @@ The repository contains experimental source for:
 The headless engine's private source now includes a strict preparation-journal
 codec and Linux file-custody candidate. It holds the actual selected-store lease,
 persists bounded immutable revisions, and rejects changed or malformed journal
-state. It has no operator entrypoint. Journal bytes remain untrusted assertions;
-this does not prove container cleanup, initialize a store or authorize an action.
-See the [current source record](docs/PROJECT_STATUS.md#stage-a-private-linux-journal-custody-candidate)
-and [custody contract](docs/architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract).
+state. A subsequent private Stage-A candidate defines strict Linux POSIX ACL
+parsing and a finite descriptor-bound sample of an already held readable regular
+file or directory. The sample uses fixed-size reads and two bounded observations;
+it carries observed metadata and parsed bytes, not permission or action authority.
+It has no operator entrypoint. Journal bytes remain untrusted assertions;
+native samples supply no resource or action authority. Neither proves container
+cleanup, initializes a store or authorizes an action.
+
+Synthetic parser vectors remain separate from disposable Linux read evidence. `ENODATA` remains an explicitly unclassified observation: it does not
+become an empty ACL, a mode fallback, effective access, or authority. Associated
+paths and ancestry, sockets, SQLite descriptors, search-only `O_PATH` handles,
+kernel/LSM classification and present-ACL proof remain later work.
+See the [current source record](docs/PROJECT_STATUS.md#stage-a-private-readable-object-acl-candidate)
+and [custody contract](docs/architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract),
+plus the [ACL candidate contract](docs/architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md).
 
 These are not all enabled together as a supported runtime. Real Docker
 execution, complete runtime cleanup proof, supported installation, and release
