@@ -1,0 +1,623 @@
+{
+  "document_type": "manual_source_crypto_operation_inventory",
+  "document_version": 1,
+  "authority": "docs/PROJECT_STATUS.md#crypto-operation-provider-source-inventory",
+  "source_basis": {
+    "revision": "a92857ed762f28873990bd1f1a921b104363537e",
+    "tree_oid": "ce08e9bc72e7a66bb9b08a999139d151a0330f1d"
+  },
+  "scope": {
+    "included": "Named application/tooling operation classes and direct source/lock evidence; representative call sites where a primitive repeats",
+    "excluded": [
+      "exhaustive transitive dependency or compiled feature census",
+      "generated binaries, artifacts and deployed services",
+      "actual OS entropy or cryptographic module observations",
+      "customer/agency compliance assessment and classification",
+      "selected provider/module/certificate/environment/self-test evidence"
+    ]
+  },
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "supported_release_evidence": false,
+  "side_effects": [],
+  "source_toolchain_pins": {
+    "rust": "1.97.1",
+    "node": "22.22.3",
+    "npm": "10.9.8",
+    "meaning": "Declared source/tooling pins; not compiled cryptographic module or supported operating-environment evidence"
+  },
+  "operations": [
+    {
+      "id": "RUST_PASSWORD",
+      "source_family": "rust_local_daemon_store",
+      "operation": "password derivation and verification",
+      "observed_profile": "lnsat.argon2id.v1; Argon2id v19; 19456 KiB; 2 passes; 1 lane; 32-byte result",
+      "backend_evidence": "argon2 0.5.3; password-hash/rand_core OS salt interface",
+      "integration_boundary": "Application password-verifier source and transaction-local owner foundation; no supported deployment proof",
+      "source_refs": [
+        {
+          "path": "crates/lnsat-auth/src/lib.rs",
+          "line_start": 18,
+          "line_end": 40,
+          "subject": "profile constants"
+        },
+        {
+          "path": "crates/lnsat-auth/src/lib.rs",
+          "line_start": 577,
+          "line_end": 640,
+          "subject": "create/validate/verify local password verifier"
+        },
+        {
+          "path": "crates/lnsat-store/src/owner_bootstrap.rs",
+          "line_start": 17,
+          "line_end": 118,
+          "subject": "prepared verifier and transaction-local owner insertion"
+        }
+      ]
+    },
+    {
+      "id": "RUST_SESSION_RANDOM",
+      "source_family": "rust_local_daemon_store",
+      "operation": "session and independent proof entropy",
+      "observed_profile": "16-byte session identifier; independent 32-byte bearer and proof secrets",
+      "backend_evidence": "rand_core 0.6.4 OsRng re-export; getrandom 0.2.17 OS interface; zeroize 1.9.0",
+      "integration_boundary": "Integrated auth/session source; private arrays/intermediate bearer hex zeroized; returned public strings remain caller-owned",
+      "source_refs": [
+        {
+          "path": "crates/lnsat-auth/src/lib.rs",
+          "line_start": 469,
+          "line_end": 517,
+          "subject": "create_local_session_secrets_v1"
+        },
+        {
+          "path": "crates/lnsatd/src/lib.rs",
+          "line_start": 678,
+          "line_end": 716,
+          "subject": "session issue and caller handoff"
+        }
+      ]
+    },
+    {
+      "id": "RUST_NONCE_CAPABILITY_RANDOM",
+      "source_family": "rust_local_daemon_store",
+      "operation": "nonce and one-time capability entropy",
+      "observed_profile": "32-byte nonce and 32-byte capability; digest persistence",
+      "backend_evidence": "getrandom 0.2.17; sha2 0.11.0; subtle 2.6.1; zeroize 1.9.0",
+      "integration_boundary": "Named preparation/consumption source; crypto operations do not independently grant dispatch authority",
+      "source_refs": [
+        {
+          "path": "crates/lnsat-store/src/phase7_nonce.rs",
+          "line_start": 151,
+          "line_end": 222,
+          "subject": "nonce issue random bytes"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_consumption.rs",
+          "line_start": 27,
+          "line_end": 220,
+          "subject": "capability shape, secret lifetime and issue path"
+        }
+      ]
+    },
+    {
+      "id": "RUST_COMMITMENTS",
+      "source_family": "rust_local_daemon_store",
+      "operation": "session, evidence, operation and runtime identity commitments",
+      "observed_profile": "SHA-256; session/proof use domain plus NUL plus value; canonical evidence domains vary by contract",
+      "backend_evidence": "sha2 0.11.0; subtle 2.6.1 for selected secret-digest comparisons",
+      "integration_boundary": "Representative named hashing/equality source; content commitments are not encryption or protected collection",
+      "source_refs": [
+        {
+          "path": "crates/lnsat-auth/src/lib.rs",
+          "line_start": 716,
+          "line_end": 748,
+          "subject": "session/proof digest and comparison"
+        },
+        {
+          "path": "crates/lnsat-store/src/phase7_persistence.rs",
+          "line_start": 1347,
+          "line_end": 1407,
+          "subject": "operation/evidence digest helpers"
+        },
+        {
+          "path": "crates/lnsatd/src/runtime_profile.rs",
+          "line_start": 178,
+          "line_end": 205,
+          "subject": "profile canonical digest"
+        },
+        {
+          "path": "crates/lnsatd/src/docker_local_execution_payload.rs",
+          "line_start": 260,
+          "line_end": 286,
+          "subject": "payload identity digest"
+        }
+      ]
+    },
+    {
+      "id": "RUST_ED25519_VERIFY",
+      "source_family": "rust_optional_primitive",
+      "operation": "public-only approval signature verification",
+      "observed_profile": "Ed25519; RFC 8410 SPKI; canonical base64url; 64-byte signature; weak-key rejection; strict verify",
+      "backend_evidence": "ed25519-dalek 3.0.0 with default features disabled",
+      "integration_boundary": "Optional pure verifier; implemented_not_wired; no private-key signing/custody or activated provider",
+      "source_refs": [
+        {
+          "path": "crates/lnsat-contracts/src/signed_approval.rs",
+          "line_start": 73,
+          "line_end": 155,
+          "subject": "public evidence/key-reference models"
+        },
+        {
+          "path": "crates/lnsat-contracts/src/signed_approval.rs",
+          "line_start": 509,
+          "line_end": 592,
+          "subject": "approval digest and strict public verifier"
+        }
+      ]
+    },
+    {
+      "id": "RUST_LOCAL_TRANSPORT",
+      "source_family": "rust_local_daemon_store",
+      "operation": "local authenticated transport boundary",
+      "observed_profile": "Numeric-loopback HTTP/TCP and header-pair checks; legacy authenticated Unix client withdrawn",
+      "backend_evidence": "std networking and named auth checks; no TLS backend established in named Rust source",
+      "integration_boundary": "Local source boundary only; loopback/Host/Origin checks do not prove encryption or an authenticated remote channel",
+      "source_refs": [
+        {
+          "path": "crates/lnsat-auth/src/lib.rs",
+          "line_start": 125,
+          "line_end": 241,
+          "subject": "numeric-loopback origin and transport facts"
+        },
+        {
+          "path": "crates/lnsatd/src/product_transport.rs",
+          "line_start": 70,
+          "line_end": 93,
+          "subject": "UnixSocketEndpointV1 rejection"
+        },
+        {
+          "path": "crates/lnsatd/src/lib.rs",
+          "line_start": 678,
+          "line_end": 838,
+          "subject": "local authenticated source callers"
+        }
+      ]
+    },
+    {
+      "id": "RUST_STORAGE_BACKUP",
+      "source_family": "rust_local_daemon_store",
+      "operation": "SQLite storage and backup/restore integrity boundary",
+      "observed_profile": "Bundled SQLite; file checksum, consistent snapshot and fresh inert restore",
+      "backend_evidence": "rusqlite 0.40.1; libsqlite3-sys 0.38.1; SHA-256",
+      "integration_boundary": "Named source establishes storage/recovery integrity and custody, not page/backup/envelope encryption",
+      "source_refs": [
+        {
+          "path": "crates/lnsat-store/Cargo.toml",
+          "line_start": 16,
+          "line_end": 25,
+          "subject": "backup/bundled storage features"
+        },
+        {
+          "path": "crates/lnsatd/src/product_recovery.rs",
+          "line_start": 125,
+          "line_end": 199,
+          "subject": "backup/restore evidence"
+        },
+        {
+          "path": "crates/lnsat-store/src/selected_store.rs",
+          "line_start": 38,
+          "line_end": 150,
+          "subject": "selected file/custody facts"
+        }
+      ]
+    },
+    {
+      "id": "NODE_BETA_SESSION",
+      "source_family": "typescript_local_beta",
+      "operation": "local-beta session entropy, opaque credential commitments and equality",
+      "observed_profile": "16-byte hex identifier; 32-byte base64url token secret and independent proof; SHA-256; timing-safe compare",
+      "backend_evidence": "node:crypto randomBytes/createHash/timingSafeEqual; binary/module/environment not captured",
+      "integration_boundary": "TypeScript local-beta PostgreSQL API source; separate from Rust daemon/SQLite path; token interoperability not established",
+      "source_refs": [
+        {
+          "path": "apps/api/src/local-control-plane-session.ts",
+          "line_start": 95,
+          "line_end": 124,
+          "subject": "PostgreSQL session repository"
+        },
+        {
+          "path": "apps/api/src/local-control-plane-session.ts",
+          "line_start": 246,
+          "line_end": 287,
+          "subject": "session service and entropy"
+        },
+        {
+          "path": "apps/api/src/local-control-plane-session.ts",
+          "line_start": 342,
+          "line_end": 400,
+          "subject": "digest verification and hash/equality helpers"
+        }
+      ]
+    },
+    {
+      "id": "WEBCRYPTO_CONTRACT_DIGESTS",
+      "source_family": "typescript_contract_source",
+      "operation": "policy, approval, audit and ledger content identities",
+      "observed_profile": "SHA-256 over each contract canonical preimage",
+      "backend_evidence": "globalThis.crypto.subtle.digest; runtime binary/backend/module evidence unselected",
+      "integration_boundary": "Contract and audit source primitives; integrity identities do not prove external audit anchoring",
+      "source_refs": [
+        {
+          "path": "packages/policy/src/policy-decision-v1.ts",
+          "line_start": 357,
+          "line_end": 374,
+          "subject": "policy digest"
+        },
+        {
+          "path": "packages/policy/src/approval-evidence-v1.ts",
+          "line_start": 838,
+          "line_end": 854,
+          "subject": "approval digest helper"
+        },
+        {
+          "path": "packages/audit/src/audit-event-v1.ts",
+          "line_start": 651,
+          "line_end": 667,
+          "subject": "audit digest helper"
+        },
+        {
+          "path": "packages/audit/src/audit-ledger-record-digest.ts",
+          "line_start": 259,
+          "line_end": 264,
+          "subject": "ledger digest helper"
+        },
+        {
+          "path": "packages/gateway/src/packet-inspection.ts",
+          "line_start": 254,
+          "line_end": 255,
+          "subject": "request digest"
+        }
+      ]
+    },
+    {
+      "id": "NODE_ADAPTER_DIGESTS",
+      "source_family": "typescript_adapter_source",
+      "operation": "A2A and registry canonical metadata identity",
+      "observed_profile": "SHA-256",
+      "backend_evidence": "node:crypto createHash",
+      "integration_boundary": "Adapter metadata commitments; no new authorization or authenticated external anchor",
+      "source_refs": [
+        {
+          "path": "packages/gateway/src/a2a-contract.ts",
+          "line_start": 1,
+          "line_end": 102,
+          "subject": "A2A card digest source"
+        },
+        {
+          "path": "packages/gateway/src/registry-supply-chain.ts",
+          "line_start": 487,
+          "line_end": 499,
+          "subject": "registry canonical metadata digest"
+        }
+      ]
+    },
+    {
+      "id": "TS_ED25519_SEAM",
+      "source_family": "typescript_optional_primitive",
+      "operation": "approval signature validation seam",
+      "observed_profile": "Ed25519 SPKI/message/64-byte signature shape; approval preimage SHA-256",
+      "backend_evidence": "Injected Ed25519VerificationProviderV1 plus Web Crypto digest",
+      "integration_boundary": "Primitive callback boundary; actual selected cryptographic provider is not established; not wired production authority",
+      "source_refs": [
+        {
+          "path": "packages/policy/src/signed-approval-evidence-v1.ts",
+          "line_start": 627,
+          "line_end": 715,
+          "subject": "public verification wrapper"
+        },
+        {
+          "path": "packages/policy/src/signed-approval-evidence-v1.ts",
+          "line_start": 1262,
+          "line_end": 1276,
+          "subject": "approval preimage digest"
+        }
+      ]
+    },
+    {
+      "id": "TS_SIGNER_INTERFACE",
+      "source_family": "typescript_interface_only",
+      "operation": "proposed signing and key custody profiles",
+      "observed_profile": "Type labels only: ed25519, ecdsa_p256_sha256, rsa_pss_sha256; software_vault, pkcs11_3_2, cloud_kms_hsm",
+      "backend_evidence": "Interface methods only; no selected provider dispatch",
+      "integration_boundary": "Provider calls/private-key input/key generation/activation/production verification false; returned signatures non-authorizing",
+      "source_refs": [
+        {
+          "path": "packages/policy/src/signer-provider.ts",
+          "line_start": 3,
+          "line_end": 22,
+          "subject": "closed interface status and proposed labels"
+        },
+        {
+          "path": "packages/policy/src/signer-provider.ts",
+          "line_start": 133,
+          "line_end": 138,
+          "subject": "provider method declarations"
+        },
+        {
+          "path": "packages/policy/src/signer-provider.ts",
+          "line_start": 188,
+          "line_end": 315,
+          "subject": "blocked activation/dispatch/result contracts"
+        }
+      ]
+    },
+    {
+      "id": "MCP_OAUTH_BOUNDARY",
+      "source_family": "typescript_adapter_source",
+      "operation": "bearer claims and OAuth callback admission",
+      "observed_profile": "Issuer/audience/resource/time/scope/principal checks; required PKCE S256, exact redirect URI and state",
+      "backend_evidence": "Injected McpBearerTokenVerifier; timingSafeEqual for named comparison",
+      "integration_boundary": "Adapter receives verified claims; this wrapper does not itself establish JWT/JWK/JWKS signature validation or token exchange",
+      "source_refs": [
+        {
+          "path": "packages/mcp/src/oauth-security.ts",
+          "line_start": 21,
+          "line_end": 29,
+          "subject": "injected bearer verifier"
+        },
+        {
+          "path": "packages/mcp/src/oauth-security.ts",
+          "line_start": 83,
+          "line_end": 232,
+          "subject": "claim admission"
+        },
+        {
+          "path": "packages/mcp/src/oauth-security.ts",
+          "line_start": 236,
+          "line_end": 330,
+          "subject": "callback/PKCE policy"
+        }
+      ]
+    },
+    {
+      "id": "SPIFFE_VERIFIER_BOUNDARY",
+      "source_family": "typescript_adapter_source",
+      "operation": "workload credential evidence admission",
+      "observed_profile": "x509-svid or jwt-svid evidence",
+      "backend_evidence": "Injected SpiffeCredentialVerifier",
+      "integration_boundary": "Named adapter does not itself implement JWT/X.509 cryptographic validation; configured provider evidence remains separate",
+      "source_refs": [
+        {
+          "path": "packages/gateway/src/workload-identity.ts",
+          "line_start": 1,
+          "line_end": 104,
+          "subject": "credential verifier and workload admission"
+        }
+      ]
+    },
+    {
+      "id": "REGISTRY_REMOTE_BOUNDARY",
+      "source_family": "typescript_adapter_source",
+      "operation": "remote registry target and artifact metadata policy",
+      "observed_profile": "Public HTTPS target/redirect/IP policy; SPDX/CycloneDX; in-toto/SLSA v1; subject digests; sigstore-cosign-compatible shape",
+      "backend_evidence": "Named policy/metadata validators; no selected authenticated channel or artifact signature backend established",
+      "integration_boundary": "Quarantine and metadata checks; not certificate pinning/mTLS, real signature/SBOM/provenance verification, installation or execution",
+      "source_refs": [
+        {
+          "path": "packages/gateway/src/registry-supply-chain.ts",
+          "line_start": 47,
+          "line_end": 117,
+          "subject": "registry quarantine and evidence inputs"
+        },
+        {
+          "path": "packages/gateway/src/registry-supply-chain.ts",
+          "line_start": 450,
+          "line_end": 474,
+          "subject": "artifact metadata shape checks"
+        }
+      ]
+    },
+    {
+      "id": "SOURCE_REVIEW_BINDING",
+      "source_family": "build_review_source",
+      "operation": "public-history-native reviewed diff and raw blob identity",
+      "observed_profile": "SHA-256 over canonical diff and exact protected Git blob bytes",
+      "backend_evidence": "node:crypto createHash in repository review tooling",
+      "integration_boundary": "Source review integrity metadata; neither a signature nor artifact provenance/certification",
+      "source_refs": [
+        {
+          "path": "scripts/check-public-history-review-evidence.mjs",
+          "line_start": 780,
+          "line_end": 796,
+          "subject": "canonical diff binding"
+        },
+        {
+          "path": "scripts/check-public-history-review-evidence.mjs",
+          "line_start": 837,
+          "line_end": 881,
+          "subject": "protected raw blob binding"
+        }
+      ]
+    },
+    {
+      "id": "ARTIFACT_SIGNING_GATE",
+      "source_family": "release_process_documentation",
+      "operation": "future selected-target artifact signing and assurance",
+      "observed_profile": "Reproducibility; non-production signature rehearsal; SPDX SBOM; SLSA v1 provenance; later separate production signing",
+      "backend_evidence": "No selected artifact-signing provider or produced artifact evidenced by this inventory",
+      "integration_boundary": "Documented future proof/publication gates; not implemented signing/custody",
+      "source_refs": [
+        {
+          "path": "docs/RELEASING.md",
+          "line_start": 79,
+          "line_end": 87,
+          "subject": "candidate evidence requirements"
+        },
+        {
+          "path": "docs/RELEASING.md",
+          "line_start": 112,
+          "line_end": 136,
+          "subject": "supported release gate and artifact proof"
+        },
+        {
+          "path": "docs/RELEASING.md",
+          "line_start": 150,
+          "line_end": 157,
+          "subject": "separate publication/signing authority"
+        }
+      ]
+    }
+  ],
+  "source_blobs": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:d9d3b91bc21a8c86f0fc2eceb6a31ea19bec54cc38d3ba6bdb73d7abbb62ec74"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "sha256:e7ee265a993be272116023aae2e4706e8ded57f000254d1e93da695a5091fd93"
+    },
+    {
+      "path": "apps/api/src/local-control-plane-session.ts",
+      "sha256": "sha256:2a5e87772ba430b7ba331e7ec4afe43df0a3047fc298ffe9fd293c1bb978d839"
+    },
+    {
+      "path": "crates/lnsat-auth/Cargo.toml",
+      "sha256": "sha256:2da24247950f876959b1aa6c2f5fdf891c8ff1c39ffffce44e253bb6d2ea8f0c"
+    },
+    {
+      "path": "crates/lnsat-auth/src/lib.rs",
+      "sha256": "sha256:4b89c42ecde8470b949109183551e15e3a04b4ead57ffe131dab74dc414caa6d"
+    },
+    {
+      "path": "crates/lnsat-contracts/Cargo.toml",
+      "sha256": "sha256:19571ca921621baee7aec085a969df4e8044ade542910a11f1cc48902d3480ce"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/signed_approval.rs",
+      "sha256": "sha256:589e7851cfa2d6cdc0b8ecd60649c2d613cd3d385863f07ebf203880814cc333"
+    },
+    {
+      "path": "crates/lnsat-store/Cargo.toml",
+      "sha256": "sha256:449e3cfba06d1033d0f7dfb02fbae88ca98c7570d084569973cf711c4ae23bb1"
+    },
+    {
+      "path": "crates/lnsat-store/src/owner_bootstrap.rs",
+      "sha256": "sha256:bd657e64fed9250c07bc9c64abf95b1cb93822daf98f0222f8720fa91487b378"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption.rs",
+      "sha256": "sha256:23e12c951aa0db2a48d5143c54d572d7754038345cd4e1dc7bccc1c539ac3250"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_nonce.rs",
+      "sha256": "sha256:438225c1146b8cf854f76f498e07be65623e7173e420c2c11121db328f4dae92"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_persistence.rs",
+      "sha256": "sha256:df4d5324cf807b42c4deef89803c1868a2350ff0b55dfbcacbb2c803012b68aa"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:711f9056292bb32ae88ff94fdcba655c0091acf16e25412ed07c4aee55a610e6"
+    },
+    {
+      "path": "crates/lnsatd/Cargo.toml",
+      "sha256": "sha256:5d6da7205c6cd8d68a8ea73c41253363371da327f524ccdf8d70cdf98516af38"
+    },
+    {
+      "path": "crates/lnsatd/src/docker_local_execution_payload.rs",
+      "sha256": "sha256:5f9e906cf33abbbf87b5d16436fb8ea7f08dd60a0bdfe1e1e73eceb677370043"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:052500e6713528ac555092a8b19e6d372ad5a205d98f595e2087ee5f19fa5808"
+    },
+    {
+      "path": "crates/lnsatd/src/product_recovery.rs",
+      "sha256": "sha256:4d2d8f3d92a38d2a5292f4c21ef3d043c2354d1d3bef2cb7b745d47f7277461f"
+    },
+    {
+      "path": "crates/lnsatd/src/product_transport.rs",
+      "sha256": "sha256:66e6d71e53bfe28def5b0fe22428103694760fb1b52114a95bb7ec9bc3584ab9"
+    },
+    {
+      "path": "crates/lnsatd/src/runtime_profile.rs",
+      "sha256": "sha256:79490e77d7c445aa9b7af3e9a662673c081a4be73d7a66d367f760f3569ed5c9"
+    },
+    {
+      "path": "docs/RELEASING.md",
+      "sha256": "sha256:c5f597943dcd9e98c339e3496a13b24e3e06a9619fdbf72e45fba30684b0cd3a"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:df0e4efb65272cb91853b8305b19467bfd5ceba53e114adf6cc2eb3d25ae5c33"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:b714640e008043ab7a4ff0aaa7299993e1eb223ce98950de16e401b5583c7fea"
+    },
+    {
+      "path": "packages/audit/src/audit-event-v1.ts",
+      "sha256": "sha256:444090311ce2ac7a89f988bb01ee768b576467ce8a131697d8046745703e1e42"
+    },
+    {
+      "path": "packages/audit/src/audit-ledger-record-digest.ts",
+      "sha256": "sha256:0073a559552fb8ed543472d1be0208e6f381e9d6731909eabc83087143810695"
+    },
+    {
+      "path": "packages/gateway/src/a2a-contract.ts",
+      "sha256": "sha256:d25c0545f346c2b474c8e55915b49e6e076d0849808ef50af93f5893a6eb461a"
+    },
+    {
+      "path": "packages/gateway/src/packet-inspection.ts",
+      "sha256": "sha256:4c6169ce8bc7173c6ef33b6768abe57e8ed056088ddb45785aaeb498d74fd256"
+    },
+    {
+      "path": "packages/gateway/src/registry-supply-chain.ts",
+      "sha256": "sha256:2f1b81c56a4218d0c34c492955a52b2f46357f49ca9558f21a8e01e23c094a29"
+    },
+    {
+      "path": "packages/gateway/src/workload-identity.ts",
+      "sha256": "sha256:06b7defa3356b247baf6a1beefa1856b0f3313edb297c934d7c60645811491cc"
+    },
+    {
+      "path": "packages/mcp/src/oauth-security.ts",
+      "sha256": "sha256:0c1a0b4e197ce5c488488b4508e3717989314f6ca5365a44d1621013ded955f6"
+    },
+    {
+      "path": "packages/policy/src/approval-evidence-v1.ts",
+      "sha256": "sha256:fe337ceef64bde5bee8e8d6bbe6fe533aa7e1e77999a2768d246f1489812df32"
+    },
+    {
+      "path": "packages/policy/src/policy-decision-v1.ts",
+      "sha256": "sha256:af26999e173b2d6a9706f0b7405ea1051dcb603442e37abbf44727db9129fca6"
+    },
+    {
+      "path": "packages/policy/src/signed-approval-evidence-v1.ts",
+      "sha256": "sha256:22854a05f543c265ae85202fd19c104efd08c250a7b50c8e7cabeefc1925f4b0"
+    },
+    {
+      "path": "packages/policy/src/signer-provider.ts",
+      "sha256": "sha256:2b3d3b84bffc723a03c3424f1d07961cfc0e967ffe7d23ad369eada690176144"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "sha256:8e390d6a0838315f972690f46ef8bae8b7ecc9ee6c1ed70140ef852869c2482e"
+    },
+    {
+      "path": "scripts/check-public-history-review-evidence.mjs",
+      "sha256": "sha256:e5b10d9d3e33be72816a5f2785b3384c4d6228f7540c37933b1589e23c0f3e37"
+    }
+  ],
+  "unestablished_assurance": [
+    "selected strict crypto profile and approved backend/module/version/environment",
+    "module validation/certificate/security policy and self-test/error-state proof",
+    "entropy health/provider identity",
+    "key custody/rotation/revocation and recovery",
+    "selected identity/MFA/federation and authenticated channel provider",
+    "storage/backup encryption and encryption key boundary",
+    "external audit anchoring/collection",
+    "produced artifact/signature/SBOM/provenance and signing provider"
+  ]
+}
