@@ -1255,6 +1255,46 @@ P1/P2/P3 was found in the corrected proposal. No broad source tests or code
 scanners were rerun for this documentation-only slice; parent exact-head source
 CI is separate evidence above.
 
+Exact strict-admission draft PR #84 head
+`a7739bfdde8d25168cde90af433966c0ef424e86` passed hosted source CI run
+`37165741406`, job `111328140941`, at `2026-10-04T01:00:26Z`.
+This validates the design/source tree; it does not accept the design or prove
+an actual module, provider, authenticator or runtime.
+
+### Proposed human authentication assurance design
+
+Canonical work record: this subsection. The accepted enterprise/government
+direction requires verified human assurance and fresh exact consequential
+confirmation. The [proposed design](architecture/HUMAN_AUTHENTICATION_ASSURANCE_DESIGN.md)
+defines one Gateway-owned human/session/challenge/decision evidence boundary,
+compares local WebAuthn with selected OIDC federation, and requires exact
+enrollment, distinct-person linking, revocation, inert recovery and privacy.
+The browser session header pair is CSRF/request proof, not two human factors.
+
+**Owner acceptance, exact source contracts and implementation are pending.**
+Local WebAuthn is conditionally recommended for the owner-controlled package;
+its domain-origin/secure-context requirement cannot reuse the existing numeric
+loopback origin. No origin, transport, IdP, authenticator, library, assurance
+level, schema or deployment is selected. Existing password/session, roles,
+approval, offline recovery and OAuth/workload adapter behavior is unchanged.
+No MFA, federation, AAL/FAL/IAL or government readiness is established.
+
+The HCFG-6 source-order decision, Stage-A source integration, candidate SQL,
+strict crypto acceptance, audit/privacy, Phase 11 packet/pins and full V1 remain
+open. This documentation adds no route or authority. Docker, host/configuration
+mutation, actual credential/provider/key work, candidate artifact construction,
+merge, signing, release, deployment and production remain closed.
+
+Named documentation direction passed 31 tests across 188 Markdown files;
+public readiness passed its three tests, and refreshed legacy inventory retained
+2,122 occurrences across 295 files. Exact-file formatting and staged whitespace
+checks passed. The initial inventory check failed because the new document was
+not staged when its tracked-file inventory was first generated; that failed
+receipt is retained and refresh after exact staging passed. Independent review
+is mandatory before commit; hosted exact-head source CI remains separate.
+Broad source tests and code scanners were not rerun for this docs-only slice;
+the unchanged parent source CI above is the separate source evidence.
+
 ### Dependency advisory checkpoint
 
 On 2026-10-03 a fresh `npm run audit:dependencies:check` passed on exact draft

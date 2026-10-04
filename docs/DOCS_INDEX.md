@@ -132,6 +132,9 @@ subsystem or proposal.
 - [Proposed strict crypto admission design](architecture/STRICT_CRYPTO_ADMISSION_DESIGN.md)
   — complete selected-operation coverage and exact module/environment/health/key
   evidence; owner acceptance, provider selection and implementation pending.
+- [Proposed human authentication assurance design](architecture/HUMAN_AUTHENTICATION_ASSURANCE_DESIGN.md)
+  — common human/session/decision evidence boundary, local WebAuthn and selected
+  OIDC alternatives; origin, enrollment/recovery and exact source gates remain.
 - [Loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [Packet model](architecture/PACKET_MODEL.md)
 - [Policy and audit](architecture/POLICY_AND_AUDIT.md)

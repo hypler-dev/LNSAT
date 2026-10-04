@@ -44,6 +44,14 @@ provider or deployment and implements no guard. Its
 [Project Status record](../PROJECT_STATUS.md#proposed-strict-crypto-admission-design)
 retains pending owner acceptance and implementation.
 
+The [proposed human authentication design](HUMAN_AUTHENTICATION_ASSURANCE_DESIGN.md)
+defines the human/session/decision assurance boundary and compares local WebAuthn
+with selected OIDC federation. Numeric-loopback origin compatibility, exact
+trust/enrollment/recovery, revocation and privacy contracts remain unresolved.
+It implements no MFA or federation; its
+[Project Status record](../PROJECT_STATUS.md#proposed-human-authentication-assurance-design)
+owns pending acceptance and implementation.
+
 ## Required work and acceptance evidence
 
 These are proposed implementation requirements, not implemented capabilities.
