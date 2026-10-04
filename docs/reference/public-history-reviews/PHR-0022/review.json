@@ -1,0 +1,88 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0022-independent-implementation-review-5ea5b44a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-mountinfo-byte-stage-a"],
+  "base_revision": "6a383bb48d1a90e4a6b6f32989ded4dcb8fc91ae",
+  "reviewed_revision": "5ea5b44ae646aca76a7c8e397fda9057a6084ac7",
+  "reviewed_tree_oid": "fd7f824925acb0fbb71547a6e13fba2e86522bc4",
+  "diff_sha256": "sha256:a90eb93c74f258876e94e2a72c42dd9402555909319bbc1b60dd5e4c4e590af2",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:684c5a213f7c009d847e4e9f31f0139f8e3db1ce7f48d0de88a385fb75270f89"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native.rs",
+      "sha256": "sha256:ca86b5996d2db7fef560f71ab2ffc9d6d9d3062532073d48fae663146dfd1d22"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_mountinfo.rs",
+      "sha256": "sha256:4a07c5cbf2b64cc8ac15eec95522df752cefcc16156bf7856c56be83ff2e3ff6"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_mountinfo_tests.rs",
+      "sha256": "sha256:5de56b8908499c1b032f46cab890b3880fc09f5008854cf5525377725fa6f4ba"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:ed2c26ca888444d4e5d3744793e867aaa829f87a69ce2852856e22054723e7ec"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:ebe9dc0909556e9cfb6881e8006c7f17536040fdbd87dd75f5fcaaaead76e9a3"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d8f6932d076a62ccb1117ae1358a0d082343107b7172bfc95f3ddf02d1ade338"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-mountinfo-candidate-source-spec.md",
+      "sha256": "sha256:a544d6474d16f4898133a7d7f2f8c5d91d03d1e0229ef48a04c31a579baa72a6"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:ab1eea60fb43664edd943a343b570d6c3c1e042916c4ab711257383cf8b8a285"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:4c58ac277517ac3992073bd48fc33568fcb4df4ad535bea5a64a329744dfac82"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:cad405a5990946c5e3a6f94bcdb3692ac123ea90b4f3016881425d26594e3f15"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:91a93fe57cc0b5343f25d70e57a8bc14da14789e2029a83e39ee91502b33e7c2"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/mountinfo_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the exact private Stage-A mountinfo parser, reviewed byte grammar, bounded storage and work, synthetic positive and denial fixtures, field-specific escaping and allocation failures, retained authority/privacy/integration gates, exact docs/status/registry/inventory source diff and named validation, followed by actual source and direct-child attestation bindings"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0022-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Fresh precode review required deterministic validation for otherwise untestable storage failure. The frozen contract and implementation include a scoped thread-local test-only deny-only reservation hook compiled out of non-test builds. Synthetic tests fail each row/ID/decoded-field reservation in turn, require the fixed storage error with no partial result or input mutation, and verify reset including unwind. Exact source review confirmed the resolution.",
+      "resolution_revision": "5ea5b44ae646aca76a7c8e397fda9057a6084ac7"
+    },
+    {
+      "finding_id": "PHR-0022-F2",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Fresh precode review required explicit cross-field hash escaping and non-UTF-8 evidence. The frozen contract and synthetic tests accept raw hash and reject its octal escape in root/mountpoint, reject raw hash and decode its octal escape in filesystem type/source, and preserve raw high bytes in every decoded field. Exact source review confirmed the resolution; synthetic rows supply no mounted-object or idmapping proof.",
+      "resolution_revision": "5ea5b44ae646aca76a7c8e397fda9057a6084ac7"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
