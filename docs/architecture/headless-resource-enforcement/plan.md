@@ -81,8 +81,9 @@ locked Phase 11 packet are preserved.
 
 The proposal names same-process held-handle custody, exact confined paths,
 finite namespace/root-link exceptions, four-line fdinfo policy, EOF/sentinel
-reads, storage bounds and bracketing comparisons. Its readiness is
-**NOT_READY**: the accepted containment investigation has not closed exact
+reads, storage bounds and bracketing comparisons. Its readiness was
+**NOT_READY** before the exact contract below closed private-candidate precode.
+The accepted containment investigation needed exact
 construction/lifetime, synchronization/resource, native-fixture method and
 crash-bridge interface/invariants. The reviewed synchronous recipe still provides no hard native return
 deadline; bounded bytes, readiness polling and checks around a syscall do not
@@ -95,7 +96,7 @@ contract/feasibility investigation on 2026-10-04; Project Status owns the
 Do not ask for that same decision again. The accepted limitation is no hard
 native-completion or completed-cleanup guarantee. Construction/drop ownership,
 exact resources/synchronization, a feasible genuine unfinished-operation test
-method and crash-bridge interface/invariants still require fresh precode review.
+method and crash-bridge interface/invariants were required by that review.
 Under the accepted Stage-A order, completed actual native tests gate candidate
 source completion, and implemented canonical recovery gates product integration;
 neither is required to exist before the private source needed to implement it.
@@ -107,10 +108,22 @@ The [selected fixture contract](native-source-spec.md#selected-instrumented-linu
 specifies control roles/frames, boot-lifetime retention, watchdog and evidence
 ordering. Its independent review is a separate contract subgate, not whole-reader
 precode PASS, kernel/harness source permission or execution authority.
-No dependency or worker implementation is approved by these decisions. Other procfs/cgroup/securityfs readers,
+The method choice alone did not approve worker source. The later whole-reader
+precode PASS opens only the named inert reader source scope. Other procfs/cgroup/securityfs readers,
 associated-path ACL classification, socket/SQLite/O_PATH custody and daemon
 association remain separately bounded work. No dependency or feature change is
 preapproved by this gate description.
+
+The [exact retained-worker candidate contract](native-source-spec.md#exact-retained-worker-candidate-contract)
+now supplies concrete construction, state/token ordering, wakeup, cleanup and
+crash-bridge interface rules. Fresh independent whole-reader precode review
+passed it with the existing native schedule and selected genuine test methods;
+[Project Status](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+records the disposition. Under the accepted Stage-A order, the named private
+reader/test/declaration source scope is open. Implementation and actual native
+results remain missing; candidate completion and full integration retain their
+separate evidence gates. No kernel/harness source, construction or execution
+is opened by this private-reader precode PASS.
 
 ### Parallel inert prerequisite
 

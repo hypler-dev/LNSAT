@@ -231,8 +231,9 @@ nonblocking, direct/synchronous I/O and async flags. `O_DIRECTORY` requires a
 directory kind. These masks govern observed flags, not proof of historical
 creation flags or permission authority. The narrow policy excludes a writable
 SQLite main descriptor; later actual selected-store custody needs a separately
-reviewed extension. Never read, seek, write, duplicate, explicitly close or
-reopen the shared resource. SQLite's selected descriptor retains its existing
+reviewed extension. Never read, seek, write, duplicate, explicitly close a still-shared resource or
+reopen it. Only worker retirement of a final exclusive owner may consume its
+File under the exact cleanup contract below. SQLite's selected descriptor retains its existing
 store lifetime; this proposal creates no SQLite borrow or custody API.
 Reader-owned proc/namespace handles are distinct. Final custody-reference and
 temporary-handle destruction belong to the worker/retainer cleanup contract,
@@ -317,7 +318,9 @@ The accepted Stage-A amendment also permits a disconnected supplied-byte
 prerequisite under its own exact contract and precode review. This subsection
 opens only that pure representation lane; it does not implement any operation,
 input-descriptor check, deadline, EOF observation, worker or successful native
-reader described above. The genuine reader remains NOT_READY. No material
+reader described above. Genuine reader precode was NOT_READY at that byte-parser
+checkpoint; the later exact retained-worker contract has its own disposition in
+Project Status. No material
 custody/trust amendment is accepted by adding this parser.
 
 Owned source is `crates/lnsatd/src/headless_native_fdinfo.rs`, its adjacent
@@ -432,18 +435,19 @@ Before source, a separate exact decision must define how bounded caller return,
 held-descriptor/store lifetime, late-result rejection, at-most-one unfinished
 observation, resource retention/quarantine and eventual cleanup work together.
 The retained-worker investigation has explicit owner acceptance; its exact
-construction and native feasibility still need independent precode review.
+construction and native feasibility required the later independent precode review
+recorded in Project Status.
 It must preserve a genuine non-root positive case, safe APIs, no resource
 duplication/reopen, no privileged helper and no authority-bearing IPC. It does
-not authorize worker implementation. Extending result acceptance, claiming
+not itself authorize worker implementation. Extending result acceptance, claiming
 cancellation from polling, or always denying the intended positive case cannot
-open reader source. Until the gate is resolved, all proposed
-operation/storage details above remain unimplemented and precode readiness fails.
+open reader source. The exact retained-worker contract below resolves the private
+precode gate; all proposed operation/storage details remain unimplemented here.
 
 ##### Retained-lane containment contract investigation
 
-**Accepted for exact contract/feasibility investigation; not implemented or
-precode-approved.** The [canonical owner decision](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+**Historical investigation, superseded by the exact retained-worker contract
+below; no native implementation or results are claimed.** The [canonical owner decision](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
 binds the reviewed proposal at `f1510a0e2241bd61c170c244b2dee6b6112e0845`.
 Investigate replacing the synchronous borrowed reader with one private non-root
 observer lane which owns lifetime-safe resource custody and contains unfinished
@@ -569,8 +573,9 @@ prior wording demanded completed native tests and the full durable bridge before
 the private source needed to produce them. No evidence requirement is waived.
 Deterministic models remain insufficient for native unfinished-operation proof;
 synthetic success or an always-denying implementation cannot establish feasibility.
-Host mutation/negative kernel probes remain closed. Reader precode is still
-**NOT_READY** while exact module and test-method decisions remain unresolved.
+Host mutation/negative kernel probes remain closed. Reader precode was
+**NOT_READY** at this investigation checkpoint; Project Status records the
+subsequent exact-contract review and private source disposition.
 
 The owner has accepted this single-lane contract investigation with explicit
 late-denial and retained-cleanup semantics. Continue exact contract/review work
@@ -588,8 +593,10 @@ existing quarantine/admission contract; that integration bridge is still open.
 
 ##### Construction and feasibility findings after acceptance
 
-This is the next exact investigation boundary, not an implemented worker or a
-precode PASS. The existing safe libraries are Rust 1.97.1, nix 0.31.3 with
+This historical investigation explains the constraints resolved by the
+[exact candidate contract](#exact-retained-worker-candidate-contract) below.
+Its tentative primitives are superseded there; it is not an implemented worker
+or an independent precode PASS. The existing safe libraries are Rust 1.97.1, nix 0.31.3 with
 `fs,poll,socket,user` and rustix 1.1.5 with `std,alloc,fs`. Existing readable
 observation borrows `&File`; no native retained-lane owner, queue, result slot or
 quarantine implementation exists. Reusing daemon/server threads or ordinary
@@ -821,6 +828,298 @@ write/flush ordering, journal budgets, compatibility and reconciliation evidence
 remain part of the later coherent store/daemon freeze. No journal codec, schema,
 writer, recovery action or selected-store operation is changed here.
 
+##### Exact retained-worker candidate contract
+
+This is the concrete successor to the construction/synchronization investigation
+above. Project Status owns its independent precode disposition. It selects the
+private module's implementation rules; it does not claim source, native results,
+canonical recovery or the complete integration freeze already exists.
+
+**Private boundary and ownership.** The future module owns one process-lifetime
+`static LaneRoot`. It contains one control word, one SeqCst atomic closed startup flag, one
+`OnceLock<Thread>` wake handle, and one `Mutex<Slots>`. Slots contain the unique
+`Option<JoinHandle<()>>`, one `Option<Request>`, one `Option<Completion>` and fixed
+cleanup bookkeeping. There is no `Drop` for the root, no reset, registry, pool,
+queue, replacement thread or general callback. All fields and constructors stay
+private to the reader module; product entrypoints cannot call it in Stage A.
+
+A private `OwnedProcfsCustody` holds two `Arc<File>` values, created once by
+moving the existing resource and proc-root `File`s during owner preparation.
+It has no public constructor, Clone implementation, serde or Debug output.
+Preparation may allocate and dispose of its own inputs; it is outside the
+coordinator method and remains charged to the enclosing preparation budget.
+The coordinator accepts only `&OwnedProcfsCustody`. It never owns or destroys
+the original owner object. Future integration must keep original owner
+construction/destruction on its explicitly budgeted owner path; passing a
+request-local owning wrapper whose destructor runs at coordinator return would
+violate that integration contract.
+
+`try_prepare(&OwnedProcfsCustody, enclosing_deadline)` returns either a private,
+non-Clone `Attempt` or a fixed denial. An Attempt contains only a static root
+reference, token, immutable `Instant` deadline and an armed/disarmed flag; no
+native handle or borrowed caller stack enters it. Preparation fixes identity and
+custody but performs no native dispatch. Its `dispatch(&mut self)` publishes the
+prepared request once; `poll(&mut self)` returns
+Pending or one completed result. `Drop` of an armed Attempt closes its matching
+attempt atomically and wakes the worker; it never locks, joins or drops a file.
+Old/disarmed tokens cannot cancel another attempt. Explicit stop closes the
+whole lane through the same control word.
+
+Before publication, two bounded `Arc::clone` operations borrow the still-live
+owner; rejecting their local copies cannot drop the final File. After publication,
+the slot owns both copies until the worker moves the Request to its own stack.
+The permanently retained join capability owns accounting for that worker's
+unfinished work. No File/Arc leaves in a Completion or accepted observation.
+A vanished caller therefore cannot detach the worker or free its borrowed stack.
+The resource and proc root are shared identities, never `dup`, `try_clone` or
+reopened resources. Selected SQLite descriptors remain excluded.
+
+**Construction and wakeup.** Supported execution is Linux with native 64-bit
+atomics. Other targets return the existing unsupported-platform denial before
+creating a thread or taking custody. Initialize root storage statically, then
+claim `VIRGIN(0) -> BUILDING(0)` exactly once. A construction guard makes every
+ordinary failure/unwind terminal. Acquire the empty Slots guard before spawn;
+poison, contention or an unexpected occupied slot fails before native creation.
+The guard remains held through handle storage, with the worker still behind the
+closed start flag and forbidden to acquire Slots or perform native observation.
+
+Use `Builder::new().stack_size(4_194_304).spawn(fixed_worker_entry)`, capturing
+only `&'static LaneRoot`, with no application spawn hook, thread-local value,
+logging, name formatter or injected closure. The supported-target Rust/libc
+assumptions already recorded above apply. Immediately move the returned handle
+into the proven-empty slot: no allocation, lookup, callback, assertion, fallible
+relock or replaced owning value lies between return and permanent storage.
+A reported spawn error permanently fails the lane; it is never retried.
+
+After storage, publish one clone of the handle's `Thread` in the previously
+empty OnceLock, conditionally change BUILDING to IDLE without clearing terminal,
+open the start flag and unpark that Thread. Only then return construction success.
+Stop during construction selects terminal startup; the worker performs no native
+observation. Any later constructor error leaves the stored handle retained.
+A panic before wake publication can leave an unstarted worker retained; it is
+terminal construction uncertainty, never readiness or clean shutdown.
+
+Use `thread::park` / `Thread::unpark` for wakeup, not a Condvar whose predicate
+can change without its mutex. An unpark permit persists across a later park;
+spurious wakeups must recheck startup/control/slot state. Coordinator wakeup uses
+nonwaiting `OnceLock::get`; before publication the constructor is responsible
+for the startup wake. No deadline/stop path acquires Slots. Worker native work,
+resource close, allocation/free and outcome destruction occur outside Slots.
+Mutex poison closes the lane; neither side repairs or overwrites uncertain slots.
+The root preserves any retained values, and the worker may clean only values it
+already owns. There is no recovery to IDLE after poison.
+
+**One control word and nonreusable tokens.** Use one `AtomicU64`, exclusively
+SeqCst, for every decision: bit 63 is sticky TERMINAL, bits 0–2 encode phase,
+and bits 3–62 encode a 60-bit token. Phases are 0 VIRGIN, 1 BUILDING, 2 IDLE,
+3 ACTIVE, 4 READY, 5 RESERVED, 6 RETIRING, 7 BODY_RETURNED. Token zero belongs
+only to construction; jobs use 1 through `2^60 - 1`. No separate phase/stop/token
+atomics decide admission or acceptance. Unsupported atomic targets deny.
+
+Global stop uses one same-word fetch-or and never clears the bit. Attempt-local
+cancellation checks its armed flag and uses token-conditional strong CAS, with
+at most one retry for the worker's independent ACTIVE-to-READY transition.
+A different token is a no-op. Attempt methods require unique mutable access;
+the same Attempt cannot poll/retire concurrently with its Drop. The coordinator
+disarms before unlocking a retirement that could enable a new token. These
+ownership rules exclude repeated concurrent phase churn in cancellation; no
+weak-CAS spin loop or stale-token global cancellation is permitted.
+Every nonterminal transition compares the complete expected word; if stop wins,
+a later store cannot resurrect IDLE. Reaching token exhaustion terminalizes before
+any new custody transfer. Arithmetic is checked; wrap, reset and reused tokens
+are forbidden. Diagnostic/cleanup bookkeeping never overrides this word.
+
+The coordinator first samples start, checked-adds five seconds and fixes
+`D = min(start + 5 seconds, enclosing_deadline)`; expired/overflowed input denies.
+It uses one `try_lock` per invocation, never a blocking lock or internal spin
+retry. Busy leaves existing work alone; poison fails terminally. With an idle
+word and empty request/result slots, it prepares the two shared references,
+CASes IDLE(old) to ACTIVE(new), and moves the fixed request into the empty slot
+with its dispatch flag false before unlocking. Preparation does not unpark for
+native work. Failure before publication drops only nonfinal
+borrowed copies. No fallible operation or callback follows the admission CAS
+before slot publication. Stop after that CAS leaves the published request for
+worker-only cleanup and permanently prevents result acceptance. A prepared Attempt
+whose durable intent is unavailable cannot dispatch.
+
+Dispatch performs one nonwaiting slot access, requires the same ACTIVE token,
+original unexpired D and an undispatched request, flips only that request's
+one-way dispatch flag, unlocks and unparks. Busy returns Pending; deadline or
+stop denies and terminalizes. Duplicate dispatch denies without resending.
+The private Stage-A fixture may call this disconnected native observation
+method directly; future product integration must put the canonical durable-intent
+adapter before it. No supplied Boolean or serialized proof is a dispatch input.
+
+The worker takes that exact token's dispatchable Request under Slots, unlocks, and calls only
+`run_fixed_procfs_attempt`. Before and after every native call/decoding stage it
+checks terminal state and D; expiry closes the lane and prevents optional work.
+The check and syscall entry are not atomic: scheduling can allow a native call
+after stop or D when its preceding check passed. Such work is already dispatched,
+possibly entered, permanently unaccepted and retained for cleanup. Checks stop
+later optional work once closure/expiry is observed; they are not cancellation
+or a promise of no post-stop syscall entry. Mandatory owned-handle cleanup still
+runs even after expiry. The worker finishes
+its cleanup protocol before publishing one Completion under Slots, then CASes
+ACTIVE(token) to READY(token). A concurrent terminal bit prevents READY and
+routes the outcome to worker-only disposal/accounting. No second request is
+admitted while a request, result, native cleanup or retirement remains pending.
+
+**Acceptance and retirement.** The Attempt's deadline is available without
+Slots. A poll at/after D first terminalizes that token and denies; lock contention
+cannot delay that decision. Before D, a nonready state or contended slot returns
+Pending without changing D. With the matching READY outcome locked, reserve by
+CAS READY(token) -> RESERVED(token) on the same word as stop, then sample the
+current clock. A sample at/after D denies and terminalizes; reservation alone
+publishes no observation. If terminal is already observed, deny conservatively.
+A timely sample proves the reservation preceded D; a stop before reservation
+would have prevented that CAS. A stop after it closes future work and does not
+turn this untrusted, earlier-linearized sample into an action permit.
+
+Move a timely accepted private `NativeSample` out of the slot, preserving its
+owned mountinfo bytes and fixed identities. It remains nonserializable and
+untrusted. Timely native denials may likewise complete without poisoning an
+otherwise clean lane. Set RETIRING only with a conditional transition that
+preserves terminal; disarm the Attempt, unlock and wake the worker. Rejected or
+late outcomes remain root/worker-owned for disposal. The worker checks empty
+slots and finished cleanup, then alone CASes RETIRING(token) -> IDLE(token).
+Stop between those steps leaves terminal set. No transient empty slot grants
+admission while the control word is ACTIVE/READY/RESERVED/RETIRING.
+
+Allocator/scheduler latency is not bounded by this protocol. Accepted output
+ownership moves to the internal consumer; retaining many old outputs is not
+covered by the one-inflight-slot bound and must be bounded at integration.
+No response-time, total-heap/RSS or kernel-memory ceiling is claimed.
+
+**Explicit cleanup and panic.** Use owned descriptors for every reader-created
+proc/namespace handle and consume them on the worker through the pinned safe
+`nix::unistd::close(owned_fd)`, outside locks, once each. Record any error as
+`native_procfs.cleanup_uncertain`, keep terminal closed, and continue required
+cleanup of the remaining independently owned handles. Never retry close by its
+old numeric descriptor: reuse or Linux close-error semantics cannot justify it.
+Normal RAII is the unwind fallback only; a panic path supplies no clean witness.
+
+Consume each worker-owned input reference with `Arc::into_inner`. None means
+this worker relinquished a nonfinal reference; it claims nothing about another
+owner's future close. Some yields the now-exclusive File, which the worker closes
+once through the same safe consuming API. This is final ownership retirement,
+not closing a still-shared resource; no borrowed/raw close is permitted. Do not
+use `try_unwrap(...).ok()`: a concurrent final-owner race can drop the File
+implicitly and hide its close result. Pinned Rust's
+[atomic reference retirement](https://raw.githubusercontent.com/rust-lang/rust/1.97.1/library/alloc/src/sync.rs)
+and nix 0.31.3's consuming `close<Fd: IntoRawFd>` supply these safe operations.
+
+A clean Completion requires all reader-created descriptors consumed without
+error and both worker input references retired by this protocol. It establishes
+worker descriptor accounting, not completion of every kernel fput/reference,
+release of an original owner's still-held File, thread/TLS termination or clean
+process shutdown. A close may itself remain unfinished past D; its worker and
+join capability remain retained. Late completion can record cleanup but never
+clear terminal or become an accepted sample.
+
+A fixed entry wrapper catches unwind only to mark terminal; worker stack cleanup
+can itself block before the catch is reached. The independent coordinator
+therefore uses D without waiting for a panic notification. A worker-exit guard
+also marks unexpected exit terminal. `panic=abort`, allocator abort, stack
+failure, process death, hostile raw close and broken Rust/libc/ABI are outside
+live-process recovery and require the future durable bridge. No panic callback
+runs under Slots. On stop, the worker disposes owned requests/results and may
+record BODY_RETURNED after ordinary cleanup, always with TERMINAL set. Root
+retains its JoinHandle forever; this candidate exposes neither join nor clean
+shutdown. `is_finished`, body return and VM/process disappearance are not TLS/
+join or native cleanup proof. The integration freeze must separately supply
+supervised termination/accounting before any clean lifecycle claim.
+
+**Resource accounting.** At most one worker exists, requesting a 4 MiB stack;
+actual stack/guard/TLS/native bookkeeping can be larger and are not measured here.
+There is one root, one join handle, one Thread wake reference, one request slot
+and one result slot. Owner custody performs at most two Arc allocations; each
+attempt makes two reference increments, no duplicate descriptor. The native
+schedule retains at most eight descriptor identities including its two inputs,
+with each record opened/read/closed sequentially. The existing buffer/decoder
+request formula above is unchanged. Result publication follows reader-handle
+cleanup; next admission follows result retirement, so two native attempts do
+not overlap. Caller-owned old results and original owners remain separately
+accounted external objects. `Arc::new`, library spawn/TLS and allocator behavior
+are not made fallible by `try_reserve_exact`; abort yields no positive evidence.
+
+**Future crash-bridge interface.** Stage-A source remains a private candidate
+with no live store caller. Integration must insert a single canonical
+preparation-store adapter between private preparation and dispatch; there is no serialized permit or
+caller-supplied successful observer. The adapter owns the exact prepared Attempt by value and a separate immutable
+identity snapshot. There is no self-reference or long-lived borrow of the Attempt.
+The snapshot contains selected store/installation identity, preparation and candidate
+binding, resource/proc-root custody identity, exclusive lease incarnation,
+process incarnation, nonreusable lane token and original budget identity. The sequence is prepare Attempt, copy its fixed identity/deadline metadata,
+persist and verify intent under the selected lease, then construct the adapter
+by moving that same Attempt together with the verified snapshot. Dispatch takes
+mutable access to the owned Attempt after confirming snapshot equality; no
+immutable borrow spans that call. The lane fixes token and D during preparation,
+so persistence does not predict a future counter or invent a second deadline.
+The process incarnation is freshly generated once per process; a numeric PID,
+boot identity alone or reused owner session cannot substitute for it.
+
+Before dispatch, persist that complete attempt identity plus a maximum five-second
+window and enclosing-budget binding in the existing canonical preparation
+journal. Its opaque budget identity refers to exactly one live immutable Instant
+deadline, held initially by the prepared Attempt, copied into the verified snapshot,
+and moved unchanged with that Attempt into the adapter.
+Do not serialize Rust Instant memory or reconstruct its old deadline on restart.
+A restarted process denies unresolved intents regardless of elapsed time. If
+persistence consumes the original budget, dispatch is forbidden; late/ambiguous
+acknowledgment cannot mint a fresh budget or token. Neither an untrusted decoded
+journal row nor a supplied durable-success Boolean constructs the live binding.
+
+The adapter distinguishes NotDispatched, CompletedWithDescriptorAccounting and
+Unresolved; those are interface outcomes, not new current journal phases.
+Only verified source state proving no dispatch-flag publication permits
+NotDispatched; mere request preparation is not native dispatch.
+Completed includes exact same-attempt outcome and cleanup accounting, never
+inferred from timeout, body return or PID absence. Late cleanup remains denied
+in-process and cannot by itself clear canonical quarantine. Resolution is a
+separate durable acknowledged transition under the same lease; failed/ambiguous
+resolution retains unresolved state and denies clean release. Coordinator stop/
+deadline denial never waits for persistence: the earlier durable intent already
+forces restart denial if no later append completes.
+
+Before integration, the canonical journal's separately reviewed schema/codec
+must fix field encodings, revision/digest binding, size/flush order, identity
+freshness and reconciliation evidence, together with selected-store/daemon
+revocation and lifecycle. This is an explicit dependency, not a second ledger
+or a claim that current `quarantined`/`cleanup_verified` phases implement this
+bridge. No schema, store writer, recovery action or actual random identity is
+introduced by this contract.
+
+**Positive and denial feasibility.** The ordinary Linux recipe uses an existing
+ext4 filesystem, an unlocked caller-owned readable regular file and directory,
+and a genuine proc-root in the same process/PID view. Open fixture inputs once
+with CLOEXEC before the coordinator; never change their flags or contents during
+the attempt. The observed allowed directory/LARGEFILE bits and fdinfo's separate
+CLOEXEC bit must match the existing exact masks. A small stable namespace, known
+mount rows, available statx mount IDs and readable namespace links can satisfy
+all checks without root, mounts, ACL mutation or resource reopening. This is
+an unexecuted feasible recipe; arbitrary temp/workspace paths do not prove ext4.
+
+Pinned cached nix 0.31.3 supplies Linux `openat2`/OpenHow/ResolveFlag under `fs`,
+`openat`, fstat/fstatfs/fcntl and consuming close. Pinned rustix 1.1.5 supplies
+`fs::statx` with MNT_ID, fixed-buffer `fs::readlinkat_raw` and `io::read` with no
+wrapper retry/allocation, using the existing features. Unavailable kernel support,
+missing result-mask bits or full/truncated self-link data deny. The syscall
+schedule and strict record grammar remain unchanged. O_PATH can be source-tested
+under the same custody checks but is not required for the ordinary ext4 positive.
+
+Future focused tests must cover concurrent construction, pre-/post-spawn failure,
+startup stop, poisoned/contended slots, request-owner disappearance, panic at each
+ownership handoff, every native-step denial, explicit-close failure, stale tokens,
+exhaustion, two sequential timely attempts, stop/expiry on each side of reservation
+and retirement, and late delivery with no second job. Process-global construction
+cases require isolated test processes; there is no resettable production root.
+Synthetic scheduling/failure tests may prove only those mechanics and must never
+create a successful native sample. Genuine file/directory positives must run on
+the unmodified reviewed recipe; the separately selected instrumented mountinfo
+fixture supplies the unfinished-native/late-cleanup row. Actual results gate
+candidate completion. Source compilation and synthetic checks alone cannot close
+that evidence or the complete native freeze.
+
 ##### Selected instrumented Linux timeout fixture
 
 **Selected for contract work under the owner's delegated design decision;
@@ -1019,10 +1318,11 @@ packet is opened. That later packet must name exact files/APIs, configuration,
 privileges, artifact provenance, controls, commands and cleanup. Source, build,
 guest provisioning and execution remain separate unopened actions here. The
 reader's application construction/drop ownership, complete slot/resource/
-synchronization rules, positive recipe and crash-bridge interface still need a
-whole-reader precode PASS. Completed native results gate candidate source
+synchronization rules, positive recipe and crash-bridge interface are frozen by
+the exact retained-worker contract above. Its separate whole-reader precode
+disposition is recorded in Project Status. Completed native results gate candidate source
 completion; canonical recovery and the full native freeze gate integration.
-Reader/worker implementation remains **NOT_READY**. No further owner method-choice
+Reader/worker implementation remains missing. No further owner method-choice
 question is required within the delegated contract scope.
 
 ##### Required evidence and later source ownership

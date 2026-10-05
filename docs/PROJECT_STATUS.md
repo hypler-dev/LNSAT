@@ -1511,7 +1511,9 @@ terminal EOF/sentinel handling, fixed/fallible storage, current descriptor/mount
 association and bracketing drift denials. Existing supplied-byte decoder, ACL
 sampler, journal, source contracts and Cargo pins/features are preserved.
 
-**Reader implementation and precode readiness remain NOT_READY.** Research of
+**Whole-reader private-candidate precode: PASS; implementation remains missing.**
+The exact contract below closes the private source gate under the accepted
+Stage-A order. It does not close actual native results or integration. Research of
 exact upstream Linux v6.8 shows synchronous sequential-read locking, namespace
 locking and filesystem/security callbacks; the inspected recipe has no proved
 five-second native return bound. Byte/read caps, `O_NONBLOCK`, a readiness timeout
@@ -1546,8 +1548,9 @@ candidate policy; actual selected SQLite custody needs a separate reviewed
 contract. The temporary tmpfs candidate case supplies no selected ext4 recipe
 positive.
 
-Documentation review and named checks establish the accuracy of this gate
-record only. Fresh independent precode review must still find a genuine non-root
+At the initial investigation checkpoint, documentation review and named checks
+established the accuracy of the gate record only. Independent precode review
+still needed a genuine non-root
 positive recipe with exact deadline rejection, retained custody and cleanup
 accounting before inert reader implementation. The
 [post-acceptance investigation](architecture/headless-resource-enforcement/native-source-spec.md#construction-and-feasibility-findings-after-acceptance)
@@ -1573,7 +1576,7 @@ or completed evidence is inferred from correcting this order.
 Pinned Rust construction research narrows the alleged normal native-create/
 handle-return gap under the specified supported-target library assumptions.
 Application retention/startup, exact slots/synchronization, resources and cleanup
-still require whole-reader precode review.
+required the later whole-reader precode review recorded below.
 
 On **2026-10-05**, the human owner delegated resolving the remaining issues and
 choosing the best method to the controller, in response to the explicit
@@ -1594,11 +1597,32 @@ exact deadline/late-cleanup observations. The test kernel retains identity
 bookkeeping until disposal; that is separate from candidate descriptor cleanup.
 Ordinary positives still need the unmodified reviewed Linux recipe. No kernel,
 harness or reader source was added, and no native experiment ran. The contract
-is subject to independent documentation review; whole-reader precode remains
-**NOT_READY** pending application construction/ownership, synchronization/resource,
+passed independent documentation review at source
+`35ec5f8b2b94a64e4f48a796d86f64caba2c9302`, attested by direct child
+`4e9389135d4270660dd6e33820f149748651532c`. At that checkpoint, whole-reader precode
+remained **NOT_READY** pending application construction/ownership, synchronization/resource,
 positive-recipe and crash-bridge interface closure. Actual native results remain
 a candidate-completion gate, and full recovery/native freeze remain integration
 gates.
+
+The [exact retained-worker candidate contract](architecture/headless-resource-enforcement/native-source-spec.md#exact-retained-worker-candidate-contract)
+now fixes permanent construction/handle retention, a 4 MiB requested stack,
+nonwaiting coordinator access, one combined atomic phase/token/terminal word,
+reservation-before-clock acceptance, worker-only descriptor/reference cleanup,
+and the future canonical crash-bridge interface. Pinned cached safe APIs support
+the chosen operation signatures; ordinary ext4 file/directory positives remain
+unexecuted. Fresh independent OpenAI Terra xhigh whole-reader precode review
+passed with no actionable P1/P2/P3. A second independent review confirmed
+resolution of the future adapter ownership cycle and the check-to-syscall-entry
+race statement. This opens only the inert private reader/test/declaration source
+paths already named in the accepted Stage-A plan; no implementation is claimed
+at this checkpoint. Actual genuine positive and unfinished-operation evidence
+still gates candidate completion; canonical recovery and the complete native
+freeze still gate integration. This is progress toward the accepted standalone V1
+engine and downstream integration outcome, not a complete V1 or packaging claim.
+The owner clarified that LNSAT remains independent of Rangoon: Rangoon must be
+able to consume the standard adapter contracts, without engine branding,
+consumer-specific workflow dependencies or an alternate authority path.
 
 Full native/source/pin/positive-feasibility freeze,
 separate artifact capture, product integration and Phase 11 actual runtime remain
@@ -1611,8 +1635,9 @@ remains neutral and standalone; no support or certification claim follows.
 
 Canonical work record: this subsection, under the accepted Stage-A source-order
 amendment. The [exact byte contract](architecture/headless-resource-enforcement/native-source-spec.md#separately-reviewed-stage-a-fdinfo-byte-prerequisite)
-defines an independent inert representation prerequisite while genuine reader
-return/custody remains NOT_READY. Fresh independent OpenAI Terra xhigh precode
+defines an independent inert representation prerequisite. Genuine reader
+return/custody was NOT_READY at that parser checkpoint; the later whole-reader
+precode PASS above supplies no native implementation or result. Fresh independent OpenAI Terra xhigh precode
 review passed with no P1/P2/P3 findings. Only the private parser, its synthetic
 tests and private module declaration are owned source paths.
 
