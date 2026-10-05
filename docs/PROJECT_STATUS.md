@@ -1505,7 +1505,7 @@ remain unchanged and closed.
 
 Canonical work record: this subsection, under the existing HCFG-6/Stage-A
 acceptance. The [bounded supporting proposal](architecture/headless-resource-enforcement/native-source-spec.md#stage-a-self-process-procfs-and-held-mount-reader-proposal)
-now names private same-process input borrows, genuine procfs checks, exact
+names private same-process held custody, genuine procfs checks, exact
 no-follow paths, finite namespace/root-link exceptions, four-line fdinfo policy,
 terminal EOF/sentinel handling, fixed/fallible storage, current descriptor/mount
 association and bracketing drift denials. Existing supplied-byte decoder, ACL
@@ -1519,18 +1519,25 @@ or checking time around a completed syscall cannot supply that bound. This is a
 source-derived feasibility limitation of the proposed synchronous recipe, not
 a claim that every Linux implementation is impossible or an observed host failure.
 
-The [concrete containment proposal](architecture/headless-resource-enforcement/native-source-spec.md#proposed-containment-decision-for-owner-review)
-now compares synchronous calls, scoped/detached threads, one retained in-process
-lane and a separate process. It recommends investigating one fixed outstanding
-job with shared ownership of the same held descriptors, coordinator-controlled
-deadline acceptance, terminal timeout quarantine and retained cleanup. This is
-an independently reviewed **unaccepted design proposal**, not worker source or
-reader precode PASS. It explicitly cannot promise hard five-second native
-completion, scheduler-independent denial or completed cleanup. Exact lifetime,
-allocation/FD accounting, crash/durability bridge, selected-store custody and
-genuine blocked-operation evidence remain required. No worker model or weaker
-deadline is accepted; human acceptance and fresh exact feasibility/precode review
-precede any material custody/trust amendment and reader implementation. Ordinary safe borrow lifetime, matching mount tables and
+The human owner replied **`accept` on 2026-10-04** to the explicit question
+whether to accept retained-worker contract investigation, with late results
+rejected and native work/cleanup potentially exceeding five seconds. The
+accepted subject is the independently reviewed containment proposal present at
+`f1510a0e2241bd61c170c244b2dee6b6112e0845`, following the delivery milestone
+checkpoint. This is **acceptance for exact contract and feasibility investigation**,
+not reader source, precode PASS, full native freeze or product/runtime authority.
+The [retained-lane investigation](architecture/headless-resource-enforcement/native-source-spec.md#retained-lane-containment-contract-investigation)
+now owns supporting custody and proof details; this subsection owns acceptance.
+Do not request the same owner decision again.
+
+The accepted investigation uses one fixed outstanding job with shared ownership
+of the same held descriptors, coordinator-controlled deadline acceptance,
+terminal timeout quarantine and retained cleanup. It cannot promise hard
+five-second native completion, scheduler-independent denial or completed
+cleanup. Exact construction/drop ownership, synchronization, allocation/FD
+accounting, crash/durability bridge and genuine blocked-operation evidence remain
+precode requirements. Selected SQLite custody stays separate. Ordinary held
+ownership, matching mount tables and
 namespace metadata supply no atomic/ABA-free snapshot, authenticated installed
 kernel, host manifest, ACL/idmapping classification or action permit. Extra
 fdinfo lock/type tails and writable resource descriptors deny under this narrow
@@ -1540,8 +1547,13 @@ positive.
 
 Documentation review and named checks establish the accuracy of this gate
 record only. Fresh independent precode review must still find a genuine non-root
-positive recipe with an enforceable return and cleanup contract before inert
-reader implementation. Full native/source/pin/positive-feasibility freeze,
+positive recipe with exact deadline rejection, retained custody and cleanup
+accounting before inert reader implementation. The
+[post-acceptance investigation](architecture/headless-resource-enforcement/native-source-spec.md#construction-and-feasibility-findings-after-acceptance)
+narrows a process-lifetime retainer candidate, ownership transfer, slot/state
+linearization and explicit resource accounting. Construction/unwind proof,
+genuine unfinished-operation evidence and the journal/store crash bridge remain
+unresolved; no existing fixture establishes them. Full native/source/pin/positive-feasibility freeze,
 separate artifact capture, product integration and Phase 11 actual runtime remain
 open. No Docker/host/ACL operation, target pressure, credential/provider intake,
 SQL18/initializer/activation, merge/main mutation, package/image construction,
@@ -2001,9 +2013,10 @@ order the remaining enforcement, protected setup/control, headless integration,
 actual workflow proof, RC and selected-package work. They reuse these command
 gates and existing source/test foundations; they establish no new completion,
 mutation, runtime or release authority. LNSAT remains neutral and standalone.
-The genuine reader remains NOT_READY, and the retained-worker containment
-proposal remains unaccepted. A general continuation instruction does not decide
-that material native-completion/custody tradeoff.
+The genuine reader remains NOT_READY. The owner's explicit acceptance of
+retained-worker contract investigation is recorded in the
+[reader checkpoint](#stage-a-self-process-procfs-reader-contract); exact
+feasibility/precode proof remains required before implementation.
 
 The evidence baseline is reviewed source/attestation head
 `002f608e2174ee73d9b79af70a39c5fe9cc1bc81`, tree

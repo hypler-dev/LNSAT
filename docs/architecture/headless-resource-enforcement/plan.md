@@ -54,7 +54,7 @@ This section tracks the separate
 [self-process reader proposal](native-source-spec.md#stage-a-self-process-procfs-and-held-mount-reader-proposal).
 It is a documentation contract checkpoint, not precode approval, implementation
 or completion of the genuine reader. Project
-Status owns the [current reader gap](../../PROJECT_STATUS.md#stage-a-private-mountinfo-byte-candidate)
+Status owns the [current reader gap](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
 and [V1 command reconciliation](../../PROJECT_STATUS.md#v1-command-and-contract-completion-gates).
 The accepted Stage-A amendment permits an independently reviewed inert candidate;
 the supplied-byte decoder does not authenticate its input source.
@@ -79,20 +79,24 @@ locked Phase 11 packet are preserved.
 | Source evidence               | Require actual disposable Linux self-process/held-object positives, malformed/limit/EOF negatives and deterministic drift/lifetime tests. Separate synthetic parser vectors from genuine-reader fixtures; no Docker, selected host, permission mutation, target action or pressure proof.                                                                             |
 | Review and rollback           | Fresh independent read-only precode review must cover every native operation and feasible non-root positive path before implementation. Resulting source needs focused pinned tests, `npm run check`, public/inventory/history checks and separate exact-source/direct-child reviews. Rollback is a reviewed inert-source revert, not journal repair or live cleanup. |
 
-The proposal now names same-process held-handle custody, exact confined paths,
+The proposal names same-process held-handle custody, exact confined paths,
 finite namespace/root-link exceptions, four-line fdinfo policy, EOF/sentinel
 reads, storage bounds and bracketing comparisons. Its readiness is
-**NOT_READY**: the reviewed synchronous procfs recipe does not provide an
-enforceable native return deadline. Bounded bytes, readiness polling and deadline
-checks surrounding a syscall do not resolve this. The concrete
-[containment decision proposal](native-source-spec.md#proposed-containment-decision-for-owner-review)
-now specifies a candidate one-job retained lane, terminal timeout quarantine,
-late-result rejection and cleanup obligations. It remains unaccepted and cannot
-promise hard native completion or completed cleanup. Human acceptance and an
-exact lifetime/resource/crash contract with fresh feasibility/precode review
-remain prerequisites; no worker model, feature change or weaker deadline is
-accepted here. Project
-Status owns the [reader contract checkpoint](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract). Other procfs/cgroup/securityfs readers,
+**NOT_READY**: the accepted containment investigation has not closed exact
+construction/lifetime, synchronization/resource, native-fixture and crash-bridge
+proof. The reviewed synchronous recipe still provides no hard native return
+deadline; bounded bytes, readiness polling and checks around a syscall do not
+change that fact. The concrete
+[retained-lane investigation](native-source-spec.md#retained-lane-containment-contract-investigation)
+specifies one outstanding job, terminal timeout quarantine, late-result
+rejection and retained cleanup. The human owner explicitly accepted exact
+contract/feasibility investigation on 2026-10-04; Project Status owns the
+[decision and reader checkpoint](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract).
+Do not ask for that same decision again. The accepted limitation is no hard
+native-completion or completed-cleanup guarantee. Construction/drop ownership,
+exact resources/synchronization, a genuine unfinished-operation fixture and the
+crash bridge still require fresh feasibility/precode review before source.
+No dependency or worker implementation is approved by that acceptance. Other procfs/cgroup/securityfs readers,
 associated-path ACL classification, socket/SQLite/O_PATH custody and daemon
 association remain separately bounded work. No dependency or feature change is
 preapproved by this gate description.

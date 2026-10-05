@@ -207,16 +207,20 @@ implementation and evidence.
 #### Stage-A self-process procfs and held-mount reader proposal
 
 This is the bounded reader contract proposal following the reviewed byte
-candidate. It is **not ready for reader implementation**: the enforceable native
-return bound below is unresolved. [Project Status](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
-owns its readiness, review and implementation record. The original HCFG-6 and
-Stage-A acceptances do not accept a new worker, cancellation or custody model.
+candidate. It is **not ready for reader implementation**: retained-worker
+construction/custody and genuine unfinished-operation feasibility remain
+unproved. [Project Status](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+owns the owner's explicit acceptance of contract investigation, readiness,
+review and implementation. That limited acceptance adds to the original HCFG-6
+and Stage-A decisions; none supplies precode PASS or runtime authority.
 The broader native reads in the table below remain separate contracts.
 
 The proposed candidate observes only its own process and one caller-owned held
-regular file or directory at a time. Inputs are safe lifetime-bound borrows of
-the procfs root and resource `File`, plus the existing private absolute monotonic
-budget. No pathname, PID, numeric FD, raw bytes or success flag is accepted from
+regular file or directory at a time. The investigated inputs are shared ownership
+of the same existing procfs-root and resource `File`, plus the existing private
+absolute monotonic budget. This supersedes the synchronous proposal's promise
+that work cannot outlive the caller's borrow; it does not permit descriptor
+duplication or reopening. No pathname, PID, numeric FD, raw bytes or success flag is accepted from
 an agent/API/config caller. The resource must have `(st_mode & S_IFMT)` exactly `S_IFREG` or `S_IFDIR`,
 and `F_GETFD` exactly `FD_CLOEXEC`; unknown descriptor-flag bits deny. Classify
 `F_GETFL` in this order: with `O_PATH`, require access-mode bits `O_RDONLY`
@@ -227,13 +231,14 @@ nonblocking, direct/synchronous I/O and async flags. `O_DIRECTORY` requires a
 directory kind. These masks govern observed flags, not proof of historical
 creation flags or permission authority. The narrow policy excludes a writable
 SQLite main descriptor; later actual selected-store custody needs a separately
-reviewed extension. Never read, seek, write, duplicate, close or reopen the
-resource. SQLite's selected descriptor must
-retain its existing store lifetime; this proposal creates no SQLite borrow or
-custody API. Reader-owned proc/namespace handles are distinct and close on drop.
-The observation cannot outlive either input borrow. Safe Rust borrows prevent
-ordinary owner close/reuse, not hostile raw close, namespace/root changes or a
-malicious host; those are not new guarantees.
+reviewed extension. Never read, seek, write, duplicate, explicitly close or
+reopen the shared resource. SQLite's selected descriptor retains its existing
+store lifetime; this proposal creates no SQLite borrow or custody API.
+Reader-owned proc/namespace handles are distinct. Final custody-reference and
+temporary-handle destruction belong to the worker/retainer cleanup contract,
+including when the original caller has gone away. Shared ownership prevents
+ordinary owner close/reuse while held, not hostile raw close, namespace/root
+changes or a malicious host; those are not new guarantees.
 
 ##### Filesystem origin and finite lookup operations
 
@@ -250,7 +255,7 @@ manifest authentication, complete namespace identity or authority.
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `self`                                 | One bounded `rustix::fs::readlinkat_raw` into an 11-byte fixed buffer. Reject a full buffer, empty value, noncanonical/nonpositive decimal or a value different from `std::process::id()`. This reads link text; it does not follow the link or accept a caller PID. Repeat for drift. A different procfs PID view denies; matching numbers alone prove no host PID-namespace identity.                                                                                                                          |
 | Numeric self directory, `fdinfo`, `ns` | Open each generated/fixed component relative to its held parent using safe `nix::fcntl::openat2`. Combine `O_RDONLY`, `O_DIRECTORY`, `O_CLOEXEC`, `O_NOFOLLOW`; combine `RESOLVE_BENEATH`, `RESOLVE_NO_SYMLINKS`, `RESOLVE_NO_MAGICLINKS`, `RESOLVE_NO_XDEV`. Require procfs and the held proc-root mount/device at every step. No path concatenation from untrusted strings, enumeration, absolute-path fallback or weakened flags.                                                                             |
-| `fdinfo/{held_fd}` and `mountinfo`     | Canonical decimal FD comes only from the still-borrowed resource; open its generated component relative to held `fdinfo`. Open fixed `mountinfo` relative to held numeric self. Use the same resolve flags and combine `O_RDONLY`, `O_CLOEXEC`, `O_NOFOLLOW`; require regular procfs records on the same held proc mount. No `/proc/self/fd` or resource reopening. Open fresh records for each read; no seek/replay fallback.                                                                                   |
+| `fdinfo/{held_fd}` and `mountinfo`     | Canonical decimal FD comes only from the still-held resource; open its generated component relative to held `fdinfo`. Open fixed `mountinfo` relative to held numeric self. Use the same resolve flags and combine `O_RDONLY`, `O_CLOEXEC`, `O_NOFOLLOW`; require regular procfs records on the same held proc mount. No `/proc/self/fd` or resource reopening. Open fresh records for each read; no seek/replay fallback.                                                                                       |
 | `ns/mnt` and `ns/user`                 | The only namespace-link following exceptions: fixed single components opened from the verified held `ns` directory with safe `openat`, combining `O_RDONLY`, `O_CLOEXEC`, intentionally following the genuine kernel link. Require `NSFS_MAGIC` and retain owned namespace descriptors for device/inode comparison. Fixed-name following `statx` queries repeat current device/inode checks against those handles. No arbitrary name, `setns`, `unshare`, privilege escalation or resource magic-link exception. |
 | Numeric self `root`                    | The only resource-link metadata exception: safe `statx` of fixed `root` relative to verified held numeric self, following its kernel link for basic identity/mount metadata only. It creates no descriptor and reads no target bytes. Compare before/after; this does not authorize reopening a held resource through that link.                                                                                                                                                                                 |
 
@@ -404,14 +409,15 @@ actual pins and grant/use invalidation/linearization contract. Live mount and
 namespace tokens remain separate from persistent resource identity. No generic
 host-root, daemon or adapter association is inferred from matching self data.
 
-##### Blocking precode gate: enforceable native return
+##### Blocking precode gate: native return and retained custody
 
-The unchanged budget requirement is an absolute deadline no later than five
-seconds from observation start and no later than the enclosing uninterrupted
+The absolute result-acceptance deadline remains no later than five seconds
+from observation start and no later than the enclosing uninterrupted
 preparation/action deadline. Acquisition, metadata/lookup, reads, decoding and
-owned-handle cleanup belong to that attempt; no per-file reset is permitted.
-A late completion must deny, but deadline checks before/after syscalls alone
-cannot guarantee that control returns by the deadline.
+owned-handle cleanup remain attributable to that attempt; no per-file reset is
+permitted. The owner has accepted investigating retained custody when native
+work outlives this deadline. A late completion must deny. This does not establish
+that the syscall, cleanup or delivery of denial finishes by the deadline.
 
 In reviewed upstream v6.8, `seq_read_iter` acquires a mutex; the mount iterator
 acquires the namespace read semaphore; mount emission calls filesystem/security
@@ -425,26 +431,27 @@ new claim that all possible Linux implementations are infeasible.
 Before source, a separate exact decision must define how bounded caller return,
 held-descriptor/store lifetime, late-result rejection, at-most-one unfinished
 observation, resource retention/quarantine and eventual cleanup work together.
-A worker/process isolation proposal would change custody and trust surfaces;
-it needs independent feasibility review and human acceptance if it changes the
-accepted design. It must preserve a genuine non-root positive case, safe APIs,
-no resource duplication/reopen, no privileged helper and no authority-bearing
-IPC. This contract does not select or authorize such a worker. Weakening the
-deadline, claiming cancellation from polling, or always denying the intended
-positive case cannot open reader source. Until the gate is resolved, all proposed
+The retained-worker investigation has explicit owner acceptance; its exact
+construction and native feasibility still need independent precode review.
+It must preserve a genuine non-root positive case, safe APIs, no resource
+duplication/reopen, no privileged helper and no authority-bearing IPC. It does
+not authorize worker implementation. Extending result acceptance, claiming
+cancellation from polling, or always denying the intended positive case cannot
+open reader source. Until the gate is resolved, all proposed
 operation/storage details above remain unimplemented and precode readiness fails.
 
-##### Proposed containment decision for owner review
+##### Retained-lane containment contract investigation
 
-Recommendation, **not accepted or implemented**: replace the proposed synchronous
-borrowed reader with one private non-root observer lane which owns lifetime-safe
-resource custody and contains unfinished native work. This is a concrete design
-amendment candidate. It does not establish a hard wall-clock guarantee that a
-kernel syscall, thread destructor or process termination finishes in five
-seconds. The original stronger reader gate remains closed unless the owner
-accepts the explicit availability/cleanup semantics below after independent
-review. No API, worker, process, native read or new mutation is added by this
-proposal.
+**Accepted for exact contract/feasibility investigation; not implemented or
+precode-approved.** The [canonical owner decision](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+binds the reviewed proposal at `f1510a0e2241bd61c170c244b2dee6b6112e0845`.
+Investigate replacing the synchronous borrowed reader with one private non-root
+observer lane which owns lifetime-safe resource custody and contains unfinished
+native work. This does not establish a hard wall-clock guarantee that a kernel
+syscall, thread destructor or process termination finishes in five seconds.
+No API, worker, process, native read or new mutation is added by this contract
+investigation. The original stronger hard-completion claim remains unsupported;
+it is no longer an owner-choice blocker for this accepted investigation.
 
 The decision distinguishes three obligations. The observation may be accepted
 only before the original absolute deadline; the coordinator must perform no
@@ -477,7 +484,8 @@ worker startup and acceptance of the custody object belong to the separately
 bounded lane-construction contract; construction itself supplies no observation
 or deadline success. It cannot be hidden outside the overall preparation limit.
 
-This changes the previous input borrow/retention contract and needs acceptance.
+The owner accepted investigating this change to input borrow/retention semantics;
+exact construction and cleanup proof remain precode requirements.
 A `&File`, an SQLite raw descriptor, or an unsafe fabricated `'static` borrow
 cannot be converted into this custody object. Selected SQLite custody remains
 excluded: the real store connection/lifetime, its writable and locked descriptor,
@@ -550,13 +558,130 @@ can establish feasibility. The exact synchronization primitives, construction
 budget, retention/drop ownership, actual blocked-operation fixture and durable
 crash bridge must be reviewed together before source is permitted.
 
-The owner decision is therefore concrete: accept investigation/source-freeze of
-this single-lane containment model with explicit late-denial and retained-cleanup
-semantics, or retain the hard native completion requirement and keep native
-reader source blocked. Acceptance would authorize only the subsequent exact
-contract/review work, not an already-proved implementation, product integration,
-Docker operation, artifact construction or runtime proof. The supplied-byte
-fdinfo prerequisite above is independent of this unaccepted amendment.
+The owner has accepted this single-lane contract investigation with explicit
+late-denial and retained-cleanup semantics. Continue exact contract/review work
+without seeking the same decision again. Acceptance does not establish a proved
+implementation or authorize product integration, Docker operation, artifact
+construction or runtime proof. The supplied-byte fdinfo prerequisite remains
+independent source evidence and cannot close the following construction or
+native-feasibility gaps.
+
+This investigation does not extend the separate preparation, administrative,
+startup/action or cleanup budgets elsewhere in this specification. An unfinished
+observer cannot be reported as successful cleanup under those budgets. Its
+retained uncertainty must deny the enclosing transition and participate in the
+existing quarantine/admission contract; that integration bridge is still open.
+
+##### Construction and feasibility findings after acceptance
+
+This is the next exact investigation boundary, not an implemented worker or a
+precode PASS. The existing safe libraries are Rust 1.97.1, nix 0.31.3 with
+`fs,poll,socket,user` and rustix 1.1.5 with `std,alloc,fs`. Existing readable
+observation borrows `&File`; no native retained-lane owner, queue, result slot or
+quarantine implementation exists. Reusing daemon/server threads or ordinary
+temporary-file tests does not establish these new invariants.
+
+**Lifetime candidate.** Investigate one private process-lifetime retention root
+for a single persistent worker. A request-scoped owner is insufficient: safe
+ordinary destruction can detach its `JoinHandle`, and a scoped-thread owner can
+block while joining. The root would retain the unique join capability and all
+pending custody after every requester/session/temporary controller handle is
+dropped. Rust statics do not run `Drop` at process exit, but that fact alone does
+not prove correct construction, recoverability or clean process termination.
+This is a proposed private retention mechanism, not an accepted process-global
+installation API or a restriction on the final embedding product.
+
+Construction must irreversibly claim the one lane before spawning; a concurrent
+constructor, failed spawn or panic cannot permit another worker. The exact
+recipe must prove the interval between successful native spawn and permanent
+handle retention, including every unwind/early-return path. The worker must not
+begin native observation before retention is established. No resettable lazy
+initializer, forgotten local handle, detached error path or automatic replacement
+can satisfy this proof. An unfinished constructor must remain visibly unavailable
+and cannot hide its time outside the enclosing preparation budget. This proof
+is still open; source is not authorized merely by naming a static owner.
+
+An exact next construction recipe must acquire the empty retention slot before
+spawn, give the worker only the permanent root and a closed start gate, then
+move a returned handle into that already-owned empty slot before opening the
+gate. The post-return transfer must contain no allocation, formatting, callback,
+assertion, replaced value with a destructor or other unwind point. On a reported
+spawn failure, construction becomes terminal; it never resets for a retry.
+This narrows application-owned handoff but does not prove the library path.
+Pinned Rust 1.97.1's Unix thread implementation creates the native thread and
+also has an attribute-destruction guard with an assertion before returning.
+The constructor review must establish the selected platform's valid-attribute
+success/failure assumptions and account for any post-creation unwind before a
+handle reaches application custody. This is a source inspection finding, not
+an observed failure or a claim that valid Linux attribute destruction fails.
+
+**Custody transfer.** Investigate borrowing the owner's already-held
+`Arc<File>` values during admission and taking only bounded shared references
+after the lane claim. The held file objects remain identical; cloning an Arc
+must never call `dup`, `File::try_clone` or reopen a path. Before ownership is
+transferred, the original borrowed owners must keep any rejected temporary
+reference from becoming the last reference on the coordinator. After transfer,
+the request slot or worker owns the custody until accounted cleanup. A timed-out
+caller may disappear. No reference to its stack, cancellation token lifetime or
+SQLite connection may become a hidden retention requirement. The actual API
+and constructor for these private custody objects remain to be frozen.
+
+**Synchronization candidate.** One fixed request slot and one fixed result slot
+are sufficient; a channel backlog is not. Investigate an atomic terminal latch
+independent of the slot lock, with coordinator slot access using a non-waiting
+operation. Native calls, resource destruction and callbacks must run outside
+any slot lock. Lock contention may delay a read attempt but cannot block the
+deadline/stop denial path or become a retry that extends the original budget.
+Poison, worker exit and incomplete cleanup close admission. Exact memory
+ordering, token publication and the acceptance/stop race still need one reviewed
+linearization proof; separate atomics are not themselves that proof.
+
+The intended state transitions are uninitialized -> constructing -> idle ->
+running(token) -> completed(token) -> idle, with the final transition allowed
+only after the coordinator's timely acceptance or timely completed denial and
+worker cleanup accounting. Expiry, panic, disconnected ownership, stop,
+uncertain cleanup or token exhaustion instead enter terminal quarantine. A late
+completion can update cleanup accounting but never return to idle. The token
+must not wrap or be reused. These are private observer states, not installation
+authority or a serialized permit. Worker shutdown/TLS destruction is distinct
+from completion of one job in a persistent thread.
+
+**Resource accounting candidate.** The finite lookup schedule can retain two
+input descriptors, three proc directories (numeric self, fdinfo and ns), two
+namespace descriptors and at most one open record: eight simultaneous descriptor
+identities including the inputs, with no duplication. Open/read/close records
+sequentially; an exact source trace must verify this proposed peak. Requested raw
+record capacity is two 1,048,577-byte mountinfo buffers plus one 4,097-byte fdinfo
+buffer, reused across bracketing reads. The 11-byte self-link buffer and fixed
+path/identity fields are additional. Decoder row/index allocations, Arc/slot
+storage, worker stack, TLS and native thread bookkeeping must be counted
+separately. Existing row/read caps do not prove a total memory ceiling.
+
+An explicit `Builder::stack_size` request would avoid reliance on the ambient
+default, but the platform may allocate more. `Builder::spawn` reports OS creation
+failure; it does not provide bounded construction latency or make all allocation
+fallible. The exact stack request, allocation failure/unwind/abort disposition
+and pinned implementation accounting remain open. Do not advertise fixed total
+memory or a hard return bound before that review.
+
+**Native fixture gap.** No current repository fixture was identified that proves
+a timely genuine procfs/held-ext4 positive and expiry while an actual operation
+from this exact reader is unfinished. Existing readable-file tests and fdinfo/
+mountinfo byte vectors do not provide this evidence. A sleeping closure, channel
+barrier, fake clock, slow destructor or blocked pipe/FIFO can test a containment
+model, but cannot substitute for a genuinely unfinished allowed procfs operation.
+Adding a FIFO to the positive reader path would violate its regular-file/procfs
+origin policy. No host mutation, mount/namespace change, pressure, fault-injection
+facility, unsafe syscall wrapper or helper is authorized to manufacture the
+missing evidence. No impossibility result is claimed; an exact compliant fixture
+and the pinned Linux test environment must be identified and reviewed.
+
+**Precode disposition.** Acceptance resolves the owner-choice gate only.
+Construction/drop ownership, the complete resource/synchronization proof, genuine
+positive/unfinished-operation evidence and the exact journal/store crash bridge
+remain unresolved. Reader/worker implementation is **NOT_READY**. Further work
+must address these named gaps, not seek the same acceptance again or substitute
+another byte parser for the native proof.
 
 ##### Required evidence and later source ownership
 
@@ -837,6 +962,19 @@ continues to own runtime truth; runtime/package/publication remain closed.
   [receiver](https://doc.rust-lang.org/std/sync/mpsc/struct.Receiver.html)
   does not cancel native work or authenticate cleanup. These stable APIs do not
   provide a hard real-time scheduler guarantee.
+- Exact Rust 1.97.1 [join-handle source](https://raw.githubusercontent.com/rust-lang/rust/1.97.1/library/std/src/thread/join_handle.rs)
+  preserves the distinction between main-function completion and thread
+  termination; [thread builder source](https://raw.githubusercontent.com/rust-lang/rust/1.97.1/library/std/src/thread/builder.rs)
+  documents OS spawn errors and a requested stack size that the platform may
+  exceed. The [Rust Reference on statics](https://doc.rust-lang.org/reference/items/static-items.html)
+  states that statics do not run destruction at program exit. These facts inform
+  the retention investigation; they do not prove the proposed constructor,
+  memory ceiling, native fixture or crash recovery.
+- Pinned Rust 1.97.1 [thread lifecycle](https://raw.githubusercontent.com/rust-lang/rust/1.97.1/library/std/src/thread/lifecycle.rs)
+  and [Unix thread creation](https://raw.githubusercontent.com/rust-lang/rust/1.97.1/library/std/src/sys/thread/unix.rs)
+  locate the allocation, native creation and attribute-guard steps for the
+  constructor audit. Successful public API return is later than native thread
+  creation; the investigated custody handoff must cover that interval.
 
 These source-derived recipe choices are LNSAT design inferences. Research does
 not provide owner acceptance of a material design change or runtime evidence.
