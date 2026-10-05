@@ -101,7 +101,13 @@ source completion, and implemented canonical recovery gates product integration;
 neither is required to exist before the private source needed to implement it.
 The [reconciled evidence order](native-source-spec.md#retained-lane-containment-contract-investigation)
 corrects the prior circular wording without waiving either requirement.
-No dependency or worker implementation is approved by that acceptance. Other procfs/cgroup/securityfs readers,
+The owner's 2026-10-05 delegation also closes the instrumented fixture method
+choice; Project Status records the exact proposal and controller selection.
+The [selected fixture contract](native-source-spec.md#selected-instrumented-linux-timeout-fixture)
+specifies control roles/frames, boot-lifetime retention, watchdog and evidence
+ordering. Its independent review is a separate contract subgate, not whole-reader
+precode PASS, kernel/harness source permission or execution authority.
+No dependency or worker implementation is approved by these decisions. Other procfs/cgroup/securityfs readers,
 associated-path ACL classification, socket/SQLite/O_PATH custody and daemon
 association remain separately bounded work. No dependency or feature change is
 preapproved by this gate description.

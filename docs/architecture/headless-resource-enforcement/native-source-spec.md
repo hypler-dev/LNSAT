@@ -821,110 +821,209 @@ write/flush ordering, journal budgets, compatibility and reconciliation evidence
 remain part of the later coherent store/daemon freeze. No journal codec, schema,
 writer, recovery action or selected-store operation is changed here.
 
-##### Proposed instrumented Linux timeout fixture
+##### Selected instrumented Linux timeout fixture
 
-**Proposed evidence method only; not owner-accepted, implementation-ready or
-execution-authorized.** The new decision is whether a deliberately instrumented
-native syscall may supply the retained-worker timeout-containment test row.
-It does not reopen the already accepted retained-worker investigation or change
-the production kernel recipe. The proposal permits no operation in this task.
-
-Prefer one test-only, task/record-bound wait inside the actual mountinfo read
-path over holding the global mount namespace semaphore. The latter can stall
-unrelated mount readers/writers throughout a disposable guest and still needs
-arrival instrumentation. A dedicated gate can establish that this particular
-syscall is unfinished without modifying mount state or claiming a naturally
-occurring stock-kernel stall. This remains a proposed laboratory fault-injection
-method requiring a separate owner decision and exact build/run packet.
+**Selected for contract work under the owner's delegated design decision;
+not implemented, built or execution-authorized.** Project Status records that
+acceptance against the reviewed proposal. The selected method is one test-only,
+task/record-bound wait inside the actual mountinfo read path. It avoids holding
+the global mount namespace semaphore and establishes deliberate native
+unfinished-operation evidence. It does not claim a naturally occurring stall,
+change the production kernel recipe or supply an action permit.
 
 **Identity and hook boundary.** Linux v6.8 shares `m_start` across mount views.
-The proposed test-only open hook therefore tags one `proc_mounts` record only
-when its opener is the enrolled worker task object, its retained namespace is
-the enrolled mount-namespace object, and its `show` function is `show_mountinfo`.
-Enrollment retains kernel object references, not a reusable numeric PID/TID.
-The tag binds one generation to that already-opened record without duplicating
-or reopening the resource or procfs descriptor. Unrelated tasks, namespaces,
-`mounts` and `mountstats` records bypass the facility.
+The test-only open hook tags one `proc_mounts` record only when its opener is
+the enrolled worker task object, its retained namespace is the enrolled mount
+namespace, and its `show` function is `show_mountinfo`. Enrollment retains kernel
+object references, never reusable numeric PID/TID identity. The tag refers to
+one boot-lifetime fixture and is consumed only once. Unrelated tasks, namespaces,
+`mounts`, `mountstats`, later records and subsequent starts on the consumed record
+bypass the facility. Buffer-growth retries are legitimate, not protocol errors.
+No held resource or procfs descriptor is duplicated or reopened for enrollment.
 
-On the first tagged `m_start` entry, consume the one-shot tag, publish arrival
-under the fixture state lock, and wait on a private fixture wait queue before
-the normal `down_read(&namespace_sem)`. The actual procfs read is already in
-kernel with its record's ordinary private seq mutex held. No global namespace
-semaphore or mount write lock is held by this gate. Sequence iteration may
-restart after buffer growth or later reads: subsequent starts on the consumed
-record bypass the gate, as do later records. They are not protocol errors or
-new injection opportunities. Normal mountinfo behavior resumes after release.
+First tagged `m_start` publishes arrival under the fixture lock and uses
+uninterruptible `wait_event` on its private queue before normal
+`down_read(&namespace_sem)`. Signals and spurious wakeups cannot bypass the
+release predicate. The normal per-record
+seq mutex may be held; no global namespace semaphore or mount write lock is held
+by the gate. Only the release predicate permits gate exit; then publish
+`GATE_EXITED` exactly once before the ordinary iterator continues. At entry to
+`mounts_release`, copy the static fixture-root pointer and clear its tag while
+`proc_mounts` is valid, before `path_put`, `put_mnt_ns` and `seq_release_private`.
+Closing a tagged record without gate exit fails immediately. Publish
+`RECORD_CLOSED` through the saved static-root pointer only after those ordinary
+release operations return. Never dereference the freed record or infer completed
+record cleanup from merely entering its release callback.
 
-These boundaries follow the existing Linux v6.8
+These hook boundaries derive from Linux v6.8
 [mountinfo open/emitter selection](https://github.com/torvalds/linux/blob/v6.8/fs/proc_namespace.c#L222-L312),
-[sequence-read retries](https://github.com/torvalds/linux/blob/v6.8/fs/seq_file.c#L160-L278),
-[mount iterator](https://github.com/torvalds/linux/blob/v6.8/fs/namespace.c#L1365-L1406)
-and [wait-queue synchronization](https://github.com/torvalds/linux/blob/v6.8/include/linux/wait.h#L299-L320).
-The hooks described here do not exist in current LNSAT or the unmodified kernel.
+[sequence-read retries](https://github.com/torvalds/linux/blob/v6.8/fs/seq_file.c#L160-L278)
+and [mount iteration](https://github.com/torvalds/linux/blob/v6.8/fs/namespace.c#L1365-L1406).
+They describe a future patch; no hook exists in current LNSAT or unmodified Linux.
 
-**Control and required evidence.** One isolated disposable test guest would
-permit one generation. The fixture controller receives separate enrollment and
-release/status capabilities. The worker enrolls before native dispatch; only the
-controller can arm or release. No general operation, arbitrary PID/path, memory
-address, resource descriptor or native-result payload belongs in that protocol.
-The exact transport, safe harness APIs and capability construction are not yet
-selected; this is a reviewable method decision, not a runnable operator packet.
+**Isolation and role construction.** Use a built-in, test-config-only character
+device at the future guest's fixed `/dev/lnsat_test_procfs_gate`. It is absent from
+the unmodified positive recipe and every product artifact. The later execution
+packet must provide an isolated disposable guest with no selected host storage,
+credentials, Docker endpoint or target access, and preprovision the exact device
+and its restricted non-root test-user access. No device provisioning is authorized
+here. The harness validates character-device identity against that packet through
+safe metadata APIs; a path alone supplies no origin proof.
 
-| Stage             | Required observation and failure rule                                                                                                                                                                                                                                              |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enroll and arm    | Retain exact task/namespace identities and one generation; start an independent test watchdog. Duplicate enrollment/arm or invalid control capability fails the fixture. No source dispatch exists here today.                                                                     |
-| Dispatch and bind | Coordinator fixes the original absolute deadline before dispatch. The test open hook binds only the first matching mountinfo record. Failure to bind or arrive before the deadline cannot pass this test.                                                                          |
-| Arrive and hold   | The first tagged iterator entry publishes `ARRIVED`. A synchronized state snapshot must show the same generation remains unreleased through the timeout observation. All status transitions use one fixture state lock and the kernel wait-queue wakeup contract.                  |
-| Timeout denial    | Require the original deadline reached, no worker result, terminal lane quarantine, retained custody and second-job denial while the kernel gate is still unreleased. A watchdog or premature release invalidates the proof.                                                        |
-| Explicit release  | Only after timeout evidence does the matching controller release the wait. The real mountinfo read continues; its late result cannot reopen admission or become an accepted sample.                                                                                                |
-| Teardown          | Forced release, controller loss, protocol error, watchdog expiry or missing accounting marks the fixture failed. Retained references are not silently freed while the gate/read is live. Guest disposal is containment of a failed test, never successful worker cleanup evidence. |
+The trusted controller thread opens exactly two independent, close-on-exec,
+no-follow file descriptions before dispatch. First open creates the control role
+and retains that exact controller task; its second open creates the enrollment
+role. Other or further opens fail. The controller moves the enrollment `File`
+into the single worker before start, without cloning it. Enrollment binds the
+calling worker task and current mount-namespace object once; it must differ from
+the controller task. Only the exact controller can use control operations; only
+the enrolled worker uses enrollment. There is no role conversion, fork/exec,
+duplication, inherited descriptor, replacement worker, rearm or second generation.
+A same-process trusted harness is assumed; these roles are test routing, not an
+isolation boundary against malicious code in that process.
 
-Arrival, release and watchdog disposition must be recorded consistently under
-the fixture lock; a userspace in-flight flag is insufficient. Watchdog release
-must be independent of the blocked reader and must always fail the experiment.
-Its exact budget, clock domain, controller-loss handling and reference lifetime
-are required in the future packet. A scheduler or kernel stall can still prevent
-a watchdog or teardown from progressing; no hard real-time cleanup is claimed.
+Safe Rust `File`, `Read::read`, `Write::write`, `OpenOptionsExt` and the existing
+safe metadata surface suffice for the planned harness interface. No application
+`unsafe`, ioctl, mmap, async control, new dependency/feature or arbitrary supplied
+PID/path/address/result is needed. The two fixture descriptors are additional
+test-only resources, separately accounted from the candidate reader's eight
+native descriptor identities. Fixture I/O stays on the controller/worker setup
+paths, never the engine coordinator's deadline/stop path. Neither control role
+can publish a successful observation or reopen engine admission.
 
-`GATE_EXITED` means only that the test wait returned into `m_start`.
-`READ_RETURNED`, temporary-handle cleanup, retained-custody accounting and thread
-termination are different observations. A persistent worker normally survives
-job cleanup. None may be inferred from an earlier state or from VM disappearance.
-The instrumented-negative artifact must bind exact test kernel source/patch/
-configuration, harness and candidate revisions, run generation, chronological
-evidence, release reason and each distinct cleanup observation, without exporting
-raw procfs data, paths, descriptors, addresses or credentials.
+**Fixed private wire format.** This protocol is only a future test interface,
+not the LNSAT wire or a serializable capability. Each write is exactly eight
+bytes: ASCII `LPG1`, one opcode, three zero reserved bytes. Opcodes are `1 ENROLL`
+(enrollment role only), `2 ARM`, `3 RELEASE` and `4 ABORT` (control role only).
+No payload, generation supplied by userspace, path, timeout override or native
+result is accepted. `ENROLL` requires both descriptions created and no prior
+attempt; `ARM` requires enrollment and no prior arm; `RELEASE` requires arrival,
+no failure and no prior release. `ABORT` always fails the experiment and requests
+release; a repeated abort cannot change the first release reason.
 
-**Claim and decision boundary.** If implemented as specified, unreleased kernel
-arrival would establish an actual procfs syscall still in progress, with genuine
-native handles and the caller's timeout path running independently. This is a
-stronger containment experiment than a userspace barrier, fake clock, FIFO or
-sleeping closure. It would establish only behavior under deliberate test-kernel
-instrumentation. It would not prove that an unmodified kernel naturally stalls
-there, that native work is cancelable or bounded, or that the selected production
-kernel/build is supported. Ordinary positive evidence must separately use the
-unmodified reviewed Linux recipe; a dormant hook is still an instrumented build.
-Neither test supplies Docker runtime or certification authority.
+A control-role read requires exactly 32 requested bytes and returns one immediate
+snapshot: bytes 0–3 ASCII `LPS1`; bytes 4–7 little-endian fact bitmap; byte 8 first
+release reason; byte 9 first failure reason; bytes 10–31 zero. Bitmap bits 0–9 are
+`ENROLLED`, `ARMED`, `RECORD_BOUND`, `ARRIVED`, `RELEASED`, `GATE_EXITED`,
+`RECORD_CLOSED`, `CONTROL_CLOSED`, `ENROLLMENT_CLOSED`, `FAILED`; all higher bits
+are zero. Facts only accumulate. Release reasons are `0 NONE`, `1 EXPLICIT`,
+`2 WATCHDOG`, `3 ABORT`, `4 ROLE_CLOSE`, `5 PROTOCOL`; first failure reasons are
+`0 NONE`, `1 PROTOCOL`, `2 WATCHDOG`, `3 ABORT`, `4 ROLE_CLOSE`, `5 RECORD_CLOSE`.
+Failure never clears, including after an earlier explicit release. Release reason
+identifies the first wakeup cause and never changes to conceal a later failure.
+A record-close failure releases with reason `PROTOCOL` if not already released.
 
-The owner may accept or reject this narrow evidence-method proposal. Acceptance
-would authorize completing its exact test contract, not kernel/harness source,
-unsafe application code, tool installation, artifact construction, guest/host
-provisioning, native experiments or product integration. Exact transport,
-isolation, safe harness interface, state/record lifetime, watchdog and provenance
-must first pass independent review. Any later construction/execution request
-must name concrete inputs, outputs, isolation, privileges, cleanup and permitted
-commands. Until those decisions are complete, the fixture remains **NOT_READY**
-and the existing no-instrumentation/no-host-action restrictions remain in force.
+The device is nonseekable and has no per-read cursor, partial-message accumulator
+or event queue. Reads return the latest coherent snapshot, not EOF after the first
+read. Encoding occurs from a fixed stack snapshot copied under the state lock;
+user copies happen outside it. A valid write copies and validates its whole fixed frame before its semantic
+transition; a copy fault may only publish sticky protocol failure and release. Wrong length, opcode, reserved byte, role, caller, order,
+or copy fault fails the fixture and releases any waiter; later valid input cannot
+repair it. A kernel write succeeds only with count eight. The harness makes one
+read/write call per transaction: EINTR, short count, error or invalid snapshot
+fails that run, with no `read_exact`/`write_all` retry or command replay. If the
+control role remains usable, it may issue one best-effort ABORT; otherwise the
+watchdog remains containment. A snapshot copy error can follow an earlier transition, and failure handling
+itself changes state; an error never proves that no transition occurred.
 
-**Precode disposition.** The retained-worker owner decision permits contract
-investigation. The ordinary library-return concern is narrowed under explicit
-trusted-target assumptions; application construction/drop ownership, complete
-resource/synchronization rules and an accepted feasible genuine-native test
-method remain unresolved. The private contract must also specify its future
-crash-bridge interface and invariants, without claiming canonical recovery is
-implemented. Reader/worker implementation remains **NOT_READY**. Completed
-native test results gate source completion; the complete durable bridge gates
-integration. Neither may be reported as complete by reviewing this proposal.
+**Synchronization and lifetime.** One `raw_spinlock_t`, always acquired with IRQ-save semantics, serializes
+role creation, enrollment, arm, record binding, arrival, release, close and
+snapshots. Every pointer/task/namespace comparison uses already retained valid
+objects. References needed for enrollment are acquired before publishing it;
+losing/invalid paths drop temporary references outside the state lock. Allocation,
+user copy, sleep, file/ref destruction and timer cancellation never occur while
+holding that lock. The wait predicate reads the release latch with the same lock;
+release sets it under lock then wakes the private queue after unlocking. Register
+and recheck through the standard wait-queue pattern to avoid lost wakeups.
+
+The fixture is one static root per guest boot with one embedded queue and timer.
+The controller-task, worker-task and mount-namespace references remain retained
+until guest disposal. There is no module unload, reset, fixture free, timer free
+or reference reuse during the experiment. A tagged record points to that root;
+record release follows the ordered hook described above. This deliberately retains
+kernel identity bookkeeping, potentially including namespace/mount memory; it
+claims neither a kernel-memory bound nor return to zero kernel references.
+Candidate native descriptor cleanup must be measured separately. Guest disposal
+ends test containment and is never counted as successful candidate cleanup.
+
+Closing either role before clean explicit release, gate exit and record close
+sets failure and releases any waiter. Closing the tagged record before gate exit
+also fails. Normal role closes after those three facts do not fail an otherwise
+valid run. Kernel `release` is final-file cleanup, which can be deferred; a Rust
+`File` drop or process death does not prove that close was observed. The independent
+watchdog covers missing or delayed close notification. These constraints follow
+Linux v6.8 [file cleanup ordering](https://github.com/torvalds/linux/blob/v6.8/fs/file_table.c#L323-L429)
+and [wait-queue rules](https://github.com/torvalds/linux/blob/v6.8/include/linux/wait.h#L299-L320);
+the static-root lifetime is a design choice, not implemented teardown evidence.
+
+**Independent watchdog.** On the sole ARM, capture kernel `CLOCK_MONOTONIC`
+time, checked-add exactly 15 seconds and start an embedded absolute hrtimer
+before acknowledging ARM. Arithmetic/initialization failure fails the fixture.
+No restart, extension, interval or user timeout input exists. The callback may
+only take the IRQ-safe state lock, publish failed watchdog release when still
+unreleased, unlock, wake the queue and return without restarting. It performs no
+allocation, file operation, blocking join or ref destruction. The timer/root
+remain alive; no synchronous cancellation is needed to permit fixture teardown.
+A callback after an earlier release is a no-op. Before any unreleased control or
+hook transition, check the same absolute expiry under the state lock; reaching
+it forces failed watchdog release even if the callback has not yet run. Thus a
+late explicit RELEASE cannot turn a missed watchdog deadline into success.
+Absolute clock/timer selection uses the Linux v6.8
+[hrtimer interface](https://www.kernel.org/doc/html/v6.8/driver-api/basics.html#c.hrtimer_start).
+Scheduler/kernel stalls can still delay callbacks, control calls and cleanup;
+15 seconds is an experiment cutoff, not a hard cleanup guarantee.
+
+**Evidence and harness sequence.** The worker writes ENROLL, then waits behind
+the existing job/start gate without a candidate job or native procfs access.
+The controller observes enrollment and receives successful ARM completion.
+Only then may the coordinator fix the job's original deadline once, as
+`min(start + 5 seconds, enclosing original deadline)`, and release that job gate
+for dispatch. Setup ordering is not timeout evidence. Neither controller nor
+worker shortens, extends or replaces the deadline after dispatch. The controller samples
+the same userspace monotonic domain as that original deadline; it never converts
+an opaque Rust `Instant` to the kernel clock epoch. Use at most 2,000 status reads,
+with at least a 10 ms controller wait between unsuccessful polls, and a separate
+20-second userspace evidence cutoff starting before ARM. Missing progress or
+cutoff always fails; none of these waits or limits bounds a stuck syscall.
+
+| Evidence point           | Required facts                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Arrival before deadline  | A valid same-run snapshot has `ARRIVED`, no `RELEASED`/`GATE_EXITED`/`FAILED`; the userspace clock sampled after that read is strictly before the original deadline. Record the original attempt token and deadline without changing either.                                                                                                                    |
+| Timeout while unfinished | After the original deadline and coordinator terminal denial, another coherent snapshot still has `ARRIVED`, no `RELEASED`/`GATE_EXITED`/`FAILED`. Require absent accepted result, retained worker custody and second-job rejection. Monotonic no-reset facts establish that release did not occur between snapshots.                                            |
+| Explicit release         | Only after the preceding evidence, send one RELEASE; require reason `EXPLICIT` and no failure. A concurrent watchdog or premature/ambiguous release invalidates the run.                                                                                                                                                                                        |
+| Late completion          | Independently observe `GATE_EXITED`, `READ_RETURNED`, `RECORD_CLOSED`, temporary-handle cleanup and `WORKER_CLEANUP_ACCOUNTED`; reject the late result and retain terminal lane closure. A persistent worker need not exit. If shutdown is tested, `THREAD_EXITED` and handle accounting need separate proof.                                                   |
+| Final accounting         | Capture a final no-failure snapshot after record close and worker cleanup, then close enrollment and observe `ENROLLMENT_CLOSED` through the surviving control role before closing control. Controller close has no remaining status reader; do not claim an observed `CONTROL_CLOSED`. A close error, missing observation or failed watchdog invalidates PASS. |
+
+Kernel arrival means only entry to the injected wait. Gate exit, read return,
+handle cleanup, worker accounting and thread termination are distinct events.
+No userspace in-flight flag or VM disappearance substitutes for them. Retain a
+bounded redacted chronological record of these facts, exact original deadline,
+release/failure reasons and identity bindings to the reviewed kernel source/patch/
+configuration, harness, candidate revisions and unique disposable-guest run.
+A fixture has only one generation per boot; reject mixed/reused run evidence.
+Export no raw procfs payload, path, descriptor, address or credential. Exact
+artifact hashes and permitted construction/execution commands belong to the
+later concrete packet; none is invented or captured here.
+
+**Claim and remaining gates.** This contract selects transport, roles, lifetime,
+watchdog and failure semantics for instrumented-negative containment evidence.
+The actual syscall uses genuine native handles and returns late into cleanup;
+no successful observation is fabricated. This method proves no naturally
+occurring stock-kernel stall, cancellation bound, selected-host support or
+certification. Ordinary positives separately require the unmodified reviewed
+Linux recipe; a dormant hook is still an instrumented build. No method approval
+supplies Docker runtime proof.
+
+Fresh independent contract review must pass before any kernel/harness source
+packet is opened. That later packet must name exact files/APIs, configuration,
+privileges, artifact provenance, controls, commands and cleanup. Source, build,
+guest provisioning and execution remain separate unopened actions here. The
+reader's application construction/drop ownership, complete slot/resource/
+synchronization rules, positive recipe and crash-bridge interface still need a
+whole-reader precode PASS. Completed native results gate candidate source
+completion; canonical recovery and the full native freeze gate integration.
+Reader/worker implementation remains **NOT_READY**. No further owner method-choice
+question is required within the delegated contract scope.
 
 ##### Required evidence and later source ownership
 

@@ -251,6 +251,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0030/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0031",
+      "subject_id": "headless-native-instrumented-fixture-contract",
+      "review_subject_ids": ["headless-native-instrumented-fixture-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0031/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

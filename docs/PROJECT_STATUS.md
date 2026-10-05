@@ -1570,16 +1570,35 @@ canonical recovery and the complete freeze before product integration. Both
 requirements remain mandatory at their proper gates. No new source permission
 or completed evidence is inferred from correcting this order.
 
-Pinned Rust construction research also narrows the alleged normal
-native-create/handle-return gap: supported-target library assumptions permit
-the ordinary return path, while application retention/startup, exact slots/
-synchronization, resources and cleanup still require precode review. The [proposed instrumented timeout method](architecture/headless-resource-enforcement/native-source-spec.md#proposed-instrumented-linux-timeout-fixture)
-uses one task/record-bound kernel wait in a real mountinfo read. It would supply
-only deliberate-instrumentation containment evidence, with separate ordinary
-positive tests on the unmodified recipe. The evidence method is proposed for a
-new owner decision; transport, watchdog, isolation and lifetime remain unclosed.
-It is not accepted, constructed or executed, and acceptance would permit further
-exact contract work only. Reader precode remains **NOT_READY**.
+Pinned Rust construction research narrows the alleged normal native-create/
+handle-return gap under the specified supported-target library assumptions.
+Application retention/startup, exact slots/synchronization, resources and cleanup
+still require whole-reader precode review.
+
+On **2026-10-05**, the human owner delegated resolving the remaining issues and
+choosing the best method to the controller, in response to the explicit
+contract-only method decision. The reviewed proposal is source
+`e9fe2ce04a02546fae937f303e0ab74b80d030cc`, attested by direct child
+`95cc0708ed869a10997affe501069d337d595737`. Exercising that delegation, the
+controller selects the task/record-bound mountinfo kernel wait for
+**instrumented-negative timeout-containment evidence only**. This closes the
+method-choice question and authorizes remaining design decisions within contract
+work. Do not ask for the same method approval again. It does not authorize
+kernel/harness implementation, construction, provisioning or execution.
+
+The [selected fixture contract](architecture/headless-resource-enforcement/native-source-spec.md#selected-instrumented-linux-timeout-fixture)
+now specifies two task-bound control roles, safe fixed-frame read/write transport,
+one generation per guest boot, monotonic state and irreversible failure,
+boot-lifetime identity retention, an independent 15-second kernel watchdog and
+exact deadline/late-cleanup observations. The test kernel retains identity
+bookkeeping until disposal; that is separate from candidate descriptor cleanup.
+Ordinary positives still need the unmodified reviewed Linux recipe. No kernel,
+harness or reader source was added, and no native experiment ran. The contract
+is subject to independent documentation review; whole-reader precode remains
+**NOT_READY** pending application construction/ownership, synchronization/resource,
+positive-recipe and crash-bridge interface closure. Actual native results remain
+a candidate-completion gate, and full recovery/native freeze remain integration
+gates.
 
 Full native/source/pin/positive-feasibility freeze,
 separate artifact capture, product integration and Phase 11 actual runtime remain
