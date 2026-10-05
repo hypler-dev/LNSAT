@@ -6,6 +6,8 @@ backlog.
 ## Current Surfaces
 
 - `docs/sdk/README.md`: navigation and audience guide;
+- `docs/sdk/developer-pack.md`: application/agent integration entry point and
+  accepted feedback/API/SDK delivery requirements, linked to Project Status;
 - `docs/sdk/typescript-reference.md`: exported TypeScript contracts;
 - `docs/sdk/mcp.md`: MCP inspection adapter;
 - `docs/sdk/agent.md`: agent context and policy profiles;

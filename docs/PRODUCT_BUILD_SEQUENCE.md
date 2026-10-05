@@ -363,6 +363,18 @@ The embedding lifecycle and reference daemon must preserve the same authority
 boundary. API failure or disconnection cannot imply success, non-execution or
 permission to retry. Graphical management is not required for this milestone.
 
+The accepted [developer integration requirement](PROJECT_STATUS.md#v1-developer-integration-and-agent-development-pack)
+also belongs to this milestone. Maintain engine-owned API/SDK reference,
+versioned schemas, exact error and feedback semantics, and the
+[developer and agent integration pack](sdk/developer-pack.md) alongside source.
+Each implemented interface needs working examples, compatibility and negative
+conformance, safe retry/reconciliation guidance, and clear maturity labels.
+Rangoon and other consumers use the same contracts; client libraries cannot
+invent authority, retry consequences automatically, hide unknown outcomes or
+turn diagnostic declarations into active permissions. Freeze the selected
+presentation, transport, identity and protected readback contracts before
+mutation-management integration. Package publication retains its separate gate.
+
 ### 4. Prove the integrated workflow
 
 Connect the completed setup/control/enforcement lifecycle to the existing

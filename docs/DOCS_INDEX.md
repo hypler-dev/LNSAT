@@ -231,6 +231,10 @@ human authority, inspecting private filesystem identities, or accessing Docker.
 ## Integrators and SDK Authors
 
 - [SDK overview](sdk/README.md)
+- [Developer and agent integration pack](sdk/developer-pack.md)
+  — current source references, agent integration brief and accepted V1
+  error/feedback, SDK/API and conformance requirements; incomplete runtime/SDK
+  behavior remains explicit.
 - [TypeScript source reference](sdk/typescript-reference.md)
 - [MCP adapter guide](sdk/mcp.md)
 - [Agent contract guide](sdk/agent.md)

@@ -6,6 +6,14 @@ enable node-agent runtime, policy activation, auth provider wiring, workflow
 execution, external calls, package mutation, lockfile refresh, or live
 operation.
 
+Application and agent builders should start with the
+[developer and agent integration pack](developer-pack.md) for current API/schema
+references and required feedback, retry and recovery behavior. The roles,
+control levels and capability names below belong to source-only preview
+manifests. They are not the live local role-to-permission map and cannot
+activate policy or substitute for authenticated Gateway authority. The current
+local map is documented in [authentication posture](../architecture/AUTH_AND_INTEGRATION_POSTURE.md#authorization-levels).
+
 ## Source Basis
 
 - `packages/packets/src/startup-wizard-policy-profile.ts`

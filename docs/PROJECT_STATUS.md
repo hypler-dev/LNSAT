@@ -2065,6 +2065,48 @@ referenced runtime profile but opens no database, listener, process, or action
 authority. No range or fallback exists. Headless configuration/control and
 Phase 11 real Docker proof remain pending.
 
+### V1 developer integration and agent development pack
+
+Canonical work record: this subsection. On **2026-10-05**, the human owner
+required clear feedback and error loops between LNSAT and consuming applications,
+SDK/API documentation, an agent development pack, and developer documentation
+maintained in LNSAT. This is accepted V1 product direction for the independent
+engine; Rangoon consumes the same contracts as other applications. It selects
+no identity provider, management transport, approval renderer, new wire schema,
+SDK package, publication or runtime action.
+
+The [developer and agent integration pack](sdk/developer-pack.md) now provides
+the source documentation entry point, existing contract/schema/fixture links,
+an agent-facing integration brief and required feedback/recovery behavior.
+Existing SDK guides and unpublished workspace contracts remain reusable source
+foundations. The current `lnsat.error_envelope.v1_0` covers six deterministic
+contract families; its stable code/path and public-safe message do not provide
+a universal runtime error, retry or outcome contract. Complete typed client
+coverage, protected management readback, mutation lifecycle feedback, executable
+integration tutorials and selected-artifact developer conformance remain missing.
+Documentation scaffolding is not a completed SDK or a V1 completion claim.
+
+V1 integration acceptance must cover version/capability discovery, exact
+authentication and authority boundaries, stable machine-readable errors with
+safe actionable feedback, declared versus active/enforced configuration,
+approval/operation/cleanup states, freshness and explicit unknown outcomes.
+Retry/idempotency, reconnect/reconciliation, stop/revocation and compatibility
+must be documented and tested per operation. A transport error never establishes
+non-execution; an error message never grants retry or permission. Readback and
+explanations retain authorization and redaction. The agent pack must include
+versioned machine-readable contracts, bounded tool/adapter mappings, examples,
+negative conformance cases and development guidance that cannot self-authorize.
+
+Architecture scrutiny identified integration blockers before Rangoon mutation
+management: an explicitly trusted complete approval presentation path and a
+selected authenticated client transport/origin. Identity linking/revocation,
+authoritative management-state projection, exact policy-change transactions,
+budget scope/enforcement and protected feedback still require their existing
+source-contract gates. These are unresolved design/implementation requirements,
+not demonstrated new vulnerabilities in deployed code. Reuse the existing
+headless, human-assurance and monitoring authorities; no competing permission
+engine, status ledger or Rangoon-specific bypass is introduced.
+
 ### V1 command and contract completion gates
 
 Canonical implementation and completion record: this subsection, reconciled on
@@ -2085,10 +2127,10 @@ order the remaining enforcement, protected setup/control, headless integration,
 actual workflow proof, RC and selected-package work. They reuse these command
 gates and existing source/test foundations; they establish no new completion,
 mutation, runtime or release authority. LNSAT remains neutral and standalone.
-The genuine reader remains NOT_READY. The owner's explicit acceptance of
-retained-worker contract investigation is recorded in the
-[reader checkpoint](#stage-a-self-process-procfs-reader-contract); exact
-feasibility/precode proof remains required before implementation.
+The genuine reader implementation and actual native evidence remain missing.
+The [reader checkpoint](#stage-a-self-process-procfs-reader-contract) records
+the exact private-candidate precode PASS; candidate completion and the complete
+native/integration freeze remain separate gates.
 
 The evidence baseline is reviewed source/attestation head
 `002f608e2174ee73d9b79af70a39c5fe9cc1bc81`, tree
