@@ -15,11 +15,12 @@ persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
 Latest bounded engine source prerequisite: the
-[private fdinfo byte candidate](#stage-a-private-fdinfo-byte-candidate),
-following the reviewed Linux journal-custody, readable-object ACL and mountinfo
-byte candidates.
-Its source and proof limits are distinct from unfinished V1 integration,
-enterprise assurance and actual runtime gates.
+[private context/challenge codec](#stage-a-private-context-and-challenge-codec),
+following the private journal, ACL, mountinfo, fdinfo, reader and profile candidates.
+Its exact private contract passed precode review; source validation and review
+remain separate gates. These prerequisites remain distinct
+from unfinished V1 integration, native evidence, enterprise assurance and
+actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
@@ -1689,6 +1690,44 @@ uses standard engine contracts as an optional consumer. This private parser
 does not complete those commands or open initialization, registration, activation,
 startup frames or runtime authority. Full freeze, artifact capture, integration,
 actual native/runtime evidence and packaging retain their separate gates.
+
+### Stage-A private context and challenge codec
+
+Canonical work record: this subsection under the human-accepted Stage-A source
+order. The [private context/challenge contract](architecture/headless-resource-enforcement/startup-wire-source-spec.md#stage-a-private-context-and-challenge-codec-contract)
+bounds two closed inert decoders for action and preparation challenge frames.
+It freezes exact context syntax, ordered commitments, canonical LF framing,
+finite represented ceilings, private input-free errors and the source/test
+matrix. Fresh independent OpenAI Terra xhigh precode review passed with no
+P1/P2/P3 findings and independently reproduced both golden digests and exact
+frame sizes. The named private module and tests now implement both decoders.
+Closed typed objects, exact frame-family dispatch, ordered commitments and
+canonical LF frames reject ambiguous shape or representation. Outputs retain
+only private unverified context/limits, canonical bytes and their digest, with
+zeroizing retained strings and buffers. Existing product callers are unchanged.
+
+Fifteen focused host test groups pass, covering both published goldens, all
+18 mutable context fields, fixed attempt sequence, every nested object's closed
+shape, framing/control/size and canonical denials, integer widths and limits,
+identity grammar, message families and private error precedence. A fixed-recipe
+preparation vector remains syntax-only. Full `npm run check` passes: 1,519
+TypeScript tests, 139 contract comparisons, 264 macOS store tests with two
+ignored and 178 daemon tests. Strict host Clippy, formatting and metadata checks
+pass. Semgrep has zero errors and one unchanged test-helper INFO; both new codec
+files have zero findings. Scoped redacted Gitleaks reports zero findings.
+Independent source review found a reporting mismatch, corrected to the actual
+15 focused tests, and no source or test-matrix defect. Exact source/direct-child
+PHR-0036 remains a separate gate, pending at this source checkpoint. Source
+evidence supplies no native or runtime result.
+
+A decoded frame remains an unverified declaration. Self-consistent bytes cannot
+prove randomness, freshness, consumed-attempt custody, current daemon identity,
+profile narrowing, elapsed time, adequate output budget or permission. Existing
+small-budget golden frames remain syntax fixtures. Actual preparation requires
+the separately fixed recipe budget. Native observation, observation/release/
+result messages, product integration, CLI setup and full freeze remain open.
+LNSAT remains the standalone engine; Rangoon is an optional standard-contract
+consumer. Phase 11 retains sole runtime-proof authority.
 
 ### Stage-A private fdinfo byte candidate
 

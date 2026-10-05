@@ -138,13 +138,14 @@ source; focused and full source validation plus exact attestations follow.
 
 ## Complete native freeze and later gates
 
-The next independent Stage-A prerequisite is the
+The preceding independent Stage-A prerequisite is the
 [private schema-3 profile codec](startup-wire-source-spec.md#stage-a-private-schema-3-profile-codec-contract).
 Its exact profile-only contract passed fresh independent precode review after
 the mandatory byte/entrypoint denial matrix was completed. The named new private
 module/tests and declaration now contain the private candidate; independent source
-review and full host validation passed, as recorded in Project Status. Exact
-source/direct-child attestation remains a distinct gate. It neither changes schema-1/2 callers nor supplies
+review and full host validation passed, as recorded in Project Status. Its exact
+source/direct-child chain is attested by PHR-0035; that source evidence supplies
+no runtime authority. It neither changes schema-1/2 callers nor supplies
 startup frames, native evidence or authority.
 Project Status owns acceptance and implementation evidence. Actual Linux reader
 completion remains open while this independent representation work proceeds.
@@ -171,6 +172,18 @@ no general OS, package, enterprise or certification claim. Docker observation,
 host/ACL changes, target pressure, credential intake, migration/initializer
 activation, merge/main mutation, supported-artifact construction, release,
 publication, deployment, production and tool installation remain closed.
+
+### Private context and challenge prerequisite
+
+After the profile codec, the [exact private context/challenge contract](startup-wire-source-spec.md#stage-a-private-context-and-challenge-codec-contract)
+names two inert decoders, their source/test ownership, fixed errors, canonical
+framing and the complete commitment/denial matrix. Fresh independent precode
+review passed. The named private source and focused host tests are implemented;
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-context-and-challenge-codec)
+owns its disposition. Decoder success establishes only representation and
+self-consistency. Trusted challenge generation, replay binding, profile and
+remaining-budget enforcement, native facts, release, full freeze and product
+integration retain their separate gates.
 
 ## Validators
 

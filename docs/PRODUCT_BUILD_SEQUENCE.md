@@ -423,11 +423,13 @@ reopen the already accepted owner decision. Actual native results and the comple
 recovery/native freeze remain distinct later gates.
 In parallel, retain exact existing
 source/test mappings for the protected workflow and prepare only independently
-reviewed inert prerequisites allowed by Stage A. The next profile-only codec
-contract has passed its independent precode gate; its bounded private source,
-validation and exact review proceed under the
-[canonical status record](PROJECT_STATUS.md#stage-a-private-schema-3-profile-codec).
-It does not open CLI setup or replace the native evidence. Do not restart completed
+reviewed inert prerequisites allowed by Stage A. The private profile codec now
+has source validation and exact independent review. The next bounded contract
+and private source cover action/preparation context and challenge decoding under the
+[canonical status record](PROJECT_STATUS.md#stage-a-private-context-and-challenge-codec).
+Independent precode/source review and focused/full host validation passed;
+exact source/direct-child attestation remains a distinct gate. Neither codec opens CLI setup or replaces
+native evidence. Do not restart completed
 prerequisites, implement fake success or treat an always-deny implementation as
 the required positive case. Full freeze, integration, real runtime, RC and
 package proof each remain observable exits. Counting source packets or passing

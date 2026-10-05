@@ -389,3 +389,125 @@ exact-source/direct-child attestations. Rollback is an inert-source revert, with
 no runtime cleanup or data migration. Actual Linux reader evidence, complete
 native/wire/daemon/store/pin freeze, artifact capture, integration and activation
 remain separate unsatisfied gates.
+
+## Stage-A private context and challenge codec contract
+
+This independently reviewed prerequisite follows the accepted
+[Stage-A source order](source-freeze-staging-decision.md). The canonical work
+record is [Project Status](../../PROJECT_STATUS.md#stage-a-private-context-and-challenge-codec).
+It implements representation and self-consistency only. It cannot authenticate
+host input, challenge freshness, daemon association, a consumed attempt, profile
+narrowing, clock continuity, native observations or execution authority.
+
+### Exact ownership and interface
+
+Owned source is new private `crates/lnsatd/src/headless_startup_challenge.rs`,
+`headless_startup_challenge_tests.rs`, and one private module declaration in
+`lib.rs`. Existing profile, adapter process, supervisor, native, journal and
+store code, dependencies, features, CLI and locked Phase 11 source stay intact.
+The controller owns this section, its Status record, existing plan/build links
+and generated review metadata. No registration or product caller is introduced.
+
+Two private entrypoints decode a borrowed complete byte frame:
+`decode_action_challenge` and `decode_preparation_challenge`. Each returns its
+own sealed unverified declaration, retaining its typed context and represented
+limits privately, canonical frame bytes and recomputed context digest. The
+outputs have no public constructor, `Debug`, `Clone`, serialization
+or authority conversion. Internal closed structs may derive Serde for decoding
+and canonical encoding. Retained input-derived strings, canonical frames and
+temporary commitment buffers use the existing zeroizing owner. No I/O, clock,
+random source, thread, observer, session, store or process operation is performed.
+No generic message dispatcher, observation, release, result or action parser is
+part of this slice.
+
+### Exact grammar and ordered denial
+
+Each entrypoint accepts only its exact contract/version/schema/message tuple
+from the contexts and payload table above. There is no fallback or negotiation.
+Action accepts only `startup_challenge`; preparation only `probe_challenge`.
+Top-level, context, payload and limits must all be closed named JSON objects.
+No omitted, unknown, duplicate (including escaped duplicate), positional-array,
+null or wrong-type field is accepted at any level. There are no nullable fields.
+The action and preparation contexts use precisely their listed fields; in
+particular preparation has no installation, generation, epoch or action identity.
+
+Apply these deterministic private denial stages in order:
+
+1. `input_too_large`: reject more than 65,536 bytes before parsing or copying.
+2. `framing`: require one final LF, with no earlier literal LF or CR anywhere.
+3. `json_shape`: decode the entire remaining UTF-8 JSON value into closed typed
+   structs; unknown, duplicate, missing, null, type and trailing-value errors deny.
+4. `family`: require the exact entrypoint's contract/version/schema/message tuple.
+5. `context`: check all context identity, digest and integer predicates below,
+   including the payload `startup_digest` syntax.
+6. `limits`: check the represented finite ceilings below.
+7. `binding`: recompute the domain-separated ordered context digest and require
+   exact equality with the payload's syntactically valid `startup_digest`.
+8. `canonical`: require the complete input to equal typed compact ASCII-key-sorted
+   re-encoding plus its one LF. Serialization failure uses this same code.
+
+Codes use the fixed `headless_challenge.` prefix and carry no input, field value,
+path, raw error text or suggested retry. A noncanonical positional array can be
+rejected during shape decoding or final canonical comparison; it never returns
+an output. Earlier stages otherwise determine precedence. JSON whitespace,
+reordered keys, escaped alternate spellings, BOM, exponent/fraction/signed
+numbers and trailing bytes cannot equal the required canonical frame.
+
+`installation_id` must be a 36-byte lowercase hyphenated UUID with version nibble
+`4` and RFC variant nibble `8`, `9`, `a` or `b`. `generation` and `authority_epoch`
+are positive u64; `attempt_sequence` is u32 exactly 1. Action operation and
+authorization IDs retain their exact `opn_`/`xau_` plus 64 lowercase hex syntax.
+`preparation_id`, `container_id`, `channel_id` and `challenge` are each exactly
+64 lowercase hex characters. All three context digests and `startup_digest`
+are exactly `sha256:` plus 64 lowercase hex characters. Parsing these strings
+proves no randomness or current object association. A preparation container
+exists after private creation and before installation commit; only later private
+daemon inspection may supply its trusted identity.
+
+The six represented limits use u64 for memory/stdout/stderr and u32 for
+pids/CPU/wall-clock. Their syntax bounds are `memory_bytes=1..536870912`,
+`pids=1..64`, `cpu_millis=1..1000`, `wall_clock_millis=1..30000`,
+`stdout_bytes=1..1048576` and `stderr_bytes=0`, inclusive. These maxima follow
+the schema-3 profile ceilings; a narrowed action value may be smaller than the
+profile's creation minimum. They do not compare against a selected profile or
+establish enough budget to start. The same finite representation is used for
+preparation; actual preparation must separately equal the immutable recipe's
+10,000 ms, 67,108,864 memory bytes, 16 tasks, 250 millicores, 65,536 stdout bytes
+and zero stderr, and fit its selected profile. The existing one-byte-stdout
+vectors remain accepted syntax fixtures, never admission positives. Shared
+remaining time, startup/output overhead and fixed preparation feasibility remain
+mandatory integration checks; decoding supplies no usable budget or permission.
+
+A changed context with the old digest denies. A fully recomputed self-consistent
+context can decode as a new unverified declaration. Detecting replay, stale
+nonces or substitution relative to trusted host state requires that future state
+and is not claimed here. Limits are outside the context digest by the existing
+wire contract; changing valid limits preserves that digest. Later authenticated
+channel/profile/budget checks must bind their actual values before use.
+
+### Required source evidence
+
+Independently reproduce both published context digests and exact 1,189/984-byte
+LF-inclusive challenge vectors. Add a preparation syntax vector with the fixed
+recipe limits; it still proves no runnable positive. Verify encode/decode byte
+identity and absence of authority conversion. For every action and preparation
+context field, change one valid value, prove old-digest denial and a changed
+recomputed commitment; fixed attempt sequence is instead covered by denial.
+Check limits changes leave the context digest unchanged and remain unverified.
+
+Exercise both entrypoints against all other contract/schema/version/message
+combinations, cross-family frames, all other message types, every nested object's
+missing/unknown/duplicate/escaped-duplicate/null/wrong-type/positional-array
+cases, invalid UTF-8, every truncation and forbidden raw control byte, CRLF,
+extra LF, no LF, trailing JSON, reordered keys and escape/number alternatives.
+Test the inclusive 65,536-byte preparse cap and 65,537-byte denial without calling
+a padded invalid frame a positive. Cover exact integer widths/range endpoints,
+overflow, zero/sign/fraction/exponent forms, UUID version/variant/case/separators,
+prefix/hex lengths, uppercase/nonhex/Unicode identities and digest substitution.
+Finite fixed errors must never reflect a supplied marker.
+
+Run focused pinned host tests, strict host Clippy/formatting, `npm run check`,
+docs/public/inventory/history/diff checks and installed scoped source audits.
+Fresh independent precode and source review plus exact source/direct-child
+attestations are separate gates. No host check closes native Linux evidence,
+complete source/pin freeze, actual activation/runtime, SDK or package readiness.
