@@ -6,7 +6,7 @@ Status: accepted
 Authority: [HCFG-6 intent](intent.md); current acceptance/implementation belongs to [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
-Last updated: 2026-10-04
+Last updated: 2026-10-05
 
 ## Scope and protected lanes
 
@@ -76,15 +76,15 @@ locked Phase 11 packet are preserved.
 | Bounded execution             | Specify safe pinned APIs, fixed/fallible storage, interruption/short-read policy and an enforceable monotonic deadline within the existing uninterrupted preparation/action budget. A byte cap alone does not prove bounded return; no unbounded retry.                                                                                                               |
 | Current association and drift | Specify before/after descriptor, filesystem, process/root/namespace and mount-row checks, the exact fdinfo-to-row association and refusal of missing, ambiguous, replaced or changing observations. Persistent resource identity remains distinct from live mount/namespace tokens.                                                                                   |
 | Output and denial             | Define a private non-serializable observation with fixed data-free errors and no public successful constructor, live observer permit, ACL/idmapping classification or action authority. Unsupported platforms and unavailable origin/association deny.                                                                                                                |
-| Source evidence               | Require actual disposable Linux self-process/held-object positives, malformed/limit/EOF negatives and deterministic drift/lifetime tests. Separate synthetic parser vectors from genuine-reader fixtures; no Docker, selected host, permission mutation, target action or pressure proof.                                                                             |
+| Source evidence               | Freeze feasible genuine Linux positive, unfinished-operation and denial recipes before source; require actual results before candidate completion. Test construction/execution needs its own permitted scope. No synthetic success, Docker, selected host, permission mutation, target action or pressure proof.                                                      |
 | Review and rollback           | Fresh independent read-only precode review must cover every native operation and feasible non-root positive path before implementation. Resulting source needs focused pinned tests, `npm run check`, public/inventory/history checks and separate exact-source/direct-child reviews. Rollback is a reviewed inert-source revert, not journal repair or live cleanup. |
 
 The proposal names same-process held-handle custody, exact confined paths,
 finite namespace/root-link exceptions, four-line fdinfo policy, EOF/sentinel
 reads, storage bounds and bracketing comparisons. Its readiness is
 **NOT_READY**: the accepted containment investigation has not closed exact
-construction/lifetime, synchronization/resource, native-fixture and crash-bridge
-proof. The reviewed synchronous recipe still provides no hard native return
+construction/lifetime, synchronization/resource, native-fixture method and
+crash-bridge interface/invariants. The reviewed synchronous recipe still provides no hard native return
 deadline; bounded bytes, readiness polling and checks around a syscall do not
 change that fact. The concrete
 [retained-lane investigation](native-source-spec.md#retained-lane-containment-contract-investigation)
@@ -94,8 +94,13 @@ contract/feasibility investigation on 2026-10-04; Project Status owns the
 [decision and reader checkpoint](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract).
 Do not ask for that same decision again. The accepted limitation is no hard
 native-completion or completed-cleanup guarantee. Construction/drop ownership,
-exact resources/synchronization, a genuine unfinished-operation fixture and the
-crash bridge still require fresh feasibility/precode review before source.
+exact resources/synchronization, a feasible genuine unfinished-operation test
+method and crash-bridge interface/invariants still require fresh precode review.
+Under the accepted Stage-A order, completed actual native tests gate candidate
+source completion, and implemented canonical recovery gates product integration;
+neither is required to exist before the private source needed to implement it.
+The [reconciled evidence order](native-source-spec.md#retained-lane-containment-contract-investigation)
+corrects the prior circular wording without waiving either requirement.
 No dependency or worker implementation is approved by that acceptance. Other procfs/cgroup/securityfs readers,
 associated-path ACL classification, socket/SQLite/O_PATH custody and daemon
 association remain separately bounded work. No dependency or feature change is

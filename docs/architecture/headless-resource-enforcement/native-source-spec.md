@@ -547,16 +547,30 @@ closed-lane check must eventually participate in every affected admission and
 release path under the accepted serialization contract; a private worker test
 alone cannot prove that integration.
 
-Precode evidence must include timely genuine non-root positive observations,
-expiry before dispatch, expiry while an actual native operation is unfinished,
-late result, completion-at-deadline, panic/disconnect, retained ownership, no
-second job, destructor/join delay, shutdown and restart/quarantine. Deterministic
-model tests may prove state transitions but cannot substitute for native
-unfinished-operation evidence. Host mutation/negative kernel probes remain
-closed in this task. No always-denying implementation or synthetic native success
-can establish feasibility. The exact synchronization primitives, construction
-budget, retention/drop ownership, actual blocked-operation fixture and durable
-crash bridge must be reviewed together before source is permitted.
+**Evidence ordering under accepted Stage A.** Precode review specifies an exact
+feasible recipe for timely genuine non-root positive observations, expiry before
+dispatch, expiry during an unfinished native operation, late delivery,
+completion-at-deadline, panic/disconnect, retained ownership, no second job,
+destructor/join delay, shutdown and restart/quarantine. It reviews the complete
+private ownership/synchronization/resource contract and the interface/invariants
+required of the future crash bridge. It does not require results from a worker
+that has not yet been implemented or completion of canonical store integration.
+
+| Gate                                    | Required evidence and scope                                                                                                                                                                                                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Private reader precode                  | Exact safe operations, permanent custody and construction, synchronization/cleanup, requested resource limits, denial/positive cases, feasible test methods, and explicit integration dependencies. Fresh independent PASS is required before assigning source ownership.          |
+| Private candidate source completion     | Actual implementation, genuine disposable Linux positives and unfinished-native-operation/late-cleanup evidence, focused/full source checks and fresh exact source/direct-child review. Unexecuted or unavailable tests remain missing; the candidate cannot be declared complete. |
+| Complete freeze and product integration | Implemented canonical journal/store schema and crash recovery, installation-wide admission/stop/revocation, whole-boundary review, exact artifact pins/provenance and feasible positive recipe under accepted Stage C. A private module PASS cannot satisfy this gate.             |
+| Test construction/execution and runtime | Each experiment must have its own permitted environment and exact authorization. Stage-A self-process fixture permission does not authorize kernel instrumentation, host changes, Docker, package/image construction or runtime proof.                                             |
+
+This corrects an ordering conflict with the already accepted
+[source-order amendment](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source):
+prior wording demanded completed native tests and the full durable bridge before
+the private source needed to produce them. No evidence requirement is waived.
+Deterministic models remain insufficient for native unfinished-operation proof;
+synthetic success or an always-denying implementation cannot establish feasibility.
+Host mutation/negative kernel probes remain closed. Reader precode is still
+**NOT_READY** while exact module and test-method decisions remain unresolved.
 
 The owner has accepted this single-lane contract investigation with explicit
 late-denial and retained-cleanup semantics. Continue exact contract/review work
@@ -607,13 +621,32 @@ move a returned handle into that already-owned empty slot before opening the
 gate. The post-return transfer must contain no allocation, formatting, callback,
 assertion, replaced value with a destructor or other unwind point. On a reported
 spawn failure, construction becomes terminal; it never resets for a retry.
-This narrows application-owned handoff but does not prove the library path.
-Pinned Rust 1.97.1's Unix thread implementation creates the native thread and
-also has an attribute-destruction guard with an assertion before returning.
-The constructor review must establish the selected platform's valid-attribute
-success/failure assumptions and account for any post-creation unwind before a
-handle reaches application custody. This is a source inspection finding, not
-an observed failure or a claim that valid Linux attribute destruction fails.
+The library-return question is narrower than the application handoff.
+Pinned Rust 1.97.1 performs parent spawn hooks, Thread/Arc/closure/ThreadInit
+allocation and pthread-attribute setup before native creation. After successful
+creation, its Unix backend destroys the valid attribute object and moves the
+native/thread/packet values into the returned handle. No ordinary post-success
+allocation or parent user callback was identified in that return path. Worker
+execution can already have begun, so the closed start gate remains necessary.
+
+The attribute-destruction assertion is not an observed normal Linux failure.
+The constructor may rely on the pinned safe API and valid-object, conforming
+supported-target Rust/libc/pthread semantics; an ABI/library violation or memory
+corruption is outside that trust assumption. Ordinary spawn failure leaves the
+lane terminal. Constructor panic/abort supplies no readiness or cleanup claim.
+This resolves the alleged ordinary library-return gap conditionally; it does
+not close the application-owned permanent-retention/start-gate proof, ambient
+spawn-hook assumptions, stack/TLS accounting or crash semantics. Actual selected
+library/platform provenance remains part of the full freeze, not a fabricated pin.
+No unsafe wrapper, interposed pthread function or helper is introduced.
+
+Research: exact Rust 1.97.1
+[thread lifecycle](https://github.com/rust-lang/rust/blob/1.97.1/library/std/src/thread/lifecycle.rs#L27-L110),
+[Unix thread creation](https://github.com/rust-lang/rust/blob/1.97.1/library/std/src/sys/thread/unix.rs#L43-L98)
+and [safe builder](https://github.com/rust-lang/rust/blob/1.97.1/library/std/src/thread/builder.rs#L140-L185),
+with the [POSIX attribute lifecycle contract](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_attr_destroy.html).
+These establish source assumptions, not measured construction latency or an
+installed-runtime support claim.
 
 **Custody transfer.** Investigate borrowing the owner's already-held
 `Arc<File>` values during admission and taking only bounded shared references
@@ -788,12 +821,110 @@ write/flush ordering, journal budgets, compatibility and reconciliation evidence
 remain part of the later coherent store/daemon freeze. No journal codec, schema,
 writer, recovery action or selected-store operation is changed here.
 
-**Precode disposition.** Acceptance resolves the owner-choice gate only.
-Construction/drop ownership, the complete resource/synchronization proof, genuine
-positive/unfinished-operation evidence and the exact journal/store crash bridge
-remain unresolved. Reader/worker implementation is **NOT_READY**. Further work
-must address these named gaps, not seek the same acceptance again or substitute
-another byte parser for the native proof.
+##### Proposed instrumented Linux timeout fixture
+
+**Proposed evidence method only; not owner-accepted, implementation-ready or
+execution-authorized.** The new decision is whether a deliberately instrumented
+native syscall may supply the retained-worker timeout-containment test row.
+It does not reopen the already accepted retained-worker investigation or change
+the production kernel recipe. The proposal permits no operation in this task.
+
+Prefer one test-only, task/record-bound wait inside the actual mountinfo read
+path over holding the global mount namespace semaphore. The latter can stall
+unrelated mount readers/writers throughout a disposable guest and still needs
+arrival instrumentation. A dedicated gate can establish that this particular
+syscall is unfinished without modifying mount state or claiming a naturally
+occurring stock-kernel stall. This remains a proposed laboratory fault-injection
+method requiring a separate owner decision and exact build/run packet.
+
+**Identity and hook boundary.** Linux v6.8 shares `m_start` across mount views.
+The proposed test-only open hook therefore tags one `proc_mounts` record only
+when its opener is the enrolled worker task object, its retained namespace is
+the enrolled mount-namespace object, and its `show` function is `show_mountinfo`.
+Enrollment retains kernel object references, not a reusable numeric PID/TID.
+The tag binds one generation to that already-opened record without duplicating
+or reopening the resource or procfs descriptor. Unrelated tasks, namespaces,
+`mounts` and `mountstats` records bypass the facility.
+
+On the first tagged `m_start` entry, consume the one-shot tag, publish arrival
+under the fixture state lock, and wait on a private fixture wait queue before
+the normal `down_read(&namespace_sem)`. The actual procfs read is already in
+kernel with its record's ordinary private seq mutex held. No global namespace
+semaphore or mount write lock is held by this gate. Sequence iteration may
+restart after buffer growth or later reads: subsequent starts on the consumed
+record bypass the gate, as do later records. They are not protocol errors or
+new injection opportunities. Normal mountinfo behavior resumes after release.
+
+These boundaries follow the existing Linux v6.8
+[mountinfo open/emitter selection](https://github.com/torvalds/linux/blob/v6.8/fs/proc_namespace.c#L222-L312),
+[sequence-read retries](https://github.com/torvalds/linux/blob/v6.8/fs/seq_file.c#L160-L278),
+[mount iterator](https://github.com/torvalds/linux/blob/v6.8/fs/namespace.c#L1365-L1406)
+and [wait-queue synchronization](https://github.com/torvalds/linux/blob/v6.8/include/linux/wait.h#L299-L320).
+The hooks described here do not exist in current LNSAT or the unmodified kernel.
+
+**Control and required evidence.** One isolated disposable test guest would
+permit one generation. The fixture controller receives separate enrollment and
+release/status capabilities. The worker enrolls before native dispatch; only the
+controller can arm or release. No general operation, arbitrary PID/path, memory
+address, resource descriptor or native-result payload belongs in that protocol.
+The exact transport, safe harness APIs and capability construction are not yet
+selected; this is a reviewable method decision, not a runnable operator packet.
+
+| Stage             | Required observation and failure rule                                                                                                                                                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Enroll and arm    | Retain exact task/namespace identities and one generation; start an independent test watchdog. Duplicate enrollment/arm or invalid control capability fails the fixture. No source dispatch exists here today.                                                                     |
+| Dispatch and bind | Coordinator fixes the original absolute deadline before dispatch. The test open hook binds only the first matching mountinfo record. Failure to bind or arrive before the deadline cannot pass this test.                                                                          |
+| Arrive and hold   | The first tagged iterator entry publishes `ARRIVED`. A synchronized state snapshot must show the same generation remains unreleased through the timeout observation. All status transitions use one fixture state lock and the kernel wait-queue wakeup contract.                  |
+| Timeout denial    | Require the original deadline reached, no worker result, terminal lane quarantine, retained custody and second-job denial while the kernel gate is still unreleased. A watchdog or premature release invalidates the proof.                                                        |
+| Explicit release  | Only after timeout evidence does the matching controller release the wait. The real mountinfo read continues; its late result cannot reopen admission or become an accepted sample.                                                                                                |
+| Teardown          | Forced release, controller loss, protocol error, watchdog expiry or missing accounting marks the fixture failed. Retained references are not silently freed while the gate/read is live. Guest disposal is containment of a failed test, never successful worker cleanup evidence. |
+
+Arrival, release and watchdog disposition must be recorded consistently under
+the fixture lock; a userspace in-flight flag is insufficient. Watchdog release
+must be independent of the blocked reader and must always fail the experiment.
+Its exact budget, clock domain, controller-loss handling and reference lifetime
+are required in the future packet. A scheduler or kernel stall can still prevent
+a watchdog or teardown from progressing; no hard real-time cleanup is claimed.
+
+`GATE_EXITED` means only that the test wait returned into `m_start`.
+`READ_RETURNED`, temporary-handle cleanup, retained-custody accounting and thread
+termination are different observations. A persistent worker normally survives
+job cleanup. None may be inferred from an earlier state or from VM disappearance.
+The instrumented-negative artifact must bind exact test kernel source/patch/
+configuration, harness and candidate revisions, run generation, chronological
+evidence, release reason and each distinct cleanup observation, without exporting
+raw procfs data, paths, descriptors, addresses or credentials.
+
+**Claim and decision boundary.** If implemented as specified, unreleased kernel
+arrival would establish an actual procfs syscall still in progress, with genuine
+native handles and the caller's timeout path running independently. This is a
+stronger containment experiment than a userspace barrier, fake clock, FIFO or
+sleeping closure. It would establish only behavior under deliberate test-kernel
+instrumentation. It would not prove that an unmodified kernel naturally stalls
+there, that native work is cancelable or bounded, or that the selected production
+kernel/build is supported. Ordinary positive evidence must separately use the
+unmodified reviewed Linux recipe; a dormant hook is still an instrumented build.
+Neither test supplies Docker runtime or certification authority.
+
+The owner may accept or reject this narrow evidence-method proposal. Acceptance
+would authorize completing its exact test contract, not kernel/harness source,
+unsafe application code, tool installation, artifact construction, guest/host
+provisioning, native experiments or product integration. Exact transport,
+isolation, safe harness interface, state/record lifetime, watchdog and provenance
+must first pass independent review. Any later construction/execution request
+must name concrete inputs, outputs, isolation, privileges, cleanup and permitted
+commands. Until those decisions are complete, the fixture remains **NOT_READY**
+and the existing no-instrumentation/no-host-action restrictions remain in force.
+
+**Precode disposition.** The retained-worker owner decision permits contract
+investigation. The ordinary library-return concern is narrowed under explicit
+trusted-target assumptions; application construction/drop ownership, complete
+resource/synchronization rules and an accepted feasible genuine-native test
+method remain unresolved. The private contract must also specify its future
+crash-bridge interface and invariants, without claiming canonical recovery is
+implemented. Reader/worker implementation remains **NOT_READY**. Completed
+native test results gate source completion; the complete durable bridge gates
+integration. Neither may be reported as complete by reviewing this proposal.
 
 ##### Required evidence and later source ownership
 

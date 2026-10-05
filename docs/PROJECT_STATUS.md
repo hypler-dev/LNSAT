@@ -1535,8 +1535,9 @@ of the same held descriptors, coordinator-controlled deadline acceptance,
 terminal timeout quarantine and retained cleanup. It cannot promise hard
 five-second native completion, scheduler-independent denial or completed
 cleanup. Exact construction/drop ownership, synchronization, allocation/FD
-accounting, crash/durability bridge and genuine blocked-operation evidence remain
-precode requirements. Selected SQLite custody stays separate. Ordinary held
+accounting, crash-bridge interface/invariants and a feasible genuine native test
+method remain precode requirements. Actual blocked-operation results are required
+before source completion; complete durable recovery is required before integration. Selected SQLite custody stays separate. Ordinary held
 ownership, matching mount tables and
 namespace metadata supply no atomic/ABA-free snapshot, authenticated installed
 kernel, host manifest, ACL/idmapping classification or action permit. Extra
@@ -1551,9 +1552,8 @@ positive recipe with exact deadline rejection, retained custody and cleanup
 accounting before inert reader implementation. The
 [post-acceptance investigation](architecture/headless-resource-enforcement/native-source-spec.md#construction-and-feasibility-findings-after-acceptance)
 narrows a process-lifetime retainer candidate, ownership transfer, slot/state
-linearization and explicit resource accounting. Construction/unwind proof,
-genuine unfinished-operation evidence and the journal/store crash bridge remain
-unresolved. The 2026-10-05 investigation completed a finite Linux fixture
+linearization and explicit resource accounting. Application construction/unwind, exact native test-method feasibility and
+crash-bridge interface decisions remain unresolved. The 2026-10-05 investigation completed a finite Linux fixture
 elimination, derived aggregate decoder allocation requests from the existing
 1 MiB input cap, and checked 420 abstract stop/deadline orderings. The model
 supplies ordering evidence only; no native observation ran. No compliant genuine
@@ -1561,8 +1561,25 @@ unfinished-operation fixture was identified. Existing journal phases lack
 observer-attempt/process identity, so quarantine cannot be presented as a
 completed native crash bridge. The supporting specification now names the
 required durable-before-dispatch/restart-denial obligations without changing
-schema or implementation. Construction, complete synchronization/resource proof,
-actual Linux fixture evidence and the crash bridge remain precode blockers.
+schema or implementation. Independent source-order review subsequently identified two P2 documentation
+errors: completed native test results and the full durable bridge had been
+placed before private implementation. The existing accepted Stage-A order now
+applies explicitly: exact feasible module/test contracts and bridge invariants
+before private source; actual Linux test evidence before source completion;
+canonical recovery and the complete freeze before product integration. Both
+requirements remain mandatory at their proper gates. No new source permission
+or completed evidence is inferred from correcting this order.
+
+Pinned Rust construction research also narrows the alleged normal
+native-create/handle-return gap: supported-target library assumptions permit
+the ordinary return path, while application retention/startup, exact slots/
+synchronization, resources and cleanup still require precode review. The [proposed instrumented timeout method](architecture/headless-resource-enforcement/native-source-spec.md#proposed-instrumented-linux-timeout-fixture)
+uses one task/record-bound kernel wait in a real mountinfo read. It would supply
+only deliberate-instrumentation containment evidence, with separate ordinary
+positive tests on the unmodified recipe. The evidence method is proposed for a
+new owner decision; transport, watchdog, isolation and lifetime remain unclosed.
+It is not accepted, constructed or executed, and acceptance would permit further
+exact contract work only. Reader precode remains **NOT_READY**.
 
 Full native/source/pin/positive-feasibility freeze,
 separate artifact capture, product integration and Phase 11 actual runtime remain
