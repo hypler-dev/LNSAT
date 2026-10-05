@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0031-independent-implementation-review-35ec5f8b",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-instrumented-fixture-contract"],
+  "base_revision": "95cc0708ed869a10997affe501069d337d595737",
+  "reviewed_revision": "35ec5f8b2b94a64e4f48a796d86f64caba2c9302",
+  "reviewed_tree_oid": "988453f78702558e32595e3816ce61b0f1b28f26",
+  "diff_sha256": "sha256:a354de606429360d9055584050d2fc176bd40e17ac65fd0c44fabe4563437e7b",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:c24052c26a00f49d615e70f0065f2f0c94aaaebb4e6fc91224bb7c59890cbdcc"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:eb3919cf6d8be6d5738c7a8e0cc08a54090edcbb71500cc5fb1f196f31cfc524"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:d2cfbe2037d6c85d795a285b2ad1a9459788fecddcff05e97a2986ce0ac55cac"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:ce6755bacfdecdc853863d8d0b392e6261519d9b8a577fe59c4d768dd95b0826"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:f26b3609d000ef95e06af443e868cab24aacdd259d5607e264b5194a569e032a"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/procfs_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of exact documentation recording delegated fixture-method selection and fixed private transport, roles, state, boot-lifetime retention, watchdog and timeout/cleanup evidence contract. Design findings resolved; no remaining P1/P2/P3. Documentation and fixture-contract approval only: whole-reader precode remains NOT_READY. No reader/kernel/harness implementation, construction, execution, integration, support or release authority. Exact source and direct-child bindings reviewed separately."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
