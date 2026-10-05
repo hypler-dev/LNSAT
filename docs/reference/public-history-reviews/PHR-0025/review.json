@@ -1,0 +1,68 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0025-independent-implementation-review-c6c3a9d7",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-procfs-reader-contract-readiness"],
+  "base_revision": "969baeab544701f57152ec6dd4ed5ab06746a604",
+  "reviewed_revision": "c6c3a9d7cdfcc9aed6fa3da690876f423f441217",
+  "reviewed_tree_oid": "bbf92294d23be78dfe97f7c43e3ca8e53c9f8132",
+  "diff_sha256": "sha256:9407646adaf5f01ef1c19f6c1640770e7184d6bb0feb7e06c3d4443c77a59314",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:51749e143d29600afd29d7c315ef0b832677a0911effac154c13b3ac6f9c17a8"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:733dcb34dc0ba4f3b5e045c2ee7fc544e5d07014669cbf8487a7fae01b82271e"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:d02792f34ad83fc58d3d1c5bb6b747c3ff4a4029fc721a3fe49f092888c16e8f"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:12d95639f5c5dcabd063979427e86dfbff08aea26839b70fdfd6d4d05554bba0"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:eb2e412f5e2ba5c9eff8ed23b1b9e60a0488d36c69db518d31636fcc14c3d75e"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/procfs_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact documentation and procfs reader readiness review, primary Linux v6.8 kernel basis, safe pinned API evidence, five-file source candidate and exact source/direct-child bindings. Documentation approved; reader precode remains NOT_READY because native return/custody gate is unresolved. No reader implementation or runtime authority."
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0025-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The proposed reader had no finite filesystem magic-to-mount-row type rule. The exact proposal now binds genuine procfs to proc, ext4 to ext4 and tmpfs to explicitly untrusted candidate fixtures; tmpfs supplies no selected ext4 recipe positive.",
+      "resolution_revision": "c6c3a9d7cdfcc9aed6fa3da690876f423f441217"
+    },
+    {
+      "finding_id": "PHR-0025-F2",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Unescaped flag union pipes split the lookup table. Final rows name each combined flag separately, preserve exact no-follow and finite kernel-link exceptions, and pass the scoped table/link checker.",
+      "resolution_revision": "c6c3a9d7cdfcc9aed6fa3da690876f423f441217"
+    },
+    {
+      "finding_id": "PHR-0025-F3",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Resource kinds and observed descriptor/status flag masks were unspecified. The proposal now freezes regular/directory kinds, exact CLOEXEC, ordered O_PATH/readable masks and unknown-bit denial; writable and locked SQLite custody remain separately unimplemented.",
+      "resolution_revision": "c6c3a9d7cdfcc9aed6fa3da690876f423f441217"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
