@@ -1518,12 +1518,18 @@ or checking time around a completed syscall cannot supply that bound. This is a
 source-derived feasibility limitation of the proposed synchronous recipe, not
 a claim that every Linux implementation is impossible or an observed host failure.
 
-The next bounded work is a documentation decision for enforceable caller return
-and held-resource/store custody: unfinished-work limit, late-result rejection,
-retention/quarantine and cleanup. No worker/process or cancellation model is
-selected, no accepted deadline is weakened, and no reader source is authorized.
-Any material custody/trust amendment needs fresh independent feasibility review
-and human acceptance. Ordinary safe borrow lifetime, matching mount tables and
+The [concrete containment proposal](architecture/headless-resource-enforcement/native-source-spec.md#proposed-containment-decision-for-owner-review)
+now compares synchronous calls, scoped/detached threads, one retained in-process
+lane and a separate process. It recommends investigating one fixed outstanding
+job with shared ownership of the same held descriptors, coordinator-controlled
+deadline acceptance, terminal timeout quarantine and retained cleanup. This is
+an independently reviewed **unaccepted design proposal**, not worker source or
+reader precode PASS. It explicitly cannot promise hard five-second native
+completion, scheduler-independent denial or completed cleanup. Exact lifetime,
+allocation/FD accounting, crash/durability bridge, selected-store custody and
+genuine blocked-operation evidence remain required. No worker model or weaker
+deadline is accepted; human acceptance and fresh exact feasibility/precode review
+precede any material custody/trust amendment and reader implementation. Ordinary safe borrow lifetime, matching mount tables and
 namespace metadata supply no atomic/ABA-free snapshot, authenticated installed
 kernel, host manifest, ACL/idmapping classification or action permit. Extra
 fdinfo lock/type tails and writable resource descriptors deny under this narrow
@@ -1540,6 +1546,55 @@ open. No Docker/host/ACL operation, target pressure, credential/provider intake,
 SQL18/initializer/activation, merge/main mutation, package/image construction,
 release/publication/deploy/production or tool installation is opened. LNSAT
 remains neutral and standalone; no support or certification claim follows.
+
+### Stage-A private fdinfo byte candidate
+
+Canonical work record: this subsection, under the accepted Stage-A source-order
+amendment. The [exact byte contract](architecture/headless-resource-enforcement/native-source-spec.md#separately-reviewed-stage-a-fdinfo-byte-prerequisite)
+defines an independent inert representation prerequisite while genuine reader
+return/custody remains NOT_READY. Fresh independent OpenAI Terra xhigh precode
+review passed with no P1/P2/P3 findings. Only the private parser, its synthetic
+tests and private module declaration are owned source paths.
+
+The contract freezes four ordered LF-terminated fields, canonical bounded decimal
+values, explicit leading-zero octal flags, a 4,096-byte inclusive input cap and
+fixed data-free errors with deterministic precedence. Decoding is allocation-free
+and linear within that cap. Parsed values remain untrusted representation;
+unknown flag bits convey no authority. No procfs access, descriptor operation,
+thread, clock, observer permit, serialization, dependency change or product caller
+is introduced. Native reader, worker/custody, full freeze, integration and runtime
+gates remain separate.
+
+The private source implements this exact byte grammar. Pinned focused tests
+passed 35/35: seven new synthetic fdinfo groups and 28 preserved native/ACL/
+mountinfo groups. The new vectors exercise all byte substitutions, forbidden
+controls/high bytes, every truncation, numeric boundaries and overflow,
+framing/field/number precedence, extra fdinfo tails and exact cap behavior.
+Strict all-target Clippy and formatting passed without suppression after checked
+conversion/assertion and literal-format corrections. Full local macOS
+`npm run check` passed in 1,105.99 seconds: 1,519 TypeScript tests, 139 contract
+comparisons, 264 store tests and 135 daemon library tests; two ignored store
+child helpers remain exercised by parent tests. These local counts do not
+replace Linux evidence for a new exact head.
+
+Installed named `p/rust` Semgrep scanned the three owned Rust paths with zero
+findings/errors; redacted Gitleaks returned zero findings. The first Semgrep
+attempt failed on sandbox trust-anchor access; the installed scanner succeeded
+with certificate access, metrics and version checks disabled. The first full
+check was interrupted before the known disposable-socket sandbox limitation;
+the unchanged suite passed with fixture access. No tests were suppressed and
+no tools or dependencies were installed. No dependency delta exists; no new OSV
+scan is claimed. Fresh independent OpenAI Terra xhigh exact-source review found
+no actionable P1/P2/P3. Final source/direct-child bindings remain their own
+history gate; hosted Linux CI on a new exact source head remains unrun.
+
+Draft PR #92 remains at `002f608e2174ee73d9b79af70a39c5fe9cc1bc81`, with source
+run `37232012586`/job `111523569754` successful. That preceding result does not
+cover this local fdinfo source. Public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8`. The Phase 11 operator packet remains
+the sole runtime-proof authority, and its execution gate is unchanged. No
+reader/worker implementation, accepted custody amendment, complete native
+freeze, runtime, support or certification claim follows from these source checks.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

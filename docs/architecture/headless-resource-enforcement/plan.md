@@ -84,14 +84,27 @@ finite namespace/root-link exceptions, four-line fdinfo policy, EOF/sentinel
 reads, storage bounds and bracketing comparisons. Its readiness is
 **NOT_READY**: the reviewed synchronous procfs recipe does not provide an
 enforceable native return deadline. Bounded bytes, readiness polling and deadline
-checks surrounding a syscall do not resolve this. The next documentation slice
-is the exact bounded-return/custody decision, including unfinished-work retention,
-late-result rejection and cleanup, followed by fresh feasibility/precode review.
-No worker model, feature change or weaker deadline is accepted here. Project
+checks surrounding a syscall do not resolve this. The concrete
+[containment decision proposal](native-source-spec.md#proposed-containment-decision-for-owner-review)
+now specifies a candidate one-job retained lane, terminal timeout quarantine,
+late-result rejection and cleanup obligations. It remains unaccepted and cannot
+promise hard native completion or completed cleanup. Human acceptance and an
+exact lifetime/resource/crash contract with fresh feasibility/precode review
+remain prerequisites; no worker model, feature change or weaker deadline is
+accepted here. Project
 Status owns the [reader contract checkpoint](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract). Other procfs/cgroup/securityfs readers,
 associated-path ACL classification, socket/SQLite/O_PATH custody and daemon
 association remain separately bounded work. No dependency or feature change is
 preapproved by this gate description.
+
+### Parallel inert prerequisite
+
+The [exact supplied-byte fdinfo contract](native-source-spec.md#separately-reviewed-stage-a-fdinfo-byte-prerequisite)
+is a separately reviewed Stage-A representation prerequisite while native return
+and custody remain blocked. Its owned private parser/test/declaration paths are
+named there. It adds no observation, deadline or worker and cannot satisfy reader
+precode or full native freeze. Fresh exact precode review precedes this parser's
+source; focused and full source validation plus exact attestations follow.
 
 ## Complete native freeze and later gates
 

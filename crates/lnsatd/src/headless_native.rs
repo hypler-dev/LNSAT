@@ -5,6 +5,8 @@
 
 #[path = "headless_native_acl.rs"]
 mod acl;
+#[path = "headless_native_fdinfo.rs"]
+mod fdinfo;
 #[path = "headless_native_mountinfo.rs"]
 mod mountinfo;
 #[path = "headless_native_readable.rs"]

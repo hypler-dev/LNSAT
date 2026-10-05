@@ -306,6 +306,70 @@ line, mount option or namespace token enters a diagnostic. There is no partial
 successful observation. Logical buffer/requested work bounds do not bound allocator/kernel memory,
 scheduler delay or syscall return.
 
+##### Separately reviewed Stage-A fdinfo byte prerequisite
+
+The accepted Stage-A amendment also permits a disconnected supplied-byte
+prerequisite under its own exact contract and precode review. This subsection
+opens only that pure representation lane; it does not implement any operation,
+input-descriptor check, deadline, EOF observation, worker or successful native
+reader described above. The genuine reader remains NOT_READY. No material
+custody/trust amendment is accepted by adding this parser.
+
+Owned source is `crates/lnsatd/src/headless_native_fdinfo.rs`, its adjacent
+`headless_native_fdinfo_tests.rs` and one private module declaration in
+`headless_native.rs`. The parser takes one immutable supplied byte slice and
+returns one private record with `position: u64`, `flags: u32`, `mount_id: u32`
+and `inode: u64`. These integers are untrusted representation, including zero;
+no flag interpretation, descriptor association, EOF/freshness/origin evidence,
+mount/namespace/ACL/idmapping classification or authority follows. Record fields
+and parser are private; no Debug, serializer, public constructor, observer
+injection or product caller is added. No dependency, feature, lock or existing
+mountinfo/ACL parser change is permitted.
+
+Use the four-line grammar immediately above exactly. Decimal `position` is
+bounded by `i64::MAX`, `mount_id` by `i32::MAX`, inode by `u64::MAX`; flags consume
+one literal leading zero followed by one through eleven octal digits whose
+value fits `u32`. Additional leading zeroes in the octal payload are accepted
+within that fixed width, as already permitted by the proposed grammar; decimal
+leading zeroes remain forbidden except the single `0`. This is a finite byte
+policy, not an assertion of canonical kernel flags or native provenance.
+
+The error order is exact: reject input above 4,096 bytes first; then preflight
+nonempty input, terminal LF, exactly four nonempty lines, and bytes limited to
+ASCII graphic/space plus TAB/LF. Reject all other control bytes, DEL and high
+bytes. Then check each exact ordered prefix (`pos:` plus TAB, `flags:` plus TAB,
+`mnt_id:` plus TAB, `ino:` plus TAB), followed by the field's numeric grammar.
+No leading/trailing/repeated whitespace, sign, decimal separator or normalization
+is admitted by numeric parsing. Missing/extra lines fail framing; reordered,
+duplicate or unknown names in a four-line frame fail the field check. The first
+invalid ordered field/number determines the result after successful preflight.
+No partial record escapes failure.
+
+Four fixed data-free errors are `native_fdinfo.limit_exceeded`,
+`native_fdinfo.invalid_framing`, `native_fdinfo.invalid_field` and
+`native_fdinfo.invalid_number`. Only the error enum may derive Debug/Eq for
+fixed-code tests; no supplied integer or byte enters its code. Parsing performs
+no heap allocation, text conversion, syscall, descriptor operation, clock,
+thread, retry, recursion or input mutation. A bounded preflight plus four field
+passes is linear in at most 4,096 bytes, with constant stack storage and checked
+arithmetic. Allocation failure injection is unnecessary for this allocation-free
+module; this supplies no wall-clock guarantee for native observation.
+
+Focused vectors must cover zero/maxima, ordinary flags, permitted octal padding,
+all numeric overflows and width excess, decimal leading zeroes, wrong radix,
+signs, empty values, exact prefixes/order, duplicate/unknown/missing/extra fields,
+lock/type tails, empty lines, all forbidden controls/high bytes, every truncated
+prefix of a valid record, and unchanged input. At 4,096 bytes an invalid padded
+record must produce a grammar error, while 4,097 bytes must produce the limit
+error: there is no valid cap-sized record under four bounded fields, so tests
+must not invent one. Exercise every single-byte substitution of a representative
+record for panic freedom and field-domain invariants; successful mutations remain
+untrusted numbers. Tests use synthetic bytes only and never read procfs or inject
+a successful native observer. Run focused pinned tests, strict Clippy/format,
+full `npm run check`, public/inventory/history checks, installed scanners and
+fresh independent exact source/direct-child reviews. A source revert removes
+this private prerequisite without migration or runtime changes.
+
 ##### Current association and drift
 
 For the resource, compare only device/inode, kind/mode, UID/GID, link count,
@@ -369,6 +433,130 @@ IPC. This contract does not select or authorize such a worker. Weakening the
 deadline, claiming cancellation from polling, or always denying the intended
 positive case cannot open reader source. Until the gate is resolved, all proposed
 operation/storage details above remain unimplemented and precode readiness fails.
+
+##### Proposed containment decision for owner review
+
+Recommendation, **not accepted or implemented**: replace the proposed synchronous
+borrowed reader with one private non-root observer lane which owns lifetime-safe
+resource custody and contains unfinished native work. This is a concrete design
+amendment candidate. It does not establish a hard wall-clock guarantee that a
+kernel syscall, thread destructor or process termination finishes in five
+seconds. The original stronger reader gate remains closed unless the owner
+accepts the explicit availability/cleanup semantics below after independent
+review. No API, worker, process, native read or new mutation is added by this
+proposal.
+
+The decision distinguishes three obligations. The observation may be accepted
+only before the original absolute deadline; the coordinator must perform no
+native observation or unbounded join/drop in its request path; an unfinished
+worker retains custody and permanently closes the lane until separately verified
+recovery. Coordinator scheduling and kernel progress remain host assumptions;
+a scheduling pause may delay delivery of the denial. A timeout is evidence of
+nonacceptance, never evidence of syscall cancellation, cleanup or nonexecution.
+A five-second hard real-time response/cleanup guarantee remains unsupported.
+
+| Choice                                                               | Decision and reason                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Synchronous reads with checks, nonblocking flag or readiness polling | Rejected as a solution to bounded native return; a blocked syscall does not reach the next check.                                                                                                                                                            |
+| Scoped borrowed thread                                               | Rejected: Rust scope return joins all scoped threads, so a stuck syscall retains the caller. Dropping an ordinary JoinHandle detaches rather than cancels; it loses the required cleanup owner.                                                              |
+| Per-request worker, retry or detached timeout                        | Rejected: repeated timeouts can accumulate unfinished work; borrowed resource lifetime and late-result authority are unresolved.                                                                                                                             |
+| Separate observer process                                            | Deferred: parent/self identity, descriptor inheritance/transfer, SQLite custody, authenticated fixed protocol, crash/reaping and inherited authority require a different exact contract. No helper executable or FD transfer is selected.                    |
+| One retained in-process observer lane                                | Recommended for an independently reviewed amendment: fixed private operations, ownership retained through completion, one unfinished job, immutable deadline, permanent timeout latch and no blocking join on the coordinator. Implementation remains gated. |
+
+**Custody.** The proposed first reader lane accepts only private owned read-only
+or O_PATH regular-file/directory custody and owned proc-root custody. The owner
+creates an `Arc<File>` custody object once by moving the existing `File`; Arc
+references share that same handle and never call `dup`, `try_clone` or reopen.
+The coordinator retains custody while the worker holds its own reference.
+The worker receives a fixed request, not an arbitrary closure, public observer,
+path/PID/FD argument or caller-controlled callback. All native opens, metadata
+checks, reads and temporary-handle destruction happen on that worker. The
+coordinator does not perform a preliminary `fstat`, `statx`, proc-root open or
+other potentially blocking filesystem operation before offloading. Allocation,
+worker startup and acceptance of the custody object belong to the separately
+bounded lane-construction contract; construction itself supplies no observation
+or deadline success. It cannot be hidden outside the overall preparation limit.
+
+This changes the previous input borrow/retention contract and needs acceptance.
+A `&File`, an SQLite raw descriptor, or an unsafe fabricated `'static` borrow
+cannot be converted into this custody object. Selected SQLite custody remains
+excluded: the real store connection/lifetime, its writable and locked descriptor,
+release/stop concurrency and selected-write contract must be reconciled in their
+own exact freeze. No Arc around an unrelated reopened file substitutes for it.
+The first lane's positive resource case is a held read-only ext4 file/directory;
+synthetic/tmpfs fixtures remain untrusted prerequisites.
+
+**Single slot and deadline.** One private lane is constructed under the eventual
+installation custody/daemon lease. At most one job can be outstanding; there is
+no backlog, pool expansion or automatic replacement worker. Its nonreusable
+attempt token, absolute deadline and original custody set are fixed before
+dispatch. The deadline is the earlier of observation-start plus five seconds and
+the enclosing uninterrupted preparation/action deadline. No per-read reset,
+renewal, retry, deadline extension or fresh token for a timed-out operation is
+allowed. Every native step and decoding stage checks expiry before starting
+and after returning; expiry prevents all later optional work.
+
+The coordinator alone decides acceptance after receiving the complete private
+result and checking the current monotonic time against that original deadline.
+Worker-reported completion time cannot admit a late-delivered result. Deadline
+arrival, disconnect, worker panic, unknown outcome or incomplete cleanup selects
+denial and the terminal lane latch. A simultaneous completion/timeout race has
+one serialized coordinator decision: if its acceptance check occurs at or after
+the deadline, denial wins. Expiry detected by the worker is also terminal.
+No result published after terminal denial can reset the lane or become a permit.
+Acceptance still returns only an untrusted native sample, never action authority.
+
+**Unfinished work and cleanup.** Timed-out work retains its resource/proc-root
+custody, the single slot and the join handle in the private lane owner. The
+coordinator does not synchronously join it, run its destructors or release the
+last custody reference. There is no new job while retention is unresolved.
+Once the syscall returns, the worker rejects its result, stops further optional
+reads, disposes of its temporary native handles and reports only completion for
+quarantine accounting. The terminal admission latch remains closed even if
+cleanup later finishes. A fixed private result slot cannot enqueue more than one
+completion or carry a serialized permission. Publication alone is not thread
+termination: thread-local destructors and join completion also belong to the
+retained cleanup responsibility. No use of `is_finished` is promoted into a
+hard bounded-join proof.
+
+The lane owner must outlive the worker and cannot silently drop/detach its handle
+on a normal error path. Shutdown uses the same closed admission state; it does
+not report clean shutdown while custody is retained. Process termination or a
+signal is not a five-second cleanup proof. A restarted process must honor the
+existing durable preparation quarantine and exclusive installation lease; it
+cannot erase an unresolved record or treat process absence as verified resource
+cleanup. Before integration, an exact crash/durability contract must bind this
+new local uncertainty to existing journal/store recovery without adding a new
+competing authority record. That cross-module contract is still required.
+
+**Bounds and proof obligations.** The exact source contract must fix worker count,
+stack size, one request/result slot, allocation/failure behavior, native handle
+count and the requested buffer/parser bounds already listed. These are not a
+kernel allocation or scheduler guarantee. No native callback may hold a mutex
+needed by deadline rejection, stop or revocation. No success or cleanup path may
+accidentally join/drop retained work on the coordinator. The installation-wide
+closed-lane check must eventually participate in every affected admission and
+release path under the accepted serialization contract; a private worker test
+alone cannot prove that integration.
+
+Precode evidence must include timely genuine non-root positive observations,
+expiry before dispatch, expiry while an actual native operation is unfinished,
+late result, completion-at-deadline, panic/disconnect, retained ownership, no
+second job, destructor/join delay, shutdown and restart/quarantine. Deterministic
+model tests may prove state transitions but cannot substitute for native
+unfinished-operation evidence. Host mutation/negative kernel probes remain
+closed in this task. No always-denying implementation or synthetic native success
+can establish feasibility. The exact synchronization primitives, construction
+budget, retention/drop ownership, actual blocked-operation fixture and durable
+crash bridge must be reviewed together before source is permitted.
+
+The owner decision is therefore concrete: accept investigation/source-freeze of
+this single-lane containment model with explicit late-denial and retained-cleanup
+semantics, or retain the hard native completion requirement and keep native
+reader source blocked. Acceptance would authorize only the subsequent exact
+contract/review work, not an already-proved implementation, product integration,
+Docker operation, artifact construction or runtime proof. The supplied-byte
+fdinfo prerequisite above is independent of this unaccepted amendment.
 
 ##### Required evidence and later source ownership
 
@@ -642,6 +830,13 @@ continues to own runtime truth; runtime/package/publication remain closed.
   selected primitives under existing features, not native read cancellation.
   [Rust process ID](https://doc.rust-lang.org/std/process/fn.id.html) avoids adding
   nix's currently disabled `process` feature.
+- Rust's [scoped-thread lifetime contract](https://doc.rust-lang.org/std/thread/fn.scope.html),
+  [join/detach behavior](https://doc.rust-lang.org/std/thread/struct.JoinHandle.html)
+  and [shared ownership](https://doc.rust-lang.org/std/sync/struct.Arc.html)
+  explain the proposed custody alternatives. A timeout on a
+  [receiver](https://doc.rust-lang.org/std/sync/mpsc/struct.Receiver.html)
+  does not cancel native work or authenticate cleanup. These stable APIs do not
+  provide a hard real-time scheduler guarantee.
 
 These source-derived recipe choices are LNSAT design inferences. Research does
 not provide owner acceptance of a material design change or runtime evidence.
