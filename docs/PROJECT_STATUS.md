@@ -15,8 +15,9 @@ persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
 Latest bounded engine source prerequisite: the
-[private mountinfo byte candidate](#stage-a-private-mountinfo-byte-candidate),
-following the reviewed Linux journal-custody and readable-object ACL candidates.
+[private fdinfo byte candidate](#stage-a-private-fdinfo-byte-candidate),
+following the reviewed Linux journal-custody, readable-object ACL and mountinfo
+byte candidates.
 Its source and proof limits are distinct from unfinished V1 integration,
 enterprise assurance and actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
@@ -1991,6 +1992,18 @@ checked-in interfaces and tests, not completion inferred from historical
 P10-X1's 13 evidence rows, 13 negatives and eight compatibility guarantees.
 Implementation, source validation, design acceptance, merge, runtime proof and
 support remain distinct states. No current row is supported.
+
+The next end-to-end delivery outcome is owner setup, protected access
+configuration, request, distinct-human approval, bounded execution, durable
+receipt and restart/recovery through the engine's versioned headless interfaces.
+The [delivery milestones](PRODUCT_BUILD_SEQUENCE.md#end-to-end-engine-delivery-milestones)
+order the remaining enforcement, protected setup/control, headless integration,
+actual workflow proof, RC and selected-package work. They reuse these command
+gates and existing source/test foundations; they establish no new completion,
+mutation, runtime or release authority. LNSAT remains neutral and standalone.
+The genuine reader remains NOT_READY, and the retained-worker containment
+proposal remains unaccepted. A general continuation instruction does not decide
+that material native-completion/custody tradeoff.
 
 The evidence baseline is reviewed source/attestation head
 `002f608e2174ee73d9b79af70a39c5fe9cc1bc81`, tree

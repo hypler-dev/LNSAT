@@ -219,6 +219,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0026/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0027",
+      "subject_id": "v1-end-to-end-engine-delivery-milestones",
+      "review_subject_ids": ["v1-end-to-end-engine-delivery-milestones"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0027/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

@@ -288,6 +288,129 @@ support profile makes it required.
    publication, and stable/latest promotion. Publication never follows from a
    source merge or candidate build automatically.
 
+## End-to-End Engine Delivery Milestones
+
+The next product outcome is one complete protected workflow:
+**owner setup -> configure access -> request -> approve -> bounded execution ->
+durable receipt -> restart/recovery**. An embedding product must consume the
+engine's versioned contracts and evidence without acquiring a second approval,
+resource-access or execution authority. Keep consumer-specific workflows and UI
+outside the neutral engine.
+
+These milestones organize the accepted V1 scope into deliverable outcomes; they
+do not replace the phase order or create a second completion ledger.
+[Project Status](PROJECT_STATUS.md#v1-command-and-contract-completion-gates)
+owns implemented, experimental, withdrawn and missing behavior for each command
+and contract. Its [native-reader gate](PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+owns the current feasibility blocker. Each milestone needs its own exact source
+scope, positive and denial evidence, and independent review. Design acceptance,
+source completion, merge, runtime proof and support remain separate.
+
+### 1. Prove the resource boundary
+
+Complete genuine native observation, resource identity and effective-enforcement
+classification, then freeze the coherent native/wire/daemon/store/revocation
+contract. Reuse the reviewed owner-binding, journal, ACL, mountinfo and fdinfo
+prerequisites; none is a replacement for current native evidence. Unsupported,
+substituted, stale or unverifiable resources must deny activation and use.
+
+The immediate dependency is the genuine reader's return and custody contract.
+The retained-worker containment proposal remains unaccepted and cannot promise
+five-second native completion or finished cleanup. Resolve that owner decision,
+then exact lifetime, allocation/FD accounting, quarantine/crash behavior and
+genuine positive/unfinished-operation feasibility before reader source.
+
+The accepted [Stage-A amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+allows independently reviewed inert private candidates before final artifact
+pins. It does not permit behavioral integration with unset pins or a partial
+freeze. Exit requires the complete reviewed source contract, actual captured
+pins/provenance and a feasible non-root positive recipe; capture and native
+runtime experiments retain their separate authorization gates.
+
+### 2. Complete protected installation and configuration
+
+Reuse existing local owner proof, credential/session foundations, pure
+composition/comparison and the accepted
+[bootstrap contract](architecture/headless-local-bootstrap/spec.md). Complete
+selected writable-store custody and atomic initial installation/generation,
+then protected configuration change, epoch/revocation and installation-wide
+stop. Every widening decision must bind the authenticated human, exact change
+and current state; configuration inspection cannot become activation authority.
+
+Exit evidence must cover a nonempty initial configuration, interrupted or
+replayed bootstrap, owner/session substitution, stale and concurrent changes,
+stop racing admission/use, restart-preserved revocation, linked durable audit
+and rollback that cannot restore broader or revoked authority. SQL18, writable
+store integration, initializer and activation retain their exact precode and
+implementation gates. Existing inert backup/restore and owner-recovery paths
+are reused; restore must not activate an installation.
+
+### 3. Finish the headless integration contract
+
+Complete required API and `lnsatctl` consumers for configuration, monitoring,
+approvals, operations, audit, recovery and emergency control against the
+canonical per-command gates. Reuse authenticated exact-ID reads and existing
+approval/operation contracts. Snapshot/list/search and versioned watch need
+their own accepted contracts before implementation. Withdrawn Unix bearer
+health/status commands remain withdrawn; no replacement transport is implied.
+
+Exit evidence must show compatible version selection, authentication/CSRF and
+permission checks, redaction, stable errors/exit codes, exact evidence identity,
+and the accepted watch ordering/resume/retention/backpressure/disconnect rules.
+The embedding lifecycle and reference daemon must preserve the same authority
+boundary. API failure or disconnection cannot imply success, non-execution or
+permission to retry. Graphical management is not required for this milestone.
+
+### 4. Prove the integrated workflow
+
+Connect the completed setup/control/enforcement lifecycle to the existing
+request, distinct-human approval, one-use claim, bounded adapter, receipt and
+reconciliation chain. Preserve the source proof in
+`crates/lnsat-store/src/tests/phase8_runtime_composition.rs` and
+`crates/lnsatd/src/tests/phase11_served_fake_runtime.rs`: exact replay does not
+redispatch; post-consequence unknown survives restart and reconciles by
+inspection; an unchanged target stays unknown without an invented receipt.
+These are reusable regression requirements, not real Docker evidence.
+
+Exit requires a complete workflow through versioned headless interfaces with
+same-attempt identity binding, concurrency and disconnect coverage, durable
+restart/recovery, stop/revocation races and honest cleanup/unknown reporting.
+The [Phase 11 operator packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+owns actual runtime proof and its separate execution approval. Its existing
+locked profile proves only its own claims; the stronger HCFG-6 profile also
+needs its own exact approved proof. Source integration cannot close either gate.
+
+### 5. Freeze a release candidate
+
+Close Phase 13 reliability, security, migration/recovery, update/rollback,
+revocation, dependency, secret and fuzzing evidence for the completed workflow.
+Preserve explicit limitations and select the applicable assurance requirements
+from the [security direction](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md).
+Exit is one independently reviewed RC source identity, version, changelog and
+build recipe with required findings resolved. It supplies no certification,
+supported package or production authority.
+
+### 6. Prove one selected package lifecycle
+
+Select exact core-target rows, then obtain candidate-build authorization and
+prove immutable artifact identity, reproducibility, provenance/SBOM, signature
+verification, non-root setup, compatibility, upgrade, backup/restore,
+rollback and revocation in the required disposable environments. Changed bytes
+require affected proof to be repeated. Only then seek separate final signing
+and publication authority. A consumer can evaluate source contracts earlier;
+it can rely on a supported engine only within the proven package/target scope.
+
+### Next bounded delivery work
+
+First resolve the reader contract blocker above; do not infer its acceptance
+from a general instruction to continue. In parallel, retain exact existing
+source/test mappings for the protected workflow and prepare only independently
+reviewed inert prerequisites allowed by Stage A. Do not restart completed
+prerequisites, implement fake success or treat an always-deny implementation as
+the required positive case. Full freeze, integration, real runtime, RC and
+package proof each remain observable exits. Counting source packets or passing
+tests alone cannot produce an honest V1 completion percentage or delivery date.
+
 ## Current Next Lane
 
 Phase 10 product-surface stabilization is complete at source-conformance level.
