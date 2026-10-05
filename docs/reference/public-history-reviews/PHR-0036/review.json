@@ -1,0 +1,59 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0036-independent-implementation-review-ddd5b5b4",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-context-challenge-codec-stage-a"],
+  "base_revision": "03c368f9b8ef8cf9b4711621be215c2b0d9410fa",
+  "reviewed_revision": "ddd5b5b4a7b90282fd2af79daa87c709f059fc64",
+  "reviewed_tree_oid": "0e971c8bcedc33a098b7940930215f3107d5ddc8",
+  "diff_sha256": "sha256:e043dac31529867560f0acb0ef6317093fcbdb5d6a23abddda7652cf9b52ccd5",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_startup_challenge.rs",
+      "sha256": "sha256:3169b220a635ad036476b7febe9005ad7f63e8dbbf43ed47e27fffb45b4e2c92"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_startup_challenge_tests.rs",
+      "sha256": "sha256:94e725a2c560e86644fdace0259262e043ba9ad6815daf10da9f3e4f5b896aae"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:7fedeb70e10d722defe066ae046a2b23a05c4c8f271eed894a4ca703fec774ce"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:919eb6c01628f71f39c04dc35a3d81a36dcd55f2534e692db4586e7e9cd20a2d"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:2e13ad6c881e1811e7564261b4a6297a2a3c17839b5a8ff478e975649b1f831c"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:8aff6998caf257f60ad1151a8275c1592143d0059cd8007481fd8cc6ef60d3c6"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/startup-wire-source-spec.md",
+      "sha256": "sha256:be6ed537f1f86d7d0187965caec7e26ea949371a5f804baedc228873048ccd92"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:b75085499b1808421f3279921abeba99a8c2395ae527797f6cea4492ee26092f"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:4190b557b5ce544600f6377a88624c89e4765ed57fade4faebe2688b60bbd569"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/v1_gates_independent_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only review of the private action/preparation context and challenge codec, map-only closed typed JSON, family separation, exact identity and integer grammar, ordered context commitments, canonical LF framing, retained unverified limits, zeroizing retained storage, complete context-mutation and denial matrices, fixed data-free errors, and honest source-only gate documentation. Precode review by /root/procfs_contract_review; source review by /root/v1_gates_independent_review. Exact source review passed with no remaining P1/P2/P3; direct-child verification remains a separate gate. Host source checks do not establish native Linux evidence, complete source/pin freeze, CLI setup completion, product integration, activation, runtime, support, packaging or release authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

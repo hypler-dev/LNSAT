@@ -298,7 +298,7 @@
       "review_subject_ids": ["headless-context-challenge-codec-stage-a"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0036/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
