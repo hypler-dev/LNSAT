@@ -275,6 +275,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0033/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0034",
+      "subject_id": "headless-native-procfs-reader-source-candidate",
+      "review_subject_ids": ["headless-native-procfs-reader-source-candidate"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0034/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

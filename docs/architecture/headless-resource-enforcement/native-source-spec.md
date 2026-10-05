@@ -206,13 +206,14 @@ implementation and evidence.
 
 #### Stage-A self-process procfs and held-mount reader proposal
 
-This is the bounded reader contract proposal following the reviewed byte
-candidate. It is **not ready for reader implementation**: retained-worker
-construction/custody and genuine unfinished-operation feasibility remain
-unproved. [Project Status](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
-owns the owner's explicit acceptance of contract investigation, readiness,
-review and implementation. That limited acceptance adds to the original HCFG-6
-and Stage-A decisions; none supplies precode PASS or runtime authority.
+This is the bounded reader contract following the reviewed byte candidate.
+The later [exact retained-worker contract](#exact-retained-worker-candidate-contract)
+has passed independent whole-reader precode review under the accepted Stage-A
+order. [Project Status](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+owns acceptance, implementation and evidence. The named private source scope is
+open; actual genuine native results still gate candidate completion, and the
+complete native freeze and canonical recovery still gate product integration.
+Neither precode review nor private source supplies runtime authority.
 The broader native reads in the table below remain separate contracts.
 
 The proposed candidate observes only its own process and one caller-owned held
@@ -381,10 +382,15 @@ this private prerequisite without migration or runtime changes.
 ##### Current association and drift
 
 For the resource, compare only device/inode, kind/mode, UID/GID, link count,
-ctime, filesystem magic, mount ID and current descriptor/status flags. For
+ctime, filesystem magic, mount ID and current descriptor/status flags. Match the raw kernel `O_LARGEFILE` bit through
+the pinned rustix Linux backend; libc may define its userspace open flag as zero
+on 64-bit targets. An unavailable raw flag mapping denies the platform rather
+than accepting unknown status bits. For
 proc directories compare device/inode, kind, procfs magic and mount ID; do not
 compare dynamic root link counts or access times. Process-root comparison is
-device/inode/mount ID; namespace comparison is retained NSFS device/inode.
+device/inode/mount ID; namespace comparison is retained NSFS device/inode. Repeat `fstat` and `fstatfs`
+on both retained namespace handles after the table reads, and compare each
+fresh fixed-name link with that retained NSFS identity again.
 The finite candidate resource filesystem mapping is `EXT4_SUPER_MAGIC` to
 `ext4` and `TMPFS_MAGIC` to `tmpfs`; every other resource filesystem denies.
 Temporary tmpfs fixtures prove untrusted candidate association only and do not
@@ -442,7 +448,8 @@ duplication/reopen, no privileged helper and no authority-bearing IPC. It does
 not itself authorize worker implementation. Extending result acceptance, claiming
 cancellation from polling, or always denying the intended positive case cannot
 open reader source. The exact retained-worker contract below resolves the private
-precode gate; all proposed operation/storage details remain unimplemented here.
+precode gate. The private source candidate and its incomplete native validation
+are recorded only in Project Status.
 
 ##### Retained-lane containment contract investigation
 
@@ -942,9 +949,14 @@ before slot publication. Stop after that CAS leaves the published request for
 worker-only cleanup and permanently prevents result acceptance. A prepared Attempt
 whose durable intent is unavailable cannot dispatch.
 
-Dispatch performs one nonwaiting slot access, requires the same ACTIVE token,
-original unexpired D and an undispatched request, flips only that request's
-one-way dispatch flag, unlocks and unparks. Busy returns Pending; deadline or
+Dispatch performs one nonwaiting slot access and requires the same ACTIVE token
+and an undispatched request. A same-value strong CAS on the complete ACTIVE word
+linearizes dispatch admission against stop while Slots remains held. Sample the
+clock after that CAS; publish the one-way dispatch flag only if the sample is
+before original D. An expired sample closes the token without flag publication.
+A timely sample proves admission preceded D; stop before the CAS would prevent
+it, while stop after it closes already admitted work. Then unlock and unpark.
+Busy returns Pending; deadline or
 stop denies and terminalizes. Duplicate dispatch denies without resending.
 The private Stage-A fixture may call this disconnected native observation
 method directly; future product integration must put the canonical durable-intent
@@ -1322,18 +1334,23 @@ synchronization rules, positive recipe and crash-bridge interface are frozen by
 the exact retained-worker contract above. Its separate whole-reader precode
 disposition is recorded in Project Status. Completed native results gate candidate source
 completion; canonical recovery and the full native freeze gate integration.
-Reader/worker implementation remains missing. No further owner method-choice
-question is required within the delegated contract scope.
+Private reader/worker source now exists as an unintegrated candidate; Linux
+compilation and native test results remain missing. No kernel/harness source,
+build or execution is opened. No further owner method-choice question is
+required within the delegated contract scope.
 
 ##### Required evidence and later source ownership
 
 A ready contract must receive fresh independent read-only precode review of
 every native operation, timeout/lifetime/cleanup path and feasible non-root
-positive recipe. The later isolated source would own
+positive recipe. The private source candidate owns
 `crates/lnsatd/src/headless_native_procfs.rs`, its focused test companion and the
-private declaration in `headless_native.rs`; no ownership or source permission
-is assigned before the blocking gate passes. Existing decoder/ACL/journal and
-Cargo versions/features/lock remain unchanged in this documentation slice.
+private declaration in `headless_native.rs`. The exact precode gate has passed.
+Composition also requires read-only parent-private accessors in the existing
+fdinfo and mountinfo byte modules: parsed numeric identities, filesystem type
+and unique mount-row lookup. Those accessors introduce no mutable view or
+external constructor and preserve decoder grammar, limits, errors and accepted
+bytes. ACL/journal behavior and Cargo versions/features/lock remain unchanged.
 
 Future tests need genuine disposable Linux self-process/held regular-file and
 directory positives (including O_PATH only if its exact custody passes), known

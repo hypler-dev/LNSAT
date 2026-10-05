@@ -120,8 +120,10 @@ crash-bridge interface rules. Fresh independent whole-reader precode review
 passed it with the existing native schedule and selected genuine test methods;
 [Project Status](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
 records the disposition. Under the accepted Stage-A order, the named private
-reader/test/declaration source scope is open. Implementation and actual native
-results remain missing; candidate completion and full integration retain their
+reader/test/declaration source scope is open. Private implementation is now a
+source candidate under validation; actual native results remain missing.
+Read-only parent-private parser accessors support the reader without changing
+the byte contracts. Candidate completion and full integration retain their
 separate evidence gates. No kernel/harness source, construction or execution
 is opened by this private-reader precode PASS.
 

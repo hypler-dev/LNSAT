@@ -314,13 +314,14 @@ contract. Reuse the reviewed owner-binding, journal, ACL, mountinfo and fdinfo
 prerequisites; none is a replacement for current native evidence. Unsupported,
 substituted, stale or unverifiable resources must deny activation and use.
 
-The immediate dependency is the genuine reader's return and custody contract.
-The owner has accepted retained-worker contract/feasibility investigation;
+The genuine reader's exact retained-worker contract has passed independent
+whole-reader precode review under the accepted Stage-A order;
 [Project Status](PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
-records the exact decision. This model cannot promise five-second native
-completion or finished cleanup. Resolve exact lifetime, allocation/FD
-accounting, quarantine/crash behavior and genuine positive/unfinished-operation
-feasibility, then obtain fresh precode review before reader source.
+records the exact decision and current source evidence. Implement the named
+private candidate, then obtain actual genuine positive and unfinished-operation
+results before claiming candidate completion. This model cannot promise
+five-second native completion or finished cleanup. Canonical durable recovery
+and the complete native freeze remain integration requirements.
 
 The accepted [Stage-A amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
 allows independently reviewed inert private candidates before final artifact
@@ -416,8 +417,9 @@ it can rely on a supported engine only within the proven package/target scope.
 
 ### Next bounded delivery work
 
-First complete the accepted reader contract investigation and resolve its
-remaining precode blockers; do not reopen the already accepted owner decision.
+Continue the named inert reader implementation from its exact precode PASS;
+do not reopen the already accepted owner decision. Actual native results and
+the complete recovery/native freeze remain distinct later gates.
 In parallel, retain exact existing
 source/test mappings for the protected workflow and prepare only independently
 reviewed inert prerequisites allowed by Stage A. Do not restart completed

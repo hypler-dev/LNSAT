@@ -9,6 +9,8 @@ mod acl;
 mod fdinfo;
 #[path = "headless_native_mountinfo.rs"]
 mod mountinfo;
+#[path = "headless_native_procfs.rs"]
+mod procfs;
 #[path = "headless_native_readable.rs"]
 mod readable;
 

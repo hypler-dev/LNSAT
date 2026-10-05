@@ -3,7 +3,7 @@
 const MAX_INPUT_BYTES: usize = 4_096;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum FdInfoError {
+pub(super) enum FdInfoError {
     LimitExceeded,
     InvalidFraming,
     InvalidField,
@@ -22,7 +22,7 @@ impl FdInfoError {
 }
 
 // Intentionally neither Debug nor serializable: values are private untrusted bytes.
-struct FdInfoRecord {
+pub(super) struct FdInfoRecord {
     position: u64,
     flags: u32,
     mount_id: u32,
@@ -30,7 +30,7 @@ struct FdInfoRecord {
 }
 
 impl FdInfoRecord {
-    fn parse(input: &[u8]) -> Result<Self, FdInfoError> {
+    pub(super) fn parse(input: &[u8]) -> Result<Self, FdInfoError> {
         if input.len() > MAX_INPUT_BYTES {
             return Err(FdInfoError::LimitExceeded);
         }
@@ -46,6 +46,18 @@ impl FdInfoRecord {
             mount_id,
             inode,
         })
+    }
+
+    pub(super) const fn flags(&self) -> u32 {
+        self.flags
+    }
+
+    pub(super) const fn mount_id(&self) -> u32 {
+        self.mount_id
+    }
+
+    pub(super) const fn inode(&self) -> u64 {
+        self.inode
     }
 }
 

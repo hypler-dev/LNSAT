@@ -18,7 +18,7 @@ const MAX_TAG_BYTES: usize = 32;
 const MAX_MOUNT_ID: u32 = 2_147_483_647;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum MountInfoError {
+pub(super) enum MountInfoError {
     LimitExceeded,
     InvalidFraming,
     InvalidRow,
@@ -31,7 +31,7 @@ enum MountInfoError {
 }
 
 impl MountInfoError {
-    const fn code(self) -> &'static str {
+    pub(super) const fn code(self) -> &'static str {
         match self {
             Self::LimitExceeded => "native_mountinfo.limit_exceeded",
             Self::InvalidFraming => "native_mountinfo.invalid_framing",
@@ -47,7 +47,7 @@ impl MountInfoError {
 }
 
 // Intentionally neither Debug nor serializable: private bytes are not diagnostics.
-struct MountInfoRow<'a> {
+pub(super) struct MountInfoRow<'a> {
     mount_id: u32,
     parent_id: u32,
     device_major: u32,
@@ -61,12 +61,12 @@ struct MountInfoRow<'a> {
     super_options: &'a [u8],
 }
 
-struct MountInfoTable<'a> {
+pub(super) struct MountInfoTable<'a> {
     rows: Vec<MountInfoRow<'a>>,
 }
 
 impl<'a> MountInfoTable<'a> {
-    fn parse(input: &'a [u8]) -> Result<Self, MountInfoError> {
+    pub(super) fn parse(input: &'a [u8]) -> Result<Self, MountInfoError> {
         let row_count = preflight(input)?;
         let mut rows = Vec::new();
         let mut ids = Vec::new();
@@ -83,6 +83,24 @@ impl<'a> MountInfoTable<'a> {
             return Err(MountInfoError::DuplicateMountId);
         }
         Ok(Self { rows })
+    }
+
+    pub(super) fn row_by_mount_id(&self, mount_id: u32) -> Option<&MountInfoRow<'a>> {
+        self.rows.iter().find(|row| row.mount_id == mount_id)
+    }
+}
+
+impl MountInfoRow<'_> {
+    pub(super) const fn mount_id(&self) -> u32 {
+        self.mount_id
+    }
+
+    pub(super) const fn device(&self) -> (u32, u32) {
+        (self.device_major, self.device_minor)
+    }
+
+    pub(super) fn filesystem_type(&self) -> &[u8] {
+        &self.filesystem_type
     }
 }
 
