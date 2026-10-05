@@ -1486,9 +1486,10 @@ no new OSV scan is claimed. Fresh independent OpenAI Terra xhigh exact-source
 review found no actionable P1/P2/P3. Source-commit binding, direct-child native
 history attestation and exact final-head Linux source CI retain their own gates.
 Linux execution of these new pure tests supplies no genuine mount observation.
-The next native gate is the exact genuine procfs/held-mount reader contract;
-filesystem origin, intentional kernel links, held descriptor lifetime,
-fdinfo grammar, no-follow reads, deadlines and drift remain unresolved.
+At this byte-candidate checkpoint, the genuine procfs/held-mount reader contract
+was unresolved. The later [reader contract checkpoint](#stage-a-self-process-procfs-reader-contract)
+refines those questions and records the remaining enforceable-return blocker;
+no genuine reader is implemented.
 
 Preceding draft PR #89 head `9139b97987455cab0455f6f9a1992b62e34456ff` passed
 exact-head Linux source run `37219486368`; draft PR #90 head
@@ -1498,6 +1499,47 @@ parser source. Public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`.
 Phase 11 packet, proof lock and all Docker, host/ACL change, artifact, SQL18,
 initializer, activation, merge, signing, release, deploy and production gates
 remain unchanged and closed.
+
+### Stage-A self-process procfs reader contract
+
+Canonical work record: this subsection, under the existing HCFG-6/Stage-A
+acceptance. The [bounded supporting proposal](architecture/headless-resource-enforcement/native-source-spec.md#stage-a-self-process-procfs-and-held-mount-reader-proposal)
+now names private same-process input borrows, genuine procfs checks, exact
+no-follow paths, finite namespace/root-link exceptions, four-line fdinfo policy,
+terminal EOF/sentinel handling, fixed/fallible storage, current descriptor/mount
+association and bracketing drift denials. Existing supplied-byte decoder, ACL
+sampler, journal, source contracts and Cargo pins/features are preserved.
+
+**Reader implementation and precode readiness remain NOT_READY.** Research of
+exact upstream Linux v6.8 shows synchronous sequential-read locking, namespace
+locking and filesystem/security callbacks; the inspected recipe has no proved
+five-second native return bound. Byte/read caps, `O_NONBLOCK`, a readiness timeout
+or checking time around a completed syscall cannot supply that bound. This is a
+source-derived feasibility limitation of the proposed synchronous recipe, not
+a claim that every Linux implementation is impossible or an observed host failure.
+
+The next bounded work is a documentation decision for enforceable caller return
+and held-resource/store custody: unfinished-work limit, late-result rejection,
+retention/quarantine and cleanup. No worker/process or cancellation model is
+selected, no accepted deadline is weakened, and no reader source is authorized.
+Any material custody/trust amendment needs fresh independent feasibility review
+and human acceptance. Ordinary safe borrow lifetime, matching mount tables and
+namespace metadata supply no atomic/ABA-free snapshot, authenticated installed
+kernel, host manifest, ACL/idmapping classification or action permit. Extra
+fdinfo lock/type tails and writable resource descriptors deny under this narrow
+candidate policy; actual selected SQLite custody needs a separate reviewed
+contract. The temporary tmpfs candidate case supplies no selected ext4 recipe
+positive.
+
+Documentation review and named checks establish the accuracy of this gate
+record only. Fresh independent precode review must still find a genuine non-root
+positive recipe with an enforceable return and cleanup contract before inert
+reader implementation. Full native/source/pin/positive-feasibility freeze,
+separate artifact capture, product integration and Phase 11 actual runtime remain
+open. No Docker/host/ACL operation, target pressure, credential/provider intake,
+SQL18/initializer/activation, merge/main mutation, package/image construction,
+release/publication/deploy/production or tool installation is opened. LNSAT
+remains neutral and standalone; no support or certification claim follows.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

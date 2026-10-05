@@ -50,8 +50,10 @@ runtime authority.
 
 ## Next genuine procfs reader contract gate
 
-This section bounds the next separate contract draft; it is not an exact reader
-specification, precode approval, implementation or completion record. Project
+This section tracks the separate
+[self-process reader proposal](native-source-spec.md#stage-a-self-process-procfs-and-held-mount-reader-proposal).
+It is a documentation contract checkpoint, not precode approval, implementation
+or completion of the genuine reader. Project
 Status owns the [current reader gap](../../PROJECT_STATUS.md#stage-a-private-mountinfo-byte-candidate)
 and [V1 command reconciliation](../../PROJECT_STATUS.md#v1-command-and-contract-completion-gates).
 The accepted Stage-A amendment permits an independently reviewed inert candidate;
@@ -77,10 +79,16 @@ locked Phase 11 packet are preserved.
 | Source evidence               | Require actual disposable Linux self-process/held-object positives, malformed/limit/EOF negatives and deterministic drift/lifetime tests. Separate synthetic parser vectors from genuine-reader fixtures; no Docker, selected host, permission mutation, target action or pressure proof.                                                                             |
 | Review and rollback           | Fresh independent read-only precode review must cover every native operation and feasible non-root positive path before implementation. Resulting source needs focused pinned tests, `npm run check`, public/inventory/history checks and separate exact-source/direct-child reviews. Rollback is a reviewed inert-source revert, not journal repair or live cleanup. |
 
-Filesystem origin, intentional-link semantics, fdinfo grammar, held-descriptor
-lifetime, enforceable bounded return, EOF and drift are still unresolved exact
-contracts. This packet must resolve them rather than turning the existing
-proposal into an assumed implementation. Other procfs/cgroup/securityfs readers,
+The proposal now names same-process held-handle custody, exact confined paths,
+finite namespace/root-link exceptions, four-line fdinfo policy, EOF/sentinel
+reads, storage bounds and bracketing comparisons. Its readiness is
+**NOT_READY**: the reviewed synchronous procfs recipe does not provide an
+enforceable native return deadline. Bounded bytes, readiness polling and deadline
+checks surrounding a syscall do not resolve this. The next documentation slice
+is the exact bounded-return/custody decision, including unfinished-work retention,
+late-result rejection and cleanup, followed by fresh feasibility/precode review.
+No worker model, feature change or weaker deadline is accepted here. Project
+Status owns the [reader contract checkpoint](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract). Other procfs/cgroup/securityfs readers,
 associated-path ACL classification, socket/SQLite/O_PATH custody and daemon
 association remain separately bounded work. No dependency or feature change is
 preapproved by this gate description.

@@ -204,6 +204,201 @@ no mounted object or option absence, and completes none of the genuine reader,
 association or complete-freeze requirements below. Project Status owns its
 implementation and evidence.
 
+#### Stage-A self-process procfs and held-mount reader proposal
+
+This is the bounded reader contract proposal following the reviewed byte
+candidate. It is **not ready for reader implementation**: the enforceable native
+return bound below is unresolved. [Project Status](../../PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+owns its readiness, review and implementation record. The original HCFG-6 and
+Stage-A acceptances do not accept a new worker, cancellation or custody model.
+The broader native reads in the table below remain separate contracts.
+
+The proposed candidate observes only its own process and one caller-owned held
+regular file or directory at a time. Inputs are safe lifetime-bound borrows of
+the procfs root and resource `File`, plus the existing private absolute monotonic
+budget. No pathname, PID, numeric FD, raw bytes or success flag is accepted from
+an agent/API/config caller. The resource must have `(st_mode & S_IFMT)` exactly `S_IFREG` or `S_IFDIR`,
+and `F_GETFD` exactly `FD_CLOEXEC`; unknown descriptor-flag bits deny. Classify
+`F_GETFL` in this order: with `O_PATH`, require access-mode bits `O_RDONLY`
+(zero) and allow only `O_PATH`, `O_DIRECTORY`, `O_NOFOLLOW`; without `O_PATH`,
+require access-mode bits `O_RDONLY` and allow only `O_LARGEFILE`, `O_DIRECTORY`,
+`O_NOFOLLOW`. Every other returned status bit denies, including append,
+nonblocking, direct/synchronous I/O and async flags. `O_DIRECTORY` requires a
+directory kind. These masks govern observed flags, not proof of historical
+creation flags or permission authority. The narrow policy excludes a writable
+SQLite main descriptor; later actual selected-store custody needs a separately
+reviewed extension. Never read, seek, write, duplicate, close or reopen the
+resource. SQLite's selected descriptor must
+retain its existing store lifetime; this proposal creates no SQLite borrow or
+custody API. Reader-owned proc/namespace handles are distinct and close on drop.
+The observation cannot outlive either input borrow. Safe Rust borrows prevent
+ordinary owner close/reuse, not hostile raw close, namespace/root changes or a
+malicious host; those are not new guarantees.
+
+##### Filesystem origin and finite lookup operations
+
+Require directory kind, genuine `PROC_SUPER_MAGIC` and stable device/inode and
+mount ID for the procfs root. Its `F_GETFD`/`F_GETFL` must meet the same exact
+CLOEXEC and readable/O_PATH masks above, with directory kind required. Obtain descriptor mount IDs using pinned safe
+`rustix::fs::statx` with an empty path, `AtFlags::EMPTY_PATH`, requested basic
+identity fields and `StatxFlags::MNT_ID`; require every used result-mask bit and
+reject a mount ID outside the reviewed old mountinfo-ID range. Filesystem magic
+is a necessary local origin check, not installed-kernel provenance, host-root
+manifest authentication, complete namespace identity or authority.
+
+| Operation                              | Exact proposed restriction                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `self`                                 | One bounded `rustix::fs::readlinkat_raw` into an 11-byte fixed buffer. Reject a full buffer, empty value, noncanonical/nonpositive decimal or a value different from `std::process::id()`. This reads link text; it does not follow the link or accept a caller PID. Repeat for drift. A different procfs PID view denies; matching numbers alone prove no host PID-namespace identity.                                                                                                                          |
+| Numeric self directory, `fdinfo`, `ns` | Open each generated/fixed component relative to its held parent using safe `nix::fcntl::openat2`. Combine `O_RDONLY`, `O_DIRECTORY`, `O_CLOEXEC`, `O_NOFOLLOW`; combine `RESOLVE_BENEATH`, `RESOLVE_NO_SYMLINKS`, `RESOLVE_NO_MAGICLINKS`, `RESOLVE_NO_XDEV`. Require procfs and the held proc-root mount/device at every step. No path concatenation from untrusted strings, enumeration, absolute-path fallback or weakened flags.                                                                             |
+| `fdinfo/{held_fd}` and `mountinfo`     | Canonical decimal FD comes only from the still-borrowed resource; open its generated component relative to held `fdinfo`. Open fixed `mountinfo` relative to held numeric self. Use the same resolve flags and combine `O_RDONLY`, `O_CLOEXEC`, `O_NOFOLLOW`; require regular procfs records on the same held proc mount. No `/proc/self/fd` or resource reopening. Open fresh records for each read; no seek/replay fallback.                                                                                   |
+| `ns/mnt` and `ns/user`                 | The only namespace-link following exceptions: fixed single components opened from the verified held `ns` directory with safe `openat`, combining `O_RDONLY`, `O_CLOEXEC`, intentionally following the genuine kernel link. Require `NSFS_MAGIC` and retain owned namespace descriptors for device/inode comparison. Fixed-name following `statx` queries repeat current device/inode checks against those handles. No arbitrary name, `setns`, `unshare`, privilege escalation or resource magic-link exception. |
+| Numeric self `root`                    | The only resource-link metadata exception: safe `statx` of fixed `root` relative to verified held numeric self, following its kernel link for basic identity/mount metadata only. It creates no descriptor and reads no target bytes. Compare before/after; this does not authorize reopening a held resource through that link.                                                                                                                                                                                 |
+
+Opening numeric self rather than resolving `self/...` permits the ordinary
+no-link/no-cross-mount rules to stay exact. The finite namespace/root exceptions
+are proposed explicitly because `NO_MAGICLINKS` and `NO_XDEV` cannot be claimed
+for operations which intentionally cross those kernel links. Kernel-origin
+checks precede exceptions and every lookup error denies without retry or fallback.
+A whole procfs root bind is still kernel procfs; authenticating its selected
+host-recipe placement is a separate integration/root-manifest obligation.
+
+##### fdinfo grammar, EOF and storage
+
+For this first candidate the complete fdinfo record is exactly four LF-terminated
+lines in upstream v6.8 order: `pos`, `flags`, `mnt_id`, `ino`. Each field name is
+followed by one colon and one tab; values contain no whitespace. `pos` is
+canonical nonnegative decimal through `i64::MAX`; `flags` is a leading `0`
+followed by one through 11 octal digits, bounded by `u32::MAX`; `mnt_id` is
+canonical decimal from zero through `i32::MAX`; `ino` is canonical decimal
+through `u64::MAX`. Decimal leading zeroes other than `0`, signs, overflow,
+missing/reordered/duplicate fields, CR/NUL, missing terminal LF and every extra
+line deny. Upstream fdinfo may append lock or type-specific records. Rejecting
+them is this candidate's narrow policy, not a universal procfs grammar. A locked
+SQLite descriptor is not silently admitted; its later custody/integration needs
+its own reviewed lock-tail contract. The read position is representation only;
+compare mount/inode/flags, not mutable `pos`, across samples. Compare fdinfo inode
+and flags against current `fstat`/`F_GETFL`/`F_GETFD`, with `FD_CLOEXEC` translated
+to the emitter's `O_CLOEXEC` bit; no ACL or permission classification follows.
+
+Read fdinfo to actual terminal EOF with an inclusive 4,096-byte cap. Read each
+mountinfo table to actual terminal EOF with the unchanged inclusive 1,048,576-byte,
+4,096-row and 8,192-byte-per-row decoder policy. For each record, fallibly reserve
+its cap plus one sentinel byte once before I/O. A positive short read advances
+within the buffer; a zero result establishes EOF only after a nonempty complete
+record; the sentinel distinguishes exact cap plus EOF from overflow. At most
+cap-plus-one positive reads and one terminal EOF call are allowed. An error,
+including `EINTR` or `EAGAIN`, denies immediately; do not use an auto-retrying
+`read_to_end`, retry interrupted calls, accept a prefix or parse a truncated read.
+The mountinfo decoder's fixed errors and fallible allocation policy are unchanged.
+
+Read before and after tables sequentially. Compare their complete immutable byte
+buffers before decoding the retained table; drop the first buffer and do not
+create a self-referential struct. The eventual private observation owns retained
+mountinfo bytes and fixed numeric identities; any decoded table borrows those
+bytes transiently. No derived Debug, serde, raw-input diagnostic, external
+serialization, success constructor or injected successful observer is allowed.
+Reader denials use only private fixed codes with the `native_procfs.` prefix:
+`unsupported_platform`, `invalid_descriptor`, `origin_rejected`, `read_rejected`,
+`invalid_fdinfo`, `limit_exceeded`, `storage_unavailable`, `budget_exhausted`,
+`object_changed`, `association_rejected`. Existing mountinfo parser denials retain
+their reviewed private codes; no errno text, descriptor number, PID, path, raw
+line, mount option or namespace token enters a diagnostic. There is no partial
+successful observation. Logical buffer/requested work bounds do not bound allocator/kernel memory,
+scheduler delay or syscall return.
+
+##### Current association and drift
+
+For the resource, compare only device/inode, kind/mode, UID/GID, link count,
+ctime, filesystem magic, mount ID and current descriptor/status flags. For
+proc directories compare device/inode, kind, procfs magic and mount ID; do not
+compare dynamic root link counts or access times. Process-root comparison is
+device/inode/mount ID; namespace comparison is retained NSFS device/inode.
+The finite candidate resource filesystem mapping is `EXT4_SUPER_MAGIC` to
+`ext4` and `TMPFS_MAGIC` to `tmpfs`; every other resource filesystem denies.
+Temporary tmpfs fixtures prove untrusted candidate association only and do not
+satisfy the selected ext4 host recipe. Proc-root magic maps only to `proc`.
+No opaque filesystem name is interpreted as an authenticated mapping.
+
+One proposed attempt brackets reads with resource/proc-root `fstat`, `fstatfs`,
+`statx` mount ID, descriptor flags, the self-link, current process-root metadata
+and fresh namespace-link metadata compared to retained namespace handles. It
+reads resource and proc-root fdinfo before and after two fresh mountinfo tables.
+Require unchanged fixed identities/flags, equal complete tables, exactly one
+row for each fdinfo mount ID, agreement with descriptor `statx` mount ID, matching
+row device major/minor and filesystem type, and current root/namespace equality.
+The proc-root row must be `proc`; the resource row must match the finite
+filesystem mapping above, not a caller Boolean. Missing or hidden/outside-root rows,
+duplicates, detached mounts, unavailable fields and drift deny the whole sample.
+Retain at most one resource borrow, proc root, numeric-self, fdinfo directory,
+namespace directory, two namespace handles and one open record per attempt.
+
+This is bracketed current evidence, not an atomic namespace snapshot or proof
+that no ABA change occurred between samples. Mount option bytes establish no
+trusted `idmapped=false`, ACL absence, active LSM list or continuous effective
+permissions. Subsequent integration still needs the accepted root manifest,
+actual pins and grant/use invalidation/linearization contract. Live mount and
+namespace tokens remain separate from persistent resource identity. No generic
+host-root, daemon or adapter association is inferred from matching self data.
+
+##### Blocking precode gate: enforceable native return
+
+The unchanged budget requirement is an absolute deadline no later than five
+seconds from observation start and no later than the enclosing uninterrupted
+preparation/action deadline. Acquisition, metadata/lookup, reads, decoding and
+owned-handle cleanup belong to that attempt; no per-file reset is permitted.
+A late completion must deny, but deadline checks before/after syscalls alone
+cannot guarantee that control returns by the deadline.
+
+In reviewed upstream v6.8, `seq_read_iter` acquires a mutex; the mount iterator
+acquires the namespace read semaphore; mount emission calls filesystem/security
+hooks. Read readiness and `O_NONBLOCK` do not add a completion deadline to these
+paths. The inspected synchronous recipe therefore has **no proved enforceable
+native return bound**. A timer notification, async wrapper, byte/read cap,
+`RESOLVE_CACHED`, detached borrowed thread or signal is not an accepted substitute.
+Kernel time/allocation are not bounded by userspace storage limits. There is no
+new claim that all possible Linux implementations are infeasible.
+
+Before source, a separate exact decision must define how bounded caller return,
+held-descriptor/store lifetime, late-result rejection, at-most-one unfinished
+observation, resource retention/quarantine and eventual cleanup work together.
+A worker/process isolation proposal would change custody and trust surfaces;
+it needs independent feasibility review and human acceptance if it changes the
+accepted design. It must preserve a genuine non-root positive case, safe APIs,
+no resource duplication/reopen, no privileged helper and no authority-bearing
+IPC. This contract does not select or authorize such a worker. Weakening the
+deadline, claiming cancellation from polling, or always denying the intended
+positive case cannot open reader source. Until the gate is resolved, all proposed
+operation/storage details above remain unimplemented and precode readiness fails.
+
+##### Required evidence and later source ownership
+
+A ready contract must receive fresh independent read-only precode review of
+every native operation, timeout/lifetime/cleanup path and feasible non-root
+positive recipe. The later isolated source would own
+`crates/lnsatd/src/headless_native_procfs.rs`, its focused test companion and the
+private declaration in `headless_native.rs`; no ownership or source permission
+is assigned before the blocking gate passes. Existing decoder/ACL/journal and
+Cargo versions/features/lock remain unchanged in this documentation slice.
+
+Future tests need genuine disposable Linux self-process/held regular-file and
+directory positives (including O_PATH only if its exact custody passes), known
+record origin and descriptor association, exact EOF/sentinel/short-read bounds,
+strict fdinfo/extra-tail failures, unsupported-platform denials, fixed data-free
+errors and deterministic change at every bracketing stage. Test-only hooks may
+force denial/change/short reads, never fabricate a successful native origin or
+permit. Deadline proof must cover a genuinely unfinished native operation,
+late completion and retained-resource cleanup; advancing a fake clock around
+an already returned syscall is insufficient. No test changes mount/namespace,
+permissions or a selected host, invokes Docker, duplicates SQLite's FD, performs
+a target action or establishes runtime/support/certification authority.
+
+Future source needs focused pinned Linux tests, formatting/strict Clippy,
+`npm run check`, docs/public/inventory/history checks and exact source/direct-child
+attestations. Documentation checks and independent approval of this accurate
+gate record do not approve reader implementation. The complete coherent
+native/wire/daemon/store/pin/positive-feasibility freeze, separate artifact
+capture, product integration, runtime operator proof and V1/release remain open.
+
 Open genuine procfs and cgroupfs once, verify filesystem magic and held mount
 association against the reviewed host recipe, and use descriptor-relative
 no-follow reads. Procfs intentional `self`/namespace kernel links are handled
@@ -429,6 +624,24 @@ continues to own runtime truth; runtime/package/publication remain closed.
   [upstream proc documentation](https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/filesystems/proc.rst)
   distinguishes that field from the later tagged optional fields. An exact
   installed-kernel recipe and current authenticated association remain required.
+
+- [Linux v6.8 self link](https://github.com/torvalds/linux/blob/v6.8/fs/proc/self.c)
+  derives its numeric target from the current task in the procfs PID view;
+  [fdinfo source](https://github.com/torvalds/linux/blob/v6.8/fs/proc/fd.c)
+  emits four base fields and may append lock/type-specific data.
+- [Linux v6.8 sequential reads](https://github.com/torvalds/linux/blob/v6.8/fs/seq_file.c)
+  and [mount iterator](https://github.com/torvalds/linux/blob/v6.8/fs/namespace.c)
+  expose the inspected synchronous locking paths, not a five-second return promise.
+  [Namespace links](https://github.com/torvalds/linux/blob/v6.8/fs/proc/namespaces.c)
+  are kernel magic links, distinct from ordinary no-follow descent.
+- Exact safe [nix 0.31.3 openat2](https://docs.rs/nix/0.31.3/nix/fcntl/fn.openat2.html),
+  [read](https://docs.rs/nix/0.31.3/nix/unistd/fn.read.html) and
+  [poll](https://docs.rs/nix/0.31.3/nix/poll/fn.poll.html), plus
+  [rustix 1.1.5 fixed-buffer readlinkat](https://docs.rs/rustix/1.1.5/rustix/fs/fn.readlinkat_raw.html)
+  and [statx](https://docs.rs/rustix/1.1.5/rustix/fs/fn.statx.html), provide
+  selected primitives under existing features, not native read cancellation.
+  [Rust process ID](https://doc.rust-lang.org/std/process/fn.id.html) avoids adding
+  nix's currently disabled `process` feature.
 
 These source-derived recipe choices are LNSAT design inferences. Research does
 not provide owner acceptance of a material design change or runtime evidence.
