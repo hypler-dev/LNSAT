@@ -75,7 +75,8 @@ installation_ref, binding_digest, recipe_digest, probe_entrypoint,
 probe_executable_digest, image_manifest_digest, image_index_digest
 ```
 
-`installation_ref` is the HCFG logical reference; binding/recipe/executable/
+`installation_ref` is the HCFG logical reference, including its required
+`installation:` prefix and existing V1 reference grammar; binding/recipe/executable/
 manifest digests use the common encoding. `image_index_digest` is required;
 explicit null means no selected index, otherwise exact separately verified
 index association. The probe entrypoint is absolute, canonical and at most
@@ -300,3 +301,91 @@ cover escaped duplicate keys, alternate ordering, all unknown/missing/null/type
 cases, integer/collection/byte limits, startup/action budget continuity,
 cross-context/container/challenge substitutions, framing truncation and replay.
 Actual Linux/daemon/probe/selected-target negatives remain separate proof.
+
+## Stage-A private schema-3 profile codec contract
+
+The human-accepted [Stage-A source order](source-freeze-staging-decision.md)
+allows this exact independently reviewed inert prerequisite before the complete
+integration freeze. The earlier whole-wire freeze requirement remains mandatory
+for integration; it does not prohibit this disconnected profile-only candidate.
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-schema-3-profile-codec)
+owns its disposition. This contract does not open startup/preparation/action
+frames, native observation, root trust, registration or a product caller.
+
+Source ownership is limited to new private `crates/lnsatd/src/headless_profile.rs`
+and `headless_profile_tests.rs`, with one private declaration in `lib.rs`.
+The existing schema-1/2 runtime profile, its loaders, CLI behavior, store schema,
+native reader and locked Phase 11 source remain unchanged. No dependency or
+feature change is needed. The controller owns this contract, Project Status,
+the existing plan/build-sequence links and generated review metadata.
+
+The candidate accepts borrowed bytes and returns a module-private unverified
+profile containing validated declarations and their two commitments. It performs
+no I/O and cannot construct or expose a guard, credential, active installation,
+observer, release, audit or authority token. Neither profile types nor parse
+functions are exported outside this private module. Retained input strings and
+canonical buffers use zeroizing storage; they have no `Debug`, `Display` or
+logging path. Borrowed caller input, serde's transient internal buffers and
+allocator behavior are not claimed to be securely erased. This is bounded
+representation validation, not a fallible-allocation or hard-time guarantee.
+
+The 16-KiB inclusive input ceiling is checked before UTF-8/JSON parsing. Typed
+closed deserialization rejects unknown, missing, duplicate and escaped-duplicate
+keys at every object, trailing JSON, wrong types and unexpected nulls. Typed
+unsigned numbers reject signed (including negative zero), fraction and exponent
+spellings as well as overflow. The required nullable index uses explicit field
+presence: an omitted index must never deserialize as its allowed explicit null.
+The exact constants, ranges, non-root IDs, digests and reference grammar above
+apply. Valid input ordering, JSON whitespace and equivalent JSON string escapes
+do not change the canonical digest. Public schema-1/2 parsers are not reused or
+silently widened.
+
+All path checks use platform-independent Linux lexical rules: leading slash,
+non-root path, byte ceiling, no backslash, NUL, ASCII control, empty component,
+trailing slash, `.` or `..` component. They do not resolve or inspect any path.
+The filesystem workdir and target must be identical. Component-wise overlap
+means equality or either path being an ancestor of the other at a slash boundary;
+string-prefix adjacency such as `/work` and `/work-copy` does not overlap.
+The target must overlap neither immutable entrypoint nor the finite reserved
+roots `/proc`, `/dev`, `/sys`, `/etc/hosts`, `/etc/hostname`, `/etc/resolv.conf`
+from the [realized mount contract](realized-recipe-source-spec.md#mount-accounting-algorithm).
+The container root mount `/` is deliberately not in that exclusion set because
+every valid target lies beneath it; lexical root itself is already denied.
+Readonly/mask overlays and forbidden shm are covered by their reserved roots.
+Probe and adapter entrypoints must differ. Any additional immutable recipe
+layout checks, actual object type and resource/daemon association remain future
+native/recipe checks; lexical acceptance supplies none of them.
+
+Canonical encoding serializes only the closed validated typed profile, with
+every object's fields in ASCII lexical order, no whitespace or trailing LF.
+Its output is also capped at 16 KiB; no generic untrusted JSON object survives
+parsing. The profile domain and complete object are exactly as specified above.
+The private production parser obtains the Git configuration floor only from
+`lnsat_store::phase7_git_adapter_configuration_digest_v1`; callers cannot supply
+an alternate floor. The authority-domain hash is an unverified configuration
+commitment, not proof of authorization. A private hash helper may take a
+synthetic floor inside tests for the already published golden vectors. It is
+not exported or connected to a product entrypoint.
+
+Errors are a finite private enum with input-free classifications for input size,
+JSON/UTF-8 shape, semantic constraints and canonical encoding. Raw parser errors,
+paths, digests and field values are never returned or logged. No successful parse
+converts a declared limit, expected digest or synthetic pin into runtime evidence.
+
+Before source, fresh independent review covers this contract and independently
+recomputes both existing [profile vectors](startup-golden-vectors.md#schema-3-profile-inputs).
+Source tests cover both positive vectors, production floor derivation, whitespace/
+ordering/escape invariance, invalid UTF-8 and trailing JSON, exactly 16 KiB and
+one byte above it (including size-before-UTF-8 error precedence), required-null
+presence, every object's missing/unknown/duplicate/null/type cases, numeric
+lexical/range boundaries, the HCFG installation-reference prefix and
+reference/digest/path ceilings, each reserved overlap
+and component adjacency, target overlap with each immutable entrypoint in both
+ancestor directions and equality, probe/adapter equality, exact profile
+constants, canonical byte limits and commitment changes for accepted field changes.
+Focused pinned Rust tests, formatting and strict Clippy precede `npm run check`,
+docs/public/inventory/history checks, installed audit tools and fresh independent
+exact-source/direct-child attestations. Rollback is an inert-source revert, with
+no runtime cleanup or data migration. Actual Linux reader evidence, complete
+native/wire/daemon/store/pin freeze, artifact capture, integration and activation
+remain separate unsatisfied gates.

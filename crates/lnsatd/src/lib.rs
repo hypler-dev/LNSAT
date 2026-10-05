@@ -17,6 +17,11 @@ pub mod headless_config_loader;
     reason = "Reviewed inert Stage-A native candidate awaits complete freeze and integration"
 )]
 mod headless_native;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A profile codec awaits complete freeze and integration"
+)]
+mod headless_profile;
 pub mod product_config;
 pub mod product_output;
 pub mod product_recovery;

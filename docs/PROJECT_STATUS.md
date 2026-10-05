@@ -1651,6 +1651,45 @@ SQL18/initializer/activation, merge/main mutation, package/image construction,
 release/publication/deploy/production or tool installation is opened. LNSAT
 remains neutral and standalone; no support or certification claim follows.
 
+### Stage-A private schema-3 profile codec
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [private codec contract](architecture/headless-resource-enforcement/startup-wire-source-spec.md#stage-a-private-schema-3-profile-codec-contract)
+bounds the next independent prerequisite while actual Linux reader evidence
+remains open. This checkpoint specifies strict schema-3 representation, exact
+commitments, Linux lexical paths, reserved-mount separation and required-null
+presence. Fresh independent OpenAI Terra xhigh precode review identified missing
+mandatory byte/entrypoint denial cases in the test matrix. The contract now
+requires those cases; independent recheck passed without remaining P1/P2/P3.
+The private module/tests and declaration now implement the schema-3 candidate.
+It parses closed map-only JSON, requires explicit nullable-index presence,
+retains the existing HCFG installation-reference prefix, checks Linux lexical
+paths and immutable/reserved mount separation, and derives both exact canonical
+commitments using the compiled Git floor. It performs no I/O or registration;
+retained strings and canonical buffers use zeroizing storage. Existing schema-1/2
+behavior remains unchanged.
+
+Nine focused host tests pass, including both independently recomputed golden
+vectors and aggregated positive/denial matrices. Draft validation exposed omitted
+nullable-field acceptance and derived Serde positional-array acceptance; explicit
+presence and map-only deserialization now deny both. Tests isolate path overlap,
+boolean posture, numerical/byte limits and commitment changes for all 24 mutable
+accepted fields. Fresh independent OpenAI Terra xhigh source review identified
+incomplete commitment-change coverage; the completed matrix passed recheck with
+no remaining P1/P2/P3. Full `npm run check` passes: 1,519 TypeScript tests,
+139 contract comparisons, 264 macOS store tests with two ignored, and 163 daemon
+tests. Strict host Clippy, formatting and metadata policy pass. Semgrep reports
+one unchanged test-helper INFO, independently non-actionable for this diff;
+Gitleaks reports zero findings. Exact source/direct-child attestation is a separate
+`PHR-0035` gate, pending at this source checkpoint. Host source evidence supplies
+no native or runtime proof.
+
+LNSAT owns standalone CLI setup, validation, management and recovery; Rangoon
+uses standard engine contracts as an optional consumer. This private parser
+does not complete those commands or open initialization, registration, activation,
+startup frames or runtime authority. Full freeze, artifact capture, integration,
+actual native/runtime evidence and packaging retain their separate gates.
+
 ### Stage-A private fdinfo byte candidate
 
 Canonical work record: this subsection, under the accepted Stage-A source-order

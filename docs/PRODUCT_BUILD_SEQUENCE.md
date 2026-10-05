@@ -417,12 +417,17 @@ it can rely on a supported engine only within the proven package/target scope.
 
 ### Next bounded delivery work
 
-Continue the named inert reader implementation from its exact precode PASS;
-do not reopen the already accepted owner decision. Actual native results and
-the complete recovery/native freeze remain distinct later gates.
+The private reader source candidate is implemented; actual Linux compilation,
+genuine positive and unfinished-operation evidence remain outstanding. Do not
+reopen the already accepted owner decision. Actual native results and the complete
+recovery/native freeze remain distinct later gates.
 In parallel, retain exact existing
 source/test mappings for the protected workflow and prepare only independently
-reviewed inert prerequisites allowed by Stage A. Do not restart completed
+reviewed inert prerequisites allowed by Stage A. The next profile-only codec
+contract has passed its independent precode gate; its bounded private source,
+validation and exact review proceed under the
+[canonical status record](PROJECT_STATUS.md#stage-a-private-schema-3-profile-codec).
+It does not open CLI setup or replace the native evidence. Do not restart completed
 prerequisites, implement fake success or treat an always-deny implementation as
 the required positive case. Full freeze, integration, real runtime, RC and
 package proof each remain observable exits. Counting source packets or passing

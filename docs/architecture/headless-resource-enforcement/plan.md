@@ -138,6 +138,17 @@ source; focused and full source validation plus exact attestations follow.
 
 ## Complete native freeze and later gates
 
+The next independent Stage-A prerequisite is the
+[private schema-3 profile codec](startup-wire-source-spec.md#stage-a-private-schema-3-profile-codec-contract).
+Its exact profile-only contract passed fresh independent precode review after
+the mandatory byte/entrypoint denial matrix was completed. The named new private
+module/tests and declaration now contain the private candidate; independent source
+review and full host validation passed, as recorded in Project Status. Exact
+source/direct-child attestation remains a distinct gate. It neither changes schema-1/2 callers nor supplies
+startup frames, native evidence or authority.
+Project Status owns acceptance and implementation evidence. Actual Linux reader
+completion remains open while this independent representation work proceeds.
+
 The reader contract and its later inert source are prerequisites, not the full
 native freeze. The accepted
 [staging decision](source-freeze-staging-decision.md#c-complete-freeze-before-integration-or-activation)
