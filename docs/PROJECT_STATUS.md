@@ -1553,7 +1553,18 @@ accounting before inert reader implementation. The
 narrows a process-lifetime retainer candidate, ownership transfer, slot/state
 linearization and explicit resource accounting. Construction/unwind proof,
 genuine unfinished-operation evidence and the journal/store crash bridge remain
-unresolved; no existing fixture establishes them. Full native/source/pin/positive-feasibility freeze,
+unresolved. The 2026-10-05 investigation completed a finite Linux fixture
+elimination, derived aggregate decoder allocation requests from the existing
+1 MiB input cap, and checked 420 abstract stop/deadline orderings. The model
+supplies ordering evidence only; no native observation ran. No compliant genuine
+unfinished-operation fixture was identified. Existing journal phases lack
+observer-attempt/process identity, so quarantine cannot be presented as a
+completed native crash bridge. The supporting specification now names the
+required durable-before-dispatch/restart-denial obligations without changing
+schema or implementation. Construction, complete synchronization/resource proof,
+actual Linux fixture evidence and the crash bridge remain precode blockers.
+
+Full native/source/pin/positive-feasibility freeze,
 separate artifact capture, product integration and Phase 11 actual runtime remain
 open. No Docker/host/ACL operation, target pressure, credential/provider intake,
 SQL18/initializer/activation, merge/main mutation, package/image construction,

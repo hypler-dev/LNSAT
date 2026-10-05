@@ -646,16 +646,45 @@ must not wrap or be reused. These are private observer states, not installation
 authority or a serialized permit. Worker shutdown/TLS destruction is distinct
 from completion of one job in a persistent thread.
 
-**Resource accounting candidate.** The finite lookup schedule can retain two
+**Requested-storage derivation.** The finite lookup schedule can retain two
 input descriptors, three proc directories (numeric self, fdinfo and ns), two
 namespace descriptors and at most one open record: eight simultaneous descriptor
 identities including the inputs, with no duplication. Open/read/close records
 sequentially; an exact source trace must verify this proposed peak. Requested raw
 record capacity is two 1,048,577-byte mountinfo buffers plus one 4,097-byte fdinfo
-buffer, reused across bracketing reads. The 11-byte self-link buffer and fixed
-path/identity fields are additional. Decoder row/index allocations, Arc/slot
-storage, worker stack, TLS and native thread bookkeeping must be counted
-separately. Existing row/read caps do not prove a total memory ceiling.
+buffer, reused across bracketing reads. The 11-byte self-link buffer is additional.
+These are requested userspace capacities, not bounds on kernel allocation.
+
+The existing private mountinfo decoder permits a tighter aggregate calculation
+than multiplying every field maximum by every row. For input length `I <=
+1,048,576` and row count `N <= 4,096`, it requests one `N`-element row vector, one
+`N`-element `u32` ID vector, and four decoded byte vectors per row. Each decoded
+vector reserves exactly its encoded token length before decoding. Those tokens
+are disjoint spans of the one bounded input; the sum of all requested decoded
+byte capacities is therefore at most `I`, including a partially parsed row on
+failure. Escapes cannot expand that sum. There are at most `4N + 2` decoder
+allocation requests. The ID vector is temporary; row values retain the four
+vectors and borrow option fields from the input. Row tokenization uses a fixed
+42-element slice array, not another heap collection. The fdinfo decoder adds
+no heap allocation.
+
+With all three raw buffers conservatively retained during decoding, the
+requested buffer/decoder payload is at most `3,149,827 + 4,096 * (R + 4)` bytes,
+where `R = size_of::<MountInfoRow>()` for the selected compiled target. The
+11-byte self-link array, stack token array, vector/control structures, two Arc
+allocations, request/result slots, thread stack/TLS and library/native thread
+bookkeeping remain additional. This formula neither assumes an unverified Rust
+layout nor counts mutually exclusive phases as a measured process peak. Existing
+[`headless_native_mountinfo.rs`](../../../crates/lnsatd/src/headless_native_mountinfo.rs)
+implements these decoder bounds; no decoder source change is required.
+
+Rust 1.97.1's [`Vec::try_reserve_exact` contract](https://github.com/rust-lang/rust/blob/1.97.1/library/alloc/src/vec/mod.rs#L1508-L1524)
+allows allocator rounding beyond the requested capacity. The calculation closes
+the logical decoder-request accounting only. It does not establish a heap/RSS
+ceiling, allocation latency, fully fallible construction, stack sufficiency or
+cleanup deadline. Allocation failure must deny; an allocator abort or stack
+failure is a process failure requiring the still-open crash/recovery contract.
+No memory-pressure experiment is authorized to manufacture that evidence.
 
 An explicit `Builder::stack_size` request would avoid reliance on the ambient
 default, but the platform may allocate more. `Builder::spawn` reports OS creation
@@ -664,17 +693,100 @@ fallible. The exact stack request, allocation failure/unwind/abort disposition
 and pinned implementation accounting remain open. Do not advertise fixed total
 memory or a hard return bound before that review.
 
-**Native fixture gap.** No current repository fixture was identified that proves
-a timely genuine procfs/held-ext4 positive and expiry while an actual operation
-from this exact reader is unfinished. Existing readable-file tests and fdinfo/
-mountinfo byte vectors do not provide this evidence. A sleeping closure, channel
-barrier, fake clock, slow destructor or blocked pipe/FIFO can test a containment
-model, but cannot substitute for a genuinely unfinished allowed procfs operation.
-Adding a FIFO to the positive reader path would violate its regular-file/procfs
-origin policy. No host mutation, mount/namespace change, pressure, fault-injection
-facility, unsafe syscall wrapper or helper is authorized to manufacture the
-missing evidence. No impossibility result is claimed; an exact compliant fixture
-and the pinned Linux test environment must be identified and reviewed.
+**Finite Linux fixture investigation.** Read-only review of upstream Linux
+v6.8 identifies the following candidates. No native operation or experiment was
+run. A future ordinary positive fixture would require a verified genuine held
+procfs root and an already-held read-only, unlocked ext4 file/directory in the
+same process; it must pass every origin, flags, four-line grammar, association
+and bracketing check. This is an unexecuted recipe, not a positive result or a
+claim that the eventual pinned host satisfies it.
+
+| Candidate                                                      | Source-derived result and remaining boundary                                                                                                                                                                                                                             |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A second procfs record read                                    | `seq_open` creates a private per-open mutex. The candidate's freshly opened, unshared record does not contend on another open's mutex. Sharing its record with a second reader would change the exact schedule.                                                          |
+| Mountinfo namespace semaphore                                  | `m_start` takes `namespace_sem` for reading. This is a genuine possible wait, but no allowed mechanism was identified to hold the writer side with a deterministic rendezvous. A controlled mount operation or kernel test hook would require a separate scope decision. |
+| Held ext4 file lock                                            | `fdinfo` prints file-lock state instead of waiting for the user lock to be granted; ext4 has no `show_fdinfo` hook. Lock tails also fail the candidate's four-line grammar. Internal spin-lock contention is not a controlled fixture.                                   |
+| Self link, fixed directory/namespace/root/statx operations     | Internal allocation or contention is possible; the inspected paths supply no reproducible, non-mutating userspace rendezvous. Forcing reclaim/pressure or adding a fault-injection facility remains forbidden.                                                           |
+| Userspace in-flight flag or task syscall snapshot              | A pre-call flag cannot prove kernel entry. A task syscall snapshot would add unapproved `task/TID/syscall` leaves and needs its own identity/deadline association proof; it is not an accepted substitute.                                                               |
+| Sleeping closure, barrier, fake clock, slow destructor or FIFO | These test an abstract containment path or a different operation. They do not prove that an allowed procfs operation remains unfinished at timeout.                                                                                                                      |
+
+Primary sources are Linux v6.8
+[`seq_open` / `seq_read_iter`](https://github.com/torvalds/linux/blob/v6.8/fs/seq_file.c#L53-L80),
+[`mountinfo_open`](https://github.com/torvalds/linux/blob/v6.8/fs/proc_namespace.c#L222-L265),
+[`m_start` / namespace locking](https://github.com/torvalds/linux/blob/v6.8/fs/namespace.c#L1365-L1406),
+[`fdinfo` emission](https://github.com/torvalds/linux/blob/v6.8/fs/proc/fd.c#L21-L70),
+[`show_fd_locks`](https://github.com/torvalds/linux/blob/v6.8/fs/locks.c#L2689-L2705),
+[ext4 file operations](https://github.com/torvalds/linux/blob/v6.8/fs/ext4/file.c#L872-L890)
+and [task syscall sampling](https://github.com/torvalds/linux/blob/v6.8/fs/proc/base.c#L603-L627).
+These are research references, not captured installed-kernel pins.
+
+The inspected candidate set yields no compliant unfinished-operation fixture;
+this is not a general impossibility result. One concrete missing test capability
+would be a separately reviewed disposable Linux mechanism that proves a
+mountinfo read has reached the held namespace semaphore and keeps it there
+through the coordinator's original deadline, then releases it for late-result
+and cleanup checks. Holding the writer alone is insufficient: reader arrival
+must also be evidenced. Host/namespace changes, helpers, tracing/fault injection,
+target pressure and tool installation remain closed. Do not repeatedly replace
+this missing evidence with another parser or generic scheduling test.
+
+**Stop/deadline ordering investigation.** Two split-decision designs are
+insufficient. A clock sample before a later acceptance commit can become stale
+across scheduling; a separate open-latch read can precede stop while the later
+commit follows it. An exact implementation must reject both schedules.
+
+A bounded abstract candidate reserves a ready result by compare/exchange on the
+same control word that carries a sticky terminal bit, then samples the current
+monotonic clock. A result can be accepted only if that subsequent sample is
+strictly before the original deadline and stop has not already been observed.
+The reservation can then be its logical linearization point: monotonicity proves
+it preceded the timely sample. Stop before reservation prevents reservation;
+stop afterward permanently closes future admission, and retirement must use a
+conditional transition that cannot clear the terminal bit. A late sample denies
+and closes the lane. Reservation alone publishes no sample or permission.
+This candidate retains late-delivery denial and makes no response-time promise.
+
+A finite external evidence model enumerated 420 orderings of cleanup/publication,
+reservation/clock/retirement, stop and deadline arrival; six allowed a timely
+sample, with no acceptance reservation after stop or expiry. That result assumes
+atomic sequentially consistent control steps and prior complete worker cleanup.
+It checks one attempt only. It does not prove Rust memory ordering, result-slot
+ownership, token reuse/exhaustion, next admission, panic, destruction, construction,
+crash recovery or genuinely unfinished native work. Those are still required
+before selecting actual primitives or implementing a worker. The model is an
+investigation aid outside the product repository, not an authority fixture.
+
+**Existing journal boundary and required crash bridge.** The current
+[preparation journal contract](preparation-store-source-spec.md#private-preparation-directory-and-journal)
+and private codec have only `pending`, `probe_created`, `cleanup_verified`,
+`bound` and `quarantined` phases. Their record identity binds preparation,
+candidate, store, recipe, owner, challenge, container and revision. It does not
+bind an observer lane/attempt, process incarnation, original deadline, retained
+custody or unresolved syscall. `quarantined` can conservatively deny a preparation,
+but cannot truthfully identify or prove cleanup of a native worker. The current
+custody implementation deliberately defers persistent observation quarantine
+and offline recovery; a valid record after reopening remains untrusted evidence.
+
+Before product integration, extend this same canonical preparation authority
+under a separately reviewed schema/compatibility decision; do not add a second
+completion ledger or reinterpret `probe_created`/`cleanup_verified` as native
+observation states. The exact bridge must bind the attempt and owning process
+incarnation to preparation/resource/lease identity, persist observation intent
+before dispatch, define which acknowledged durable transition permits a clean
+resolution, and treat timeout, crash or ambiguous persistence as unresolved.
+No dispatch or retry follows a failed/ambiguous intent write. A restarted owner
+must recover under the exclusive installation lease and deny new observation
+until the prior attempt is conservatively reconciled; process absence, a PID
+match, a parseable journal or late worker completion alone cannot clear it.
+
+The deadline path must close admission in memory without waiting for journal
+I/O or an owned-file destructor. Pre-dispatch durable intent must therefore be
+sufficient for conservative restart denial even if a later quarantine append
+never completes. Unresolved persistence and retained work must also prevent a
+clean shutdown/release claim. Exact phase/field names, identity freshness,
+write/flush ordering, journal budgets, compatibility and reconciliation evidence
+remain part of the later coherent store/daemon freeze. No journal codec, schema,
+writer, recovery action or selected-store operation is changed here.
 
 **Precode disposition.** Acceptance resolves the owner-choice gate only.
 Construction/drop ownership, the complete resource/synchronization proof, genuine
