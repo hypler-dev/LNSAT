@@ -266,7 +266,7 @@
       "review_subject_ids": ["headless-native-reader-exact-precode-contract"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0032/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }

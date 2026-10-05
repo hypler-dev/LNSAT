@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0032-independent-implementation-review-11ab6067",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-reader-exact-precode-contract"],
+  "base_revision": "4e9389135d4270660dd6e33820f149748651532c",
+  "reviewed_revision": "11ab606726083eb6a7614f382c71e7f43f6b1b3a",
+  "reviewed_tree_oid": "0baed99c3fc36d2b46f1eabf0a4a080902911920",
+  "diff_sha256": "sha256:2e0d6e51ba151bcbdb3a0b4cae976ed857e1bb34394a12d843e093adda0f14c0",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:90e14b2b75cb086ac5fa2871f83c6ff5d7439590aa6609165a10d90c4bea52a7"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:10ad797bea7973bebac27ef6a50f98757535269b403cfc79ac68a5f6544f09aa"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:7e98f570fb87055ca2e7c4db6e8d31e65bae4a8b5ce52bdc106bab62df594bdb"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:0ba959a4ec6412597fdc696c93ab4c0002ea6fa807b20e7ea5bddce19876bbdb"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:69b52d1fa8e7d2881fd662de20e44a89126b190f2a7db2b61a265ec97c8760d1"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/procfs_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only whole-reader precode and exact documentation review. Exact native schedule, retained construction/custody, combined atomic state, immutable deadline acceptance, cleanup accounting, positive and instrumented-negative test methods and future canonical crash-bridge invariants passed with no remaining P1/P2/P3. Private inert reader source gate only; actual native evidence still gates candidate completion and complete recovery/native freeze gates integration. No implementation, experiment, kernel/harness build or execution, runtime, support or release claim. Exact source and direct-child bindings reviewed separately."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
