@@ -261,6 +261,22 @@ Raw-blob custody, selected recipe/pins, storage/daemon association, full native
 freeze, product integration and actual runtime remain separate dependencies.
 This work does not open the pending kernel/harness source packet.
 
+### Private Create and Wait prerequisite
+
+After Version, Info and Image, independently review the
+[Create/Wait supplied-body contract](docker-response-source-spec.md#stage-a-private-create-and-wait-decoder-contract)
+before implementing its named private module, synthetic tests and declaration.
+That exact precode review has passed; the named inert source scope is open
+under Stage A, with implementation evidence recorded only in Project Status.
+The two representations supply only a claimed container ID and claimed zero
+exit; they do not establish creation, ownership, consequence or cleanup. Exact
+source normalization, complete shape/recipe rules, bounds, fixed errors and
+mandatory positive/denial evidence are specified. Project Status owns precode
+and implementation disposition. Same-instance transport, attempt/journal
+custody, Inspect/native association, durable receipt and uncertainty handling
+remain later integration requirements. No pending native fixture source gate,
+full freeze, runtime or publication authority is opened by this prerequisite.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.

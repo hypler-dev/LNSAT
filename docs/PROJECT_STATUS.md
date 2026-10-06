@@ -24,16 +24,16 @@ Those remain documentation only; provider integration and the release writer
 are unfinished.
 
 The latest bounded engine source is the
-[private daemon Image decoder](#stage-a-private-daemon-image-decoder-contract),
-following the Version and Info supplied-body decoders, context/challenge
-codecs and earlier private candidates. Image has a private supplied-body
-implementation and independently authored synthetic tests. Full host-source
-validation passed on unchanged production bytes; final review-driven test
-coverage passes 21 focused groups and strict lint. Exact source and direct-child
-attestations are complete under PHR-0047, following the PHR-0046 contract review.
-The predecessor Info and Version source chains remain attested under PHR-0038
-and PHR-0037. These prerequisites stay distinct from unfinished V1 integration,
-native evidence, enterprise assurance and actual runtime gates.
+[private Create/Wait decoder candidate](#stage-a-private-create-and-wait-decoder-contract),
+following the private Version, Info and Image supplied-body decoders,
+context/challenge codecs and earlier prerequisites. It has fifteen focused
+synthetic test groups, strict host lint and full host-source validation passing.
+Fresh independent exact source review passed; PHR-0049 tracks this source slice
+and its separate direct-child attestation. The predecessor Image chain remains attested under
+PHR-0047 after PHR-0046 contract review; Info and Version remain separately
+attested under PHR-0038 and PHR-0037. All are private prerequisites, distinct
+from unfinished V1 integration, native evidence, enterprise assurance and
+actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
@@ -1674,6 +1674,44 @@ open. No Docker/host/ACL operation, target pressure, credential/provider intake,
 SQL18/initializer/activation, merge/main mutation, package/image construction,
 release/publication/deploy/production or tool installation is opened. LNSAT
 remains neutral and standalone; no support or certification claim follows.
+
+### Stage-A private Create and Wait decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [Create/Wait supplied-body contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-create-and-wait-decoder-contract)
+prepares the next private prerequisite after Version, Info and Image. It names
+exact source/test/declaration ownership, finite preflight/typed bounds, static
+errors, source-shaped positives and the denial/boundary matrix. It retains only
+an unverified created-container ID or unverified zero-exit representation.
+Fresh independent OpenAI Terra xhigh precode review passed after explicit
+non-object-root vectors were added for both entrypoints. The named private
+source/test/declaration scope now contains the inert implementation and
+independently authored synthetic tests. Fifteen focused groups and strict host
+Clippy pass. Initial integration corrected test assertions that assumed scanner
+error traits, then added optional-object duplicate, malformed-number, stage-
+precedence and typed-discard boundary cases. Production acceptance was unchanged.
+Full source validation passed against unchanged source bytes. The initial
+sandbox run denied existing listener fixtures; the permission-scoped rerun
+passed without weakening tests, including the Trace2 Unix-socket case with no
+skip. Fresh independent OpenAI Terra xhigh source review passed with no
+actionable findings. PHR-0049 tracks the exact source and its separate direct
+attestation child. Scoped Semgrep found no new-file findings and one unchanged
+test-only informational finding in lib.rs; Gitleaks found none.
+
+Exact pinned Moby type, create-builder and container-router bytes were checked
+against independently decoded GitHub Contents and Git blob identities. The
+WaitResponse appendix hash was stale and is corrected. Successful Create has an
+allocated warnings array; router warnings still deny the selected recipe. Wait
+writes success headers before its result, so headers never imply completion;
+any present Error denies the selected zero-exit representation. These source
+facts provide no current daemon or runtime evidence.
+
+The decoder contract preserves future same-instance response/attempt/journal
+custody, uncertainty after lost creation responses, independent consequence
+verification and cleanup/reconciliation. Exact source and direct-child
+attestations remain separate from native fixture source authority, the full
+native/source/pin freeze, product wiring and runtime. These
+remain separate gates; LNSAT remains neutral and standalone.
 
 ### Stage-A private daemon Image decoder contract
 
