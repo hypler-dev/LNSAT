@@ -2167,13 +2167,22 @@ and the positive/denial matrix. It separates declaration consistency from
 independently held profile/registry bindings, native root/daemon custody and raw
 OCI parent links; those remain required subsequent boundaries.
 
-PHR-0054 tracks fresh independent exact precode review. No root-manifest source
-or test implementation is added by this documentation packet. The named inert
-candidate requires precode PASS before implementation and its own focused/full
-source validation plus exact source/direct-child review afterward. Current pins
-remain unset; no registry, I/O, successful native constructor, product caller or
-authority conversion is introduced. Full native freeze, integration, runtime,
-packaging and V1 completion remain unfinished. Phase 11 owns runtime proof.
+The exact precode contract and separate direct child are independently reviewed
+and attested by PHR-0054. The named private source, contract-derived sibling
+tests and one private declaration now contain the supplied-body candidate. It
+performs bounded UTF-8 JSON scanning, closed map-only typed decoding, internal
+claim checks and a recursively ordered canonical commitment. It retains all
+current-instance and artifact claims with zeroizing owned strings and buffers;
+static errors reveal no input. Decoder success remains unverified declaration
+consistency, not profile/registry/native or OCI custody evidence.
+
+PHR-0055 tracks the implementation's focused/full source validation and fresh
+independent exact-source review; its registry remains pending until the separate
+direct attestation child records the completed review. Current pins remain
+unset; no registry, I/O, successful native constructor, product caller or
+authority conversion is introduced. The synthetic tests supply no host or
+artifact proof. Full native freeze, integration, runtime, packaging and V1
+completion remain unfinished. Phase 11 owns runtime proof.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

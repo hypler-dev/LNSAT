@@ -49,6 +49,11 @@ mod headless_native;
 mod headless_profile;
 #[allow(
     dead_code,
+    reason = "Reviewed inert Stage-A root manifest decoder awaits complete freeze and integration"
+)]
+mod headless_root_manifest;
+#[allow(
+    dead_code,
     reason = "Reviewed inert Stage-A challenge codec awaits complete freeze and integration"
 )]
 mod headless_startup_challenge;
