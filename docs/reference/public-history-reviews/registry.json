@@ -338,7 +338,7 @@
       "review_subject_ids": ["headless-startup-message-codecs-stage-a"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0041/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
