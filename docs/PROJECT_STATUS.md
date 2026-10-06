@@ -1702,8 +1702,8 @@ cross-domain substitution tests. Three additional stale storage-type appendix
 hashes are corrected without changing field/type/tag inventory. PHR-0051 tracks
 this bounded correction; the reviewed PHR-0050 commits remain preserved.
 
-This is documentation reconciliation only. Inspect implementation is missing;
-the complete private contract and its review gate are tracked in the next
+This reconciliation is documentation only. The complete private contract,
+implementation candidate and their review gates are tracked in the next
 subsection. Project Status continues to track the implemented Create/Wait
 candidate below. Full native/source/pin freeze, product integration, runtime
 and packaging remain unfinished and separately gated.
@@ -1720,13 +1720,23 @@ eighteen source-shaped phase/role/backend vectors. Expected phase, role, backend
 recipe and attempt remain external held-context inputs to later integration;
 a decoder cannot authenticate the expectations from its own input.
 
-This contract is documentation only; Inspect implementation is missing. Fresh
-independent precode review and its exact source/direct-child attestations gate
-the named inert implementation under the accepted Stage-A order. PHR-0052 tracks
-this exact contract slice and its review evidence. No Inspect code,
-caller, API, native fixture source, complete freeze, integration, runtime,
-package, release or support gate is completed by the contract. The full V1
-outcome remains unfinished.
+Fresh independent precode review passed for the exact contract, preserved in
+PHR-0052 and its separate direct-child attestation. The named private module,
+contract-derived sibling tests and one private lib.rs declaration now
+contain the inert supplied-body implementation candidate. It performs complete
+bounded syntax scanning before closed typed decoding and recipe validation;
+it retains coherent unverified lifecycle, role, storage, identity, metadata,
+resource, mount and network claims. Image, Config.Image and selected-manifest
+descriptor remain distinct. Input-derived owned strings use Zeroizing custody;
+static errors reveal no response text. No product caller or I/O is introduced.
+
+PHR-0053 tracks the implementation's focused/full source validation and fresh
+independent exact-source review. Its registry state remains pending until the
+separate direct attestation child records the completed review. The tests are synthetic body-only evidence,
+not current daemon, native custody or held-attempt comparisons. The candidate
+does not complete native fixture source, the full native/source/pin freeze,
+integration, runtime, packaging, release or support. The full V1 outcome remains
+unfinished. Phase 11 continues to own the separately locked runtime proof.
 
 ### Stage-A private Create and Wait decoder contract
 

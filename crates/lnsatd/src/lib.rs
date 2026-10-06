@@ -29,6 +29,11 @@ mod headless_daemon_image;
 mod headless_daemon_info;
 #[allow(
     dead_code,
+    reason = "Reviewed inert Stage-A Inspect decoder awaits complete freeze and integration"
+)]
+mod headless_daemon_inspect;
+#[allow(
+    dead_code,
     reason = "Reviewed inert Stage-A Version decoder awaits complete freeze and integration"
 )]
 mod headless_daemon_version;
