@@ -2827,6 +2827,22 @@ review found no remaining findings. Offline scanning does not establish Python
 transitive coverage or runtime exploitability. The draft remains unmerged; exact
 published-head CI is tracked on its pull request.
 
+The protected-main integration run on 2026-10-06 exposed three further live
+advisories. Its bounded maintenance follow-up pins `smol-toml` to `1.9.0`
+and advances the existing lockfile entries for `proxy-addr` to `2.0.8` and
+`source-map-js` to `1.2.2`. These are the patched versions for
+[GHSA-r4xh-jqrq-34v2](https://github.com/advisories/GHSA-r4xh-jqrq-34v2),
+[GHSA-jqcg-44mw-7w3h](https://github.com/advisories/GHSA-jqcg-44mw-7w3h), and
+[GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q).
+Their dependency requirements, Node engine ranges, and licenses are unchanged;
+tarball URLs and integrity values match the registry metadata. The revised
+lockfile audit reports zero vulnerabilities, and offline lockfile-only npm
+resolution succeeds without installing package code. Exact installed-dependency
+signatures, the full source suite, and protected merge checks remain hosted-CI
+gates. Independent source and direct-child review are recorded under PHR-0043.
+No audit exception, application-source edit, runtime proof, or release
+authority follows from this maintenance.
+
 See [MCP interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md)
 and [Phase 8 adapter authority conformance](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).
 
