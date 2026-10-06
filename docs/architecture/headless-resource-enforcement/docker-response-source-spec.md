@@ -923,11 +923,11 @@ GraphDriver and Storage are mutually exclusive selected storage branches:
 
 ### Inspect lifecycle normalization prerequisite
 
-This is a reconciliation of the existing Inspect recipe before its complete
-private decoder contract, not approval to implement an Inspect module. A future
-contract must name the exact owned source/test/declaration paths, private retained
-projection, fixed error precedence and the complete positive/denial matrix before
-fresh precode review. The selected scenario is a newly created object, one
+This reconciles the existing Inspect recipe for the
+[private decoder contract](#stage-a-private-inspect-decoder-contract), which names
+owned source/test/declaration paths, retained projection, fixed error precedence
+and the complete positive/denial matrix. Reconciliation alone is not approval to
+implement an Inspect module; fresh precode review remains required. The selected scenario is a newly created object, one
 successful first start, then a normal zero-exit stop with no restart, restoration,
 exec, health probe, legacy link or concurrent lifecycle mutation. A response
 cannot select its own trusted phase: the later held attempt/journal chooses the
@@ -1014,8 +1014,9 @@ acceptance cases; this documentation reconciliation does not claim they exist.
 Retain claimed identity, resource ceilings, labels, paths, timestamps, mounts,
 network, storage and descriptor values needed by later comparison. No discarded
 value may become a native path, cleanup selector or authority input. Exact
-retained fields, aggregate owned-memory bounds and error taxonomy still need the
-complete private contract and independent precode review. Container Inspect Image
+retained fields, aggregate owned-memory bounds and error taxonomy are specified
+in the [private Inspect contract](#stage-a-private-inspect-decoder-contract);
+independent precode review remains its implementation gate. Container Inspect Image
 is backend-dependent, as traced below. Existing source/pin freeze and native
 association gates stay open until their own evidence passes.
 
@@ -1201,6 +1202,280 @@ builder holds the same lock. Do not require running endpoint/sandbox IDs on
 the positive stopped response. API reset fields do not prove sandbox deletion:
 cleanup errors can remain, so durable custody and native cleanup/absence
 proof are still required before closing the preparation/action record.
+
+## Stage-A private Inspect decoder contract
+
+This supplied-body prerequisite follows the accepted
+[Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-inspect-decoder-contract)
+owns precode review and implementation truth. The lifecycle, normalization and
+backend identity sections above are normative inputs to this contract. It covers
+the fresh selected container's created, running and normal exited claims for
+preparation and action. Failed starts, restored containers, restarts, health
+transitions and exceptional exits remain denials, not alternate positives.
+
+### Inspect ownership and authority boundary
+
+Owned source is exactly `crates/lnsatd/src/headless_daemon_inspect.rs`, sibling
+`headless_daemon_inspect_tests.rs`, and one private module declaration in
+`crates/lnsatd/src/lib.rs`. The only entrypoint is private
+`decode_inspect_claim(&[u8]) -> Result<UnverifiedContainerInspect, InspectDecodeError>`.
+No existing decoder, shared parser, dependency, feature, public contract or
+product caller changes. The module performs no I/O, transport, native lookup,
+clock read, cleanup, retry, journal/store mutation or authorization.
+
+The result and its children are sealed private types, without public
+constructors, serialization, Debug/Display, Clone or authority conversions.
+It describes coherent **claimed** phase, role and storage representation.
+Those tags never select the expected trusted phase, role, backend or recipe.
+The later caller must select all expected context from held same-attempt state,
+compare every retained claim, then perform independent native/OCI/custody
+checks. A body-only decoder cannot reject a valid claim merely because it is
+from a different attempt or phase than an unavailable caller context. Such
+mismatches are mandatory later integration denials, not fictitious parser proof.
+
+The body cannot distinguish a containerd manifest target from an index target
+by digest syntax. Retain Image and the selected manifest descriptor separately;
+do not equate their digests or infer index membership. Preserve the profile's
+separate raw-config commitment and the backend comparison rules above. Parsing
+success supplies no created-object ownership, execution, cleanup or support
+claim, even when every field matches the static recipe.
+
+### Inspect preflight, allocation and error bounds
+
+Input is one UTF-8 JSON object with optional ordinary JSON whitespace and an
+inclusive 1,048,576-byte body cap. Validate UTF-8, then scan the complete body
+without a dynamic tree or dynamic scanner stack before typed allocation.
+The fixed scanner stack has root-at-one depth at most 32. Enforce these
+inclusive decoded bounds before adding the corresponding item:
+
+| Quantity                                                    | Inspect bound |
+| ----------------------------------------------------------- | ------------- |
+| Members in any object, including unknown/forbidden branches | 128           |
+| Object members across the entire body                       | 4,096         |
+| Elements in any array                                       | 128           |
+| Array elements across the entire body                       | 4,096         |
+| Decoded key bytes                                           | 1..256        |
+| Decoded string value bytes                                  | 0..4,096      |
+| Entries in an allowed typed string dictionary               | 64            |
+
+The global array bound is Inspect-specific, like the 128-member object bound;
+existing decoders remain unchanged. The 64/65-member HostConfig positives must
+fit. A dictionary's 65th entry fails typed shape even when its syntactic object
+fits the 128-member preflight cap. No fallback increases a limit.
+
+Charge all keys, strings, numbers, members and elements in unknown or forbidden
+branches during preflight. Reject BOM, invalid UTF-8, raw controls, malformed
+escapes/surrogates, malformed number syntax, incomplete input and trailing data.
+Finish syntax/limit scanning before rejecting syntactically valid fractional,
+exponent or negative-zero numeric spelling. Every number uses plain decimal
+integer spelling; no coercion from strings or booleans. Selected Linux Go int
+and int64 fields fit i64, uint and uint64 fit u64, and BlkioWeight fits u16.
+Wrong signedness or width is a shape denial; narrower recipe predicates follow.
+
+Use only these fixed data-free error codes, in stage order:
+
+1. `headless_inspect.input_too_large`, before examining an oversized body;
+2. `headless_inspect.json_syntax`, for UTF-8 or preflight syntax;
+3. `headless_inspect.json_limits`, for preflight bounds;
+4. `headless_inspect.json_shape`, for integer spelling/width or closed typed decoding;
+5. `headless_inspect.recipe`, for a completely typed shape failing fixed values or internal consistency.
+
+Within the scan, syntax/limit precedence is the first left-to-right failure.
+Subsequent stages run only after prior stages pass. Root scalars/arrays within
+syntax limits are shape denials. Missing, unknown, wrong-case, raw/escaped
+duplicate keys, positional arrays at object positions and forbidden null are
+shape denials. No error exposes input, field name, offset, path, provider text
+or partial output. A denial says nothing about whether a remote action occurred.
+
+Every module-owned input-derived string, including decoded keys and discarded
+values, has a Zeroizing owner. Any fixed preflight string buffer is also
+zeroized. Caller input and JSON-library scratch are outside that custody claim.
+Typed decoding and projection move allocations; they do not clone input text.
+Across simultaneously live module-owned decoded string payloads, the sum is at
+most the body cap: each input token contributes at most its encoded byte length
+and is owned once. Dictionary keys move into their typed records; closed-field
+keys are short-lived. No reserialized response or full input copy is retained.
+Container member/element slots are bounded by the 4,096+4,096 global counts,
+with fixed typed-record and fixed scanner-stack overhead. Vector reservation
+must respect these verified limits and cannot trust an unbounded size hint.
+These are logical payload/slot bounds, not a promise about allocator overhead,
+process RSS, library scratch or universal memory erasure. Review must verify
+actual ownership and capacity behavior rather than infer it from the body cap.
+
+### Inspect complete typed shapes
+
+The appendix gives exact JSON spellings, types and embedding; this section and
+the normalization sections restrict that inventory to the selected recipe.
+All untagged fields are required. Embedded Resources is flattened, not a key.
+Every object is a closed typed map. The only dynamic key sets are Config.Labels,
+GraphDriver.Data and descriptor annotations, each a bounded string dictionary
+with duplicate decoded keys denied. No generic JSON Value, ignored subtree,
+arbitrary empty struct, opaque serialized child or recursive skip is accepted.
+
+| Position                             | Required representation and optional-key rule                                                                                                                                                                                                                      |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Inspect root                         | All untagged InspectResponse fields required. State, Config, HostConfig, NetworkSettings non-null. Exactly one non-null GraphDriver or Storage. SizeRw/SizeRootFs forbidden. ImageManifestDescriptor omitted in graphdriver; non-null and required in snapshotter. |
+| State                                | Exactly its eleven untagged fields. Health forbidden, including null.                                                                                                                                                                                              |
+| Config                               | All untagged fields required. Healthcheck, StopSignal and StopTimeout additionally required and non-null. ExposedPorts, ArgsEscaped, NetworkDisabled, OnBuild and Shell forbidden, including empty/false/null forms.                                               |
+| Config.Healthcheck                   | Exactly Test as a non-null string array. All other health keys forbidden.                                                                                                                                                                                          |
+| Config.Volumes                       | Required null or exactly an empty object; preserve which form. No named-volume key accepted.                                                                                                                                                                       |
+| Config.Labels                        | Required non-null string dictionary. Key order is immaterial; retain the entire set for later exact held-request/image-merge comparison.                                                                                                                           |
+| HostConfig                           | All untagged direct and flattened fields required, plus Runtime and Init. Annotations, StorageOpt, Tmpfs, Sysctls and Umask forbidden. Mounts omitted for preparation, required non-null for action. Exactly 64/65 members respectively.                           |
+| HostConfig.LogConfig                 | Exactly Type string and Config empty object.                                                                                                                                                                                                                       |
+| HostConfig.RestartPolicy             | Exactly Name string and MaximumRetryCount integer.                                                                                                                                                                                                                 |
+| Empty object positions               | HostConfig.PortBindings, LogConfig.Config, NetworkSettings.Ports and empty Config.Volumes reject every member. No unsupported port/volume child parser is introduced.                                                                                              |
+| Required null positions              | ExecIDs; HostConfig.Links, MemorySwappiness and all five unused block-device throttle/weight lists; endpoint IPAMConfig, Links, Aliases, DriverOpts and DNSNames. Any non-null value is a shape denial.                                                            |
+| Required empty-only non-string lists | HostConfig.Devices, DeviceRequests and Ulimits are non-null empty arrays; an element is a shape denial. Their unselected child schemas are not modeled.                                                                                                            |
+| Other list positions                 | Required non-null typed string arrays, except ConsoleSize, exactly two u64 integers, and the exact mount arrays below. Fixed contents/lengths fail recipe after typed decoding.                                                                                    |
+| GraphDriver                          | Exactly Name string and Data, either null or a string dictionary. Data is the sole typed-discard subtree; its strings never supply filesystem selectors.                                                                                                           |
+| Storage                              | Exactly RootFS, exactly Snapshot, exactly Name string; all three nested objects required non-null despite omission tags.                                                                                                                                           |
+| Top-level Mounts                     | Non-null array of closed mount records; records require Type, Source, Destination, Mode, RW, Propagation. Name and Driver forbidden.                                                                                                                               |
+| HostConfig.Mounts elements           | Exactly Type, Source, Target, BindOptions; all required non-null. Other mount fields forbidden. BindOptions exactly Propagation string and NonRecursive boolean; other bind options forbidden.                                                                     |
+| NetworkSettings                      | Exactly SandboxID, SandboxKey, Ports and Networks; Networks exactly one non-null `none` endpoint.                                                                                                                                                                  |
+| EndpointSettings                     | All fifteen untagged fields required; null positions as above, other fields string or signed integer as listed in the appendix.                                                                                                                                    |
+| ImageManifestDescriptor              | Exactly required mediaType, digest, size and platform, plus optional non-null annotations dictionary. urls, data and artifactType forbidden. Platform exactly architecture, os and optional nonempty variant; os.version/os.features forbidden.                    |
+
+Except the explicit null/nullable positions in this table, every selected field
+is non-null. Unconditional presence/type requirements and forbidden keys are
+shape rules. The typed intermediate permits optional GraphDriver, Storage,
+ImageManifestDescriptor and HostConfig.Mounts as non-null typed values; exactly
+one storage branch and phase/role/backend-dependent presence/cardinality are
+recipe rules. Thus a graphdriver descriptor or a preparation HostConfig.Mounts
+member is a recipe denial after complete typed decoding, while a null optional
+object/array is a shape denial. This ordering never treats absence as null.
+
+GraphDriver.Data null and empty map remain permitted typed-discard variants.
+Optional descriptor annotations must have 1..64 entries when present, matching
+Go's omission tag. Their keys are ASCII of 1..256 bytes, consistent with the
+Image descriptor grammar; values remain bounded UTF-8 strings. A non-ASCII key,
+like a dictionary over64entries, is a shape denial; an empty annotations map is
+a recipe denial. Retain their exact key/value set and presence, treating map
+order as immaterial. Required-null markers and
+empty-only container visitors still reject decoded duplicates through the
+closed map rules, and preflight visits all rejected children first.
+
+### Inspect fixed predicates and retained projection
+
+Apply the fixed Config/HostConfig/mount/network normalization above after typed
+decoding. Fixed values are validated, never silently defaulted. The private
+result retains the following semantic values, using typed children; field names
+within Rust are private implementation details. Fixed fields may be omitted from
+the final result only after exact validation, as enumerated below.
+
+| Retained claim                                                                | Predicate before projection; later comparison dependency                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Id and Name                                                                   | Id exactly 64 lowercase hex. Name exactly `/lnsat-hcfg6-probe-` or `/lnsat-hcfg6-action-` plus 64 lowercase hex, consistent with claimed role. Later compare held Create ID/name and same-attempt custody; syntax is no ownership proof.                                                                                                                                                                         |
+| Created, claimed phase, State.Pid, StartedAt, FinishedAt                      | Timestamp grammar and coherent phase rules below. Retain exact strings and PID, not only booleans. Later compare held lifecycle and native PID/start-tick association.                                                                                                                                                                                                                                           |
+| Image and Config.Image                                                        | Each full `sha256:` plus 64 lowercase hex. Retain separately; no local equality or config-digest assumption replaces held backend/selector/raw OCI comparison.                                                                                                                                                                                                                                                   |
+| Driver and storage representation                                             | Driver nonempty, not `N/A`; GraphDriver.Name or Storage.RootFS.Snapshot.Name must equal it. Retain claimed representation and name; it cannot select trusted backend. GraphDriver.Data is bounded then discarded.                                                                                                                                                                                                |
+| Manifest descriptor                                                           | Retain mediaType, digest, signed size, annotations presence/full set and platform architecture/os/variant presence/value. Require mediaType exactly `application/vnd.oci.image.manifest.v1+json`, full SHA-256 digest, positive size, os linux and nonempty architecture other than `N/A`; variant absent or nonempty other than `N/A`. Later raw manifest/target/index/config/platform comparison is mandatory. |
+| Claimed role and Config.User                                                  | Role coherent across name, entrypoint and mounts. User is canonical decimal `uid:gid`, no leading zero except a single zero; each fits u32 excluding 4294967295, uid positive. Retain exact value. Actual selected UID/GID, group list and native identity are later checks.                                                                                                                                     |
+| Config.WorkingDir, Config.Labels, Config.Volumes presence variant             | Keep exact workdir, entire labels dictionary and null-versus-empty volumes marker. Require image-role label `io.lnsat.image-role=hcfg6-git-reference`. Other label keys are bounded unverified dictionary entries; only later exact held label-set comparison can admit them. No label authorizes cleanup.                                                                                                       |
+| Memory, MemorySwap, PidsLimit, CpuPeriod, CpuQuota, CgroupParent, MaskedPaths | Memory/PidsLimit positive; MemorySwap equals Memory; CpuPeriod 100000; CpuQuota at least1000, divisible by100 and i64-safe. Retain each number separately, exact parent string and nonempty ordered mask list. Later compare exact request ceilings, daemon defaults, root recipe and native cgroups/masks.                                                                                                      |
+| ResolvConfPath, HostnamePath, HostsPath                                       | Preserve each exact phase-dependent string independently. Empty in created; nonempty canonical absolute paths in running/exited. Never open them here. Later compare held generated metadata and native inode association; retained path does not prove survival.                                                                                                                                                |
+| Action Source and Destination                                                 | Top-level Source/Destination match HostConfig Source/Target and Config.WorkingDir. Preserve exact strings. Both canonical absolute paths; target cannot be `/`. Later canonical resource/native mount/overlap checks remain mandatory. Preparation has no owner mount and workdir `/`.                                                                                                                           |
+| SandboxID, SandboxKey, NetworkID, EndpointID                                  | Preserve all four exact strings, including required phase-specific emptiness. Nonempty IDs exactly64lowercase hex; nonempty key a canonical absolute path. Later held same-network/namespace association and native absence checks cannot be inferred from reset API values.                                                                                                                                     |
+
+Canonical absolute paths are `/` or `/`-separated nonempty components with no
+`.` or `..`, trailing slash, NUL or ASCII control/DEL. Strings remain at most
+4,096 decoded bytes. This lexical rule never performs resolution or proves
+custody. CgroupParent is retained as a bounded control-free string, including
+empty; its selected cgroup-driver syntax/value is a later exact recipe check.
+Labels/annotations are bounded strings, not path inputs. Unknown dictionary
+keys are unverified claims only, not a compatibility or authority fallback.
+
+The claimed role is preparation when the entrypoint is exactly the singleton
+`/usr/local/bin/lnsat-hcfg6-probe`, name uses the probe prefix, workdir is `/`,
+top Mounts is empty and HostConfig.Mounts omitted. Action uses singleton
+`/usr/local/bin/lnsat-hcfg6-adapter`, the action name prefix and exactly one
+matching writable private nonrecursive bind. Path equals that entrypoint; Args
+and Cmd are empty. Mixed-role or partially omitted representations deny.
+
+Timestamp grammar is calendar-valid RFC3339 with four-digit year0001..9999,
+seconds00..59, optional1..9 fractional digits and `Z` or numeric offset
+`+/-HH:MM` with hours00..23/minutes00..59; maximum35ASCII bytes. No leap second,
+spaces, lowercase separator or malformed date. The zero timestamp is exactly
+`0001-01-01T00:00:00Z`; equivalent alternative spellings of that instant deny.
+Created is nonzero. Compare normalized instants with checked integer arithmetic
+using signed seconds plus nanoseconds (or a wider exact representation); do not
+overflow a signed64nanosecond total for valid distant years. Retain original strings. Created state requires both State times zero and PID0;
+running requires nonzero StartedAt>=Created, FinishedAt zero, PID in1..u32::MAX;
+exited requires PID0 and nonzero FinishedAt>=StartedAt>=Created. A backward
+wall-clock result denies this selected positive recipe; timestamps never supply
+freshness, monotonic elapsed-time budgets or native process-start proof.
+All phases require ExitCode0, Error empty, Paused/Restarting/OOMKilled/Dead false;
+Running is true only for running. RestartCount is0. Apply AppArmor/metadata and
+network phase table above exactly; every other Status or mixed tuple denies.
+
+All remaining compare fields have exact fixed values and become implicit only
+after validation: linux Platform; empty MountLabel/ProcessLabel/LogPath;
+phase AppArmorProfile; null ExecIDs; Config hostname/domain/attach/TTY/stdin
+flags, ordered nine-entry Env, empty Cmd, singleton role entrypoint, disabled
+health, SIGKILL/timeout1; all fixed HostConfig booleans/strings/arrays/nulls,
+logging/restart/security/capability tuple, ShmSize67108864, zero unused integer
+controls, false OomKillDisable/Init, exact five ReadonlyPaths; fixed mount
+Type/Mode/RW/Propagation/NonRecursive; fixed endpoint null/zero/address fields
+and empty Ports. Config.Env is the exact nine strings in the linked realized
+recipe, not actual process environment. MaskedPaths must be a nonempty array
+of canonical absolute paths with no duplicate; its conditional exact contents
+remain retained for root/native comparison. No variable compare field may be
+silently discarded or replaced by a success marker.
+
+### Inspect acceptance matrix and later integration
+
+Before implementation, fresh independent precode review must pass this exact
+contract and source ownership. Source tests are independently authored against
+it and must cover:
+
+- Eighteen complete source-shaped positives: three phases × two roles ×
+  graphdriver/containerd-manifest/containerd-index. The parser does not invent a
+  manifest-versus-index tag; fixtures use distinct target/selected-manifest
+  values to demonstrate lossless retention. Verify64/65HostConfig counts,
+  both Config.Volumes forms, both GraphDriver.Data forms, descriptor annotations
+  omitted/present and platform variant omitted/present. Each dynamic retained
+  field gets at least two independent valid values with exact output assertions.
+- Every root and child field's required/optional/forbidden presence, null,
+  wrong type and case; all object positions reject positional arrays. Mutate
+  unknown and raw/escaped duplicate keys at each closed map and dynamic map,
+  including all selected storage/mount/network/descriptor children. Non-object
+  roots are shape denials. Check exact static error codes.
+- Every fixed predicate and local relation, each role/phase transition and
+  mixed tuple, resource values and integer widths/endpoints, fractional/exponent/
+  negative-zero spelling, UID/GID limits, names/IDs/digests, path grammar,
+  leap-year/timezone/fraction/time ordering, disabled-health and AppArmor rules.
+  Include valid ordered year9999 timestamps to exercise the full calendar range
+  without signed64nanosecond overflow, plus offset/fraction ordering and reversed
+  time denials. Descriptor annotations require explicit empty-map recipe denial,
+  non-ASCII-key shape denial, empty-key preflight limit denial, ASCII boundary
+  positives and64/65entry shape-boundary tests. Cover required-null versus
+  absent/empty and optional omission versus null.
+- Exact and one-over body, decoded key/string, depth, per-object/dictionary,
+  per-array/global member/global element bounds; padding an otherwise valid
+  positive to the body cap. Use scanner-level vectors where the typed schema
+  cannot reach a boundary. Cover128/129object versus64/65dictionary separately,
+  multibyte/escaped strings, surrogate pairs, malformed/truncated input,
+  unknown/forbidden deep branches and stage precedence. Verify no limit retry.
+- Projection/data lifetime review and canaries: errors never contain supplied
+  strings, no Debug/Display/Serialize/Clone escape, all owned input strings
+  zeroizing, no uncontrolled allocation or text copies, no public caller or I/O.
+  Synthetic fixtures do not count as daemon/native observations.
+
+Body-only tests cannot claim held-context rejection. Later integration must
+add negative tests for wrong expected phase/role/backend/attempt, substituted
+Create identity, raw OCI digest-domain/parent-link/platform mismatch, stale PID/
+namespace/cgroup/metadata/mount custody, unexpected labels/defaults/environment,
+changed ceilings, replay and cleanup uncertainty. Compare every retained field;
+missing expected values are blocking. Native evidence, actual artifact pins,
+root/daemon authentication and complete source/pin/positive-feasibility freeze
+remain mandatory before connection to product entrypoints. No Stage-A success
+creates a permit or a new runtime/support claim.
+
+Implementation requires focused pinned Rust tests, strict Clippy and formatting,
+full `npm run check`, scoped installed Semgrep/Gitleaks and applicable dependency
+checks, docs/public/inventory/history/whitespace validation, fresh exact source
+review and separate direct-child attestation. Contract-only changes use the
+existing proportional documentation checks and independent precode review.
 
 ## Wait, errors and complete-freeze gate
 

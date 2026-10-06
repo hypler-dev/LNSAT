@@ -1703,11 +1703,30 @@ hashes are corrected without changing field/type/tag inventory. PHR-0051 tracks
 this bounded correction; the reviewed PHR-0050 commits remain preserved.
 
 This is documentation reconciliation only. Inspect implementation is missing;
-its exact private projection, complete bounds/error contract, source ownership
-and independent precode review remain required. No Inspect source scope is
-opened. Project Status continues to track the implemented Create/Wait candidate
-below. Full native/source/pin freeze, product integration, runtime and packaging
-remain unfinished and separately gated.
+the complete private contract and its review gate are tracked in the next
+subsection. Project Status continues to track the implemented Create/Wait
+candidate below. Full native/source/pin freeze, product integration, runtime
+and packaging remain unfinished and separately gated.
+
+### Stage-A private Inspect decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [private Inspect contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-inspect-decoder-contract)
+now names exact source/test/declaration ownership, closed typed shapes, retained
+unverified claims, finite aggregate allocation bounds, static error precedence,
+role/phase/backend coherence and the complete positive/denial matrix. It retains
+backend-dependent Image and selected-manifest claims separately and requires
+eighteen source-shaped phase/role/backend vectors. Expected phase, role, backend,
+recipe and attempt remain external held-context inputs to later integration;
+a decoder cannot authenticate the expectations from its own input.
+
+This contract is documentation only; Inspect implementation is missing. Fresh
+independent precode review and its exact source/direct-child attestations gate
+the named inert implementation under the accepted Stage-A order. PHR-0052 tracks
+this exact contract slice and its review evidence. No Inspect code,
+caller, API, native fixture source, complete freeze, integration, runtime,
+package, release or support gate is completed by the contract. The full V1
+outcome remains unfinished.
 
 ### Stage-A private Create and Wait decoder contract
 

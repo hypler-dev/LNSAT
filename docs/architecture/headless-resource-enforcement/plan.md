@@ -289,9 +289,15 @@ separate raw-config commitment and selected-manifest proof; a returned storage
 branch cannot choose its own trusted comparison. Project Status owns the
 reconciliation disposition. Define exact owned
 source/test/declaration paths, retained projection, aggregate memory/error bounds
-and the full positive/denial matrix, then obtain fresh precode review before
-implementation. This step does not approve Inspect source, native fixture source,
-full source/pin freeze, integration, artifact capture or runtime.
+and the full positive/denial matrix in the
+[private Inspect contract](docker-response-source-spec.md#stage-a-private-inspect-decoder-contract),
+then obtain fresh precode review before implementation. Its supplied-body result
+retains claims only; held phase/role/backend/attempt selection and every native,
+raw OCI and recipe comparison remain later integration requirements. Source
+ownership is the private Inspect module, its independently authored tests and
+one private lib.rs declaration. Project Status owns review and implementation
+state. This step does not approve native fixture source, full source/pin freeze,
+integration, artifact capture or runtime.
 
 ## Validators
 
