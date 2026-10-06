@@ -1675,6 +1675,30 @@ SQL18/initializer/activation, merge/main mutation, package/image construction,
 release/publication/deploy/production or tool installation is opened. LNSAT
 remains neutral and standalone; no support or certification claim follows.
 
+### Inspect lifecycle normalization reconciliation
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [Inspect normalization prerequisite](architecture/headless-resource-enforcement/docker-response-source-spec.md#inspect-lifecycle-normalization-prerequisite)
+reconciles the pinned served API and create/start/stop paths before a complete
+Inspect private decoder contract. Thirteen stale appendix hashes are corrected
+against exact public bytes verified through raw and GitHub Contents endpoints,
+with independent Git blob identity checks. Field/type/tag inventory is unchanged.
+
+The source trace distinguishes empty created-state AppArmor/metadata paths from
+running and exited claims, fixes empty ExecIDs to null, preserves disabled-health
+and phase-specific network semantics, and records 64/65 positive HostConfig
+members. A 64-member syntactic object ceiling would reject the action positive shape;
+the future Inspect ceiling is 128 while bounded dictionaries remain at 64.
+These corrections preserve effective native confinement and held attempt/journal
+custody; API values supply neither enforcement nor absence evidence.
+
+This is documentation reconciliation only. Inspect implementation is missing;
+its exact private projection, complete bounds/error contract, source ownership
+and independent precode review remain required. No Inspect source scope is
+opened. Project Status continues to track the implemented Create/Wait candidate
+below. Full native/source/pin freeze, product integration, runtime and packaging
+remain unfinished and separately gated.
+
 ### Stage-A private Create and Wait decoder contract
 
 Canonical work record: this subsection under the accepted Stage-A source order.

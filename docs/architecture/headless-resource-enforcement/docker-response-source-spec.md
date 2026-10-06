@@ -902,14 +902,15 @@ ProcessLabel, RestartCount, Config, HostConfig, Mounts, NetworkSettings and
 conditional ImageManifestDescriptor. Names include the source leading slash
 plus exact private generated name. Path is the selected singleton entrypoint;
 Args is exactly `[]`. Platform is `linux`. Selected SELinux-disabled labels
-are empty; AppArmorProfile equals the required realized profile. No health,
+are empty; AppArmorProfile follows the exact lifecycle table below. No health,
 restart, unreviewed process or execution is inferred as harmless metadata.
 
-Created is bounded RFC3339. ResolvConfPath, HostnamePath and HostsPath are
-bounded strings compared to the exact trusted root-generated metadata recipe
-and associated native held objects. LogPath is empty for selected `none`
-logging. ExecIDs is the exact nil/empty encoding of an empty set; any ID
-denies. SizeRw/SizeRootFs are omitted because the request sets size=0.
+Created is bounded RFC3339Nano as emitted by the pinned Go formatter.
+ResolvConfPath, HostnamePath and HostsPath follow the lifecycle table below;
+after start they are compared to the exact trusted root-generated metadata
+recipe and associated native held objects. LogPath is empty for selected `none`
+logging. ExecIDs is required null: the empty ExecStore.List result is a nil
+slice. An omitted member, `[]` or any ID denies this exact response recipe. SizeRw/SizeRootFs are omitted because the request sets size=0.
 GraphDriver and Storage are mutually exclusive selected storage branches:
 
 - Legacy graph branch: GraphDriver non-null exactly Name/Data as above,
@@ -919,6 +920,108 @@ GraphDriver and Storage are mutually exclusive selected storage branches:
   GraphDriver omitted. Optional tags do not permit these required positive
   nested objects to disappear. Snapshot name is an identifier, not proof of
   actual workload root mount.
+
+### Inspect lifecycle normalization prerequisite
+
+This is a reconciliation of the existing Inspect recipe before its complete
+private decoder contract, not approval to implement an Inspect module. A future
+contract must name the exact owned source/test/declaration paths, private retained
+projection, fixed error precedence and the complete positive/denial matrix before
+fresh precode review. The selected scenario is a newly created object, one
+successful first start, then a normal zero-exit stop with no restart, restoration,
+exec, health probe, legacy link or concurrent lifecycle mutation. A response
+cannot select its own trusted phase: the later held attempt/journal chooses the
+expected phase and binds every comparison to the same object and daemon.
+
+The [API 1.56 Inspect route](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/server/router/container/inspect.go)
+forwards size=0 to the builder. Its older-version alias/MAC/descriptor/Umask and
+GraphDriver/Storage compatibility rewrites do not run for this selected version.
+Its nil-Config fallback constructs a zero Config object; that object does not
+meet the selected positive Config recipe. No older-version response is silently
+upgraded by the decoder.
+
+| Claimed field                                 | Created before first start | Held running                                                                    | Normal completed exit                                                                              |
+| --------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `AppArmorProfile`                             | Empty string               | `docker-default`                                                                | Previously held `docker-default`                                                                   |
+| `ResolvConfPath`, `HostnamePath`, `HostsPath` | Each empty string          | Exact nonempty root-generated paths, each bound independently to native custody | Same path claims as held during the attempt; retained text does not prove file survival or cleanup |
+| `ExecIDs`                                     | `null`                     | `null`                                                                          | `null`                                                                                             |
+| `State.Health`                                | Omitted                    | Omitted                                                                         | Omitted                                                                                            |
+| `NetworkSettings.SandboxID`, `SandboxKey`     | Empty strings              | Exact generated ID and trusted namespace-key claim                              | Empty strings                                                                                      |
+| `Networks.none.NetworkID`                     | Empty string               | Exact generated network ID                                                      | Same previously held network ID                                                                    |
+| `Networks.none.EndpointID`                    | Empty string               | Exact generated endpoint ID                                                     | Empty string                                                                                       |
+| `NetworkSettings.Ports`                       | `{}`                       | `{}`                                                                            | `{}`                                                                                               |
+
+The [base constructor](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/container.go#L145)
+leaves AppArmor and metadata-path state empty. Create invokes
+[setSecurityOptions](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container.go#L204),
+whose [parser](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/daemon_unix.go#L203)
+does not populate AppArmor for the selected sole no-new-privileges option.
+During [start](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/start.go#L187),
+[saveAppArmorConfig](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container_linux.go#L10)
+records the default for the selected AppArmor-supported, nonprivileged recipe.
+[WithApparmor](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/oci_linux.go#L125)
+separately selects the effective OCI profile. Empty before start is not proof of
+missing confinement, and `docker-default` after start is not proof of effective
+kernel enforcement. Existing native AppArmor and complete realized-recipe checks
+remain mandatory. Missing AppArmor support, custom/disabled profiles or a failed
+start do not enter the running positive case.
+
+Start calls initializeNetworking before OCI construction. Its
+[Unix sandbox options](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container_operations_unix.go#L578)
+set HostsPath and ResolvConfPath; then
+[BuildHostnameFile](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/container_unix.go#L48)
+sets HostnamePath. Created-state parsing must not require those paths to exist
+before their source construction. Once started, no empty-path fallback or
+caller-selected path supplies native custody. Failed or interrupted start is a
+separate reconciliation outcome, not a created/running positive with relaxed
+predicates.
+
+The [exec store](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/exec.go#L123)
+returns a nil slice for no entries, establishing exact ExecIDs null. For a new
+container the [disabled-health path](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/health.go#L336)
+returns no probe for Test NONE and does not create Health state. Restored or
+previously configured health state is outside this positive scenario; present
+Health still denies. The existing network start/stop rules below apply under the
+same held phase, and resetting API IDs does not establish native absence.
+
+#### Inspect object bounds and mandatory future regression cases
+
+The type inventory has 41 direct HostConfig fields plus 29 flattened Resources
+fields: 70 possible JSON member names, not a nested Resources object. The selected
+preparation response emits 64 members: Annotations, StorageOpt, Tmpfs, Sysctls,
+Umask and Mounts are omitted. The action response emits 65, because its Mounts
+member is present. Runtime and Init are present in both, despite their omission
+tags. A copied 64-member per-object preflight limit would reject the valid
+action response. For the future Inspect decoder, the syntactic per-object ceiling is
+128; dictionary-specific limits remain 64 and global members remain 4,096.
+This Inspect-specific ceiling changes no existing Version/Info/Image/Create/Wait
+parser and grants no generic unknown-key allowance. Typed closed maps must still
+reject every unknown or duplicate decoded member. All existing 1 MiB, depth,
+string, element, numeric-width and pre-allocation bounds remain applicable.
+
+The complete Inspect implementation must include successful created/running/exited
+vectors for preparation and action, both selected storage representations and
+exact 64/65-member HostConfig shapes. Independently vary AppArmor and each metadata
+path across phases; reject a self-selected phase, stale running network IDs on
+exit, an empty required running ID/path, ExecIDs `[]`, any Health, unknown fields,
+escaped duplicates and null/default substitution. Test the 128/129 syntactic
+object boundary separately from the 64/65 dictionary boundary. Other mandatory
+cases include the singleton entrypoint plus empty Cmd relation to Path/Args,
+Config.Env versus actual process environment, no legacy links, dead-state graph
+metadata exceptions, and descriptor platform injection. These are future source
+acceptance cases; this documentation reconciliation does not claim they exist.
+
+Retain claimed identity, resource ceilings, labels, paths, timestamps, mounts,
+network, storage and descriptor values needed by later comparison. No discarded
+value may become a native path, cleanup selector or authority input. Exact
+retained fields, aggregate owned-memory bounds and error taxonomy still need the
+complete private contract and independent precode review. In particular,
+container Inspect Image is the image-config identity (`ctr.ImageID.String()`);
+it must not be confused with a containerd create selector's manifest/index target.
+When ImageManifestDescriptor is present, the builder injects ImagePlatform if
+its Platform pointer was nil; compare the resulting descriptor to the separately
+held raw OCI chain. Existing source/pin freeze and native association gates stay
+open until their own evidence passes.
 
 ### State phases
 
@@ -1242,7 +1345,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.Config
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/config.go#L25) · snapshot SHA-256
-`4c974b6b028baed3d7246e28abe1cbf032cd30b12fe1da6269744e00a8676713`.
+`06f5e71501399a33906ef7b006d49d71a700e6c84d7442a90e9d240cb52b81ee`.
 
 | Go field          | Go type               | JSON tag     |
 | ----------------- | --------------------- | ------------ |
@@ -1284,7 +1387,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.HostConfig
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L418) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field          | Go type             | JSON tag     |
 | ----------------- | ------------------- | ------------ |
@@ -1334,7 +1437,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.InspectResponse
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/container.go#L117) · snapshot SHA-256
-`35510018abc7ff47a580a4ec12bdd567900365e7e1f75455ce61fb253d6b00ba`.
+`1c9f57409df799ad3b6f6f330460d58b371bf353b9920646cb31a04ea2d48c02`.
 
 | Go field                  | Go type               | JSON tag                            |
 | ------------------------- | --------------------- | ----------------------------------- |
@@ -1369,7 +1472,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.LogConfig
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L358) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field | Go type             | JSON tag |
 | -------- | ------------------- | -------- |
@@ -1379,7 +1482,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.MountPoint
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/container.go#L32) · snapshot SHA-256
-`35510018abc7ff47a580a4ec12bdd567900365e7e1f75455ce61fb253d6b00ba`.
+`1c9f57409df799ad3b6f6f330460d58b371bf353b9920646cb31a04ea2d48c02`.
 
 | Go field      | Go type             | JSON tag     |
 | ------------- | ------------------- | ------------ |
@@ -1395,7 +1498,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.NetworkSettings
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/network_settings.go#L8) · snapshot SHA-256
-`307d67438b1a7ef337468303360e1395e7854866273fcc9d5b6145826689db72`.
+`eda0e410e1fea35131bbbb225d5b32e6abf557d2621645687bbc99570d7363aa`.
 
 | Go field     | Go type                                | JSON tag |
 | ------------ | -------------------------------------- | -------- |
@@ -1407,7 +1510,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.Resources
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L370) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field               | Go type                      | JSON tag             |
 | ---------------------- | ---------------------------- | -------------------- |
@@ -1444,7 +1547,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.RestartPolicy
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L275) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field            | Go type             | JSON tag |
 | ------------------- | ------------------- | -------- |
@@ -1454,7 +1557,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.State
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/container.go#L75) · snapshot SHA-256
-`35510018abc7ff47a580a4ec12bdd567900365e7e1f75455ce61fb253d6b00ba`.
+`1c9f57409df799ad3b6f6f330460d58b371bf353b9920646cb31a04ea2d48c02`.
 
 | Go field     | Go type          | JSON tag     |
 | ------------ | ---------------- | ------------ |
@@ -1538,7 +1641,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.mount.BindOptions
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/mount/mount.go#L87) · snapshot SHA-256
-`efb639220953d8176dd7b3a1fdd52dcd016669a59094d6585010a982ec4a1806`.
+`a4b9e8529fbe5ef4aa0b1144aa720a6e12f04991a988248199750471b140c91d`.
 
 | Go field                 | Go type       | JSON tag     |
 | ------------------------ | ------------- | ------------ |
@@ -1551,7 +1654,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.mount.Mount
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/mount/mount.go#L27) · snapshot SHA-256
-`efb639220953d8176dd7b3a1fdd52dcd016669a59094d6585010a982ec4a1806`.
+`a4b9e8529fbe5ef4aa0b1144aa720a6e12f04991a988248199750471b140c91d`.
 
 | Go field         | Go type           | JSON tag     |
 | ---------------- | ----------------- | ------------ |
@@ -1641,7 +1744,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### network.EndpointIPAMConfig
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/network/endpoint.go#L60) · snapshot SHA-256
-`beaa06129a8b501538f6c82f3c171224ad905c9866c812912dca03caa1620494`.
+`1316e728ea174584fc8edcaf3fdc587cccc6d5485af2c914705f4c3ac0ca2637`.
 
 | Go field       | Go type        | JSON tag                 |
 | -------------- | -------------- | ------------------------ |
@@ -1652,7 +1755,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### network.EndpointSettings
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/network/endpoint.go#L10) · snapshot SHA-256
-`beaa06129a8b501538f6c82f3c171224ad905c9866c812912dca03caa1620494`.
+`1316e728ea174584fc8edcaf3fdc587cccc6d5485af2c914705f4c3ac0ca2637`.
 
 | Go field              | Go type               | JSON tag |
 | --------------------- | --------------------- | -------- |

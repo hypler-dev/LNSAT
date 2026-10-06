@@ -277,6 +277,18 @@ custody, Inspect/native association, durable receipt and uncertainty handling
 remain later integration requirements. No pending native fixture source gate,
 full freeze, runtime or publication authority is opened by this prerequisite.
 
+### Inspect lifecycle reconciliation before private source
+
+Reconcile the [served Inspect lifecycle](docker-response-source-spec.md#inspect-lifecycle-normalization-prerequisite)
+before completing the private decoder contract. The exact created/running/exited
+representations, null ExecIDs and 64/65-member HostConfig positives are mandatory
+inputs to that contract; preserve independent native enforcement and same-attempt
+custody. Project Status owns the reconciliation disposition. Define exact owned
+source/test/declaration paths, retained projection, aggregate memory/error bounds
+and the full positive/denial matrix, then obtain fresh precode review before
+implementation. This step does not approve Inspect source, native fixture source,
+full source/pin freeze, integration, artifact capture or runtime.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.
