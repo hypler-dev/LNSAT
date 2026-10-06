@@ -1,0 +1,51 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0057-independent-implementation-review-4847f82d",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-raw-oci-chain-stage-a"],
+  "base_revision": "1442307e305a26240e3681d51c3c7a74a32b8175",
+  "reviewed_revision": "4847f82d8f18abac6427396508ef3f679d6c948d",
+  "reviewed_tree_oid": "bae4d43562163e9fb9c3da6f7cebc5d2ef8c1734",
+  "diff_sha256": "sha256:02067650b190380c72499237d36b4b409274084476649822a4812752dbaeb42e",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_oci_chain.rs",
+      "sha256": "sha256:c43763f59d4ce23ee2a0fcc75dd08cfad94e693b38b25a7c38288381596f57b4"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_oci_chain_tests.rs",
+      "sha256": "sha256:4d32e85d2b58a03cb160a7459003b8867348841c0edb98d17d4f4fb6ffcf8742"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:bbc38f775913ef15f16806d56939928d0f7c759b6e4f97e5327a456fe3c58a1e"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:fd12f818c548f69911d5b289cc83920a9077f1e9f620bc066ce99c0d9680ab94"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:c62d317be49b2547925f3b83804928d31c01d817f74d1a799e526268144fbbf6"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:d36af669685eec30518963cc9893d0c827d516a291f9a650aed206bddc691f67"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:842021bbd33203a13aed700e3e15a71147bed94901408f10a6b84fca695404b4"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/inspect_decoder_precode_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "Native OpenAI Codex gpt_reviewer Terra xhigh independent read-only exact source review. Covers the private supplied-byte OCI config/manifest/optional-index decoder, bounded all-input preflight, closed typed records with complete optional presence, zeroizing owned text and raw digests, deterministic static denials, and raw internal parent links. Hash target, cross-blob denial stage, short control escapes, fixed-array cardinality and 32-bit descriptor bounds were corrected before approval. Nineteen focused synthetic groups, strict all-target host Clippy, full npm run check, docs/public/inventory/history/format/diff checks pass. Full check reports 1519 TypeScript tests, 139 contract comparisons, 335 daemon tests and 264 store tests plus two existing explicitly invoked helper ignores. Production source remained unchanged during the full check; test-only style fixes preceded its final Rust stages, which cover final reviewed bytes. Scoped Semgrep found no new-file issue and one unchanged test-only informational lib.rs finding; Gitleaks found none. No dependencies or features changed. Exact immutable source binding confirmed. This attests only an inert supplied-byte candidate: self-consistent OCI links do not authenticate root custody, image provenance, immutable recipe/profile/registry bindings, daemon/backend association, installed layers, native feasibility, complete freeze, product integration, runtime, hosted CI, packaging or support. Separate exact direct-child audit remains required. No execution or other authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
