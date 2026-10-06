@@ -346,6 +346,20 @@ custody/response provenance methods. Never use a self-consistent supplied chain,
 post-call timer or generic successful witness to fill those gaps. Keep existing
 implemented prerequisites and all artifact/native/runtime gates intact.
 
+### Single-lane held artifact read prerequisite
+
+The [exact artifact-read contract](native-artifact-source-spec.md) selects a
+fixed operation in the existing retained native lane before full root/image
+composition. Freeze and independently review its request/result tags, original
+file ownership, shared byte/deadline budget, native positional-read schedule and
+per-kind cleanup before changing that worker. Do not add another worker or
+relabel a supplied digest as observed bytes. The source packet must include all
+existing procfs regressions as well as the named artifact positives/denials.
+[Project Status](../../PROJECT_STATUS.md#stage-a-held-artifact-read-contract)
+owns implementation truth. This primitive does not replace rooted ancestry,
+current peer, recipe/pins or genuine unfinished-operation evidence; source,
+full freeze, integration, native execution and runtime gates remain distinct.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.

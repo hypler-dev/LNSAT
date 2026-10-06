@@ -2230,7 +2230,7 @@ obligations. Image descriptor platform reconstruction preserves the already
 validated equality; it does not reopen the reviewed decoder or invent lost data.
 
 This documentation reconciliation adds no callable source interface or trusted
-holder. PHR-0058 tracks its exact independent review and direct attestation child.
+holder. PHR-0058 attests its exact independent review and direct attestation child.
 The next source packet still needs exact ownership, private read-only DTO access,
 complete recipe expectation shape, native file/peer/budget provenance and positive
 feasibility evidence appropriate to the selected method. Existing procfs source
@@ -2238,6 +2238,26 @@ and tests cannot prove bounded regular-artifact I/O by implication. Actual pins,
 full native/source freeze, integration, runtime and packaging remain unfinished.
 Do not restart implemented codecs or journal custody. Project Status continues
 to own implementation truth; Phase 11 owns runtime proof.
+
+### Stage-A held artifact read contract
+
+Canonical work record: this subsection under the accepted HCFG-6 Stage-A order.
+The [held artifact read contract](architecture/headless-resource-enforcement/native-artifact-source-spec.md)
+names the next real native I/O prerequisite: a fixed artifact operation in the
+existing single retained procfs lane. It specifies original-owner descriptor
+borrows, per-kind cleanup, tagged completion checks, a shared observation
+budget, positional reads, raw streaming hashes, exact flags and stable native
+metadata/ACL samples. No second worker or injected reader is proposed.
+
+This is a source contract, not implemented file I/O or complete rooted custody.
+PHR-0059 tracks its independent precode review and exact direct-child attestation.
+The next implementation must preserve existing procfs invariants and regressions,
+add genuine held-file tests without presenting them as root authority, and keep
+all new methods private and disconnected from product callers. Root ancestry
+acquisition, complete recipe/pins, peer/pidfd association, native positive and
+unfinished-operation evidence, whole-boundary integration, runtime and packaging
+remain separate unfinished gates. The existing procfs proof cannot be reused as
+artifact I/O proof. Phase 11 remains the runtime-proof owner.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

@@ -106,6 +106,10 @@ subsystem or proposal.
   — exact inert contract for bounded byte-only mountinfo decoding with raw
   non-UTF-8 preservation and finite row, option, escape and tag rules; no I/O,
   kernel or mount authority follows.
+- [HCFG-6 held artifact-read source contract](architecture/headless-resource-enforcement/native-artifact-source-spec.md)
+  — fixed read/hash operation proposed for the existing single retained native
+  lane; exact source review, implementation and genuine native evidence remain
+  distinct from rooted custody, complete freeze and runtime authority.
 - [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
   — exact proposed schema-3 fields, native payload and separate startup contexts;
   complete wire implementation and full freeze remain pending.

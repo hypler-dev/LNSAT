@@ -1511,6 +1511,13 @@ trusted-root model when the direct listener, kernel instance tokens and pidfd
 are required. This closes that design question without claiming direct
 executable observation, actual host evidence or full source-freeze approval.
 
+The next [held artifact-read source contract](native-artifact-source-spec.md)
+adds a fixed read/hash operation to the existing single retained lane, subject
+to fresh whole-lane precode review. It names shared observation budgeting,
+original-owner borrowing, positional read bounds and per-kind cleanup. It does
+not inherit artifact proof from procfs tests or implement the complete rooted
+ancestry/current-daemon bridge above. Project Status owns source disposition.
+
 ## Separate profile 3 and protocol 2
 
 The [startup wire companion](startup-wire-source-spec.md) defines every field,

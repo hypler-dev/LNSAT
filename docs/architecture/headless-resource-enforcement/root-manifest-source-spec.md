@@ -876,6 +876,13 @@ under a reset budget. Reprovisioning and generation changes keep their separate
 explicit gates. Raw facts, handles and diagnostics remain private and zeroizing
 where required; serialized digests cannot restore a live custody holder.
 
+The [held artifact-read candidate contract](native-artifact-source-spec.md)
+selects one concrete prerequisite: actual positional reads/hashes of an already
+held file through the existing single retained native lane and one shared
+observation budget. It requires its own exact review and tests. It supplies no
+root ancestry acquisition, native peer or trusted holder; those requirements
+above remain mandatory and cannot be filled by its unverified result.
+
 ### Required evidence before composition source
 
 The next exact source packet must name owned files and private interfaces for
