@@ -690,7 +690,7 @@ peels to `147f9c13cedb47a0c4d9a11a222961073d585877`. The linked served router
 and both backend constructors were checked at that same Moby commit, rather
 than inferring the wire solely from Go struct tags.
 
-Future source ownership is exactly `crates/lnsatd/src/headless_daemon_image.rs`,
+Source ownership is exactly `crates/lnsatd/src/headless_daemon_image.rs`,
 its sibling `headless_daemon_image_tests.rs`, and one private module declaration
 in `crates/lnsatd/src/lib.rs`. The private entrypoint is
 `decode_image_claim(&[u8]) -> Result<UnverifiedImage, ImageDecodeError>`.

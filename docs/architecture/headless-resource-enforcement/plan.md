@@ -253,7 +253,10 @@ identity/selection without changing the profile's raw config commitment. Fresh
 independent precode review passed after the exact authenticated pre-request
 selector rule and list-presence corrections;
 [Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-image-decoder-contract)
-owns their disposition. Decoder success will remain an unverified claim.
+owns their disposition. The private decoder and synthetic tests now implement
+this representation prerequisite with allocation-free bounded preflight, closed
+map-only shapes and an unverified retained projection. Source review and exact
+attestations are separate gates. Decoder success remains an unverified claim.
 Raw-blob custody, selected recipe/pins, storage/daemon association, full native
 freeze, product integration and actual runtime remain separate dependencies.
 This work does not open the pending kernel/harness source packet.

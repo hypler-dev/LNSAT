@@ -1688,14 +1688,47 @@ P1/P2/P3 remains in that contract review; final documentation validation and
 exact source/direct-child attestations are separate gates. Ten stale appendix hash references across
 six Image-related type files were corrected using raw/Contents/Git-blob checks.
 The served API requires allocated tag/digest arrays, including empty arrays.
-No Image decoder source has been implemented by this packet.
+The separate implementation adds a private supplied-body decoder, independently
+authored synthetic tests and one private module declaration. Allocation-free
+preflight enforces body, depth, object/global member, array and decoded-string
+bounds before closed map-only deserialization. Typed shape checks precede fixed
+recipe predicates. The sealed, non-serializable result retains unverified Config,
+layer and storage/descriptor claims; it creates no identity or authorization.
+Module-owned input-derived strings, dynamic keys and fixed decoded-key storage
+use zeroizing custody. Caller input and JSON-library scratch remain outside that
+scrubbing claim. No caller, transport, I/O, clock, dependency or feature is added.
+
+The synthetic matrix covers graphdriver and manifest/index branches, an
+independently written expected projection, source-shaped Config omissions,
+optional presence, null/type/duplicate/unknown-key denials, target and platform
+consistency, cardinality, numeric/calendar grammar and each preflight limit.
+Literal `N/A` remains allowed in nonempty-only informational and Config fields;
+identity fields retain their stricter rule. Initial integration found three test
+fixture/expectation errors: non-hex layer digests, negative descriptor-size error
+classification and the root-at-one depth boundary. These are corrected against
+the accepted contract rather than by changing production acceptance.
+
+Literal `npm run check` passes: 1,519 TypeScript tests, 139 contract comparisons,
+264 macOS store tests with two ignored, and 257 daemon tests. Fresh independent
+OpenAI Terra xhigh review found mandatory coverage gaps in null/type/presence,
+healthcheck duration rejection, depth 32, nested maps, raw map reordering and
+retained descriptor variation. The subsequent test-only expansion addresses
+those findings without changing production bytes. It receives focused tests,
+strict host Clippy and formatting; final documentation and metadata receive
+proportional checks and exact review. Scoped Semgrep finds no issue in the new
+source and only the unchanged test-only temporary-directory INFO in `lib.rs`;
+redacted scoped Gitleaks finds no secrets. These are host and synthetic source
+results. The preexisting Node cache predates three patched dependency pins;
+exact installed-dependency proof requires hosted CI. No local install occurred.
+PHR-0047 tracks this implementation while PHR-0046 preserves the contract review.
+Exact source and direct-child attestations remain separate gates.
 
 The source check also found and corrected a material comparison/selector error:
 the pinned containerd backend reports and resolves a manifest/index target
 digest, whereas the graphdriver backend uses config digest identity. The
 transport and root/OCI companions now distinguish those branches, preserve
 profile `image_digest` as the raw config commitment, and require the selected
-target's held parent-link chain. The proposed decoder requires exactly one
+target's held parent-link chain. The private decoder requires exactly one
 GraphDriver/Descriptor branch and target Id/Descriptor.digest agreement. This
 does not change existing profile codecs, public contracts or active callers.
 
