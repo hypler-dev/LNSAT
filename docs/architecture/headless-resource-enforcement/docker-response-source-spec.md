@@ -6,8 +6,8 @@ native freeze. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runt
 owns acceptance and implementation. The Phase 11 operator packet owns runtime
 truth. The bounded Stage-A Version-only decoder contract below is a private
 source prerequisite. The separate Info-only prerequisite below now has a private
-source candidate tracked by Project Status. The Image-only contract below
-prepares the next private prerequisite. No daemon verification, Docker
+source candidate tracked by Project Status. Image and Create/Wait also have
+private supplied-body candidates under their exact contracts below. No daemon verification, Docker
 operation or activation follows from these decoders or their contracts.
 
 ## Source and interpretation
@@ -1072,6 +1072,163 @@ kernel control. Enterprise/government deployment additionally retains the
 [security requirements](../ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
 and Phase 13/14 evidence gates.
 
+## Stage-A private Create and Wait decoder contract
+
+This supplied-body prerequisite follows Version, Info and Image under the
+accepted [Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+It prepares two representations needed by the later same-attempt lifecycle:
+the claimed created-container ID and a claimed zero-exit Wait response. Neither
+is proof of creation, ownership, termination, cleanup or the intended consequence.
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-create-and-wait-decoder-contract)
+owns precode review and subsequent implementation evidence.
+
+### Source normalization and exact ownership
+
+At the pinned Moby revision above, the
+[create builder](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/create.go)
+allocates an empty warnings slice on successful creation. The
+[container router](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/server/router/container/container_routes.go)
+appends its own warnings and writes the Create response with HTTP 201. Thus an
+empty array is the selected positive encoding; any builder or router warning
+denies this candidate's recipe. API 1.56 Wait writes HTTP 200 headers before
+waiting for the result, then emits StatusCode and a non-nil Error only when the
+backend reports an error. Headers alone cannot establish a completed response.
+An empty error message is omitted within a present Error object; `{}` therefore
+remains a valid typed error representation, but always denies zero-exit success.
+
+Raw source bytes and independently decoded GitHub Contents bytes were compared,
+and their computed Git object IDs matched the returned blob identities:
+
+| Exact Moby source                                    | Bytes  | SHA-256                                                            |
+| ---------------------------------------------------- | ------ | ------------------------------------------------------------------ |
+| `api/types/container/create_response.go`             | 640    | `0bb39c935a3c4395b71350a1ac671a4057a760eff1a4ee81d8136fd2be454135` |
+| `api/types/container/wait_response.go`               | 494    | `7a99407ea3e3d28b90162fc686a5e26745f9f3ce5ebcaeae18ac15883923725a` |
+| `api/types/container/wait_exit_error.go`             | 381    | `06b9eaf565c5a8a21a4cf12d6aab0bff54160015cc4d21f5a992ba005f6ec7e7` |
+| `daemon/create.go`                                   | 13,412 | `7337eee29d341b24825f61fe48a3935877c0321905968d20b0a864a1d60839ad` |
+| `daemon/server/router/container/container_routes.go` | 44,302 | `800b1109da81fa68c3e60882c78372e0f82d65721fc3216925b129e6ceaffc09` |
+
+The WaitResponse appendix hash is corrected to these verified bytes. This
+source check establishes encoding evidence, not installed daemon provenance.
+
+Owned source is exactly `crates/lnsatd/src/headless_daemon_container_response.rs`,
+its sibling `headless_daemon_container_response_tests.rs`, and one private
+module declaration in `crates/lnsatd/src/lib.rs`. Entrypoints are private
+`decode_create_claim(&[u8]) -> Result<UnverifiedCreatedContainer, ContainerResponseDecodeError>`
+and `decode_wait_claim(&[u8]) -> Result<UnverifiedZeroExit, ContainerResponseDecodeError>`.
+The sealed, non-serializable results retain only the unverified ID for Create
+and a distinct zero-exit representation for Wait. They expose no constructor,
+authority conversion, public API or product caller. No Inspect parser, generic
+HTTP-error parser, transport, I/O, clock, dependency, feature or shared-parser
+refactor belongs to this slice. Existing decoders remain unchanged.
+
+All module-owned input-derived strings, including dynamic decoded keys,
+warnings and error messages, use zeroizing custody during typed decoding and
+projection. Fixed preflight string storage, if any, is also zeroized. Caller
+input and JSON-library scratch are outside that custody claim. No response
+text or string can become a path, cleanup selector, command or public diagnostic.
+
+### Bounds, stages and errors
+
+The whole input has an inclusive 1,048,576-byte ceiling. It contains one JSON
+object with optional JSON whitespace before and after; no canonical key order
+or terminal LF is required. Strict UTF-8 validation and allocation-free
+lexical/structural preflight precede owned typed decoding. The preflight has
+root-at-one depth 32, at most 64 members per object and 4,096 total members,
+at most 128 elements per array, keys of 1..256 decoded UTF-8 bytes, and values
+of at most 4,096 decoded UTF-8 bytes. These caps also apply to subsequently
+rejected unknown branches. Check each bound before adding the relevant
+container/member/element/string byte. No dynamic syntax tree, dynamic scanner
+stack or unbounded subtree skipping is permitted.
+
+Reject BOM, invalid UTF-8, raw string controls, malformed escapes or surrogate
+pairs, invalid JSON number syntax, trailing data and incomplete input.
+After a successful preflight, typed decoding accepts maps only at object
+positions and rejects unknown, missing, duplicate decoded or escaped-duplicate
+keys, wrong case, positional arrays, wrong types and forbidden explicit null.
+StatusCode must use plain signed decimal JSON integer spelling and fit i64;
+fractions, exponents, negative zero, strings, booleans and overflow are shape
+errors. Scan all syntax and bounds before classifying valid-but-disallowed
+numeric spellings. No numeric coercion is allowed.
+
+Both entrypoints use only these fixed, data-free codes in this stage order:
+
+1. `headless_container_response.input_too_large` before inspecting oversized input;
+2. `headless_container_response.json_syntax` for UTF-8 or preflight syntax;
+3. `headless_container_response.json_limits` for preflight bounds;
+4. `headless_container_response.json_shape` for closed typed decoding or integer representation;
+5. `headless_container_response.recipe` for the complete typed representation failing the fixed predicates below.
+
+Within the scan, syntax and limit failures use the first left-to-right failure.
+Later stages run only after earlier stages pass. Errors reveal no input, field,
+offset, provider text or partial result. A denial never authorizes retry and
+cannot establish that a remote creation or action did not occur.
+
+### Complete typed shapes and recipe predicates
+
+Create requires exactly `Id` and `Warnings`. Id is a non-null string;
+Warnings is a non-null array of non-null strings. The positive recipe requires
+Id to be exactly 64 lowercase ASCII hexadecimal characters and Warnings to be
+empty. Empty, short, long, uppercase, prefixed, nonhex or Unicode IDs are
+recipe denials after the typed stage; any warning string, including an empty
+one, is a recipe denial. Missing/null/wrong-type fields or wrong-type warning
+elements are shape denials. No all-zero digest exception is inferred: an ID is
+an unverified syntax claim, not a digest commitment or ownership proof.
+
+Wait requires StatusCode and permits only optional Error. Error, when present,
+must be a non-null object with optional Message and no other key. Message, when
+present, must be a non-null string. Empty or nonempty messages are discarded;
+the candidate denies every present Error object, including `{}` and an empty
+Message. Explicit null Error is a shape denial, not absence. The sole positive
+recipe is StatusCode zero with Error omitted. Every other representable i64
+StatusCode is a recipe denial. A successful return merely states that the
+supplied body claims zero exit without an error object.
+
+### Mandatory evidence and integration dependencies
+
+Before implementation, obtain fresh independent exact precode review. Source
+tests must be independently authored against this contract and include:
+
+- Source-shaped positives for both entrypoints, independent expected Create
+  ID projection, reversed map order, escaped equivalent keys and hex characters,
+  ordinary whitespace and trailing newline. Vary valid IDs, including all-zero
+  and all-`f`, to prove retention rather than a constant projection.
+- Both cross-family inputs and every required/optional field's omitted, null,
+  empty, scalar, array and object cases; wrong case, unknown root/nested keys,
+  raw/escaped duplicates, positional objects and warning-element wrong types.
+  For both entrypoints, directly test well-formed, in-bound non-object roots
+  (`null`, booleans, plain integers, strings and arrays) as `json_shape` denials.
+  Assert every exact fixed error, not merely `is_err`.
+- Every ID predicate, warning presence, StatusCode zero/nonzero/i64 endpoints
+  and overflow, negative zero, fractions and exponent spellings. Error omitted,
+  null, `{}`, Message omitted/empty/nonempty/null/wrong-type, nested unknown and
+  duplicate Message cases must remain distinct under the stated stages.
+- Exact byte/string/key/depth/member/array limits and one over, including a
+  genuinely valid positive padded only with JSON whitespace at the body limit.
+  For schema-impossible deep or wide inputs, exercise scanner helpers directly
+  and distinguish scanner acceptance from eventual shape denial. Cover decoded
+  multibyte/escaped byte counts, valid surrogate pairs and malformed Unicode,
+  truncated input, trailing values, invalid UTF-8/BOM and stage precedence.
+- Warning/error canaries never appear in errors or successful projections;
+  code review verifies zeroizing owners and no log/Debug/Display/Serialize
+  exposure of retained or discarded input. Synthetic vectors are not daemon
+  responses or native evidence.
+
+Run focused Rust tests, strict Clippy/format, full `npm run check`, scoped
+installed Semgrep/Gitleaks and proportional docs/public/inventory/history and
+whitespace checks. Preserve exact independent source and direct-child evidence.
+No larger response is retried automatically after a parser-bound denial.
+
+Later integration must authenticate the exact endpoint/response status and
+complete framing under a held same-instance daemon channel. Create's ID must
+be durably bound to the current attempt and cleanup journal before subsequent
+operations; malformed or lost responses leave uncertainty, never a fresh
+Create retry. Wait must follow the selected condition on that held ID and
+cannot replace Inspect/native association, action-result and consequence
+verification, durable receipt or cleanup/reconciliation. HTTP 200 headers,
+exit zero and a decoded ID supply none of those authorities. Complete native/
+source/pin freeze, product wiring, selected artifact capture and actual runtime
+proof remain separate unfinished gates. LNSAT stays neutral and standalone.
+
 ## Exact field/type appendix
 
 The following mechanically extracted inventory covers only the listed reachable
@@ -1326,7 +1483,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.WaitResponse
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/wait_response.go#L13) · snapshot SHA-256
-`efca9bdb26fa2d35e376ed05fe618f2ceb68fc9b76cf9c48f1ab917fb562fc1d`.
+`7a99407ea3e3d28b90162fc686a5e26745f9f3ce5ebcaeae18ac15883923725a`.
 
 | Go field     | Go type          | JSON tag          |
 | ------------ | ---------------- | ----------------- |
