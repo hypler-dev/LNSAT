@@ -1692,6 +1692,16 @@ the future Inspect ceiling is 128 while bounded dictionaries remain at 64.
 These corrections preserve effective native confinement and held attempt/journal
 custody; API values supply neither enforcement nor absence evidence.
 
+A follow-up pinned-source trace corrects the prior unconditional config-digest
+claim for container Inspect Image: graphdriver stores the config digest, while
+containerd stores the image target manifest/index digest and retains the selected
+platform manifest descriptor separately. The
+[backend identity contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#inspect-image-identity-by-selected-backend)
+requires held-backend selection, distinct raw OCI chain comparisons and future
+cross-domain substitution tests. Three additional stale storage-type appendix
+hashes are corrected without changing field/type/tag inventory. PHR-0051 tracks
+this bounded correction; the reviewed PHR-0050 commits remain preserved.
+
 This is documentation reconciliation only. Inspect implementation is missing;
 its exact private projection, complete bounds/error contract, source ownership
 and independent precode review remain required. No Inspect source scope is

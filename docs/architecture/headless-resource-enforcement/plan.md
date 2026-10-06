@@ -283,7 +283,11 @@ Reconcile the [served Inspect lifecycle](docker-response-source-spec.md#inspect-
 before completing the private decoder contract. The exact created/running/exited
 representations, null ExecIDs and 64/65-member HostConfig positives are mandatory
 inputs to that contract; preserve independent native enforcement and same-attempt
-custody. Project Status owns the reconciliation disposition. Define exact owned
+custody. Include the [backend-dependent Image identity](docker-response-source-spec.md#inspect-image-identity-by-selected-backend)
+and graphdriver, containerd manifest and containerd index cases. Preserve the
+separate raw-config commitment and selected-manifest proof; a returned storage
+branch cannot choose its own trusted comparison. Project Status owns the
+reconciliation disposition. Define exact owned
 source/test/declaration paths, retained projection, aggregate memory/error bounds
 and the full positive/denial matrix, then obtain fresh precode review before
 implementation. This step does not approve Inspect source, native fixture source,

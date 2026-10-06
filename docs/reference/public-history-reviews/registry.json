@@ -411,6 +411,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0050/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0051",
+      "subject_id": "inspect-backend-image-identity-correction",
+      "review_subject_ids": ["inspect-backend-image-identity-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0051/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

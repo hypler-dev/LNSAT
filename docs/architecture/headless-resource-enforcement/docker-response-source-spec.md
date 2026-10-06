@@ -1015,13 +1015,62 @@ Retain claimed identity, resource ceilings, labels, paths, timestamps, mounts,
 network, storage and descriptor values needed by later comparison. No discarded
 value may become a native path, cleanup selector or authority input. Exact
 retained fields, aggregate owned-memory bounds and error taxonomy still need the
-complete private contract and independent precode review. In particular,
-container Inspect Image is the image-config identity (`ctr.ImageID.String()`);
-it must not be confused with a containerd create selector's manifest/index target.
-When ImageManifestDescriptor is present, the builder injects ImagePlatform if
-its Platform pointer was nil; compare the resulting descriptor to the separately
-held raw OCI chain. Existing source/pin freeze and native association gates stay
-open until their own evidence passes.
+complete private contract and independent precode review. Container Inspect Image
+is backend-dependent, as traced below. Existing source/pin freeze and native
+association gates stay open until their own evidence passes.
+
+#### Inspect image identity by selected backend
+
+The earlier unconditional image-config interpretation of `ctr.ImageID.String()`
+was incorrect. The pinned
+[create path](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/create.go#L181)
+gets `img.ID()` from the selected image service, passes it to
+[newContainer](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container.go#L113),
+and stores the selected manifest separately. The
+[Inspect builder](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/inspect.go#L133)
+returns that stored ImageID without converting its digest domain.
+
+| Selected backend                        | Inspect Image                                | ImageManifestDescriptor                                                               |
+| --------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Legacy graphdriver                      | Raw image-config digest from the image store | Omitted for the selected fresh create path                                            |
+| Containerd snapshotter, manifest target | Image target manifest digest                 | Selected platform manifest descriptor                                                 |
+| Containerd snapshotter, index target    | Image target index digest                    | Selected child platform manifest descriptor; its digest differs from the index target |
+
+The [graphdriver image service](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/images/image.go#L160)
+returns the [config-addressed store image](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/internal/image/store.go#L210).
+The [containerd image service](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/containerd/image.go#L62)
+passes `img.Target.Digest` to
+[dockerOciImageToDockerImagePartial](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/containerd/imagespec.go#L18),
+whose call to [NewImage](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/internal/image/image.go#L210)
+preserves that supplied ID; `Image.ID()` returns it unchanged. The internal
+field's config-digest comment does not override this containerd assignment.
+Containerd separately assigns `im.Target()` as the selected platform manifest
+descriptor. When its Platform pointer is nil, Inspect injects the stored
+ImagePlatform before returning it.
+
+Future integration must select the expected backend from held trusted context,
+then compare Image to the corresponding held config or manifest/index target.
+The response cannot select its own backend or supply the expected identity.
+The profile's raw-config `image_digest` commitment remains unchanged. For the
+containerd branch, raw OCI custody must separately prove the target-to-selected-
+manifest-to-config chain, including index membership when applicable; matching
+Image and a descriptor alone does not prove those links. Preserve Config.Image,
+Inspect Image and the descriptor as separate unverified claims for their exact
+held-recipe comparisons. No config/manifest/index substitution or backend fallback
+is permitted.
+
+The future positive/denial matrix must cover graphdriver, containerd manifest
+and containerd index targets, reject cross-domain digest substitution, and check
+the selected manifest and injected platform against the held raw chain. A valid
+index target must not be rejected merely because its digest differs from the
+selected child descriptor. These remain contract and integration acceptance
+requirements, not implemented Inspect tests or runtime evidence.
+
+The three storage-type appendix hashes below are also corrected against exact
+pinned raw bytes and independently decoded GitHub Contents bytes, with matching
+Git blob identities. This changes neither their field inventory nor the selected
+storage response shapes. No new backend, source implementation or runtime gate
+is opened by this correction.
 
 ### State phases
 
@@ -1682,7 +1731,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.RootFSStorage
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/root_f_s_storage.go#L11) · snapshot SHA-256
-`ab6dab1f46602cbf1c24c64284688d14ae61b1879f465c00624068f2867baf0d`.
+`37834b03649e4ad9bee2611d4fc19831e2262b8590b913b2bd8cca265546ab13`.
 
 | Go field   | Go type                  | JSON tag             |
 | ---------- | ------------------------ | -------------------- |
@@ -1691,7 +1740,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.RootFSStorageSnapshot
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/root_f_s_storage_snapshot.go#L11) · snapshot SHA-256
-`d7ea4a7388c81e645ddc1a4927ee40efe4994c1509de7f2d54655ce696563454`.
+`05a691477fbf3659d7ccef8d25aa4fb5334246d92987c8407506b1a3c6439273`.
 
 | Go field | Go type  | JSON tag         |
 | -------- | -------- | ---------------- |
@@ -1700,7 +1749,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.Storage
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/storage.go#L11) · snapshot SHA-256
-`2a3fce37668a0f4fdcda47b675e87ccb412e33da858358894b6c5c6572b990a4`.
+`668328ec999d495a2057db385df4078e32bb51eb5393c17b9b738cb190b0d9ec`.
 
 | Go field | Go type          | JSON tag           |
 | -------- | ---------------- | ------------------ |
