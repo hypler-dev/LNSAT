@@ -323,6 +323,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0039/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0040",
+      "subject_id": "native-procfs-fixture-source-packet",
+      "review_subject_ids": ["native-procfs-fixture-source-packet"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0040/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

@@ -127,6 +127,15 @@ the byte contracts. Candidate completion and full integration retain their
 separate evidence gates. No kernel/harness source, construction or execution
 is opened by this private-reader precode PASS.
 
+The [concrete fixture source packet](native-fixture-source-spec.md) prepares the
+next native-evidence dependency: the selected test-kernel patch and private
+harness that must exercise the actual retained reader. It names exact source
+ownership, fixed hooks, unchanged production behavior, ordinary source checks
+and separately ignored native tests. Project Status owns the pending source-only
+authorization. The method choice is already accepted; implementation, artifact
+construction/provenance, guest provisioning and execution remain distinct gates.
+No fixture source or actual Linux evidence is created by the packet itself.
+
 ### Parallel inert prerequisite
 
 The [exact supplied-byte fdinfo contract](native-source-spec.md#separately-reviewed-stage-a-fdinfo-byte-prerequisite)

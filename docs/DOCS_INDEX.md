@@ -90,6 +90,10 @@ subsystem or proposal.
 - [HCFG-6 native source-freeze proposal](architecture/headless-resource-enforcement/native-source-spec.md)
   — proposed bounded native, profile and startup transport seams; full freeze,
   source integration and runtime proof remain pending.
+- [HCFG-6 native procfs fixture source packet](architecture/headless-resource-enforcement/native-fixture-source-spec.md)
+  — exact future test-kernel patch/private harness ownership for the selected
+  native timeout evidence method; source authorization, build and execution
+  remain separate pending gates.
 - [HCFG-6 preparation/store source specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
   — private Stage-A journal codec and Linux file custody source, plus future
   observation-owning phase writes, atomic bootstrap and release synchronization;

@@ -14,7 +14,10 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Latest bounded contract work records
+Latest bounded contract work prepares the
+[native procfs fixture source packet](#native-procfs-fixture-source-packet)
+for the selected Linux evidence method. Kernel/harness implementation,
+construction and execution remain unopened. The preceding contract work records
 [local OS authentication and encrypted-state design requirements](#local-os-authentication-and-encrypted-state-direction)
 and clarifies the existing
 [release-write deadline](#release-write-deadline-contract-clarification).
@@ -1659,6 +1662,33 @@ open. No Docker/host/ACL operation, target pressure, credential/provider intake,
 SQL18/initializer/activation, merge/main mutation, package/image construction,
 release/publication/deploy/production or tool installation is opened. LNSAT
 remains neutral and standalone; no support or certification claim follows.
+
+### Native procfs fixture source packet
+
+Canonical work record: this subsection, under the existing retained-worker
+investigation and delegated instrumented-method decision. The
+[concrete source packet](architecture/headless-resource-enforcement/native-fixture-source-spec.md)
+names the seven upstream kernel paths inside one future patch, a test-only
+configuration fragment, one private Rust fixture-test module and fixed test-only
+hooks in the existing reader. It supplies exact enrollment/dispatch, read-return,
+cleanup and descriptor-close responsibilities without introducing a successful
+sample injector or changing production behavior.
+
+The method-choice decision is already accepted; no repeat approval is needed.
+**Source implementation authorization is pending.** This checkpoint prepares
+that separate decision. No kernel patch, harness source, device, Linux binary,
+guest or native result exists as a consequence of this documentation. The
+private reader candidate remains implemented but unverified on genuine Linux.
+
+Source-only implementation, if explicitly opened after independent review,
+would permit only the packet's four named source paths and normal host checks;
+native cases remain ignored. Kernel application/build, Linux test construction,
+guest/device provisioning and actual positive/negative execution require a later
+exact artifact/run packet and authorization. Tool installation, Docker, selected
+targets, pressure, credentials, host/ACL changes, SQL18/B6, activation, merge,
+packaging and release remain closed. Source review and synthetic evidence
+cannot satisfy actual native observations, durable recovery or the complete
+native/wire/daemon/store/revocation freeze. LNSAT remains standalone and neutral.
 
 ### Stage-A private schema-3 profile codec
 

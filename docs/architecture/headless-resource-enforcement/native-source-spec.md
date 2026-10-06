@@ -1337,7 +1337,11 @@ completion; canonical recovery and the full native freeze gate integration.
 Private reader/worker source now exists as an unintegrated candidate; Linux
 compilation and native test results remain missing. No kernel/harness source,
 build or execution is opened. No further owner method-choice question is
-required within the delegated contract scope.
+required within the delegated contract scope. The
+[concrete fixture source packet](native-fixture-source-spec.md) now names the
+future kernel patch, configuration, private Rust hooks and focused test scope.
+It prepares the separate source-only decision without opening implementation,
+construction or execution; Project Status owns that pending authorization.
 
 ##### Required evidence and later source ownership
 
