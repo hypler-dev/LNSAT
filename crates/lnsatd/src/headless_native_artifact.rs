@@ -506,6 +506,30 @@ pub(super) fn read(
     Err(ArtifactError::UnsupportedPlatform)
 }
 
+// Account for successful native returns before rejecting late or short reads.
+// This fixed result primitive performs no I/O and grants no native provenance.
+fn checked_read_count(
+    guard: &super::ArtifactCheckpoint<'_>,
+    purpose: ArtifactReadPurpose,
+    requested: usize,
+    outcome: Result<usize, ArtifactError>,
+) -> Result<usize, ArtifactError> {
+    let charged = match outcome {
+        Ok(actual) => guard.budget.charge(purpose, actual),
+        Err(_) => Ok(()),
+    };
+    // Always execute the post-call checkpoint, including failed reads and
+    // accounting failures. Preserve the existing accounting-error precedence.
+    let checked = guard.check();
+    charged?;
+    checked?;
+    let actual = outcome?;
+    if actual != requested {
+        return Err(ArtifactError::ReadRejected);
+    }
+    Ok(actual)
+}
+
 #[cfg(target_os = "linux")]
 struct ArtifactContent {
     digest: Zeroizing<[u8; 32]>,
@@ -546,13 +570,19 @@ fn read_content(
         if count == 0 {
             return Err(ArtifactError::LimitExceeded);
         }
-        let actual = rustix::io::pread(request.file.as_ref(), &mut scratch[..count], offset)
-            .map_err(|_| ArtifactError::ReadRejected)?;
-        request.budget.charge(request.purpose, actual)?;
-        checkpoint(lane, token, deadline, &request.budget)?;
-        if actual != count {
-            return Err(ArtifactError::ReadRejected);
-        }
+        let outcome = rustix::io::pread(request.file.as_ref(), &mut scratch[..count], offset)
+            .map_err(|_| ArtifactError::ReadRejected);
+        let actual = checked_read_count(
+            &super::ArtifactCheckpoint {
+                lane,
+                token,
+                deadline,
+                budget: &request.budget,
+            },
+            request.purpose,
+            count,
+            outcome,
+        )?;
         checkpoint(lane, token, deadline, &request.budget)?;
         hash.update(&scratch[..actual]);
         checkpoint(lane, token, deadline, &request.budget)?;

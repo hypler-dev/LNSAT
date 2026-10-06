@@ -242,6 +242,200 @@ fn artifact_budget_charges_partial_returns_and_overflow_invalidates() {
     );
 }
 
+// These tests exercise the fixed post-call result primitive, not a native
+// reader, injected I/O callback, or Linux acquisition success.
+fn result_checkpoint<'a>(
+    lane: &'a LaneRoot,
+    budget: &'a ArtifactReadBudget,
+) -> super::super::ArtifactCheckpoint<'a> {
+    lane.control.store(
+        super::super::word(super::super::ACTIVE, 1),
+        Ordering::SeqCst,
+    );
+    super::super::ArtifactCheckpoint {
+        lane,
+        token: NonZeroU64::new(1).unwrap(),
+        deadline: budget.state.deadline,
+        budget: &budget.state,
+    }
+}
+
+#[test]
+fn artifact_failed_read_checks_live_context_without_charging_bytes() {
+    let lane = LaneRoot::new();
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let guard = result_checkpoint(&lane, &budget);
+    assert_eq!(
+        checked_read_count(
+            &guard,
+            ArtifactReadPurpose::OciBody,
+            8,
+            Err(ArtifactError::ReadRejected)
+        ),
+        Err(ArtifactError::ReadRejected)
+    );
+    assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
+    assert_eq!(budget.state.artifact_oci_content.load(Ordering::SeqCst), 0);
+    assert_eq!(budget.state.valid(), Ok(()));
+}
+
+#[test]
+fn artifact_failed_read_expiry_precedes_native_error_and_stays_invalid() {
+    for expired_budget in [false, true] {
+        let lane = LaneRoot::new();
+        let mut budget = ArtifactReadBudget::begin(deadline()).unwrap();
+        if expired_budget {
+            Arc::get_mut(&mut budget.state).unwrap().deadline = Instant::now();
+        }
+        let mut guard = result_checkpoint(&lane, &budget);
+        if expired_budget {
+            guard.deadline = deadline();
+        } else {
+            guard.deadline = Instant::now();
+        }
+        assert_eq!(
+            checked_read_count(
+                &guard,
+                ArtifactReadPurpose::OciBody,
+                8,
+                Err(ArtifactError::ReadRejected)
+            ),
+            Err(ArtifactError::BudgetExhausted)
+        );
+        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+        assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
+    }
+}
+
+#[test]
+fn artifact_failed_read_terminal_or_stale_token_precedes_native_error() {
+    for stopped in [false, true] {
+        let lane = LaneRoot::new();
+        let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+        let guard = result_checkpoint(&lane, &budget);
+        if stopped {
+            lane.terminalize();
+        } else {
+            lane.control.store(
+                super::super::word(super::super::ACTIVE, 2),
+                Ordering::SeqCst,
+            );
+        }
+        assert_eq!(
+            checked_read_count(
+                &guard,
+                ArtifactReadPurpose::OciBody,
+                8,
+                Err(ArtifactError::ReadRejected)
+            ),
+            Err(if stopped {
+                ArtifactError::BudgetExhausted
+            } else {
+                ArtifactError::AssociationRejected
+            })
+        );
+        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+        assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
+    }
+}
+
+#[test]
+fn artifact_failed_read_preserves_existing_observation_invalidation() {
+    let lane = LaneRoot::new();
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let guard = result_checkpoint(&lane, &budget);
+    budget.state.invalidate();
+    assert_eq!(
+        checked_read_count(
+            &guard,
+            ArtifactReadPurpose::OciBody,
+            8,
+            Err(ArtifactError::ReadRejected)
+        ),
+        Err(ArtifactError::ObservationInvalid)
+    );
+    assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn artifact_short_or_complete_return_charges_actual_bytes() {
+    for actual in [0, 3, 8] {
+        let lane = LaneRoot::new();
+        let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+        let guard = result_checkpoint(&lane, &budget);
+        assert_eq!(
+            checked_read_count(&guard, ArtifactReadPurpose::OciBody, 8, Ok(actual)),
+            if actual == 8 {
+                Ok(8)
+            } else {
+                Err(ArtifactError::ReadRejected)
+            }
+        );
+        assert_eq!(
+            budget.state.all_content.load(Ordering::SeqCst),
+            u64::try_from(actual).unwrap()
+        );
+        assert_eq!(
+            budget.state.artifact_oci_content.load(Ordering::SeqCst),
+            u64::try_from(actual).unwrap()
+        );
+    }
+}
+
+#[test]
+fn artifact_late_return_charges_actual_bytes_before_checkpoint_denial() {
+    for purpose in [
+        ArtifactReadPurpose::RootManifest,
+        ArtifactReadPurpose::OciBody,
+    ] {
+        for actual in [3, 8] {
+            let lane = LaneRoot::new();
+            let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+            let mut guard = result_checkpoint(&lane, &budget);
+            guard.deadline = Instant::now();
+            assert_eq!(
+                checked_read_count(&guard, purpose, 8, Ok(actual)),
+                Err(ArtifactError::BudgetExhausted)
+            );
+            assert_eq!(
+                budget.state.all_content.load(Ordering::SeqCst),
+                u64::try_from(actual).unwrap()
+            );
+            assert_eq!(
+                budget.state.artifact_oci_content.load(Ordering::SeqCst),
+                if purpose.uses_artifact_allowance() {
+                    u64::try_from(actual).unwrap()
+                } else {
+                    0
+                }
+            );
+            assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+        }
+    }
+}
+
+#[test]
+fn artifact_post_call_accounting_failure_keeps_original_error_precedence() {
+    let lane = LaneRoot::new();
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let mut guard = result_checkpoint(&lane, &budget);
+    budget
+        .state
+        .artifact_oci_content
+        .store(ARTIFACT_OCI_LIMIT, Ordering::SeqCst);
+    guard.deadline = Instant::now();
+    assert_eq!(
+        checked_read_count(&guard, ArtifactReadPurpose::OciBody, 8, Ok(8)),
+        Err(ArtifactError::LimitExceeded)
+    );
+    assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 8);
+    assert_eq!(
+        budget.state.artifact_oci_content.load(Ordering::SeqCst),
+        ARTIFACT_OCI_LIMIT
+    );
+    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+}
+
 #[test]
 fn artifact_input_limits_reject_zero_and_each_wrong_purpose_length() {
     for (purpose, limit) in [

@@ -2283,20 +2283,41 @@ proposed. It explicitly separates provisional bootstrap mount observations
 from the later authenticated mount, kernel, namespace and peer comparisons.
 
 PHR-0061 tracks independent precode review and exact direct-child attestation.
-Review identified a required narrow shared-reader follow-up: failed `pread`
-currently maps its error before its post-call checkpoint. Existing coordinator
-and publication gates still reject expired results; the exact per-call failure
-ordering must be corrected and source-tested before rooted bootstrap reuse.
+At the contract checkpoint, review identified a narrow shared-reader follow-up:
+failed `pread` mapped its error before its post-call checkpoint. Existing
+coordinator and publication gates still reject expired results; the source
+correction below addresses the required per-call ordering before bootstrap reuse.
 The contract also specifies non-owning lease admission and a separate worker-only
 cleanup path that can dispose handles after observation invalidation without
 reopening read authority. These are source obligations, not implemented fixes.
-No bootstrap source is implemented by this documentation packet. The present
-held-artifact candidate remains unchanged. Search-only prefix ACL sampling,
+That documentation packet implemented no bootstrap source and left the held
+artifact candidate unchanged. Search-only prefix ACL sampling,
 artifact/OCI acquisition, actual host-root and current peer/pidfd association,
 complete recipe/pins and composition still need their exact source contracts
 and implementation. Linux positive and unfinished-operation evidence, complete
 native freeze, integration, runtime and packaging remain unfinished. Phase 11
 owns runtime proof; LNSAT remains standalone and Rangoon uses ordinary adapters.
+
+### Stage-A artifact read post-call checkpoint correction
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and the root manifest bootstrap prerequisite above. The private held-artifact
+reader now captures a failed `pread` result without returning before the existing
+typed post-call checkpoint. A fixed private result primitive accounts for all
+successful actual bytes, executes the checkpoint even on read or accounting
+failure, preserves accounting-error precedence, then propagates context or native
+read denial. Short and late successful returns still consume their actual byte
+allowance. No callback, injected reader, observer, retry or authority is added.
+
+Seven host regression tests cover timely failed reads, both deadline boundaries,
+terminal and stale-token contexts, sticky invalidation, short/full byte counts,
+late byte accounting and accounting-error precedence. These exercise the fixed
+result primitive; they do not simulate or prove Linux native I/O. Named focused
+and full source validation plus fresh independent exact source/direct-child
+review are required by PHR-0062. No Linux compile, positive native read, blocked
+operation, rooted acquisition, complete native freeze, integration, runtime or
+packaging completion is claimed. The other root-bootstrap source obligations
+remain open; Phase 11 continues to own runtime proof.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

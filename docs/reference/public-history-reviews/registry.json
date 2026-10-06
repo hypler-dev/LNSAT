@@ -499,6 +499,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0061/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0062",
+      "subject_id": "headless-artifact-read-checkpoint-correction",
+      "review_subject_ids": ["headless-artifact-read-checkpoint-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0062/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }
