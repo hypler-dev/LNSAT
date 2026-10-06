@@ -28,7 +28,15 @@ fn complete_denial(attempt: &mut Attempt, error: ProcfsError) {
     let deadline = request.deadline;
     let mut accounting = CleanupAccounting::default();
     retire_request(lane, request, &mut accounting);
-    publish_completion(lane, job, deadline, Err(error), accounting);
+    publish_completion(
+        lane,
+        job,
+        deadline,
+        RequestKind::Procfs,
+        CompletionOutcome::Procfs(Err(error)),
+        accounting,
+        None,
+    );
 }
 
 #[test]
@@ -39,8 +47,9 @@ fn procfs_preparation_borrows_same_custody_without_dispatch() {
     assert_eq!(Arc::strong_count(&custody.proc_root), 2);
     let slots = lane.slots.lock().unwrap();
     let request = slots.request.as_ref().unwrap();
-    assert!(Arc::ptr_eq(&request.resource, &custody.resource));
-    assert!(Arc::ptr_eq(&request.proc_root, &custody.proc_root));
+    let (resource, proc_root) = request.procfs().unwrap();
+    assert!(Arc::ptr_eq(resource, &custody.resource));
+    assert!(Arc::ptr_eq(proc_root, &custody.proc_root));
     assert!(!request.dispatched);
     assert_eq!(request.deadline, attempt.deadline);
     drop(slots);
@@ -49,7 +58,15 @@ fn procfs_preparation_borrows_same_custody_without_dispatch() {
     assert_eq!(Arc::strong_count(&custody.resource), 1);
     assert_eq!(Arc::strong_count(&custody.proc_root), 1);
     assert_eq!(phase(lane.control.load(Ordering::SeqCst)), BODY_RETURNED);
-    assert!(lane.slots.lock().unwrap().cleanup.unwrap().1.complete());
+    assert!(
+        lane.slots
+            .lock()
+            .unwrap()
+            .cleanup
+            .unwrap()
+            .2
+            .complete(RequestKind::Procfs)
+    );
 }
 
 #[test]
@@ -236,7 +253,7 @@ fn procfs_cleanup_uncertainty_prevents_result_acceptance_and_reuse() {
         .cleanup
         .as_mut()
         .unwrap()
-        .1
+        .2
         .input_close_failures = 1;
     assert!(matches!(attempt.poll(), Err(ProcfsError::CleanupUncertain)));
     assert!(terminal(lane.control.load(Ordering::SeqCst)));
@@ -336,16 +353,19 @@ fn procfs_late_stop_and_close_failure_retain_cleanup_without_reuse() {
             lane,
             job,
             deadline,
-            Err(ProcfsError::OriginRejected),
+            RequestKind::Procfs,
+            CompletionOutcome::Procfs(Err(ProcfsError::OriginRejected)),
             accounting,
+            None,
         );
         assert!(terminal(lane.control.load(Ordering::SeqCst)));
         drain_terminal(lane);
         let slots = lane.slots.lock().unwrap();
         assert!(slots.request.is_none());
         assert!(slots.completion.is_none());
-        let (retained_job, retained) = slots.cleanup.unwrap();
+        let (retained_job, retained_kind, retained) = slots.cleanup.unwrap();
         assert_eq!(retained_job, job);
+        assert_eq!(retained_kind, RequestKind::Procfs);
         assert_eq!(retained.input_references_retired, 2);
         assert_eq!(retained.reader_handles, accounting.reader_handles);
         assert_eq!(
@@ -406,4 +426,27 @@ fn procfs_kernel_largefile_flag_is_allowed_without_write_or_extra_flags() {
             Err(ProcfsError::InvalidDescriptor)
         );
     }
+}
+
+#[test]
+fn procfs_corrupted_request_token_terminalizes_without_dispatch() {
+    let (lane, custody) = control_fixture();
+    let mut attempt = prepared(lane, &custody);
+    lane.slots.lock().unwrap().request.as_mut().unwrap().token =
+        NonZeroU64::new(attempt.token.get() + 1).unwrap();
+    assert_eq!(attempt.dispatch(), Err(ProcfsError::InvalidDescriptor));
+    assert!(terminal(lane.control.load(Ordering::SeqCst)));
+    assert!(
+        !lane
+            .slots
+            .lock()
+            .unwrap()
+            .request
+            .as_ref()
+            .unwrap()
+            .dispatched
+    );
+    drain_terminal(lane);
+    assert_eq!(Arc::strong_count(&custody.resource), 1);
+    assert_eq!(Arc::strong_count(&custody.proc_root), 1);
 }

@@ -2249,15 +2249,27 @@ borrows, per-kind cleanup, tagged completion checks, a shared observation
 budget, positional reads, raw streaming hashes, exact flags and stable native
 metadata/ACL samples. No second worker or injected reader is proposed.
 
-This is a source contract, not implemented file I/O or complete rooted custody.
-PHR-0059 tracks its independent precode review and exact direct-child attestation.
-The next implementation must preserve existing procfs invariants and regressions,
-add genuine held-file tests without presenting them as root authority, and keep
-all new methods private and disconnected from product callers. Root ancestry
-acquisition, complete recipe/pins, peer/pidfd association, native positive and
-unfinished-operation evidence, whole-boundary integration, runtime and packaging
-remain separate unfinished gates. The existing procfs proof cannot be reused as
-artifact I/O proof. Phase 11 remains the runtime-proof owner.
+PHR-0059 attests the independently reviewed precode contract. The private source
+candidate adds the fixed held-file read/hash operation to that same retained
+lane, with closed request/result kinds, per-kind input retirement and one shared
+observation gate. A fixed private checkpoint brackets the reused ACL sampler's
+individual native calls; no caller supplies an observer or reader. The candidate
+keeps artifact bytes and raw digests unverified;
+it has no product caller, public SDK surface or successful authority constructor.
+PHR-0060 tracks its independent implementation review and exact direct-child
+attestation.
+
+Host-source validation uses the installed macOS target. Linux-specific reader
+code and disposable held-file tests are not compiled or executed by that host
+suite; pinned dependency API inspection is source evidence only. Positive Linux
+tests require an explicitly selected disposable ext4 directory and remain
+separate from ordinary host checks. These limits
+must remain explicit until a separately permitted Linux validation environment
+supplies exact evidence. Root ancestry acquisition, complete recipe/pins,
+peer/pidfd association, native positive and unfinished-operation evidence,
+whole-boundary integration, runtime and packaging remain separate unfinished
+gates. The existing procfs proof cannot be reused as artifact I/O proof.
+Phase 11 remains the runtime-proof owner.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

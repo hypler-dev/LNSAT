@@ -11,7 +11,7 @@ not a supplied-byte decoder, trusted root holder or complete source freeze.
 
 The next source slice owns `crates/lnsatd/src/headless_native_artifact.rs` and
 `crates/lnsatd/src/headless_native_artifact_tests.rs`, the existing `headless_native_procfs.rs` and its tests,
-and the minimum internal visibility change in `headless_native_readable.rs`.
+and the fixed artifact checkpoint path in `headless_native_readable.rs`.
 The new artifact module is a private child of the existing procfs lane module.
 Its only executable entry is that lane's closed worker dispatch. There is no
 second static lane, thread, process, queue, restart, arbitrary closure, injected
@@ -214,8 +214,15 @@ existing pinned safe nix/rustix APIs; no raw FFI or unsafe application code.
    a libc LARGEFILE constant that can be zero on a 64-bit ABI.
 2. Sample the existing finite readable-object access/default ACL representation.
    `ENODATA` stays unclassified; it is never silently positive root/ACL proof.
-   Permit only the minimum `pub(super)` visibility for the opaque sample and
-   sample function, plus equality comparison. No new field constructor or
+   Keep the opaque sample and equality comparison private. The artifact entry
+   uses a fixed opaque checkpoint from the retained lane around every internal
+   `fcntl`, `fstat`, `fstatfs` and `fgetxattr` call. Its private fields bind the
+   actual lane, token, deadline and observation gate; no caller supplies a
+   callback, trait, reader or successful sample. The ordinary readable sampler
+   retains its existing behavior through the same implementation without an
+   artifact checkpoint. An internal native denial cannot hide a gate failure:
+   artifact code checks the gate after both successful and failed sampler
+   returns before mapping the native error. No new field constructor or
    authenticated ACL-absence API is added.
 3. Fix an initial identity containing device/inode, type, UID/GID, mode, nlink,
    size, mtime and ctime including nanoseconds, filesystem type and file flags.
