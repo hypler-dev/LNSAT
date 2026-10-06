@@ -32,7 +32,7 @@ Docker CLI, build, pull, exec, prune, registry, volume or network API exists.
 | -------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------- |
 | Version                          | `GET /version`                                                                     | 200 JSON                        |
 | Engine facts                     | `GET /info`                                                                        | 200 JSON                        |
-| Image                            | `GET /images/{config_image_id}/json`                                               | 200 JSON                        |
+| Image                            | `GET /images/{selected_image_digest}/json`                                         | 200 JSON                        |
 | Create                           | `POST /containers/create?name={private_name}`                                      | 201 JSON                        |
 | Inspect own object               | `GET /containers/{container_id}/json?size=0`                                       | 200 JSON                        |
 | Inspect exact preparation orphan | `GET /containers/lnsat-hcfg6-probe-{preparation_id}/json?size=0`                   | 200 JSON or exact current 404   |
@@ -42,7 +42,20 @@ Docker CLI, build, pull, exec, prune, registry, volume or network API exists.
 | Kill owned running object        | `POST /containers/{container_id}/kill?signal=SIGKILL`                              | 204 empty                       |
 | Remove inspected own object      | `DELETE /containers/{container_id}?v=0&force=0&link=0`                             | 204 empty                       |
 
-Image selectors are exact `sha256:` config ImageIDs. Other IDs are complete
+Image selectors are exact full `sha256:` digests derived from the independently
+selected backend and held OCI parent chain. For the pinned containerd backend,
+a non-null profile `headless.image_index_digest` selects that exact held index
+digest as the target; an explicit null selects the exact held manifest digest
+bound by `headless.image_manifest_digest`. Missing, mismatched or unavailable
+held blobs deny before request construction. The selected index must contain
+the exact held manifest descriptor, whose config descriptor binds the held raw
+config. Never choose the branch from a response or failed lookup, and never use
+raw config digest as a presumed target lookup.
+Its [resolver](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/containerd/image.go)
+matches target digests. The graphdriver branch instead uses the held config
+digest. The complete recipe selects one branch with no retry/fallback between
+identities or stores. Profile `image_digest` still commits to the raw config;
+the selector is derived from the separate held manifest/index pins. Other IDs are complete
 64-lowercase-hex values, never prefixes. Names contain only fixed ASCII plus
 a private 64-hex draw: preparation names above; action names
 `lnsat-hcfg6-action-{channel_id}`. An action name is never a retry selector.
@@ -101,7 +114,7 @@ Fixed values: hostname `lnsat`, empty domain, decimal selected `uid:gid`, all
 three attach flags true, no ports, TTY false, OpenStdin true, StdinOnce true,
 empty Cmd/OnBuild/Shell, ArgsEscaped false, no image volume and
 `Healthcheck={"Test":["NONE"]}`. Image is the independently verified exact
-local config ImageID. Entrypoint is a singleton immutable probe or adapter
+backend-specific image selector defined above. Entrypoint is a singleton immutable probe or adapter
 path. WorkingDir is `/` for preparation and the verified profile target for
 action. NetworkDisabled is false with NetworkMode none; this preserves the
 private network namespace. StopSignal is `SIGKILL`, StopTimeout is 1.
@@ -189,7 +202,7 @@ Required security projections are:
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Version  | Version 29.8.2, ApiVersion 1.56, Linux OS, selected architecture, exact current build/component identities from manifest.                                                                                                                                                                                |
 | Info     | ServerVersion, OSType/Architecture, CgroupDriver systemd, CgroupVersion 2, finite-controller availability, exact SecurityOptions for seccomp/AppArmor/cgroupns and no rootless/userns, default runc runtime and exact runtime/component build tuple. No proxy address or arbitrary diagnostic is echoed. |
-| Image    | Id equal config ImageID; exact config/manifest/optional-index association and platform; immutable Entrypoint/Cmd/User/Env/WorkingDir/Volumes/Healthcheck/OnBuild/Shell/labels matched to recipe. Tags or RepoDigests alone do not authenticate association.                                              |
+| Image    | Backend-specific Id: graphdriver config digest or containerd target manifest/index digest; exact config/manifest/optional-index association and platform; immutable Config and RootFS matched to recipe. Tags or RepoDigests alone do not authenticate association.                                      |
 | Create   | Exactly one Id and Warnings empty; returned ID then undergoes full own-object inspection.                                                                                                                                                                                                                |
 | Inspect  | Id, Name, Image, Path/Args, State, Config, HostConfig, Mounts, AppArmorProfile, ProcessLabel/MountLabel, NetworkSettings, RestartCount and image-manifest descriptor match recipe/current object. Host PID/start ticks and cgroup/native namespace associations are independently observed.              |
 | Wait     | Normal completion is exactly `{"StatusCode":0}`. The tagged response omits a nil Error pointer; present/null Error or another exit status denies success. Termination/uncertainty never produces success.                                                                                                |
@@ -199,8 +212,13 @@ authenticated raw config/manifest/optional-index parent-link comparison that
 the fixed Image Inspect call cannot supply. Exact source's
 [image response type](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image_inspect.go)
 makes `Descriptor` conditional on the multi-platform store; `Manifests` also
-requires an option this private request never sends. Do not require those
-fields unconditionally, or reconstruct a config ImageID from API Config JSON.
+requires an option this private request never sends. The pinned containerd
+backend returns Id equal to its target Descriptor.digest (manifest or index),
+not the raw config digest. The graphdriver backend returns config digest Id
+and GraphDriver without Descriptor. The Image decoder contract preserves these
+mutually exclusive source branches; the final recipe selects one. Never compare
+containerd target Id directly with profile `image_digest`, which remains the
+raw config commitment, or reconstruct that commitment from API Config JSON.
 Image RootFS layer DiffIDs and platform/config projections must agree with the
 held raw config and complete reviewed image recipe. Tags/RepoDigests remain
 non-authoritative. Root/daemon trust and later actual image proof still apply.

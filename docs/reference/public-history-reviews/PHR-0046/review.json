@@ -1,0 +1,51 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0046-independent-implementation-review-98db7dca",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-daemon-image-decoder-contract-stage-a"],
+  "base_revision": "dc2de0bb9071c839fb4bef57a060ce0fe0dd8879",
+  "reviewed_revision": "98db7dca7a69e5d081466e2890ecc7e9faf258e1",
+  "reviewed_tree_oid": "8adf58e8e8ca0c20308a4452b3d676e1a13aa543",
+  "diff_sha256": "sha256:2500f0dd423ab0199faeeafe240a826003ed2c24e4e5ab7ee8986c44bf275c6d",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:bf39122b4854f494257d70b881ae6840074ea0afd72bb2c8a86b25f40ad7ca63"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/docker-response-source-spec.md",
+      "sha256": "sha256:7fe24268e0b90954481b38c66ec9c728925f21c398b058ee25902b4398e558d8"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/docker-source-spec.md",
+      "sha256": "sha256:4215caefe91d3995d9f7636148403252d28064f6cdb05565a0c248fa64b64ab3"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:c96dd344c45a63670be2217b9d11487126d2b47aa7fca0e7843d914315fb1a0a"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/root-manifest-source-spec.md",
+      "sha256": "sha256:42559f423aa8fb8b5deb728b0d9166092ff3f3f3c145a81d20f2fff41d55c3cd"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:884e8bc864f1f0d12e071bda3d2fb1477172b75f709c081d8956875223eadc4a"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:67d90d0571b94f47dc633405424ed624e0924aae583f6dcf9ce7b61f3187964e"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/image_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only precode and exact immutable documentation review. Closed supplied-body Image decoder contract; verified upstream types and served API; corrected tag-list encoding, source hashes and backend-specific target identity. Authenticated profile index presence selects the target before lookup; held index-to-manifest-to-config links remain required. All nine final documentation validation groups pass, including public/inventory/history and Phase11 readiness. No decoder implementation or full npm run check claimed for this documentation-only patch. No public/profile codec change, backend fallback, native fixture, runtime, full-freeze, support, release or deployment authority. Separate exact direct-child verification remains required."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

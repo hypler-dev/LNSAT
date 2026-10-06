@@ -6,7 +6,7 @@ Status: accepted
 Authority: [HCFG-6 intent](intent.md); current acceptance/implementation belongs to [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
-Last updated: 2026-10-05
+Last updated: 2026-10-06
 
 ## Scope and protected lanes
 
@@ -241,6 +241,25 @@ Source tests are synthetic and private. Project Status owns implementation and
 acceptance.
 No adapter sequence barrier, trusted observation, store release, current native
 result, integration or pending kernel/harness authority follows.
+
+### Private daemon Image prerequisite
+
+After Version and Info, the [Image-only supplied-body contract](docker-response-source-spec.md#stage-a-private-image-decoder-contract)
+bounds the next representation prerequisite for comparing the selected image
+with held raw OCI config/manifest/index. It names exact private files, source
+normalization, error precedence, retained claims and tests. Exact upstream
+verification corrected served list encodings and backend-specific image target
+identity/selection without changing the profile's raw config commitment. Fresh
+independent precode review passed after the exact authenticated pre-request
+selector rule and list-presence corrections;
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-image-decoder-contract)
+owns their disposition. The private decoder and synthetic tests now implement
+this representation prerequisite with allocation-free bounded preflight, closed
+map-only shapes and an unverified retained projection. Source review and exact
+attestations are separate gates. Decoder success remains an unverified claim.
+Raw-blob custody, selected recipe/pins, storage/daemon association, full native
+freeze, product integration and actual runtime remain separate dependencies.
+This work does not open the pending kernel/harness source packet.
 
 ## Validators
 
