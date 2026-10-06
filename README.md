@@ -146,10 +146,14 @@ attempt. The durable store owns consumption and operation/attempt state so
 that replay and concurrent claim attempts cannot create an additional dispatch.
 
 For the prepared Phase 11 path, source includes a private store-owned
-pre-supervisor verifier. It authenticates the created-claim result and freshly
-re-reads the exact bound consumption, operation and attempt in a store
-transaction before producing a bound, non-replayable guard. A caller-supplied
-snapshot or a matching digest cannot replace that durable-state check.
+pre-supervisor verifier. Before process creation, a runnable driver must
+authenticate the created-claim result through the durable-store boundary.
+The verifier re-reads the exact bound consumption, operation and attempt in a
+fresh authenticated store transaction before returning a bound pre-supervisor
+guard. It revalidates created, dispatching, no-receipt and no-reconciliation
+state. A caller-supplied claim snapshot, public read API or matching digest
+cannot replace that durable-state check. Failure after the durable claim commit
+rejects before spawn, preserves or marks `outcome_unknown`, and never redispatches.
 
 This verifier is a source prerequisite. A separately reviewed runnable proof
 driver and real runtime evidence are still required before the prepared path
@@ -347,11 +351,28 @@ and [enforcement plan](docs/architecture/headless-resource-enforcement/plan.md)
 define these prerequisites. Project Status records which private candidates
 exist and which evidence is still missing.
 
-Phase 11 has deterministic proof planning, evidence requirements, private
-admission contracts and the store-owned pre-supervisor verifier described
-above. The
+The source now includes deterministic proof-plan, evidence-requirements, a
+source-only execution-harness contract, a private run-manifest contract, and a
+private served-driver admission evaluator. The evaluator structurally binds
+the canonical manifest, caller-supplied claim snapshot, D3/D4A payload, loaded
+profile and launch-contract digest. Its output authenticates no claim snapshot,
+revalidates no durable claim state and grants no launch permission. The
+store-owned pre-supervisor verifier described above supplies a separate source
+boundary; it does not turn structural admission into a runnable proof driver.
+Real-driver and runtime proof steps remain proposed design evidence only:
+none grants a runtime result, receipt, execution, completion, or support claim.
+
+The private manifest binds declarations to a separately supplied expected
+source-root/revision/build identity and rejects lexical source/target overlap.
+A later driver must authenticate physical source and target identities and
+revalidate their disjointness immediately before process creation. This source
+does not constitute real runtime evidence or complete Phase 11.
+
+The
 [operator run packet](docs/architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
-remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`. Live executable, image,
+remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`. It distinguishes the locked
+proof-implementation source from PR #39's packet integration identity; merging
+that packet did not move its proof-source lock. Live executable, image,
 profile, launch and manifest identities remain blocking. A runnable proof
 driver, authenticated physical source/target identities, authorized disposable
 execution and consequence/cleanup evidence remain separate work. No current
