@@ -1673,6 +1673,39 @@ SQL18/initializer/activation, merge/main mutation, package/image construction,
 release/publication/deploy/production or tool installation is opened. LNSAT
 remains neutral and standalone; no support or certification claim follows.
 
+### Stage-A private daemon Image decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [Image-only supplied-body contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-image-decoder-contract)
+prepares the next image-identity representation prerequisite. It names exact
+private source/test/declaration ownership, finite preflight and typed bounds,
+fixed errors, API omission versus raw OCI presence, Config/RootFS/storage/
+descriptor projections and the mandatory positive/denial matrix. Exact upstream
+type/router/backend verification is complete. Fresh independent OpenAI Terra
+xhigh precode review passed after correcting the served-list null rule and
+making authenticated pre-request target selection explicit. No actionable
+P1/P2/P3 remains in that contract review; final documentation validation and
+exact source/direct-child attestations are separate gates. Ten stale appendix hash references across
+six Image-related type files were corrected using raw/Contents/Git-blob checks.
+The served API requires allocated tag/digest arrays, including empty arrays.
+No Image decoder source has been implemented by this packet.
+
+The source check also found and corrected a material comparison/selector error:
+the pinned containerd backend reports and resolves a manifest/index target
+digest, whereas the graphdriver backend uses config digest identity. The
+transport and root/OCI companions now distinguish those branches, preserve
+profile `image_digest` as the raw config commitment, and require the selected
+target's held parent-link chain. The proposed decoder requires exactly one
+GraphDriver/Descriptor branch and target Id/Descriptor.digest agreement. This
+does not change existing profile codecs, public contracts or active callers.
+
+Later comparison must bind every retained unverified claim to held raw OCI
+bytes, their parent links, a complete immutable image recipe and authenticated
+daemon/storage custody. Parsing alone cannot establish those facts. This work
+does not select artifact pins, complete the native freeze, open the separately
+pending kernel/harness source packet or provide Docker/runtime evidence. LNSAT
+remains standalone; Rangoon is an optional standard-contract consumer.
+
 ### Native procfs fixture source packet
 
 Canonical work record: this subsection, under the existing retained-worker

@@ -160,7 +160,8 @@ necessary. No writable host snapshot is mounted into either process.
 An OCI blob record has exactly `path,digest,size`; size is positive and at
 most 1 MiB. All custody rules for artifact files apply. There are exactly two
 or three blobs and at most 3 MiB total. Config digest equals profile
-`image_digest` (local config ImageID), manifest equals
+`image_digest` (raw config digest, distinct from a containerd Image Inspect
+target Id), manifest equals
 `headless.image_manifest_digest`, and nullable index pairs exactly with
 `headless.image_index_digest`. These three identities are distinct.
 
@@ -251,8 +252,17 @@ binds the reviewed declared layer/DiffID identities. It does not independently
 hash installed layers or prove the daemon unpacked them faithfully. That
 association uses the accepted root/daemon boundary, exact prepositioned image
 pins and later selected-target proof. The root manifest asserts the blobs
-correspond to that daemon's local image; compare Image Inspect's `Id`,
-platform, Config and RootFS DiffIDs before use. A descriptor, tag, RepoDigest,
+correspond to that daemon's local image; compare Image Inspect's backend-specific
+`Id`, platform, Config and RootFS DiffIDs before use. For the pinned containerd
+backend, a non-null profile `headless.image_index_digest` requires target Id and
+Descriptor.digest equal to that exact held index digest; explicit null requires
+both equal to the held `headless.image_manifest_digest`. This predicate is
+authenticated before request construction, never inferred from a response.
+Missing or mismatched held blobs deny. Follow the index's exact held manifest
+descriptor and that manifest's config descriptor to the selected raw config,
+rather than equating target Id with
+profile `image_digest`. The graphdriver branch instead claims config digest Id;
+the complete recipe must select and bind one backend without fallback. A descriptor, tag, RepoDigest,
 API Config re-encoding or root-provided file alone cannot replace this chain.
 No additional Docker endpoint, registry call, image pull or artifact build.
 

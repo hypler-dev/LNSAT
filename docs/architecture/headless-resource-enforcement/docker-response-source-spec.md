@@ -6,8 +6,9 @@ native freeze. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runt
 owns acceptance and implementation. The Phase 11 operator packet owns runtime
 truth. The bounded Stage-A Version-only decoder contract below is a private
 source prerequisite. The separate Info-only prerequisite below now has a private
-source candidate tracked by Project Status. No daemon verification, Docker
-operation or activation follows from either decoder.
+source candidate tracked by Project Status. The Image-only contract below
+prepares the next private prerequisite. No daemon verification, Docker
+operation or activation follows from these decoders or their contracts.
 
 ## Source and interpretation
 
@@ -603,8 +604,12 @@ neutral contracts; Rangoon remains an optional standard-contract consumer.
 
 ## Image response
 
-Root keys are exactly image.InspectResponse. Compare Id, Architecture, Os,
+Root keys are exactly image.InspectResponse. Compare Architecture, Os,
 optional Variant, Config and RootFS to held raw OCI config and immutable recipe.
+Id has backend-specific meaning: the graphdriver backend returns the config
+digest; the containerd backend returns its target manifest/index digest, also
+present in Descriptor.digest. Do not equate the latter with the raw config
+digest. The exact selected-backend comparison and parent-link chain are required.
 OsVersion is omitted for this first Linux recipe. Config is non-null with the
 flattened DockerOCIImageConfig/ImageConfig fields in the appendix; no wrapper
 key named ImageConfig or DockerOCIImageConfigExt is admitted. Exact raw
@@ -616,8 +621,9 @@ RootFS is exactly Type `layers` and a nonempty ordered Layers array of 1..16
 full SHA-256 DiffIDs matching raw config. Metadata is exactly LastTagTime as a
 bounded RFC3339 timestamp, including the valid Go zero timestamp; discard it.
 Size is a nonnegative signed int64 and bounded by the reviewed image/storage
-recipe. RepoTags/RepoDigests are required null or bounded string arrays,
-discarded. Optional Comment/Created/Author are bounded nonempty strings;
+recipe. RepoTags/RepoDigests are required bounded string arrays, including empty
+arrays, and discarded. The served API 1.56 router normalizes backend nil lists
+to allocated empty arrays; explicit null is not accepted. Optional Comment/Created/Author are bounded nonempty strings;
 Created is RFC3339. They cannot authenticate origin.
 
 GraphDriver is omitted or exactly `{Name,Data}`; Name is a bounded string,
@@ -638,6 +644,247 @@ forbidden. Platform is exactly architecture, os and optional variant;
 os.version/os.features are forbidden. Digest and size match held raw blobs,
 not RepoDigests. Presence for both descriptor fields is fixed by the selected
 storage/recipe; absent descriptors do not replace raw OCI parent-link proof.
+
+## Stage-A private Image decoder contract
+
+This is the next supplied-body prerequisite under the accepted
+[Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-image-decoder-contract)
+owns review and implementation truth. Fresh independent precode review must
+pass before implementation. The decoder accepts untrusted Image Inspect body
+bytes only; it neither obtains those bytes nor authenticates the image, daemon,
+raw OCI files or storage backend. The existing Version/Info candidates and
+locked Phase 11 path remain unchanged.
+
+### Image ownership and representation boundary
+
+The pinned served API 1.56 [router](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/server/router/image/image_routes.go)
+normalizes nil tag/digest lists to arrays. The
+[containerd backend](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/containerd/image_inspect.go)
+returns target digest Id and Descriptor with no GraphDriver at this API version;
+the [graphdriver backend](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/images/image_inspect.go)
+returns config digest Id and GraphDriver without Descriptor. The private Image
+request sends no platform query, so the containerd target is the image's
+manifest/index target, not a caller-selected child. This corrects the previous
+unconditional config-ImageID comparison. It does not change the profile's raw
+config `image_digest` commitment or authorize a backend/selector fallback.
+
+The six Image-relevant type files were checked through raw downloads and
+base64-decoded GitHub Contents responses; their recomputed Git blobs match the
+API blob IDs. Ten earlier appendix SHA-256 references across these six files
+were incorrect and are replaced; unrelated type hashes are outside this refresh.
+This is source provenance, not installed artifact or runtime evidence.
+
+| Exact source                               | Raw bytes | SHA-256                                                            |
+| ------------------------------------------ | --------- | ------------------------------------------------------------------ |
+| Moby `api/types/image/image_inspect.go`    | 5,207     | `294b967dc7bcb894188a8e17d7b69c0ccbc4da16fc668a6449d52c6038c3be68` |
+| Moby `api/types/image/image.go`            | 394       | `23365d448c646f64becfa337681cccc854fc2c1892fc6ef6ead3e89b700a05f5` |
+| Moby `api/types/storage/driver_data.go`    | 1,072     | `d0503186bea207a8b00708c0d178fea6bef698b97b245e6f5aa450ca4902be2c` |
+| Docker image-spec `specs-go/v1/image.go`   | 2,158     | `70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7` |
+| OCI image-spec `specs-go/v1/config.go`     | 4,548     | `b88c5220009106090d760c4589704a950b45e6c0f676427be9537b2abaf2a763` |
+| OCI image-spec `specs-go/v1/descriptor.go` | 3,110     | `0861d8687b818f7045ca3f076e8f8a1ef92497514235fbaea4c6af0c075f1c3a` |
+
+Moby paths use the pinned commit above. Docker image-spec tag `v1.3.1` peels
+to `f1d00ebd2d6d6805170d5543dbca4b850f35f9af`; OCI image-spec tag `v1.1.1`
+peels to `147f9c13cedb47a0c4d9a11a222961073d585877`. The linked served router
+and both backend constructors were checked at that same Moby commit, rather
+than inferring the wire solely from Go struct tags.
+
+Future source ownership is exactly `crates/lnsatd/src/headless_daemon_image.rs`,
+its sibling `headless_daemon_image_tests.rs`, and one private module declaration
+in `crates/lnsatd/src/lib.rs`. The private entrypoint is
+`decode_image_claim(&[u8]) -> Result<UnverifiedImage, ImageDecodeError>`.
+No dependency, feature, shared-parser refactor, HTTP operation, filesystem
+read, clock, public constructor, caller or successful observer injection is
+included. Documentation and normal exact PHR/inventory evidence are ancillary.
+
+The output is a sealed, non-serializable collection of unverified claims. It
+has no Debug, Clone, public constructor or authority conversion. It retains
+Id, architecture, optional variant, the Config projection below, ordered
+DiffIDs, Size, optional GraphDriver name, and the complete optional Descriptor
+projection. Fixed predicates are implicit. Optional compared fields retain
+presence; absence is not a wildcard. Metadata, tag/digest lists, author/comment/
+creation text and GraphDriver.Data are typed then discarded. No digest of the
+response or identity/authority token is minted.
+
+All module-owned input-derived strings, including dynamic keys and discarded
+temporary values, use zeroizing storage. Caller input, copies outside the
+module and JSON-library scratch remain outside that scrubbing claim. No input
+value, path, offset, field name or provider diagnostic is reflected by errors.
+
+### Image bounds and error precedence
+
+The body cap is 1,048,576 bytes inclusive. Validate strict UTF-8, then complete
+an allocation-free lexical/structural preflight before typed owned decoding.
+Accept exactly one JSON object with optional JSON whitespace. Reject BOM, raw
+string controls, malformed numbers/escapes/surrogates, incomplete input and
+trailing values/data. Root depth is one; maximum depth is 32. Each object has
+at most 64 members and the complete body at most 4,096 members, including
+dictionary entries. Keys have 1..256 decoded UTF-8 bytes; all string values
+have at most 4,096 decoded UTF-8 bytes. Every array has at most 128 elements.
+These preflight caps apply to unknown and later-forbidden branches too. Charge
+each cap before entering/growing beyond it; use no dynamic stack or retained
+generic JSON tree.
+
+Typed decoding requires maps at every object position; unknown, wrong-case,
+duplicate and escaped-duplicate keys deny. No positional struct arrays,
+coercion, recursive skip or optional-null default is accepted. Required nullable
+GraphDriver.Data distinguishes missing from explicit null. Every other
+accepted field, including tag/digest lists, rejects null. Dynamic dictionaries have exactly
+bounded string keys and values, never arbitrary JSON.
+
+Size and Descriptor.size accept decimal integer tokens only, within
+0..9,223,372,036,854,775,807 inclusive. Negative tokens (including `-0`),
+fractions, exponents, strings, Booleans and overflow fail shape; malformed JSON
+number tokens fail syntax. Descriptor.size must additionally be positive.
+
+The five fixed data-free errors, in precedence order, are:
+
+1. `headless_image.input_too_large`: body cap, before UTF-8 inspection.
+2. `headless_image.json_syntax`: strict UTF-8 or preflight syntax.
+3. `headless_image.json_limits`: preflight bounds.
+4. `headless_image.json_shape`: typed presence/map/duplicate/unknown/null/type
+   failures, forbidden keys and integer spelling/range failures.
+5. `headless_image.recipe`: fixed predicates, content validity, typed collection
+   cardinality, empty present omission-tagged values and inconsistent platforms.
+
+UTF-8 precedes preflight; within preflight the first left-to-right syntax/limit
+failure wins. Complete shape validation precedes recipe validation. For an
+overlong typed array within the preflight cap, validate every element's type
+before returning its recipe cardinality error. Failure returns no partial
+projection. This precedence does not inspect an unbounded body or bypass a cap.
+
+### Image exact root and Config shape
+
+Nine root members are required: `Id,RepoTags,RepoDigests,Config,Architecture,Os,
+Size,RootFS,Metadata`. The only optional members are
+`Comment,Created,Author,Variant,GraphDriver,Descriptor`; at most fifteen root
+members are accepted. `OsVersion,Manifests,Identity` are forbidden even as
+null, empty or false placeholders. Id is `sha256:` followed by exactly 64
+lowercase hexadecimal digits. Architecture is nonempty and not `N/A`; Os is
+exactly `linux`. Variant, if present, is nonempty and not `N/A`. These platform
+strings remain unverified claims, not a selected build target.
+
+RepoTags and RepoDigests are each a required array of at most 128 bounded
+strings, including empty arrays. The API router converts nil lists to `[]`. Their strings never supply identity
+or a future image selector. Optional Comment/Author are nonempty bounded
+strings. Created, when present, obeys the same calendar-valid RFC3339 subset
+as Info.SystemTime above. Metadata is exactly a required LastTagTime string
+with that timestamp grammar; `0001-01-01T00:00:00Z` is valid. All are discarded.
+
+Config is a non-null flattened map. Its only accepted keys are `User,Env,
+Entrypoint,Cmd,WorkingDir,Labels,StopSignal,Healthcheck`, all optional.
+`ImageConfig,DockerOCIImageConfigExt,ExposedPorts,Volumes,ArgsEscaped,OnBuild,
+Shell` are forbidden even when empty, false or null. The selected raw OCI
+grammar permits only empty ports/volumes/OnBuild/Shell and false ArgsEscaped;
+the pinned API encoder omits those values. Their accepted raw presence does
+not justify their presence in this API body.
+
+User, WorkingDir and StopSignal, when present, are nonempty bounded strings.
+Env, Entrypoint and Cmd, when present, are nonempty arrays of 1..64 bounded
+strings; element strings may be empty and remain exact claims. Labels, when
+present, is a nonempty dictionary of 1..64 bounded string pairs. Healthcheck,
+when present, is exactly a map requiring Test, exactly `["NONE"]`; interval,
+timeout, retry, start-period and start-interval keys are forbidden even at zero.
+This is the selected disabled-healthcheck shape, not permission to execute a
+healthcheck. Empty Config is structurally valid and remains unverified.
+
+Retain each accepted Config field and its optional presence, preserving array
+order and exact decoded string bytes. Normalize dictionary order only, using
+bytewise key sort. Do not fill absent fields with guessed defaults. Future
+comparison must use an explicit source-derived normalization of the held raw
+OCI config: an empty raw User/Cmd/OnBuild/Shell or false ArgsEscaped can be
+omitted by this API encoder without changing the separately committed raw
+bytes. In particular the proposed raw `User=""` requires an omitted API User.
+The proposed fixed environment, entrypoint, labels and WorkingDir are later
+exact recipe comparisons; accepting a different structurally valid claim here
+does not accept a different image recipe or authorize execution.
+
+RootFS is exactly Type `layers` plus required Layers, an ordered array of
+1..16 distinct full lowercase SHA-256 DiffIDs in the same grammar as Id.
+Retain order; never sort or deduplicate it into an accepted result. GraphDriver,
+when present, is exactly required Name and Data. Name is a nonempty bounded
+string other than `N/A`, retained. Data is required null or a dictionary of
+0..64 bounded string pairs, discarded. Never open a path found in Data.
+
+Exactly one of GraphDriver and Descriptor must be present. Both or neither
+fails recipe after shape validation. These are mutually exclusive unverified
+source branches, not permission to select an alternate backend. A Descriptor
+branch additionally requires Id equal Descriptor.digest. A GraphDriver branch
+cannot establish its claimed config digest without held raw config custody.
+The later complete recipe fixes one permitted branch; it cannot silently fall
+back between them when image lookup or association fails.
+
+### Image optional descriptor
+
+Descriptor, when present, is a non-null map requiring `mediaType,digest,size`.
+The only optional keys are `annotations,platform`; `urls,data,artifactType`
+and all other keys are forbidden. mediaType is exactly
+`application/vnd.oci.image.manifest.v1+json` or
+`application/vnd.oci.image.index.v1+json`. digest is a full lowercase SHA-256
+digest in the Id grammar. size is positive within the signed-64-bit bound.
+annotations, if present, is a nonempty dictionary of 1..64 pairs; keys are
+ASCII of 1..256 bytes and values bounded UTF-8 strings. Normalize only its
+dictionary ordering. Retain media type, digest, size, annotations and presence.
+
+platform, when present, is a map requiring `architecture,os`; its only optional
+member is `variant`. Architecture is nonempty and not `N/A`, os is `linux`,
+and a present variant is nonempty and not `N/A`. `os.version,os.features` and
+other fields are forbidden. Its architecture and optional variant must equal
+the root claims, including variant presence. Retain platform presence; its
+fixed/equal values need not be duplicated in the output. Neither an omitted
+platform nor an omitted Descriptor supplies parent-link evidence.
+
+### Image mandatory evidence and integration gate
+
+Before source, verify exact upstream type bytes and the served API 1.56 image
+route/backends, including omission/flattening behavior. Build synthetic positive
+bodies from those sources with independently specified expected projections.
+Cover empty/nonempty tag and digest arrays plus explicit-null denial,
+GraphDriver absence/null-data/empty-data/nonempty-data, manifest/index descriptors, optional platform/variant/annotations and both
+disabled-healthcheck representations. Include raw-empty-to-API-omitted vectors
+without suggesting that this decoder reads or authenticates a raw OCI blob.
+Prove ordering invariance for maps/escaped keys and exact order preservation
+for Env, Entrypoint, Cmd and DiffIDs. Vary each retained claim independently;
+vary discarded data without changing the result.
+
+For every required and optional path, cover omission/null/wrong-type/empty/
+nonempty forms as applicable; every object as a positional array; duplicate,
+escaped duplicate, wrong-case and unknown keys; every forbidden root/child key;
+each fixed predicate, unavailable identity string, hash grammar, timestamp
+calendar/leap/fraction/offset boundary and descriptor/root platform mismatch.
+Cover both valid storage branches, both/neither branch denial, target Id versus
+Descriptor.digest mismatch and an index target whose digest differs from the
+held child manifest/config. A config digest cannot substitute for target Id in
+that synthetic snapshotter case. Synthetic parent blobs remain unverified.
+Test repeated, reordered and 0/1/16/17 DiffIDs; 0/1/64/65 Config array elements;
+dictionary 0/1/64/65 bounds; integer zero/max/overflow/fraction/exponent/negative
+zero; and healthcheck Test cardinality/type/content and forbidden duration keys.
+
+Exercise exact and over-cap body, decoded key/string bytes (raw UTF-8 and
+escaped Unicode), depth, local/total members and arrays, without an unrelated
+smaller cap masking the intended boundary. Include every truncation of a valid
+body, malformed escapes/surrogates/numbers/UTF-8, raw controls, BOM, trailing
+data and competing-error precedence. Secret canaries must never reach errors
+or the projection through discarded fields. Positive synthetic results must
+exist; an all-denial test suite cannot establish candidate completeness.
+
+Implementation requires focused tests, pinned host format/strict lint, full
+`npm run check`, public/inventory/history checks, scoped installed scanners and
+fresh independent exact source/direct-child review. Complete source/pin freeze
+must later bind every retained claim, exact descriptor/storage presence, Size
+limits and normalized Config to held raw OCI config/manifest/index, immutable
+reviewed recipe and authenticated daemon/endpoint/storage custody.
+For the selected containerd branch, authenticated non-null
+`headless.image_index_digest` selects the held index before any request;
+explicit null selects held `headless.image_manifest_digest`. Require exact
+target descriptor media type/digest/size and index-to-manifest-to-config parent
+links; missing/mismatched blobs deny. No response-driven selector, retry or
+backend fallback is admitted. HTTP framing,
+actual native association, current artifact pins, recovery, integration and
+runtime proof remain separate. This prerequisite does not complete V1, create
+a permit or open Docker, native fixture, installation, migration, release or
+packaging authority. LNSAT remains standalone; Rangoon consumes its contracts.
 
 ## Create and Inspect response
 
@@ -1089,7 +1336,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### image.InspectResponse
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image_inspect.go#L17) · snapshot SHA-256
-`1e553c587dc2bfba1010a2abe92a8499520d0413104a7e2d59db7abd912743da`.
+`294b967dc7bcb894188a8e17d7b69c0ccbc4da16fc668a6449d52c6038c3be68`.
 
 | Go field       | Go type                            | JSON tag                |
 | -------------- | ---------------------------------- | ----------------------- |
@@ -1115,7 +1362,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### image.RootFS
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image_inspect.go#L10) · snapshot SHA-256
-`1e553c587dc2bfba1010a2abe92a8499520d0413104a7e2d59db7abd912743da`.
+`294b967dc7bcb894188a8e17d7b69c0ccbc4da16fc668a6449d52c6038c3be68`.
 
 | Go field | Go type    | JSON tag     |
 | -------- | ---------- | ------------ |
@@ -1125,7 +1372,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.image.Metadata
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image.go#L8) · snapshot SHA-256
-`5283b17b5529f119fad533a911128837a90cd7f64bf91f728f495a70794ae2cc`.
+`23365d448c646f64becfa337681cccc854fc2c1892fc6ef6ead3e89b700a05f5`.
 
 | Go field      | Go type     | JSON tag     |
 | ------------- | ----------- | ------------ |
@@ -1165,7 +1412,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.DriverData
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/driver_data.go#L12) · snapshot SHA-256
-`37dc67a62ff5cc873bd38d6f66c075844eafa9b19f9644491d6af9a558656584`.
+`d0503186bea207a8b00708c0d178fea6bef698b97b245e6f5aa450ca4902be2c`.
 
 | Go field | Go type             | JSON tag |
 | -------- | ------------------- | -------- |
@@ -1202,7 +1449,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.docker-image-spec.v1.DockerOCIImageConfig
 
 [Exact source](https://github.com/moby/docker-image-spec/blob/v1.3.1/specs-go/v1/image.go#L20) · snapshot SHA-256
-`e94a05acb57fb873dffe0c7ffeda0b7bcc287feefc946d1d6fa0e269e49c9a93`.
+`70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7`.
 
 | Go field       | Go type                   | JSON tag |
 | -------------- | ------------------------- | -------- |
@@ -1212,7 +1459,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.docker-image-spec.v1.DockerOCIImageConfigExt
 
 [Exact source](https://github.com/moby/docker-image-spec/blob/v1.3.1/specs-go/v1/image.go#L27) · snapshot SHA-256
-`e94a05acb57fb873dffe0c7ffeda0b7bcc287feefc946d1d6fa0e269e49c9a93`.
+`70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7`.
 
 | Go field      | Go type              | JSON tag     |
 | ------------- | -------------------- | ------------ |
@@ -1223,7 +1470,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.docker-image-spec.v1.HealthcheckConfig
 
 [Exact source](https://github.com/moby/docker-image-spec/blob/v1.3.1/specs-go/v1/image.go#L35) · snapshot SHA-256
-`e94a05acb57fb873dffe0c7ffeda0b7bcc287feefc946d1d6fa0e269e49c9a93`.
+`70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7`.
 
 | Go field        | Go type         | JSON tag     |
 | --------------- | --------------- | ------------ |
@@ -1271,7 +1518,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### oci.image-spec.v1.Descriptor
 
 [Exact source](https://github.com/opencontainers/image-spec/blob/v1.1.1/specs-go/v1/descriptor.go#L22) · snapshot SHA-256
-`15a2dd7bcee754aba53090539b304e06fad2b7809d0ba66cee4eb043ef2912f6`.
+`0861d8687b818f7045ca3f076e8f8a1ef92497514235fbaea4c6af0c075f1c3a`.
 
 | Go field       | Go type             | JSON tag                 |
 | -------------- | ------------------- | ------------------------ |
@@ -1287,7 +1534,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### oci.image-spec.v1.ImageConfig
 
 [Exact source](https://github.com/opencontainers/image-spec/blob/v1.1.1/specs-go/v1/config.go#L24) · snapshot SHA-256
-`27a0ba54e5c90533ce58bd84756d9bded3c7335c3609cac3295fe2381cf87935`.
+`b88c5220009106090d760c4589704a950b45e6c0f676427be9537b2abaf2a763`.
 
 | Go field       | Go type               | JSON tag                 |
 | -------------- | --------------------- | ------------------------ |
@@ -1305,7 +1552,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### oci.image-spec.v1.Platform
 
 [Exact source](https://github.com/opencontainers/image-spec/blob/v1.1.1/specs-go/v1/descriptor.go#L53) · snapshot SHA-256
-`15a2dd7bcee754aba53090539b304e06fad2b7809d0ba66cee4eb043ef2912f6`.
+`0861d8687b818f7045ca3f076e8f8a1ef92497514235fbaea4c6af0c075f1c3a`.
 
 | Go field       | Go type    | JSON tag                |
 | -------------- | ---------- | ----------------------- |
