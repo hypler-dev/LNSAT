@@ -1,0 +1,67 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0060-independent-implementation-review-2fb98d83",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-held-artifact-read-stage-a"],
+  "base_revision": "3850a7f42222d5c80a0c91ee559eaddc72fa1e79",
+  "reviewed_revision": "2fb98d833a4c24fcb2c6bb66b61050794d9ea51a",
+  "reviewed_tree_oid": "6d2656ffd8befde047da9946124e1d2807c2512c",
+  "diff_sha256": "sha256:04c28f41dd0bcd38694c2840775125302b165deb71974ccb5525c51092efb903",
+  "protected_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:284068544a7115de14d3afd793d639325fdab0834965f0e4edb44f6a1052cbfb"
+    },
+    {
+      "path": "crates/lnsatd/Cargo.toml",
+      "sha256": "sha256:7fcd914a8049833dcb40da92500633821acbd6dfb49ad32aa08a899e9d9f6551"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact.rs",
+      "sha256": "sha256:76caf6a846c10094e3ebc9ee7ea8cafee145a5b92644be542bcdb3cbedf50b45"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact_tests.rs",
+      "sha256": "sha256:8ea106dcbfea19fd45f0897b049b76e502a03590219b44a1e4341b41563c8df1"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_procfs.rs",
+      "sha256": "sha256:ddad9a39ce3a58136198d83462115c6eb0d997cf9317577e06bd0774fdb06176"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_procfs_tests.rs",
+      "sha256": "sha256:a8967f2857a68357742eda587a3ae9fbf43851bb681eb4b17f89e26d425f6133"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable.rs",
+      "sha256": "sha256:e9be3830811c382b3108eeb63d48de9edc723927bc40c9eef6165f1d44423496"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:1b1c1ee630f8d168ccc067bbf46e96a4214fbc445933020e18c6bea23965a10c"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-artifact-source-spec.md",
+      "sha256": "sha256:8718c79f526a38a2cdd796827945b8a88ea44f55ca78f104e47efe5676f458b7"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:c15d7764c0434b64d518ae4546a2049057af86ea97b81e90ba5b6935379ac723"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:e53d92666a972a924002e3a348f1dd83ba2c9393c7449f3eac7fe78286cf00eb"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/artifact_read_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only exact source review. Eleven immutable source blobs, parent, tree and canonical diff match the reviewed staged packet. The private held-artifact operation uses the existing single retained native lane, closed request and completion kinds, per-kind worker cleanup, shared deadline and observation budget, one-use manifest claim, fail-closed publication and polling, exact descriptor predicates, bounded positional reads, stable native identity and ACL samples, and zeroizing streaming hashing. A fixed private checkpoint brackets each ACL native call. Review findings were resolved before final review. Complete npm check passed after a sandbox-only listener restriction was resolved by a scoped local-test socket rerun; the initial failed receipt is preserved. The 75 focused native host tests, strict all-target clippy, formatting, public, inventory, history and diff checks passed. Gitleaks reported zero findings. Semgrep reported five fixture-only INFO records and zero actionable findings, independently confirmed. No new dependency package or version was added; the existing sha2 zeroize feature adds two dependency edges. Offline OSV data was unavailable, so vulnerability lookup remains unverified. Only the installed macOS target was compiled and tested. Linux-gated source and explicit ext4 fixtures were not compiled or run; dependency API inspection does not substitute for Linux validation. This approves only the private inert Stage-A source candidate. Root ancestry acquisition, complete recipe and pins, peer/pidfd association, native positive and unfinished-operation evidence, whole-boundary integration, runtime and packaging remain unfinished. No product caller or successful authority constructor was added. Separate exact direct-child attestation review remains required; no merge, release, runtime or execution authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
