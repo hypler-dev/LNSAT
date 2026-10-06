@@ -266,6 +266,220 @@ the complete recipe must select and bind one backend without fallback. A descrip
 API Config re-encoding or root-provided file alone cannot replace this chain.
 No additional Docker endpoint, registry call, image pull or artifact build.
 
+## Stage-A private root-manifest decoder contract
+
+This supplied-body prerequisite follows the accepted
+[source order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-root-manifest-decoder-contract)
+owns review and implementation disposition. It completes the representation
+needed to compare a root declaration with the selected profile, registry and
+native observations. It does not supply those observations or comparisons.
+Fresh independent exact precode review is required before the named source.
+
+### Ownership, interface and retained claims
+
+Owned source is new private `crates/lnsatd/src/headless_root_manifest.rs`,
+`headless_root_manifest_tests.rs`, and one private module declaration in
+`crates/lnsatd/src/lib.rs`. Existing profile, startup, daemon-response, native,
+store, dependency, feature and locked Phase 11 source stay unchanged. Use the
+existing pinned serde, sha2 and zeroize dependencies. There is no generic public
+manifest decoder, caller-selected registry, I/O, observer constructor or permit.
+
+The sole private entrypoint is
+`decode_root_manifest_claim(&[u8]) -> Result<UnverifiedRootManifest, RootManifestError>`.
+It accepts only the complete borrowed JSON body. Its output retains the full
+closed typed records listed in this document, compact canonical bytes and the
+32-byte recomputed manifest commitment. Every identity, pathname, source/build
+claim, ordered member, explicit nullable index and declared size remains
+available for later private comparison. Do not erase dynamic fields merely
+because a predicate or current synthetic fixture accepts them. A Boolean or
+commitment alone is insufficient output.
+
+The output has no `Clone`, `Debug`, `Display`, public constructor, serialization
+or authority conversion. Internal closed DTO serialization is allowed solely
+for canonicalization. Input-derived owned strings, canonical byte buffers and
+any temporary owned input/commitment buffers use zeroizing owners. Borrowed
+input and serde's internal scratch are outside that erasure claim. Errors carry
+no field name, path, value, bytes, offset or underlying serde message. No logging
+is introduced. Successful decoding says only that the supplied declaration is
+well formed and internally coherent; even an exactly matching caller-provided
+profile digest cannot authenticate its origin.
+
+### Complete shape and bounded allocation
+
+All exact records above are map-only objects. Unknown, duplicate, escaped-
+duplicate, missing, wrong-type and positional-array encodings deny at every
+object position. Every listed field is required; the sole nullable slot is
+`image.index`, whose explicit null is distinct from absence. Its non-null form
+has the same three-field blob shape as config and manifest. No defaulting,
+flattened catch-all, untyped retained JSON tree or ignored unknown subtree.
+All integer fields use the widths and value predicates below; negative zero,
+signs, fractions and exponents deny even when numerically integral.
+
+Before typed allocation, validate UTF-8 and scan JSON using fixed bounded
+storage. The body ceiling is 65,536 bytes inclusive. JSON whitespace is allowed
+before, within and after the one object; no LF framing requirement applies.
+BOM, malformed UTF-8/escapes/surrogates/numbers, raw controls, incomplete input
+and trailing values deny. Root object depth is one and maximum depth is 16.
+Each object has at most 32 members; all objects together at most 2,048 members.
+Each array has at most 128 elements; all arrays together at most 256 elements.
+Decoded keys have 1..256 UTF-8 bytes, decoded string values 0..4,096 bytes.
+Count escaped equivalents identically. Apply caps even in unknown branches
+before allocating their contents; never skip an unbounded value on shape denial.
+The scanner uses no heap-grown parse stack or generic JSON value tree.
+
+After scanning, every decoded string rejects ASCII control bytes U+0000 through
+U+001F and U+007F. Fixed keys and identifier grammars impose their additional
+ASCII rules. Values otherwise retain their original UTF-8 bytes without Unicode
+normalization. Semantic collection caps remain narrower than scanner ceilings:
+administrators 0..16, active LSMs 1..16, components exactly five, mounts 1..128.
+Empty strings are allowed only where explicitly named below.
+
+### Exact semantic predicates and internal relations
+
+Apply the existing fixed contract, schema, component, kernel source-ref,
+listener, metadata-policy, filesystem and platform constants above. Additional
+precision for the private candidate is:
+
+- All UID/GID fields are u32 and exclude `u32::MAX`. Controller UID/GID and
+  administrator UIDs are positive; daemon UID/GID are exactly zero.
+  Administrators are strictly increasing and exclude the controller UID.
+  No claim about actual supplementary groups follows from this array.
+- Daemon PID is positive u32. Namespace inodes, file inodes, start ticks and
+  mount IDs are positive u64. Device major/minor are u32 and may be zero.
+  `schema_version` is u32 exactly one. File/blob sizes are positive u64 with
+  their separate 256-MiB/1-MiB inclusive caps.
+- Common digests and source commits use the exact lowercase formats above.
+  Source commits have 40 digits without prefix. Source-ref is exactly `v6.8`.
+  Kernel release and component versions are 1..128 printable ASCII bytes.
+  Dockerd, containerd and runc versions use the exact specified constants;
+  shim/host-Git versions, kernel release and remaining commits stay unverified
+  retained claims for independently held registry comparison.
+- Components have exactly the five named roles in the specified order. Dockerd
+  source commit and `templates.source_commit` both equal the fixed reviewed Moby
+  commit. The other source commits are not inferred from their version strings.
+- Boot ID is exactly lowercase hexadecimal UUID spelling in 8-4-4-4-12 groups.
+  Do not add UUID-v4 restrictions from the startup release-ID grammar. Actual
+  boot-ID equality and freshness are native comparisons, not lexical proof.
+- Active LSM identifiers match `[a-z][a-z0-9_]{0,31}`, are unique, and retain
+  their supplied order. Syntax does not establish the selected permitted LSM
+  list or absence of BPF programs; those remain registry/native checks.
+- Canonical absolute Linux paths begin `/`; no backslash, empty internal
+  component, `.` or `..`, repeated slash or trailing slash is permitted.
+  `/` itself is accepted only for mount `root` and `mount_point`. File paths,
+  endpoint, metadata directories and executable container paths are non-root.
+  The common 4,096-byte cap applies; endpoint uses 100 and executable container
+  paths use 256. Root is not a possible regular-file/socket/executable leaf or
+  a dedicated daemon data directory in this selected recipe.
+- Metadata policy is the exact specified string and `dedicated` is true.
+  Container repository path equals daemon-root path followed by `/containers`,
+  with no normalization, truncation or independently selected alias. Both
+  directory identity tuples remain distinct claims requiring native comparison.
+- Mounts are strictly increasing by `mount_id`. Every record has `ext4`, false
+  `idmapped`, and the exact declared instance host mount namespace. Distinct
+  mount IDs may share a device or pathname (stacked/bind views); do not infer
+  native mount selection or pathname coverage from a string-prefix test.
+- Platform OS is `linux`, architecture matches `[a-z0-9_]{1,32}`, and variant
+  is 0..32 printable ASCII bytes. Empty variant is retained explicitly. These
+  are representation rules, not a supported architecture list or API spelling
+  mapping. The selected recipe supplies exact architecture and variant.
+- Adapter and probe container paths cannot equal or be component ancestors of
+  one another. Prefix siblings such as `/bin/probe` and `/bin/probe2` remain
+  distinct. Snapshot digests remain independently retained; the decoder does
+  not infer role or image inclusion from a shared or different digest.
+- Config, manifest and non-null index digests are pairwise distinct. Preserve
+  absence-by-explicit-null separately from a present index. No descriptor or
+  raw OCI parent-link verification is performed by this manifest parser.
+- Checked sum of every declared artifact and OCI blob size is at most 1 GiB.
+  Count each named occurrence, even repeated paths/digests; kernel has three,
+  components ten, templates one, image adapter/probe snapshots two and image
+  provenance one, plus two or three OCI blobs. This is a declared-work ceiling,
+  not evidence of bytes read. Future native code independently meters actual
+  reads, repeated stability checks, elapsed time and interruption without
+  resetting its shared deadline. No deduplication grants extra read budget.
+
+Comparisons that require external truth are deliberately not implemented by
+this entrypoint: independently held controller/profile identity; selected
+registry recipe/pins; current root ownership, mode, ACL, link count and ancestry;
+filesystem/mount coverage; actual file size/hash and stable held/name identity;
+current boot/peer/pidfd/executable/namespace association; running kernel/LSM
+provenance; raw OCI blobs, descriptor parent links and daemon image selection;
+image inventory/startup facts; generation/epoch/attempt/release state. Missing
+such facts must deny a future guard, not make this decoder a substitute guard.
+Separate exact contracts must name the custody reader and raw OCI verifier
+before their source. No root/daemon trust bridge, successful native constructor
+or private-authority input API is opened by this representation contract.
+
+### Commitment and deterministic denial
+
+After complete shape and semantic validation, serialize the typed records with
+ASCII-lexicographically sorted keys recursively, preserving every required field,
+explicit null and array order. Emit compact UTF-8 JSON without a trailing LF;
+use normal JSON string escaping, with no optional slash or non-ASCII escaping.
+No map may rely on incidental insertion order. Equivalent input whitespace,
+key order and escape spelling produce identical canonical bytes. Digests are
+SHA-256 of the exact domain bytes already specified, one LF and those bytes.
+No self-digest exists. Raw OCI digests will hash raw blobs separately.
+
+Private static error codes use prefix `headless_root_manifest.` with stages:
+
+1. `input_too_large`: body byte ceiling, before copying or decoding;
+2. `json_syntax`: UTF-8 or JSON lexical/structural failure;
+3. `json_limits`: preflight bounds;
+4. `json_shape`: closed typed maps, presence, duplicates, type or integer width/
+   spelling;
+5. `family`: contract ID and schema version;
+6. `claims`: fixed values, lexical predicates, per-record bounds and internal
+   cross-record relations including declared-byte ceiling;
+7. `canonical`: typed serialization or commitment construction failure.
+
+UTF-8 failure precedes scanning; within the scanner the first left-to-right
+syntax/limit violation wins. Semantic stages run only after complete typed
+shape succeeds. No expected-digest mismatch code is invented: expected digest
+and genuine origin belong to later independently held comparisons. Errors and
+output do not prescribe retry, provisioning, cleanup or automatic refresh.
+
+### Required source evidence and remaining delivery gates
+
+Independently authored synthetic positives cover both explicit-null and present
+index, empty and maximum administrator arrays, reordered/escaped/whitespace
+input, all five components, variable retained identities/paths/versions/digests,
+ordered distinct LSMs and mount IDs, namespace equality, both variant forms and
+mount `/`. Compare complete retained projections, not just successful return.
+Independently reconstruct the domain/LF/canonical hash and at least one fixed
+known digest. Equivalent JSON encodings must have identical commitment;
+each valid changed dynamic claim must change it. Canonical bytes must remain
+bounded and contain every original typed claim.
+
+For every object type test each required member missing, unknown, duplicate,
+escaped duplicate, null, wrong type and positional-array form. Exercise required
+nullable index separately. Test every fixed constant, numeric zero/maximum/
+overflow/spelling, digest and UUID syntax, all lexical string/path bounds,
+administrator ordering/controller exclusion, component ordering/source linkage,
+LSM duplicates/order, mount ordering/namespace, metadata path relation,
+executable equality/ancestor/prefix-sibling cases, distinct image identities,
+and both per-file and aggregate byte ceilings (at, below and above).
+
+Test scanner byte/depth/member/array/key/string ceilings at and above each cap
+without an earlier failure masking the intended bound. Lower-level preflight
+boundary fixtures need not satisfy the closed manifest shape; distinguish those
+from successful full-manifest positives. Include malformed UTF-8, escapes,
+surrogates, numbers, truncation and trailing data; all escaped-control forms;
+static-error secret canaries and deterministic stage precedence. Prove that
+altered self-consistent claims remain unverified, not detected forgery or replay.
+No host pathname is opened and no synthetic fixture is described as attestation.
+
+Named source validation: focused pinned Rust tests, Rust formatting, strict
+all-target Clippy, full `npm run check`, installed scoped scanners, docs/public/
+inventory/history/diff checks, and fresh exact-source/direct-child review.
+The present precode documentation packet uses proportional docs/public/inventory/
+history/format/link/diff and locked Phase 11 readiness checks; no unchanged Rust
+build is claimed rerun. Only reviewed private source ownership opens after
+precode PASS. Native fixture/kernel/harness source, actual artifact capture,
+full source/pin/positive-feasibility freeze, product integration, runtime,
+packaging and release retain their separate gates. LNSAT remains standalone;
+Rangoon consumes its normal engine/adapter contracts.
+
 ## Freeze acceptance and remaining work
 
 Independent review must verify that a future non-root controller can read the

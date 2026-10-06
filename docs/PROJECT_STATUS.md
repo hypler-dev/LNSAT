@@ -2157,6 +2157,24 @@ the sole runtime-proof authority, and its execution gate is unchanged. No
 reader/worker implementation, accepted custody amendment, complete native
 freeze, runtime, support or certification claim follows from these source checks.
 
+### Stage-A private root-manifest decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private root-manifest contract](architecture/headless-resource-enforcement/root-manifest-source-spec.md#stage-a-private-root-manifest-decoder-contract)
+names supplied-body source/test/declaration ownership, complete retained claims,
+bounded typed decoding, internal relations, canonical commitment, fixed errors
+and the positive/denial matrix. It separates declaration consistency from
+independently held profile/registry bindings, native root/daemon custody and raw
+OCI parent links; those remain required subsequent boundaries.
+
+PHR-0054 tracks fresh independent exact precode review. No root-manifest source
+or test implementation is added by this documentation packet. The named inert
+candidate requires precode PASS before implementation and its own focused/full
+source validation plus exact source/direct-child review afterward. Current pins
+remain unset; no registry, I/O, successful native constructor, product caller or
+authority conversion is introduced. Full native freeze, integration, runtime,
+packaging and V1 completion remain unfinished. Phase 11 owns runtime proof.
+
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
 Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed

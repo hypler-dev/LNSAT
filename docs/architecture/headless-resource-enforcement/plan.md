@@ -299,6 +299,22 @@ one private lib.rs declaration. Project Status owns review and implementation
 state. This step does not approve native fixture source, full source/pin freeze,
 integration, artifact capture or runtime.
 
+### Private root-manifest prerequisite
+
+After the supplied Docker response candidates, the
+[private root-manifest contract](root-manifest-source-spec.md#stage-a-private-root-manifest-decoder-contract)
+bounds the declaration needed for later profile/registry/native comparison.
+It names exact source ownership, all retained current-instance and artifact
+claims, internal consistency, finite allocation/work ceilings, deterministic
+errors, canonical commitment and independently authored positive/denial tests.
+Obtain fresh exact precode review before implementing the named private module;
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-root-manifest-decoder-contract)
+owns disposition. Decoder success does not prove root origin, live association,
+raw artifact bytes or OCI parent links. Those need their own exact custody and
+comparison contracts; do not introduce caller-supplied successful evidence as
+an integration shortcut. Native fixture source, artifact capture, full freeze,
+integration, activation and runtime retain separate gates.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.
