@@ -44,6 +44,11 @@ mod headless_daemon_version;
 mod headless_native;
 #[allow(
     dead_code,
+    reason = "Reviewed inert Stage-A OCI chain awaits complete freeze and integration"
+)]
+mod headless_oci_chain;
+#[allow(
+    dead_code,
     reason = "Reviewed inert Stage-A profile codec awaits complete freeze and integration"
 )]
 mod headless_profile;

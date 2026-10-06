@@ -23,16 +23,14 @@ and clarifies the existing
 Those remain documentation only; provider integration and the release writer
 are unfinished.
 
-The latest bounded engine source is the
-[private root-manifest decoder](#stage-a-private-root-manifest-decoder-contract),
-following the private daemon-response and startup candidates. Eighteen focused
-synthetic groups, strict host lint, full host-source checks and independent exact
-source/direct-child reviews passed; PHR-0055 attests that source after the
-PHR-0054 precode contract. The next
-[raw OCI chain contract](#stage-a-private-raw-oci-chain-contract) defines exact
-supplied-byte parent-link checks and their later custody/comparison obligations;
-it is not implemented. These are private prerequisites, distinct from unfinished
-V1 integration, native evidence, enterprise assurance and actual runtime gates.
+The latest bounded engine source candidate is the
+[private raw OCI chain decoder](#stage-a-private-raw-oci-chain-contract),
+following the attested private root-manifest and daemon-response prerequisites.
+It retains supplied config/manifest/optional-index records, raw identities and
+internal parent links. PHR-0056 attests its precode contract; source validation
+and exact independent source/direct-child review are tracked under PHR-0057.
+These are private prerequisites, distinct from unfinished V1 integration, native
+evidence, enterprise assurance and actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
@@ -2202,14 +2200,20 @@ compressed layer digests separately from uncompressed DiffIDs. Parent links bind
 the supplied bytes; they cannot authenticate root custody, selected recipe/pins,
 daemon association or installed layer contents.
 
-This is a precode documentation packet, not an implementation. PHR-0056 tracks
-fresh independent exact-contract review and its separate attestation child.
-Only the named private module, sibling tests and declaration may follow precode
-PASS under the already accepted Stage-A amendment. No existing decoder or product
-entrypoint is widened. Root/profile/registry comparison, stable artifact custody,
-backend-specific Image/Inspect mapping and complete freeze remain explicit later
-requirements. No new native, provisioning, Docker, runtime, packaging, support or
-Rangoon-specific authority follows. Phase 11 remains the runtime-proof owner.
+PHR-0056 attests the independently reviewed precode contract. The private source
+candidate now implements the named supplied-byte decoder, sibling synthetic tests
+and one inert module declaration. It preserves optional-field presence, complete
+ordered metadata and separate compressed-layer/DiffID identities, preflights all
+supplied bodies before typed decoding, and returns only fixed denial codes.
+PHR-0057 tracks source validation and exact independent source/direct-child review;
+that review remains pending until the attestation is committed.
+
+No existing decoder or product entrypoint is widened. A self-consistent supplied
+chain is unverified data, not authenticated image provenance. Root/profile/registry
+comparison, stable artifact custody, backend-specific Image/Inspect mapping and
+complete freeze remain explicit later requirements. No new native, provisioning,
+Docker, runtime, packaging, support or Rangoon-specific authority follows. Phase 11
+remains the runtime-proof owner.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
