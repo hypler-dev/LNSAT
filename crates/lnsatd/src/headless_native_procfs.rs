@@ -262,9 +262,8 @@ fn construct_once() -> Result<(), ProcfsError> {
             return Err(ProcfsError::BudgetExhausted);
         }
         let mut construction = ConstructionGuard { committed: false };
-        let mut slots = match LANE.slots.try_lock() {
-            Ok(slots) => slots,
-            Err(_) => return Err(ProcfsError::BudgetExhausted),
+        let Ok(mut slots) = LANE.slots.try_lock() else {
+            return Err(ProcfsError::BudgetExhausted);
         };
         if slots.join.is_some() || slots.request.is_some() || slots.completion.is_some() {
             return Err(ProcfsError::BudgetExhausted);
@@ -729,11 +728,11 @@ fn retire_request(lane: &LaneRoot, request: Request, accounting: &mut CleanupAcc
     for file in [request.resource, request.proc_root] {
         #[cfg(target_os = "linux")]
         {
-            if let Some(file) = Arc::into_inner(file) {
-                if nix::unistd::close(file).is_err() {
-                    accounting.input_close_failures += 1;
-                    lane.terminalize();
-                }
+            if let Some(file) = Arc::into_inner(file)
+                && nix::unistd::close(file).is_err()
+            {
+                accounting.input_close_failures += 1;
+                lane.terminalize();
             }
         }
         #[cfg(not(target_os = "linux"))]
@@ -782,7 +781,11 @@ fn run_fixed_procfs_attempt(
 #[cfg(target_os = "linux")]
 mod linux {
     use super::super::{fdinfo::FdInfoRecord, mountinfo::MountInfoTable};
-    use super::*;
+    use super::{
+        CleanupAccounting, Instant, LANE, LinkObservation, MAX_FDINFO_BYTES, MAX_MOUNTINFO_BYTES,
+        NativeSample, ObjectObservation, Ordering, ProcfsError, Request, terminal,
+        validate_namespace_link,
+    };
     use nix::fcntl::{FcntlArg, OFlag, OpenHow, ResolveFlag, fcntl, openat, openat2};
     use nix::sys::{
         stat::{Mode, fstat, major, minor},
@@ -917,16 +920,13 @@ mod linux {
             opened: nix::Result<OwnedFd>,
         ) -> Result<(), ProcfsError> {
             // The caller proves the slot empty before entering the native open.
-            match opened {
-                Ok(fd) => {
-                    self.handles[index] = Some(fd);
-                    self.accounting.reader_handles += 1;
-                    self.check()
-                }
-                Err(_) => {
-                    self.check()?;
-                    Err(ProcfsError::OriginRejected)
-                }
+            if let Ok(fd) = opened {
+                self.handles[index] = Some(fd);
+                self.accounting.reader_handles += 1;
+                self.check()
+            } else {
+                self.check()?;
+                Err(ProcfsError::OriginRejected)
             }
         }
 
@@ -1033,7 +1033,8 @@ mod linux {
                 device_major: stat.stx_dev_major,
                 device_minor: stat.stx_dev_minor,
                 inode: stat.stx_ino,
-                mount_id: stat.stx_mnt_id as u32,
+                mount_id: u32::try_from(stat.stx_mnt_id)
+                    .map_err(|_| ProcfsError::OriginRejected)?,
             })
         }
 
@@ -1096,9 +1097,12 @@ mod linux {
                 ctime_seconds: stat.st_ctime as i64,
                 ctime_nanoseconds: stat.st_ctime_nsec as i64,
                 filesystem_magic: filesystem.filesystem_type().0 as i64,
-                mount_id: statx.stx_mnt_id as u32,
-                descriptor_flags: descriptor_flags as u32,
-                status_flags: status_flags as u32,
+                mount_id: u32::try_from(statx.stx_mnt_id)
+                    .map_err(|_| ProcfsError::OriginRejected)?,
+                descriptor_flags: u32::try_from(descriptor_flags)
+                    .map_err(|_| ProcfsError::InvalidDescriptor)?,
+                status_flags: u32::try_from(status_flags)
+                    .map_err(|_| ProcfsError::InvalidDescriptor)?,
                 device_major: statx.stx_dev_major,
                 device_minor: statx.stx_dev_minor,
             })

@@ -1656,6 +1656,16 @@ Exact source/direct-child attestation remains required for this checkpoint.
 This is a source candidate, not completed reader evidence or a complete native
 freeze.
 
+The 2026-10-06 protected-main source check reached the Linux reader body and
+reported eight strict Clippy findings. The bounded correction uses explicit
+imports, equivalent control-flow idioms, and checked integer conversions after
+the existing mount-ID and descriptor/status-flag validation. It preserves the
+same accepted values, denial codes, native-call ordering, deadlines and cleanup
+accounting. No lint suppression, public interface or native fixture is added.
+PHR-0045 records independent source review; exact-head Linux source CI remains
+the compilation/lint gate. Neither that gate nor host tests establish genuine
+reader positives, unfinished-operation evidence or runtime authority.
+
 Full native/source/pin/positive-feasibility freeze,
 separate artifact capture, product integration and Phase 11 actual runtime remain
 open. No Docker/host/ACL operation, target pressure, credential/provider intake,
