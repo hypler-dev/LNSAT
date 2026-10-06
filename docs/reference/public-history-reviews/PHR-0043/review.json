@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0043-independent-implementation-review-f59c62df",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["protected-main-dependency-audit-remediation"],
+  "base_revision": "6ec6c2dee69cda45d7834bfd75554dd0eabd09a6",
+  "reviewed_revision": "f59c62df9b44f78a16f908b07b5298c85c7e652e",
+  "reviewed_tree_oid": "4be13bd104fffc59247c31a0889e1436e2ce01c4",
+  "diff_sha256": "sha256:7718d266cc4e49c356cf225e400d92456da8ea2c0e65e3cff5ac5ad9df2996e5",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:03a8aba6c087f559872c585be2b7105af25c8d75775dfb4db83b4f9eaf4496f9"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:cb0798c5b1d8718bebc7d5a364a03d94a61c0a1d94314536ac718d4163ff1254"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:af6094f769079a2e2d253fe5e01b98d0aa704e9e42630bba4bb06e79e0007fba"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:0775a7c41385c97da44b7ec250160e020ec64d5167eb0bf59483df4c5000711a"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:33ab90ba241423b66626e363ef2dee0148bf74bf6d5951b373af778552db8d4f"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/v1_gates_independent_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only review of the exact five-path dependency maintenance patch: three patched versions, registry tarball and integrity metadata, unchanged dependency requirements and engines, lockfile-only resolution and zero live lockfile advisories, documentation/public/inventory/history checks, and scoped secret scan. Local metadata tools use the preexisting cache; this review does not claim full testing of patched installed dependencies. Exact installed dependency signatures and full source CI remain mandatory before protected merge. No audit suppression or runtime/release authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
