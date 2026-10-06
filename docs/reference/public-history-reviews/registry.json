@@ -410,7 +410,7 @@
       "review_subject_ids": ["inspect-lifecycle-normalization-reconciliation"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0050/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
