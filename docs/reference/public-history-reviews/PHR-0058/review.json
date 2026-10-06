@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0058-independent-implementation-review-36d094d7",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-image-association-custody-boundary"],
+  "base_revision": "e560a429eba7d271cff03d97b98fca3ec1719c62",
+  "reviewed_revision": "36d094d79ac48162d3a600d9f0f118e753b69667",
+  "reviewed_tree_oid": "48c8905f4f0e00ed1f925c468b0835828e1805a9",
+  "diff_sha256": "sha256:e6fa2ce1e9d47307c06e54b16d947d496342697f823b4fcaf4b9d48bb80c40c8",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:2a09f07c820a192d53111f42ad0b48e42dc394cc500389895270de6995c0af44"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:68323a9bac10887e8a12455e877e3001eef1c6e1887447983860b1e15e4b60a1"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/root-manifest-source-spec.md",
+      "sha256": "sha256:a8d9d919106da4b891fbcca0a9c2ccc84a6bc08e3ddc596bd302164bace298fc"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:e0db1b03da650397a8e70e20b2ed805fc0c8987843c68106651d3e61fe0616a6"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:ec4cda710e6dee22e329bab5fc4f5cf0db8b0f5ca5b80bb4b543e2ee382c6f5b"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/inspect_decoder_precode_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "Native OpenAI Codex gpt_reviewer Terra xhigh independent read-only exact documentation review. Covers the cross-module image association and custody boundary in the existing root-manifest companion, Project Status implementation truth, plan links and required review metadata. The contract distinguishes config, manifest, index, recipe, root and executable digest domains; binds backend-specific selectors and retained descriptor-platform values; preserves optional raw presence; and requires independently observed identity, held-object custody, shared byte/deadline accounting and invalidation before composition source. Exact private interfaces, complete immutable recipe expectations and native custody feasibility remain deferred; no new source API or trusted holder is approved. Docs, public, inventory, history, exact format/link/diff and Phase 11 readiness checks pass. No Rust implementation changed and the full source suite was not rerun for this documentation-only packet. Immutable source commit, parent, tree, canonical diff and all five protected blobs match the independently reviewed staged packet. Separate exact direct-child audit remains required. No native execution, Docker, artifact construction, actual pin admission, integration, runtime, hosted CI, full freeze, packaging, support or release authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
