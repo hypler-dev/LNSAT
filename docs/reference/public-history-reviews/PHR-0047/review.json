@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0047-independent-implementation-review-026e2044",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-daemon-image-decoder-stage-a"],
+  "base_revision": "06d0e8bdf433afd80b814ff9d302332bde8ba5c4",
+  "reviewed_revision": "026e204480e7706cb02d96718af46dc65ea6a42f",
+  "reviewed_tree_oid": "aa878e55e0186e372a59b1c2b98b389f497fd010",
+  "diff_sha256": "sha256:a99693bf2dd07f79f5bd95e7952b0053187e59f78718d3986a7f55d11b48a198",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_daemon_image.rs",
+      "sha256": "sha256:57b7e4b8971fec64c5bb65be875a1cb2f510f7862b465cfa7ebe8185a9059935"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_daemon_image_tests.rs",
+      "sha256": "sha256:127cce6f78ef26d62e5fcc08b25c6e197a2f07ecc049f74e499cc281f41716c7"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:54d9a1e8e8839d0a93d3f1dbd30811599c4ff838aa938d77438f6940cd808bc5"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:fcb2c404afd795021993adc3b37d45004df7a7eb0557556a32055d3fe49cfdc0"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/docker-response-source-spec.md",
+      "sha256": "sha256:cbfb6e0bcb137ff7cf92e1cf3c587a6f7761772cdf9d7af8f6234ccac10cec29"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:a4cb616533c185910bd67c4273c657bfe7d4f94d97d177522004582fbf4b9800"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:540c0fb1c5c68cef0b9247d70f2df2cd6863ad16fcdff2716a0a205fe712ed8c"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:5c5ec985f5a223b1f52db6c167465fa8f35a60e893c6147f42b8f104845a9d80"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/image_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact source review. Private supplied-body Image decoder with allocation-free bounded preflight, closed map-only shapes, fixed data-free errors and zeroizing unverified claims. All mandatory coverage findings resolved. Full npm run check passes on identical production bytes: 1519 TypeScript tests, 139 contract comparisons, 264 macOS store tests with two ignored, 257 daemon tests. Subsequent test-only coverage expansion passes 21 focused groups, strict Clippy and format; final docs/public/inventory/whitespace checks pass. Scoped Semgrep finds no new issue and only unchanged test-only lib.rs temporary-directory INFO; Gitleaks zero. Preexisting Node cache predates three patched pins; exact installed-dependency proof remains hosted-CI work. No transport, public caller, native observation, full freeze, runtime, support, packaging, release or deployment authority. Separate exact direct-child verification required."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
