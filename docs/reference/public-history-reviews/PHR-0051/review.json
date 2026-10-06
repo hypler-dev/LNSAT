@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0051-independent-implementation-review-5c1cad7b",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["inspect-backend-image-identity-correction"],
+  "base_revision": "598f3b272642daebe29d8ce69c2ae139f94af4cf",
+  "reviewed_revision": "5c1cad7b9aa1ddfcf0372f17d44cac06011e558f",
+  "reviewed_tree_oid": "f8280050cfddab709c8ece9b095a100de9140cec",
+  "diff_sha256": "sha256:199ec2b3dc77ff6c62a91d5d7c6d3def27a3e8e2866ddd07f532dba37c22a649",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:62922e52ddde008cb329e0d3c2aa538640d647a934fac4994c3e86bd06353ae9"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/docker-response-source-spec.md",
+      "sha256": "sha256:3a4b2eb9293eb8714fdc347a7b59bd7042a086b57298c6e520f375dab8b6cd54"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:04e66188b1a1711eec9ee81ba96069b60e948ca6fc908bff6f0392b3afe046f5"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:19850c629b4336efb8a5f8ac899c0a4323789272af29aad73664e8c137985b88"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:7c7cd01a508a93b038a9e8e90d908c15ae21acaab41aa7591a99824da155da06"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/inspect_image_identity_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact documentation and pinned-source review. Verified the GetImage/NewImage/ID/create/newContainer/Inspect chain: graphdriver config digest and containerd manifest/index target digest remain distinct from the selected platform manifest descriptor. Three storage-type snapshot hashes match dual public endpoint bytes and Git blob identities. Exact five-path diff reviewed with no actionable findings. Docs/public/inventory/history/format/link/whitespace checks and Phase11 readiness 43-case suite/check pass. Documentation only; no new full-source or hosted CI claim. Complete Inspect private contract, precode review, implementation, native freeze, integration, runtime and packaging remain unfinished. Separate exact direct-child review required; no authority widened."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

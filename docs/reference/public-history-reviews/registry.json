@@ -418,7 +418,7 @@
       "review_subject_ids": ["inspect-backend-image-identity-correction"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0051/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
