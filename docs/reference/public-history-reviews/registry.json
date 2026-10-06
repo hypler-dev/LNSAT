@@ -315,6 +315,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0038/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0039",
+      "subject_id": "local-protection-and-release-deadline-contract",
+      "review_subject_ids": ["local-protection-and-release-deadline-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0039/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

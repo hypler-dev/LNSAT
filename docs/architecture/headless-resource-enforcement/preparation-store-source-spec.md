@@ -518,11 +518,26 @@ becomes `unknown`; it never resends or creates a replacement attempt.
 
 Mutex acquisition uses source monotonic time, 100 ms try-lock polling, and a
 five-second acquisition cap. These values are fixed source behavior, not user
-configuration. The exact frame write is bounded by the remaining action
-deadline and has a five-second minimum cap; it may not extend the action
-deadline. Timeout, owner loss, custody drift, stale generation/epoch, missing
-audit, or any unrecognized writer denies release and preserves consumed-attempt
-reconciliation evidence.
+configuration. Immediately before the single exact frame write, require a
+nonzero remaining action budget and fix
+`write_deadline = min(original_action_deadline, write_start + 5 seconds)` in
+the same monotonic domain, with checked arithmetic. This is a maximum cap, not
+a five-second admission reserve. It neither resets nor extends the original
+deadline; the existing startup/frame feasibility requirements still apply.
+If completion of the exact frame write cannot be established by this cutoff, the committed
+attempt remains consumed and `unknown`, with no resend or replacement attempt.
+Expiry before the write starts sends no frame; a prior committed attempt still
+requires reconciliation.
+
+This is an acceptance cutoff, not a proof of synchronous write cancellation,
+physical return or mutex release. The complete source freeze must establish
+the write primitive and retained channel/lock ownership during an unfinished
+write and late cleanup. A timer alone cannot satisfy the bounded-write or
+revocation-serialization requirement, and dropping the lock while a write may
+still release an action is not an accepted implementation. Timeout, owner
+loss, custody drift, stale generation/epoch, missing audit, or any unrecognized
+writer denies a new release and preserves consumed-attempt reconciliation
+evidence. No release writer is implemented or authorized by this clarification.
 
 ## Crash and ambiguity matrix
 

@@ -42,7 +42,7 @@ The [crypto operation/provider inventory](CRYPTO_OPERATION_PROVIDER_INVENTORY.md
 records named application operations and their source/provider boundaries at one
 immutable source revision. Its manual blob bindings prepare provider design;
 they are not a compiled crypto census, strict-profile activation or assurance
-evidence. [Project Status](../PROJECT_STATUS.md#crypto-operation-provider-source-inventory)
+evidence. [Project Status](../PROJECT_STATUS.md#crypto-operationprovider-source-inventory)
 owns that work record.
 
 The [proposed strict crypto admission design](STRICT_CRYPTO_ADMISSION_DESIGN.md)
@@ -65,7 +65,7 @@ separates private authority data, authorized disclosure, optional diagnostics
 and independently verified history custody. It defines failure, retention and
 inert restore requirements without selecting or implementing a collector,
 encryption provider or export permission. Its
-[Project Status record](../PROJECT_STATUS.md#proposed-audit-privacy-and-evidence-custody-design)
+[Project Status record](../PROJECT_STATUS.md#proposed-auditprivacy-and-evidence-custody-design)
 owns pending acceptance and exact implementation contracts.
 
 ## Required work and acceptance evidence
@@ -84,6 +84,64 @@ tests and fresh independent review before its behavior is integrated.
 | Data and transport       | No ambient secret inheritance or telemetry by default. Explicit data classification, redaction, export/retention and crypto-at-rest boundary. Remote transport or external services require a separately reviewed authenticated transport/privacy contract.                                                                                                                                    | Secret canaries, no-sensitive-output tests, key/storage custody and explicit transport/export proof. A loopback listener or backup checksum alone is not encryption evidence.                               |
 | Supply chain             | Reproducible selected-target artifacts, verified signatures, SPDX JSON SBOM, SLSA v1 provenance, dependency/advisory/license policy, vulnerability response, supported update/revocation and rollback.                                                                                                                                                                                         | Exact Phase 13 RC source and Phase 14 immutable artifact identity, signature/SBOM/provenance verification and update/rollback rehearsals.                                                                   |
 | Resilience and assurance | Fuzz bounded parsers, test crashes/races/outages/resource pressure, rehearse backup/restore/credential recovery and incident response; perform independent security review.                                                                                                                                                                                                                    | Named tests, targeted threat-model coverage, exact restored-state inertness, failure injection and documented residual limits/operational ownership.                                                        |
+
+## Local authentication, service keys and encrypted state
+
+The owner's local-password and OS-encryption question makes this an explicit
+part of standalone setup design. The following is a proposed boundary within
+the existing security direction; it does not select an OS provider, accept an
+implementation contract, collect credentials or enable a service. Project
+Status retains implementation and acceptance truth.
+
+1. **Human authentication:** prefer a trusted platform-mediated authentication
+   flow for the selected OS. LNSAT and consuming apps must not collect or store
+   the user's OS login password. A verified result needs an explicit binding to
+   the intended local LNSAT identity/session and requested operation; an unlocked
+   desktop or an arbitrary app assertion is insufficient. Existing LNSAT-local
+   Argon2id credentials are a separate mechanism, not OS authentication or MFA.
+2. **Service key custody:** use a reviewed OS-backed key provider accessible to
+   the intended least-privilege service identity. Configuration, adapters and
+   child workloads receive references, not raw encryption keys or inherited
+   credentials. Define key release, rotation, revocation, recovery and deletion;
+   do not reuse a login password or bearer session as an encryption key. Hardware
+   binding, if selected, requires its own compatibility and recovery evidence.
+3. **Encrypted data coverage:** the selected storage contract must account for
+   authority state, SQLite WAL/journal and temporary copies, preparation journals,
+   backups and recovery artifacts. Name any plaintext metadata and authorized
+   export boundary. File permissions, checksums, password hashes and memory
+   zeroization are complementary controls, not evidence that these bytes are
+   encrypted. Full-disk encryption alone does not establish protected exports,
+   backup coverage or resistance to a privileged attacker on a running host.
+4. **Interactive and unattended startup:** define each mode explicitly. A
+   headless service must not wait indefinitely for a desktop prompt or silently
+   unlock through a weaker path. Missing, locked, revoked or wrong-installation
+   keys deny protected startup/access; there is no plaintext fallback or silent
+   replacement key. A reboot, password change, key loss or restored backup needs
+   a documented recovery path. Restored authority remains inert until the
+   separate identity/resource/lifecycle checks succeed.
+5. **Authorization and feedback:** successful OS authentication or key unlock
+   does not approve an action, confer an LNSAT role or bypass policy, distinct
+   approval, one-use consumption or revocation. The standalone CLI and consumer
+   API must distinguish authentication required, key unavailable, access denied
+   and unsupported platform/provider with safe remediation. Exact versioned
+   error codes, retry semantics and identity bindings remain to be frozen;
+   messages must not expose secret material, private paths or raw provider errors.
+
+LNSAT owns this neutral setup/enforcement contract. Rangoon may guide the same
+flows through standard adapters without becoming the key or authorization
+authority. No Rangoon account, graphical UI or external identity provider is a
+prerequisite for standalone LNSAT.
+
+Acceptance evidence must include allowed and denied service identities,
+interactive/unattended restart, unavailable/revoked keys, provider failure,
+rotation interrupted at each durable boundary, recovery without authorization
+resurrection, and byte-level inspection of every claimed encrypted artifact.
+Crash dumps, swap and live process memory require an explicit residual exposure
+statement; OS storage protection must not be described as universal secrecy.
+For example, [systemd's credential interface](https://systemd.io/CREDENTIALS/)
+delivers decrypted credentials to service code at activation. That documented
+behavior illustrates the storage/runtime distinction; it selects no provider
+for LNSAT and grants no credential access.
 
 ## Standards mapping and claim boundary
 

@@ -14,7 +14,12 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Latest bounded engine work: the
+Latest bounded contract work records
+[local OS authentication and encrypted-state design requirements](#local-os-authentication-and-encrypted-state-direction)
+and clarifies the existing
+[release-write deadline](#release-write-deadline-contract-clarification).
+Both remain documentation only; provider integration and the release writer
+are unfinished. The latest bounded engine source is the
 [private daemon Info decoder contract](#stage-a-private-daemon-info-decoder-contract),
 following the source-reviewed Version, context/challenge and earlier private
 candidates. Info now has a private supplied-body source candidate and independent
@@ -2051,6 +2056,44 @@ binding to the final status/requirements/sequence documents. The retained
 hardening analysis supplies two explicit options and their tradeoffs; it is
 derived design evidence, not a vulnerability scan or compliance assessment.
 Detailed identity/provider selection and implementation remain open.
+
+### Local OS authentication and encrypted-state direction
+
+Canonical work record: this subsection, within the existing requested
+enterprise/government security direction. The owner's local-password and
+OS-encryption question is retained in the
+[supporting setup requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md#local-authentication-service-keys-and-encrypted-state).
+The proposed boundary separates trusted OS-mediated human authentication,
+least-privilege service key custody, encrypted persistent/temporary/backup data,
+interactive versus unattended startup, and action authorization. LNSAT owns the
+neutral CLI/API contract; Rangoon consumes it through standard adapters.
+
+Current LNSAT-local Argon2id authentication does not establish OS login
+integration, MFA or encrypted state. No OS/key provider, hardware binding,
+encryption implementation, credential intake, key migration or host change is
+selected or performed here. Detailed identity/operation binding, encrypted
+artifact coverage, key lifecycle/recovery and versioned failure/remediation
+contracts still need exact design and independent review. Unlock is not action
+approval. Missing required keys must not silently cause plaintext operation or
+authority recreation; full-disk encryption supplies no running privileged-host
+attacker protection claim. This documentation clarification accepts no pending
+strict-crypto or human-assurance proposal and supplies no runtime/support claim.
+
+### Release-write deadline contract clarification
+
+Canonical work record: this subsection. Independent review found an ambiguity
+in the existing [release synchronization contract](architecture/headless-resource-enforcement/preparation-store-source-spec.md#installation-wide-release-synchronization):
+"five-second minimum cap" could imply an undefined admission floor or deadline
+extension. The corrected contract uses a single maximum cutoff,
+`min(original_action_deadline, write_start + 5 seconds)`, without adding a
+five-second reserve. Existing shared-budget/frame feasibility rules remain.
+
+Committed attempts with delivery ambiguity remain consumed and `unknown`;
+there is no resend. The cutoff proves neither cancellation nor physical return
+or lock release. Exact transport behavior and retained channel/lock ownership
+during unfinished writes remain mandatory full-freeze work. This fixes contract
+wording only: no writer, store/schema change, grant, release, native runtime or
+new authority is implemented. Earlier reviewed candidates remain preserved.
 
 ### Crypto operation/provider source inventory
 
