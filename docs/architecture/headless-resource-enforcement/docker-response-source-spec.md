@@ -5,9 +5,9 @@ coverage and records exact source normalization; it does not complete the full
 native freeze. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 owns acceptance and implementation. The Phase 11 operator packet owns runtime
 truth. The bounded Stage-A Version-only decoder contract below is a private
-source prerequisite. The separate Info-only prerequisite below is still a
-precode contract; no daemon verification, Docker operation or activation
-follows from either contract.
+source prerequisite. The separate Info-only prerequisite below now has a private
+source candidate tracked by Project Status. No daemon verification, Docker
+operation or activation follows from either decoder.
 
 ## Source and interpretation
 

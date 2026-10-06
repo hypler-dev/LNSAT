@@ -431,9 +431,10 @@ bounded candidate is the
 [private Info decoder contract](PROJECT_STATUS.md#stage-a-private-daemon-info-decoder-contract).
 It separates retained comparison claims from typed discarded data, closes exact
 presence/error/boundary rules and corrects the named pinned source references.
-Fresh independent precode review passes; implementation remains pending at this
-contract-preparation checkpoint. No decoder opens CLI setup or replaces native
-evidence.
+Fresh independent precode review passed. Its private source candidate and
+twenty-two synthetic test groups pass focused and full host-source validation.
+Exact source/direct-child review bindings remain separate under PHR-0038. No decoder opens
+CLI setup or replaces native evidence.
 Do not restart completed
 prerequisites, implement fake success or treat an always-deny implementation as
 the required positive case. Full freeze, integration, real runtime, RC and

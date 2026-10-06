@@ -17,8 +17,10 @@ release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 Latest bounded engine work: the
 [private daemon Info decoder contract](#stage-a-private-daemon-info-decoder-contract),
 following the source-reviewed Version, context/challenge and earlier private
-candidates. Info is contract preparation only: fresh independent precode review passed;
-its source implementation remains pending. The prior Version source and exact
+candidates. Info now has a private supplied-body source candidate and independent
+synthetic tests. Focused and full host-source validation pass; exact source and
+direct-child attestations remain separate gates under PHR-0038.
+The prior Version source and exact
 direct-child attestation are complete under PHR-0037. These prerequisites stay
 distinct from unfinished V1 integration, native evidence, enterprise assurance
 and actual runtime gates.
@@ -1792,8 +1794,8 @@ Canonical work record: this subsection under the accepted Stage-A source order.
 The [exact private Info-only contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-info-decoder-contract)
 names supplied-body bounds, closed typed shapes, exact null/omission rules,
 fixed selected-recipe predicates, data-free errors and an unverified retained
-projection before source implementation. Only the new private Info source,
-its tests and one private module declaration are proposed. Version source,
+projection before source implementation. The bounded candidate adds only the
+new private Info source, its tests and one private module declaration. Version source,
 transport, native custody and active product callers remain unchanged.
 
 This preparation corrects two comparison gaps: host capacity and optional
@@ -1811,23 +1813,43 @@ named builder/router/configuration files bound the source normalization.
 This is source provenance, not actual daemon or artifact evidence.
 
 Fresh independent OpenAI Terra xhigh precode review passed with no P1/P2/P3.
-The exact five-path documentation candidate and contract bytes are bound in the
-review evidence. The reviewer checked the pinned source hash/blob identities
-and complete 57-member synthetic body with independently written expected
-projection. Implementation and its mandatory synthetic positive, negative and
-boundary tests remain pending. Full source validation and exact source/direct-child
-attestations are later gates for that implementation.
+The reviewed contract remains byte-identical in its exact Info section. The
+source implements an allocation-free bounded JSON preflight followed by closed
+map-only typed decoding and fixed recipe checks. Its sealed result retains only
+unverified comparison claims, including capacity and optional firewall identity;
+it creates no authority or identity digest. Module-owned input-derived strings,
+discarded values, dynamic keys and fixed decoded-key storage use zeroizing
+custody. Caller input and JSON-library scratch are outside that scrubbing claim.
+No public caller, transport, I/O, dependency or feature was added.
 
-Documentation direction passes 31 tests across 192 Markdown files; public
-readiness passes three tests. Exact documentation links/tables, formatting,
-generated legacy inventory and whitespace checks pass. The locked Phase 11
-readiness suite passes 43 cases and its check retains the prepared-only verdict.
-Native public-history validation passes with 37 attested, zero pending and
-supported-release eligibility false. An initial timestamp grammar example was
-misread as a Markdown link by the existing validators; equivalent prose fixed
-the documentation without weakening a validator. This slice changes no behavior
-source, so the prior exact Version source validation is preserved rather than
-claimed as validation of an unimplemented Info decoder.
+Twenty-two independently authored synthetic test groups cover the source-shaped
+positive body and separately written expected projection; every required and
+optional member, null/allocated encodings, all closed maps, decoded duplicates,
+fixed predicates, ordered SecurityOptions, runtime branches, typed discarded
+data and numeric/prefix/calendar grammar. Boundary cases separately reach body,
+depth, per-object/global member, key/string, row and array caps. The feature-string
+exception is confined to its two exact decoded-key paths. Truncation, malformed
+UTF-8/escapes/numbers, competing error stages and secret canaries are covered.
+Initial tests caught empty-runtime-status and Swarm-manager classification
+defects and overrestricted informational strings; these failures remain in the
+validation evidence. All twenty-two focused tests and strict host Clippy pass.
+Literal `npm run check` passes: 1,519 TypeScript tests, 139 contract comparisons,
+264 macOS store tests with two ignored, and 216 daemon tests. Scoped Semgrep
+finds no issue in the new files and only the unchanged test-only temporary-directory
+INFO in `lib.rs`; scoped redacted Gitleaks finds no secrets. Independent review
+identified one P3 coverage gap at the dynamic registry-dictionary map position.
+Direct array/scalar denial cases now pass alongside the existing null/empty-map
+positives. Fresh independent OpenAI Terra xhigh recheck resolved that finding;
+no P1/P2/P3 remains. Exact source and direct-child attestations remain separate
+gates.
+PHR-0038 tracks this separate implementation; PHR-0037 preserves Version evidence.
+
+The full suite covers the unchanged production Rust and contract bytes. The
+subsequent coverage-only test addition receives all twenty-two focused tests,
+strict lint and formatting; final factual documentation and generated metadata
+receive proportional checks and exact review. These are macOS host and synthetic
+source results, not Linux or genuine daemon observations.
+
 No current runtime, Linux result, integration, provider/encryption behavior,
 CLI setup or packaging completion follows. LNSAT retains standalone authority;
 Rangoon consumes the same neutral interfaces. Phase 11 owns runtime proof.
