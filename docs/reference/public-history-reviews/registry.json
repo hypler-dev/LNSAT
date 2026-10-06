@@ -47,6 +47,330 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0005/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0006",
+      "subject_id": "headless-bootstrap-fresh-store-b1",
+      "review_subject_ids": ["headless-bootstrap-fresh-store-b1"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0006/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0007",
+      "subject_id": "headless-bootstrap-owner-transaction-b2",
+      "review_subject_ids": ["headless-bootstrap-owner-transaction-b2"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0007/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0008",
+      "subject_id": "headless-bootstrap-selected-store-custody-b3a",
+      "review_subject_ids": ["headless-bootstrap-selected-store-custody-b3a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0008/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0009",
+      "subject_id": "headless-bootstrap-main-descriptor-custody-b3b",
+      "review_subject_ids": ["headless-bootstrap-main-descriptor-custody-b3b"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0009/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0010",
+      "subject_id": "headless-owner-current-credential-c1",
+      "review_subject_ids": ["headless-owner-current-credential-c1"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0010/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0011",
+      "subject_id": "headless-owner-complete-comparison-view-c2",
+      "review_subject_ids": ["headless-owner-complete-comparison-view-c2"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0011/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0012",
+      "subject_id": "headless-comparison-exact-asserted-profile-compatibility",
+      "review_subject_ids": [
+        "headless-comparison-exact-asserted-profile-compatibility"
+      ],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0012/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0013",
+      "subject_id": "local-session-private-generation-buffers",
+      "review_subject_ids": ["local-session-private-generation-buffers"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0013/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0014",
+      "subject_id": "headless-preparation-journal-codec-stage-a",
+      "review_subject_ids": ["headless-preparation-journal-codec-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0014/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0015",
+      "subject_id": "headless-preparation-journal-custody-stage-a",
+      "review_subject_ids": ["headless-preparation-journal-custody-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0015/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0016",
+      "subject_id": "sqlite-native-configuration-custody",
+      "review_subject_ids": ["sqlite-native-configuration-custody"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0016/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0017",
+      "subject_id": "headless-preparation-linux-test-lint",
+      "review_subject_ids": ["headless-preparation-linux-test-lint"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0017/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0018",
+      "subject_id": "repository-independent-review-workflow",
+      "review_subject_ids": ["repository-independent-review-workflow"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0018/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0019",
+      "subject_id": "headless-preparation-held-baseline-mutation-classification",
+      "review_subject_ids": [
+        "headless-preparation-held-baseline-mutation-classification"
+      ],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0019/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0020",
+      "subject_id": "headless-native-readable-acl-stage-a",
+      "review_subject_ids": ["headless-native-readable-acl-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0020/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0021",
+      "subject_id": "headless-native-mountinfo-idmapped-research-correction",
+      "review_subject_ids": ["headless-native-mountinfo-idmapped-research-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0021/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0022",
+      "subject_id": "headless-native-mountinfo-byte-stage-a",
+      "review_subject_ids": ["headless-native-mountinfo-byte-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0022/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0023",
+      "subject_id": "gateway-public-https-ipv6-canonicalization",
+      "review_subject_ids": ["gateway-public-https-ipv6-canonicalization"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0023/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0024",
+      "subject_id": "v1-command-gate-reconciliation-and-native-reader-bounds",
+      "review_subject_ids": ["v1-command-gate-reconciliation-and-native-reader-bounds"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0024/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0025",
+      "subject_id": "headless-native-procfs-reader-contract-readiness",
+      "review_subject_ids": ["headless-native-procfs-reader-contract-readiness"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0025/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0026",
+      "subject_id": "headless-native-fdinfo-byte-stage-a",
+      "review_subject_ids": ["headless-native-fdinfo-byte-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0026/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0027",
+      "subject_id": "v1-end-to-end-engine-delivery-milestones",
+      "review_subject_ids": ["v1-end-to-end-engine-delivery-milestones"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0027/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0028",
+      "subject_id": "headless-native-retained-custody-accepted-investigation",
+      "review_subject_ids": ["headless-native-retained-custody-accepted-investigation"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0028/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0029",
+      "subject_id": "headless-native-reader-feasibility-investigation",
+      "review_subject_ids": ["headless-native-reader-feasibility-investigation"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0029/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0030",
+      "subject_id": "headless-native-reader-gate-order-and-fixture-method",
+      "review_subject_ids": ["headless-native-reader-gate-order-and-fixture-method"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0030/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0031",
+      "subject_id": "headless-native-instrumented-fixture-contract",
+      "review_subject_ids": ["headless-native-instrumented-fixture-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0031/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0032",
+      "subject_id": "headless-native-reader-exact-precode-contract",
+      "review_subject_ids": ["headless-native-reader-exact-precode-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0032/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0033",
+      "subject_id": "v1-developer-feedback-and-agent-pack-requirements",
+      "review_subject_ids": ["v1-developer-feedback-and-agent-pack-requirements"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0033/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0034",
+      "subject_id": "headless-native-procfs-reader-source-candidate",
+      "review_subject_ids": ["headless-native-procfs-reader-source-candidate"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0034/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0035",
+      "subject_id": "headless-schema3-profile-codec-stage-a",
+      "review_subject_ids": ["headless-schema3-profile-codec-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0035/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0036",
+      "subject_id": "headless-context-challenge-codec-stage-a",
+      "review_subject_ids": ["headless-context-challenge-codec-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0036/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0037",
+      "subject_id": "headless-daemon-version-decoder-stage-a",
+      "review_subject_ids": ["headless-daemon-version-decoder-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0037/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0038",
+      "subject_id": "headless-daemon-info-decoder-stage-a",
+      "review_subject_ids": ["headless-daemon-info-decoder-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0038/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0039",
+      "subject_id": "local-protection-and-release-deadline-contract",
+      "review_subject_ids": ["local-protection-and-release-deadline-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0039/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0040",
+      "subject_id": "native-procfs-fixture-source-packet",
+      "review_subject_ids": ["native-procfs-fixture-source-packet"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0040/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0041",
+      "subject_id": "headless-startup-message-codecs-stage-a",
+      "review_subject_ids": ["headless-startup-message-codecs-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0041/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0042",
+      "subject_id": "technical-readme-architecture-and-integration",
+      "review_subject_ids": ["technical-readme-architecture-and-integration"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0042/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0043",
+      "subject_id": "protected-main-dependency-audit-remediation",
+      "review_subject_ids": ["protected-main-dependency-audit-remediation"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0043/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0044",
+      "subject_id": "technical-readme-phase11-readiness-guarantees",
+      "review_subject_ids": ["technical-readme-phase11-readiness-guarantees"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0044/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0045",
+      "subject_id": "private-procfs-linux-strict-lint-correction",
+      "review_subject_ids": ["private-procfs-linux-strict-lint-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0045/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }

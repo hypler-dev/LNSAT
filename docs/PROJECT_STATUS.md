@@ -14,6 +14,28 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
+Latest bounded contract work prepares the
+[native procfs fixture source packet](#native-procfs-fixture-source-packet)
+for the selected Linux evidence method. Kernel/harness implementation,
+construction and execution remain unopened. The preceding contract work records
+[local OS authentication and encrypted-state design requirements](#local-os-authentication-and-encrypted-state-direction)
+and clarifies the existing
+[release-write deadline](#release-write-deadline-contract-clarification).
+Both remain documentation only; provider integration and the release writer
+are unfinished. The latest bounded engine source is the
+[private daemon Info decoder contract](#stage-a-private-daemon-info-decoder-contract),
+following the source-reviewed Version, context/challenge and earlier private
+candidates. Info now has a private supplied-body source candidate and independent
+synthetic tests. Focused and full host-source validation pass; exact source and
+direct-child attestations remain separate gates under PHR-0038.
+The prior Version source and exact
+direct-child attestation are complete under PHR-0037. These prerequisites stay
+distinct from unfinished V1 integration, native evidence, enterprise assurance
+and actual runtime gates.
+The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
+records those remaining product gates; the genuine reader remains a separate
+contract-first native slice.
+
 ## Active Security Remediation
 
 The owner accepted the
@@ -27,6 +49,80 @@ applies source remediation for the same-UID Unix control-socket substitution and
 global login-limiter lockout findings. It withdraws Unix bearer reads before the
 first supported release, preserves browser header-pair transport, and still
 requires focused validation and independent review before release judgment.
+
+### Public HTTPS IPv6 address classification
+
+Canonical work record: this subsection. A supplied sampled review identified a
+P2 defect in the existing Gateway public HTTPS target validator: compressed
+IPv6 rejection predicates were applied to lowercase raw address spellings.
+Equivalent expanded loopback, unspecified and mapped addresses, and padded
+documentation-prefix addresses, could pass the resolved-address contract.
+The bounded source repair applies the existing rejection invariant without
+introducing new policy ranges, permissions, transports or mutation authority.
+
+After `node:net` validates IPv6 syntax, the validator locally parses an IPv6
+literal through the existing Node WHATWG URL parser and classifies its canonical
+hostname. Unsupported scoped literal parsing fails closed with the existing
+`gateway.network.ssrf_blocked` result. IPv4 classification, every previously
+blocked IPv6 class, all mapped IPv4 addresses including public mapped addresses,
+fixed errors, redirect and credential restrictions, and DNS-revalidation flags
+remain intact. Inputs are unchanged. A2A card/push and Registry source contracts
+inherit rejection; blocked card/source targets do not reach their respective
+identity or namespace verifier.
+
+Regression evidence contains 21 failing assertions against the original
+classifier, followed by 76/76 passing focused Gateway tests after repair.
+Gateway typecheck also passed. Cases cover compressed, expanded, padded,
+uppercase and mixed dotted-tail spellings, mixed resolved-address sets,
+scoped/malformed denials, public IPv6 positives, literal URL behavior and
+unchanged IPv4 policy. Full source gates, independent exact-source review and
+public-history-native binding remain required for the reviewed commit.
+
+The source-contract defect is distinct from unproven live SSRF impact. No new
+DNS resolver, fetch or connection implementation, network observation, provider,
+credential, authority, runtime, merge, release or production action follows.
+The Phase 11 operator packet and unfinished native observation/profile freeze
+remain unchanged. This scoped repair establishes no enterprise certification.
+
+### Session creation private buffer lifetime
+
+Canonical work record: this subsection. Under the existing local-authentication
+remediation and enterprise/government security direction, the bounded source
+hardening wraps session generation's three temporary entropy arrays and its
+intermediate bearer hex string in the already pinned `Zeroizing` owner.
+Those private allocations are scrubbed on drop, including an early random-
+provider error. The OS random source, entropy sizes, token grammar, digest
+domains, authentication behavior and all public fields/errors remain unchanged.
+This creates no identity, session, transport or action authority.
+
+`LocalSessionSecretsV1` retains its existing movable public `String` fields.
+Adding a public `Drop` implementation would break existing field moves and is
+outside this slice. Callers retain responsibility for returned raw secrets and
+their copies. Existing daemon issue/rotation paths explicitly scrub original
+result fields after creating the private zeroizing browser-header holder.
+This private-buffer improvement is not universal memory erasure, a confirmed
+vulnerability assessment, MFA, FIPS/provider assurance or government readiness.
+
+Pinned auth tests passed (13/13), and the full `npm run check` passed with
+1,471 TypeScript workspace tests, 139/139 TypeScript contract comparisons,
+251 store tests (one intentionally ignored child helper), and 100 daemon
+tests. The initial full run stopped on stale generated inventory; it was
+retained as failed evidence, refreshed, and rerun successfully. Named local
+Semgrep `p/rust` and redacted Gitleaks worktree scans reported zero findings;
+dependency files are unchanged. Fresh independent source review covers the
+private-buffer change and existing caller handoff. Public-history-native
+review binding uses `PHR-0013`; it grants no runtime or release authority.
+
+Parent selected-write contract PR #81 passed exact-head source CI
+`37159123843`, job `111308655772`, at
+`59bbb92f9df96afdf0b4e7166c38cb92134be27f` on `2026-10-03T22:49:02Z`.
+That evidence covers the proposed contract, not selected-write implementation.
+
+At this session-buffer checkpoint the HCFG-6 source-order decision was pending;
+its later human acceptance is recorded in the canonical staging subsection.
+This session-buffer change opened no native/profile/journal/store Stage-A code,
+candidate SQL, Docker, host mutation, artifact build, merge, release,
+deployment or production. The Phase 11 packet remains unchanged.
 
 Repository source is public through the independently audited fresh-history
 cutover recorded in [public source readiness](PUBLIC_READINESS.md). Public
@@ -132,7 +228,7 @@ runtime, package, or release behavior. Phase 11's
 remains the runtime-proof status authority; no real Docker proof or production
 authorization follows from these reads.
 
-## Proposed HCFG-4B/4C And HCFG-5 Contracts
+## HCFG-4B/4C And HCFG-5 Contracts
 
 [PR #52](https://github.com/hypler-dev/LNSAT/pull/52) merged the proposed
 bounded current-unresolved evidence snapshot and versioned watch design at
@@ -148,10 +244,2143 @@ Draft [HCFG-5A](https://github.com/hypler-dev/LNSAT/pull/61),
 [HCFG-5B](https://github.com/hypler-dev/LNSAT/pull/62), and
 [HCFG-5C](https://github.com/hypler-dev/LNSAT/pull/63) propose protected
 online configuration transitions, atomic local bootstrap, and an exact fresh
-owner-decision challenge. Their reviewed design heads have green exact-head CI,
-but owner intent/security acceptance, source implementation, selected-platform
-HCFG-6 enforcement, and activation remain pending. No configuration mutation
-or resource access is opened by these proposals.
+owner-decision challenge. Their reviewed design heads have green exact-head CI.
+On 2026-09-30 the human owner authorized the controller to accept the reviewed
+contracts needed for V1 and proceed with bounded source implementation. This
+is human acceptance of HCFG-5B at
+`662fc5f489d70d735d9d612e9f8cce6ed3a2b593` and HCFG-5C at
+`0d5db17a1de7fdbd40abcfe4ddf901a39e89e160`, not an agent self-approval.
+The accepted [bootstrap contract](architecture/headless-local-bootstrap/intent.md)
+records the host-owner assumption, atomic first initialization, selected-store
+binding, and inert-restore policy. The owner-decision contract retains exact
+change-view confirmation, credential rechecks, bounded challenges, and one-use
+consumption. Routine design and implementation choices within these reviewed
+contracts no longer await another owner acceptance. Named validation and fresh
+independent source review remain required. HCFG-6 enforcement and actual
+initialization/activation require their own implementation and proof. Runtime
+proof, merge, package, and release retain separate gates. No configuration
+mutation or resource access follows from the design acceptance alone.
+
+### HCFG-5A bounded pure comparison model
+
+Canonical implementation record: this section. The owner accepted the
+[bounded pure-model specification](architecture/headless-comparison-model/spec.md)
+at PR #67 head `7166ee6d2ab0e213e7f565eedc3b86dd1204763f` in the
+2026-09-30 development conversation. The isolated source draft implements a
+structural Rust comparison model with private fields, sealed declaration
+recomposition, bounded per-side evidence, independent mode and budget ordering,
+exact canonical commitments, explicit in-memory change summaries, and redacted
+diagnostics. The 37 focused headless regressions include 18 comparison tests,
+an independent 65-state/4,225-pair mode and budget oracle, and a manually
+specified canonical golden vector checked against a real model result. Pinned
+Rust formatting, strict Clippy, full `npm run check`, public/documentation and
+inventory checks, installed local Rust/secret scans, and fresh independent
+source/test/documentation review passed. This remains an unmerged source draft;
+it supplies no authenticated comparison, owner decision, or activation.
+Acceptance covers pure Rust comparison mathematics and tests only. The
+assertions cannot authenticate
+resource identity, policy, current effective authority, or enforcement. The
+model must always retain `authority_comparison: unverifiable`,
+`identity_verified: false`, `activation_available: false`, and
+`grants_action_authority: false`.
+
+The initial compatibility binding recognizes the existing source contract
+`lnsat.runtime_profile.docker_local.v1` exactly and rejects other asserted
+profile versions. This conditional compatibility check supplies no platform
+proof or execution permission. HCFG-5B/5C source implementation, authenticated
+active-generation derivation, HCFG-6, monitoring, activation, merge, and release
+remain separate gates. The Phase 11 operator packet remains runtime authority;
+its source-only preparation verdict is unchanged.
+
+### HCFG-5A exact asserted profile compatibility
+
+Canonical work record: this subsection. The accepted pure-model specification
+requires a separately reviewed source change for each additional recognized
+asserted profile. The bounded V1 prerequisite extends that closed source list
+to exactly `lnsat.runtime_profile.docker_local.v1` and
+`lnsat.runtime_profile.docker_local.v2`. The latter is the selected HCFG-6
+native contract identity. This changes only conditional comparison of supplied
+assertions; it implements no native schema-3 decoder, profile verifier, journal,
+store, initializer or authenticated comparison. This compatibility change
+accepted no HCFG-6 source-order amendment and opened no Stage-A implementation;
+the later human source-order acceptance is recorded separately below.
+
+Both contexts must retain the same exact profile string. Mixed versions and
+unknown or near-match strings deny without a model commitment, summary or
+view. The selected string remains in model/view commitments; existing v1
+golden bytes remain unchanged. Equal, narrowing and widening mathematics must
+work for nonempty matching v2 inputs. Diagnostics retain
+`authority_comparison: unverifiable`, `identity_verified: false`,
+`activation_available: false`, and `grants_action_authority: false`.
+
+The isolated source draft implements this bounded recognition. Thirty focused
+comparison/view tests passed, including unchanged v1 golden commitments,
+nonempty v2 equality/narrowing/widening, both mixed-version directions, matched
+unknown/near-match pairs, stopped v2 and distinct v1/v2 model/view commitments.
+Fresh independent OpenAI Terra xhigh source/test/contract review passed with
+no findings. Full pinned `npm run check` reached terminal exit zero: strict
+Rust formatting/Clippy, all workspace tests/type checks and 1,471 TypeScript
+tests passed. The first restricted run failed 55 daemon listener tests
+(49 `ListenFailed`, six socket `PermissionDenied`); the unchanged suite passed
+when disposable loopback/Unix test sockets were permitted. No production or
+Docker endpoint was used. Local named `p/rust` Semgrep and redacted worktree
+Gitleaks found zero findings; no source/report upload or tool installation
+occurred. PHR-0012 binds the independently reviewed source commit
+`e3a2cb063ef1827c966939f44e7867de6704579e` to its direct-child attestation
+`65a5441f661c35fcf4ac102d9b5a46346c36197d`. Committed native provenance
+passed with 12 attested records and zero pending. Draft PR #80 remains
+unmerged at that exact head. Hosted source CI run `37157277947` and job
+`111303156585` completed successfully at `2026-10-03T22:24:24Z`. These are
+source review/validation results, not runtime or supported-release authority.
+
+This is within the existing accepted pure comparison boundary, not acceptance
+of online apply or native execution. Physical profile/schema verification,
+selected-store custody and current-authority integration remain required.
+The Phase 11 operator packet remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`;
+Docker, host mutation, candidate builds, merge, release and production remain
+closed. V1 and enterprise/government assurance remain incomplete.
+
+### HCFG-5B B1 fresh-store prerequisite
+
+Canonical implementation record: this section. Under the accepted bootstrap
+contract, B1 adds only a store-owned read-only schema-17 inspection. It verifies
+one complete main-schema identity (31 tables and 218 objects), rejects temporary
+objects and attached databases, rechecks native schema/migration/immutable
+retention seeds and integrity, and requires all 28 authority/evidence tables to
+be empty in one deferred read transaction. Schema identity includes tables,
+views, triggers, indexes, and autoindexes, including names a wildcard filter
+could otherwise overlook. Only exact compiled migration, store metadata, and
+preserve-only retention seeds may pre-exist. Unknown or altered state denies.
+
+The result is a private-field snapshot diagnostic with
+`initialization_available: false` and `grants_action_authority: false`; it has
+no wire serializer or authority conversion. It may become stale after any
+writer commits. The later initializer must repeat the private gate inside its
+own immediate transaction together with host-owner, file/path, lease,
+declaration, and selected-platform enforcement checks. This adds no migration,
+owner credential, installation, generation, configuration audit, command,
+route, OS verifier, or activation. Current source has no HCFG-6 verifier that
+can authenticate all declared resources and enforce the selected controls.
+
+Nine focused bootstrap tests, strict store Clippy, and full `npm run check`
+passed on unchanged source bytes. Documentation, public readiness, inventory,
+and local dependency/signature checks passed. Fresh independent source review
+found no source defects; its stale-inventory validation finding was resolved by
+refreshing the inventory and rerunning the full check on frozen files. Local
+secret scanning found no leaks. The Rust scan reported two pre-existing
+test-helper findings and no finding in the new production module.
+
+Git-bound independent review evidence is tracked as `PHR-0006` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+This remains an unmerged source-only prerequisite. The next source work must
+establish selected-store file/owner/lease binding and real selected-platform
+resource/enforcement proof before atomic initialization can admit authority.
+Matching a SQLite filename alone is not proof of its opened file identity.
+The Phase 11 operator packet and source-only runtime verdict are unchanged.
+Bootstrap and V1 remain incomplete; this prerequisite does not initialize a
+usable installation.
+
+### HCFG-5B B2 transaction-local owner foundation
+
+Canonical implementation record: this section. Under the accepted bootstrap
+contract and standing owner authorization, B2 extracts the existing owner
+credential and identity-event construction into a private transaction-local
+helper. The public owner-bootstrap API, errors, single-owner checks, schema
+verification, immediate transaction, and commit behavior remain unchanged.
+
+Preparation validates and copies the exact identity, display name, and time;
+it owns the credential ID and a zeroizing verifier, retains no plaintext
+password, and has no debug, clone, or wire representation. The insert helper
+accepts only an existing SQLite transaction and never starts, commits, or
+rolls back one. Its caller must use an immediate transaction and abort the
+whole operation on any error. A later initializer can therefore compose owner,
+installation, generation, and linked audit writes in one transaction instead
+of committing an owner first.
+
+Seven focused owner-bootstrap tests and strict store Clippy pass. Three new
+tests prove owned metadata cannot be substituted after preparation, the caller
+can drop the password before the transaction, no owner rows are externally
+visible before caller commit, and outer rollback erases all identity,
+credential, and event rows after success or injected later-insert failure.
+Full `npm run check` passed on unchanged source bytes. Fresh independent
+read-only source and documentation review found no actionable defects. Local
+secret scanning found no leaks; the named Rust static scan reported two
+unchanged test-helper informational findings and no new production findings.
+Git-bound review evidence is tracked as `PHR-0007` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+
+This changes no schema, migration, public API, CLI, route, installation,
+generation, configuration audit, resource verifier, OS control, or activation.
+The existing owner-only foundation remains legacy/inert for headless setup.
+Selected-store binding, real resource/enforcement proof, and the complete
+atomic initializer remain open source work. Phase 11 runtime authority and
+V1 readiness are unchanged.
+
+### HCFG-5C C1 current owner credential prerequisite
+
+Canonical implementation record: this section. The [C1 credential source
+specification](architecture/headless-owner-decision/credential-source-spec.md)
+defines the bounded implementation details.
+The HCFG-5C design was accepted by the human owner at exact head
+`0d5db17a1de7fdbd40abcfe4ddf901a39e89e160`. C1 is the bounded source
+implementation of its current-owner credential prerequisite; the design is
+accepted, source implementation is complete for this slice, and independent
+source review passed. This record does not self-accept new authority.
+
+C1 prepares a private snapshot only after a valid owner password verifies
+against the current bounded credential chain. The snapshot has no `Debug` or
+`Clone`, wire representation, public constructor, or success-injection seam.
+Each store instance owns a private transient scope marker; recheck requires
+that marker and the actual borrowed SQLite transaction connection to match the
+original store. A different store, reopened store, process, or connection
+cannot reuse the snapshot even when credential bytes match.
+
+The read transaction ends before Argon2id work. The later transaction-local
+recheck reloads the current owner identity and complete bounded credential
+chain, compares exact identity and credential metadata plus the domain-bound
+SHA-256 PHC fingerprint, and writes no rows. PHC row values are held through
+`Zeroizing<String>` on success and error paths. The existing public owner
+password API and result/error family remain unchanged; schema remains 17.
+
+Eleven focused tests and strict store Clippy passed. Coverage includes real
+rotation/recovery, valid same-version verifier replacement, historical-chain
+corruption, immutable identity/role drift, malformed owner status evidence,
+store movement/reopen and cross-wired transaction rejection, absence of
+credential-component row writes, and unchanged session activity. Fresh independent source review found
+no actionable defects. Gitleaks found no leaks; the named Rust static scan
+reported only two unchanged test-helper informational findings and no new
+production finding. Full `npm run check` passed on unchanged source after two
+checkout-environment failures: the first sandboxed run could not bind disposable
+daemon listeners; the socket-enabled run then lacked the existing workspace
+dependency directories. Restoring those dependency links required no install,
+manifest or lockfile change. The terminal run covers all 100 daemon tests and
+the complete Rust/TypeScript source gates; neither earlier failure is rewritten
+as a pass or claimed as a code fix. This remains an unmerged source draft, and
+exact-head hosted CI run
+[37145456578](https://github.com/hypler-dev/LNSAT/actions/runs/37145456578)
+succeeded for draft PR #76 head
+`cad0d35fe5a20366679557d89dcada217f63dbe3` on 2026-10-03. Hosted source
+verification does not open runtime or support.
+Git-bound review registration is `PHR-0010` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+
+C1 does not implement full configuration, challenge, session, decision,
+installation, generation, resource, or activation authority. Runtime/V1/FIPS,
+MFA, and government-assurance gates remain incomplete. Phase 11 packet status
+authority is unchanged, and no merge, release, runtime, production, or
+deployment action follows from this source slice.
+
+### HCFG-5C C2 complete comparison view prerequisite
+
+Canonical implementation record: this section. The [C2 complete-view source
+specification](architecture/headless-owner-decision/view-source-spec.md) is
+frozen under the accepted HCFG-5C baseline at exact head
+`0d5db17a1de7fdbd40abcfe4ddf901a39e89e160`. The bounded C2 source slice is
+implemented. Preliminary contract review passed; independent source review
+found no source defects, and its stale documentation-index wording finding was
+corrected in this packet. This record does not create a second acceptance
+authority or accept new authority.
+
+C2 defines a closed complete conditional model view over the accepted HCFG-5A
+comparison result. The view includes every changed resource and rule field,
+all eight asserted context fields, old and candidate declaration digests, and
+a distinct model-view digest. Resource and rule changes remain complete and
+sorted; nullable sides are explicit, and no filtering, pagination,
+abbreviation, or ellipsis is permitted.
+
+The canonical JSON view has an inclusive 131,072-byte cap and a bounded writer
+that exposes no partial output on overflow. The existing comparison model,
+classifications, commitment, summary, supported asserted profile, and redacted
+diagnostic remain unchanged. The view is source-only in-memory model material;
+it is not a supported wire or profile contract.
+
+Ten focused view tests, strict contract-crate Clippy, pinned Rust formatting
+and full `npm run check` passed. The full gate covered 88 contract unit tests,
+13 contract conformance tests, 251 store tests and all 100 daemon tests, plus
+the complete TypeScript and source-conformance gates. Documentation, public
+readiness and refreshed inventory checks passed. The named local Rust scan
+found no findings. Worktree secret scanning reported one confirmed false
+positive in ignored generated metadata: the pinned Ed25519 library documents
+a PEM begin marker without any key body. The complete documentation line
+matches its pinned library source; no application secret was found and no rule
+was suppressed. Dependencies, lockfiles and schema 17 are unchanged. Git-bound
+independent source review is registered as `PHR-0011` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+Draft PR #77 remains unmerged at exact head
+`7ee3422e3ff8b67458e159cfab21807fd272fbc9`. GitHub readback confirmed CI run
+`37148971399`, attempt 1, and source-gate job `111278633780` completed
+successfully at `2026-10-03T19:55:05Z`. CI supplies source validation; it does
+not grant merge or runtime authority.
+
+C2 creates no authenticated server view, current-state derivation, consent,
+confirmation, challenge, session, decision, candidate generation, or action
+authority. No schema, route, storage, migration, runtime, package, release,
+deployment, or production state follows from this prerequisite. Full HCFG-5C,
+HCFG-6, V1, and enterprise/government assurance remain incomplete.
+
+### HCFG-5B B3A custody readiness withdrawn
+
+Historical B3A source and independent review are preserved by immutable
+[PHR-0008](reference/public-history-reviews/PHR-0008/review.json).
+Draft [PR #71](https://github.com/hypler-dev/LNSAT/pull/71), exact head
+`437db8058feaa93df1f9bad551f70727fbd73a27`, failed source CI run
+`36944404753` on its Linux nonregular-path fixture. More importantly, subsequent
+cross-process evidence confirmed that opening and closing an additional database
+`File` can cancel POSIX locks belonging to another live SQLite connection in the
+same process. Keeping that extra handle until custody drop or checking a WAL
+checkpoint does not resolve this hazard. Source readiness is withdrawn; the
+historical Mac validation and review do not prove the correction. Prior review
+manifests are not rewritten.
+
+### HCFG-5B B3B main descriptor observation and lock correction
+
+Canonical implementation record: this section. Under the accepted bootstrap
+contract and standing human source authorization, the isolated corrective
+candidate removes every direct selected-store database handle and checkpointed
+header read. It retains an owner-owned exact `0700` parent and regular
+single-link exact `0600` named database and shared lease, device/inode
+observations, and nonzero equal real/effective host UID. The exclusive shared
+lease is validated and locked before any SQLite open. Busy callers cannot open
+SQLite or create its WAL/SHM coordination files.
+
+A fresh private read-only/no-create connection uses the fixed native Unix VFS.
+Exact SQLite `3.53.2` source identity, non-debug posture, and unique builtin
+function origin are checked before the native `sqlite_filestat('main')` call.
+The native string allocator is bounded by a temporary 4096-byte
+`SQLITE_LIMIT_LENGTH` before allocation; the original connection limit is
+restored on success and denial. SQL NULL and malformed, duplicate, unknown,
+out-of-range or other-VFS diagnostic shapes deny with static errors. A private
+typed decode keeps the main descriptor internal. Safe in-place `fstat` observes
+that actual descriptor's owner, mode, regular type, link count and device/inode
+without opening, duplicating or closing any database alias. Native and named
+metadata are checked twice and rechecked on explicit custody use.
+
+The repository forces the FILESTAT compile flag and rejects named ambient
+compiler, target, flags, wrapper, native-source and link overrides before Cargo.
+Locked full Cargo metadata requires the single pinned bundled SQLite package and
+exact native features and the exact fs-only production Nix alias. Developer-host compiler/SDK binaries, PATH and Cargo
+configuration remain trusted; these checks do not authenticate a release
+artifact. External consumers lacking the required capability fail closed.
+Existing Nix `0.31.3` remains unchanged; an exact fs-only Nix `0.29.0` alias
+supplies the safe raw-descriptor metadata API without relaxing unsafe-code
+prohibition. Existing locked Serde is reused for private typed decoding.
+
+The header prefilter is removed. A current schema held in uncheckpointed WAL is
+read normally, with no checkpoint, migration or journal assignment. Malformed
+and old-schema read-only denials may create coordination files or the lease;
+they write no main database or authority rows. Source coverage includes a real
+child-process POSIX byte-lock contender across ordinary/selected coexistence,
+second-selection denial, bounded-native failure, repeated observation,
+post-open schema denial and selected destruction while the ordinary reader
+remains alive. The prior checkpoint test remains a separate check of connection
+closure before shared-lease release.
+
+Nineteen focused selected-store regressions passed locally on macOS; the one
+normally ignored child-only harness was invoked by the lock regression. Six
+native build-policy tests passed. An initial full repository check failed in an
+existing served fake-runtime test: 99 daemon tests passed and one returned
+`gateway.runtime_composition.denied` instead of success. The exact test passed
+alone, then the normal parallel daemon suite passed 100/100 on unchanged source.
+A subsequent full `npm run check` passed on the same frozen candidate, including
+100/100 daemon tests twice and 240 store tests with the child harness normally
+ignored but explicitly invoked by its parent regression. Workspace Clippy,
+formatting, source metadata and `npm run build` passed. The cause of the initial
+intermittent denial was not identified; no correction of that reliability
+history is claimed.
+
+Independent source review closed the validation finding after the terminal
+unchanged full-check pass. Review provenance is tracked as `PHR-0009` in the
+[public-history review registry](reference/public-history-reviews/registry.json).
+Exact-head Linux source CI run `36957301014` completed successfully at
+`59396f5927a7e5f657d9a4983748ac084701181c`. This closes the hosted source
+gate only; the historical failed run remains failure evidence. Gitleaks found no leaks;
+named Rust and JavaScript Semgrep scans found no new confirmed production
+defect, with unchanged informational Rust findings locally triaged. Native npm
+dependency and signature checks passed. Recursive offline OSV remained
+unverified because its vulnerability database was unavailable; a separate
+public-coordinate query returned no advisories for the one new Nix version.
+That narrow query is not full dependency coverage or a vulnerability-free claim.
+
+This observes main database metadata only. It does not prove release-artifact
+identity, effective ACL isolation, journal/WAL/SHM descriptor custody, resource
+identity or OS enforcement. No serializable permit, production proof injection,
+initializer, configuration activation, CLI, route, schema or migration is added.
+Complete atomic initialization and V1 remain incomplete. The Phase 11 operator
+packet remains runtime authority and its source-only verdict is unchanged.
+
+### HCFG-5B B4 durable-state contract
+
+Canonical work record: this subsection. The [proposed durable-state source
+contract](architecture/headless-local-bootstrap/state-source-spec.md) fills the
+installation/generation/current-pointer/bootstrap-audit details required by the
+accepted HCFG-5B and HCFG-6 designs. It is supporting contract work, not an
+initializer or trusted-state implementation. Current schema remains 17; no
+table, migration, state reader, route, CLI or mutation is added.
+
+The contract retains the four planned `headless_installations`,
+`headless_generations`, `headless_active` and `headless_config_audit` families.
+It separates the owner's confirmed declaration reference from the new random
+installation/store-instance UUIDs. Both are bound by the immutable root and
+bootstrap event; confirmed declaration/binding/preparation bytes are preserved.
+The pure model uses the stored declaration reference, while a future private
+authenticated comparison must also bind the actual UUID/store/file root.
+
+Ordered columns, distinct hash domains, bounded canonical text, null genesis,
+noncircular root/generation/audit linkage and same-transaction readback are
+specified. Current-state derivation must recheck selected-store custody,
+complete audit/generation evidence, actual compiled policy, epochs/stop and
+fresh native resource/enforcement proof. Existing transaction-local session/
+CSRF checks and the C1 current-owner credential recheck are reused; neither
+creates installation authority.
+
+Two synthetic store vectors were recomputed independently to check canonical
+framing, ordered column counts and the distinct root/generation/audit
+commitments for one shared declaration reference. They do not prove Rust
+parser execution, credential/event rederivation, native observations, store
+custody or a trusted-state reader. Fresh independent OpenAI Terra xhigh
+contract review resolved a rendered credential-generation invariant error;
+the corrected value is exactly `1`. Artifact-shape, formatting, documentation
+direction (31 tests, 183 Markdown files), public readiness, inventory
+(2,122 occurrences across 295 files), schema-17 truth, public-history evidence
+(11 attested, zero pending), and unchanged Phase 11 readiness (43 tests,
+execution closed) passed. This remains a proposed supporting contract, not
+complete source-freeze acceptance or implementation evidence.
+
+Draft PR #78 remains unmerged at exact head
+`751c14811fda380adcc00e3f036baab89e836725`. GitHub readback confirmed CI run
+`37152111406`, attempt 1, and source-gate job `111287942648` completed
+successfully at `2026-10-03T20:54:17Z`. This validates the source draft; no
+merge, initialization or runtime authority follows.
+
+The proposed next headless migration 18 cannot silently import the unrelated
+historical Phase 7d signed-evidence v18 test-only layout. Actual registration
+requires reconciliation of the compiled schema, exhaustive eligibility and
+legacy truth labels; optional signing remains blocked. The complete native/
+wire/daemon/store freeze retains its gates. Source-order acceptance was pending
+at this checkpoint and was accepted later in the canonical staging record.
+No Stage-A implementation, initialization, activation, Docker, host ACL,
+artifact build, merge, release or production action follows from this record.
+
+### HCFG-5B B5 schema and verification contract
+
+Canonical work record: this subsection. The [B5 schema source proposal](architecture/headless-local-bootstrap/schema-source-spec.md)
+specifies exact candidate SQL for the B4 root/generation/audit/pointer layout.
+It executes no new SQL, adds no migration file or registry entry, and leaves
+current schema 17 and ordinary store behavior unchanged. Its migration-body
+text identity is separate from the still-unset actual SQLite schema digest.
+Source-order acceptance was pending at this B5 checkpoint; the later accepted
+amendment is recorded below. The full integration gate remains closed.
+
+The proposal rejects occupancy in all 28 existing non-seed tables before any
+lasting migration change. Metadata and retention rebuilding are explicit
+seed mechanics: retain all 28 current preserve-only families and add four.
+It adds four STRICT empty headless tables, exact unique indexes, deferred
+cyclic foreign keys, immutable-history triggers and pointer genesis/monotonic
+guards. Static expectations are 35 tables, 32 non-seed tables and 242 main
+objects; these counts are not observed SQLite output. Actual candidate
+execution, full emitted-object verification and the new schema digest remain
+unproven. No legacy owner or restored authority acquires headless authority.
+
+Source inspection also found a profile compatibility dependency. HCFG-6's
+native proposal selects contract `lnsat.runtime_profile.docker_local.v2` at
+schema version 3; at the B5 checkpoint the conditional comparison model
+recognized only asserted v1. A future generation must retain the actual native
+profile identity. The separately recorded pure-model compatibility slice
+addresses conditional v2 recognition; authenticated comparison still requires
+verified native/current state. Relabeling v2 as v1 or an
+always-denying placeholder cannot close that requirement. B5 changes no
+comparison source or native behavior.
+
+Independent OpenAI Terra xhigh contract review passed with no findings. A
+separate Luna medium static inventory confirmed the B4 column ordering,
+foreign-key parent keys, guard/retention families, named indexes/triggers and
+exact proposed SQL-text hash. Neither review executed SQL or established its
+syntax, emitted SQLite objects or a schema-manifest digest. Artifact shape,
+formatting, documentation direction (31 tests, 184 Markdown files), public
+readiness, inventory (2,122 occurrences across 295 files), schema-17 truth,
+public-history evidence (11 attested, zero pending), and unchanged Phase 11
+readiness (43 tests, execution closed) passed. These are documentation/static
+checks; the unchanged parent source gate passed in PR #78. Actual candidate
+SQL execution, source implementation and runtime proof remain unperformed.
+
+Draft PR #79 is unmerged at exact head
+`2fcdbb0d937cddc29f77497e7d38896bb947a23a`. GitHub readback confirmed
+source-gate CI run `37154531103` and job `111295076082` succeeded at
+`2026-10-03T21:34:42Z`. It validates the supporting source draft, not candidate
+SQL execution, schema identity, initialization or runtime authority.
+
+### HCFG-5B B6 selected-write and migration custody contract
+
+Canonical work record: this subsection. The [B6 selected-write source proposal](architecture/headless-local-bootstrap/selected-write-source-spec.md)
+specifies private writable connection ownership and selected migration ordering
+needed by complete atomic setup. Source inspection confirmed that B3B remains
+read-only main-descriptor custody, ordinary `SqliteStore::open` remains unbound
+and automatically migrates its legacy list, and B2/C1 supply only owner and
+credential prerequisites. None implements this writable initializer.
+
+The proposal keeps candidate schema 18 outside the ordinary migration list,
+requires the lease before a no-create fixed-VFS writable open, repeats exact
+schema/empty-state checks inside explicit immediate transactions, and preserves
+actual main-descriptor observation without an extra database alias. WAL/SHM
+named-path/lifecycle evidence is explicitly distinct from descriptor-bound
+proof; the concrete observer and full writer/mutex freeze remain outstanding.
+No source, schema, pragma or existing ordinary-open behavior changes here.
+
+Migration commits before preparation. The proposed preparation store digest
+binds actual B4 file/path custody to schema 18 and its future exact manifest;
+no precommit installation UUID or schema-17 journal is repurposed. Preparation
+and cleanup precede one atomic owner/root/generation/audit/pointer transaction.
+Credential scopes follow the actual connection, unknown commits require exact
+readback, and connection closure precedes lease release. Journals, diagnostics
+and copied state never become authority.
+
+Fresh independent OpenAI Terra xhigh contract review found no actionable
+P1/P2/P3. Artifact shape, formatting, documentation direction (31 tests,
+185 Markdown files), public readiness, inventory (2,122 occurrences across
+295 files), schema-17 truth, committed native provenance (12 attested,
+zero pending) and unchanged Phase 11 readiness (43 tests, execution closed)
+passed. These validate documentation and existing source boundaries; no
+candidate SQL or new source test ran. The unchanged parent source gate passed
+at exact draft PR #80 head `65a5441f661c35fcf4ac102d9b5a46346c36197d`.
+
+This is supporting contract work under accepted HCFG-5B/HCFG-6 baselines, not
+complete freeze acceptance or selected-write implementation. Source-order
+acceptance was pending at this B6 checkpoint; the later accepted amendment is
+recorded below. Candidate SQL execution, initialization, activation, Docker,
+host mutation, merge, artifact builds, signing, release, deploy and production
+remain closed at this B6 checkpoint. V1 and
+enterprise/government readiness are incomplete. The Phase 11 operator packet
+retains its locked source and source-only runtime verdict.
+
+## HCFG-6 Resource And Runtime Enforcement Design
+
+Canonical work record: this section. The accepted V1 requirement needs real
+nonempty resource identity and selected OS enforcement at grant and use.
+**The human owner accepted HCFG-6 for bounded source implementation on
+2026-10-01**, replying `accepted` directly to the request for draft PR #72 at
+exact reviewed head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`.
+The [intent](architecture/headless-resource-enforcement/intent.md),
+[specification](architecture/headless-resource-enforcement/spec.md) and
+[plan](architecture/headless-resource-enforcement/plan.md) record that accepted
+design. HCFG-5B/5C acceptance and green CI were prerequisites, not the source
+of this new human decision.
+
+Acceptance includes the first same-host Linux Docker Engine 29.8.2/API 1.56
+rootful engineering backend, explicit trusted host/kernel/daemon boundary,
+nonempty marked Git repository and exact runtime profile, owner-controlled
+binding, private daemon/kernel startup observations, resource-free bootstrap
+probe and inert trusted-adapter staging. Unsupported kinds/mappings deny.
+This selects no package OS/architecture row and supplies no supported runtime.
+
+The owner also accepted the narrow amendment to bootstrap's no-resource-open
+rule: metadata-only held directory handles and bounded host-side marker/Git
+identity reads after the selected-store lease and declaration/binding checks.
+The [bootstrap intent](architecture/headless-local-bootstrap/intent.md),
+[specification](architecture/headless-local-bootstrap/spec.md) and
+[plan](architecture/headless-local-bootstrap/plan.md) reconcile that exception,
+handle lifetime, finite owner preparation budget, random precommit preparation
+ID, durable journal and later atomic installation/audit binding. No Git
+subprocess, target-mounted workload, target action or action grant is permitted
+during bootstrap. Existing B1/B2/B3B source behavior is unchanged.
+
+Current Docker-local source verifies configuration, executable/endpoint metadata
+and a marked disposable Git target before launch, then writes the approved
+action payload immediately after spawn. Restrictive argv and a configured
+mount source do not prove the workload's actual target inode, namespaces,
+privilege, seccomp or cgroup controls. No authenticated startup observation
+barrier or verified filesystem-backed HCFG owner-binding inventory is implemented. The S1 pure input decoder below does not supply either. No boolean, caller JSON,
+mocked observer or empty-only initializer completes HCFG-6. Atomic bootstrap,
+protected control, monitoring, actual runtime and V1 remain incomplete.
+
+Initial design review found a P1 bootstrap-order conflict and P2 backend/journal
+identity gaps. The revised design named the exact backend, explicitly sought
+the metadata amendment and allocated preparation identity before installation.
+Fresh independent OpenAI Terra xhigh read-only review of the final feasibility
+clarifications found no actionable P1/P2/P3. At the accepted head, design
+artifact, docs, formatting, public-readiness, inventory and native review-evidence
+checks passed; the unchanged Phase 11 readiness suite passed 43/43. GitHub
+connector verification after the human decision confirmed draft PR #72 at the
+same exact head and CI run `36963652146` completed successfully. Those results
+cover that accepted head, not subsequent acceptance-document edits.
+
+**Next source gate: complete and independently review the exact source freeze
+before behavioral integration.** It must resolve genuine native mount and
+effective-ACL observation, immutable component/template and kernel recipe
+identities, bounded wire/daemon/native formats, cleanup custody and
+store/admission/revocation linearization. Persistent resource identity is
+distinct from live mount/namespace tokens. The finite resource-free owner
+preparation budget is distinct from HCFG-3's zero denied-action budget; startup
+and action share one bounded action budget without resetting it at release.
+Real kernel/daemon observations and later runtime/package proof remain required.
+
+### HCFG-6 S1 pure owner-binding decoder source draft
+
+On 2026-10-02, the bounded S1 pure decoder source draft was recorded from the
+exact owner-binding contract in
+[the supporting source specification](architecture/headless-resource-enforcement/bindings-source-spec.md).
+It accepts caller bytes plus a sealed HCFG-3 declaration and returns a sealed
+unverified declaration input. It performs no file loading, path resolution,
+owner or OS observation, selected-store proof, persistence, CLI, route,
+generation, permission grant, or runtime work. Strict bounds, exact inventory
+matching, canonical path syntax, lexical overlap rejection, separate
+commitments, asserted-identity pairing, and redacted diagnostics are covered
+by fifteen focused Rust tests.
+
+Fifteen focused Rust tests, Rustfmt, strict Clippy and the complete pinned `npm run check` passed. Documentation/public checks and inventory passed; the unchanged Phase 11 readiness suite passed 43/43. Local Semgrep `p/rust` ran eleven rules on ten Rust files with zero findings or parse errors, and Gitleaks reported zero worktree findings. Fresh independent OpenAI Terra xhigh read-only review resolved a plan-order conflict and missing test proofs, then found no remaining actionable P1/P2/P3. The first broad check stopped on sandbox-denied disposable socket fixtures (`Operation not permitted`); the complete rerun with disposable local fixtures allowed exited zero. Draft PR #74 is at exact head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`. GitHub readback confirmed exact-head CI run `37102692708` and its source-gate job `111145197193` completed successfully. This S1 draft is a pure input prerequisite and does not
+complete the HCFG-6 source freeze, native/wire/daemon/synchronization
+contracts, verifier, bootstrap, runtime, package, release, or V1 gates.
+Current profile/protocol and Phase 11 source-lock truth remain unchanged.
+
+### HCFG-6 native source-freeze proposal checkpoint
+
+The supporting [native source specification](architecture/headless-resource-enforcement/native-source-spec.md)
+and [preparation/store specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
+were added on 2026-10-02 in an isolated public checkout based on PR #74's exact
+source head. They specify private native ownership, held-object and ACL bounds,
+genuine procfs/mount/cgroup association, a separate preparation protocol without
+an unborn installation ID, profile 3/protocol 2, finite private daemon transport,
+immutable preparation revisions, exact cleanup and installation-wide release/
+revocation serialization. They change documentation only.
+
+Independent OpenAI Terra xhigh native feasibility review found a feasible
+non-root path within the accepted trusted-root model after two P2 corrections:
+require a present exact-controller socket ACL observed with safe bounded
+no-follow path reads under held root-controlled ancestry, and name the daemon
+identity bridge as root-provisioned artifact attestation tied to current kernel
+peer credentials, peer pidfd, boot ID, start ticks and socket identity. No direct
+non-root hash of a running root daemon's ptrace-protected executable is claimed.
+Inherited/proxied listeners, generic ACL-absence positives and unsupported
+native observations deny. The proposed safe Rust ACL dependency is not added.
+
+**The complete source freeze remains pending.** Ordinary-object kernel/LSM ACL
+absence classification, exact nested native wire fields, API security-field
+projections, immutable built-in mount/device/security recipes and actual
+component/kernel/image pins still require complete review before behavioral
+integration. Actual pins remain `UNSET_BLOCKING`; no source activation may
+proceed while unset. This checkpoint supplies no native verifier, journal,
+migration, bootstrap, release guard, protected control, watch or runtime proof.
+The Phase 11 packet remains runtime authority; full HCFG-6 and V1 remain open.
+
+For this documentation checkpoint, artifact shapes, exact-doc formatting,
+documentation alignment (31 tests, 170 Markdown files), public readiness
+(901 files), refreshed inventory (2,122 occurrences across 295 files) and the
+unchanged Phase 11 readiness suite (43/43) passed. Fresh independent OpenAI
+Terra xhigh proposal review resolved frame-size, nullable-index and review-base
+ambiguities, then found no remaining actionable P1/P2/P3. That PASS covers this
+proposal checkpoint only. The complete source freeze and behavioral integration
+remain gated, and hosted CI for this subsequent documentation head is separate
+from green PR #74 source CI.
+
+### HCFG-6 exact native/wire/daemon research checkpoint
+
+On 2026-10-03, GitHub readback confirmed draft PR #75 head
+`60460a33291b621836d73f1bb746bf4c384b59a5` and exact-head CI run `37104768503`
+completed successfully. That result covers the earlier documentation proposal,
+not this subsequent delta. Fetched public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8`; the canonical checkpoint remains
+clean and its private archive remote is not public-main authority.
+
+The supporting [wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
+now specifies schema-3 profile fields, separate precommit/action contexts,
+native fields, canonical domains and frame bounds. The
+[Docker proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
+resolves API 1.56 against exact Moby 29.8.2 commit
+`8af9fe3a36bab3e039862a2ab1cef1880c9b4d03`, finite request/framing controls,
+generated readonly metadata and rootful namespace/device assumptions. The
+[native proposal](architecture/headless-resource-enforcement/native-source-spec.md)
+adds the stock-ext4 no-reachable-ENOSYS predicate, manifest bootstrap ordering
+and explicit trusted-root idmapped-mount attestation. The earlier claim about
+mountinfo exposing no idmapped flag is corrected by the
+[mountinfo research reconciliation](#native-mountinfo-research-reconciliation).
+Selected-store ACL evidence is associated named-path proof,
+not a database alias or fd-bound ACL read.
+
+Independent exact-source review found that Moby always repeats the primary
+GID in the workload's supplementary list. The proposed positive predicate is
+exactly one copy of that same effective GID; every distinct group denies. The
+host controller's list stays empty. This corrects an impossible empty-workload
+list without adding a distinct effective group-access class. The accepted
+specification explains the correction; recorded human acceptance stays at
+exact PR #72 head. Full-freeze review still gates behavioral integration.
+
+**This remains a documentation proposal checkpoint.** Closed nested API
+response projections, manifest anchor/provenance fields, realized immutable
+mount/device/environment and negative-probe recipe, actual component/kernel/
+image pins and coherent full-freeze review remain required. Synthetic golden
+vectors establish proposed byte commitments only. No native verifier, journal,
+migration, atomic bootstrap, protected control, watch, runtime or V1 completion
+is supplied by this delta. Phase 11 runtime authority and all execution gates
+remain unchanged.
+
+For the 2026-10-03 proposal delta, documentation alignment passed 31 tests
+with 174 Markdown files, public readiness checked 905 files, legacy inventory
+remained 2,122 occurrences across 295 files, and unchanged Phase 11 readiness
+passed 43/43 with execution closed. Fresh independent OpenAI Terra xhigh
+native/wire/Docker/vector review found no remaining actionable P1/P2/P3.
+These checks and review cover documentation and synthetic commitments only;
+the full native source freeze remains pending. Hosted CI must be checked on
+the subsequently committed exact head.
+
+### HCFG-6 root manifest and OCI custody proposal checkpoint
+
+Exact draft PR #75 head `c74b9b5607453a738813b91b3a93eab54cd046ed` passed
+hosted source CI run `37109900511` on 2026-10-03. Complete local pinned source
+validation for that head passed 1,471 workspace tests and 541 Rust tests with
+one ignored case. Those results cover that head, not this subsequent proposal.
+
+The [root manifest/OCI companion](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
+now defines a strict root-controlled anchor, canonical manifest commitment,
+current daemon/kernel instance association, exact artifact/provenance records
+and raw OCI config/manifest/optional-index parent links. Profile/caller digests
+are content expectations, not root authority. A hashed provenance file binds
+its identity; its build/current-instance assertion uses the accepted trusted
+root boundary. No signature, remote attestation, hostile-host protection,
+certification or actual installed-image proof is claimed.
+
+Exact Moby create/start/Inspect source confirms a pre-start `none` endpoint
+placeholder, allocated Ports/Networks objects and a tracked-only Mounts array.
+Generated metadata/OCI mounts require native observations; API image Config
+re-encoding cannot authenticate raw config ImageID or parent links. The
+[Docker companion](architecture/headless-resource-enforcement/docker-source-spec.md)
+records these positive-case corrections and source-defined omission/default
+limits. Complete nested projections and exact selected normalization still
+remain open.
+
+This is documentation only. Full native source freeze still requires the
+closed nested API allowlist, complete immutable realized mount/device/environment
+and negative-probe recipe, actual reviewed pins and coherent independent
+review. No native verifier, preparation journal, atomic bootstrap, protected
+generation/epoch/stop/revocation, monitoring, runtime, package or V1 completion
+is supplied. Phase 11 status authority and execution gates remain unchanged.
+For this documentation delta, artifact-shape checks passed 3/3, exact-doc
+formatting and diff checks passed, direction validation passed 31 tests with
+175 Markdown files, public readiness checked 906 files, and refreshed inventory
+remained 2,122 occurrences across 295 files. Unchanged Phase 11 readiness passed
+43/43 with execution closed. Fresh independent OpenAI Terra xhigh read-only
+review of the complete eight-file proposal found no remaining actionable
+P1/P2/P3 after the controller clarified the ext4-versus-native virtual-filesystem
+scope and explicit current-kernel trust bridge. This PASS covers the proposed
+grammar/source facts only; full source freeze and new exact-head hosted CI
+remain separate gates. Unchanged source suites are the prior exact-head
+results above, not newly run tests of a live verifier.
+
+### HCFG-6 closed response proposal checkpoint
+
+Exact draft PR #75 head `4f9955a5fcab9cb5fadf1c26913e0821a631ff47` passed
+hosted source CI run `37113024699` with source-gate job `111174452417`.
+Those terminal results cover the preceding root/OCI proposal, not the following
+documentation delta. Public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after a fresh fetch.
+
+The [closed Docker response proposal](architecture/headless-resource-enforcement/docker-response-source-spec.md)
+adds explicit nested types, compare/discard/forbid paths and source-normalized
+empty/null/omitted rules. Its pinned mechanical appendix inventories 47 types
+and 368 fields; this extraction is not a permission or runtime proof. Exact
+served routing, image merge, create defaults, Inspect construction and null
+network source resolve successful empty warnings, Args/Cmd separation, copied
+masked/readonly defaults, omitted mount options, inactive Swarm, disabled NRI,
+stock runtime aliases and uname-versus-Go architecture. The proposed first
+recipe explicitly fixes ShmSize and empty daemon default ulimits; no host
+configuration is observed or changed.
+
+This remains a source-contract proposal. Actual immutable component/kernel/
+image pins, complete realized mount/device/environment/security values,
+negative-probe procedures and coherent independent full-freeze review remain
+required before behavioral integration. No native verifier, journal, atomic
+bootstrap, active generation, protected control, watch or runtime is added.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; V1 and enterprise/
+government deployment readiness remain incomplete.
+
+For this documentation delta, artifact-shape checks passed 3/3, exact-doc
+formatting and diff checks passed, direction validation passed 31 tests with
+176 Markdown files, public readiness checked 907 files and refreshed inventory
+remained 2,122 occurrences across 295 files. Unchanged Phase 11 readiness
+passed 43/43 with execution closed. A separate mechanical check matched all
+47 type sections, 368 source field references and copied snapshot hashes.
+Fresh independent OpenAI Terra xhigh read-only review found no remaining
+actionable P1/P2/P3 after correcting an ambiguous string-size override,
+documentation index descriptions and explicit fixed HostConfig response
+values. The component predicate names the complete stock
+Engine/containerd/runc/docker-init call path. No Go serialization canary was
+run because no Go compiler is installed; no installation occurred. These are
+source-contract and documentation results, not parser/enforcement tests or
+full-freeze approval. New exact-head hosted CI remains separate from the
+preceding green result; unchanged runtime source retains its prior evidence.
+
+### HCFG-6 realized recipe proposal checkpoint
+
+Exact draft PR #75 head `033323b276e1fc874a6fae43c88551275eacc913` passed
+hosted source CI run `37116570533`. This terminal result covers the preceding
+closed-response checkpoint, not the following documentation proposal. Freshly
+fetched public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` and is
+an ancestor of this source chain; the canonical archive checkout remains clean.
+
+The [realized recipe proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md)
+defines finite mount/device predicates, exact initial image/process environment
+and five challenged native denial sentinels. Exact runc v1.5.2 peeled source
+resolves shared directory-mask tmpfs aliases, potentially writable private
+null-device file masks, standard nodes/symlinks, no-TTY setup and mknod-to-host-
+bind fallback. That fallback is excluded from the proposed positive recipe.
+The private wire adds bounded initial environment observations; updated
+synthetic vectors remain unverified encoding examples. CPU bandwidth units are
+explicitly millicores, distinct from wall time and total CPU consumption.
+
+Complete source freeze remains open: actual component/kernel/template/image
+pins are `UNSET_BLOCKING`; the exact registry and derived commitment layouts,
+selected snapshotter/kernel mount normalization, immutable image/library/Git
+inventory, current root-attested mask layout, safe probe methods and controlled
+resource-pressure procedures require further source review. Five sentinels
+cannot prove every denied syscall or resource ceiling. No behavior, native
+verifier, journal, bootstrap, protected control, monitoring or runtime is added.
+There is no change to accepted design or the separate activation gates.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; V1 and enterprise/
+government readiness remain incomplete.
+
+For this documentation delta, artifact-shape checks passed 3/3, direction
+validation passed 31 tests with 177 Markdown files, public readiness checked
+908 files, and inventory remained 2,122 occurrences across 295 files.
+Unchanged Phase 11 readiness passed 43/43 with execution closed. A pinned
+Node verifier reconstructed the displayed synthetic inputs, commitments and
+frame byte counts; a separate structural check covered all 32 recipe table
+rows. Fresh independent OpenAI Terra xhigh review found no remaining P1/P2/P3
+after two vector corrections and one malformed table row were fixed. The
+first vector verifier incorrectly replaced displayed release inputs with
+derived values; it was tightened to reject those mismatches. Its earlier PASS
+is superseded, not enforcement evidence. No native syscall, pressure,
+Docker or live environment test was run. New exact-head hosted CI remains
+separate; prior CI is not evidence for this proposal delta.
+
+### HCFG-6 proposed source-freeze staging amendment
+
+Canonical decision record: this subsection. Independent read-only gate audit
+found a P2 ordering cycle: actual new adapter/probe/image pins are required
+before behavioral integration, while implementing those candidates and
+constructing the image are both closed before that same complete freeze.
+Source/artifact/runtime evidence must not be substituted for one another.
+
+The human owner accepted the
+[staging decision](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+in this development conversation on 2026-10-03 (America/Los_Angeles), replying
+`accepted` to the presented PR #75 source-order amendment at exact reviewed
+revision `5a1338cb31706bde4e1458a5089cfacb28e90917`. The decision bytes at the
+current stack base were verified equal to that reviewed revision. This is a
+direct human acceptance, not controller self-acceptance or inference from CI.
+
+**Source-order acceptance is complete.** Reviewed inert private Stage-A
+candidate modules may follow their exact contracts and fresh independent
+review without final artifact pins. Separately authorized artifact capture and
+one complete source/pin/positive-feasibility freeze remain required before
+product integration. Docker, image/package construction, permission changes,
+initializer, active integration, merge, release and runtime remain closed.
+The original HCFG-6 acceptance is unchanged; this amends source ordering only.
+Earlier checkpoint statements of pending source-order acceptance are historical.
+
+The first selected engine candidate is the
+[private preparation-journal codec](architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-journal-codec-contract),
+following the native plan's codec-first order. Its exact canonical grammar,
+commitments, phase/identity continuity, finite bounds, fixed errors and private
+ownership receive independent contract review before code. Native/file custody,
+schema writes, bootstrap/release and full-freeze integration remain separate;
+codec success cannot prove a current fact or create authority.
+
+Exact Moby source also establishes root-owned `0710` containers/per-container
+metadata ancestors and `0644` generated files. Same-UID access does not prove
+non-root controller access to the accepted rootful daemon. Required native
+metadata custody needs a reviewed feasible preprovisioned ACL or other exact
+accepted method; no privileged helper, automatic permission change or procfs
+magic-link fallback is inferred. This remains a full-freeze feasibility item.
+
+The preceding exact recipe head `a73d9d7068c48f7a6acabe0451ef4ab26967dbff`
+passed hosted source CI run `37118861695`. For this proposed decision,
+documentation direction passed 31 tests (178 Markdown files), public readiness
+checked 909 files, inventory remained 2,122 occurrences across 295 files, and
+unchanged Phase 11 readiness passed 43/43 with execution closed. Exact-doc
+formatting and diff checks passed. Fresh independent OpenAI Terra xhigh review
+found no remaining P1/P2/P3 after separating complete source/artifact freeze
+from later live activation observations, avoiding another ordering cycle.
+That review covered the proposed amendment only. The later human acceptance
+above opens the stated source ordering, not a complete freeze or runtime claim.
+
+Exact parent security-design PR #86 head
+`350abaccf6a2b32e0b4edc01120a763d8d9471d8` passed hosted source CI run
+`37168251752`, job `111335662383`, at `2026-10-04T01:49:25Z`.
+This is exact source/design evidence, not implementation of proposed MFA,
+strict crypto, encrypted storage or independent audit custody.
+
+### Stage-A preparation-journal codec candidate
+
+Canonical implementation record: this subsection under the accepted source-order
+amendment. The private store candidate implements exact journal record syntax,
+candidate/journal commitments and bounded immutable revision-chain validation.
+It follows the accepted codec-first preparation-engine sequence. All module
+functions/types remain private; the scoped dormant-module annotation preserves
+its disconnected state. No public re-export, active caller, file/database
+operation, native observer, random-ID generator or transition writer is added.
+
+Strict parsing requires every field, including explicit nullable members,
+struct-order compact JSON and exactly one LF. It rejects alternate encodings,
+wrong schema/digest/identity/type/bounds, immutable context drift, missing prior
+digest, revision gaps/replays, forbidden phase edges and container substitution.
+Five data-free errors provide fixed bounded codes. Parsed chains are untrusted
+assertions of internal consistency, not evidence of actual custody, cleanup,
+current store identity, completed bootstrap or action authority.
+
+Fresh pre-implementation contract review resolved two P2 ambiguities (digest
+spelling and closed errors) and explicit P3 quarantine-positive coverage before
+source began. Independent Python/manual positional-array goldens anchor the
+commitments. The final focused Rust suite passed 11/11. The complete pinned
+`npm run check` exited zero, including strict workspace Clippy/Rustfmt,
+1,471 TypeScript workspace tests, 139 contract conformance cases, 262 store
+tests (one child helper is marked ignored and invoked by its cross-process
+regression), 100 daemon tests, and unchanged Phase 11 readiness 43/43 with
+execution closed. Documentation direction passed 31 tests over 189 Markdown files;
+public readiness checked 941 files and inventory remained 2,122 occurrences
+across 295 files.
+
+Fresh independent OpenAI Terra xhigh source review resolved historical status
+ambiguity, a missing created-container negative and a phase-type error-class
+defect. The latter already denied admission; the string-only decoder now
+classifies all five tested wrong JSON types as `journal.invalid_record`.
+Public-history-native review binding uses `PHR-0014`; the reviewed source commit
+and its separate attestation child must bind the actual Git tree, canonical
+diff and file hashes. No source/readiness/release approval is inferred from
+that identifier alone.
+
+Named local Semgrep `p/rust` ran eleven rules on eleven Rust files without parse
+errors. Neither new journal file had an alert; five unchanged temp-directory
+alerts elsewhere remain recorded with bounded baseline triage. Redacted
+Gitleaks reported zero worktree leaks. Dependency manifests and locks are
+unchanged. The first full check failed on sandbox-denied disposable sockets;
+the first final-source rerun failed on stale generated inventory. Both failures
+are retained separately. After inventory regeneration, the complete rerun with
+disposable local fixtures allowed passed; no gate was skipped or waived.
+
+At the codec checkpoint, durable file/native custody and the remaining engine
+work were unfinished. The subsequent private journal-custody candidate is
+recorded below. Native/profile proof, selected-store/schema-18 writing,
+bootstrap/release, complete source/pin/positive-feasibility freeze, product
+integration, monitoring, advanced security and real runtime proof remain
+unfinished. Actual pins remain
+`UNSET_BLOCKING`. This candidate neither narrows the V1 end state nor replaces
+the nonempty engine with a diagnostic/always-denying observer.
+
+### Stage-A private Linux journal custody candidate
+
+Canonical implementation record: this subsection. The human-accepted source-
+order amendment permits the private filesystem candidate after its exact
+contract and fresh precode review. Source is present in the private
+`headless_preparation` child, with a minimal selected-store lifetime bridge.
+All entrypoints remain disconnected; the schema is still 17 and the existing
+ordinary/read-only selected-store APIs retain their behavior.
+
+The guard exclusively borrows an actual inspected read-only `SqliteStore`,
+retains its actual parent and exclusive lease, and rechecks native main-file
+association without duplicating or closing SQLite's descriptor. Safe Linux
+`openat2` descent and descriptor-relative `mkdirat` anchor the owner-private
+root, preparation directories and revision files. Modes are checked, never
+repaired. Canonical untrusted frames use exclusive no-clobber creation, full
+file flush then directory flush, complete bounded readback and fixed errors.
+There is no path-only I/O, procfs fallback, public constructor or successful-
+observer injection.
+
+Private actual stat/chain baselines reject inode replacement and observed
+content drift within one guard lifetime. Each inspection reads the complete
+root twice and compares both results with the retained baseline. Append admits
+only its exact expected delta; older files and unrelated preparations remain
+unchanged. Any failure poisons the guard, returns no partial result, and leaves
+partial files for denial/reconciliation without repair, retry or deletion.
+Restart establishes a new physical baseline from untrusted bytes; it supplies
+no external anti-rollback or earlier-flush success proof. Finite observation
+checks are not atomic with arbitrary same-owner host mutation.
+
+Only the existing exact `nix 0.31.3` gains its `dir` feature; dependency versions,
+locks and toolchains are unchanged. Its actual pinned `Dir::from_fd` error
+branch leaves ownership open despite the API documentation. A narrowly pinned
+safe wrapper closes only that newly owned enumeration descriptor once on
+failure; it never handles a borrowed/main/lease descriptor. Dependency upgrades
+must re-review this rule. Shared logic compiles on macOS; actual construction
+and descent deny there without a fallback.
+
+Precode review resolved creation anchoring, descriptor ownership, retained
+baseline and inspection/post-append comparison ambiguities before their
+implementation. Local focused Rust tests passed 13/13: the existing 11 codec
+groups, a genuine macOS platform-denial case and descriptor ownership checks
+in an isolated child test process. Its ignored helper runs explicitly in that
+child, avoiding descriptor reuse by parallel tests. Strict store all-target
+Clippy and the complete pinned `npm run check` passed: 1,471 TypeScript tests,
+139 cross-language comparisons, 264 store tests and the remaining workspace
+Rust gates. Both ignored store helpers are invoked by their parent regression
+tests. Docs checks covered 189 Markdown files, 33 critical documents and all
+14 roadmap phases; public checks covered 944 project files. Inventory and
+pending-source history validation passed without granting release eligibility.
+
+Fresh independent custody source/docs and aggregate Rust/claims reviews passed.
+The changed Rust files' named Semgrep scan returned two test-only alerts,
+independently reviewed as non-actionable fixture findings. Redacted Gitleaks
+returned zero findings; recursive OSV returned zero known dependency alerts.
+Initial default-cache, lint and scanner certificate failures were corrected
+without installing tools. The first complete check rejected the shared clone's
+Git object alternates; copying its objects locally, removing only that alternate
+reference and passing `git fsck --full` resolved the provenance failure. The
+complete rerun passed; failed attempts remain separate evidence, with no gate
+skipped or waived. Aggregate build review identified a separate Cargo-home
+configuration P2 to correct before main integration.
+
+At this reviewed source checkpoint, nonempty Linux filesystem positives must run on the
+exact published source head in the existing pinned Ubuntu CI; they were not
+executed on the macOS host. Source fixtures do not establish the selected
+kernel/profile, ACL/mount/ancestry feasibility or Phase 11 runtime proof.
+
+This candidate persists untrusted phase assertions only. `cleanup_verified`
+and `bound` do not prove observed cleanup or committed SQL/audit state. The
+observation-owning phase writer, B6 writable connection, schema-18 execution,
+atomic bootstrap, release serialization, all-writer coverage, native profile/
+Docker observation, complete source/pin/positive-feasibility freeze and product
+integration remain unfinished. Watch/monitoring and strict crypto/MFA/audit
+assurance remain their separate accepted or proposed work. No operator CLI,
+route, live initializer, activation, artifact construction, Docker, merge,
+release, deployment or production action is opened. Phase 11 remains
+`PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; actual pins remain `UNSET_BLOCKING`.
+
+### Main source integration: native build configuration correction
+
+Canonical implementation record: this subsection. The requested preparation for
+GitHub main integration includes the reviewed linear source chain and the
+private Stage-A custody candidate; unrelated conflicting drafts and failing
+dependency PRs are excluded. This preparation supplies no merge authorization.
+
+Fresh aggregate build review found a P2: the native override gate inspected only
+repository config and process environment while Cargo could also load selected
+home or ancestor configuration. The independently reviewed correction resolves
+the physical repository cwd and effective Cargo home, rejects external config
+presence before tool invocation, requires a regular non-symlink exact repository
+config, closes named direct and Cargo-equivalent native selectors, and rejects
+extra runner arguments. It never reads external config contents or modifies
+operator configuration. Developer-host and toolchain trust remain explicit;
+finite checks supply no release attestation or concurrent hostile-host proof.
+
+The source correction is present. All 10 focused native-policy tests passed,
+including real runner subprocesses that reject wrapper/linker home config,
+ancestor/legacy config, dangling/symlink config and named environment selectors
+before fake Cargo's sentinel is reached. A configuration-free physical-path
+positive reaches that sentinel. The complete pinned `npm run rust:check` passed,
+including strict all-target Clippy, 139 contract comparisons and workspace tests.
+Docs checks passed 31 tests across 189 Markdown files, 33 critical documents and
+14 phases; public checks passed across 945 project files. Named `p/javascript`
+Semgrep returned zero alerts/errors and redacted Gitleaks returned zero findings.
+Dependency versions and lockfiles are unchanged by this correction. Inventory,
+final independent review and history attestation retain their gates.
+
+The preceding custody slice's complete `npm run check` passed at its own reviewed
+checkpoint. Exact-head Ubuntu CI and resolved review threads remain required
+for a concrete main merge decision. Strict crypto, MFA and audit/privacy designs
+remain proposals. Full source/pin/positive-feasibility freeze, behavioral
+integration, Docker, host mutation, schema-18 execution, artifacts, signing,
+release, deployment and production remain closed.
+
+The main integration candidate is public PR #88, initially published at exact
+head `d1b1d85b40cbc01a802a8a68eac5e1be516e023f`. Its Ubuntu source CI run
+`37191633294` failed strict all-target Clippy on five Linux-only test diagnostics:
+one redundant `Write` import and four needless identifier borrows in the
+private custody fixtures. Dependency signatures and vulnerability checks passed;
+the new Linux custody positives had not run when Clippy stopped the gate. The
+failure remains recorded despite the preceding macOS source checks passing.
+
+The bounded correction removes those five test diagnostics without changing
+production behavior, dependencies, lint policy or CI. The macOS rerun passed
+pinned formatting, strict workspace all-target Clippy and 13 focused Rust
+tests, with the descriptor child helper explicitly invoked by its parent.
+Documentation checks passed 31 tests over 189 Markdown files, 33 critical
+documents and 14 phases; public checks passed over 946 files. Inventory passed
+with 2,122 occurrences across 295 files. Named `p/rust` Semgrep returned two
+unchanged test-fixture alerts and zero errors, independently triaged as
+non-actionable; redacted Gitleaks returned zero findings.
+
+Fresh independent review, the `PHR-0017` source/attestation pair and a new
+exact-head Ubuntu source run retain their gates. The Linux run must execute the
+nonempty custody positives before the main candidate is declared ready. No
+failure is waived and no merge, runtime or release authority follows from this
+correction.
+
+### Repository review workflow: owner-accepted CodeRabbit retirement
+
+Canonical acceptance and implementation record: this subsection. On
+2026-10-04, the human owner accepted disabling CodeRabbit from the routine
+LNSAT workflow and using repository-native tools plus fresh independent
+internal LLM review. The bounded source change adds the repository configuration
+and updates contributor guidance and the README review pointer.
+
+The configuration selects disabled automatic/incremental reviews, empty opt-in
+labels/keyword, disabled draft reviews, request-changes/auto-approval behavior,
+review progress/status messages, automatic summaries and ambient chat replies.
+It does not uninstall the app, revoke repository access or block explicit manual
+mentions. Routine contributor work does not invoke CodeRabbit CLI/manual reviews.
+The official provider schema and documentation govern configuration syntax;
+local validation and fresh independent review precede its publication.
+
+Public main protection currently requires the strict, up-to-date `Node and Rust
+source gates` check and conversation resolution; CodeRabbit is not a required
+check. The effective ruleset read contains no additional branch rules. This
+change leaves required checks/protection intact, preserves existing findings and
+immutable review records, and retains independent Git-bound evidence and separate
+human merge/release authorization. A bot result, LLM verdict or source CI pass
+grants no runtime, release or certification authority. The `PHR-0018` source/
+attestation pair and exact final-head CI retain their gates.
+
+The published integration head `41255fd289cef536218d349519ce6b1b53b1fdfd`
+passed the complete pinned local `npm run check`, with 18 public-history-native
+attestations, zero pending and supported-release eligibility false. Exact Ubuntu
+run `37194297972`, job `111412826233`, passed dependency signatures, dependency
+audit, strict Rust lint and actual normal/zero-created Linux custody positives.
+It then failed one store fixture: 275 tests passed, one failed and two child
+helpers were listed ignored but invoked by their parent regressions. The held
+guard correctly rejected a revision replaced by a symlink as retained-baseline
+`journal_custody.changed`; that test expected the fresh-descent
+`journal_custody.io_rejected` classification.
+
+The bounded correction changes only that exact expected fixed error and explains
+baseline-before-descent ordering. Production behavior, rejection requirements,
+assertion strictness, lint/CI, dependencies and runtime boundaries are unchanged.
+The failed run remains evidence; neither its nonempty positives nor the passing
+macOS run supply whole-head CI success. Fresh independent source review, the
+`PHR-0019` source/attestation pair and a new complete exact-head Ubuntu run retain
+their gates before main readiness.
+
+Exact PR #88 head `86b089761cfb5f8b093ddbf91d6d1b5faea43362` subsequently
+passed complete Ubuntu source CI run `37196415971`, job `111419129063`.
+All 13 actual Linux journal-custody groups passed; 276 store and 100 daemon
+tests passed, with both ignored store helpers invoked by their parent tests.
+Pinned local full validation also passed. This supersedes the earlier failing
+head's gate state without deleting its failure evidence. The published stack
+has 19 attested source slices and no pending tail; source release eligibility
+is false. PR #88 remains unmerged, public main remains `e09a6b0`, and ten
+inherited missing DCO trailers remain documented for owner contribution review.
+This separate ACL candidate does not modify PR #88.
+
+### Stage-A private readable-object ACL candidate
+
+Canonical implementation record: this subsection. The owner-accepted HCFG-6
+source-order amendment permits exact reviewed inert native candidates. The
+[readable-object ACL contract](architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md)
+adds private strict Linux POSIX ACL parsing and finite actual descriptor reads;
+it changes no product entrypoint, profile, public wire or schema. Full
+source/pin/positive-feasibility freeze and later integration remain open.
+
+Precode independent review resolved two items before native implementation:
+ambient rustix backend selectors now reject before Cargo, with an exact
+registry/version/features/Linux-edge check; descriptor test commitments name
+write-only, read-write, missing close-on-exec, O_PATH and non-file inputs.
+The three new exact lock records are rustix 1.1.5, linux-raw-sys 0.12.1 and
+errno 0.3.14. Their downloaded archives match Cargo.lock checksums. The selected
+x86_64 Linux source-CI backend is linux_raw; no other backend is accepted through
+ambient selectors or feature drift. Application unsafe code remains forbidden.
+
+The sampler borrows an actual held readable File without opening, duplicating
+or closing it. Four fixed-buffer access/default ACL reads are each bracketed by
+actual stat/filesystem observations; two complete scans compare raw bytes and
+metadata. No size query, buffer growth, retry, setter, shell utility, named-path
+or procfs fallback exists. Malformed frames, mode inconsistencies, unsupported
+reads and sampled drift reject with fixed data-free errors. Linux ACL masks
+own the inode group permission triplet; masked-off raw rights are valid.
+Default inheritance ACLs are not the containing directory's access mode.
+
+Samples authenticate no associated path, ancestry, owner, kernel, mount, LSM or
+resource. ENODATA remains explicitly unclassified and supplies no empty-ACL,
+mode fallback or effective-access result. Synthetic parser positives are byte
+syntax evidence. No sample is serializable or consumed as an observer permit.
+Selected SQLite, socket and search-only O_PATH custody, authenticated absence,
+current present-ACL proof and full native feasibility remain later work.
+
+Pinned local validation passed all 10 focused macOS groups: nine synthetic
+ACL grammar groups (including all 512 base mode combinations) and genuine
+unsupported-platform denial. Strict all-target Clippy passed after an unused
+platform import and two implementation lint diagnostics were corrected without
+suppression. The complete `npm run check` passed: 1,471 TypeScript tests,
+139 contract comparisons, 264 store tests and 110 daemon tests. Both ignored
+store child helpers remain explicitly invoked by their parent tests.
+Docs direction passed 31 tests over 190 Markdown files, 33 critical documents
+and all 14 phases; public readiness and inventory passed, with the inventory
+unchanged at 2,122 occurrences across 295 files. Full formatting passed.
+
+Installed named `p/rust`/`p/javascript` Semgrep returned one test-only temporary-
+directory INFO and zero errors, independently triaged as non-actionable.
+Redacted Gitleaks returned zero findings. Recursive metadata-only OSV scanned
+436 package coordinates with zero known vulnerability alerts; nine local or
+unscannable exclusions remain unclaimed. The first offline dependency fetch,
+scanner flag invocation and docs-worker Node-version failure were corrected;
+failed evidence is retained separately without installations or a waived gate.
+Fresh independent OpenAI Terra xhigh exact-source review found no remaining
+P1/P2/P3. Native history attestation and exact-head Ubuntu CI retain their gates.
+The five actual Linux read/descriptor/drift groups require that exact source
+run: macOS source compilation and parser tests supply no Linux result.
+
+No authority or V1 completion follows from these candidate observations.
+Docker, host/ACL changes, actual pins, schema-18 execution, initializer,
+activation, artifact construction, merge, signing, release, deploy and
+production remain closed. Phase 11 packet status is unchanged.
+
+### Native mountinfo research reconciliation
+
+Canonical work record: this subsection. Follow-up bounded native research found
+a factual gap in the supporting proposal: upstream Linux v6.8
+[`show_mnt_opts`](https://raw.githubusercontent.com/torvalds/linux/v6.8/fs/proc_namespace.c)
+emits `idmapped` when `is_idmapped_mnt` is true, and `show_mountinfo` calls it in
+the per-mount options field. The
+[upstream field documentation](https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/filesystems/proc.rst)
+places the tagged optional fields after those options. The supporting native
+specification now records the source behavior and removes the blanket claim
+that mountinfo exposes no idmapped indication.
+
+This is a factual documentation correction under the accepted inert Stage-A
+work lane. Root-manifest attestation and current authenticated descriptor/mount
+association remain the proposed design requirements. Untrusted supplied bytes
+or an absent invented optional tag prove no mount property; upstream source
+does not authenticate a selected installed kernel. No decoder, native reader,
+permission rule, successful observer, product integration or runtime claim is
+added. The ACL candidate in PR #89 does not consume mountinfo. Complete native
+source/pin/positive-feasibility freeze, exact parser precode review and later
+integration remain open. Pinned docs direction passed 31 tests over the same
+190 Markdown files, 33 critical documents and 14 phases; public source passed.
+The unchanged Phase 11 readiness suite passed 43/43 and retained the locked
+packet status. Exact-file formatting and whitespace checks passed. Fresh
+independent review, native history attestation and exact-head hosted source
+verification retain their separate gates. Phase 11 packet and all runtime,
+Docker, host change,
+artifact, merge, release and production gates remain unchanged.
+
+### Stage-A private mountinfo byte candidate
+
+Canonical work record: this subsection, under the human-accepted Stage-A
+source-order amendment at exact `5a1338cb31706bde4e1458a5089cfacb28e90917`.
+The [exact byte contract](architecture/headless-resource-enforcement/native-mountinfo-candidate-source-spec.md)
+defines the next private prerequisite after readable-object ACL sampling.
+Fresh independent OpenAI Terra xhigh precode review passed after two P2 test
+coverage gaps were resolved: deterministic denial at every allocation class,
+and the exact per-field hash-escape/non-UTF-8 matrix. The resulting private
+source implements the reviewed finite grammar. Complete native/source/pin/
+positive-feasibility freeze remains open.
+
+The accepted Stage-A lane permits exact reviewed inert source without final
+artifact pins. It does not permit integration or action authority. This slice
+is supplied immutable bytes only: no procfs or descriptor read, path/permission
+classification, authenticated mount/idmapping/ACL-absence result, observer
+permit, serialization, dependency change or active caller. Missing parents,
+stacked mountpoints, ID zero and non-UTF-8 fields are representation cases;
+no row authenticates an installed kernel or live object. A genuine reader and
+held-root association require their own later exact contract and Linux evidence.
+
+The private decoder now preserves byte fields and borrowed opaque option/tag
+regions, permits zero IDs, missing parents and stacked mountpoints, enforces
+inclusive 1 MiB/4,096-row/8 KiB limits, rejects duplicate IDs and malformed
+records, and returns only fixed private data-free errors. No record is Debug-
+formatted or serializable. Source vectors cover field-specific escapes and
+high bytes, exact numeric/field/option/tag bounds, every reservation denial,
+unwind reset and every single-byte substitution in a minimal row.
+
+Pinned local focused tests passed 28/28: 18 new synthetic mountinfo groups,
+nine unchanged ACL syntax groups and the genuine unsupported-platform denial.
+Strict all-target Clippy and full formatting passed after three unsuppressed
+lint corrections. The complete `npm run check` passed in 999.89 seconds:
+1,471 TypeScript tests, 139 contract comparisons, 264 store tests and 128 daemon
+library tests. Both ignored store child helpers remain invoked by parent tests.
+Docs direction passed 31 tests over 191 Markdown files, 33 critical documents
+and 14 phases. Public source and inventory passed; inventory remains 2,122
+occurrences across 295 files. Unchanged Phase 11 readiness passed 43/43.
+
+Installed named `p/rust` Semgrep scanned 27 daemon source files with zero errors
+and six INFO findings, all outside the three changed parser paths. Fresh source
+review confirmed no parser defect; existing argument/test-directory diagnostics
+and the old adapter self-hash retain their bounded source-only trust context,
+not broader security certification. Redacted worktree Gitleaks returned zero
+findings. The first Semgrep invocation could not find the installed binary in
+the pinned runner PATH; the absolute installed path succeeded. No tool was
+installed, source uploaded or rule suppressed. No dependency delta exists;
+no new OSV scan is claimed. Fresh independent OpenAI Terra xhigh exact-source
+review found no actionable P1/P2/P3. Source-commit binding, direct-child native
+history attestation and exact final-head Linux source CI retain their own gates.
+Linux execution of these new pure tests supplies no genuine mount observation.
+At this byte-candidate checkpoint, the genuine procfs/held-mount reader contract
+was unresolved. The later [reader contract checkpoint](#stage-a-self-process-procfs-reader-contract)
+refines those questions and records the remaining enforceable-return blocker;
+no genuine reader is implemented.
+
+Preceding draft PR #89 head `9139b97987455cab0455f6f9a1992b62e34456ff` passed
+exact-head Linux source run `37219486368`; draft PR #90 head
+`6a383bb48d1a90e4a6b6f32989ded4dcb8fc91ae` passed run `37221003142`.
+The latter is this slice's clean public parent; neither parent run covers new
+parser source. Public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`.
+Phase 11 packet, proof lock and all Docker, host/ACL change, artifact, SQL18,
+initializer, activation, merge, signing, release, deploy and production gates
+remain unchanged and closed.
+
+### Stage-A self-process procfs reader contract
+
+Canonical work record: this subsection, under the existing HCFG-6/Stage-A
+acceptance. The [bounded supporting proposal](architecture/headless-resource-enforcement/native-source-spec.md#stage-a-self-process-procfs-and-held-mount-reader-proposal)
+names private same-process held custody, genuine procfs checks, exact
+no-follow paths, finite namespace/root-link exceptions, four-line fdinfo policy,
+terminal EOF/sentinel handling, fixed/fallible storage, current descriptor/mount
+association and bracketing drift denials. Existing supplied-byte decoder, ACL
+sampler, journal, source contracts and Cargo pins/features are preserved.
+
+**Whole-reader private-candidate precode: PASS; private source candidate under validation.**
+The exact contract below closes the private source gate under the accepted
+Stage-A order. It does not close actual native results or integration. Research of
+exact upstream Linux v6.8 shows synchronous sequential-read locking, namespace
+locking and filesystem/security callbacks; the inspected recipe has no proved
+five-second native return bound. Byte/read caps, `O_NONBLOCK`, a readiness timeout
+or checking time around a completed syscall cannot supply that bound. This is a
+source-derived feasibility limitation of the proposed synchronous recipe, not
+a claim that every Linux implementation is impossible or an observed host failure.
+
+The human owner replied **`accept` on 2026-10-04** to the explicit question
+whether to accept retained-worker contract investigation, with late results
+rejected and native work/cleanup potentially exceeding five seconds. The
+accepted subject is the independently reviewed containment proposal present at
+`f1510a0e2241bd61c170c244b2dee6b6112e0845`, following the delivery milestone
+checkpoint. This is **acceptance for exact contract and feasibility investigation**,
+not reader source, precode PASS, full native freeze or product/runtime authority.
+The [retained-lane investigation](architecture/headless-resource-enforcement/native-source-spec.md#retained-lane-containment-contract-investigation)
+now owns supporting custody and proof details; this subsection owns acceptance.
+Do not request the same owner decision again.
+
+The accepted investigation uses one fixed outstanding job with shared ownership
+of the same held descriptors, coordinator-controlled deadline acceptance,
+terminal timeout quarantine and retained cleanup. It cannot promise hard
+five-second native completion, scheduler-independent denial or completed
+cleanup. Exact construction/drop ownership, synchronization, allocation/FD
+accounting, crash-bridge interface/invariants and a feasible genuine native test
+method remain precode requirements. Actual blocked-operation results are required
+before source completion; complete durable recovery is required before integration. Selected SQLite custody stays separate. Ordinary held
+ownership, matching mount tables and
+namespace metadata supply no atomic/ABA-free snapshot, authenticated installed
+kernel, host manifest, ACL/idmapping classification or action permit. Extra
+fdinfo lock/type tails and writable resource descriptors deny under this narrow
+candidate policy; actual selected SQLite custody needs a separate reviewed
+contract. The temporary tmpfs candidate case supplies no selected ext4 recipe
+positive.
+
+At the initial investigation checkpoint, documentation review and named checks
+established the accuracy of the gate record only. Independent precode review
+still needed a genuine non-root
+positive recipe with exact deadline rejection, retained custody and cleanup
+accounting before inert reader implementation. The
+[post-acceptance investigation](architecture/headless-resource-enforcement/native-source-spec.md#construction-and-feasibility-findings-after-acceptance)
+narrows a process-lifetime retainer candidate, ownership transfer, slot/state
+linearization and explicit resource accounting. Application construction/unwind, exact native test-method feasibility and
+crash-bridge interface decisions remain unresolved. The 2026-10-05 investigation completed a finite Linux fixture
+elimination, derived aggregate decoder allocation requests from the existing
+1 MiB input cap, and checked 420 abstract stop/deadline orderings. The model
+supplies ordering evidence only; no native observation ran. No compliant genuine
+unfinished-operation fixture was identified. Existing journal phases lack
+observer-attempt/process identity, so quarantine cannot be presented as a
+completed native crash bridge. The supporting specification now names the
+required durable-before-dispatch/restart-denial obligations without changing
+schema or implementation. Independent source-order review subsequently identified two P2 documentation
+errors: completed native test results and the full durable bridge had been
+placed before private implementation. The existing accepted Stage-A order now
+applies explicitly: exact feasible module/test contracts and bridge invariants
+before private source; actual Linux test evidence before source completion;
+canonical recovery and the complete freeze before product integration. Both
+requirements remain mandatory at their proper gates. No new source permission
+or completed evidence is inferred from correcting this order.
+
+Pinned Rust construction research narrows the alleged normal native-create/
+handle-return gap under the specified supported-target library assumptions.
+Application retention/startup, exact slots/synchronization, resources and cleanup
+required the later whole-reader precode review recorded below.
+
+On **2026-10-05**, the human owner delegated resolving the remaining issues and
+choosing the best method to the controller, in response to the explicit
+contract-only method decision. The reviewed proposal is source
+`e9fe2ce04a02546fae937f303e0ab74b80d030cc`, attested by direct child
+`95cc0708ed869a10997affe501069d337d595737`. Exercising that delegation, the
+controller selects the task/record-bound mountinfo kernel wait for
+**instrumented-negative timeout-containment evidence only**. This closes the
+method-choice question and authorizes remaining design decisions within contract
+work. Do not ask for the same method approval again. It does not authorize
+kernel/harness implementation, construction, provisioning or execution.
+
+The [selected fixture contract](architecture/headless-resource-enforcement/native-source-spec.md#selected-instrumented-linux-timeout-fixture)
+now specifies two task-bound control roles, safe fixed-frame read/write transport,
+one generation per guest boot, monotonic state and irreversible failure,
+boot-lifetime identity retention, an independent 15-second kernel watchdog and
+exact deadline/late-cleanup observations. The test kernel retains identity
+bookkeeping until disposal; that is separate from candidate descriptor cleanup.
+Ordinary positives still need the unmodified reviewed Linux recipe. No kernel,
+harness or reader source was added, and no native experiment ran. The contract
+passed independent documentation review at source
+`35ec5f8b2b94a64e4f48a796d86f64caba2c9302`, attested by direct child
+`4e9389135d4270660dd6e33820f149748651532c`. At that checkpoint, whole-reader precode
+remained **NOT_READY** pending application construction/ownership, synchronization/resource,
+positive-recipe and crash-bridge interface closure. Actual native results remain
+a candidate-completion gate, and full recovery/native freeze remain integration
+gates.
+
+The [exact retained-worker candidate contract](architecture/headless-resource-enforcement/native-source-spec.md#exact-retained-worker-candidate-contract)
+now fixes permanent construction/handle retention, a 4 MiB requested stack,
+nonwaiting coordinator access, one combined atomic phase/token/terminal word,
+reservation-before-clock acceptance, worker-only descriptor/reference cleanup,
+and the future canonical crash-bridge interface. Pinned cached safe APIs support
+the chosen operation signatures; ordinary ext4 file/directory positives remain
+unexecuted. Fresh independent OpenAI Terra xhigh whole-reader precode review
+passed with no actionable P1/P2/P3. A second independent review confirmed
+resolution of the future adapter ownership cycle and the check-to-syscall-entry
+race statement. This opened only the inert private reader/test/declaration source
+paths already named in the accepted Stage-A plan. Actual genuine positive and unfinished-operation evidence
+still gates candidate completion; canonical recovery and the complete native
+freeze still gate integration. This is progress toward the accepted standalone V1
+engine and downstream integration outcome, not a complete V1 or packaging claim.
+The owner clarified that LNSAT remains independent of Rangoon: Rangoon must be
+able to consume the standard adapter contracts, without engine branding,
+consumer-specific workflow dependencies or an alternate authority path.
+
+The private reader source candidate now contains the retained-worker control
+lane, fixed self-process procfs schedule, descriptor-origin and bracketing checks,
+strict bounded reads, and explicit worker-side descriptor/reference retirement.
+It remains disconnected from product callers. Minimal read-only accessors inside
+the private fdinfo and mountinfo modules permit composition without changing
+their grammar, accepted bytes, limits or public contracts. No successful observer
+injection, serialized permit, store caller or runtime integration is present.
+
+Nineteen focused host tests exercise the production coordinator helpers with
+synthetic denial outcomes, including contention, stale tokens, poison, terminal
+cleanup, exhaustion and retirement. Namespace identity/origin predicates and
+late/stop/synthetic-close-failure cleanup retention have focused regression
+coverage. They create no successful native sample.
+Strict host Clippy passes. Linux syscall-body compilation, genuine ext4
+file/directory positives, construction/panic/close-failure coverage and the
+selected unfinished-native-operation evidence remain unverified. Host source
+validation and independent static review cannot satisfy those native gates.
+Exact source/direct-child attestation remains required for this checkpoint.
+This is a source candidate, not completed reader evidence or a complete native
+freeze.
+
+The 2026-10-06 protected-main source check reached the Linux reader body and
+reported eight strict Clippy findings. The bounded correction uses explicit
+imports, equivalent control-flow idioms, and checked integer conversions after
+the existing mount-ID and descriptor/status-flag validation. It preserves the
+same accepted values, denial codes, native-call ordering, deadlines and cleanup
+accounting. No lint suppression, public interface or native fixture is added.
+PHR-0045 records independent source review; exact-head Linux source CI remains
+the compilation/lint gate. Neither that gate nor host tests establish genuine
+reader positives, unfinished-operation evidence or runtime authority.
+
+Full native/source/pin/positive-feasibility freeze,
+separate artifact capture, product integration and Phase 11 actual runtime remain
+open. No Docker/host/ACL operation, target pressure, credential/provider intake,
+SQL18/initializer/activation, merge/main mutation, package/image construction,
+release/publication/deploy/production or tool installation is opened. LNSAT
+remains neutral and standalone; no support or certification claim follows.
+
+### Native procfs fixture source packet
+
+Canonical work record: this subsection, under the existing retained-worker
+investigation and delegated instrumented-method decision. The
+[concrete source packet](architecture/headless-resource-enforcement/native-fixture-source-spec.md)
+names the seven upstream kernel paths inside one future patch, a test-only
+configuration fragment, one private Rust fixture-test module and fixed test-only
+hooks in the existing reader. It supplies exact enrollment/dispatch, read-return,
+cleanup and descriptor-close responsibilities without introducing a successful
+sample injector or changing production behavior.
+
+The method-choice decision is already accepted; no repeat approval is needed.
+**Source implementation authorization is pending.** This checkpoint prepares
+that separate decision. No kernel patch, harness source, device, Linux binary,
+guest or native result exists as a consequence of this documentation. The
+private reader candidate remains implemented but unverified on genuine Linux.
+
+Source-only implementation, if explicitly opened after independent review,
+would permit only the packet's four named source paths and normal host checks;
+native cases remain ignored. Kernel application/build, Linux test construction,
+guest/device provisioning and actual positive/negative execution require a later
+exact artifact/run packet and authorization. Tool installation, Docker, selected
+targets, pressure, credentials, host/ACL changes, SQL18/B6, activation, merge,
+packaging and release remain closed. Source review and synthetic evidence
+cannot satisfy actual native observations, durable recovery or the complete
+native/wire/daemon/store/revocation freeze. LNSAT remains standalone and neutral.
+
+### Stage-A private schema-3 profile codec
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [private codec contract](architecture/headless-resource-enforcement/startup-wire-source-spec.md#stage-a-private-schema-3-profile-codec-contract)
+bounds the next independent prerequisite while actual Linux reader evidence
+remains open. This checkpoint specifies strict schema-3 representation, exact
+commitments, Linux lexical paths, reserved-mount separation and required-null
+presence. Fresh independent OpenAI Terra xhigh precode review identified missing
+mandatory byte/entrypoint denial cases in the test matrix. The contract now
+requires those cases; independent recheck passed without remaining P1/P2/P3.
+The private module/tests and declaration now implement the schema-3 candidate.
+It parses closed map-only JSON, requires explicit nullable-index presence,
+retains the existing HCFG installation-reference prefix, checks Linux lexical
+paths and immutable/reserved mount separation, and derives both exact canonical
+commitments using the compiled Git floor. It performs no I/O or registration;
+retained strings and canonical buffers use zeroizing storage. Existing schema-1/2
+behavior remains unchanged.
+
+Nine focused host tests pass, including both independently recomputed golden
+vectors and aggregated positive/denial matrices. Draft validation exposed omitted
+nullable-field acceptance and derived Serde positional-array acceptance; explicit
+presence and map-only deserialization now deny both. Tests isolate path overlap,
+boolean posture, numerical/byte limits and commitment changes for all 24 mutable
+accepted fields. Fresh independent OpenAI Terra xhigh source review identified
+incomplete commitment-change coverage; the completed matrix passed recheck with
+no remaining P1/P2/P3. Full `npm run check` passes: 1,519 TypeScript tests,
+139 contract comparisons, 264 macOS store tests with two ignored, and 163 daemon
+tests. Strict host Clippy, formatting and metadata policy pass. Semgrep reports
+one unchanged test-helper INFO, independently non-actionable for this diff;
+Gitleaks reports zero findings. Exact source/direct-child attestation is a separate
+`PHR-0035` gate, pending at this source checkpoint. Host source evidence supplies
+no native or runtime proof.
+
+LNSAT owns standalone CLI setup, validation, management and recovery; Rangoon
+uses standard engine contracts as an optional consumer. This private parser
+does not complete those commands or open initialization, registration, activation,
+startup frames or runtime authority. Full freeze, artifact capture, integration,
+actual native/runtime evidence and packaging retain their separate gates.
+
+### Stage-A private context and challenge codec
+
+Canonical work record: this subsection under the human-accepted Stage-A source
+order. The [private context/challenge contract](architecture/headless-resource-enforcement/startup-wire-source-spec.md#stage-a-private-context-and-challenge-codec-contract)
+bounds two closed inert decoders for action and preparation challenge frames.
+It freezes exact context syntax, ordered commitments, canonical LF framing,
+finite represented ceilings, private input-free errors and the source/test
+matrix. Fresh independent OpenAI Terra xhigh precode review passed with no
+P1/P2/P3 findings and independently reproduced both golden digests and exact
+frame sizes. The named private module and tests now implement both decoders.
+Closed typed objects, exact frame-family dispatch, ordered commitments and
+canonical LF frames reject ambiguous shape or representation. Outputs retain
+only private unverified context/limits, canonical bytes and their digest, with
+zeroizing retained strings and buffers. Existing product callers are unchanged.
+
+Fifteen focused host test groups pass, covering both published goldens, all
+18 mutable context fields, fixed attempt sequence, every nested object's closed
+shape, framing/control/size and canonical denials, integer widths and limits,
+identity grammar, message families and private error precedence. A fixed-recipe
+preparation vector remains syntax-only. Full `npm run check` passes: 1,519
+TypeScript tests, 139 contract comparisons, 264 macOS store tests with two
+ignored and 178 daemon tests. Strict host Clippy, formatting and metadata checks
+pass. Semgrep has zero errors and one unchanged test-helper INFO; both new codec
+files have zero findings. Scoped redacted Gitleaks reports zero findings.
+Independent source review found a reporting mismatch, corrected to the actual
+15 focused tests, and no source or test-matrix defect. Exact source/direct-child
+PHR-0036 remains a separate gate, pending at this source checkpoint. Source
+evidence supplies no native or runtime result.
+
+A decoded frame remains an unverified declaration. Self-consistent bytes cannot
+prove randomness, freshness, consumed-attempt custody, current daemon identity,
+profile narrowing, elapsed time, adequate output budget or permission. Existing
+small-budget golden frames remain syntax fixtures. Actual preparation requires
+the separately fixed recipe budget. Native observation, observation/release/
+result messages, product integration, CLI setup and full freeze remain open.
+LNSAT remains the standalone engine; Rangoon is an optional standard-contract
+consumer. Phase 11 retains sole runtime-proof authority.
+
+### Stage-A private startup message codecs
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [remaining message contract](architecture/headless-resource-enforcement/startup-wire-source-spec.md#stage-a-private-observation-release-and-result-codecs)
+names private action/preparation observation, action release and result decoders,
+closed native and Git request representations, exact owned source paths,
+commitments, bounded decoding, fixed errors and source validation requirements.
+Fresh independent OpenAI Terra xhigh precode review passed after exact module
+path wiring and synthetic-vector wording were corrected. All six independent
+frame encodings and commitments were reproduced, including the typed v2 request,
+target and sixteen-field Git tool-argument digests. The named private candidate
+implements an allocation-free bounded lexical preflight, closed map-only native
+and execution-request representations, fixed errors and zeroizing retained
+frames. The focused host suite passes 40 tests, including 25 new message tests
+and all 15 existing challenge tests. Literal `npm run check` passes on the frozen
+code/test snapshot, including strict Rust lint and cross-language/source suites.
+Final documentation and history metadata receive their scoped checks separately.
+Fresh independent OpenAI Terra xhigh review found no remaining P1/P2/P3 after
+exact Git head and repository-path byte-edge tests were added. Native history
+entry `PHR-0041` tracks exact source and separate direct-child review. Scoped Semgrep and Gitleaks report zero findings. The first full run's
+missing nested dependency-cache links were restored from existing byte-matched
+manifests before the passing rerun; no dependency or tool was installed.
+Existing challenge functions, native/profile/daemon modules and legacy store/
+Phase 11 source remain unchanged.
+
+Source scrutiny identified that the existing shared Git tool-argument helper
+still requires adapter v1, whereas this accepted profile requires v2. The new
+private contract preserves the old helper and derives the same bounded digest
+from a syntactically valid typed v2 request without changing adapter identity.
+Existing release hash examples are not valid closed Git request positives;
+their bytes remain historical synthetic hash evidence and explicit decoder
+negatives. New typed release positives retain independent fixed commitments.
+
+This candidate is representation-only: no trusted release barrier, native
+observation, channel, consumed attempt, audit, time budget or replay protection
+is supplied. Actual native evidence, complete source/pin freeze, integration,
+protected CLI setup and V1 runtime/packaging remain open. Kernel/harness source
+approval remains separately pending; this prerequisite does not open it.
+
+### Stage-A private daemon Version decoder
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private Version-only contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-version-decoder-contract)
+defines supplied-body byte limits, checks bounds before allocation, requires
+closed map shapes, exact selected-family presence, component/build consistency and a
+private unverified retained projection. It deliberately separates typed discarded
+Details from compared build claims. The source paths and complete positive,
+boundary and denial matrix are named before implementation. Fresh independent
+precode review identified an ambiguous Details-entry count. The contract now
+counts required and extra pairs together per map and requires distributed
+at-cap/over-cap tests. Fresh independent OpenAI Terra xhigh recheck passed with
+no remaining P1/P2/P3.
+
+The named private source candidate implements supplied-body decoding with an
+allocation-free JSON preflight, closed typed maps, per-map Details bounds,
+fixed component predicates and all eight root/Engine consistency comparisons.
+Its sealed output retains only unverified comparison claims in zeroizing
+storage. It adds no caller, public/exported constructor, I/O, dependency or
+feature. Caller input and JSON-library scratch remain outside the module-owned
+storage scrubbing claim.
+
+Sixteen focused test groups use an independently constructed synthetic body and
+expected retained projection. They cover all component permutations, required
+members and types, decoded duplicates, positional arrays, all compared claims,
+discarded Details, Unicode byte limits, per-map/global counts, depth, framing,
+numbers and fixed errors. Initial validation exposed positional-array acceptance
+and a leading-zero number classification defect; both were corrected without
+weakening the matrix. All sixteen focused tests and strict host Clippy pass;
+initial failures remain in the review evidence. Literal `npm run check` passes:
+1,519 TypeScript tests, 139 contract comparisons, 264 macOS store tests with two
+ignored and 194 daemon tests. Fresh independent static source review found no
+remaining P1/P2/P3. Scoped Semgrep found no issue in either new Rust file and only
+the unchanged test-only temporary-directory INFO in `lib.rs`; scoped redacted
+Gitleaks found no secrets. Docs, public readiness, inventory, formatting and
+public-history checks pass for their named source scope. PHR-0037 owns the exact
+source review binding; direct-child verification remains a separate gate.
+
+These are macOS host and synthetic source results. No Linux native compilation,
+genuine daemon response, artifact/pin comparison, production caller or runtime
+result is claimed. The full check covered unchanged Rust blobs; final factual
+documentation and generated metadata receive proportional checks and exact review.
+
+Primary-source refresh found that the recorded Version type snapshot digest did
+not match the exact pinned file. Raw and base64 GitHub responses agree with the
+recomputed Git blob; the three appendix references now use the verified raw-byte
+SHA-256. Existing listed types and fields are unchanged. This correction is
+source evidence, not an installed component/artifact pin or a native result.
+
+The prior context/challenge source and exact direct-child attestation are recorded
+by PHR-0036. A Version parse cannot authenticate a daemon, establish native
+controls, compare unset recipe values, admit a registry entry, initialize a
+store or release an action. Full freeze, integration, standalone CLI setup,
+real runtime and packaging remain separate. LNSAT owns the engine contracts;
+Rangoon consumes the same interfaces without becoming another authority.
+
+### Stage-A private daemon Info decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private Info-only contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-info-decoder-contract)
+names supplied-body bounds, closed typed shapes, exact null/omission rules,
+fixed selected-recipe predicates, data-free errors and an unverified retained
+projection before source implementation. The bounded candidate adds only the
+new private Info source, its tests and one private module declaration. Version source,
+transport, native custody and active product callers remain unchanged.
+
+This preparation corrects two comparison gaps: host capacity and optional
+firewall-driver identity must survive parsing for later recipe comparison.
+It also reconciles SecurityOptions with the already ordered transport contract,
+records stock runtime path literals rather than inferred artifact custody,
+and requires Containerd.Address consistently with its pinned builder.
+The private Go-int cap fits both signed 32-bit and 64-bit representations;
+native 64-bit atomic support alone would not establish Go integer width.
+
+Raw and base64 GitHub content responses plus recomputed Git blobs verify four
+pinned type files. Fifteen stale appendix SHA references are corrected; the
+listed field/type/tag inventories match and are unchanged. Eight additional
+named builder/router/configuration files bound the source normalization.
+This is source provenance, not actual daemon or artifact evidence.
+
+Fresh independent OpenAI Terra xhigh precode review passed with no P1/P2/P3.
+The reviewed contract remains byte-identical in its exact Info section. The
+source implements an allocation-free bounded JSON preflight followed by closed
+map-only typed decoding and fixed recipe checks. Its sealed result retains only
+unverified comparison claims, including capacity and optional firewall identity;
+it creates no authority or identity digest. Module-owned input-derived strings,
+discarded values, dynamic keys and fixed decoded-key storage use zeroizing
+custody. Caller input and JSON-library scratch are outside that scrubbing claim.
+No public caller, transport, I/O, dependency or feature was added.
+
+Twenty-two independently authored synthetic test groups cover the source-shaped
+positive body and separately written expected projection; every required and
+optional member, null/allocated encodings, all closed maps, decoded duplicates,
+fixed predicates, ordered SecurityOptions, runtime branches, typed discarded
+data and numeric/prefix/calendar grammar. Boundary cases separately reach body,
+depth, per-object/global member, key/string, row and array caps. The feature-string
+exception is confined to its two exact decoded-key paths. Truncation, malformed
+UTF-8/escapes/numbers, competing error stages and secret canaries are covered.
+Initial tests caught empty-runtime-status and Swarm-manager classification
+defects and overrestricted informational strings; these failures remain in the
+validation evidence. All twenty-two focused tests and strict host Clippy pass.
+Literal `npm run check` passes: 1,519 TypeScript tests, 139 contract comparisons,
+264 macOS store tests with two ignored, and 216 daemon tests. Scoped Semgrep
+finds no issue in the new files and only the unchanged test-only temporary-directory
+INFO in `lib.rs`; scoped redacted Gitleaks finds no secrets. Independent review
+identified one P3 coverage gap at the dynamic registry-dictionary map position.
+Direct array/scalar denial cases now pass alongside the existing null/empty-map
+positives. Fresh independent OpenAI Terra xhigh recheck resolved that finding;
+no P1/P2/P3 remains. Exact source and direct-child attestations remain separate
+gates.
+PHR-0038 tracks this separate implementation; PHR-0037 preserves Version evidence.
+
+The full suite covers the unchanged production Rust and contract bytes. The
+subsequent coverage-only test addition receives all twenty-two focused tests,
+strict lint and formatting; final factual documentation and generated metadata
+receive proportional checks and exact review. These are macOS host and synthetic
+source results, not Linux or genuine daemon observations.
+
+No current runtime, Linux result, integration, provider/encryption behavior,
+CLI setup or packaging completion follows. LNSAT retains standalone authority;
+Rangoon consumes the same neutral interfaces. Phase 11 owns runtime proof.
+
+### Stage-A private fdinfo byte candidate
+
+Canonical work record: this subsection, under the accepted Stage-A source-order
+amendment. The [exact byte contract](architecture/headless-resource-enforcement/native-source-spec.md#separately-reviewed-stage-a-fdinfo-byte-prerequisite)
+defines an independent inert representation prerequisite. Genuine reader
+return/custody was NOT_READY at that parser checkpoint; the later whole-reader
+precode PASS above supplies no native implementation or result. Fresh independent OpenAI Terra xhigh precode
+review passed with no P1/P2/P3 findings. Only the private parser, its synthetic
+tests and private module declaration are owned source paths.
+
+The contract freezes four ordered LF-terminated fields, canonical bounded decimal
+values, explicit leading-zero octal flags, a 4,096-byte inclusive input cap and
+fixed data-free errors with deterministic precedence. Decoding is allocation-free
+and linear within that cap. Parsed values remain untrusted representation;
+unknown flag bits convey no authority. No procfs access, descriptor operation,
+thread, clock, observer permit, serialization, dependency change or product caller
+is introduced. Native reader, worker/custody, full freeze, integration and runtime
+gates remain separate.
+
+The private source implements this exact byte grammar. Pinned focused tests
+passed 35/35: seven new synthetic fdinfo groups and 28 preserved native/ACL/
+mountinfo groups. The new vectors exercise all byte substitutions, forbidden
+controls/high bytes, every truncation, numeric boundaries and overflow,
+framing/field/number precedence, extra fdinfo tails and exact cap behavior.
+Strict all-target Clippy and formatting passed without suppression after checked
+conversion/assertion and literal-format corrections. Full local macOS
+`npm run check` passed in 1,105.99 seconds: 1,519 TypeScript tests, 139 contract
+comparisons, 264 store tests and 135 daemon library tests; two ignored store
+child helpers remain exercised by parent tests. These local counts do not
+replace Linux evidence for a new exact head.
+
+Installed named `p/rust` Semgrep scanned the three owned Rust paths with zero
+findings/errors; redacted Gitleaks returned zero findings. The first Semgrep
+attempt failed on sandbox trust-anchor access; the installed scanner succeeded
+with certificate access, metrics and version checks disabled. The first full
+check was interrupted before the known disposable-socket sandbox limitation;
+the unchanged suite passed with fixture access. No tests were suppressed and
+no tools or dependencies were installed. No dependency delta exists; no new OSV
+scan is claimed. Fresh independent OpenAI Terra xhigh exact-source review found
+no actionable P1/P2/P3. Final source/direct-child bindings remain their own
+history gate; hosted Linux CI on a new exact source head remains unrun.
+
+Draft PR #92 remains at `002f608e2174ee73d9b79af70a39c5fe9cc1bc81`, with source
+run `37232012586`/job `111523569754` successful. That preceding result does not
+cover this local fdinfo source. Public main remains
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8`. The Phase 11 operator packet remains
+the sole runtime-proof authority, and its execution gate is unchanged. No
+reader/worker implementation, accepted custody amendment, complete native
+freeze, runtime, support or certification claim follows from these source checks.
+
+### HCFG-6 generated daemon metadata custody proposal checkpoint
+
+Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed
+hosted source CI run `37120253071` with job `111194814745`. This result covers
+the preceding staging proposal; its human acceptance was pending at this
+checkpoint and is recorded as accepted in the canonical staging subsection.
+Public main was `e09a6b02634b04a46f861ed8b092acc2c2e50fe8` after that fetch,
+and the canonical checkpoint was clean. No Stage-A implementation had begun
+at this documentation checkpoint.
+
+The [generated metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
+specifies a conditional non-root path through rootful daemon metadata ancestry:
+exact inherited access/default ACLs, search-only O_PATH identities, bounded
+named ACL observations and readable own-container generated-file handles.
+Exact source distinguishes Docker's data-root chmod normalization, `fdget`'s
+O_PATH rejection, special POSIX ACL syscall routing and in-place metadata
+writes. Requested `0644` files can inherit the proposed observed `0640` ACL
+shape; creation mode alone is not current inode evidence.
+
+The root-manifest proposal adds exact current daemon/container-root identities
+and an explicit trusted-root dedicated-data-root assertion. ACL inheritance
+below the container repository grants controller metadata access beyond one
+new directory; shared workload roots are excluded by this proposed recipe.
+LNSAT performs no automatic permission provisioning, directory inventory,
+foreign-container read, procfs magic-link reopen or privileged-helper call.
+Root-mediated transient replacement and the dedication assertion retain the
+accepted trusted-root boundary; no atomic named-read or hostile-root assurance
+is claimed. Full source/pin/positive-feasibility freeze and later actual
+provisioning, activation, runtime, package and security assurance remain open.
+Phase 11 remains `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`.
+
+For this documentation proposal, artifact shapes passed 3/3, documentation
+direction passed 31 tests (179 Markdown files), public readiness checked 910
+files, inventory remained 2,122 occurrences across 295 files, and unchanged
+Phase 11 readiness passed 43/43 with execution closed. Exact-doc formatting
+and diff checks passed; all seven copied Linux source hashes matched their
+research report. The first bounded hash extractor omitted the digit in `ext4`
+and matched six names; correcting the filename pattern verified all seven,
+without a source/hash mismatch. Fresh independent OpenAI Terra xhigh contract
+review found no remaining P1/P2/P3 after the controller explicitly separated
+precreate, created, post-start and terminal-cleanup metadata predicates.
+This PASS covers the conditional proposed custody method, not complete native
+freeze, current host proof or the then-pending staging acceptance. No dependency,
+source, CLI, schema or runtime behavior changed. New exact-head hosted CI is
+separate from the preceding green result; unchanged source was not rebuilt for
+this docs-only delta. The resulting exact head
+`3a1971860d370c08a16a575ef7e1a8cf3c87ebbd` subsequently passed hosted source
+CI [run `37122640734`](https://github.com/hypler-dev/LNSAT/actions/runs/37122640734),
+job `111201633544`, on 2026-10-03. Draft PR #75 remains open; this result does
+not accept the source-order amendment or complete native freeze.
+
+### HCFG-6 controlled resource-pressure proposal checkpoint
+
+Exact draft PR #75 head `6c65a2bd5e388222e149ad2d5250516bf7b9afe6` passed
+hosted source CI [run `37123949018`](https://github.com/hypler-dev/LNSAT/actions/runs/37123949018),
+job `111205384429`, on 2026-10-03. This covers the preceding result-only
+dependency checkpoint, not the following procedure proposal. Fetched public
+main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`; canonical checkpoint
+was clean. The source-order amendment was pending human acceptance at this
+procedure-proposal checkpoint; later acceptance is recorded above.
+
+The [pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
+defines three fixed future test-only CPU/memory/PID cases with positive anchors,
+finite stimuli and independent host kernel/cgroup evidence. Linux v6.8 source
+distinguishes period bandwidth, local/hierarchical memory events, any-source
+OOM kill counts and PID denial caused by a leaf or ancestor. Limits, errnos,
+sampled usage or helper output alone do not pass. Exact own-case identity,
+bounded current observations, controlled host/ancestor eligibility and
+cleanup/quarantine are required; an inconclusive result stops the series.
+
+Normal preparation remains one thread with its five non-destructive sentinels.
+The proposed pressure helper never enters the product registry, startup wire,
+ordinary preparation journal or bootstrap transaction. Exact test-only source/
+decoder/custody review, pending staging acceptance, immutable artifact pins
+and separately authorized disposable proof remain required. No source helper,
+pressure, Docker, host configuration or runtime result is added. Full native
+freeze, actual startup/action proof, package and enterprise/government assurance
+remain incomplete. Phase 11 stays `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`.
+
+For this procedure proposal, artifact shapes passed 3/3, direction passed 31
+tests (180 Markdown files), public readiness checked 911 files, inventory
+remained 2,122 occurrences across 295 files, and unchanged Phase 11 readiness
+passed 43/43 with execution closed. Exact-doc formatting and diff checks
+passed; all four copied Linux research-source hashes matched. Fresh independent
+OpenAI Terra xhigh review found no actionable P1/P2/P3 in the seven-file proposal.
+This is conditional procedure/source-feasibility evidence, not an actual
+pressure outcome, accepted source-order amendment or complete native freeze.
+New exact-head hosted CI remains a separate gate.
+
+### HCFG-6 acceptance reconciliation checkpoint
+
+The 2026-10-02 acceptance reconciliation in commit `2e6ce73` changed documentation only; current profile/protocol,
+source, CLI and schema are unchanged. The initial acceptance update on
+2026-10-01 failed before command startup with `Resource temporarily unavailable
+(os error 35)`, including a read-only unsandboxed attempt; that failure remains
+historical evidence. Command execution recovered on 2026-10-02. The public
+checkout remains at the accepted exact head with public origin, and fetched
+public main remains `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`.
+For the reconciled acceptance files, all six intent/spec/plan shape checks,
+documentation alignment, Phase 11 readiness tests (43/43), refreshed inventory
+(2,122 occurrences across 295 files) and the complete pinned `npm run check`
+passed on 2026-10-02. Unlike the earlier clean-revision audit's environment
+failure, this full source-check invocation reached terminal exit zero on the
+reconciled worktree. Fresh independent OpenAI Terra xhigh read-only review
+found no actionable P1/P2/P3. The result-only status update receives proportional
+documentation/public/inventory validation before commit. Hosted CI remains
+a separate exact-head gate; no new CI success, merge or runtime proof is claimed.
+
+The Phase 11 operator packet remains runtime authority with its locked
+source/launch contract and `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY` verdict.
+Acceptance opens bounded source design work, not Docker observation/execution,
+host permission mutation, initialization, activation, merge, release,
+publication, deployment or production.
+
+## Enterprise And Government Security Direction
+
+Canonical work record: this section. On 2026-10-03 the human owner required
+advanced security for enterprise/government use alongside the active V1 build.
+The [supporting requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
+extend the existing Phase 13/14 hardening work with explicit human identity,
+assurance/crypto/key, audit/privacy, supply-chain and resilience acceptance
+evidence. They do not mark these capabilities implemented or certify LNSAT.
+The 2026-10-03 owner clarification requires rigorous independent scrutiny and
+preparation for future third-party ISO/government assessment. The supporting
+requirements now distinguish exact product evaluation from organizational ISMS
+assessment and require traceable claims, reproducible proof, assumptions and
+residual limits. No scheme, assurance level or government approval is selected.
+Jurisdiction, information class and deployment boundary remain unresolved;
+the current U.S. mapping is provisional. Detailed protected/public-contract
+behavior requires its own exact accepted specification and independent review.
+
+Inspected local source has Argon2id password/session/CSRF foundations and scoped
+roles. Phishing-resistant MFA/federation and a FIPS-validated crypto provider
+are not established; optional Ed25519 approval verification is not an activated
+signing/custody path. Signed artifact/update, SBOM/provenance and selected-target
+assurance remain Phase 13/14 gates. Hashes/export do not independently prove
+trusted-host-owner anti-tamper protection. The active HCFG/native/bootstrap/
+control/runtime build remains mandatory. No SaaS/fleet/HA/multi-tenant scope,
+Docker, host mutation, merge, release or production action opens here.
+
+Fresh independent OpenAI Terra xhigh security review found no P1/P2 in the
+requirements or supporting hardening proposal. Two P3 evidence issues were
+corrected: the strict Ed25519 source locator and the integrity registry's
+binding to the final status/requirements/sequence documents. The retained
+hardening analysis supplies two explicit options and their tradeoffs; it is
+derived design evidence, not a vulnerability scan or compliance assessment.
+Detailed identity/provider selection and implementation remain open.
+
+### Local OS authentication and encrypted-state direction
+
+Canonical work record: this subsection, within the existing requested
+enterprise/government security direction. The owner's local-password and
+OS-encryption question is retained in the
+[supporting setup requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md#local-authentication-service-keys-and-encrypted-state).
+The proposed boundary separates trusted OS-mediated human authentication,
+least-privilege service key custody, encrypted persistent/temporary/backup data,
+interactive versus unattended startup, and action authorization. LNSAT owns the
+neutral CLI/API contract; Rangoon consumes it through standard adapters.
+
+Current LNSAT-local Argon2id authentication does not establish OS login
+integration, MFA or encrypted state. No OS/key provider, hardware binding,
+encryption implementation, credential intake, key migration or host change is
+selected or performed here. Detailed identity/operation binding, encrypted
+artifact coverage, key lifecycle/recovery and versioned failure/remediation
+contracts still need exact design and independent review. Unlock is not action
+approval. Missing required keys must not silently cause plaintext operation or
+authority recreation; full-disk encryption supplies no running privileged-host
+attacker protection claim. This documentation clarification accepts no pending
+strict-crypto or human-assurance proposal and supplies no runtime/support claim.
+
+### Release-write deadline contract clarification
+
+Canonical work record: this subsection. Independent review found an ambiguity
+in the existing [release synchronization contract](architecture/headless-resource-enforcement/preparation-store-source-spec.md#installation-wide-release-synchronization):
+"five-second minimum cap" could imply an undefined admission floor or deadline
+extension. The corrected contract uses a single maximum cutoff,
+`min(original_action_deadline, write_start + 5 seconds)`, without adding a
+five-second reserve. Existing shared-budget/frame feasibility rules remain.
+
+Committed attempts with delivery ambiguity remain consumed and `unknown`;
+there is no resend. The cutoff proves neither cancellation nor physical return
+or lock release. Exact transport behavior and retained channel/lock ownership
+during unfinished writes remain mandatory full-freeze work. This fixes contract
+wording only: no writer, store/schema change, grant, release, native runtime or
+new authority is implemented. Earlier reviewed candidates remain preserved.
+
+### Crypto operation/provider source inventory
+
+Canonical work record: this subsection. The owner's enterprise/government
+security direction requires the control/crypto inventory in parallel with the
+accepted engine work. The [bounded crypto inventory](architecture/CRYPTO_OPERATION_PROVIDER_INVENTORY.md)
+and [manual source baseline](reference/crypto-operation-provider-inventory.json)
+record 17 operation/boundary classes and SHA-256 bindings for 35 named source,
+manifest, lock and process-document blobs at exact source
+`a92857ed762f28873990bd1f1a921b104363537e`, tree
+`ce08e9bc72e7a66bb9b08a999139d151a0330f1d`.
+
+This distinguishes Rust daemon/SQLite auth and persistence foundations from
+TypeScript local-beta/PostgreSQL, contract and adapter source. It does not
+establish shared token protocols or a shared deployed crypto backend. Named
+source has Argon2id, OS random interfaces, SHA-256 commitments and optional
+Ed25519 verification; signer profiles remain interface-only. OAuth/SPIFFE
+adapters rely on injected verification. Storage/backup checks establish named
+integrity/custody facts, not encryption. Registry review checks metadata shapes;
+source-review hashes are not signatures or produced artifact proof.
+
+The inventory records actual source facts for later provider selection, not a
+strict-profile specification, exhaustive transitive/compiled crypto census,
+control-matrix completion or runtime check. Approved module/version/environment,
+certificate/security policy where required, self-test/error state, entropy
+health, identity/MFA/federation, key lifecycle, encrypted storage/backup,
+protected audit and artifact-signing evidence remain unestablished. No provider
+or profile is selected or activated here; no government assurance follows.
+Detailed protected/public-contract behavior still needs its exact accepted spec.
+
+The parent private session-buffer source PR #82 passed exact-head source CI
+`37161819790`, job `111316664186`, on
+`a92857ed762f28873990bd1f1a921b104363537e` at `2026-10-03T23:46:00Z`.
+This supplies parent source evidence only. This slice changes documentation;
+no Rust/TypeScript behavior, dependency, API, schema or product version changes.
+At this standards-mapping checkpoint, source-order acceptance and Stage-A
+implementation were pending. The later human acceptance and first private
+candidate are recorded above. Candidate SQL, Phase 11 packet, Docker, host
+mutation, artifact construction, merge, release and production gates remain
+unchanged and closed.
+
+Local manual verification passed for all 35 bound blobs and 45 source ranges.
+Documentation direction passed 31 tests across 186 Markdown files; public
+readiness, generated legacy inventory, Phase 7d truth, Phase 11 readiness,
+native public-history evidence, exact-file formatting and whitespace checks
+passed. Native history remains 13 attested, zero pending and ineligible for
+supported-release evidence. Fresh independent OpenAI Terra xhigh review found
+one canonical status-link defect, corrected before final byte binding, and no
+other actionable P1/P2/P3. Broad source tests and code scanners were not rerun
+for this documentation-only slice; parent exact-head source CI is the separate
+source evidence above.
+
+Exact inventory draft PR #83 head
+`87f4fcf85d6a443b6d847109b48d55d6e064edeb` subsequently passed hosted source
+CI run `37163994904`, job `111323064566`, at `2026-10-04T00:26:31Z`.
+This is documentation/source validation, not runtime/module assurance or owner
+acceptance of the separate source-order amendment.
+
+### Proposed strict crypto admission design
+
+Canonical work record: this subsection. The requested enterprise/government
+direction and completed bounded source inventory require exact crypto/provider
+admission design before a strict assurance claim. The
+[proposed design](architecture/STRICT_CRYPTO_ADMISSION_DESIGN.md) makes complete
+selected-operation coverage, exact module/version/environment/approved-mode
+association, validation eligibility, entropy/self-test/error-state evidence and
+key lifecycle explicit. Evidence failure or change denies without weaker
+fallback; crypto admission does not independently grant action authority.
+Actual positive module/environment proof remains required.
+
+**Owner acceptance and implementation are pending.** This is a design proposal,
+not a selected provider, certificate, algorithm, target or deployment. It adds
+no source, configuration field, public API, dependency, schema or executable
+guard. Current Argon2id/session/digest/verification source is unchanged; it does
+not acquire a strict assurance claim. MFA/federation, encryption, protected
+audit, artifact lifecycle, actual runtime and full V1 remain incomplete.
+
+The HCFG-6 source-order amendment is a separate engine decision, accepted later
+in the canonical staging record above; it accepts no strict crypto design.
+Phase 11
+packet/pins, Docker, host mutation, candidate artifact construction, private-key
+or provider calls, merge, signing, release, deployment and production remain
+closed. This proposal's review or hosted source CI cannot accept either design
+or open those gates.
+
+Post-correction documentation direction passed 31 tests across 187 Markdown
+files; public readiness, generated inventory, exact-file formatting and staged
+whitespace checks passed. The initial unchanged Phase 7d, Phase 11 and native
+history checks also passed; native history remains 13 attested, zero pending
+and ineligible for supported-release evidence. Fresh independent OpenAI Terra
+xhigh review found and resolved two P2 issues: final artifact identities must
+follow reviewed source and separately authorized capture, and unavailable or
+unapproved mode must deny rather than approved mode. No remaining actionable
+P1/P2/P3 was found in the corrected proposal. No broad source tests or code
+scanners were rerun for this documentation-only slice; parent exact-head source
+CI is separate evidence above.
+
+Exact strict-admission draft PR #84 head
+`a7739bfdde8d25168cde90af433966c0ef424e86` passed hosted source CI run
+`37165741406`, job `111328140941`, at `2026-10-04T01:00:26Z`.
+This validates the design/source tree; it does not accept the design or prove
+an actual module, provider, authenticator or runtime.
+
+### Proposed human authentication assurance design
+
+Canonical work record: this subsection. The accepted enterprise/government
+direction requires verified human assurance and fresh exact consequential
+confirmation. The [proposed design](architecture/HUMAN_AUTHENTICATION_ASSURANCE_DESIGN.md)
+defines one Gateway-owned human/session/challenge/decision evidence boundary,
+compares local WebAuthn with selected OIDC federation, and requires exact
+enrollment, distinct-person linking, revocation, inert recovery and privacy.
+The browser session header pair is CSRF/request proof, not two human factors.
+
+**Owner acceptance, exact source contracts and implementation are pending.**
+Local WebAuthn is conditionally recommended for the owner-controlled package;
+its domain-origin/secure-context requirement cannot reuse the existing numeric
+loopback origin. No origin, transport, IdP, authenticator, library, assurance
+level, schema or deployment is selected. Existing password/session, roles,
+approval, offline recovery and OAuth/workload adapter behavior is unchanged.
+No MFA, federation, AAL/FAL/IAL or government readiness is established.
+
+The HCFG-6 source-order decision was pending at this human-auth proposal
+checkpoint and was accepted later in the canonical staging record above.
+Stage-A source integration, candidate SQL, strict crypto acceptance,
+audit/privacy, Phase 11 packet/pins and full V1 remain open.
+This documentation adds no route or authority. Docker, host/configuration
+mutation, actual credential/provider/key work, candidate artifact construction,
+merge, signing, release, deployment and production remain closed.
+
+Named documentation direction passed 31 tests across 188 Markdown files;
+public readiness passed its three tests, and refreshed legacy inventory retained
+2,122 occurrences across 295 files. Exact-file formatting and staged whitespace
+checks passed. The initial inventory check failed because the new document was
+not staged when its tracked-file inventory was first generated; that failed
+receipt is retained and refresh after exact staging passed. Independent review
+found no actionable P1/P2/P3 in the final byte-bound proposal; hosted exact-head
+source CI remains separate.
+Broad source tests and code scanners were not rerun for this docs-only slice;
+the unchanged parent source CI above is the separate source evidence.
+
+### Proposed audit/privacy and evidence custody design
+
+Canonical work record: this subsection. The accepted enterprise/government
+direction requires minimized disclosure and reliable decision/outcome evidence.
+The [proposed design](architecture/AUDIT_PRIVACY_AND_EVIDENCE_CUSTODY_DESIGN.md)
+separates private authority records/backups, authorized evidence disclosure,
+optional telemetry and independent custody. It requires explicit coverage,
+failure atomicity, recipient permissions, field semantics, retention and
+inert recovery before implementation or assurance claims.
+
+**Owner acceptance, exact source contracts and implementation are pending.**
+Local content hashes, immutable triggers and exact chain rederivation remain
+useful source integrity evidence. They do not prove complete history, external
+custody, encryption or protection from a malicious host owner. Current schema
+17 retains 28 families with no cleanup. HCFG-4A reads remain installation-wide;
+their stored project decoder scope is not a project authorization grant. The
+telemetry sink can be invoked, but allowed keys and fixed privacy flags cannot
+prove contextual sensitive-data exclusion.
+
+This proposal creates no export route, global sequence, collector, encryption
+provider, permission, schema, stop mechanism or authority transition. The
+HCFG-6 source-order amendment was pending at this audit proposal checkpoint
+and was accepted later in the canonical staging record above. Native/store
+integration, HCFG-4B/4C, human assurance, strict crypto and full V1 remain
+incomplete. Phase 11 packet/pins
+retain runtime authority. Docker, host mutation, candidate SQL execution,
+actual credential/provider/key work, candidate artifact construction, merge,
+signing, release, deployment and production remain closed.
+
+The design basis is exact draft PR #85 source head
+`ae89f83a8de1ad10359a29ec61e1937befcf4160`; all 18 named raw source/doc blobs
+were verified against that immutable revision. Parent hosted source CI run
+`37167115468`, job `111332234904`, was still running at initial observation;
+no terminal result is inferred. Named proportional documentation validation
+passed 31 tests across 189 Markdown files; public readiness passed three tests,
+and refreshed inventory retained 2,122 occurrences across 295 files. Exact-file
+formatting and staged whitespace checks passed. Fresh independent OpenAI Terra
+xhigh review found no actionable P1/P2/P3 in the proposal. Final byte binding is
+required before commit. Broad source tests and code scanners were not rerun for
+this documentation-only slice. These checks do not establish actual runtime,
+privacy, collector or encryption proof.
+
+### Dependency advisory checkpoint
+
+On 2026-10-03 a fresh `npm run audit:dependencies:check` passed on exact draft
+head `3a1971860d370c08a16a575ef7e1a8cf3c87ebbd`, reporting zero vulnerable
+packages and no advisory exceptions. This is the npm registry's known-advisory
+result for that lock, not a complete source/runtime vulnerability assessment.
+
+A separate read-only comparison evaluated all 12 open GitHub Dependabot alert
+ranges against every matching instance in that head's npm lock and fetched
+public-main `e09a6b02634b04a46f861ed8b092acc2c2e50fe8`. Exact Git blobs and
+lock hashes were checked before strict semver evaluation. None of those 12
+ranges includes a draft locked instance; all 12 include a public-main instance.
+
+| Package      | Draft locked versions                   | Fetched public-main versions            |
+| ------------ | --------------------------------------- | --------------------------------------- |
+| `fast-uri`   | `3.1.8` (two nested instances), `4.2.1` | `3.1.6` (two nested instances), `4.1.3` |
+| `ip-address` | `10.7.2`                                | `10.4.0`                                |
+| `undici`     | `7.30.0`                                | `7.29.0`                                |
+
+The alerts remain open and public main remains affected by those reported
+ranges. No alert was dismissed and no dependency, lock, runtime or public-main
+byte changed in this checkpoint. Fresh independent OpenAI Terra xhigh review
+found no actionable P1/P2/P3 in the exact comparison and its evidence. Source dependency
+maintenance, merged-main remediation, runtime security and supported release
+are separate states; these checks supply no enterprise/government assurance
+or certification claim.
 
 ## Current Build Position
 
@@ -181,6 +2410,180 @@ referenced runtime profile but opens no database, listener, process, or action
 authority. No range or fallback exists. Headless configuration/control and
 Phase 11 real Docker proof remain pending.
 
+### V1 developer integration and agent development pack
+
+Canonical work record: this subsection. On **2026-10-05**, the human owner
+required clear feedback and error loops between LNSAT and consuming applications,
+SDK/API documentation, an agent development pack, and developer documentation
+maintained in LNSAT. This is accepted V1 product direction for the independent
+engine; Rangoon consumes the same contracts as other applications. It selects
+no identity provider, management transport, approval renderer, new wire schema,
+SDK package, publication or runtime action.
+
+The [developer and agent integration pack](sdk/developer-pack.md) now provides
+the source documentation entry point, existing contract/schema/fixture links,
+an agent-facing integration brief and required feedback/recovery behavior.
+Existing SDK guides and unpublished workspace contracts remain reusable source
+foundations. The current `lnsat.error_envelope.v1_0` covers six deterministic
+contract families; its stable code/path and public-safe message do not provide
+a universal runtime error, retry or outcome contract. Complete typed client
+coverage, protected management readback, mutation lifecycle feedback, executable
+integration tutorials and selected-artifact developer conformance remain missing.
+Documentation scaffolding is not a completed SDK or a V1 completion claim.
+
+V1 integration acceptance must cover version/capability discovery, exact
+authentication and authority boundaries, stable machine-readable errors with
+safe actionable feedback, declared versus active/enforced configuration,
+approval/operation/cleanup states, freshness and explicit unknown outcomes.
+Retry/idempotency, reconnect/reconciliation, stop/revocation and compatibility
+must be documented and tested per operation. A transport error never establishes
+non-execution; an error message never grants retry or permission. Readback and
+explanations retain authorization and redaction. The agent pack must include
+versioned machine-readable contracts, bounded tool/adapter mappings, examples,
+negative conformance cases and development guidance that cannot self-authorize.
+
+Architecture scrutiny identified integration blockers before Rangoon mutation
+management: an explicitly trusted complete approval presentation path and a
+selected authenticated client transport/origin. Identity linking/revocation,
+authoritative management-state projection, exact policy-change transactions,
+budget scope/enforcement and protected feedback still require their existing
+source-contract gates. These are unresolved design/implementation requirements,
+not demonstrated new vulnerabilities in deployed code. Reuse the existing
+headless, human-assurance and monitoring authorities; no competing permission
+engine, status ledger or Rangoon-specific bypass is introduced.
+
+### V1 command and contract completion gates
+
+Canonical implementation and completion record: this subsection, reconciled on
+2026-10-04 against the accepted
+[standalone V1 scope](architecture/ADR-0008_LNSAT_STANDALONE_V1_SCOPE.md)
+and [headless requirements](PRODUCT_BUILD_SEQUENCE.md#headless-configuration-and-control).
+Those requirements are the product target. The tables describe the exact
+checked-in interfaces and tests, not completion inferred from historical
+P10-X1's 13 evidence rows, 13 negatives and eight compatibility guarantees.
+Implementation, source validation, design acceptance, merge, runtime proof and
+support remain distinct states. No current row is supported.
+
+The next end-to-end delivery outcome is owner setup, protected access
+configuration, request, distinct-human approval, bounded execution, durable
+receipt and restart/recovery through the engine's versioned headless interfaces.
+The [delivery milestones](PRODUCT_BUILD_SEQUENCE.md#end-to-end-engine-delivery-milestones)
+order the remaining enforcement, protected setup/control, headless integration,
+actual workflow proof, RC and selected-package work. They reuse these command
+gates and existing source/test foundations; they establish no new completion,
+mutation, runtime or release authority. LNSAT remains neutral and standalone.
+The genuine reader has a private source candidate under validation; actual
+native evidence remains missing.
+The [reader checkpoint](#stage-a-self-process-procfs-reader-contract) records
+the exact private-candidate precode PASS; candidate completion and the complete
+native/integration freeze remain separate gates.
+
+The evidence baseline is reviewed source/attestation head
+`002f608e2174ee73d9b79af70a39c5fe9cc1bc81`, tree
+`d92a45fd121e0c10b660a14d142b3299b7a3d2bb`, with IPv6 repair source
+`58ca4a6b4a28eb97ffeb37db4b84d5808f52aa73` and stacked parent PR #91 head
+`1d15784849ab83a73f835b3a2f64789d85f7efe1`. Public readback confirmed draft
+[PR #92](https://github.com/hypler-dev/LNSAT/pull/92) at that exact head/base
+and [source CI run 37232012586](https://github.com/hypler-dev/LNSAT/actions/runs/37232012586),
+job `111523569754`, successful at `2026-10-04T20:35:52Z`. Fetched public main
+`e09a6b02634b04a46f861ed8b092acc2c2e50fe8` is its ancestor. This is existing
+source evidence; it does not cover this subsequent documentation delta or
+authenticate a runtime/artifact. Native history for this reconciliation is
+tracked as `PHR-0024`, separately from immutable `PHR-0023` repair evidence.
+
+Evidence notation: **P** names positive coverage, **N** names denial coverage,
+and **R** names race/restart coverage. **R: none claimed** means the cited
+command tests supply no concurrency or live-state proof; it does not erase
+unrelated existing core tests. Missing interfaces have no implementation
+positives, negatives or race evidence. Source-implemented behavior below is
+experimental and source-only.
+
+#### Configuration and diagnostic commands
+
+Rust command dispatch lives in
+[`lnsatctl.rs`](../crates/lnsatd/src/bin/lnsatctl.rs), diagnostic construction in
+[`product_surface.rs`](../crates/lnsatd/src/product_surface.rs), and explicit
+file loading in [`product_config.rs`](../crates/lnsatd/src/product_config.rs).
+**C** below is
+[`product_configuration_cli.rs`](../crates/lnsatd/tests/product_configuration_cli.rs);
+**O** is [`product_surface_cli.rs`](../crates/lnsatd/tests/product_surface_cli.rs).
+These are named test definitions in the baseline; this docs-only reconciliation
+does not rerun unchanged Rust binaries.
+
+| Exact command or prerequisite                                    | Current implementation                                                                                                                                      | Existing positive/negative/race evidence                                                                                                                                                                                                                                                                                                                                                                                                     | Remaining V1 gate                                                                                                                                |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lnsatctl config inspect --config`                               | Source-implemented explicit daemon-config/profile digest and applied-layer readback; no authority.                                                          | C P: `config_inspection_reports_digest_layers_without_paths_or_runtime_effects`, `explicit_docker_local_profile_loads_into_config_and_public_safe_readback`; N: `file_boundary_rejects_missing_directory_symlink_non_utf8_and_oversize`; R: none claimed.                                                                                                                                                                                    | Live configuration/resource verification, activation and selected-target proof.                                                                  |
+| `lnsatctl config schema` with exact v2 selector                  | Source-implemented daemon-configuration schema diagnostic.                                                                                                  | C P/N: `v2_headless_configuration_diagnostics_are_loader_parity_and_selector_gated`; R: none claimed.                                                                                                                                                                                                                                                                                                                                        | Complete headless configuration/activation contract; schema output alone proves neither OS controls nor active authority.                        |
+| `lnsatctl config validate --config` with exact v2 selector       | Source-implemented selected daemon config plus referenced runtime-profile validation.                                                                       | C P/N: `v2_headless_configuration_diagnostics_are_loader_parity_and_selector_gated`, `closed_contract_rejects_malformed_duplicate_unknown_and_wrong_identity`, `runtime_profile_selection_fails_closed_without_runtime_or_path_disclosure`; R: none claimed.                                                                                                                                                                                 | Observed resources, complete composition/control integration and activation. No store/listener/process opens.                                    |
+| `lnsatctl config show --config` with exact v2 selector           | Source-implemented fixed redacted explicit configuration summary.                                                                                           | C P/N: `v2_config_show_and_diff_are_redacted_normalized_and_selector_gated`, `v2_config_show_and_diff_redact_all_optional_canaries_in_every_format`, `v2_config_show_and_diff_reject_invalid_arguments_without_stdout`; R: none claimed.                                                                                                                                                                                                     | Authenticated active-generation/effective-authority readback; current output remains diagnostic.                                                 |
+| `lnsatctl config diff --config --against` with exact v2 selector | Source-implemented normalized setting comparison with separate byte-change evidence.                                                                        | C P/N: preceding show/diff tests plus `v2_config_diff_compares_runtime_and_all_fixed_field_groups`; R: none claimed. Sequential loads are not an atomic pair or live-drift proof.                                                                                                                                                                                                                                                            | Authenticated complete authority comparison and stale/concurrent transition controls.                                                            |
+| HCFG-3 declaration parse/composition                             | Source-implemented pure narrowing composition under the [HCFG-3 contract](architecture/headless-configuration/spec.md).                                     | [Parser tests](../crates/lnsat-contracts/src/headless_config/parser_tests.rs) P: `valid_declaration_parses_without_raw_debug_reflection`; N: `size_trailing_and_duplicate_json_fail_closed`. [Composition tests](../crates/lnsat-contracts/src/headless_config/composition_tests.rs) P: `ordered_narrowing_preserves_stronger_approval_and_tighter_limits`; N: `every_budget_dimension_rejects_widening`. R: no live admission race claimed. | Authenticate nonempty resource identity, current policy and observed enforcement before using a composed declaration as authority.               |
+| `lnsatctl config effective --declaration` with exact v2 selector | Source-implemented composed declared ceiling only; identity/enforcement/admission/activation/action claims remain false.                                    | C P: `v2_config_effective_and_export_are_deterministic_redacted_diagnostics`; N: `v2_config_effective_and_export_fail_closed_without_reflection`, `v2_config_effective_and_export_reject_unsupported_platforms`; R: none claimed.                                                                                                                                                                                                            | Verified effective authority and protected active-generation integration.                                                                        |
+| `lnsatctl config apply`                                          | Missing command and protected transition. Accepted V1 requirement; [HCFG-5 prerequisites](#hcfg-4b4c-and-hcfg-5-contracts) are not an apply implementation. | No command P/N/R evidence. Pure comparison/view/credential tests cover only their separately named prerequisites.                                                                                                                                                                                                                                                                                                                            | Authenticated owner confirmation, atomic generation/audit binding, resource enforcement, stale/concurrent update, rollback and revocation tests. |
+| `lnsatctl config export --declaration` with exact v2 selector    | Source-implemented deterministic redacted diagnostic; non-applicable and non-reimportable.                                                                  | C P/N: same effective/export tests; R: none claimed.                                                                                                                                                                                                                                                                                                                                                                                         | Any applicable/importable export is absent and needs its own exact contract; diagnostic export cannot initialize or activate.                    |
+| `lnsatctl doctor`                                                | Source-implemented machine-readable, side-effect-free source diagnostics.                                                                                   | O P: `operator_doctor_is_machine_readable_and_side_effect_free`; N: `operator_invalid_arguments_use_stable_usage_family`; R: none claimed.                                                                                                                                                                                                                                                                                                   | Installed artifact, service health and target lifecycle evidence.                                                                                |
+
+#### Monitoring, authentication and protected control
+
+CLI command inventory is the exact v1/v2 manifest in
+[`phase10-product-surface-v1.json`](../fixtures/contracts/phase10-product-surface-v1.json)
+and [`product-surface-v2.json`](../fixtures/contracts/product-surface-v2.json).
+Reserved names express unavailable source behavior. Existing loopback routes
+are separate from absent CLI consumers; no blanket CLI/API/MCP mutation parity
+is claimed.
+
+| Interface or requirement                                                          | Current implementation                                                                                                                                                                                                  | Existing evidence and its limit                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Remaining V1 gate                                                                                                                                                      |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lnsatctl health --socket --session-token-stdin`                                  | Withdrawn; fixed `lnsatctl.unix_transport.withdrawn` before stdin or connection.                                                                                                                                        | [Withdrawal tests](../crates/lnsatd/tests/product_status_health_cli.rs) N: `legacy_health_and_status_fail_before_stdin_or_unix_connection`; no successful Unix transport P/R.                                                                                                                                                                                                                                                                                                      | A separately reviewed mutually authenticated replacement headless transport and CLI health behavior; browser/API success does not restore this command.                |
+| `lnsatctl status --socket --session-token-stdin`                                  | Withdrawn in both product-surface selections.                                                                                                                                                                           | Same withdrawal test covers both selectors and no secret/connection work; no Unix transport P/R.                                                                                                                                                                                                                                                                                                                                                                                   | Complete headless status over an accepted protected transport. The v2 status diagnostic shape alone is not a working CLI transport.                                    |
+| Non-null daemon `control_socket_path`                                             | Withdrawn before bind; absent/null stays schema-compatible.                                                                                                                                                             | N: `configured_control_socket_is_withdrawn_before_daemon_bind`; no listener P/R.                                                                                                                                                                                                                                                                                                                                                                                                   | New transport cannot inherit old socket authority.                                                                                                                     |
+| Numeric-loopback `GET`/`HEAD /v1/health` and `/v1/status`                         | Source-implemented authenticated browser/API reads with the existing session header pair and exact version/product selectors.                                                                                           | [Rust served tests](../crates/lnsatd/src/lib.rs) P: `authenticated_health_and_status_get_head_and_roles_match_fixtures`; N: `authenticated_product_reads_fail_closed_without_oracles_or_ambiguous_framing`, `tcp_duplicate_product_surface_selector_never_touches_durable_session_activity`. No live transport race claimed; these do not prove CLI delivery.                                                                                                                      | Headless consumer, operational runtime and supported-target evidence.                                                                                                  |
+| Local identity, sessions and distinct-human approval                              | Source-implemented loopback authentication/session lifecycle and approval request/decision contracts. Approval is not execution authorization.                                                                          | [Rust served tests](../crates/lnsatd/src/lib.rs) P: `served_session_issue_returns_non_ambient_headers_and_secret_free_evidence`, `served_approval_decision_is_distinct_human_authenticated_and_authority_closed`; N: `served_session_gateway_rejects_legacy_cookie_replay_for_reads_and_mutations`, `served_approval_decision_denies_scope_schema_transport_and_role_oracles`. These do not complete installation owner decisions or MFA/assurance.                                | Complete CLI control consumers, HCFG-5 authenticated exact-change decision and separately required assurance.                                                          |
+| Approval request/decision and audit exact-object reads                            | HCFG-4A source-implemented authenticated `GET`/`HEAD` for one exact rederived object. CLI approval/audit consumers are missing.                                                                                         | [Rust served tests](../crates/lnsatd/src/lib.rs) P: `served_hcfg4a_exact_reads_are_role_bound_closed_and_head_equivalent`; N: `served_hcfg4a_reads_deny_ambiguity_headers_and_oracles`. [HCFG-4A specification](architecture/headless-monitoring/spec.md) defines rederivation/redaction. No enumeration/watch P/R.                                                                                                                                                                | Complete selected evidence-family projections, protected CLI consumers and monitoring cutover.                                                                         |
+| Operations/authorization/attempt/reconciliation reads and controls                | The [existing eight Phase 8 routes](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md#runtime-composition-implementation-evidence) and experimental served proof exist. `lnsatctl` operation consumers are missing. | [Served fake-runtime tests](../crates/lnsatd/src/tests/phase11_served_fake_runtime.rs) P/N: `phase11_served_fake_runtime_executes_once_and_exact_replay_never_redispatches`; R: `phase11_served_fake_runtime_unknown_survives_restart_and_reconciles_without_runtime_retry`. [Store tests](../crates/lnsat-store/src/tests/phase8_runtime_composition.rs) R: `phase11_docker_concurrent_claim_has_one_creator_and_one_metadata_replay`. These are disposable/fake source fixtures. | Complete headless consumers/read-family coverage and separately authorized actual runtime proof.                                                                       |
+| Monitoring snapshot/list/search                                                   | Missing implementation; [HCFG-4B proposal](architecture/headless-monitoring-snapshot/intent.md) retains pending design acceptance.                                                                                      | No implemented snapshot P/N/R. Exact-ID reads cannot prove inventory or historical completeness.                                                                                                                                                                                                                                                                                                                                                                                   | Accept exact inventory/expiry/evidence-to-subject mapping, then independently implement and validate atomic snapshot/continuity boundaries.                            |
+| `lnsatctl watch` and versioned watch API                                          | Missing implementation; [HCFG-4C proposal](architecture/headless-monitoring-watch/intent.md) retains pending acceptance.                                                                                                | No watch P/N/R. One-object CLI JSONL is not an event stream.                                                                                                                                                                                                                                                                                                                                                                                                                       | Server-sourced ordering, cursor/resume, retention/backpressure, gaps/disconnect and complete family coverage plus CLI delivery.                                        |
+| Configuration permissions, installation emergency disablement and stop/revocation | Missing protected installation/generation/epoch control and CLI commands. Existing session revocation and authorization cancellation/revocation remain separate source behavior.                                        | No new installation control P/N/R. Existing [authorization tests](../crates/lnsat-store/src/tests/phase7_local_authorization.rs) R: `phase7_local_authorization_terminal_transition_races_redemption_atomically`, `phase7_local_authorization_restart_read_expiry_and_concurrency_hold`. These cannot prove HCFG-6 installation stop/revocation vs use.                                                                                                                            | Durable stop across restart/reload, one-use release, invalidating-writer serialization, narrowing/in-flight uncertainty, stale/concurrent updates and rollback denial. |
+
+#### Recovery, bootstrap and operator contracts
+
+| Exact command or contract                                                                 | Current implementation                                                                                                                                                                                                  | Existing positive/negative/race evidence                                                                                                                                                                                                                                                                                                                      | Remaining V1 gate                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lnsatctl recovery inspect --database`                                                    | Source-implemented read-only inspection; no repair or activation.                                                                                                                                                       | O P: `operator_recovery_inspection_is_read_only_and_does_not_reflect_path`; N: stable usage/path denials; R: none claimed by that CLI test.                                                                                                                                                                                                                   | Selected-target damaged-state/recovery lifecycle and authenticated headless-state integration.                                                                                 |
+| `lnsatctl backup --database --destination`                                                | Source-implemented non-root offline backup under the daemon-shared exclusive lease.                                                                                                                                     | O P/N: `offline_backup_and_inert_restore_create_fresh_verified_files_without_path_reflection`; [store tests](../crates/lnsat-store/src/lib.rs) N: `backup_restore_paths_fail_closed_without_clobbering`, `database_lease_is_owner_only_exclusive_and_symlink_refusing`; R: `interrupted_recovery_temp_and_publish_race_leave_no_partial_target`.              | Selected-target lifecycle and interruption/recovery evidence; no online backup or API/MCP/UI route.                                                                            |
+| `lnsatctl restore --backup --destination`                                                 | Source-implemented fresh inert restore; cannot replace or activate a live store.                                                                                                                                        | Same O P/N test; [store tests](../crates/lnsat-store/src/lib.rs) P: `online_backup_and_inert_restore_preserve_complete_wal_chain`; N: `backup_restore_files_are_owner_only_and_symlinks_are_refused`; R: preceding interruption/publish-race test. No active-generation replay proof is claimed.                                                              | Selected-target lifecycle and later protected re-establishment of headless authority; restore never silently restores broader/revoked authority.                               |
+| `lnsatctl recovery owner --database --expected-owner --recovered-at --new-password-stdin` | Source-implemented offline owner credential/audit change and all-owner-session revocation after quiescent preflight.                                                                                                    | O P/N: `offline_owner_recovery_reads_password_only_from_stdin_and_revokes_sessions`; [store tests](../crates/lnsat-store/src/lib.rs) N/R: `offline_owner_recovery_rejects_scope_reuse_and_nonmonotonic_input_atomically`, `offline_owner_recovery_rolls_back_credential_and_audit_on_revocation_failure`.                                                     | Selected-target recovery proof; this source behavior does not implement HCFG initial installation or served recovery.                                                          |
+| Initial host-owner bootstrap and HCFG installation                                        | Accepted HCFG-5B design; B1/B2/B3B and journal/native candidates are private prerequisites. B3A readiness was withdrawn. Initial atomic headless installation and activation are missing.                               | [Bootstrap source record](#hcfg-5b-b1-fresh-store-prerequisite) and following canonical B2/B3B sections name focused positive/denial/custody tests. B4/B5/B6 remain proposed state/schema/selected-write contracts, not registered migration or initializer evidence.                                                                                         | Real nonempty binding/native feasibility, selected-write/schema review, atomic root/generation/audit/current-pointer binding, owner proof and interruption/race/restore tests. |
+| Version negotiation, output and error/exit families                                       | Source-implemented exact Gateway `lnsat.contracts.v1_0`, exact product v1/v2 selection, `lnsat.cli.output.v1` and text/JSON/JSONL/YAML diagnostics; no range/fallback. Exit families are 0, 1, 2, 3, 4, 5, 6, 7 and 70. | O P/N: `three_product_manifest_selectors_are_exact_and_legacy_compatible`, `shared_output_formats_preserve_default_json_and_exact_position`, `operator_invalid_arguments_use_stable_usage_family`; [`product_output.rs`](../crates/lnsatd/src/product_output.rs) renders the closed contract. No event-stream or missing-command outcome coverage is claimed. | Preserve parity and add exact output/error/exit coverage when each missing command is implemented; selected artifacts must expose pin-verifiable identity.                     |
+
+#### Dispatcher, integration and runtime/lifecycle gates
+
+| Interface or V1 exit requirement                                             | Current implementation                                                                                                                                                                                                    | Existing evidence and its limit                                                                                                                                                                                                                                                                                                                                                                          | Remaining gate                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lnsat packet validate`                                                      | Source-implemented pure packet validation in [`index.ts`](../packages/cli/src/index.ts).                                                                                                                                  | [`cli.test.ts`](../packages/cli/test/cli.test.ts) P valid structured output; N invalid schema, input/JSON/usage failure; no mutation R.                                                                                                                                                                                                                                                                  | Preserve contracts and selected artifact parity; no authority from validation.                                                                                                                                         |
+| `lnsat packet hash`                                                          | Source-implemented canonical packet SHA-256 over validated input.                                                                                                                                                         | Same CLI suite P canonical hash, N invalid packet/input; no mutation R.                                                                                                                                                                                                                                                                                                                                  | Artifact/component identity remains separate from a packet digest.                                                                                                                                                     |
+| `lnsat packet inspect`                                                       | Source-implemented read-only Gateway-backed inspection with CLI/API/MCP parity.                                                                                                                                           | [`transport-neutral-packet-inspection.test.ts`](../packages/cli/test/transport-neutral-packet-inspection.test.ts) P: `matches API and MCP behavior for valid packet inspection`; N: `rejects invalid packets identically and avoids raw secret echo`; no mutation R.                                                                                                                                     | Parity covers this contract only; it grants no execution or broad headless-control parity.                                                                                                                             |
+| Manifest, help/version, completion and man source                            | Source-implemented for the three product commands; unpublished `0.1.0`, target-neutral source manifests.                                                                                                                  | O P/N: `three_product_commands_expose_same_source_manifest`, exact-selector test, `zsh_completion_per_binary_exact_surfaces`; [TS product-surface tests](../packages/cli/test/product-surface.test.ts) cover completion/man sources and unsupported selectors/shells.                                                                                                                                    | Installed files, service lifecycle and immutable selected-target identity; generated source text is not an installer.                                                                                                  |
+| `lnsatd --config` or explicit direct arguments                               | Source-implemented bounded daemon configuration; numeric-loopback and explicit source-local hosting seams.                                                                                                                | C P/N: `explicit_config_and_legacy_direct_arguments_are_distinct_compatible_modes`, closed/value/file-boundary tests; no service installation/start proof.                                                                                                                                                                                                                                               | Complete headless protected lifecycle and selected-target daemon/service evidence.                                                                                                                                     |
+| Embeddable runtime and stable integration API                                | Rust trusted-core/store primitives, exact Gateway contracts and experimental SDK/MCP/A2A interfaces exist. Complete integrated embeddable headless authority lifecycle is missing.                                        | Packet-inspection parity, CLI-only [recovery parity](../fixtures/contracts/phase10-recovery-parity-v1.json), Phase 7 conformance and existing served Phase 8 fixtures cover their exact boundaries only.                                                                                                                                                                                                 | Authenticated configuration/owner/native/store/release integration and full embeddable lifecycle conformance. Offline exceptions never gain agent/API/MCP/UI routes.                                                   |
+| Genuine native/OS enforcement and unsupported controls                       | S1, journal custody, ACL sampler and mountinfo byte decoder are inert prerequisites. A private procfs/held-mount reader source candidate exists; genuine Linux reader evidence and the full native freeze remain missing. | Synthetic byte/ACL tests, private Linux file/descriptor fixtures and unsupported-platform denials prove their named scopes; no live mount/ACL absence/idmapping/startup permit is proved.                                                                                                                                                                                                                | [Separate reader contract and full freeze gates](architecture/headless-resource-enforcement/plan.md#next-genuine-procfs-reader-contract-gate), captured pins and later actual grant/use/substitution/revocation proof. |
+| Private Phase 11 durable pre-supervisor verification                         | Source-implemented store-owned authenticated fresh claim reread and non-replay handle; not a runnable proof driver.                                                                                                       | [Store tests](../crates/lnsat-store/src/tests/phase8_runtime_composition.rs) P: `phase11_docker_pre_supervisor_re_reads_authenticated_durable_claim`; N: `phase11_docker_pre_supervisor_replay_cannot_get_handle`, `phase11_docker_pre_supervisor_wrong_csrf_becomes_unknown`, `phase11_docker_pre_supervisor_stale_claim_stays_unknown`; R: no runnable-driver race claimed. These are source fixtures. | Runnable driver wiring, exact physical/executable identities and separately authorized runtime proof remain missing.                                                                                                   |
+| Phase 11 actual disposable Docker workflow and cleanup                       | Missing real runtime proof and runnable durable-admission driver; existing fake/host-Git fixtures are experimental source evidence.                                                                                       | [Operator packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md) is unchanged: `PREPARED_SOURCE_ONLY_NOT_EXECUTION_READY`; all live identities remain `UNSET_BLOCKING`.                                                                                                                                                                                                      | Separate exact runtime authorization, all eight positive cases, required rejections, durable ambiguity, cleanup/redaction/custody and independent runtime review.                                                      |
+| Phase 13 RC/security/reliability and Phase 14 selected core-target lifecycle | Missing RC completion, selected package rows and artifacts; no supported target or release.                                                                                                                               | Existing source CI/history scans are baseline evidence only, not reproducibility, signatures, SBOM/provenance, installation/update/rollback/revocation or certification.                                                                                                                                                                                                                                 | Required product/runtime gates, coherent RC freeze and separately authorized candidate build/proof/publication for each selected row.                                                                                  |
+
+The next native slice follows the
+[exact private-reader precode PASS](#stage-a-self-process-procfs-reader-contract).
+The named inert source may implement filesystem-origin checks, finite link
+exceptions, fdinfo/EOF grammar, retained descriptor custody and deadline-based
+result acceptance. It cannot promise a hard native-return deadline. Actual
+genuine positive and unfinished-operation results remain candidate-completion
+gates. Full native freeze additionally needs coherent
+source/wire/daemon/store/revocation review, captured artifact pins/provenance
+and a feasible non-root positive recipe.
+Later integration and actual activation/runtime decisions remain separate.
+LNSAT stays neutral and standalone; optional UI, hardware attestation and
+unselected package rows do not become new V1 blockers.
+
 ### HCFG-2: Redacted explicit configuration comparison
 
 Canonical packet record: this section. Accepted scope is bounded source delivery
@@ -203,8 +2606,10 @@ text, JSON, JSONL, and YAML. Frozen v1 behavior and configuration schema remain
 unchanged. No storage, listener, process, mutation, activation, or action
 authority opens. Output does not compute effective authority, prove resource
 identity or OS enforcement, or provide an applicable configuration export.
-Layer composition, effective/export, monitoring, and protected control remain
-pending under the [ordered headless sequence](PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order).
+At the original HCFG-2 checkpoint, composition and effective/export were still
+pending. HCFG-3A/3B above now implement their bounded source diagnostics;
+verified effective authority, monitoring and protected control remain pending
+under the [ordered headless sequence](PRODUCT_BUILD_SEQUENCE.md#headless-source-packet-order).
 Rollback is a normal reviewed source revert; there is no persistent migration.
 
 ### Existing runtime and product foundations
@@ -411,10 +2816,42 @@ production listener, state-changing tool, real IdP/SPIRE/HSM/KMS integration,
 signer activation, real key/trust material, execution path, or production
 support exists.
 
-Dependency remediation pins Vitest 4.1.11, Next.js 16.3.4, Hono 4.13.5,
-and Sharp 0.35.4. The npm audit gate rejects every reported vulnerability;
+Dependency remediation pins Vitest 4.1.11, Next.js 16.3.8, Hono 4.13.7,
+and Sharp 0.35.4. The 2026-09-30 source maintenance also constrains fast-uri
+majors 3 and 4 separately to 3.1.8 and 4.2.1, ip-address to 10.7.2, and undici
+major 7 to 7.30.0. These revisions address the newly reported dependency
+advisories without introducing a major-version migration. The npm audit gate rejects every reported vulnerability;
 no advisory exception remains. This is source dependency maintenance and
 opens no runtime, deployment, package, or supported-release claim.
+
+The pure-comparison draft's first exact-head CI run caught additional Fastify
+and Hono advisories in the live npm audit. Its separate maintenance follow-up
+pins Fastify 5.12.5 and Hono 4.13.7 within their existing major versions. The
+Fastify patch preserves the same transitive requirements; the lock records the
+verified registry tarball identity and integrity. No audit suppression, model
+contract change, or runtime authority follows from these patches. Exact-lock
+installation, full `npm run source:check`, live dependency/signature audits with
+zero vulnerabilities and no exceptions, offline npm/crates.io/PyPI advisory
+scanning, and worktree secret scanning passed. Fresh independent maintenance
+review found no remaining findings. Offline scanning does not establish Python
+transitive coverage or runtime exploitability. The draft remains unmerged; exact
+published-head CI is tracked on its pull request.
+
+The protected-main integration run on 2026-10-06 exposed three further live
+advisories. Its bounded maintenance follow-up pins `smol-toml` to `1.9.0`
+and advances the existing lockfile entries for `proxy-addr` to `2.0.8` and
+`source-map-js` to `1.2.2`. These are the patched versions for
+[GHSA-r4xh-jqrq-34v2](https://github.com/advisories/GHSA-r4xh-jqrq-34v2),
+[GHSA-jqcg-44mw-7w3h](https://github.com/advisories/GHSA-jqcg-44mw-7w3h), and
+[GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q).
+Their dependency requirements, Node engine ranges, and licenses are unchanged;
+tarball URLs and integrity values match the registry metadata. The revised
+lockfile audit reports zero vulnerabilities, and offline lockfile-only npm
+resolution succeeds without installing package code. Exact installed-dependency
+signatures, the full source suite, and protected merge checks remain hosted-CI
+gates. Independent source and direct-child review are recorded under PHR-0043.
+No audit exception, application-source edit, runtime proof, or release
+authority follows from this maintenance.
 
 See [MCP interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md)
 and [Phase 8 adapter authority conformance](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).

@@ -1,0 +1,47 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0028-independent-implementation-review-98adab31",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-retained-custody-accepted-investigation"],
+  "base_revision": "f1510a0e2241bd61c170c244b2dee6b6112e0845",
+  "reviewed_revision": "98adab3172f1c2f660335b5378b2ff973bb50a3c",
+  "reviewed_tree_oid": "12baeb82cbcc630567965cb5240a646b8da8bb3c",
+  "diff_sha256": "sha256:8422cdcf07ff2a565d31c3c7b562f33cc54b2188d98f1440c9839dad56e098ba",
+  "protected_files": [
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:be513c766b26b23a7ec7f778d4275d30ca0708093f0620be8329d1769582ea53"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:761f1e52f0c63b9d3cb4dc935e44bbfca8d31ca4c21f76a695fe0327a8a0e611"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:245ba48c30619a2cb7d2ab34dd089d27d19d81c4b32197253fe55405bcef28b8"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:50e8c916b8a66c39fada7c381aee9dea1a457218747e29de21f9a8a69b0996f8"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:0a9190f1581183a9a0edd88b49e9670aefa588f24b06c756844c746f8df6b088"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:ade6771c616ba0ea82a7f2804dffd65f1ab834a92d25fc2a308d582a0c826cbb"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/procfs_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of exact documentation recording human acceptance for retained-worker contract and feasibility investigation, proposed construction/custody/linearization/resource accounting, pinned Rust research, canonical status and separate runtime gates. Documentation approval only: genuine native reader precode remains NOT_READY, with construction, synchronization, native fixture, resource and crash-bridge obligations unresolved. Reviewed exact source and direct-child history bindings; no worker source, native execution, integration, support or release authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

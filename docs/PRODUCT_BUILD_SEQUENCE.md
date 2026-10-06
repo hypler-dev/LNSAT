@@ -149,8 +149,27 @@ not this ordering record.
    owner-proof foundations; never create a second authority path.
 5. **HCFG-6 — enforcement and headless conformance.** Bind observed OS controls
    to stable capabilities, deny unsupported activation, test target substitution
-   and revocation races, and close source conformance. Actual runtime and selected
-   target proof remain separately authorized Phase 11/14 gates.
+   and revocation races, and close source conformance. The accepted source-order
+   amendment permits inert private candidates. The journal codec and Linux
+   file-custody source now exist; Project Status records their exact source
+   validation and review. The following private Stage-A candidate covers strict Linux
+   POSIX ACL parsing plus two finite observations from an already held readable
+   regular-file or directory descriptor, using a fixed buffer and no named-path
+   fallback. Its parser vectors are synthetic; bounded descriptor reads have exact-head
+   Linux source evidence. Associated-path and ancestry binding, selected
+   socket/SQLite/O_PATH custody, kernel/LSM classification and present-ACL proof
+   remain future evidence. `ENODATA` stays unclassified and
+   supplies no mode fallback, effective access, or authority. The following
+   private mountinfo candidate is byte-only: it preserves raw non-UTF-8 data and
+   bounds rows, options, escapes and optional tags before any future reader is
+   considered. It performs no procfs or other I/O, path or descriptor work,
+   mount/kernel/namespace/idmapping/ACL-absence classification, or authority
+   proof. A genuine reader later needs separately reviewed filesystem origin,
+   held-root association, no-follow lookup, drift checks and Linux evidence.
+   Native observation, complete feasibility, profile freeze and integration
+   remain unfinished.
+   Actual runtime and selected target proof remain separately authorized
+   Phase 11/14 gates.
 
 This sequence does not preapprove the later mutation contracts or satisfy the
 headless release gate. Each source packet requires focused validation and fresh
@@ -163,7 +182,11 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 1. ADR-0006 makes portable signed approval optional for local v1. Private keys
    remain user controlled outside LNSAT. Core schema v16 plus corrective v17
    serve local authorization; optional signed-evidence persistence belongs to
-   separately approved v18 work.
+   separately approved signed-evidence work. The historical v18 candidate is
+   unregistered test-only SQL; it is not the proposed mandatory headless v18
+   layout. Before headless migration registration, reconcile schema/truth
+   records without opening optional signing. A later optional proposal must
+   target the then-current schema rather than importing that historical layout.
 2. Phase 7 source packets through P7-X1 are complete. They prove the authority
    chain and disposable Git consequence in source tests, but no served/public
    execution-authorization or adapter mutation route, runtime dispatch,
@@ -242,6 +265,12 @@ support profile makes it required.
    migration, recovery, update, rollback, revocation, dependency, secret,
    fuzzing, and known-limitation gates. Freeze one exact RC source identity,
    version, changelog, and build recipe.
+   The owner's enterprise/government security direction adds explicit
+   identity assurance, crypto/key evidence, audit/privacy and supply-chain
+   acceptance requirements; see the
+   [security requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md).
+   Jurisdiction/deployment tailoring is pending. No certification or government
+   deployment claim follows from source conformance or a profile label.
 7. **Phase 14 candidate-build authorization.** Select one or two exact
    OS/architecture core-target rows. Build immutable canonical candidate components
    once per selected target. Candidate-build
@@ -258,6 +287,159 @@ support profile makes it required.
    signature verification, tag and GitHub Release creation, upload,
    publication, and stable/latest promotion. Publication never follows from a
    source merge or candidate build automatically.
+
+## End-to-End Engine Delivery Milestones
+
+The next product outcome is one complete protected workflow:
+**owner setup -> configure access -> request -> approve -> bounded execution ->
+durable receipt -> restart/recovery**. An embedding product must consume the
+engine's versioned contracts and evidence without acquiring a second approval,
+resource-access or execution authority. Keep consumer-specific workflows and UI
+outside the neutral engine.
+
+These milestones organize the accepted V1 scope into deliverable outcomes; they
+do not replace the phase order or create a second completion ledger.
+[Project Status](PROJECT_STATUS.md#v1-command-and-contract-completion-gates)
+owns implemented, experimental, withdrawn and missing behavior for each command
+and contract. Its [native-reader gate](PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+owns the current feasibility blocker. Each milestone needs its own exact source
+scope, positive and denial evidence, and independent review. Design acceptance,
+source completion, merge, runtime proof and support remain separate.
+
+### 1. Prove the resource boundary
+
+Complete genuine native observation, resource identity and effective-enforcement
+classification, then freeze the coherent native/wire/daemon/store/revocation
+contract. Reuse the reviewed owner-binding, journal, ACL, mountinfo and fdinfo
+prerequisites; none is a replacement for current native evidence. Unsupported,
+substituted, stale or unverifiable resources must deny activation and use.
+
+The genuine reader's exact retained-worker contract has passed independent
+whole-reader precode review under the accepted Stage-A order;
+[Project Status](PROJECT_STATUS.md#stage-a-self-process-procfs-reader-contract)
+records the exact decision and current source evidence. Implement the named
+private candidate, then obtain actual genuine positive and unfinished-operation
+results before claiming candidate completion. This model cannot promise
+five-second native completion or finished cleanup. Canonical durable recovery
+and the complete native freeze remain integration requirements.
+
+The accepted [Stage-A amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+allows independently reviewed inert private candidates before final artifact
+pins. It does not permit behavioral integration with unset pins or a partial
+freeze. Exit requires the complete reviewed source contract, actual captured
+pins/provenance and a feasible non-root positive recipe; capture and native
+runtime experiments retain their separate authorization gates.
+
+### 2. Complete protected installation and configuration
+
+Reuse existing local owner proof, credential/session foundations, pure
+composition/comparison and the accepted
+[bootstrap contract](architecture/headless-local-bootstrap/spec.md). Complete
+selected writable-store custody and atomic initial installation/generation,
+then protected configuration change, epoch/revocation and installation-wide
+stop. Every widening decision must bind the authenticated human, exact change
+and current state; configuration inspection cannot become activation authority.
+
+Exit evidence must cover a nonempty initial configuration, interrupted or
+replayed bootstrap, owner/session substitution, stale and concurrent changes,
+stop racing admission/use, restart-preserved revocation, linked durable audit
+and rollback that cannot restore broader or revoked authority. SQL18, writable
+store integration, initializer and activation retain their exact precode and
+implementation gates. Existing inert backup/restore and owner-recovery paths
+are reused; restore must not activate an installation.
+
+### 3. Finish the headless integration contract
+
+Complete required API and `lnsatctl` consumers for configuration, monitoring,
+approvals, operations, audit, recovery and emergency control against the
+canonical per-command gates. Reuse authenticated exact-ID reads and existing
+approval/operation contracts. Snapshot/list/search and versioned watch need
+their own accepted contracts before implementation. Withdrawn Unix bearer
+health/status commands remain withdrawn; no replacement transport is implied.
+
+Exit evidence must show compatible version selection, authentication/CSRF and
+permission checks, redaction, stable errors/exit codes, exact evidence identity,
+and the accepted watch ordering/resume/retention/backpressure/disconnect rules.
+The embedding lifecycle and reference daemon must preserve the same authority
+boundary. API failure or disconnection cannot imply success, non-execution or
+permission to retry. Graphical management is not required for this milestone.
+
+The accepted [developer integration requirement](PROJECT_STATUS.md#v1-developer-integration-and-agent-development-pack)
+also belongs to this milestone. Maintain engine-owned API/SDK reference,
+versioned schemas, exact error and feedback semantics, and the
+[developer and agent integration pack](sdk/developer-pack.md) alongside source.
+Each implemented interface needs working examples, compatibility and negative
+conformance, safe retry/reconciliation guidance, and clear maturity labels.
+Rangoon and other consumers use the same contracts; client libraries cannot
+invent authority, retry consequences automatically, hide unknown outcomes or
+turn diagnostic declarations into active permissions. Freeze the selected
+presentation, transport, identity and protected readback contracts before
+mutation-management integration. Package publication retains its separate gate.
+
+### 4. Prove the integrated workflow
+
+Connect the completed setup/control/enforcement lifecycle to the existing
+request, distinct-human approval, one-use claim, bounded adapter, receipt and
+reconciliation chain. Preserve the source proof in
+`crates/lnsat-store/src/tests/phase8_runtime_composition.rs` and
+`crates/lnsatd/src/tests/phase11_served_fake_runtime.rs`: exact replay does not
+redispatch; post-consequence unknown survives restart and reconciles by
+inspection; an unchanged target stays unknown without an invented receipt.
+These are reusable regression requirements, not real Docker evidence.
+
+Exit requires a complete workflow through versioned headless interfaces with
+same-attempt identity binding, concurrency and disconnect coverage, durable
+restart/recovery, stop/revocation races and honest cleanup/unknown reporting.
+The [Phase 11 operator packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+owns actual runtime proof and its separate execution approval. Its existing
+locked profile proves only its own claims; the stronger HCFG-6 profile also
+needs its own exact approved proof. Source integration cannot close either gate.
+
+### 5. Freeze a release candidate
+
+Close Phase 13 reliability, security, migration/recovery, update/rollback,
+revocation, dependency, secret and fuzzing evidence for the completed workflow.
+Preserve explicit limitations and select the applicable assurance requirements
+from the [security direction](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md).
+Exit is one independently reviewed RC source identity, version, changelog and
+build recipe with required findings resolved. It supplies no certification,
+supported package or production authority.
+
+### 6. Prove one selected package lifecycle
+
+Select exact core-target rows, then obtain candidate-build authorization and
+prove immutable artifact identity, reproducibility, provenance/SBOM, signature
+verification, non-root setup, compatibility, upgrade, backup/restore,
+rollback and revocation in the required disposable environments. Changed bytes
+require affected proof to be repeated. Only then seek separate final signing
+and publication authority. A consumer can evaluate source contracts earlier;
+it can rely on a supported engine only within the proven package/target scope.
+
+### Next bounded delivery work
+
+The private reader source candidate is implemented; actual Linux compilation,
+genuine positive and unfinished-operation evidence remain outstanding. Do not
+reopen the already accepted owner decision. Actual native results and the complete
+recovery/native freeze remain distinct later gates.
+In parallel, retain exact existing
+source/test mappings for the protected workflow and prepare only independently
+reviewed inert prerequisites allowed by Stage A. The private profile and
+context/challenge codecs have source validation and exact attestations. The
+private Version decoder has sixteen focused test groups, full host-source
+validation and exact source/direct-child attestations under PHR-0037. The next
+bounded candidate is the
+[private Info decoder contract](PROJECT_STATUS.md#stage-a-private-daemon-info-decoder-contract).
+It separates retained comparison claims from typed discarded data, closes exact
+presence/error/boundary rules and corrects the named pinned source references.
+Fresh independent precode review passed. Its private source candidate and
+twenty-two synthetic test groups pass focused and full host-source validation.
+Exact source/direct-child review bindings remain separate under PHR-0038. No decoder opens
+CLI setup or replaces native evidence.
+Do not restart completed
+prerequisites, implement fake success or treat an always-deny implementation as
+the required positive case. Full freeze, integration, real runtime, RC and
+package proof each remain observable exits. Counting source packets or passing
+tests alone cannot produce an honest V1 completion percentage or delivery date.
 
 ## Current Next Lane
 

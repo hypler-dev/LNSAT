@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Routine review uses repository-native checks and fresh independent reviewers.
+reviews:
+  auto_review:
+    enabled: false
+    auto_incremental_review: false
+    drafts: false
+    labels: []
+    description_keyword: ""
+  request_changes_workflow: false
+  high_level_summary: false
+  review_status: false
+  review_progress: false
+  commit_status: false
+chat:
+  auto_reply: false

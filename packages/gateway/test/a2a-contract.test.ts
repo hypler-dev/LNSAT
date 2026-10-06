@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   inspectA2aAgentCard,
   mapA2aMessageToGatewayOperation,
@@ -19,6 +19,42 @@ const fixturePath = join(
 );
 
 describe("A2A 1.0 transport-neutral authority mapping", () => {
+  it.each(["0:0:0:0:0:0:0:1", "0:0:0:0:0:ffff:0a00:0001", "2001:0db8:0:0:0:0:0:1"])(
+    "blocks non-public IPv6 %s before card verification and push use",
+    async (address) => {
+      const fixture = await readFixture();
+      const verify = vi.fn(async () => {
+        throw new Error("blocked target must not reach the verifier");
+      });
+      expect(
+        await inspectA2aAgentCard({
+          card: fixture.agent_card,
+          resolved_ips: [address],
+          redirect_chain: [],
+          now,
+          verifier: { verify },
+        }),
+      ).toEqual({
+        ok: false,
+        error_code: "a2a.card.endpoint_blocked",
+        action_authorized: false,
+        side_effects: [],
+      });
+      expect(verify).not.toHaveBeenCalled();
+      expect(
+        validateA2aPushTarget({
+          url: "https://push.example.test/a2a/events",
+          resolved_ips: [address],
+          redirect_chain: [],
+        }),
+      ).toEqual({
+        ok: false,
+        error_code: "gateway.network.ssrf_blocked",
+        side_effects: [],
+      });
+    },
+  );
+
   it("verifies active Agent Card identity without granting action authority", async () => {
     const fixture = await readFixture();
     const inspection = await inspect(fixture.agent_card);

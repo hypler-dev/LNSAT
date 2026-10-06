@@ -77,6 +77,27 @@ served/public Phase 7 execution-authorization, capability-redemption, or adapter
 mutation route, supported runtime, production target, or publication authority
 exists.
 
+## Private headless preparation candidate
+
+The Stage-A `headless_preparation` module has a strict private journal codec
+and Linux filesystem-custody child. Custody exclusively borrows an actual
+selected read-only store, retains its parent/lease lifetime, uses descriptor-
+relative no-follow opens, and persists bounded no-clobber revisions with file
+and directory flushes. Complete stat/chain baselines reject observed drift;
+errors poison the guard without repair or retry. macOS compiles shared logic
+but rejects construction; there is no weaker platform backend.
+
+These modules have no active caller or public export. Journal fields remain
+untrusted syntax assertions, including `cleanup_verified` and `bound`.
+Nothing here proves cleanup, performs SQL writes/migration 18, initializes an
+installation or grants authority. Source fixtures are separate from full
+native/profile feasibility and actual runtime proof. The
+[current implementation record](../../docs/PROJECT_STATUS.md#stage-a-private-linux-journal-custody-candidate)
+and [exact private contract](../../docs/architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-private-linux-journal-custody-contract)
+own evidence and the remaining integration gates.
+
+## Historical optional signed-evidence schema candidate
+
 Phase 7d-A1/A2/A3/A4/A5/A6/A7 adds only one unregistered test fixture for
 candidate schema v18. It proposes collision-free authority order, immutable
 Ed25519 public material, append-only key-status history, immutable nonce

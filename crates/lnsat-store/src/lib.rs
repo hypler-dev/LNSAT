@@ -33,11 +33,24 @@ use std::fs::{self, File, OpenOptions, TryLockError, symlink_metadata};
 use std::io::{self, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
+use zeroize::Zeroizing;
 
+mod headless_bootstrap;
+#[allow(
+    dead_code,
+    reason = "Reviewed Stage-A candidate remains disconnected until complete freeze and integration"
+)]
+mod headless_preparation;
+mod owner_bootstrap;
+mod owner_decision_credential;
 mod phase7_consumption;
 mod phase7_git_adapter;
 mod phase7_nonce;
 mod phase7_persistence;
+mod selected_store;
+
+pub use headless_bootstrap::{HeadlessBootstrapStoreErrorV1, HeadlessBootstrapStoreInspectionV1};
+pub use selected_store::SelectedLocalStoreErrorV1;
 
 pub use phase7_consumption::{
     PHASE7_AUTHORIZATION_TTL_SECONDS_V1, PHASE7_CAPABILITY_BYTES_V1,
@@ -2275,6 +2288,9 @@ pub struct SqliteStore {
     database_path: PathBuf,
     connection: Connection,
     authentication_dummy_verifier: String,
+    owner_decision_credential_scope: owner_decision_credential::OwnerDecisionCredentialScopeV1,
+    // Declaration-order drop closes SQLite before releasing custody/lease.
+    selected_store_custody: Option<selected_store::SelectedStoreCustodyV1>,
 }
 
 /// Acquires the process-lifetime exclusive database lease required by
@@ -2316,6 +2332,47 @@ pub fn acquire_offline_owner_recovery_authority_v1(
 }
 
 impl SqliteStore {
+    /// Opens one explicitly selected, existing schema-17 store read-only while
+    /// retaining observed process/file/parent custody and the shared lease.
+    ///
+    /// This never migrates or initializes a store. Main `SQLite` descriptor
+    /// metadata is observed in place without an extra database handle. This
+    /// does not prove artifact identity, effective ACL isolation, resource
+    /// enforcement, or action authority. Ordinary `open` behavior is unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Denies unsupported platforms, root/set-ID processes, noncanonical or
+    /// insecure selections, lease contention, custody drift, and unverifiable
+    /// schema/posture. Errors contain no caller path or database content.
+    pub fn open_selected_local_store_inspection_v1(
+        path: impl AsRef<Path>,
+    ) -> Result<Self, SelectedLocalStoreErrorV1> {
+        selected_store::open_inspection(path.as_ref())
+    }
+
+    /// Rechecks the retained process, selected-file, directory, and lease
+    /// custody. This diagnostic never grants initialization or action authority.
+    ///
+    /// # Errors
+    ///
+    /// Denies ordinary unbound stores and changed or unverifiable custody.
+    pub fn verify_selected_local_store_custody_v1(&self) -> Result<(), SelectedLocalStoreErrorV1> {
+        let custody = self
+            .selected_store_custody
+            .as_ref()
+            .ok_or(SelectedLocalStoreErrorV1::UnboundStore)?;
+        custody.verify_connection(&self.connection)?;
+        if self.connection.path() != self.database_path.to_str()
+            || !self
+                .connection
+                .is_readonly(rusqlite::MAIN_DB)
+                .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?
+        {
+            return Err(SelectedLocalStoreErrorV1::CustodyChanged);
+        }
+        Ok(())
+    }
     /// Opens or atomically bootstraps one explicit durable database.
     ///
     /// # Errors
@@ -2336,6 +2393,9 @@ impl SqliteStore {
             database_path: database_path.to_path_buf(),
             connection,
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+            owner_decision_credential_scope:
+                crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+            selected_store_custody: None,
         };
         store.apply_pending_migrations()?;
         store.verify_schema()?;
@@ -2395,16 +2455,7 @@ impl SqliteStore {
         &mut self,
         input: &LocalOwnerBootstrapInputV1<'_>,
     ) -> Result<LocalOwnerBootstrapRecordV1, LocalIdentityStoreErrorV1> {
-        validate_local_owner_bootstrap_input_v1(input)?;
-        let verifier = create_local_password_verifier_v1(input.password).map_err(|error| {
-            if error == LocalPasswordErrorV1::InvalidPassword {
-                LocalIdentityStoreErrorV1::InvalidInput
-            } else {
-                LocalIdentityStoreErrorV1::PersistenceFailed
-            }
-        })?;
-        let credential_id =
-            local_password_credential_id_v1(input.identity_ref, 1, &verifier, input.created_at);
+        let prepared = owner_bootstrap::prepare_local_owner_bootstrap_v1(input)?;
 
         self.verify_schema()
             .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
@@ -2412,78 +2463,7 @@ impl SqliteStore {
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        let (identity_count, owner_count) = transaction
-            .query_row(
-                "SELECT count(*),
-                        coalesce(sum(CASE WHEN role = 'owner' THEN 1 ELSE 0 END), 0)
-                 FROM lnsat_local_identities",
-                [],
-                |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
-            )
-            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        if owner_count > 0 {
-            let owner_ref = transaction
-                .query_row(
-                    "SELECT identity_ref
-                     FROM lnsat_local_identities
-                     WHERE role = 'owner'",
-                    [],
-                    |row| row.get::<_, String>(0),
-                )
-                .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
-            select_local_owner_bootstrap_record_v1(&transaction, &owner_ref)?
-                .ok_or(LocalIdentityStoreErrorV1::EvidenceDrift)?;
-            return Err(LocalIdentityStoreErrorV1::OwnerAlreadyBootstrapped);
-        }
-        if identity_count != 0 {
-            return Err(LocalIdentityStoreErrorV1::EvidenceDrift);
-        }
-
-        transaction
-            .execute(
-                "INSERT INTO lnsat_local_identities (
-                    identity_ref, display_name, role, owner_singleton,
-                    status, created_at
-                 ) VALUES (?1, ?2, 'owner', 1, 'active', ?3)",
-                params![input.identity_ref, input.display_name, input.created_at],
-            )
-            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        transaction
-            .execute(
-                "INSERT INTO lnsat_local_password_credentials (
-                    credential_id, identity_ref, credential_version,
-                    verifier_profile, password_verifier, created_at
-                ) VALUES (?1, ?2, 1, ?3, ?4, ?5)",
-                params![
-                    &credential_id,
-                    input.identity_ref,
-                    LOCAL_PASSWORD_PROFILE_V1,
-                    verifier,
-                    input.created_at
-                ],
-            )
-            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-        insert_local_identity_event_v1(
-            &transaction,
-            input.identity_ref,
-            LocalIdentityEventKindV1::OwnerBootstrapped,
-            None,
-            Some(1),
-            &credential_id,
-            input.created_at,
-        )?;
-
-        let record = select_local_owner_bootstrap_record_v1(&transaction, input.identity_ref)?
-            .ok_or(LocalIdentityStoreErrorV1::EvidenceDrift)?;
-        if record.identity.display_name != input.display_name
-            || record.identity.created_at != input.created_at
-            || record.identity.role != LocalIdentityRoleV1::Owner
-            || record.identity.status != LocalIdentityStatusV1::Active
-            || record.credential_profile != LOCAL_PASSWORD_PROFILE_V1
-            || record.credential_version != 1
-        {
-            return Err(LocalIdentityStoreErrorV1::EvidenceDrift);
-        }
+        let record = owner_bootstrap::insert_local_owner_bootstrap_v1(&transaction, &prepared)?;
         transaction
             .commit()
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
@@ -2654,17 +2634,35 @@ impl SqliteStore {
         identity_ref: &str,
         password: &str,
     ) -> Result<LocalCredentialVerificationV1, LocalIdentityStoreErrorV1> {
-        let verification = self.verify_local_password_credential_v1(identity_ref, password)?;
-        if verification != LocalCredentialVerificationV1::Verified {
-            return Ok(verification);
-        }
-        let Some(identity) = select_local_identity_v1(&self.connection, identity_ref)? else {
-            return Err(LocalIdentityStoreErrorV1::EvidenceDrift);
-        };
-        if identity.role != LocalIdentityRoleV1::Owner {
+        let Some(snapshot) = owner_decision_credential::prepare_current_owner_credential_v1(
+            self,
+            identity_ref,
+            password,
+        )?
+        else {
             return Ok(LocalCredentialVerificationV1::Rejected);
+        };
+        let transaction = self
+            .connection
+            .unchecked_transaction()
+            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
+        self.verify_schema()
+            .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
+        let recheck = owner_decision_credential::recheck_current_owner_credential_v1(
+            self,
+            &transaction,
+            &snapshot,
+        );
+        transaction
+            .rollback()
+            .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
+        match recheck {
+            Ok(()) => Ok(LocalCredentialVerificationV1::Verified),
+            Err(LocalIdentityStoreErrorV1::AuthorizationRejected) => {
+                Ok(LocalCredentialVerificationV1::Rejected)
+            }
+            Err(error) => Err(error),
         }
-        Ok(LocalCredentialVerificationV1::Verified)
     }
 
     /// Verifies one active local human credential without role widening.
@@ -4796,13 +4794,12 @@ struct StoredLocalIdentityEventRow {
     event_evidence_digest: String,
 }
 
-#[derive(Debug)]
 struct StoredLocalPasswordCredentialRow {
     credential_id: String,
     identity_ref: String,
     credential_version: i64,
     verifier_profile: String,
-    password_verifier: String,
+    password_verifier: Zeroizing<String>,
     created_at: String,
 }
 
@@ -5038,7 +5035,7 @@ fn select_local_password_credentials_v1(
                 identity_ref: row.get(1)?,
                 credential_version: row.get(2)?,
                 verifier_profile: row.get(3)?,
-                password_verifier: row.get(4)?,
+                password_verifier: Zeroizing::new(row.get(4)?),
                 created_at: row.get(5)?,
             })
         })
@@ -9016,6 +9013,20 @@ fn file_size(path: &Path, failure: SqliteRecoveryErrorV1) -> Result<u64, SqliteR
         .map_err(|_| failure)
 }
 
+fn local_database_lease_path_v1(
+    canonical_database_path: &Path,
+) -> Result<PathBuf, LocalOwnerRecoveryErrorV1> {
+    let database_name = canonical_database_path
+        .file_name()
+        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?;
+    let mut lease_name = database_name.to_os_string();
+    lease_name.push(".lnsat.lock");
+    Ok(canonical_database_path
+        .parent()
+        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?
+        .join(lease_name))
+}
+
 fn acquire_exclusive_database_file_v1(
     path: &Path,
     create_if_missing: bool,
@@ -9037,15 +9048,7 @@ fn acquire_exclusive_database_file_v1(
     let canonical_database_path = path
         .canonicalize()
         .map_err(|_| LocalOwnerRecoveryErrorV1::InvalidInput)?;
-    let database_name = canonical_database_path
-        .file_name()
-        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?;
-    let mut lease_name = database_name.to_os_string();
-    lease_name.push(".lnsat.lock");
-    let lease_path = canonical_database_path
-        .parent()
-        .ok_or(LocalOwnerRecoveryErrorV1::InvalidInput)?
-        .join(lease_name);
+    let lease_path = local_database_lease_path_v1(&canonical_database_path)?;
     match symlink_metadata(&lease_path) {
         Ok(lease_metadata) => {
             if lease_metadata.file_type().is_symlink() || !lease_metadata.is_file() {
@@ -13415,6 +13418,9 @@ mod tests {
             database_path: database.path.clone(),
             connection,
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+            owner_decision_credential_scope:
+                crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+            selected_store_custody: None,
         };
         let (packet, policy, request, decision) = approval_decision_fixture();
         persist_approval_chain(&mut store, &packet, &policy, &request, &decision);
@@ -18360,9 +18366,14 @@ mod tests {
         }
     }
 
+    mod headless_bootstrap;
+    mod owner_bootstrap_transaction;
+    mod owner_decision_credential;
     mod phase7_atomic_consumption;
     mod phase7_git_adapter;
     mod phase7_local_authorization;
     mod phase7d_signed_candidate;
     mod phase8_runtime_composition;
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    mod selected_store;
 }

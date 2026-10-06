@@ -12,6 +12,31 @@ pub mod docker_local_runtime_proof_execution_harness;
 pub mod docker_local_runtime_proof_run_manifest;
 pub mod docker_local_supervisor;
 pub mod headless_config_loader;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A Info decoder awaits complete freeze and integration"
+)]
+mod headless_daemon_info;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A Version decoder awaits complete freeze and integration"
+)]
+mod headless_daemon_version;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A native candidate awaits complete freeze and integration"
+)]
+mod headless_native;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A profile codec awaits complete freeze and integration"
+)]
+mod headless_profile;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A challenge codec awaits complete freeze and integration"
+)]
+mod headless_startup_challenge;
 pub mod product_config;
 pub mod product_output;
 pub mod product_recovery;

@@ -21,6 +21,29 @@ const fixturePath = join(
 );
 
 describe("registry quarantine and supply-chain trust", () => {
+  it.each(["0:0:0:0:0:0:0:1", "0:0:0:0:0:ffff:0a00:0001", "2001:0db8:0:0:0:0:0:1"])(
+    "blocks non-public IPv6 %s before namespace verification",
+    async (address) => {
+      const verifyNamespace = vi.fn(async () => ({
+        ok: true as const,
+        publisher_ref: "publisher-ref:example",
+      }));
+      expect(
+        await quarantineRegistryEntry({
+          metadata: await readMetadata(),
+          source_resolved_ips: [address],
+          source_redirect_chain: [],
+          namespace_verifier: { verifyNamespace },
+        }),
+      ).toEqual({
+        ok: false,
+        error_code: "gateway.registry.source_blocked",
+        side_effects: [],
+      });
+      expect(verifyNamespace).not.toHaveBeenCalled();
+    },
+  );
+
   it("quarantines private-registry discovery without granting authority", async () => {
     const metadata = await readMetadata();
     const result = await quarantine(metadata);

@@ -1,0 +1,116 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0015-independent-implementation-review-8420f257",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-preparation-journal-custody-stage-a"],
+  "base_revision": "2d873dc79c63a1fb7c0b40cef81944c949a83490",
+  "reviewed_revision": "8420f25701d128ef4a84ae899eb181c820adcb46",
+  "reviewed_tree_oid": "0165e65d86fe857cfa67c1bb0d9b62b37ec5bf8f",
+  "diff_sha256": "sha256:701811a2dfcfc2451be33e646de1b20c72973d21f32345683aa4ff9744adc3dd",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:113831867023311a14d921ba47be399433e50e233f8a1a70953345e51455e1b6"
+    },
+    {
+      "path": "crates/lnsat-store/Cargo.toml",
+      "sha256": "sha256:3e85fb7cd2dc914bed9e38b96bc8e63756edc7eb82deb75e4dfcef9bb00e8f3c"
+    },
+    {
+      "path": "crates/lnsat-store/README.md",
+      "sha256": "sha256:1573535885849be9f022eeb922588bb590db9eeaa4e2f85733f09e462d7afd7e"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation.rs",
+      "sha256": "sha256:51102ba7e4a5591c9cfd0be2de49eaa4293a25b70edb2d318b017422ff765bd5"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_custody.rs",
+      "sha256": "sha256:1d48d7e35e6d4b604b20c64ca2e4fc2e9f2e755d88d572a92a19ad854ab6355c"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_custody_tests.rs",
+      "sha256": "sha256:2ed1d67a48a98d4dc543b093ce259e028152220ea12613b5d6f6875a097e016f"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:23b162abcaad89a84b68916c1684b850f509ed27e30abfbaa087721239002b63"
+    },
+    {
+      "path": "docs/CLAIMS_AND_MATURITY.md",
+      "sha256": "sha256:1b901b8135459fa6b8e00fdf2ae35277be7a0fecd0b693d28c8be1247d1a8315"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:8938545e1daa8f06431adf5444a0779920cadb0f9d13eb8785c63492419cee50"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:e6c610aea7a6504c4382a0de6f4a5b7d1f5a068746c373f15b4641fe78973404"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:060e6272e76043bb783c2ec5c5a0495e8e40e32b62dabde1833e0772f268a311"
+    },
+    {
+      "path": "docs/architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md",
+      "sha256": "sha256:7c80d4b0cb7cdde389b72555293e37179657bcd6155b616c91dca5ef6b381b6c"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/selected-write-source-spec.md",
+      "sha256": "sha256:bf276d0ff0ec2f99f0168caf25832fa6f3aeca2d98a4281c437fe5baf8bfd7ba"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:620dd73a27adfb44c216278bb0824ad0c86aa67b0e14ff5d593b721a5107db7b"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:1f21e9c3b5168322e86ffd75d67db41d70bf9d108fc8c9f2420c5884bbdf7460"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/preparation-store-source-spec.md",
+      "sha256": "sha256:f34b67e134078703960e3b3e2886370eb921e02cb590109dc91a121a2de0e2a4"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/source-freeze-staging-decision.md",
+      "sha256": "sha256:d5035adf0aae5e642794e47eef2866fef6edfafd2314beb5577e34405c305eb0"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:500d5d31eea637895e3f40e8b9ce4c9bf4820bf73243b7c5f1bd3b0219302897"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:511223fcbb5938cc77fa29df28b53c626bcbe221da2df30675eb588330069f13"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/main_rust_integration_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only aggregate Rust and claims review, final journal custody source and validation review, and exact Git commit and attestation binding review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0015-F1",
+      "severity": "P1",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Ordinary-store negative coverage expects the exact changed denial returned by the unbound selected-store bridge.",
+      "resolution_revision": "8420f25701d128ef4a84ae899eb181c820adcb46"
+    },
+    {
+      "finding_id": "PHR-0015-F2",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Partial-state regressions explicitly cover retained empty preparation directories and empty or truncated revision files after restart, including a real post-create native association replacement.",
+      "resolution_revision": "8420f25701d128ef4a84ae899eb181c820adcb46"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

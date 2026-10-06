@@ -1,0 +1,116 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0020-independent-implementation-review-5f64840a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-readable-acl-stage-a"],
+  "base_revision": "86b089761cfb5f8b093ddbf91d6d1b5faea43362",
+  "reviewed_revision": "5f64840a4358dc4a605a594b2e3d118e0a983bc2",
+  "reviewed_tree_oid": "18ff5b0bc55457d70d1059630cad72c93cb62ae5",
+  "diff_sha256": "sha256:7e65a417cc0a77fbbf7d6a278ae2ed0e3f58af7aa6b1e98d5cf2f42f47557601",
+  "protected_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:9120e34a6b14294b76f04393858abdf28cb655115f10f58103fbbcfa5d9c43c4"
+    },
+    {
+      "path": "README.md",
+      "sha256": "sha256:1645c892ca52d98432fda3df2f748e61d109c69eecd5e2bd5d52d08ed06fdc46"
+    },
+    {
+      "path": "crates/lnsatd/Cargo.toml",
+      "sha256": "sha256:b35b3037ae872deb3c2c652e56eb02a987d7daf2855db58b569004b9a86643c5"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native.rs",
+      "sha256": "sha256:94ff1ecd09d2a8fa000a2bcee22fcf015be4d75212664972839e2931c5dd4ddd"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_acl.rs",
+      "sha256": "sha256:b9d39fdde8ccba46c6df96adeb18027a7032a8b20a2dee224c9ad9985f07d145"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable.rs",
+      "sha256": "sha256:b807e1c2441bd8aee72d284a8e6b289a5bd9c4949fb19c0f6fc11f19f7f78040"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable_tests.rs",
+      "sha256": "sha256:43ae143e0f82979d309d6f8c0fff2ff8845e9b99053f9dbd2dd683767d3cf193"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_tests.rs",
+      "sha256": "sha256:415d7e0b0919fdc9ca89c221887f5166e0f626a009864d742dfed94c657a5be4"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:1b01c0808b7b5575383378ea290ea8474a457b07a6d5ac1dcacf5de915f347d0"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:dad5e129494239eb19c53f9ce824cb608fa3332bdf3bc2e3484b9c2c5cbb1935"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:eff6f1788a9dea4ee773b4943e8617e261d2fd53e8345b2258c3b54678c04190"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:91540ce178f732710ec23f817d173310c35ac9d02a7e18783682ac8b5aed23f6"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md",
+      "sha256": "sha256:3b4d5bbe58186d1e1d8f95d92b9d4893133b4251873ed536adf19507d299f640"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:aa4a341443ccb2d5ee053e352ed59dfcf5cae0c7aca2d6ba57442bd7d0192a4e"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:b63386f5741bda31ee19000d95e6703ba31bbb8c608662cd181bf29d9b35f0ca"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:a630e14d68ee5eb1427eabaddcc66378135d754acd54035b66d63452e7fc7a32"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:69aee7eb956d3a14a1b1ba9316bf105c04b1d0fa4efc72ae617b047c4ca5b5a1"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.mjs",
+      "sha256": "sha256:332d1135a8ea2a326d6eb7c2aa8d65ebecc3fca0f5564bee4493b1c49f0c4c3e"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.test.mjs",
+      "sha256": "sha256:e38dfca4a7fb9caf1919639197b98bc090ab4460d041c6ca68131d0dad511b99"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/native_acl_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the accepted inert Stage-A readable-object ACL contract, strict Linux grammar/mask semantics, finite genuine borrowed-descriptor reads and explicit unclassified absence, private non-authoritative result, native dependency/backend build policy, exact source/docs diff, validator/audit evidence, and subsequent actual Git source and direct attestation bindings"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0020-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Precode dependency review found ambient Rustix backend selectors could bypass the reviewed Linux raw syscall backend. Before native implementation, the contract and deterministic native gate were amended to reject named backend cfg/feature selectors before invoking Cargo and require the exact registry/version/features/Linux production edge. Actual runner sentinel and graph mutation regressions passed; independent precode and source reviews found the correction complete.",
+      "resolution_revision": "5f64840a4358dc4a605a594b2e3d118e0a983bc2"
+    },
+    {
+      "finding_id": "PHR-0020-F2",
+      "severity": "P3",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Precode review required explicit disposable descriptor tests for write-only, read-write and missing close-on-exec states. The final source includes those strict Linux denials with O_PATH/type, actual raw sample and retained-inode drift fixtures. Exact-head Ubuntu source CI remains required; macOS parser/platform-denial tests do not supply Linux proof.",
+      "resolution_revision": "5f64840a4358dc4a605a594b2e3d118e0a983bc2"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

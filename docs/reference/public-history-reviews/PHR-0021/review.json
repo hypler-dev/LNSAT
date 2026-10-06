@@ -1,0 +1,48 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0021-independent-implementation-review-1c094c52",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-mountinfo-idmapped-research-correction"],
+  "base_revision": "9139b97987455cab0455f6f9a1992b62e34456ff",
+  "reviewed_revision": "1c094c52066302e242c9dbd84458739a91760c03",
+  "reviewed_tree_oid": "104ce9bd4362176b45ecc47f2b3d5dc3a6bd4c09",
+  "diff_sha256": "sha256:a428e8d61dd95191c49c0360027617f2a86a801d96652673fb25282337d2c724",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d7a3e2fb70f6c534adcab86013ab19ad24e7c52c767e6338b53881ad0aa7811a"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:cf71d604fbca695de6ed7d5074fc862462fcb84813ab09008ca9f66bc4690e7c"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:ccb7d255882171627986cdd03490ebe593e6bcab3bb6d6125c5dc1c6520e4f45"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:6836b285d3e0b0dd12e939efa70a8fa7c206efe298e908927f771230785c4b88"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/mountinfo_docs_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the exact factual native mountinfo documentation correction, upstream Linux v6.8 emitter and field placement, preserved trusted-root and complete source/pin/feasibility gates, exact docs/status/registry/inventory diff and named validation evidence, and subsequent actual Git source and direct attestation bindings"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0021-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Bounded primary-source research found the supporting native proposal incorrectly claimed mountinfo exposes no idmapped indication. Upstream Linux v6.8 show_mnt_opts emits idmapped in the per-mount options field and show_mountinfo calls it before tagged fields. The factual docs correction retains trusted-root attestation, current authenticated association, complete source/pin/positive-feasibility freeze and all integration/runtime gates; no decoder, reader, permission rule or authority behavior is added.",
+      "resolution_revision": "1c094c52066302e242c9dbd84458739a91760c03"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

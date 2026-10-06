@@ -1,0 +1,64 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0018-independent-implementation-review-522b02bf",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["repository-independent-review-workflow"],
+  "base_revision": "9b00af774e52f33288d0f4cab45103c4637e6e90",
+  "reviewed_revision": "522b02bf731e205d6bd1b8d6c124a1f8be6434d9",
+  "reviewed_tree_oid": "af5be07bb4a4d7a0a893acbc5dacc6bf3b79e873",
+  "diff_sha256": "sha256:4d7d67a1834487f9365e39c143290dd863710de4a201622cacab8c8e407c428b",
+  "protected_files": [
+    {
+      "path": ".coderabbit.yaml",
+      "sha256": "sha256:fc6d55f30b618b1a4362e09cc52f0b25e53619e81c7321481fe4e3e4a75b1ef8"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "sha256:897fccf0b47ee450c85a5c26fef73463ba2b698f866756b112e8a7df5309a8c0"
+    },
+    {
+      "path": "README.md",
+      "sha256": "sha256:c64a07ca38b8c6ba888ab7814d6ee834178f97056e4ebb2aa62b53c3fcb7f7d0"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:1161f9378afed737ceada1b8ae3f2c89807db0f64019791312f856cf5bc7c345"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:2b69054f33e66b1cc21d9155d2f44bce61b2d7a101b3d9d6d3efe0cb23dc8038"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:635f7c1a3286f9ff0f357616a71ae2500a3a77d70d28a3d4bfa489d000a28e5c"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/coderabbit_workflow_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only owner-accepted repository review workflow, official provider configuration schema, native and human gate retention, validation and exact Git commit and attestation binding review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0018-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The final source preserves the prior 17 registry entries and their formatting while appending only the pending PHR-0018 tail; initial broad provisional JSON formatting was corrected before the reviewed source stage.",
+      "resolution_revision": "522b02bf731e205d6bd1b8d6c124a1f8be6434d9"
+    },
+    {
+      "finding_id": "PHR-0018-F2",
+      "severity": "P3",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The unsupported provider auto_approve alias is removed; actual declared controls are checked against named official provider schema properties in addition to YAML and JSON Schema validation. Disabled automatic review does not claim app removal or access revocation.",
+      "resolution_revision": "522b02bf731e205d6bd1b8d6c124a1f8be6434d9"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

@@ -35,6 +35,20 @@ system package manager, or system `PATH` mutation. The installed roots and
 Cargo proxy remain owned by the invoking non-root user. Repository scripts set
 `RUSTUP_AUTO_INSTALL=0` and `CARGO_NET_OFFLINE=true` during validation.
 
+Source checks resolve their repository working directory physically and select
+`LNSAT_CARGO_HOME` or the recorded default Cargo home. Ambient `CARGO_HOME` is
+overwritten for child tools. Before tool invocation, the runner rejects both
+home configuration filenames, both ancestor `.cargo` configuration filenames,
+legacy repository `.cargo/config`, nonregular or symlinked repository config,
+named native environment overrides and extra runner arguments. External config
+is checked for presence without reading its contents, changing it or repairing
+permissions. The exact reviewed repository config remains the only admitted
+configuration file. These restrictions follow Cargo's
+[configuration discovery rules](https://doc.rust-lang.org/cargo/reference/config.html#hierarchical-structure).
+They are finite source-validation checks on a trusted developer host, not tool
+authentication, protection against arbitrary concurrent host mutation, or
+release-artifact attestation.
+
 The Rust crate uses locked crates.io parser dependencies. A clean environment
 must explicitly run `cargo fetch --locked --config net.offline=false` before
 the source gate. CI performs that named fetch step after installing the pinned

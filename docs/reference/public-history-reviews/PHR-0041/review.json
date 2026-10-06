@@ -1,0 +1,67 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0041-independent-implementation-review-0e757694",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-startup-message-codecs-stage-a"],
+  "base_revision": "27abfe58d731210d484282ce692f112268084ae7",
+  "reviewed_revision": "0e7576946cf0250ffb29d9c81608d5fdb2072043",
+  "reviewed_tree_oid": "c2cb29dc5a704398d22b53cfdce8eec10e2eb23d",
+  "diff_sha256": "sha256:671b0a8d645d5980c77b428215b3734093c2ce4f70e82858db3de429fc02f25f",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_startup_challenge.rs",
+      "sha256": "sha256:c8fe4a60ce3b9591986fdccda52bf86714000ee101cb73f749c58deb05538812"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_startup_messages.rs",
+      "sha256": "sha256:a4c812a3f47f26e182533744586e015e824f0c4c52e90758b9c8c78fa643b012"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_startup_messages_tests.rs",
+      "sha256": "sha256:7ec1fb4ebf4e0f972d55126f5330c6f5bb4f6364f556f68e210902649df61032"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_startup_native.rs",
+      "sha256": "sha256:eea17bfd99f22a0ba759f04c0a982222167dbb4e57ecbc7bfd68c8f5b57760a0"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_startup_release.rs",
+      "sha256": "sha256:6c83d6c12993e03549ed6086372ecd8ff44317af9a9cd701366b1b0540bbeccc"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:43b4284dd81fc63d2b510201dac7d8b5a9da40333d8083f8cb1030a7644193fd"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:2fbe99cf3f4a916a6d33c981dd1776b89470bf346944dca9543693ba863ff628"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/startup-golden-vectors.md",
+      "sha256": "sha256:3113bd7f820fd81315162e526fbbdab7c5de3fab00817f9572f96329f5bde652"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/startup-wire-source-spec.md",
+      "sha256": "sha256:577734ae90f63a6b25b36bac9895694d224f45168600022e38a7e416968c2f05"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:8a3b5a91569c46c62329d8f2ad9461bf21c916578e68bad4cb510e478dc870f9"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:beaa569e515234362823037046901ca3e359b06ade67197525f8d7fabdaef672"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/v1_gates_independent_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only review of the exact private startup observation, release and result source candidate, bounded lexical preflight, closed native and v2 Git request representations, commitments, fixed errors, independent vectors and focused/full source validation. Final source and immutable source reviews passed with no remaining P1/P2/P3. Direct-child verification remains separate. These disconnected supplied-byte codecs provide no trusted sequence, native observation, execution, runtime, integration, full-freeze, support, certification, package or release authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

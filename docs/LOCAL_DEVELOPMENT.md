@@ -8,7 +8,7 @@ infrastructure.
 
 | Tool       | Required version | Source of truth                            |
 | ---------- | ---------------- | ------------------------------------------ |
-| Node.js    | 22.x             | `package.json#engines` and CI              |
+| Node.js    | 22.22.3          | `package.json#engines` and CI              |
 | npm        | 10.9.8           | `package.json#packageManager`              |
 | Rust       | 1.97.1           | `rust-toolchain.toml`                      |
 | PostgreSQL | Optional         | Disposable loopback integration tests only |
@@ -25,6 +25,15 @@ cargo --version
 Rust installation is explicit operator work. Recorded official sources,
 checksums, target, user-local roots, and no-root proof live in
 [Pinned Rust Toolchain](RUST_TOOLCHAIN.md).
+
+Rust source checks require a configuration-free selected Cargo home and physical
+repository ancestors. They reject either `config` or `config.toml` at the selected
+home, ancestor `.cargo` configuration, legacy repository `.cargo/config`, and
+named compiler, target, source, registry, profile and configuration overrides
+before invoking Cargo or rustc. The repository's regular, non-symlink
+`.cargo/config.toml` must match the reviewed offline SQLite FILESTAT configuration.
+The scripts never edit or remove operator configuration. A trusted developer
+host and toolchain remain prerequisites; this gate does not attest a release.
 
 ## Install
 
@@ -157,3 +166,24 @@ git diff --check
 
 Record exact commands and results in pull request. Document compatibility,
 security, data-handling, migration, and rollback impact.
+
+The dependency and signature audit wrappers use a bounded private snapshot of
+the root/workspace manifests, lockfile, installed dependency trees, and exact
+project npm configuration. The audit child receives a fresh private cache and
+an allowlisted environment; it cannot reuse the operator's npm cache or project
+configuration through that environment. Snapshot construction rejects links
+that escape the snapshot and fails before audit on unsupported input or size
+limits. The wrapper removes its snapshot after the child completes.
+
+The default snapshot requires a POSIX temporary-directory chain owned by root
+or the current operator, without group/other write access except root-owned
+sticky directories. The leaf identity is rechecked before launch. Workspace
+staging and installed dependencies share entry, byte, and time limits. A Windows
+snapshot remains denied until an equivalent directory-custody profile exists.
+This protects audit inputs; it does not isolate arbitrary processes running as
+the same operator.
+
+These commands contact `https://registry.npmjs.org/` and send dependency
+metadata. They do not provide an offline vulnerability verdict. Reviewers can
+run `npm run audit:dependencies:test` without contacting the registry; passing
+those wrapper tests does not establish a clean live audit.

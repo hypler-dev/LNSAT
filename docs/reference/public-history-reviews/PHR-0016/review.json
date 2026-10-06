@@ -1,0 +1,68 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0016-independent-implementation-review-eb56cd07",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["sqlite-native-configuration-custody"],
+  "base_revision": "dffb58a86e8d94df0910bf9a9a5c5aa3f82212ca",
+  "reviewed_revision": "eb56cd07d54f7361a7bf050a6d9a471f89dd1dce",
+  "reviewed_tree_oid": "996f8e47798daf9975974d653857428dc5ea1f18",
+  "diff_sha256": "sha256:d31bcabb97ba83a633f75b9c68c93f22eaba0556d9a8d529d10019ce44ab46c4",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:22275abddfff95cb0f83ac89f8619b2c1dc12a34f3a03f4b1ffa9451a663fdc6"
+    },
+    {
+      "path": "docs/LOCAL_DEVELOPMENT.md",
+      "sha256": "sha256:0b1c3eefbfedf1bcb5fd19ed185f25114374e85ce29ea4a78da302290aeda8d4"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:62691d495230a14718f59a97ff69a5cc047f4fb77b7b33bf9ac139cd58ffda69"
+    },
+    {
+      "path": "docs/RUST_TOOLCHAIN.md",
+      "sha256": "sha256:082582402222855497bfbf7e05a68c76031351df9cfd307d3c5d62013c7a0e3c"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:6fd924dd7d874de7be750d5a1e7359b856e4e28f102a7283fcc707b2db5844a2"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:b4dff65132cd03b9a76fdd1a5b7a33bc0db1dcf4f568295546436dc2bb6eebb6"
+    },
+    {
+      "path": "scripts/run-rust-workspace.mjs",
+      "sha256": "sha256:0e6408ca3399a8b825136841b19554042eec14168062cdecc359ee9254160f23"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.mjs",
+      "sha256": "sha256:923fbb1c8dab991ab69c7beee92a4fe2227739f42d026c17a6fac5363d4c2bab"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.test.mjs",
+      "sha256": "sha256:d98bd111467a2bc1743faa01f4093c6b8cb34f0f43fa81658564202214854e32"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/main_rust_integration_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only native configuration contract, implementation, subprocess regressions, documentation, validation and exact Git commit and attestation binding review"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0016-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Native source checks reject unreviewed Cargo-home, physical ancestor and legacy configuration and direct or Cargo-equivalent compiler/configuration selectors before tool invocation; subprocess sentinel regressions cover rejection and the physical configuration-free positive.",
+      "resolution_revision": "eb56cd07d54f7361a7bf050a6d9a471f89dd1dce"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

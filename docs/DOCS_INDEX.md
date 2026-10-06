@@ -51,9 +51,106 @@ subsystem or proposal.
   — proposed atomic current-state inventory and watch cutover.
 - [Proposed HCFG-4C monitoring watch](architecture/headless-monitoring-watch/intent.md)
   — proposed durable event order, bounded cursor/resume, and watch scope.
+- [HCFG-5A pure comparison model](architecture/headless-comparison-model/spec.md)
+  — conditional source mathematics; no authenticated comparison, owner decision,
+  or activation authority.
+- [Accepted HCFG-5B atomic local bootstrap](architecture/headless-local-bootstrap/intent.md)
+  — accepted host-owner design and current read-only fresh-store prerequisite.
+- [HCFG-5B bootstrap specification](architecture/headless-local-bootstrap/spec.md)
+  — atomic initialization contract, inert restore, and bounded B1 source scope.
+- [HCFG-5B B4 durable-state source contract](architecture/headless-local-bootstrap/state-source-spec.md)
+  — proposed root/generation/audit/current-pointer bindings; no schema or
+  trusted-state implementation.
+- [HCFG-5B B5 schema source contract](architecture/headless-local-bootstrap/schema-source-spec.md)
+  — proposed exact SQL, seed/manifest checks and profile compatibility gate;
+  no SQL execution, registration or initializer.
+- [HCFG-5B B6 selected-write custody contract](architecture/headless-local-bootstrap/selected-write-source-spec.md)
+  — proposed private writable connection, selected migration admission and
+  journal/bootstrap lifetime; no implementation, SQL execution or authority.
+- [HCFG-5C owner-decision design](https://github.com/hypler-dev/LNSAT/pull/63)
+  — accepted exact confirmation and credential/challenge contract; source
+  implementation remains bounded by the accepted design.
+- [HCFG-5C C1 credential source specification](architecture/headless-owner-decision/credential-source-spec.md)
+  — current owner credential prerequisite is source implemented; independent
+  review and full source validation passed; no configuration authority.
+- [HCFG-5C C2 complete comparison view specification](architecture/headless-owner-decision/view-source-spec.md)
+  — complete conditional model view source implemented; focused and full source
+  validation passed; no authenticated comparison or owner-decision authority.
+- [Accepted HCFG-6 resource/runtime enforcement](architecture/headless-resource-enforcement/intent.md)
+  — explicit owner binding and observed nonempty target/OS control boundary;
+  owner design accepted; detailed source freeze and full enforcement implementation pending.
+- [HCFG-6 enforcement specification](architecture/headless-resource-enforcement/spec.md)
+  — accepted private startup observation, revocation and cleanup contract;
+  no current runtime or platform proof.
+- [HCFG-6 S1 owner-binding source specification](architecture/headless-resource-enforcement/bindings-source-spec.md)
+  — pure decoder input grammar and commitments; unverified input only, with
+  native/wire/daemon/synchronization freeze and runtime gates still open.
+- [HCFG-6 enforcement plan](architecture/headless-resource-enforcement/plan.md)
+  — source specification, independent review and actual proof gates.
+- [HCFG-6 native source-freeze proposal](architecture/headless-resource-enforcement/native-source-spec.md)
+  — proposed bounded native, profile and startup transport seams; full freeze,
+  source integration and runtime proof remain pending.
+- [HCFG-6 native procfs fixture source packet](architecture/headless-resource-enforcement/native-fixture-source-spec.md)
+  — exact future test-kernel patch/private harness ownership for the selected
+  native timeout evidence method; source authorization, build and execution
+  remain separate pending gates.
+- [HCFG-6 preparation/store source specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md)
+  — private Stage-A journal codec and Linux file custody source, plus future
+  observation-owning phase writes, atomic bootstrap and release synchronization;
+  Project Status owns exact evidence; integration remains gated.
+- [HCFG-6 Stage-A readable-object ACL candidate](architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md)
+  — exact inert contract for strict Linux POSIX ACL parsing and finite samples
+  from already held readable regular-file or directory descriptors; synthetic
+  parser vectors and future Linux evidence stay separate, with no ACL authority.
+- [HCFG-6 Stage-A mountinfo byte candidate](architecture/headless-resource-enforcement/native-mountinfo-candidate-source-spec.md)
+  — exact inert contract for bounded byte-only mountinfo decoding with raw
+  non-UTF-8 preservation and finite row, option, escape and tag rules; no I/O,
+  kernel or mount authority follows.
+- [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
+  — exact proposed schema-3 fields, native payload and separate startup contexts;
+  complete wire implementation and full freeze remain pending.
+- [HCFG-6 Docker transport/recipe proposal](architecture/headless-resource-enforcement/docker-source-spec.md)
+  — exact tagged API, HTTP/mux framing and positive control assumptions;
+  realized recipe and source/run pins remain incomplete.
+- [HCFG-6 closed Docker response proposal](architecture/headless-resource-enforcement/docker-response-source-spec.md)
+  — nested response types, typed compare/discard/forbid paths and exact source
+  normalization; no live parser, verifier or complete-freeze approval.
+- [HCFG-6 realized mount/device/environment/probe proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md)
+  — finite built-in predicates, actual environment observation and five narrow
+  preparation sentinels; pins, literal kernel/snapshotter normalization,
+  image inventory, pressure procedures and complete-freeze review remain open.
+- [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
+  — search-only held ancestry, exact inherited ACLs, named ACL reads and current
+  daemon-root association; provisioning, complete freeze and runtime remain gated.
+- [HCFG-6 controlled resource-pressure proof proposal](architecture/headless-resource-enforcement/pressure-proof-source-spec.md)
+  — separate future CPU/memory/PID cases, bounded stimuli, independent events
+  and exact cleanup; no normal preparation pressure or actual conformance run.
+- [Accepted HCFG-6 source-freeze staging amendment](architecture/headless-resource-enforcement/source-freeze-staging-decision.md)
+  — reviewed inert source, separately authorized artifact capture, complete
+  source/pin freeze before integration; canonical acceptance is in Project Status.
+- [HCFG-6 root manifest/OCI custody proposal](architecture/headless-resource-enforcement/root-manifest-source-spec.md)
+  — root-controlled anchor, current daemon/artifact association and raw OCI
+  parent links; no provisioning, live proof or full-freeze approval.
+- [HCFG-6 synthetic startup vectors](architecture/headless-resource-enforcement/startup-golden-vectors.md)
+  — reproducible proposed encoding examples; no OS observation or authority.
 - [System architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [Authority layer and reference workflow](architecture/AUTHORITY_LAYER_AND_REFERENCE_WORKFLOW.md)
 - [Threat model](architecture/THREAT_MODEL.md)
+- [Enterprise/government security requirements](architecture/ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
+  — requested assurance, crypto, audit/privacy and supply-chain work;
+  implementation, deployment scope and certification evidence remain pending.
+- [Crypto operation/provider source inventory](architecture/CRYPTO_OPERATION_PROVIDER_INVENTORY.md)
+  — 17 bounded operation classes and immutable manual source bindings;
+  no strict-profile/provider selection, runtime or assurance claim.
+- [Proposed strict crypto admission design](architecture/STRICT_CRYPTO_ADMISSION_DESIGN.md)
+  — complete selected-operation coverage and exact module/environment/health/key
+  evidence; owner acceptance, provider selection and implementation pending.
+- [Proposed human authentication assurance design](architecture/HUMAN_AUTHENTICATION_ASSURANCE_DESIGN.md)
+  — common human/session/decision evidence boundary, local WebAuthn and selected
+  OIDC alternatives; origin, enrollment/recovery and exact source gates remain.
+- [Proposed audit/privacy and evidence custody design](architecture/AUDIT_PRIVACY_AND_EVIDENCE_CUSTODY_DESIGN.md)
+  — private authority data, bounded disclosure, audit failure and independently
+  verified custody boundaries; exact contracts and implementation pending.
 - [Loopback browser session header hardening](architecture/SECURITY_LOOPBACK_BROWSER_SESSION_HEADER_HARDENING.md)
 - [Packet model](architecture/PACKET_MODEL.md)
 - [Policy and audit](architecture/POLICY_AND_AUDIT.md)
@@ -138,6 +235,10 @@ human authority, inspecting private filesystem identities, or accessing Docker.
 ## Integrators and SDK Authors
 
 - [SDK overview](sdk/README.md)
+- [Developer and agent integration pack](sdk/developer-pack.md)
+  — current source references, agent integration brief and accepted V1
+  error/feedback, SDK/API and conformance requirements; incomplete runtime/SDK
+  behavior remains explicit.
 - [TypeScript source reference](sdk/typescript-reference.md)
 - [MCP adapter guide](sdk/mcp.md)
 - [Agent contract guide](sdk/agent.md)
@@ -195,6 +296,9 @@ conformance remain LNSAT concerns.
 - [Why LNSAT Is Public](WHY_PUBLIC_NOW.md)
 - [Legacy identifier inventory](reference/LEGACY_IDENTIFIER_INVENTORY.md)
 - [Product direction alignment](reference/PRODUCT_DIRECTION_ALIGNMENT.md)
+- [Agent standards and V1 gap review](reference/AGENT_STANDARDS_AND_V1_GAP_REVIEW.md)
+  — dated primary-source research, existing V1 gate mapping, and proposed
+  interoperability follow-up; no runtime, release, or support authority.
 - [Pinned Rust toolchain](RUST_TOOLCHAIN.md)
 - [Governance](../GOVERNANCE.md)
 - [Maintainers](../MAINTAINERS.md)

@@ -1,0 +1,56 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0019-independent-implementation-review-05d3ca08",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-preparation-held-baseline-mutation-classification"],
+  "base_revision": "41255fd289cef536218d349519ce6b1b53b1fdfd",
+  "reviewed_revision": "05d3ca08743afac3c3c21fd77749f6cde6933795",
+  "reviewed_tree_oid": "df6cb9f5a01a3d70d3f092d608385a1a0c92624b",
+  "diff_sha256": "sha256:7d272e5ee48f9d930594d351007ed29dace68f3b971aee59fca6335cd90fa61e",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_custody_tests.rs",
+      "sha256": "sha256:8f240bf9cedf5509c45bfb9e8435f6813c9e106a24595fec09a97455780297a8"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:91c5d6e1626e3780bde56e8abdedad0db15a44efa5e718a184715de3e5384687"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:42f28d9c00ee1cee9c5847b0e9537e4b84e2fd77abd975ccd6c5e2e734074337"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:73e4dc5cae6f4d5411f5dbcb7982d81b0f54a50eea82d4430238f4973fbf7e40"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/linux_mutation_expectation_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the accepted inert Stage-A journal custody contract, exact retained-baseline error classification, strict fixture assertion and unchanged runtime boundaries, validator evidence, and exact Git commit and direct attestation binding"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0019-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The Linux post-baseline revision-symlink fixture expected the fresh-open I/O rejection classification. The held guard correctly rejects retained-baseline descent drift as changed. The final source changes only that exact expected code and an ordering comment, retaining a strict single-value assertion, unchanged production denial and a required new full exact-head Ubuntu CI run.",
+      "resolution_revision": "05d3ca08743afac3c3c21fd77749f6cde6933795"
+    },
+    {
+      "finding_id": "PHR-0019-F2",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The initial controller handoff supplied a nonexistent staged tree identifier. Before committing, the actual unchanged staged tree was obtained directly from git write-tree and the cached diff was confirmed byte-for-byte against the reviewed evidence; the final manifest binds the actual committed source tree, canonical diff and four raw source blobs.",
+      "resolution_revision": "05d3ca08743afac3c3c21fd77749f6cde6933795"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

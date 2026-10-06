@@ -1,0 +1,64 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0023-independent-implementation-review-58ca4a6b",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["gateway-public-https-ipv6-canonicalization"],
+  "base_revision": "1d15784849ab83a73f835b3a2f64789d85f7efe1",
+  "reviewed_revision": "58ca4a6b4a28eb97ffeb37db4b84d5808f52aa73",
+  "reviewed_tree_oid": "61e3ec220fb7a81fb79de85626de29c390cf57c9",
+  "diff_sha256": "sha256:f46a071382ea5b210570bc4a605a5395179a17484c3e1585a685287bc403df18",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:2d14e05539f739b4153c7a79d9a948a6fd05e1e11a88ac443341601e0f386054"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:cce7c71015e4d25ce146b6e2f63a8d4d289e9987d12b30987adafbb7e771befb"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:96f385f2787d6746135b407a2d34b4babe2558e8b996efa2ebed1ed2d0d769c8"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:d882601620be7e09d74fce2e666ce8f3046386e01823b220b891b1a86e021db4"
+    },
+    {
+      "path": "packages/gateway/src/network-security.ts",
+      "sha256": "sha256:cc4af74b1d09a6f248d7ae6de4891601bbdda7865fca659ce9afdc7e01898f6a"
+    },
+    {
+      "path": "packages/gateway/test/a2a-contract.test.ts",
+      "sha256": "sha256:d984e581a97faac11cca4f57ebafac8535d68809f1f5bdc183fa4430d79ffbb9"
+    },
+    {
+      "path": "packages/gateway/test/network-security.test.ts",
+      "sha256": "sha256:9ff96d8d5ce43bf7a0b870e1800c6bd6d3f9c87106307a2f651e257826890b13"
+    },
+    {
+      "path": "packages/gateway/test/registry-supply-chain.test.ts",
+      "sha256": "sha256:02a049259ceaecfc929bee9b6a9579e1459372e0f47285a5e21a5e134fe86b71"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/ipv6_fix_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only precode and exact source review of Gateway IPv6 canonicalization, unchanged rejection predicates and public contracts, bounded spelling-equivalence and consumer denial regressions, source-only proof limits, exact documentation/registry/inventory diff and named validation, followed by actual source and three-file direct-child bindings"
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0023-F1",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "The supplied sampled review identified alternate IPv6 spellings bypassing the existing public HTTPS target rejection predicates. Independent static/source review and focused regression evidence confirm the bounded validator defect and repair: locally canonicalize valid IPv6 literals before the unchanged deny policy, fail closed on unsupported scoped literals, preserve IPv4 and mapped-address rejection, and stop blocked A2A/Registry targets before their verifiers. The original classifier fails 21 assertions; the repaired focused set passes 76 tests. A live network-fetch path, P1 impact, runtime activation and broader security assurance remain unproven.",
+      "resolution_revision": "58ca4a6b4a28eb97ffeb37db4b84d5808f52aa73"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

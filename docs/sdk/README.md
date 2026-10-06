@@ -6,6 +6,10 @@ runtime authority.
 
 For system overview and developer workflow, start with
 [Architecture and developer guide](../architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md).
+For application and agent integration, use the
+[developer and agent integration pack](developer-pack.md). It maps existing
+source contracts and the accepted V1 feedback/API/SDK requirements without
+claiming the unfinished management interfaces or SDK packages are available.
 
 ## Current SDK Boundary
 
@@ -27,9 +31,11 @@ marketplace-listed, or stable public SDK packages.
 ## Product Contracts
 
 LNSAT owns portable module, connector, profile, skill, instruction, context,
-graph, assignment, and model-overlay contracts plus conformance. Registry,
-visual authoring, content management, evaluation, and execution integration
-remain LNSAT capabilities and must use the same Gateway authority boundary.
+graph, assignment, and model-overlay contracts plus conformance. Generic content,
+evaluation and execution contracts remain engine concerns. Registry products,
+visual authoring and commercial management experiences may live downstream and
+must use the same Gateway authority boundary. Rangoon is one consumer; it is
+not an engine dependency or an alternate authority source.
 
 These formats are planned unless current source reference names them. No
 planned format is stable or installable because it appears here.

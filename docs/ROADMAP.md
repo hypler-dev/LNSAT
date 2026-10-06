@@ -881,6 +881,21 @@ lanes, not v1 blockers.
 
 ## LNSAT Runtime and Package Sequence
 
+The [2026-09-30 agent standards and V1 gap review](reference/AGENT_STANDARDS_AND_V1_GAP_REVIEW.md)
+maps current MCP, A2A, runtime-control, identity, telemetry, OCI, and artifact
+standards to the existing product gates. Headless configuration/control, Phase
+11 runtime proof, Phase 13 source freeze, and Phase 14 selected-target proof
+remain required. The research does not accept pending implementation designs
+or add optional interoperability work to the V1 critical path.
+
+After the core workflow is proven, bounded candidate lanes include an action
+adapter for a selected framework or agent-control hook, A2A wire
+interoperability, redacted OTel export, one workload-identity provider, and
+immutable connector coverage. Each candidate must preserve Gateway authority,
+exact action binding, durable evidence, visible enforcement coverage, and the
+existing compatibility and privacy gates. A protocol task status or
+cancellation acknowledgement cannot substitute for consequence evidence.
+
 After the core contracts stabilize, LNSAT product work proceeds in this order:
 
 1. public portable manifests and conformance for modules, connectors, agent

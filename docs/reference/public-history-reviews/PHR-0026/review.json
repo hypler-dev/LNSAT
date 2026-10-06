@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0026-independent-implementation-review-eebfa485",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-native-fdinfo-byte-stage-a"],
+  "base_revision": "8e50dac8843465306a40d385bc25d4957e0b9041",
+  "reviewed_revision": "eebfa485a9b4c45199da4a3243c36f2cded9d20d",
+  "reviewed_tree_oid": "092fb3cc7a38e6a67657b03a79062e66a2c8fde7",
+  "diff_sha256": "sha256:f56a14a7ae4bed07d9c50119453b7bdab7510346b2dc9acf476691eca93e38c6",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_native.rs",
+      "sha256": "sha256:81a36320a7ce1615717d4b860f4116bf74aaf00d111fff5b6ad757a8ff364227"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_fdinfo.rs",
+      "sha256": "sha256:c256c02eb0120159d964cd6fd955a01f915243ad44af7ffe3ff38b3d1ad99617"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_fdinfo_tests.rs",
+      "sha256": "sha256:5c167c8ee0c4d6f69d98c065a0e34c89090f35e9e2eb5cf31cb7c523c2bd0480"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:9258f16b3684249019599c277d34fec379237da3100f8c053b8df12ec4cf226c"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:d280b2da292d2699ac03737bd5d9f5c643ac5e42fb27f538911d277099f6a9db"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:c1cd119f6104f2b52232dedcc7083acd1d0cbc032346be9f611beefc5c161a07"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:6d17a361d9e61c2f58d9589e8fcf9bd5587ac27ca05a6abf5b27ccb65c852e94"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:2058bdd86c9cf73a1c1213454424d18daceb838ca9c0eed6eb8f2fc0e943c6bb"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/procfs_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only precode and exact source review of the private allocation-free supplied-byte fdinfo prerequisite, hostile grammar/error-order/numeric/byte/cap vectors, no native I/O or authority, canonical implementation status, unaccepted containment design and genuine reader NOT_READY, unchanged prior history and exact source/direct-child bindings. Source-only evidence supplies no native reader, worker, runtime, support or release authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
