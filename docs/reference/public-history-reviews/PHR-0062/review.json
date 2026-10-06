@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0062-independent-implementation-review-869ac48b",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-artifact-read-checkpoint-correction"],
+  "base_revision": "59eae8f3270cebb46044599d556b5c1463cad0ba",
+  "reviewed_revision": "869ac48b95c34b01d20e4ba145e824d0c7758dbd",
+  "reviewed_tree_oid": "52acb9ffc255bc00da15b6b37f5fb411512f746b",
+  "diff_sha256": "sha256:09f1e18046225108545493cfda7800d5310791e96c11d8deac431ecc6e965694",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact.rs",
+      "sha256": "sha256:30e016322e41aa674011e1bdf77c5b0e8496271dfa192cc88a2a92ce5fcd803d"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact_tests.rs",
+      "sha256": "sha256:b9c1a806f8545d1a5254036af790412dad3856023ee26e82706ff07433408f34"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:2272ede92e8111f76cc5d9539fd4a7271f40cfa45f3287ffa5cb6fea479f51e2"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:d451cd008b08eeb0cd82ed82c30006a49d5cac13c6f0d3ca2aa2e20fcf7c24df"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:7efde52e0b205d96b13b01774d4035cb8d2c8da70cf73284cc9f6a6447589770"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/artifact_checkpoint_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact source review. Five source/documentation blobs, immutable parent, tree and canonical diff match the reviewed staged packet. The private held-artifact reader captures pread failures without returning before its existing typed post-call checkpoint. A fixed private result primitive charges successful actual bytes before late or short denial, executes the checkpoint on failed reads and accounting errors, preserves accounting-error precedence, and does not add callbacks, injected readers, retries or authority. Seven additional host regression tests cover timely native-error propagation, both deadline boundaries, terminal/stale-token context, existing invalidation, short/full actual counts, late counts and accounting-error precedence. Focused native host tests, strict all-target clippy, complete npm run check, docs/public/inventory/history/format/diff checks pass. Gitleaks zero findings; local Semgrep rules report three unchanged non-authoritative test-fixture INFO findings and zero actionable production findings. These host tests exercise result accounting, not Linux native I/O. Linux cfg code remains uncompiled and unexecuted on this macOS host; blocked native operation and positive acquisition proof remain absent. This source correction completes only the failed-read checkpoint prerequisite. Root bootstrap acquisition, retained rooted custody, full native freeze, integration, runtime and packaging remain unfinished. Separate exact direct-child review is required. No merge, runtime, release or execution authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
