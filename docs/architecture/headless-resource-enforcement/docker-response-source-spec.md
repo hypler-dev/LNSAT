@@ -4,7 +4,9 @@ Status: proposed supporting private source contract. This closes response field
 coverage and records exact source normalization; it does not complete the full
 native freeze. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 owns acceptance and implementation. The Phase 11 operator packet owns runtime
-truth. No parser, verifier, Docker operation or activation is implemented here.
+truth. The bounded Stage-A Version-only decoder contract below is a private
+source prerequisite; no daemon verification, Docker operation or activation
+follows from it.
 
 ## Source and interpretation
 
@@ -102,6 +104,172 @@ uses Go `runtime.GOARCH`. Info.Architecture instead uses
 [Linux uname](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/internal/platform/platform_linux.go).
 Freeze both exact strings for the selected platform; do not compare these two
 fields directly or silently translate an arbitrary architecture.
+
+## Stage-A private Version decoder contract
+
+This exact inert prerequisite follows the accepted
+[source ordering](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+It decodes only supplied Version JSON body bytes. It is not an HTTP parser,
+recipe admission, daemon authenticator or generic four-family response decoder.
+The other response families and all product callers remain unchanged.
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-version-decoder)
+owns current implementation and review evidence.
+
+### Source evidence and ownership
+
+The three Version type entries in the appendix now bind the raw 2,014-byte
+`api/types/system/version_response.go` at the source commit above to SHA-256
+`4a6c532645f9eaaddcc0ffb3ab1e7942047e931bb2cf1ac28e58c27238c313a3`.
+The previous `0d3eed498ed406989f3d3eb5d1627640a362fd0e815023cb8c862a8d8b3643aa`
+value did not match fetched bytes. Raw and base64-decoded GitHub content responses
+agree, including recomputation of Git blob
+`61cd1b6e2fed5e609565f3491155b1945997dcd8`. The listed types/fields are unchanged.
+This correction supplies source provenance only, not an installed artifact pin.
+
+Owned source paths are `crates/lnsatd/src/headless_daemon_version.rs`, its sibling
+`headless_daemon_version_tests.rs`, and the private module declaration in
+`crates/lnsatd/src/lib.rs`. The single private entrypoint is
+`decode_version_claim(&[u8]) -> Result<UnverifiedVersion, VersionDecodeError>`.
+No public/exported constructor, caller, feature or dependency change is opened.
+Fresh independent review of this exact contract precedes implementation.
+
+### Bounded JSON body and errors
+
+The body is at most 1,048,576 bytes inclusive and must contain exactly one JSON
+object, with optional JSON whitespace before and after it. Unlike startup
+challenge frames, there is no canonical-order or terminal-LF requirement here.
+UTF-8 is strict; BOM, raw controls in strings, malformed escapes/surrogates,
+invalid JSON numbers, trailing values/data and incomplete values deny.
+
+An allocation-free lexical/structural preflight must finish before typed owned
+JSON decoding. It bounds decoded strings, including escaped Unicode, before any
+input-derived string allocation. Object keys are 1..256 decoded UTF-8 bytes;
+string values are at most 4,096 decoded UTF-8 bytes. Count container depth with
+the root at one: at most 32. Every object has at most 64 members; total object
+members, including Details entries, are at most 4,096. Components is the only
+accepted array type; this Version-only preflight caps every encountered array
+at eight elements, including branches that later fail shape checks. Check caps
+before entering an additional container/member/element or growing a string.
+Preflight does not retain a syntax tree, allocate a dynamic stack or skip
+unbounded unknown subtrees. JSON scalar syntax may be scanned without numeric
+conversion; every accepted leaf in this family is a string. There is no numeric
+coercion or accepted numeric/Boolean/null leaf.
+
+Typed decoding then requires maps at every object position. Reject duplicate
+decoded keys, including escaped duplicates, unknown/missing keys, null,
+positional arrays, wrong case and wrong types. Extra Details keys are the sole
+explicitly permitted dynamic dictionary. No generic recursive value/skip may
+accept an unmodeled child.
+
+The private fixed data-free error codes are:
+
+1. `headless_version.input_too_large` before inspecting oversized input;
+2. `headless_version.json_syntax` for UTF-8 or preflight JSON syntax failures;
+3. `headless_version.json_limits` for preflight bounds;
+4. `headless_version.json_shape` for typed/closed-map/presence/duplicate failures;
+5. `headless_version.recipe` for fixed predicates, empty or unavailable identity
+   claims and component-set failures;
+6. `headless_version.inconsistent` for disagreement between accepted Engine
+   detail claims and their top-level counterparts.
+
+UTF-8 validation precedes the allocation-free scan. Syntax and limit failures
+within that scan use the first encountered left-to-right failure, not a second
+full scan to reprioritize competing failures. Later stages run only after the
+preceding stage passes. Raw input, field names, values, offsets and provider
+errors never appear in error output. A failed parse returns no partial result.
+
+### Exact presence and retained projection
+
+The root requires exactly Platform, Version, ApiVersion, MinAPIVersion, Os,
+Arch, Components, GitCommit, GoVersion, KernelVersion and BuildTime. This
+selected candidate deliberately requires nonempty identity/build claims even
+where the Go tag permits omission. Experimental must be absent; a present key
+of any type, including false or null, fails the closed shape. Platform is a
+non-null map containing exactly Name. Components is a non-null array; every
+component is a non-null map with exactly Name, Version and Details. Details is
+a non-null map of bounded strings; omitted/null/empty Details cannot supply its
+required identity pairs. Optional Go omissions never become defaults.
+
+After shape checks, every compared identity/build string, including duplicated
+Engine claims, must be nonempty and
+not the exact unavailable sentinel `N/A`. Version is exactly `29.8.2`,
+ApiVersion exactly `1.56` and Os exactly `linux`. Component names are unique and
+the set is exactly Engine, containerd, runc and docker-init, in any order.
+Their fixed versions are Engine `29.8.2`, containerd `2.3.6` and runc `1.5.2`;
+docker-init's version remains a bounded unverified claim for the later exact
+recipe comparison. No selected architecture or artifact identity is inferred.
+
+Engine Details requires these eleven keys:
+`GitCommit`, `ApiVersion`, `MinAPIVersion`, `GoVersion`, `Os`, `Arch`,
+`BuildTime`, `KernelVersion`, `Module`, `ModuleVersion`, `Experimental`.
+Module is exactly `github.com/moby/moby/v2`; Experimental is the string `false`.
+ApiVersion, MinAPIVersion, GoVersion, Os, Arch, BuildTime, KernelVersion and
+GitCommit must equal their root counterparts byte for byte. Each other component
+requires Details.GitCommit. Each Details map independently has at most 64 total
+entries, including required keys and extra informational pairs. Counts are not
+pooled across components: Engine permits its eleven required pairs plus at most
+53 extras; each other component permits its one required pair plus at most
+63 extras. All four maps may simultaneously contain 64 entries (256 Details
+entries in aggregate), subject also to the body and total-object-member caps.
+Extra pairs are parsed, checked for duplicates and bounds, then discarded. They never become paths,
+selectors, identity, policy, arguments or public diagnostics. Missing required
+detail keys fail the recipe stage, while non-string values fail shape.
+
+The private sealed output retains only the unverified platform name, Go
+architecture, minimum API version, kernel version, engine Git/Go/build/module
+version tuple, and each named component's version/Git claim. Fixed predicates
+are implicit in the decoder; duplicate Engine claims are not retained twice.
+BuildTime remains a compared build claim and is retained. Extra detail pairs
+and raw JSON are not retained. All module-owned input-derived strings, including retained fields and
+intermediate/discarded Details keys and values, use zeroizing storage. The
+output has no Debug, Clone, Serialize, public constructor or authority-bearing
+conversion. Caller-owned input, external copies and JSON-library scratch are outside
+that scrubbing claim; it is not universal memory erasure. No canonical body or identity digest is minted by this decoder.
+
+### Mandatory source and integration evidence
+
+Synthetic positive fixtures must reproduce the pinned source shape, all eleven
+Engine details and all four components. They are not copied live observations
+or provenance evidence. Test valid whitespace/key/component order and escaped
+representation without changing the retained projection; all four-component
+permutations must agree. Independently construct expected retained fields and
+prove that additional informational Details never enter the output.
+
+For root, Platform, each component and Details, cover every required member's
+omission, null, wrong type, duplicate/escaped duplicate and positional-array
+substitution, plus unknown keys outside Details. Exercise every retained field
+and fixed predicate; each of the eight duplicated root/detail pairs must deny
+one-sided substitution and retain a self-consistent changed unverified pair
+when it does not change a fixed predicate. Test duplicate/missing/extra/wrong-
+case components, missing/empty/unavailable build details, fixed version drift,
+Experimental presence and string mismatch, empty/oversized dictionary keys,
+wrong extra-detail value types and all private error codes/precedence.
+
+Exercise body size, decoded string/key byte bounds with raw UTF-8 and escaped
+Unicode, depth, per-object and total-member caps, array caps, every truncation
+of a valid fixture, BOM, raw controls, malformed/surrogate escapes, invalid
+UTF-8, invalid numeric syntax and trailing bytes/values. Bound tests must reach
+the intended preflight limit without a smaller unrelated bound masking it.
+Accept a positive fixture with all four Details maps at 64 total entries each,
+including the required keys. Independently add a 65th member to each map and
+require `headless_version.json_limits`; also move one extra from another map
+so the aggregate stays 256 while the selected map has 65, and require the same
+denial. This proves that required entries count and an unused slot in another
+map does not widen a local cap. Meaningful positive byte-boundary fixtures remain
+unverified syntax claims.
+Run focused tests, strict pinned host lint/format, full repository checks,
+scoped installed scanners and fresh independent source/direct-child review.
+
+Future comparison must bind every retained field to the complete reviewed
+recipe/build/kernel tuple and authenticated current root/daemon/endpoint
+custody. The selected Go architecture is not Info's uname architecture. Current
+pins, artifact provenance, native observations, held associations, profile and
+remaining-budget enforcement, HTTP/status/framing, live endpoint custody and
+full source freeze remain separate. The decoder cannot produce a permit,
+installation, cleanup selector, release, receipt or runtime/support evidence.
+No Docker, host change, credential intake, registration, initializer or active
+product integration is opened. LNSAT remains the standalone authority engine;
+Rangoon is an optional standard-contract consumer.
 
 ## Info response
 
@@ -956,7 +1124,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.ComponentVersion
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/version_response.go#L47) · snapshot SHA-256
-`0d3eed498ed406989f3d3eb5d1627640a362fd0e815023cb8c862a8d8b3643aa`.
+`4a6c532645f9eaaddcc0ffb3ab1e7942047e931bb2cf1ac28e58c27238c313a3`.
 
 | Go field  | Go type             | JSON tag     |
 | --------- | ------------------- | ------------ |
@@ -1097,7 +1265,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.PlatformInfo
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/version_response.go#L40) · snapshot SHA-256
-`0d3eed498ed406989f3d3eb5d1627640a362fd0e815023cb8c862a8d8b3643aa`.
+`4a6c532645f9eaaddcc0ffb3ab1e7942047e931bb2cf1ac28e58c27238c313a3`.
 
 | Go field | Go type  | JSON tag |
 | -------- | -------- | -------- |
@@ -1140,7 +1308,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.VersionResponse
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/version_response.go#L5) · snapshot SHA-256
-`0d3eed498ed406989f3d3eb5d1627640a362fd0e815023cb8c862a8d8b3643aa`.
+`4a6c532645f9eaaddcc0ffb3ab1e7942047e931bb2cf1ac28e58c27238c313a3`.
 
 | Go field        | Go type              | JSON tag                  |
 | --------------- | -------------------- | ------------------------- |

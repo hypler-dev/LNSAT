@@ -14,6 +14,11 @@ pub mod docker_local_supervisor;
 pub mod headless_config_loader;
 #[allow(
     dead_code,
+    reason = "Reviewed inert Stage-A Version decoder awaits complete freeze and integration"
+)]
+mod headless_daemon_version;
+#[allow(
+    dead_code,
     reason = "Reviewed inert Stage-A native candidate awaits complete freeze and integration"
 )]
 mod headless_native;

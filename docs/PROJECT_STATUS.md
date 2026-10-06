@@ -14,11 +14,12 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Latest bounded engine source prerequisite: the
-[private context/challenge codec](#stage-a-private-context-and-challenge-codec),
-following the private journal, ACL, mountinfo, fdinfo, reader and profile candidates.
-Its exact private contract passed precode review; source validation and review
-remain separate gates. These prerequisites remain distinct
+Latest bounded engine prerequisite: the
+[private daemon Version decoder contract](#stage-a-private-daemon-version-decoder),
+following the source-reviewed context/challenge codec and earlier private candidates.
+Version precode and independent static source review passed; the private source
+candidate and focused matrix are implemented and host-source validation passes.
+Exact source/direct-child bindings remain separately recorded review gates. These prerequisites remain distinct
 from unfinished V1 integration, native evidence, enterprise assurance and
 actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
@@ -1728,6 +1729,62 @@ the separately fixed recipe budget. Native observation, observation/release/
 result messages, product integration, CLI setup and full freeze remain open.
 LNSAT remains the standalone engine; Rangoon is an optional standard-contract
 consumer. Phase 11 retains sole runtime-proof authority.
+
+### Stage-A private daemon Version decoder
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private Version-only contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-version-decoder-contract)
+defines supplied-body byte limits, checks bounds before allocation, requires
+closed map shapes, exact selected-family presence, component/build consistency and a
+private unverified retained projection. It deliberately separates typed discarded
+Details from compared build claims. The source paths and complete positive,
+boundary and denial matrix are named before implementation. Fresh independent
+precode review identified an ambiguous Details-entry count. The contract now
+counts required and extra pairs together per map and requires distributed
+at-cap/over-cap tests. Fresh independent OpenAI Terra xhigh recheck passed with
+no remaining P1/P2/P3.
+
+The named private source candidate implements supplied-body decoding with an
+allocation-free JSON preflight, closed typed maps, per-map Details bounds,
+fixed component predicates and all eight root/Engine consistency comparisons.
+Its sealed output retains only unverified comparison claims in zeroizing
+storage. It adds no caller, public/exported constructor, I/O, dependency or
+feature. Caller input and JSON-library scratch remain outside the module-owned
+storage scrubbing claim.
+
+Sixteen focused test groups use an independently constructed synthetic body and
+expected retained projection. They cover all component permutations, required
+members and types, decoded duplicates, positional arrays, all compared claims,
+discarded Details, Unicode byte limits, per-map/global counts, depth, framing,
+numbers and fixed errors. Initial validation exposed positional-array acceptance
+and a leading-zero number classification defect; both were corrected without
+weakening the matrix. All sixteen focused tests and strict host Clippy pass;
+initial failures remain in the review evidence. Literal `npm run check` passes:
+1,519 TypeScript tests, 139 contract comparisons, 264 macOS store tests with two
+ignored and 194 daemon tests. Fresh independent static source review found no
+remaining P1/P2/P3. Scoped Semgrep found no issue in either new Rust file and only
+the unchanged test-only temporary-directory INFO in `lib.rs`; scoped redacted
+Gitleaks found no secrets. Docs, public readiness, inventory, formatting and
+public-history checks pass for their named source scope. PHR-0037 owns the exact
+source review binding; direct-child verification remains a separate gate.
+
+These are macOS host and synthetic source results. No Linux native compilation,
+genuine daemon response, artifact/pin comparison, production caller or runtime
+result is claimed. The full check covered unchanged Rust blobs; final factual
+documentation and generated metadata receive proportional checks and exact review.
+
+Primary-source refresh found that the recorded Version type snapshot digest did
+not match the exact pinned file. Raw and base64 GitHub responses agree with the
+recomputed Git blob; the three appendix references now use the verified raw-byte
+SHA-256. Existing listed types and fields are unchanged. This correction is
+source evidence, not an installed component/artifact pin or a native result.
+
+The prior context/challenge source and exact direct-child attestation are recorded
+by PHR-0036. A Version parse cannot authenticate a daemon, establish native
+controls, compare unset recipe values, admit a registry entry, initialize a
+store or release an action. Full freeze, integration, standalone CLI setup,
+real runtime and packaging remain separate. LNSAT owns the engine contracts;
+Rangoon consumes the same interfaces without becoming another authority.
 
 ### Stage-A private fdinfo byte candidate
 

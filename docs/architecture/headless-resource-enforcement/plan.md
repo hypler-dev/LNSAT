@@ -185,6 +185,22 @@ self-consistency. Trusted challenge generation, replay binding, profile and
 remaining-budget enforcement, native facts, release, full freeze and product
 integration retain their separate gates.
 
+### Private daemon Version prerequisite
+
+The next independent Stage-A prerequisite is the
+[Version-only supplied-body contract](docker-response-source-spec.md#stage-a-private-version-decoder-contract).
+It names exact private source/test/declaration ownership, an allocation-free
+bounded JSON preflight, closed typed shapes, required identity/build presence,
+component consistency and a sealed unverified projection. Fresh independent
+precode review passed after the Details-count ambiguity and matrix were
+resolved. Its named private source and focused test matrix are implemented;
+host-source validation and independent static review pass. Exact source and
+direct-child review bindings remain distinct from native and integration proof.
+It does not admit Info, Inspect,
+Image, HTTP transport, daemon custody, registry values or active callers.
+Project Status owns implementation truth; complete source/pin freeze and
+integration remain separate gates.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.
