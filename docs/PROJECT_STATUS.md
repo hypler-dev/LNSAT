@@ -14,24 +14,26 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Latest bounded contract work prepares the
-[native procfs fixture source packet](#native-procfs-fixture-source-packet)
-for the selected Linux evidence method. Kernel/harness implementation,
-construction and execution remain unopened. The preceding contract work records
+The [native procfs fixture source packet](#native-procfs-fixture-source-packet)
+remains prepared for the selected Linux evidence method. Kernel/harness source,
+construction and execution remain unopened. Earlier contract work records
 [local OS authentication and encrypted-state design requirements](#local-os-authentication-and-encrypted-state-direction)
 and clarifies the existing
 [release-write deadline](#release-write-deadline-contract-clarification).
-Both remain documentation only; provider integration and the release writer
-are unfinished. The latest bounded engine source is the
-[private daemon Info decoder contract](#stage-a-private-daemon-info-decoder-contract),
-following the source-reviewed Version, context/challenge and earlier private
-candidates. Info now has a private supplied-body source candidate and independent
-synthetic tests. Focused and full host-source validation pass; exact source and
-direct-child attestations remain separate gates under PHR-0038.
-The prior Version source and exact
-direct-child attestation are complete under PHR-0037. These prerequisites stay
-distinct from unfinished V1 integration, native evidence, enterprise assurance
-and actual runtime gates.
+Those remain documentation only; provider integration and the release writer
+are unfinished.
+
+The latest bounded engine source is the
+[private daemon Image decoder](#stage-a-private-daemon-image-decoder-contract),
+following the Version and Info supplied-body decoders, context/challenge
+codecs and earlier private candidates. Image has a private supplied-body
+implementation and independently authored synthetic tests. Full host-source
+validation passed on unchanged production bytes; final review-driven test
+coverage passes 21 focused groups and strict lint. Exact source and direct-child
+attestations are complete under PHR-0047, following the PHR-0046 contract review.
+The predecessor Info and Version source chains remain attested under PHR-0038
+and PHR-0037. These prerequisites stay distinct from unfinished V1 integration,
+native evidence, enterprise assurance and actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
