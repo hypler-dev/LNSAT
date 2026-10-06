@@ -480,6 +480,225 @@ full source/pin/positive-feasibility freeze, product integration, runtime,
 packaging and release retain their separate gates. LNSAT remains standalone;
 Rangoon consumes its normal engine/adapter contracts.
 
+## Stage-A private raw OCI chain contract
+
+This prerequisite implements the raw-byte and internal parent-link portion of
+the [OCI boundary above](#oci-raw-bytes-and-parent-links), under the accepted
+[Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-raw-oci-chain-contract)
+owns its disposition. It supplies the complete raw-chain comparison material
+that Image Inspect JSON and the root declaration cannot provide. Fresh exact
+independent precode review precedes implementation. This is a closed selected
+image subset; neither general OCI compatibility nor current image trust follows.
+
+### Ownership and exact private interface
+
+Owned implementation is new private `crates/lnsatd/src/headless_oci_chain.rs`,
+`crates/lnsatd/src/headless_oci_chain_tests.rs`, and one private declaration in
+`crates/lnsatd/src/lib.rs`.
+Use existing serde, sha2 and zeroize dependencies. Existing root-manifest,
+Image/Inspect, profile, native, startup and store source, dependencies/features
+and locked Phase 11 source remain unchanged. No public export or active caller.
+
+The sole private entrypoint is
+`decode_oci_chain(config: &[u8], manifest: &[u8], index: Option<&[u8]>) -> Result<UnverifiedOciChain, OciChainError>`.
+The inputs are complete borrowed raw JSON blobs in their named roles. `None`
+means no supplied index; `Some([])` and bytes spelling `null` are invalid, not
+absence. The function neither accepts an expected pin as authority nor obtains
+bytes by path, descriptor, transport, registry or Docker API. It verifies actual
+supplied raw-byte identities against the supplied parent descriptors. An attacker
+can create another self-consistent chain; success does not authenticate origin.
+
+The output retains all three typed records (index optional), each supplied
+blob's exact byte length and raw 32-byte SHA-256, every optional-field presence,
+all ordered arrays and all dictionary entries. The complete retained records
+are exactly the config, rootfs, history, execution configuration, manifest,
+descriptors, optional index/platform and annotations defined above and refined
+below. Do not discard metadata or fixed empty/false fields: their presence and
+value may be required by the selected immutable recipe. Compressed layer
+digests and uncompressed DiffIDs stay separate, ordered identity lists; they
+are not equal digests and this function does not decompress to verify a pair.
+
+Output/DTOs have no `Clone`, `Debug`, `Display`, serialization, public
+constructor or authority conversion. All owned decoded strings, dictionary
+keys, temporary decoded keys and digest/commitment buffers use zeroizing owners;
+compute hashes directly into zeroizing arrays. No retained generic JSON value,
+copy of the raw bodies, canonical re-encoding or new LNSAT commitment is needed.
+Caller-owned input and serde/hash-library scratch are outside that erasure
+claim. Errors are fixed codes only, without role, path, key, value, offset,
+digest or parser message. No logging, automatic retry or cleanup instruction.
+
+### Finite input and allocation contract
+
+Each supplied body has 1..1,048,576 bytes; the checked total is at most
+3,145,728 bytes. Check every body length before scanning, hashing or allocating.
+Then preflight all supplied bodies in config, manifest, index order before any
+typed decoding. Per body: UTF-8 JSON, one value with JSON whitespace permitted,
+depth at most 32 (root depth one), at most 64 members per object and 4,096
+members across all objects, at most 128 elements per array and 1,024 elements
+across all arrays. Decoded keys have 1..256 UTF-8 bytes and decoded string
+values at most 4,096 bytes. Sum decoded key/value bytes before allocation and
+cap at 1,048,576 per body. Escape-equivalent strings count identically.
+
+Reject BOM, malformed UTF-8/escapes/surrogates/numbers, raw JSON controls,
+incomplete input and trailing values. Scanner stack/key scratch are fixed
+bounded storage; no heap-grown syntax tree or unbounded skipped unknown branch.
+These limits apply even to later-rejected shapes. Semantic arrays/dictionaries
+have the narrower limits below. Across the chain the input and decoded text
+each remain at most 3 MiB, with bounded record/container overhead. No buffering
+of layer blobs, read loop, hashing retry, clock or worker is introduced.
+
+All records are map-only. Every named required member must occur once. Optional
+means absent or one correctly typed non-null value; null is forbidden throughout
+OCI JSON, including optional fields and array/dictionary entries. Reject unknown,
+duplicate and escaped-duplicate keys at every record and dictionary. Do not
+default omission to an empty value. Integers use unsigned decimal spelling
+without sign, fraction or exponent; widths are specified below. Strings retain
+original decoded UTF-8 without Unicode normalization and reject decoded ASCII
+controls U+0000..U+001F and U+007F. No generic Unicode trimming or normalization.
+
+### Complete selected-subset predicates
+
+The exact allowed/required fields and media types remain those in the preceding
+OCI section. These additional rules remove implementation ambiguities:
+
+- Config `os` is exactly `linux`; architecture is `[a-z0-9_]{1,32}`. Optional
+  variant is 0..32 printable ASCII bytes. Index platform uses the same grammar.
+  Preserve absent and present-empty variant separately; for the cross-blob
+  platform comparison alone both denote the empty variant. This does not choose
+  an API architecture alias or supported target row.
+- Config `created` and history `created`, when present, use exactly
+  `YYYY-MM-DDTHH:MM:SS`, an optional dot followed by 1..9 decimal digits, then
+  exactly `Z`, `+HH:MM` or `-HH:MM`. Every timestamp digit is ASCII. Years 0001..9999,
+  Gregorian calendar/leap-day validity, hours 00..23, minutes/seconds 00..59,
+  and offset hours 00..23/minutes 00..59 are required. No leap second, lowercase
+  separator, surrounding space or UTC normalization. Retain exact spelling,
+  including zero offsets; timestamps provide no freshness or ordering evidence.
+- Top-level author is 0..256 UTF-8 bytes. Each history object permits only the
+  five named fields, all optional and non-null; `{}` is allowed. History author,
+  created_by and comment have 0..4,096 bytes. Absent `empty_layer` counts as false
+  only for the history-layer count; retain its absence distinctly. Present true
+  contributes zero, absent/false contributes one. When history is present its
+  nonempty count must equal the 1..16 DiffIDs. Thus a present empty history array
+  denies; absent history is permitted. At most 64 history entries.
+- `rootfs.type` is exactly `layers`; DiffIDs number 1..16, use full lowercase
+  `sha256:` digests and are distinct. Preserve their order.
+- Every execution-config member is optional but retained with presence. User,
+  WorkingDir and StopSignal are 0..4,096-byte strings. Env/Entrypoint/Cmd are
+  arrays of 0..64 strings, each 0..4,096 bytes. Their exact values and presence
+  require later recipe comparison; this decoder grants no command/environment
+  permission. ExposedPorts/Volumes, when present, are exactly empty maps;
+  ArgsEscaped is false; OnBuild/Shell are exactly empty arrays. Healthcheck is
+  exactly a map with required `Test:["NONE"]` and no duration/retry member.
+- Labels is an optional map of 0..64 pairs: keys have 1..256 UTF-8 bytes and
+  values 0..4,096 bytes, with the common control denial. Manifest/index
+  annotations use the same bounds but keys are printable ASCII. Retain both
+  missing and present-empty maps. Dictionary key order has no semantic meaning;
+  retain entries in decoded-byte lexicographic key order after duplicate checks.
+  Raw hash still reflects the original serialized order.
+- SchemaVersion is u32 exactly 2. Descriptor sizes fit positive signed 64-bit
+  range, represented internally as positive u64 no greater than `i64::MAX`;
+  zero, overflow and non-integer spellings deny. Config and index-child
+  descriptor sizes are additionally at most 1 MiB, and later must equal the
+  corresponding actual body length. Layer sizes are declarations only: no
+  allocation/read is based on them; exact smaller per-layer limits and pins
+  remain a required immutable-recipe comparison, not a caller-selected bound.
+- Manifest layers number 1..16; each has exactly the three named descriptor
+  fields and the selected gzip layer media type. All digests use full lowercase
+  SHA-256 spelling. Retain every size/digest in order. Count must equal DiffIDs;
+  pair by position without claiming that compressed bytes or DiffIDs were read.
+  Index contains exactly one selected manifest descriptor, with required
+  platform; nested indexes and all descriptor extensions remain forbidden.
+
+The small maps and empty collections are real presence states, not discarded
+data. A typed representation must preserve every distinction above for later
+comparison; deriving a default, flattening fields or reusing Image Inspect's
+lossy metadata projection is insufficient.
+
+### Raw identity and internal links
+
+Hash complete original config, manifest and optional index bytes separately,
+without domain, canonicalization, trimming, newline removal or reserialization.
+Record each original length. Require the manifest's config descriptor to name
+the computed config digest and length. If index is supplied, its sole descriptor
+must name the computed manifest digest and length and match config OS,
+architecture and the variant rule above. Config and manifest are always required;
+there is no fallback from a malformed index to a manifest-only chain.
+
+Semantically equivalent JSON with changed whitespace, ordering or escape spelling
+has a different raw identity. Altering config bytes requires updating the
+manifest descriptor; altering those manifest bytes requires updating the index
+descriptor. Recomputing a self-consistent chain changes retained identities but
+does not make it trusted. Do not compare a compressed layer digest with a DiffID,
+a raw OCI digest with the root-manifest canonical commitment, or a containerd
+target Id with a config digest.
+
+### Deterministic denial order
+
+Private codes use prefix `headless_oci_chain.`:
+
+1. `input_bounds`: any empty/oversized supplied body or aggregate bound;
+2. `json_syntax` / `json_limits`: preflight, config then manifest then index;
+3. `json_shape`: typed closed shape/presence/duplicate/type/integer width,
+   config then manifest then index, after all preflights pass;
+4. `claims`: fixed media/schema/OS/rootfs values, lexical/calendar/control rules,
+   semantic cardinalities, size ranges and config-local history/DiffID relations;
+5. `links`: actual raw config/manifest digest or size mismatch, cross-blob layer
+   count or index-platform mismatch, after every supplied record passes claims.
+
+Within one preflight UTF-8 validation precedes left-to-right scanning; the first
+syntax/limit violation wins. All claims use one public-safe private code, so no
+member name is observable. Missing expected pins, host drift, backend mismatch
+and custody failures are not new errors in this supplied-byte function; they
+remain mandatory denial cases in the future independently held comparator.
+
+### Integration obligations and acceptance evidence
+
+Later private composition must obtain stable bytes from authenticated held
+root-controlled files, meter actual reads against the shared budget, and bind
+the full returned chain to the independently selected root-manifest commitment,
+profile and closed immutable recipe. It must compare exact raw digest/size/index
+presence and platform against root records, all recipe fields including optional
+presence and ordered compressed-layer/DiffID pins, and the authenticated daemon
+Image/Inspect projections under the selected backend. Raw empty/omitted config
+fields may have source-defined API omission normalization; compare through that
+exact reviewed mapping, never by API reserialization or arbitrary equivalence.
+For containerd, target identity is the selected index or manifest as already
+defined; for graphdriver it is config. Backend choice is independently held.
+No decoded output can create the trusted holder, admit an unset registry entry,
+prove image inventory/installed layers or release a startup barrier.
+
+Required independent synthetic positives include both no-index and index chains,
+all optional fields absent/present, empty/false presence, history omission and
+true/false/absent empty_layer, 1 and 16 layers, 64 histories, both variant
+representations, full retained projections and independently computed fixed raw
+hash/length vectors. Construct a coherent maximum-sized selected record; do not
+test bounds only through rejected shapes. Semantically equivalent byte variants
+must differ in raw hashes and succeed only with updated parent links.
+
+Negatives cover every required/optional field's absence, null, wrong type,
+unknown/duplicate/escaped-duplicate and array-for-object form; every dictionary
+and scalar array element; all fixed values, numeric spelling/range, string/UTF-8/
+calendar limits, DiffID duplicates, history/layer count and exact index
+cardinality. Exercise every scanner/body/aggregate bound at and above its cap,
+isolating impossible-to-reach aggregate excess as a checked invariant rather
+than fabricating a successful input. Include malformed/truncated/trailing JSON,
+controls and non-normalized Unicode, byte mutation at unchanged length, swapped
+roles, wrong descriptor size/hash, altered index platform and no-index downgrade.
+Prove raw hashing with trailing whitespace and escaped strings; canonicalized or
+newline-stripped hashing must fail parent checks. Self-consistent substitutions
+may parse successfully but must never yield authority. Secret canaries and
+multi-defect cases freeze static errors and stage precedence.
+
+Precode validation uses docs/public/inventory/history/format/link/diff and locked
+Phase 11 readiness checks plus independent review. Subsequent source requires
+focused pinned Rust tests, strict all-target lint, formatting, full `npm run check`,
+installed scoped scans and exact source/direct-child review. Supplied vectors
+are constructive representation evidence only. Custody reader, exact recipe/pin
+comparison, complete source/native freeze, artifact capture, integration, runtime
+and package/release proof retain their separate gates. LNSAT remains standalone;
+Rangoon consumes its ordinary engine contracts.
+
 ## Freeze acceptance and remaining work
 
 Independent review must verify that a future non-root controller can read the

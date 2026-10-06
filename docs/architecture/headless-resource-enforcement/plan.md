@@ -315,6 +315,24 @@ comparison contracts; do not introduce caller-supplied successful evidence as
 an integration shortcut. Native fixture source, artifact capture, full freeze,
 integration, activation and runtime retain separate gates.
 
+### Private raw OCI chain prerequisite
+
+The [raw-chain contract](root-manifest-source-spec.md#stage-a-private-raw-oci-chain-contract)
+follows root-manifest representation. Freeze exact private ownership, complete
+optional-presence-aware config/manifest/index claims, raw byte hashing and parent
+links, finite allocation, fixed errors and independent positive/negative vectors
+before source. Fresh independent precode review is required;
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-raw-oci-chain-contract)
+owns disposition. The candidate receives supplied bytes and returns unverified
+comparison material. It does not acquire held files, compare an independently
+selected recipe/registry, authenticate root/daemon association or prove layers.
+
+Later custody/composition contracts must bind these exact bytes to root/profile
+pins, complete immutable recipe fields and the selected backend's Image/Inspect
+mapping. No API re-encoding, self-consistent attacker chain or unset registry
+entry can replace that work. Full native/source/pin freeze, trusted startup and
+store/recovery integration, actual runtime and packaging remain separate exits.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.

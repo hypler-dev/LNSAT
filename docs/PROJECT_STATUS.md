@@ -24,16 +24,15 @@ Those remain documentation only; provider integration and the release writer
 are unfinished.
 
 The latest bounded engine source is the
-[private Create/Wait decoder candidate](#stage-a-private-create-and-wait-decoder-contract),
-following the private Version, Info and Image supplied-body decoders,
-context/challenge codecs and earlier prerequisites. It has fifteen focused
-synthetic test groups, strict host lint and full host-source validation passing.
-Fresh independent exact source review passed; PHR-0049 tracks this source slice
-and its separate direct-child attestation. The predecessor Image chain remains attested under
-PHR-0047 after PHR-0046 contract review; Info and Version remain separately
-attested under PHR-0038 and PHR-0037. All are private prerequisites, distinct
-from unfinished V1 integration, native evidence, enterprise assurance and
-actual runtime gates.
+[private root-manifest decoder](#stage-a-private-root-manifest-decoder-contract),
+following the private daemon-response and startup candidates. Eighteen focused
+synthetic groups, strict host lint, full host-source checks and independent exact
+source/direct-child reviews passed; PHR-0055 attests that source after the
+PHR-0054 precode contract. The next
+[raw OCI chain contract](#stage-a-private-raw-oci-chain-contract) defines exact
+supplied-byte parent-link checks and their later custody/comparison obligations;
+it is not implemented. These are private prerequisites, distinct from unfinished
+V1 integration, native evidence, enterprise assurance and actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
@@ -2176,13 +2175,41 @@ current-instance and artifact claims with zeroizing owned strings and buffers;
 static errors reveal no input. Decoder success remains unverified declaration
 consistency, not profile/registry/native or OCI custody evidence.
 
-PHR-0055 tracks the implementation's focused/full source validation and fresh
-independent exact-source review; its registry remains pending until the separate
-direct attestation child records the completed review. Current pins remain
+PHR-0055 attests the implementation's focused/full source validation and fresh
+independent exact-source review; the separate direct attestation child also
+passed independent review. Eighteen focused groups and strict host Clippy pass.
+Full local source checks pass with 1,519 TypeScript tests, 139 contract comparisons,
+316 daemon tests and 264 store tests plus two existing invoked helper ignores.
+That full run began before final review corrections; its final Rust stage and
+the final focused/lint/scanner runs cover the reviewed bytes. Scoped scans found
+no new-file Semgrep issue or secret; the existing test-only informational
+`lib.rs` finding remains unchanged. These are host-source and synthetic results.
+Current pins remain
 unset; no registry, I/O, successful native constructor, product caller or
 authority conversion is introduced. The synthetic tests supply no host or
 artifact proof. Full native freeze, integration, runtime, packaging and V1
 completion remain unfinished. Phase 11 owns runtime proof.
+
+### Stage-A private raw OCI chain contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private raw-chain contract](architecture/headless-resource-enforcement/root-manifest-source-spec.md#stage-a-private-raw-oci-chain-contract)
+names the next supplied-byte prerequisite: complete config/manifest/optional-index
+projections, finite preflight/allocation, raw SHA-256 identities, internal parent
+links, exact optional-field distinctions and deterministic data-free denials.
+It fixes history omission/count semantics and timestamp bounds while preserving
+compressed layer digests separately from uncompressed DiffIDs. Parent links bind
+the supplied bytes; they cannot authenticate root custody, selected recipe/pins,
+daemon association or installed layer contents.
+
+This is a precode documentation packet, not an implementation. PHR-0056 tracks
+fresh independent exact-contract review and its separate attestation child.
+Only the named private module, sibling tests and declaration may follow precode
+PASS under the already accepted Stage-A amendment. No existing decoder or product
+entrypoint is widened. Root/profile/registry comparison, stable artifact custody,
+backend-specific Image/Inspect mapping and complete freeze remain explicit later
+requirements. No new native, provisioning, Docker, runtime, packaging, support or
+Rangoon-specific authority follows. Phase 11 remains the runtime-proof owner.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
