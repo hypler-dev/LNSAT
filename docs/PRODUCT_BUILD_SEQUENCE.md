@@ -425,15 +425,15 @@ In parallel, retain exact existing
 source/test mappings for the protected workflow and prepare only independently
 reviewed inert prerequisites allowed by Stage A. The private profile and
 context/challenge codecs have source validation and exact attestations. The
-next bounded source candidate covers only private daemon Version response decoding
-under the [canonical status record](PROJECT_STATUS.md#stage-a-private-daemon-version-decoder).
-Its body/shape limits, compared and discarded fields, retained claims
-and positive/denial matrix were frozen before source. Fresh independent precode
-review passed after clarifying per-map Details counts and boundary tests.
-Private implementation, sixteen focused tests and full host-source validation
-pass, with independent static review and exact source/direct-child bindings
-kept distinct under the accepted Stage-A order. No decoder opens CLI setup
-or replaces native evidence.
+private Version decoder has sixteen focused test groups, full host-source
+validation and exact source/direct-child attestations under PHR-0037. The next
+bounded candidate is the
+[private Info decoder contract](PROJECT_STATUS.md#stage-a-private-daemon-info-decoder-contract).
+It separates retained comparison claims from typed discarded data, closes exact
+presence/error/boundary rules and corrects the named pinned source references.
+Fresh independent precode review passes; implementation remains pending at this
+contract-preparation checkpoint. No decoder opens CLI setup or replaces native
+evidence.
 Do not restart completed
 prerequisites, implement fake success or treat an always-deny implementation as
 the required positive case. Full freeze, integration, real runtime, RC and

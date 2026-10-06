@@ -201,6 +201,21 @@ Image, HTTP transport, daemon custody, registry values or active callers.
 Project Status owns implementation truth; complete source/pin freeze and
 integration remain separate gates.
 
+### Private daemon Info prerequisite
+
+After the source-reviewed Version candidate, freeze and independently review
+one [Info-only supplied-body contract](docker-response-source-spec.md#stage-a-private-info-decoder-contract).
+It names three exact source/test/declaration paths and preserves Version source.
+Keep required comparison claims, explicit nil/allocated encodings, closed typed
+informational children, finite bounds and fixed errors. The source-based
+positive body and complete denial/boundary matrix precede implementation.
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-info-decoder-contract)
+owns the passed independent precode review and pending implementation state.
+Full source checks,
+fresh independent exact source/direct-child reviews, complete source/pin freeze
+and actual selected-target proof remain separate gates. No HTTP/native/daemon
+integration, credential/provider operation or new action authority opens here.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.

@@ -5,8 +5,9 @@ coverage and records exact source normalization; it does not complete the full
 native freeze. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 owns acceptance and implementation. The Phase 11 operator packet owns runtime
 truth. The bounded Stage-A Version-only decoder contract below is a private
-source prerequisite; no daemon verification, Docker operation or activation
-follows from it.
+source prerequisite. The separate Info-only prerequisite below is still a
+precode contract; no daemon verification, Docker operation or activation
+follows from either contract.
 
 ## Source and interpretation
 
@@ -275,30 +276,35 @@ Rangoon is an optional standard-contract consumer.
 
 Root keys are exactly system.Info, subject to these classifications:
 
-| Class      | Exact root paths                                                                                                              | Rule                                                                                                                                                                                                             |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Compare    | ID, ServerVersion, OSType, Architecture, KernelVersion, OSVersion, OperatingSystem, DockerRootDir                             | Exact root-attested current daemon/host recipe. DockerRootDir equals `instance.metadata_roots.daemon_root.path`; held identity and ACL custody still apply. Informational claims do not authenticate themselves. |
-| Compare    | Driver, CgroupDriver, CgroupVersion, DefaultRuntime, Runtimes                                                                 | Selected storage backend, `systemd`, `2`, `runc` and the exact stock runtime set/shape below.                                                                                                                    |
-| Compare    | MemoryLimit, SwapLimit, CpuCfsPeriod, CpuCfsQuota, PidsLimit                                                                  | True, plus actual native controls. Availability booleans do not prove the workload limits.                                                                                                                       |
-| Compare    | SecurityOptions, Plugins, Debug, ExperimentalBuild, LiveRestoreEnabled, Isolation, CDISpecDirs, Containerd                    | Exact root recipe, selected no rootless/remap/SELinux/NRI/CDI/additional authorization/runtime plugins; private seccomp/AppArmor/cgroupns expectations.                                                          |
-| Compare    | ContainerdCommit, RuncCommit, InitCommit, InitBinary                                                                          | Closed Commit `{ID:string}` objects and exact reviewed component recipe. No legacy Expected member.                                                                                                              |
-| Compare    | Swarm                                                                                                                         | Exact inactive served shape below.                                                                                                                                                                               |
-| Discard    | Containers, ContainersRunning, ContainersPaused, ContainersStopped, Images, NFd, NGoroutines, NEventsListener, NCPU, MemTotal | Nonnegative bounded integers; NCPU/MemTotal must also meet the selected finite preparation/action recipe's host requirements.                                                                                    |
-| Discard    | CPUShares, CPUSet, IPv4Forwarding, OomKillDisable                                                                             | Booleans only. OomKillDisable availability may be false on cgroup v2; HostConfig false and native observation remain required.                                                                                   |
-| Discard    | SystemTime, LoggingDriver, IndexServerAddress, HttpProxy, HttpsProxy, NoProxy, Name, ProductLicense                           | Bounded strings; SystemTime is RFC3339. These cannot change the private request enum or selected container LogConfig.                                                                                            |
-| Discard    | DriverStatus, FirewallBackend, RegistryConfig, DefaultAddressPools, Labels, Warnings                                          | Closed typed child rules below; no interpretation of warning text as proof.                                                                                                                                      |
-| Forbid     | SystemStatus, NRI, DiscoveredDevices                                                                                          | Omitted for the selected first recipe; even present null denies.                                                                                                                                                 |
-| Empty only | GenericResources                                                                                                              | Required null or empty array as fixed by the root daemon recipe; any resource element denies before accepting its unmodeled alternatives.                                                                        |
+| Class      | Exact root paths                                                                                              | Rule                                                                                                                                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compare    | ID, ServerVersion, OSType, Architecture, KernelVersion, OSVersion, OperatingSystem, DockerRootDir             | Exact root-attested current daemon/host recipe. DockerRootDir equals `instance.metadata_roots.daemon_root.path`; held identity and ACL custody still apply. Informational claims do not authenticate themselves. |
+| Compare    | Driver, CgroupDriver, CgroupVersion, DefaultRuntime, Runtimes                                                 | Selected storage backend, `systemd`, `2`, `runc` and the exact stock runtime set/shape below.                                                                                                                    |
+| Compare    | MemoryLimit, SwapLimit, CpuCfsPeriod, CpuCfsQuota, PidsLimit                                                  | True, plus actual native controls. Availability booleans do not prove the workload limits.                                                                                                                       |
+| Compare    | SecurityOptions, Plugins, Debug, ExperimentalBuild, LiveRestoreEnabled, Isolation, CDISpecDirs, Containerd    | Exact root recipe, selected no rootless/remap/SELinux/NRI/CDI/additional authorization/runtime plugins; private seccomp/AppArmor/cgroupns expectations.                                                          |
+| Compare    | ContainerdCommit, RuncCommit, InitCommit, InitBinary                                                          | Closed Commit `{ID:string}` objects and exact reviewed component recipe. No legacy Expected member.                                                                                                              |
+| Compare    | Swarm                                                                                                         | Exact inactive served shape below.                                                                                                                                                                               |
+| Compare    | NCPU, MemTotal                                                                                                | Retain positive bounded capacity claims for the selected finite preparation/action recipe's host requirements; these claims do not prove available resources.                                                    |
+| Compare    | FirewallBackend presence and FirewallBackend.Driver                                                           | Retain optional presence and the driver claim for exact root-recipe comparison; parse and discard only its informational pairs.                                                                                  |
+| Discard    | Containers, ContainersRunning, ContainersPaused, ContainersStopped, Images, NFd, NGoroutines, NEventsListener | Nonnegative bounded integers.                                                                                                                                                                                    |
+| Discard    | CPUShares, CPUSet, IPv4Forwarding, OomKillDisable                                                             | Booleans only. OomKillDisable availability may be false on cgroup v2; HostConfig false and native observation remain required.                                                                                   |
+| Discard    | SystemTime, LoggingDriver, IndexServerAddress, HttpProxy, HttpsProxy, NoProxy, Name, ProductLicense           | Bounded strings; SystemTime is RFC3339. These cannot change the private request enum or selected container LogConfig.                                                                                            |
+| Discard    | DriverStatus, FirewallBackend.Info, RegistryConfig, DefaultAddressPools, Labels, Warnings                     | Closed typed child rules below; no interpretation of warning text as proof.                                                                                                                                      |
+| Forbid     | SystemStatus, NRI, DiscoveredDevices                                                                          | Omitted for the selected first recipe; even present null denies.                                                                                                                                                 |
+| Empty only | GenericResources                                                                                              | Required null or empty array as fixed by the root daemon recipe; any resource element denies before accepting its unmodeled alternatives.                                                                        |
 
-SecurityOptions is a finite unique string array whose exact set equals the
-realized recipe. A string can include a profile suffix: the stock AppArmor
+SecurityOptions is a finite unique string array whose exact ordered contents
+equal the realized recipe, as required by the transport/create contract. A
+string can include a profile suffix: the stock AppArmor
 entry is `name=apparmor,profile=default`, not merely `name=apparmor`.
-Seccomp's actual source-specific profile entry must also be frozen. Absence
+The pinned default seccomp profile entry is `name=seccomp,profile=builtin`.
+Absence
 of a denial name alone does not prove a required positive control.
 
 Runtimes has exactly `runc` and `io.containerd.runc.v2` for the selected stock
 source recipe. Each is a closed system.RuntimeWithStatus object. `path` is the
-exact reviewed runc path; runtimeArgs/runtimeType/options are omitted, never
+literal `runc` for both stock entries; this is not the held absolute executable
+path or proof of the selected artifact. runtimeArgs/runtimeType/options are omitted, never
 empty/null placeholders. Optional status is a string dictionary with only
 `org.opencontainers.runtime-spec.features`; its value is a UTF-8 string of at
 most 64 KiB, not recursively accepted JSON. Parse/bound/discard that string;
@@ -316,9 +322,11 @@ devices. Disabled
 returns a nil info pointer, so NRI must be omitted.
 
 Containerd is required for this selected backend even though its pointer tag
-is optional. It is exactly optional nonempty Address plus required Namespaces,
+is optional. It is exactly required nonempty Address plus required Namespaces,
 which is exactly Containers and Plugins strings. Presence/values equal the
-root recipe; no alternate endpoint is opened from these strings.
+root recipe; no alternate endpoint is opened from these strings. The pinned
+builder omits Containerd when its address is empty, so a required positive
+Containerd object cannot legitimately omit Address.
 
 Swarm is exactly NodeID `""`, NodeAddr `""`, LocalNodeState `"inactive"`,
 ControlAvailable false, Error `""`, RemoteManagers null. Nodes, Managers,
@@ -346,6 +354,252 @@ The remaining explicit informational children are:
 - Labels/Warnings: required null or bounded string arrays. Warnings are neither
   echoed nor interpreted as enforcement success; actual required observations
   and all security comparisons remain mandatory.
+
+## Stage-A private Info decoder contract
+
+This is the next separate inert prerequisite under the accepted
+[Stage-A source order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+It decodes supplied Info JSON body bytes without HTTP, Docker, native access,
+clock, recipe lookup or product integration. The Version decoder stays unchanged.
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-info-decoder-contract)
+owns implementation and review truth. Fresh independent review of this exact
+contract must pass before its named source implementation begins.
+
+### Info source evidence and ownership
+
+The exact pinned raw type files and SHA-256 values are:
+
+| Pinned file                      | Raw bytes | SHA-256                                                            |
+| -------------------------------- | --------- | ------------------------------------------------------------------ |
+| `api/types/system/info.go`       | 5,707     | `1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da` |
+| `api/types/system/runtime.go`    | 578       | `b5ec2f7d0d632ae758f26f3874d8045b6947874d290813e46e66a6b920e01054` |
+| `api/types/registry/registry.go` | 1,957     | `9c52d25141374c205fd15800b8042fc912b06420b00c6d128d3233cea98136e9` |
+| `api/types/swarm/swarm.go`       | 7,059     | `26768a857f33ef68d246f83377fba3d7176a441e98497f9261a409c6e2df29c5` |
+
+Raw and base64-decoded GitHub content responses agree; recomputed Git blobs
+agree with the pinned contents API. Fifteen prior appendix SHA references across
+these four files did not match fetched bytes and are corrected. Their listed
+fields/types/tags match the exact source and remain unchanged. Other type-family
+hashes are outside this refresh. This verifies source snapshots, not installed
+artifact pins or genuine response observations.
+
+The root type contains 63 fields: 55 untagged and eight with omission tags.
+The pinned Info builder, Unix population, system router, stock runtime builder,
+cluster inactive state and configuration constants establish the selected
+shapes below. Default seccomp uses `builtin`; both stock runtime paths are
+`runc`; Containerd is populated only with a nonempty address. Those source
+facts do not authenticate any received body.
+
+Owned source paths are `crates/lnsatd/src/headless_daemon_info.rs`, its sibling
+`headless_daemon_info_tests.rs`, and one private module declaration in
+`crates/lnsatd/src/lib.rs`. The private entrypoint is
+`decode_info_claim(&[u8]) -> Result<UnverifiedInfo, InfoDecodeError>`.
+No new dependency, shared-parser refactor, exported constructor, caller, feature
+or change to the Version decoder/tests is in scope.
+
+### Info bounds and fixed errors
+
+The body cap is 1,048,576 bytes inclusive. Validate strict UTF-8, then complete
+an allocation-free JSON lexical/structural preflight before typed owned decoding.
+Accept one JSON object with optional JSON whitespace. Reject BOM, trailing
+data/values, incomplete values, malformed numbers/escapes/surrogates and raw
+string controls. Root container depth is one; maximum depth is 32. Each object
+has at most 64 members, with at most 4,096 members across the complete body.
+Keys have 1..256 decoded UTF-8 bytes. Arrays have at most 128 elements, except
+DriverStatus and FirewallBackend.Info have at most 64 rows, each row at most
+two elements, and DefaultAddressPools has at most 64 elements. Exact pair length
+is a later shape requirement. These preflight caps apply even inside branches
+that will subsequently fail shape checks.
+
+Every string value is at most 4,096 decoded UTF-8 bytes, with one exception:
+`Runtimes.<stock-name>.status.org.opencontainers.runtime-spec.features` permits
+at most 65,536 decoded UTF-8 bytes. `<stock-name>` is exactly `runc` or
+`io.containerd.runc.v2`. Recognize this path through decoded object keys using
+bounded fixed storage. Escaped equivalent keys get the same cap; wrong case,
+unknown runtime names, extra nesting and array substitutions do not. Never
+extend the exception to all strings under Runtimes. The feature value remains
+an opaque string, never recursively decoded JSON. Preflight has no retained
+syntax tree, dynamic stack or generic recursive skip. Charge limits before
+entering an extra member/element/container or growing an owned string.
+
+Typed decoding uses map-only visitors for every object. No positional struct
+arrays, case folding, coercion, duplicate decoded keys or unknown keys are
+accepted. RegistryConfig.IndexConfigs is the only accepted dynamic dictionary;
+its keys have the same key bounds and decoded-duplicate checks. Required
+nullable fields distinguish missing, null and allocated empty values. Optional
+fields distinguish omission from null; explicit null is never an optional
+omission. No arbitrary recursive value may accept an unmodeled child.
+
+All Go `int` leaves use the private nonnegative cap 2,147,483,647 inclusive;
+this intentionally narrower bound fits both 32-bit and 64-bit Go integers and
+does not select or prove a platform. MemTotal is a nonnegative signed-64-bit
+quantity capped at 9,223,372,036,854,775,807. Reject fractional, exponent, signed
+negative (including `-0`), string, Boolean or overflowing encodings. JSON's
+lexical number grammar is checked in preflight; the exact integer spelling and
+range belong to typed shape. NCPU and MemTotal must additionally be positive
+at the recipe stage and remain unverified capacity claims.
+
+The five fixed, data-free errors are:
+
+1. `headless_info.input_too_large` before inspecting oversized input;
+2. `headless_info.json_syntax` for strict UTF-8 or preflight syntax failures;
+3. `headless_info.json_limits` for preflight bounds;
+4. `headless_info.json_shape` for typed/map/presence/unknown/duplicate/null
+   failures, forbidden fields and integer spelling/range failures;
+5. `headless_info.recipe` for fixed-value/set/order failures, zero required
+   capacity, empty/unavailable compared strings, empty present omission-tagged
+   collections/strings, and invalid IP-prefix or timestamp content.
+
+Size precedes UTF-8; UTF-8 precedes preflight. Within preflight use the first
+encountered left-to-right syntax/limit failure. Shape must finish before recipe
+checks. Wrong types/null are shape failures even where a correctly typed value
+would fail recipe. In a string array that must be empty, a string element fails
+recipe but a non-string element fails shape. GenericResources elements are
+always unmodeled and fail shape regardless of type. No raw input, field name,
+value, offset, private path or provider message appears in errors. Failure
+returns no partial output.
+
+### Info exact presence and predicates
+
+All 55 untagged root fields are required. CgroupVersion and Containerd are
+also required by this positive candidate despite their omission tags.
+ProductLicense, DefaultAddressPools and FirewallBackend may be omitted, but
+may not be null. SystemStatus, NRI and DiscoveredDevices are forbidden even
+when null. Thus 57 root members are required and at most 60 are accepted.
+
+ServerVersion is exactly `29.8.2`, OSType `linux`, CgroupDriver `systemd`,
+CgroupVersion `2`, DefaultRuntime `runc`, and Isolation the empty string.
+MemoryLimit, SwapLimit, CpuCfsPeriod, CpuCfsQuota and PidsLimit are true.
+Debug, ExperimentalBuild and LiveRestoreEnabled are false. These are unverified
+claims, not proof that any positive native control exists. Every compared
+identity/build string is nonempty and not the exact sentinel `N/A`.
+
+SecurityOptions is exactly this ordered array:
+`name=apparmor,profile=default`, `name=seccomp,profile=builtin`,
+`name=cgroupns`, optionally followed by `name=no-new-privileges`.
+No duplicate, reordering, extra name or missing required name is accepted.
+Retain whether the optional fourth entry was present for later exact recipe
+comparison. This reconciles the earlier set wording with the transport
+contract's ordered comparison and the pinned constructor's order. It does not
+select an actual daemon setting or infer workload no-new-privileges enforcement.
+
+Runtimes is a map with exactly `runc` and `io.containerd.runc.v2`. Each value is
+a map requiring `path` with literal `runc`. It may have `status`, a non-null,
+nonempty map with exactly `org.opencontainers.runtime-spec.features`, whose
+value is a nonempty bounded string. Omitted status is allowed; `{}` violates
+its omission tag. runtimeArgs, runtimeType and options are forbidden even as
+empty/null placeholders. Parse and discard the status string. It never proves
+runtime features, artifact identity or executable custody.
+
+Plugins is exactly Volume, Network, Authorization and Log. Each is required
+and is either null or a bounded array of strings. For Volume/Network/Log,
+values are unique, nonempty and not `N/A`; preserve null versus an allocated
+array and normalize allocated values by bytewise sort for later exact set
+comparison. Authorization is only null or `[]`, preserving which encoding was
+supplied. Any string element fails the no-hook recipe. GenericResources is
+only null or `[]`, preserving the encoding; any element is an unmodeled branch
+and fails shape. CDISpecDirs is exactly `[]`, as the pinned builder promotes
+nil to an allocated array. Strings in a nonempty array fail the disabled CDI
+recipe; null or non-string elements fail shape.
+
+Containerd is a non-null map requiring exactly Address and Namespaces.
+Namespaces is a non-null map requiring exactly Containers and Plugins.
+All three strings are nonempty, not `N/A`, and retained for later exact recipe
+comparison. They are opaque claims; decoding never opens an endpoint or path.
+ContainerdCommit, RuncCommit and InitCommit are non-null maps requiring exactly
+ID, a nonempty string other than `N/A`; legacy Expected is forbidden.
+
+Swarm is a non-null map with exactly NodeID `""`, NodeAddr `""`, LocalNodeState
+`"inactive"`, ControlAvailable false, Error `""`, RemoteManagers null. The
+optional Nodes, Managers, Cluster and Warnings keys are forbidden, even when
+zero/empty/null. An allocated empty RemoteManagers array fails shape. This is
+the served inactive shape; a zero-value empty LocalNodeState fails recipe.
+
+### Info informational children and retained projection
+
+DriverStatus is required null or at most 64 exact two-string rows.
+FirewallBackend, when present, is a closed map requiring nonempty Driver other
+than `N/A`; optional Info is a non-null, nonempty array of at most 64 exact
+two-string rows. Retain FirewallBackend presence and Driver; discard Info.
+This prevents the earlier discard classification from losing a claim required
+for later exact root-recipe comparison.
+
+RegistryConfig is required non-null with exactly InsecureRegistryCIDRs,
+IndexConfigs and Mirrors, all required. CIDRs is null or a string array; Mirrors
+is null or a string array. IndexConfigs is null or a map of at most 64 bounded
+dynamic keys to non-null maps requiring exactly Name (string), Mirrors (null or
+string array), Secure (Boolean) and Official (Boolean). Null and `{}` dictionary
+encodings are both permitted and discarded after validation. No registry key,
+URI, proxy or network prefix can authorize or select an operation.
+
+DefaultAddressPools, if present, is a non-null, nonempty array of at most 64
+maps requiring exactly Base (IP-prefix string) and Size (bounded nonnegative
+Go-int representation above). Both CIDRs and Base require a valid IPv4 or IPv6
+address, one slash, and canonical unsigned decimal prefix length within the
+address family's 32/128-bit range. No zone, sign, whitespace, leading-zero
+prefix length except `0`, DNS lookup or outbound address policy is used. Host
+bits need not be masked. This is pure prefix syntax, not network reachability
+or pool suitability proof. These values are discarded.
+
+SystemTime must be a calendar-valid RFC3339 timestamp beginning with
+`YYYY-MM-DDTHH:MM:SS`, followed by an optional decimal point and 1..9 fractional
+digits, then exactly `Z`, `+HH:MM` or `-HH:MM`, with year 0001..9999,
+actual month/day/leap-year validity, hour 00..23, minute/second 00..59, and
+offset hour/minute 00..23/00..59. No leap-second encoding or lowercase separator
+is accepted. This bounded subset needs no time library, clock or freshness
+claim. The timestamp is discarded. Other informational strings may be empty,
+except ProductLicense must be nonempty if present to obey its omission tag.
+Labels and Warnings are required null or bounded string arrays and are
+discarded without echoing or interpreting their contents as controls.
+
+The sealed private output retains only unverified daemon ID, uname architecture,
+kernel/OS version and operating-system description, daemon root, storage driver,
+init binary, three component commit IDs, Containerd address and both namespaces,
+plugin sets with exact null/allocated distinctions, Authorization and
+GenericResources empty encodings, optional firewall driver, NCPU/MemTotal,
+and presence of the daemon no-new-privileges claim. Fixed predicates are implicit.
+Every retained claim must be accounted for by the later complete recipe and
+native/custody comparison; parsing creates no identity or authority digest.
+
+All module-owned input-derived strings, including dynamic keys and intermediate
+or discarded values, use zeroizing storage. The result has no Debug, Clone,
+Serialize, public constructor or authority conversion. Caller input, external
+copies and JSON-library scratch are outside this scrubbing claim. Discarded
+strings do not become public diagnostics, paths, cleanup selectors or arguments.
+
+### Info required source evidence and later gates
+
+Construct a synthetic complete positive body from the pinned source types and
+an independently specified expected projection. Cover both nullable empty
+encodings, all optional positive branches, alternate unverified claims and
+plugin registration order. Prove that discarded data never enters the result.
+Cover every required member's omission/null/wrong type, each optional member's
+absence/null/empty/nonempty forms, all map positions as positional arrays,
+unknown/wrong-case/duplicate/escaped keys, every retained field and each fixed
+predicate. Cover SecurityOptions permutations, no-hook denial, both stock
+runtime maps, all forbidden root/child branches and inactive Swarm shape.
+
+Exercise per-object and total-member caps independently; required keys count.
+Test body/depth/array/row/key/string limits at and above each cap, including
+raw UTF-8 and escaped Unicode. The 65,536-byte feature exception must pass at
+both exact paths and deny over-cap, wrong-path, wrong-case, extra nesting and
+array-substitution attempts without broadening other string bounds. Verify
+fixed error precedence with competing syntax/limit/shape/recipe defects.
+Include every truncation of a valid body, malformed escapes/numbers/UTF-8,
+trailing bytes, integer extrema/overflow/fraction/exponent/negative-zero,
+calendar/leap/offset and IPv4/IPv6 prefix boundary vectors, plus secret canaries.
+Boundary fixtures must reach the intended limit without an earlier unrelated
+cap masking it. Source tests must have a nonempty positive result.
+
+Run focused tests, pinned host format/strict lint, full repository checks,
+scoped installed scanners and fresh independent source/direct-child review.
+No Linux or genuine Docker result follows from host/synthetic tests. Future
+complete source/pin freeze must bind the fixed recipe assumptions and every
+retained claim to actual selected daemon/build/native/endpoint custody, other
+response families, HTTP/status/framing and remaining-budget enforcement before
+integration. Info parsing grants no permit, registration, initializer, cleanup,
+receipt, runtime, support, certification or release authority. LNSAT owns these
+neutral contracts; Rangoon remains an optional standard-contract consumer.
 
 ## Image response
 
@@ -1064,7 +1318,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### registry.IndexInfo
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/registry/registry.go#L45) · snapshot SHA-256
-`48b2946ba394372a3ba21d67b7e1418c53e4b8d67996509a2aa9ca962f244caa`.
+`9c52d25141374c205fd15800b8042fc912b06420b00c6d128d3233cea98136e9`.
 
 | Go field   | Go type    | JSON tag |
 | ---------- | ---------- | -------- |
@@ -1076,7 +1330,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### registry.ServiceConfig
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/registry/registry.go#L10) · snapshot SHA-256
-`48b2946ba394372a3ba21d67b7e1418c53e4b8d67996509a2aa9ca962f244caa`.
+`9c52d25141374c205fd15800b8042fc912b06420b00c6d128d3233cea98136e9`.
 
 | Go field                | Go type                 | JSON tag                |
 | ----------------------- | ----------------------- | ----------------------- |
@@ -1087,7 +1341,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### swarm.Info
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/swarm/swarm.go#L200) · snapshot SHA-256
-`253023debb7e06788d759a317c154d5976f44324098118d39ed1e1df88681140`.
+`26768a857f33ef68d246f83377fba3d7176a441e98497f9261a409c6e2df29c5`.
 
 | Go field           | Go type          | JSON tag     |
 | ------------------ | ---------------- | ------------ |
@@ -1105,7 +1359,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### swarm.Peer
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/swarm/swarm.go#L218) · snapshot SHA-256
-`253023debb7e06788d759a317c154d5976f44324098118d39ed1e1df88681140`.
+`26768a857f33ef68d246f83377fba3d7176a441e98497f9261a409c6e2df29c5`.
 
 | Go field | Go type  | JSON tag |
 | -------- | -------- | -------- |
@@ -1115,7 +1369,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.Commit
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L140) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field | Go type  | JSON tag |
 | -------- | -------- | -------- |
@@ -1135,7 +1389,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.ContainerdInfo
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L89) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field     | Go type                | JSON tag     |
 | ------------ | ---------------------- | ------------ |
@@ -1145,7 +1399,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.ContainerdNamespaces
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L105) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field     | Go type  | JSON tag |
 | ------------ | -------- | -------- |
@@ -1155,7 +1409,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.DeviceInfo
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L160) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field | Go type  | JSON tag |
 | -------- | -------- | -------- |
@@ -1165,7 +1419,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.FirewallInfo
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L152) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field | Go type       | JSON tag         |
 | -------- | ------------- | ---------------- |
@@ -1175,7 +1429,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.Info
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L13) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field              | Go type                        | JSON tag                    |
 | --------------------- | ------------------------------ | --------------------------- |
@@ -1246,7 +1500,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.NRIInfo
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L169) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field | Go type       | JSON tag         |
 | -------- | ------------- | ---------------- |
@@ -1255,7 +1509,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.NetworkAddressPool
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L146) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field | Go type        | JSON tag |
 | -------- | -------------- | -------- |
@@ -1274,7 +1528,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.PluginsInfo
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/info.go#L127) · snapshot SHA-256
-`79fbfde7a547bd14538b429659b89273e417fb5f531d372de99e077d58010115`.
+`1a56684bb26042b2db36b834d69776e2e9252ce8f0bd5e2e2714defb5f2253da`.
 
 | Go field        | Go type    | JSON tag |
 | --------------- | ---------- | -------- |
@@ -1286,7 +1540,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.Runtime
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/runtime.go#L4) · snapshot SHA-256
-`4259b834ec17b890b3e963568071a6f648b17b4f922335cf776c65ad1cee0644`.
+`b5ec2f7d0d632ae758f26f3874d8045b6947874d290813e46e66a6b920e01054`.
 
 | Go field  | Go type          | JSON tag                |
 | --------- | ---------------- | ----------------------- |
@@ -1298,7 +1552,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### system.RuntimeWithStatus
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/system/runtime.go#L17) · snapshot SHA-256
-`4259b834ec17b890b3e963568071a6f648b17b4f922335cf776c65ad1cee0644`.
+`b5ec2f7d0d632ae758f26f3874d8045b6947874d290813e46e66a6b920e01054`.
 
 | Go field       | Go type             | JSON tag           |
 | -------------- | ------------------- | ------------------ |

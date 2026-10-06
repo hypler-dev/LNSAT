@@ -14,14 +14,14 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Latest bounded engine prerequisite: the
-[private daemon Version decoder contract](#stage-a-private-daemon-version-decoder),
-following the source-reviewed context/challenge codec and earlier private candidates.
-Version precode and independent static source review passed; the private source
-candidate and focused matrix are implemented and host-source validation passes.
-Exact source/direct-child bindings remain separately recorded review gates. These prerequisites remain distinct
-from unfinished V1 integration, native evidence, enterprise assurance and
-actual runtime gates.
+Latest bounded engine work: the
+[private daemon Info decoder contract](#stage-a-private-daemon-info-decoder-contract),
+following the source-reviewed Version, context/challenge and earlier private
+candidates. Info is contract preparation only: fresh independent precode review passed;
+its source implementation remains pending. The prior Version source and exact
+direct-child attestation are complete under PHR-0037. These prerequisites stay
+distinct from unfinished V1 integration, native evidence, enterprise assurance
+and actual runtime gates.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
@@ -1785,6 +1785,52 @@ controls, compare unset recipe values, admit a registry entry, initialize a
 store or release an action. Full freeze, integration, standalone CLI setup,
 real runtime and packaging remain separate. LNSAT owns the engine contracts;
 Rangoon consumes the same interfaces without becoming another authority.
+
+### Stage-A private daemon Info decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private Info-only contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-info-decoder-contract)
+names supplied-body bounds, closed typed shapes, exact null/omission rules,
+fixed selected-recipe predicates, data-free errors and an unverified retained
+projection before source implementation. Only the new private Info source,
+its tests and one private module declaration are proposed. Version source,
+transport, native custody and active product callers remain unchanged.
+
+This preparation corrects two comparison gaps: host capacity and optional
+firewall-driver identity must survive parsing for later recipe comparison.
+It also reconciles SecurityOptions with the already ordered transport contract,
+records stock runtime path literals rather than inferred artifact custody,
+and requires Containerd.Address consistently with its pinned builder.
+The private Go-int cap fits both signed 32-bit and 64-bit representations;
+native 64-bit atomic support alone would not establish Go integer width.
+
+Raw and base64 GitHub content responses plus recomputed Git blobs verify four
+pinned type files. Fifteen stale appendix SHA references are corrected; the
+listed field/type/tag inventories match and are unchanged. Eight additional
+named builder/router/configuration files bound the source normalization.
+This is source provenance, not actual daemon or artifact evidence.
+
+Fresh independent OpenAI Terra xhigh precode review passed with no P1/P2/P3.
+The exact five-path documentation candidate and contract bytes are bound in the
+review evidence. The reviewer checked the pinned source hash/blob identities
+and complete 57-member synthetic body with independently written expected
+projection. Implementation and its mandatory synthetic positive, negative and
+boundary tests remain pending. Full source validation and exact source/direct-child
+attestations are later gates for that implementation.
+
+Documentation direction passes 31 tests across 192 Markdown files; public
+readiness passes three tests. Exact documentation links/tables, formatting,
+generated legacy inventory and whitespace checks pass. The locked Phase 11
+readiness suite passes 43 cases and its check retains the prepared-only verdict.
+Native public-history validation passes with 37 attested, zero pending and
+supported-release eligibility false. An initial timestamp grammar example was
+misread as a Markdown link by the existing validators; equivalent prose fixed
+the documentation without weakening a validator. This slice changes no behavior
+source, so the prior exact Version source validation is preserved rather than
+claimed as validation of an unimplemented Info decoder.
+No current runtime, Linux result, integration, provider/encryption behavior,
+CLI setup or packaging completion follows. LNSAT retains standalone authority;
+Rangoon consumes the same neutral interfaces. Phase 11 owns runtime proof.
 
 ### Stage-A private fdinfo byte candidate
 
