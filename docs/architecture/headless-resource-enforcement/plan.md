@@ -227,6 +227,21 @@ Fresh independent exact source/direct-child reviews, complete source/pin freeze
 and actual selected-target proof remain separate gates. No HTTP/native/daemon
 integration, credential/provider operation or new action authority opens here.
 
+### Private remaining startup message prerequisite
+
+After the private context/challenge candidate, the
+[observation/release/result contract](startup-wire-source-spec.md#stage-a-private-observation-release-and-result-codecs)
+names exact private files, reused context helpers, bounded typed native and Git
+representations, message commitments and denial tests. Fresh exact independent
+precode review passed; the private candidate passes focused and full host-source
+validation and independent source review. Exact source and direct-child history
+attestations remain separate from runtime or integration authority. The v2 Git
+request retains its identity; legacy v1 dispatch/helper behavior stays unchanged.
+Source tests are synthetic and private. Project Status owns implementation and
+acceptance.
+No adapter sequence barrier, trusted observation, store release, current native
+result, integration or pending kernel/harness authority follows.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.

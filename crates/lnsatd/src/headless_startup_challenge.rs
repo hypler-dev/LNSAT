@@ -407,6 +407,9 @@ fn canonical_frame<T: Serialize>(frame: &T) -> Result<Zeroizing<Vec<u8>>, Challe
     Ok(canonical)
 }
 
+#[path = "headless_startup_messages.rs"]
+mod messages;
+
 #[cfg(test)]
 #[path = "headless_startup_challenge_tests.rs"]
 mod tests;

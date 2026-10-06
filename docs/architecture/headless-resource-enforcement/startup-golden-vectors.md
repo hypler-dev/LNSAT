@@ -347,6 +347,13 @@ array is not claimed as live runtime proof.
 
 ## Release and result inputs
 
+The release example below is a historical hash-input vector, not a valid
+closed Git request or v2 release-decoder positive. Its local/v1 adapter,
+`pkt_execute_v1_0001` ID and generic action/target fields fail the current
+private release contract. Preserve its bytes and digest as hash evidence and
+use it as a decoder-negative. The [private message contract](startup-wire-source-spec.md#stage-a-private-observation-release-and-result-codecs)
+requires separate valid typed v2 release vectors before implementation.
+
 Release input under `lnsat.hcfg_action_release.v2` is:
 
 ```json
@@ -459,6 +466,113 @@ envelope and payload, including the full approved-request object:
 The completed result's digest string is replaced by explicit null for unknown,
 while its outcome text grows by six bytes. The unknown frame is therefore
 63 bytes smaller, not the same size.
+
+## Private message decoder vectors
+
+These are synthetic representation positives only; no approval, syscall, mount,
+probe or native observation occurred. Reuse the exact action/preparation contexts
+and native object above. For preparation only, replace native.target with null
+and include the five ordered checks above, once with errno 13 and once with 30.
+No other field changes. Result vectors retain the existing payloads.
+
+The new release uses this exact typed Git execution request:
+
+```json
+{
+  "contract_version": "lnsat.contracts.v1_0",
+  "schema_id": "lnsat.execution_request.schema.v1_0",
+  "derivation_profile": "lnsat.execution_request.packet_embedded.v1",
+  "packet_ref": {
+    "schema_id": "lnsat.packet_envelope.schema.v1_0",
+    "packet_id": "pkt_0000000000000000000000000000000000000000000000000000000000000000",
+    "packet_sha256": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+  },
+  "policy_decision_ref": {
+    "schema_id": "lnsat.policy_decision.schema.v1_0",
+    "decision_id": "pol_1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "approval_request_ref": {
+    "schema_id": "lnsat.approval_request.schema.v1_0",
+    "approval_request_id": "apr_2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "approval_decision_ref": {
+    "schema_id": "lnsat.approval_decision.schema.v1_0",
+    "approval_decision_id": "apd_3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "requester_ref": "identity:agent:fixture",
+  "requester_session_ref": "session:local:requester",
+  "approver_ref": "identity:human:owner",
+  "approver_session_ref": "session:local:owner",
+  "project_ref": "project:fixture",
+  "resource_ref": "repo:fixture",
+  "action": {
+    "kind": "git.commit",
+    "arguments": {
+      "schema_id": "lnsat.git_commit_action.schema.v1",
+      "base_commit_oid": "1111111111111111111111111111111111111111",
+      "head_ref": "refs/heads/main",
+      "allowed_paths": ["fixture.txt"],
+      "patch_sha256": "sha256:6e83e30448fca3af603d51acdb77ec1692091ec2e580f9630fee112b2620e8f0",
+      "patch": "diff --git a/fixture.txt b/fixture.txt\n--- a/fixture.txt\n+++ b/fixture.txt\n@@ -1 +1 @@\n-before\n+after\n",
+      "expected_tree_oid": "2222222222222222222222222222222222222222",
+      "commit_metadata": {
+        "message": "Bounded fixture commit\n",
+        "author_name": "Fixture Author",
+        "author_email": "author@example.invalid",
+        "author_time": "1 +0000",
+        "committer_name": "Fixture Committer",
+        "committer_email": "committer@example.invalid",
+        "committer_time": "2 +0000"
+      }
+    }
+  },
+  "target": {
+    "resource_ref": "repo:fixture",
+    "identity": {
+      "schema_id": "lnsat.disposable_git_repository.schema.v1",
+      "repository_path": "/fixture/repository",
+      "git_dir_path": "/fixture/repository/.git",
+      "object_format": "sha1",
+      "head_ref": "refs/heads/main",
+      "base_commit_oid": "1111111111111111111111111111111111111111",
+      "fixture_marker_sha256": "sha256:8888888888888888888888888888888888888888888888888888888888888888"
+    }
+  },
+  "configuration_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "adapter": {
+    "ref": "adapter:docker-local:git-commit",
+    "version": "v2"
+  },
+  "executable_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "audience": "audience:gateway:local",
+  "prepared_at": "2026-07-22T20:03:00.000Z",
+  "expires_at": "2026-07-22T20:05:00.000Z"
+}
+```
+
+Retain startup/observation/release/audit values and `/work` from the existing
+release hash input. Replace target/tool digests with the independently computed
+values below. The request SHA-256 hashes its compact canonical object directly;
+target and tool digests use their unchanged NUL/length-prefixed domains, not the
+startup newline convention. All paths, identities and hashes are fixtures.
+
+- Request digest: `sha256:a3224d5dd459beee3a606f3565c0dc050b24ad89694a679613ca272adf0a2b6e`.
+- Target digest: `sha256:77ee576cfcdcff8935df24f884cc845e4d34608adb8bdb38b55f0c8c6150bd6c`.
+- Tool-argument digest: `sha256:c407d5c86418b70bb97cfeda41a80840ac55e31bdbbdf19ad9a72b6aa93b830d`.
+- Patch digest: `sha256:6e83e30448fca3af603d51acdb77ec1692091ec2e580f9630fee112b2620e8f0`.
+
+| Frame                    | LF-inclusive bytes | Message commitment                                                        |
+| ------------------------ | -----------------: | ------------------------------------------------------------------------- |
+| `action_observation`     |               3258 | `sha256:03747186479a16e66c32ade220d0f258838f2a319e43fe9a1fd249237605e57b` |
+| `probe_observation_13`   |               3106 | `sha256:f815a318ec6016d4c16bd22512e0c5687955bb6eadae19d09b926c286120e285` |
+| `probe_observation_30`   |               3106 | `sha256:87a359e060058e31fd52df1acb749c5160ddeb44c05a62eaa8227b22bc98ee6d` |
+| `action_release_v2`      |               4204 | `sha256:f4e1eb2026012a2fc481537948380bc680b014e27f10d3928e85daa64b4ac385` |
+| `result_completed`       |               1237 | `sha256:5669ff5a5dbfb59c5c7226de6ff408bda3cc2fb3a7c0e313102ab3dd2f72f068` |
+| `result_outcome_unknown` |               1174 | `sha256:254039b132d8c557f557396ad0143a099f303b0d0da4305b5fded5e4e074f19f` |
+
+These fixed expected values were computed independently with Python standard
+library JSON/SHA-256 before Rust implementation. Fresh independent precode review
+must reproduce them. Runtime predicates and genuine native proof remain missing.
 
 ## Scope boundary
 

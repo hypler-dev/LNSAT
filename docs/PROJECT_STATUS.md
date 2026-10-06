@@ -1767,6 +1767,45 @@ result messages, product integration, CLI setup and full freeze remain open.
 LNSAT remains the standalone engine; Rangoon is an optional standard-contract
 consumer. Phase 11 retains sole runtime-proof authority.
 
+### Stage-A private startup message codecs
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [remaining message contract](architecture/headless-resource-enforcement/startup-wire-source-spec.md#stage-a-private-observation-release-and-result-codecs)
+names private action/preparation observation, action release and result decoders,
+closed native and Git request representations, exact owned source paths,
+commitments, bounded decoding, fixed errors and source validation requirements.
+Fresh independent OpenAI Terra xhigh precode review passed after exact module
+path wiring and synthetic-vector wording were corrected. All six independent
+frame encodings and commitments were reproduced, including the typed v2 request,
+target and sixteen-field Git tool-argument digests. The named private candidate
+implements an allocation-free bounded lexical preflight, closed map-only native
+and execution-request representations, fixed errors and zeroizing retained
+frames. The focused host suite passes 40 tests, including 25 new message tests
+and all 15 existing challenge tests. Literal `npm run check` passes on the frozen
+code/test snapshot, including strict Rust lint and cross-language/source suites.
+Final documentation and history metadata receive their scoped checks separately.
+Fresh independent OpenAI Terra xhigh review found no remaining P1/P2/P3 after
+exact Git head and repository-path byte-edge tests were added. Native history
+entry `PHR-0041` tracks exact source and separate direct-child review. Scoped Semgrep and Gitleaks report zero findings. The first full run's
+missing nested dependency-cache links were restored from existing byte-matched
+manifests before the passing rerun; no dependency or tool was installed.
+Existing challenge functions, native/profile/daemon modules and legacy store/
+Phase 11 source remain unchanged.
+
+Source scrutiny identified that the existing shared Git tool-argument helper
+still requires adapter v1, whereas this accepted profile requires v2. The new
+private contract preserves the old helper and derives the same bounded digest
+from a syntactically valid typed v2 request without changing adapter identity.
+Existing release hash examples are not valid closed Git request positives;
+their bytes remain historical synthetic hash evidence and explicit decoder
+negatives. New typed release positives retain independent fixed commitments.
+
+This candidate is representation-only: no trusted release barrier, native
+observation, channel, consumed attempt, audit, time budget or replay protection
+is supplied. Actual native evidence, complete source/pin freeze, integration,
+protected CLI setup and V1 runtime/packaging remain open. Kernel/harness source
+approval remains separately pending; this prerequisite does not open it.
+
 ### Stage-A private daemon Version decoder
 
 Canonical work record: this subsection under the accepted Stage-A source order.
