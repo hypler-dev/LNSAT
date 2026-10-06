@@ -30,7 +30,9 @@ It retains supplied config/manifest/optional-index records, raw identities and
 internal parent links. PHR-0056 attests its precode contract; source validation
 and exact independent source/direct-child review are tracked under PHR-0057.
 These are private prerequisites, distinct from unfinished V1 integration, native
-evidence, enterprise assurance and actual runtime gates.
+evidence, enterprise assurance and actual runtime gates. The
+[cross-module association/custody boundary](#stage-a-image-association-and-custody-boundary)
+records the remaining composition obligations without opening source integration.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
@@ -2205,8 +2207,9 @@ candidate now implements the named supplied-byte decoder, sibling synthetic test
 and one inert module declaration. It preserves optional-field presence, complete
 ordered metadata and separate compressed-layer/DiffID identities, preflights all
 supplied bodies before typed decoding, and returns only fixed denial codes.
-PHR-0057 tracks source validation and exact independent source/direct-child review;
-that review remains pending until the attestation is committed.
+PHR-0057 attests the implemented source. Nineteen focused groups, full host-source
+checks and fresh exact independent source/direct-child reviews passed. These
+results supply no native, runtime, packaging or support authority.
 
 No existing decoder or product entrypoint is widened. A self-consistent supplied
 chain is unverified data, not authenticated image provenance. Root/profile/registry
@@ -2214,6 +2217,27 @@ comparison, stable artifact custody, backend-specific Image/Inspect mapping and
 complete freeze remain explicit later requirements. No new native, provisioning,
 Docker, runtime, packaging, support or Rangoon-specific authority follows. Phase 11
 remains the runtime-proof owner.
+
+### Stage-A image association and custody boundary
+
+Canonical work record: this subsection under the accepted HCFG-6 Stage-A order.
+The [cross-module boundary](architecture/headless-resource-enforcement/root-manifest-source-spec.md#cross-module-image-association-and-custody-boundary)
+connects existing private profile/root/OCI/Image/Inspect claims to the required
+independent recipe, native custody and release chain. It fixes digest domains,
+backend target versus selected-child comparisons, raw-to-API omission rules,
+controller/profile/manifest identity proof order, and shared lifetime/deadline
+obligations. Image descriptor platform reconstruction preserves the already
+validated equality; it does not reopen the reviewed decoder or invent lost data.
+
+This documentation reconciliation adds no callable source interface or trusted
+holder. PHR-0058 tracks its exact independent review and direct attestation child.
+The next source packet still needs exact ownership, private read-only DTO access,
+complete recipe expectation shape, native file/peer/budget provenance and positive
+feasibility evidence appropriate to the selected method. Existing procfs source
+and tests cannot prove bounded regular-artifact I/O by implication. Actual pins,
+full native/source freeze, integration, runtime and packaging remain unfinished.
+Do not restart implemented codecs or journal custody. Project Status continues
+to own implementation truth; Phase 11 owns runtime proof.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

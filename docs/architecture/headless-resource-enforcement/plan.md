@@ -333,6 +333,19 @@ mapping. No API re-encoding, self-consistent attacker chain or unset registry
 entry can replace that work. Full native/source/pin freeze, trusted startup and
 store/recovery integration, actual runtime and packaging remain separate exits.
 
+### Cross-module association and custody contract
+
+The [association boundary](root-manifest-source-spec.md#cross-module-image-association-and-custody-boundary)
+now separates raw/canonical/recipe digest domains, backend target and selected
+child, source-derived API omission, independent controller proof and live
+artifact/peer custody. [Project Status](../../PROJECT_STATUS.md#stage-a-image-association-and-custody-boundary)
+owns its review disposition. This is a contract reconciliation, not an exact
+new module approval. Before composition source, name the private interfaces,
+read-only DTO access, complete recipe expectation shape and genuine bounded
+custody/response provenance methods. Never use a self-consistent supplied chain,
+post-call timer or generic successful witness to fill those gaps. Keep existing
+implemented prerequisites and all artifact/native/runtime gates intact.
+
 ## Validators
 
 Design packet: artifact-shape validators for intent/spec/plan, exact-doc Prettier, `git diff --check`, `npm run docs:direction:check`, `npm run public:check`, inventory write/check after staging, and Phase 11 readiness 43-case suite/check to prove the locked packet remains intact. Documentation-only validation does not require repeating unchanged Rust/workspace builds from green exact PR #74 head `5fd0a571d6b74ba34333aae8d4c80b0427caffc3`; hosted source CI remains a separate exact-head result and does not cover a subsequent documentation patch. Source packets later run focused pinned Rust tests, complete `npm run check`, public/inventory/format, installed named Semgrep/Gitleaks and dependency OSV when applicable. Missing offline vulnerability data remains unverified.

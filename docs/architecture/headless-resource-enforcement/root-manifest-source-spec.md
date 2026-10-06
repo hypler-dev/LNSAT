@@ -699,6 +699,215 @@ comparison, complete source/native freeze, artifact capture, integration, runtim
 and package/release proof retain their separate gates. LNSAT remains standalone;
 Rangoon consumes its ordinary engine contracts.
 
+## Cross-module image association and custody boundary
+
+The private profile, root-manifest, raw OCI, Image and Inspect candidates now
+provide comparison material. Their successful results are all unverified.
+This section fixes their composition obligations under the accepted
+[Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source);
+[Project Status](../../PROJECT_STATUS.md#stage-a-image-association-and-custody-boundary)
+owns its disposition. It is a cross-module contract reconciliation, not the
+exact precode approval for a new Rust module, trusted holder or integration.
+The complete immutable recipe layout and the native custody methods below
+remain prerequisites; do not replace them with a Boolean comparison helper and
+call the native/source freeze complete.
+
+### Independently selected inputs and identity domains
+
+A future composition must start from independently held owner/store context,
+explicit stable profile selection, the closed reviewed recipe registry and genuine
+native observations. No response, manifest, label, recipe digest or parser result
+may select its own expected backend, controller, permitted recipe or artifact.
+A typed DTO named `Unverified*` does not become trusted when moved between modules.
+The profile's computed `authority_digest` is a commitment, not an authority object.
+
+The accepted recipe requires controller and workload to have the same selected
+nonzero host-mapped UID/GID. The three-way comparison is mandatory: independently
+observed controller real/effective/saved IDs, profile `isolation.run_as_uid/gid`,
+and manifest `controller.uid/gid` must agree. The profile values describe the
+workload and cannot establish controller identity. Controller supplementary groups
+are empty; workload Groups is exactly its primary GID under the separately
+accepted Moby/runc rule. Equal IDs do not make those two group-list predicates
+interchangeable. No new controller field or owner identity source is introduced.
+
+Keep these domains separate even though their encodings all resemble SHA-256:
+
+| Domain                      | Exact comparison                                                                                                                                               | Invalid substitute                                                                  |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Root declaration commitment | Profile `engine.implementation_manifest_digest` equals the decoder's domain/LF/canonical commitment, after authenticating the selected manifest path and bytes | Raw JSON file hash, another profile's declaration, a self-reported commitment       |
+| Immutable recipe            | Profile and manifest recipe digests equal the independently selected complete registry entry                                                                   | Manifest-added registry entry, prose hash, partial recipe, unset pin                |
+| Raw OCI config              | Profile `image_digest`, manifest `image.config.digest/size`, and complete held config raw hash/length agree                                                    | API Config serialization or containerd target Id                                    |
+| Raw OCI manifest            | Profile `headless.image_manifest_digest`, root manifest blob record and complete held manifest raw hash/length agree                                           | Config digest, index target, RepoDigest or tag                                      |
+| Optional raw OCI index      | Profile explicit nullable index and root `image.index` have identical presence; supplied/held OCI index has that same presence and exact hash/length           | Silently dropping an index, treating null as a wildcard, choosing a different child |
+| Executable snapshots        | Profile adapter/probe entrypoints and digests agree with distinct root image executable records and actual stable snapshot bytes                               | Claiming the snapshot proves image inclusion or the running executable              |
+
+The profile's implementation-manifest pathname must select the actual held
+manifest; the decoder intentionally retains no read-path identity. Profile
+endpoint and verifier Git path/digest must agree with the manifest's endpoint
+and ordered `host_git` component artifact, then their independent native reads.
+Do not compare path strings and call them held object identity. Image blob and
+snapshot paths come from the authenticated root record, never an API response.
+The root declaration's controller, kernel, components, templates, administrators,
+mounts and current-instance records retain all existing native/registry obligations;
+matching the image subsection does not discharge the rest of the root record.
+
+### Backend-specific target and selected child
+
+Choose the backend from the independently selected immutable recipe before
+constructing the Image request or Create body. For the closed digest-only request
+contract, derive the exact selector from held raw identities as follows. Compare
+each API claim to this independently derived expectation, not merely to another
+API claim. An Inspect decoder may accept differing Image/Config.Image claims;
+that is not permission for the composed selected request to mismatch its selector.
+
+| Held backend and OCI presence | Image request/Create selector and Image Inspect Id | Image Inspect Descriptor                          | Container Inspect Image / Config.Image                    | Container Inspect ImageManifestDescriptor                                           |
+| ----------------------------- | -------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Graphdriver                   | Raw config digest                                  | Absent; GraphDriver branch required               | Each equals the independently derived raw-config selector | Absent; GraphDriver branch required                                                 |
+| Containerd, index absent      | Raw manifest digest                                | Manifest media type, raw manifest digest and size | Each equals the independently derived manifest selector   | Selected manifest media type, digest and size; platform required                    |
+| Containerd, index present     | Raw index digest                                   | Index media type, raw index digest and size       | Each equals the independently derived index selector      | Selected child manifest media type, raw manifest digest and size; platform required |
+
+The selected graphdriver/snapshotter names and their Info/Image/Inspect relation
+must equal the complete recipe. A response branch cannot choose or change that
+recipe. No fallback lookup, alternate backend, tag, RepoDigest, platform query or
+extra request is opened. Graphdriver selection does not imply that a root/profile
+index declaration may be discarded; all declared raw OCI blobs still require
+custody and exact presence, even when the lookup is config-addressed.
+
+For a containerd index target, the Image target descriptor and Container Inspect
+selected-manifest descriptor intentionally have different digest/size/media-type
+roles. Raw index membership, manifest-to-config linkage and ordered DiffIDs must
+all agree before either descriptor can contribute to association. Never require
+an index digest to equal its child, or compare a compressed layer digest with its
+uncompressed DiffID. Actual layer bytes/unpacking and immutable executable
+inventory remain separate accepted root/daemon and selected-target proof duties.
+
+Descriptor annotations and platform presence must match their exact reviewed
+recipe records. A descriptor's annotations are not automatically the same as
+annotations inside the referenced JSON blob. Preserve absent/present distinctions;
+unknown or unreviewed equivalences deny. Image Inspect `Size` is its backend-defined
+image size, not the raw config/manifest/index byte length or a generally valid sum
+of compressed layer descriptor sizes. Its exact expected interpretation/value
+must be supplied by the reviewed backend recipe; do not invent a size equality.
+
+### Raw-to-API comparison without changing raw identity
+
+First require the complete raw OCI records, including every optional field,
+history, annotation and ordered layer declaration, to match the immutable recipe.
+Only then derive the expected API projection using the existing pinned source
+rules. Normalizing for this API comparison never alters the retained raw bytes,
+raw digest, root commitment or recipe's optional-field distinctions.
+
+| Raw OCI claim                                                                                           | Expected Image Inspect comparison                                                                                                              |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| User, WorkingDir, StopSignal absent or present-empty                                                    | API member absent; nonempty raw value requires exact present value                                                                             |
+| Env, Entrypoint, Cmd absent or present-empty                                                            | API member absent; nonempty array requires exact presence, values and order, including empty elements                                          |
+| Labels absent or present-empty                                                                          | API member absent; nonempty dictionary requires exact key/value set; dictionary ordering only is immaterial                                    |
+| ExposedPorts/Volumes empty, ArgsEscaped false, OnBuild/Shell empty, when present in accepted raw subset | These members are absent from the selected API Config; raw presence still belongs to recipe comparison                                         |
+| Healthcheck absent or exact disabled Test                                                               | API absent or exact disabled Test respectively; no duration/retry/default insertion                                                            |
+| Raw OS/architecture/variant and RootFS                                                                  | OS linux and exact architecture; absent/empty raw variant maps only to absent API variant, otherwise exact value; ordered DiffIDs remain exact |
+
+Image descriptor platform values are not missing from the current decoder's
+comparison material: when present, it validates OS linux and architecture/variant
+(including presence) equal to the retained Image root claims, then keeps a
+`platform_present` bit. Reconstruct only those proved equal values. The root
+Image platform does not prove the descriptor was present. Container Inspect's
+selected-manifest descriptor retains its full platform separately and must match
+the held selected manifest/config/index-child association. Root manifest variant
+is explicitly empty when absent; that narrowly defined comparison rule cannot
+turn absence into a wildcard for any other optional field.
+
+Version's Go architecture naming and Info's host-platform naming use their own
+exact immutable recipe mapping. Do not accept arbitrary aliases or equate every
+API Architecture field by spelling. Image/Inspect/raw OCI comparison uses the
+selected image-platform representation, not inferred host compatibility.
+
+Discarded Image author/comment/timestamp/tag/digest-list metadata and GraphDriver
+Data never regain authority through composition. Raw OCI history/author/created
+remain retained recipe material; discarded API metadata cannot substitute for it.
+Inspect's role-specific entrypoint, Config.Env, labels, user, working directory,
+limits, target mount and generated metadata paths still require the held request,
+profile, operation/preparation and native startup comparisons in their own
+contracts. The raw image's action Entrypoint does not by itself authenticate the
+probe override or actual process environment.
+
+### Custody, shared lifetime and invalidation
+
+The later private observer must keep this order and retain its actual handles:
+
+1. Select owner/store/profile/recipe through their own custody and approval
+   boundaries. An unset complete recipe or artifact pin cannot be admitted.
+2. Bootstrap the explicit root manifest from held no-follow root-owned ancestry
+   with the required present leaf ACL. Do not use the not-yet-authenticated
+   ACL-absence classifier to authenticate its own kernel/filesystem provenance.
+3. Read stable bounded manifest and artifact/OCI bytes; compare complete declared
+   identities, sizes and commitments to actual reads and independently held pins.
+   Associate current boot, namespaces, direct socket peer credentials, start ticks,
+   peer pidfd, endpoint and installed executable identity through the accepted
+   trusted-root bridge. Version or Info text cannot create this bridge.
+4. Authenticate kernel/LSM/ext4 provenance and recheck every retained prefix with
+   full effective-ACL rules before any trusted observation guard can exist.
+5. Use the held backend/selector for bounded daemon requests, bind each response
+   to its actual private exchange, and recheck the peer/root/current-instance
+   tuple after every exchange and immediately before use. An independently valid
+   response from another daemon, request or observation interval must deny.
+6. Perform the complete recipe, raw chain, API and native startup comparisons.
+   Retain the shared observation custody through the separately specified store,
+   generation/epoch, stop/revocation and one-use release checks. Image association
+   alone supplies none of those later approvals.
+
+All actual reads, including repeated stability reads, charge the same remaining
+byte/time budget. The root record's declared sum is not an actual-read meter.
+Keep the existing 64-KiB manifest, 256-MiB artifact, 1-MiB OCI body, 3-MiB OCI
+aggregate and 1-GiB artifact/OCI read limits and the five-second administrative
+observation bound inside the uninterrupted preparation/startup budget. The exact
+later I/O interface must explain deadline expiry during a blocked open/read/hash
+operation, retained worker/handle custody and safe denial. Checking a clock after
+a blocking call or imposing byte caps alone does not prove bounded return. The
+implemented procfs reader's limited method/proof cannot be silently generalized
+to regular artifact files, sockets, hashing or a new native observer.
+
+Before/after metadata checks provide the accepted trusted-root stability claim,
+not a snapshot guarantee against a malicious root administrator. Dead peer,
+changed boot/namespace/endpoint/name/held identity, changed profile/manifest/blob
+bytes, incomplete read, timeout or canceled observation invalidates the whole
+associated result. Do not mix old and new observations, cache a positive across
+restart, refresh a manifest inside existing authority, or reacquire resources
+under a reset budget. Reprovisioning and generation changes keep their separate
+explicit gates. Raw facts, handles and diagnostics remain private and zeroizing
+where required; serialized digests cannot restore a live custody holder.
+
+### Required evidence before composition source
+
+The next exact source packet must name owned files and private interfaces for
+read-only access to existing opaque DTOs, complete recipe expectations, actual
+held-file/peer/budget provenance and the lifetime-bound result. Preserve parser
+encapsulation, no public field/constructor widening, no generic observer injection,
+no serialized successful witness, and no alternate expected-value source.
+Provide a complete comparison matrix for every retained value that contributes
+to a claim; explicitly exclude discarded values from authority. This section
+names no new callable Rust interface and does not grant that later source PASS.
+Stage A permits missing actual pins while preparing inert source, but it does
+not excuse an undefined recipe shape, comparator semantics or custody method.
+
+Independent tests/review must cover all three backend rows and exact index
+presence; cross-domain substitutions; absent/empty raw-to-API cases; distinct
+descriptor and blob annotations; descriptor platform reconstruction; wrong size
+interpretations; changed ordered arrays; and self-consistent substituted chains.
+The latter may satisfy unverified consistency but must fail independently held
+recipe/native association. Include different native/profile/manifest UID/GID
+values, controller/workload group-list confusion, replaced root/peer/socket,
+changed boot/namespace, stale exchanges, budget exhaustion mid-read and restart.
+No fake successful holder may stand in for a genuine positive custody case.
+Use source-focused tests for source claims and the separately authorized native
+method for native feasibility; neither substitutes for the other.
+
+Current disposition remains: parser candidates implemented; cross-module boundary
+specified here; exact composition/custody source contracts and implementation,
+complete immutable recipe/pins, native positive and unfinished-operation proof,
+whole-boundary freeze, integration, runtime and packaging unfinished. Phase 11
+remains the runtime-proof owner. LNSAT remains standalone; Rangoon consumes
+ordinary adapters and does not choose engine provenance or create authority.
+
 ## Freeze acceptance and remaining work
 
 Independent review must verify that a future non-root controller can read the
