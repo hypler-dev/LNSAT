@@ -110,6 +110,10 @@ subsystem or proposal.
   — fixed read/hash operation proposed for the existing single retained native
   lane; exact source review, implementation and genuine native evidence remain
   distinct from rooted custody, complete freeze and runtime authority.
+- [HCFG-6 root manifest bootstrap contract](architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md)
+  — proposed fixed worker-owned manifest acquisition, retained ancestry, shared
+  deadline, provisional mount observations and opaque custody lifetime; no
+  bootstrap implementation, trusted root holder or runtime authority.
 - [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
   — exact proposed schema-3 fields, native payload and separate startup contexts;
   complete wire implementation and full freeze remain pending.

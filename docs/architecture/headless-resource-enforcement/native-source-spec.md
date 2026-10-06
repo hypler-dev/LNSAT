@@ -1518,6 +1518,15 @@ original-owner borrowing, positional read bounds and per-kind cleanup. It does
 not inherit artifact proof from procfs tests or implement the complete rooted
 ancestry/current-daemon bridge above. Project Status owns source disposition.
 
+The following [root bootstrap contract](native-root-bootstrap-source-spec.md)
+freezes the proposed first path-acquisition and retained-handle lifetime. Its
+one fixed provisional manifest survey records mount transitions before the
+manifest can be decoded; those records remain unverified until every committed
+mount, independently selected recipe and current host association predicate
+passes. This phase-specific observation rule does not open a generic crossing
+fallback or weaken the later authenticated resource policy. No bootstrap source
+or complete native freeze is supplied by that documentation contract.
+
 ## Separate profile 3 and protocol 2
 
 The [startup wire companion](startup-wire-source-spec.md) defines every field,

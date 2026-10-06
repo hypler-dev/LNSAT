@@ -2271,6 +2271,33 @@ whole-boundary integration, runtime and packaging remain separate unfinished
 gates. The existing procfs proof cannot be reused as artifact I/O proof.
 Phase 11 remains the runtime-proof owner.
 
+### Stage-A root manifest bootstrap contract
+
+Canonical work record: this subsection under the accepted HCFG-6 Stage-A order.
+The [root manifest bootstrap contract](architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md)
+defines the next acquisition prerequisite after the held artifact reader:
+one exact manifest path, worker-owned retained ancestry and leaf, the shared
+observation budget, bounded unverified bytes, opaque custody tickets, recheck
+and worker-only retirement. No coordinator native open or final close is
+proposed. It explicitly separates provisional bootstrap mount observations
+from the later authenticated mount, kernel, namespace and peer comparisons.
+
+PHR-0061 tracks independent precode review and exact direct-child attestation.
+Review identified a required narrow shared-reader follow-up: failed `pread`
+currently maps its error before its post-call checkpoint. Existing coordinator
+and publication gates still reject expired results; the exact per-call failure
+ordering must be corrected and source-tested before rooted bootstrap reuse.
+The contract also specifies non-owning lease admission and a separate worker-only
+cleanup path that can dispose handles after observation invalidation without
+reopening read authority. These are source obligations, not implemented fixes.
+No bootstrap source is implemented by this documentation packet. The present
+held-artifact candidate remains unchanged. Search-only prefix ACL sampling,
+artifact/OCI acquisition, actual host-root and current peer/pidfd association,
+complete recipe/pins and composition still need their exact source contracts
+and implementation. Linux positive and unfinished-operation evidence, complete
+native freeze, integration, runtime and packaging remain unfinished. Phase 11
+owns runtime proof; LNSAT remains standalone and Rangoon uses ordinary adapters.
+
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
 Exact draft PR #75 head `5a1338cb31706bde4e1458a5089cfacb28e90917` passed

@@ -491,6 +491,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0060/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0061",
+      "subject_id": "headless-root-manifest-bootstrap-contract",
+      "review_subject_ids": ["headless-root-manifest-bootstrap-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0061/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

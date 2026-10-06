@@ -883,6 +883,14 @@ observation budget. It requires its own exact review and tests. It supplies no
 root ancestry acquisition, native peer or trusted holder; those requirements
 above remain mandatory and cannot be filled by its unverified result.
 
+The subsequent [root bootstrap contract](native-root-bootstrap-source-spec.md)
+names the fixed first path acquisition and worker-owned retained ancestry. Its
+provisional survey cannot authenticate its own mounts: every observed edge,
+including a leaf mount, must pass the later committed mount, independent recipe,
+current root/namespace and effective-ACL checks. Its opaque ticket remains
+unverified. Subsequent artifact acquisition and the complete trusted holder
+still require separate exact contracts.
+
 ### Required evidence before composition source
 
 The next exact source packet must name owned files and private interfaces for
