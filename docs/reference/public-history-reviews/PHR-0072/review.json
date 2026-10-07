@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0072-independent-implementation-review-6c1cda69",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-private-control-api-contract"],
+  "base_revision": "7111e6ff239111d4493e4bdc9bcfb0841ff35377",
+  "reviewed_revision": "6c1cda693d32b9928bce1d5a6dcd137b78c61a5e",
+  "reviewed_tree_oid": "f8e679cd37c5c0a9fcc339b8a6b1cad053965f92",
+  "diff_sha256": "sha256:d9a928f990c5dc5c057653f2bfc71c79c981203c165ae8298c0a5abb5cf5ff54",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:b94a7816685c90238eb9150cf99c6521d2c85138d45c35ecda3a1a98ae65e25b"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:ed25651cf1009f2c3100dd546b59ee30d7c050133cb3fb069a0001a081aad249"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:40b57fd9ff6fd3bccbb8d67433a8d2c084ad4c8902f0c3369574cd023bc19c48"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:147ec79f0a4d5add0625d6434926752f91f3dd3642d3020e0492d18996c1c133"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:360ef945f19f59a571d4bdc07ea346b1625657208ba224a0971728f24ac7a23e"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/patched_dependency_bypass_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the exact five-file documentation source and immutable commit. Source parent, tree, canonical full-index diff and every protected blob independently match. The private control contract specifies one selected-store authority mutex and a private process-lifetime OnceLock root anchor established before custody I/O, original-allocation operation registration, closed job vocabulary, distinct observation/cancellation/native retirement, single-consumption whole-operation cleanup acknowledgment, separate durable/probe cleanup, stop invalidation before durable transition, and retained release mutex through potentially effectful and unfinished frame writes. The initial root-retention P2 is fixed only in the revised source; original finding and proposal review remain preserved. Future trusted owner/root/native producer placement in lnsat-store is a direction, not source relocation or a public proof bridge. Exact entry/binding fields and pins, writable/VFS admission and close witnesses, finite request/result/ack storage, Procfs budget binding, partial-owner initialization, compiler lifetime/trait proofs, writer/constructor coverage, frame writer, panic-safe retirement, durable recovery and whole-module precode remain open. All six focused gates pass at the unchanged revised source tree: docs direction, public readiness, legacy inventory, public-history review, owned formatting and diff. Exact receipts and hashes are retained locally. Documentation only: no new engine behavior and no full npm check rerun. PHR-0072 source registry is pending; exact direct-child metadata review and final committed history replay remain separate obligations. No Linux positive/unfinished-operation proof, native freeze, bootstrap/activation integration, runtime, support/certification, packaging or V1 completion is claimed. LNSAT stays neutral, standalone and headless; Rangoon uses ordinary optional adapters. No Docker, real host/ACL/security mutation, target pressure, credential intake, global/toolchain install, external GLM transfer, push, merge/main mutation, release, publication, deployment or production mutation occurred."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
