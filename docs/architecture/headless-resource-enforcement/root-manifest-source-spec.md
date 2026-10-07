@@ -85,7 +85,7 @@ a full-freeze item; no partial object or manifest digest substitutes for it.
 
 | Record                       | Exact fields and comparisons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `controller`                 | `uid,gid`: both positive, equal the independently observed host controller identity and the selected profile. Controller real/effective/saved IDs agree and supplementary groups are empty.                                                                                                                                                                                                                                                                                                                                            |
+| `controller`                 | `uid,gid`: both positive, equal the independently observed host controller identity and the selected profile. Controller real/effective/saved/filesystem IDs agree and supplementary groups are empty; the native controller credential predicate also applies.                                                                                                                                                                                                                                                                        |
 | `administrators`             | Sorted strictly increasing array of at most 16 positive u32 UIDs. Exclude root and the controller. Effective-ACL checks may recognize these selected trusted administrators; the manifest itself still permits only root write.                                                                                                                                                                                                                                                                                                        |
 | `kernel`                     | `source_ref,source_commit,release,build_provenance,configuration,artifact,active_lsms`. Source ref is `v6.8`; exact commit/release and all artifact digests equal the reviewed registry. Release is an ASCII string of 1..128 bytes, not a prefix match. The three file records use the artifact grammar below. `active_lsms` is an ordered unique array of 1..16 lowercase ASCII identifiers of 1..32 bytes; it must equal the reviewed recipe and the genuine current securityfs list. Extra/modified LSMs or BPF LSM programs deny. |
 | `components`                 | Exactly five records in order: `dockerd,containerd,runc,shim,host_git`. Each has `role,version,source_commit,artifact,build_provenance`. Version is an exact ASCII string of 1..128 bytes. Dockerd/containerd/runc versions are `29.8.2/2.3.6/1.5.2`; shim and host Git must equal the reviewed exact recipe. Dockerd source commit is `8af9fe3a36bab3e039862a2ab1cef1880c9b4d03`. Artifact and provenance are separate file records. No missing, extra or repeated role.                                                              |
@@ -723,7 +723,7 @@ The profile's computed `authority_digest` is a commitment, not an authority obje
 
 The accepted recipe requires controller and workload to have the same selected
 nonzero host-mapped UID/GID. The three-way comparison is mandatory: independently
-observed controller real/effective/saved IDs, profile `isolation.run_as_uid/gid`,
+observed controller real/effective/saved/filesystem IDs, profile `isolation.run_as_uid/gid`,
 and manifest `controller.uid/gid` must agree. The profile values describe the
 workload and cannot establish controller identity. Controller supplementary groups
 are empty; workload Groups is exactly its primary GID under the separately
@@ -834,26 +834,56 @@ probe override or actual process environment.
 
 The later private observer must keep this order and retain its actual handles:
 
-1. Select owner/store/profile/recipe through their own custody and approval
-   boundaries. An unset complete recipe or artifact pin cannot be admitted.
-2. Bootstrap the explicit root manifest from held no-follow root-owned ancestry
-   with the required present leaf ACL. Do not use the not-yet-authenticated
-   ACL-absence classifier to authenticate its own kernel/filesystem provenance.
-3. Read stable bounded manifest and artifact/OCI bytes; compare complete declared
-   identities, sizes and commitments to actual reads and independently held pins.
-   Associate current boot, namespaces, direct socket peer credentials, start ticks,
-   peer pidfd, endpoint and installed executable identity through the accepted
-   trusted-root bridge. Version or Info text cannot create this bridge.
-4. Authenticate kernel/LSM/ext4 provenance and recheck every retained prefix with
-   full effective-ACL rules before any trusted observation guard can exist.
-5. Use the held backend/selector for bounded daemon requests, bind each response
+1. Select owner/store/profile and the independently owned complete recipe through
+   their own custody and approval boundaries. The private registry owns the recipe;
+   the profile and manifest only identify an entry to compare. An unset complete
+   recipe or artifact pin cannot be admitted. Fix the one shared observation budget.
+2. Acquire only the fixed system-record custody needed for controller/root/boot/
+   namespace/kernel/peer observation and the explicit root-manifest bootstrap.
+   Check the actual worker's controller credentials before manifest content reads.
+   Retain the no-follow root-owned manifest ancestry and required present leaf ACL.
+   Read the stable bounded manifest body once. Prefix ACL no-data stays unclassified;
+   no separate component, provenance, template, executable snapshot or OCI artifact
+   may yet be opened, read or hashed.
+3. Decode only those retained manifest bytes. Compare their canonical commitment,
+   selected paths/IDs and complete claims to the held profile and independently
+   selected recipe. Agreement between two supplied declarations is insufficient.
+4. Associate actual boot, host root, namespaces, every observed mount/crossing,
+   named endpoint, direct peer credentials, start ticks and owned peer pidfd with
+   the current root attestation. Establish the exact kernel/LSM/ext4 source and
+   configuration predicates from the independently reviewed recipe and its
+   current-boot root-attestation bridge, including genuine uname and active-LSM
+   comparisons. Installed kernel bytes are not independent measurement of the
+   running kernel. Version/Info strings cannot create this bridge. Opening the
+   direct peer transport for these native checks does not permit a daemon request.
+5. Recheck the entire retained manifest and endpoint ancestry with the complete
+   effective-ACL predicates and original identity/raw baselines. Only after all
+   preceding checks may a private, worker-bound acquisition context dispatch fixed
+   artifact operations. This context exports no raw descriptor, arbitrary path,
+   callback or trusted-holder constructor; it authorizes no action or daemon request.
+6. On that same worker, acquire and read/hash every required component, provenance,
+   template, executable snapshot and raw OCI object under the authenticated mount
+   and path policy. Compare actual bytes, sizes, identities and parent links with
+   all independently held pins. Recheck controller/root/boot/namespace/peer/ACL
+   association; failure invalidates all prior work. The root declaration's artifact
+   assertions never replace these actual reads. No final trusted observation holder
+   exists until this complete stage succeeds.
+7. Use the held backend/selector for bounded daemon requests, bind each response
    to its actual private exchange, and recheck the peer/root/current-instance
    tuple after every exchange and immediately before use. An independently valid
    response from another daemon, request or observation interval must deny.
-6. Perform the complete recipe, raw chain, API and native startup comparisons.
-   Retain the shared observation custody through the separately specified store,
-   generation/epoch, stop/revocation and one-use release checks. Image association
-   alone supplies none of those later approvals.
+8. Perform the complete recipe, raw chain, API and native startup comparisons.
+   Retain shared custody through the separately specified store, generation/epoch,
+   stop/revocation and one-use release checks. Image association alone supplies none
+   of those later approvals.
+
+This sequence supersedes the earlier step that grouped artifact/OCI reads with
+initial manifest-body acquisition. It reconciles the stricter
+[root bootstrap prerequisite](native-root-bootstrap-source-spec.md#recheck-denial-and-review-evidence):
+full current-root association, kernel/LSM/ext4 classification and effective prefix
+ACLs precede every separate artifact acquisition. Bootstrap manifest bytes and
+fixed system/peer metadata are the only pre-artifact observations; this exception
+cannot expand to an artifact path merely because its contents would be useful.
 
 All actual reads, including repeated stability reads, charge the same remaining
 byte/time budget. The root record's declared sum is not an actual-read meter.

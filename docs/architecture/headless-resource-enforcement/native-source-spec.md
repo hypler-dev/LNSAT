@@ -82,9 +82,10 @@ these narrow native prerequisites:
   source. Read the exact active list from genuine held securityfs and compare
   it with the root-attested recipe. Additional/modified LSMs, BPF LSM programs
   and unproved hooks deny. This classification requires review, not caller flags.
-- The nonzero real/effective/saved UID and GID agree with the owner-selected
-  controller identity; supplementary groups are empty. All controller native
-  reads run under that unchanged identity.
+- The nonzero real/effective/saved/filesystem UID and GID agree with the
+  owner-selected controller identity; supplementary groups are empty. All
+  controller native reads run under that unchanged identity and the controller
+  credential predicate below.
 
 Actual component, template, kernel and immutable image artifact digests remain
 `UNSET_BLOCKING` until the separately reviewed exact run recipe supplies them.
@@ -92,6 +93,44 @@ Source tests cannot fill these with sample digests, and no CLI or initializer
 may activate this backend while any pin is unset. No host configuration is
 changed automatically. A feasible future provisioned recipe is necessary for
 source freeze; a current selected host and runtime proof are later gates.
+
+### Controller credential predicate
+
+The host controller is not the workload. Its native observation interval uses
+one selected nonzero host identity, no executable/helper dispatch and no credential
+mutation. The worker performing each native operation supplies its own bounded
+credential evidence; a process leader's status record cannot substitute for a
+worker thread's status. Bind the genuine task record to current native PID/TID,
+then compare the following fields before accepting its filesystem observations
+and on every required stability recheck:
+
+| Controller field                       | Required interpretation                                                                                                                                                                                                                              |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Uid`, `Gid`                           | All four real/effective/saved/filesystem columns equal the independently selected positive controller UID/GID. Cross-check real/effective/saved columns with the fixed native identity queries.                                                      |
+| `Groups`                               | Empty. Do not copy the workload's primary-GID entry rule.                                                                                                                                                                                            |
+| `CapInh`, `CapPrm`, `CapEff`, `CapAmb` | Zero. No present, raisable, inheritable or ambient controller capability supplies an alternate filesystem/ptrace/namespace access path.                                                                                                              |
+| `CapBnd`                               | A bounded kernel-defined bitset, retained and unchanged across the observation. It is an exec ceiling, not a currently effective grant; it need not be zero. Unknown bits outside the selected kernel's capability mask deny.                        |
+| `NoNewPrivs`                           | Exactly 0 or 1, retained and unchanged. Zero supplies no permission to execute or gain privileges; the closed native observation performs neither exec nor helper launch. Requiring host-wide `NoNewPrivs=1` is not inferred from the workload rule. |
+| `Seccomp`                              | Exactly 0 or 2, retained and unchanged. Neither value proves a particular filter. Mode 1 is unsupported for the required native operation set; denied or unavailable operations remain denials. No host filter is installed or relaxed.              |
+
+These are source-contract admission predicates, not host configuration actions.
+They clarify the unprivileged native observation boundary; they do not promise
+that every non-root process or existing host passes. In particular, a nonzero UID
+alone does not establish ordinary ACL access when capabilities or filesystem IDs
+differ. The workload still requires its separately fixed all-zero capability sets,
+`NoNewPrivs=1` and `Seccomp=2`. No broader controller hardening, process launcher,
+set-ID operation or filter-management API follows from these checks.
+
+The next exact native contract must freeze every task-record field/variant,
+including any selected-kernel seccomp filter-count field, finite byte/call bounds,
+PID/TID descent, capability-mask source, before/after schedule and cleanup. Current
+`nix::getgroups` allocation/retry behavior is not an acceptable per-call bound.
+Use a genuine bounded worker-task observation with empty Groups; a supplied status
+body or another thread's credentials cannot satisfy the native proof. This
+predicate does not approve that still-unimplemented reader or establish a frozen
+cross-module interface. Kernel field semantics follow the selected
+[procfs documentation](https://www.kernel.org/doc/html/v6.8/filesystems/proc.html)
+and [credential model](https://www.kernel.org/doc/html/v6.8/security/credentials.html).
 
 ## Safe native APIs and held identity
 
@@ -1510,6 +1549,36 @@ feasibility review on 2026-10-02 found this bridge consistent with the accepted
 trusted-root model when the direct listener, kernel instance tokens and pidfd
 are required. This closes that design question without claiming direct
 executable observation, actual host evidence or full source-freeze approval.
+
+The [single composition timeline](root-manifest-source-spec.md#custody-shared-lifetime-and-invalidation)
+distinguishes bootstrap manifest/system metadata from later artifact acquisition.
+Every separate artifact/OCI open, read and hash follows current root/peer/mount,
+reviewed kernel/LSM/ext4 and full prefix-ACL association. Actual artifact bytes
+then remain mandatory before any final trusted holder or daemon request.
+
+Future association operations belong inside the existing private
+`headless_native::procfs` retained-worker hierarchy, alongside or within its
+`root_bootstrap` custody implementation. The worker alone retains root ancestry,
+new system-record handles, socket and peer pidfd. Fixed request/result variants
+must bind the original root lease, begin token and shared budget. They cannot
+export descriptors, accept a caller path or injected file, invoke a callback,
+close native handles on the coordinator, or introduce a second lane. The current
+held-artifact request's `Arc<File>` is not permission to export a root handle:
+post-association acquisition must derive its file on the worker under the closed
+recipe and keep original custody through use and retirement.
+
+The private registry must own a non-Clone `CompleteRecipe` before decoding the
+root declaration. Composition borrows that immutable owner with the profile,
+root custody and original budget; a declaration cannot create or replace it.
+Its eventual exact representation must cover the complete kernel/component/
+provenance/template/image/backend/mount/security predicates and all pins, not
+only a digest or an ACL-absence Boolean. Manifest paths are candidates to compare
+against its role/path policy, never new operations. Its complete layout, selector,
+borrowed views, acquisition schedule and cleanup protocol remain explicit
+precode prerequisites; naming this owner does not implement it or admit a recipe.
+No new root-level module or duplicate profile codec is approved by this decision.
+Reuse the actual private `headless_profile.rs` and `headless_root_manifest.rs`
+through separately reviewed borrowed views of unverified declarations.
 
 The next [held artifact-read source contract](native-artifact-source-spec.md)
 adds a fixed read/hash operation to the existing single retained lane, subject

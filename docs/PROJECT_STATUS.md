@@ -2391,6 +2391,40 @@ full native freeze, integration, runtime and packaging remain unfinished.
 Phase 11 owns runtime proof; LNSAT remains standalone and Rangoon uses ordinary
 adapters. This private candidate opens no product or runtime authority.
 
+### Stage-A root-association ordering and controller contract reconciliation
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+Fresh independent precode investigation identified incompatible artifact-read
+ordering between the earlier image-custody sequence and the later root-bootstrap
+prerequisite. The reconciled root-manifest timeline permits only bootstrap
+manifest/system/peer metadata before current-root/namespace/peer/mount association,
+reviewed kernel/LSM/ext4 classification and complete prefix-ACL rechecks. Every
+separate artifact/OCI acquisition follows those checks; actual bytes/pins still
+must pass before a final trusted holder or daemon request. Root current-boot
+attestation remains the accepted kernel bridge, not remote measurement.
+
+The native contract now specifies controller filesystem IDs and actual worker
+thread evidence, empty Groups, zero inheritable/permitted/effective/ambient
+capabilities, an unchanged bounded capability ceiling, and unchanged controller
+NoNewPrivs/seccomp observations under the closed no-exec/no-helper interval.
+It explicitly does not copy the workload's full hardening policy to the host,
+modify a host, or infer ordinary ACL access from a nonzero UID alone.
+
+Association requests must remain inside the existing retained procfs/root-bootstrap
+worker hierarchy with original custody and budget. The independently owned private
+CompleteRecipe must precede declaration comparison; existing profile/root codecs
+remain unverified and must be reused through deliberate private borrowed views.
+PHR-0067 tracks this documentation reconciliation and its independent review.
+
+This is not a completed precode freeze or a source reader. CompleteRecipe layout
+and admission, exact system-filesystem/task/peer acquisition, controller record
+variants and kernel mask, fixed native call/byte/descriptor schedules, ownership
+and cleanup transitions still require a concrete independently reviewed contract.
+Linux compile, positive and unfinished-operation evidence, actual pins, full
+native freeze, integration, runtime and packaging remain open. Project Status
+owns implementation truth; Phase 11 owns runtime proof. LNSAT remains standalone,
+with Rangoon using ordinary adapters. No product or runtime authority is opened.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order
