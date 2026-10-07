@@ -142,6 +142,9 @@ subsystem or proposal.
   bounds admission/dispatch/retirement ownership, one trusted crate boundary,
   stop ordering and retained release locks; implementation, complete type/VFS
   proofs and whole module precode remain open.
+  Its [private operation identity candidate](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-private-operation-identity-candidate)
+  supplies allocation-domain/checked-sequence bookkeeping only; no control root,
+  budget, native provenance, cleanup acknowledgment or execution authority.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.

@@ -410,6 +410,52 @@ is implemented by this document. Genuine Linux positive/unfinished-operation
 proof, full native freeze, integration and selected packaging remain later,
 separate gates.
 
+## Stage-A private operation identity candidate
+
+This narrow inert prerequisite follows the independently reviewed private control
+API direction above. [Project Status](../../PROJECT_STATUS.md#stage-a-private-operation-identity-source-candidate)
+owns its source evidence. The private `lnsat-store` module
+`headless_operation_identity` provides only process-local identity bookkeeping;
+it has no product caller, physical store owner, native observer, budget, permit,
+dispatch, cancellation, acknowledgment producer or retirement method.
+
+Each `OperationIdentityAllocator` owns one fresh `Arc<IdentityDomain>` allocation
+and one `Option<NonZeroU64>` next ordinal. `new` starts at one and accepts no seed.
+`issue(&mut self)` checks the successor before returning an opaque identity;
+`u64::MAX - 1` is the final issuable ordinal. `u64::MAX` is reserved as the
+exhaustion boundary, never issued; overflow changes the allocator to permanent
+`None` exhaustion and returns the fixed `IdentityExhausted` error. No reset,
+refill, wrap or same-domain ordinal reuse is exposed.
+
+`OperationIdentity` retains a strong reference to its domain plus the ordinal.
+`same_operation` requires `Arc::ptr_eq` for the domain and equal ordinals.
+Equal ordinals from different live allocator domains cannot match. A retained
+identity keeps its allocation alive across allocator drop, preventing pointer
+reuse while that identity exists. The allocator and identity have no Clone,
+Debug, serialization, raw number/pointer getter, decoder, callback or public
+constructor. Types and methods are `pub(super)` inside a private module;
+there is no cross-crate export. These finite layouts contain no unbounded
+collection, credential, path, resource owner, validity flag or deadline. Shared
+domain references do not create or reset an observation budget.
+
+Six host tests cover self-match and monotonic issuance, equal-ordinal domain
+separation, retained-identity/new-domain separation after allocator drop,
+last issuance and sticky exhaustion, already-exhausted denial, and compile-time
+Send/Sync bounds for only these two inert types. Near-boundary seed access is
+confined to module tests. Host trait checks do not prove control-root/store/job
+traits or Linux native behavior. Rust's usual allocation failure semantics apply;
+no bounded or graceful allocation guarantee is claimed.
+
+Allocator allocation provenance is not actual root/store/native provenance.
+Future control integration must hold exactly one allocator under its anchored
+authority mutex, never replace it, and permanently quarantine the root on
+exhaustion. Identity equality alone cannot admit an operation, bind the original
+budget or validate a cleanup acknowledgment. All actual owner/budget/root-begin/
+job/native cleanup and durable/probe predicates remain required. This candidate
+closes only identity representation and issuance; full control types, trusted
+module placement, writable/VFS witnesses, finite request/result/ack storage,
+all-writer coverage, pins, complete precode/freeze and integration remain open.
+
 ## Fixed image and actual process environment
 
 The proposed image has distinct immutable paths:

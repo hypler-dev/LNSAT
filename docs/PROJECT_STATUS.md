@@ -2630,6 +2630,42 @@ neutral and headless; Rangoon uses ordinary optional adapters. Project Status
 owns implementation truth; Phase 11 owns runtime proof. No runtime, merge,
 support/certification or release gate opens.
 
+### Stage-A private operation identity source candidate
+
+Canonical work record: this subsection under the accepted Stage-A source order,
+the private control API contract above and the human instruction to proceed with
+its next inert prerequisite. The [existing realized-recipe specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-private-operation-identity-candidate)
+bounds the two-file private `lnsat-store` identity candidate. Fresh independent
+module precode review passed before implementation. This is a narrow permitted
+candidate, not the missing complete control-module precode or native freeze.
+
+The private allocator creates a fresh strong allocation domain, issues checked
+nonzero ordinals under exclusive mutable access, reserves `u64::MAX`, and denies
+permanently after overflow. Opaque identities compare allocation domain plus
+ordinal; equal ordinals from distinct domains do not match, and retained
+identities keep their old domains alive after allocator drop. No public export,
+Clone/Debug/serialization/raw getter/reset/decoder/callback or product caller is
+added for the allocator or identity. Six host tests cover normal/domain/drop/
+exhaustion behavior and Send/Sync bounds for only these inert types. PHR-0073
+requires focused and full source validation plus independent exact source and
+direct-child review; previous 72 records remain scoped to their own checkpoints.
+
+Implemented as private inert source only. This allocation domain is not actual
+selected store/root/native provenance or an approval/permit. No original budget,
+validity flag, deadline, selected custody, worker job, dispatch, cancellation,
+cleanup acknowledgment, store release or active entrypoint is implemented by
+this candidate. The future anchored root's one-allocator lifetime and permanent
+quarantine are still integration obligations. Complete entry/binding fields,
+pins, partial-owner storage, trusted module placement/dependencies, every-job
+budget binding, writable/VFS admission/close witness, finite request/result/ack
+storage, all-writer/constructor coverage, frame writer, panic-safe retirement,
+durable recovery and whole-module precode remain open. Genuine Linux positive
+and unfinished-operation evidence, full native freeze, bootstrap/control/SDK
+integration and selected packaging remain separate unfinished gates. Project
+Status owns implementation truth; Phase 11 owns runtime proof. LNSAT remains
+neutral, standalone and headless; Rangoon uses ordinary optional adapters.
+No runtime/merge/support/certification/release authority is opened.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order

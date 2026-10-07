@@ -40,6 +40,11 @@ mod headless_bootstrap;
     dead_code,
     reason = "Reviewed Stage-A candidate remains disconnected until complete freeze and integration"
 )]
+mod headless_operation_identity;
+#[allow(
+    dead_code,
+    reason = "Reviewed Stage-A candidate remains disconnected until complete freeze and integration"
+)]
 mod headless_preparation;
 mod owner_bootstrap;
 mod owner_decision_credential;
