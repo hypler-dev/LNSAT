@@ -138,7 +138,10 @@ subsystem or proposal.
   image inventory, pressure procedures and complete-freeze review remain open.
   Its [selection/control-ownership direction](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#independent-selection-and-control-side-ownership)
   separates compiled expectation, confirmed deployment and genuine observation;
-  writable admission, retirement APIs and whole module precode remain open.
+  Its [private control API contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-control-api-contract)
+  bounds admission/dispatch/retirement ownership, one trusted crate boundary,
+  stop ordering and retained release locks; implementation, complete type/VFS
+  proofs and whole module precode remain open.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.

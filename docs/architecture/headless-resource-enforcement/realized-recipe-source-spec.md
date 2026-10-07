@@ -139,9 +139,9 @@ or uncertain ownership denies and retains custody; it never silently resets.
 There is one operation slot, no queue, replacement lane or retry budget.
 
 This is a selected physical-owner requirement, not permission to wrap an
-ordinary unbound store. Exact opaque store admission, writable connection
-construction, registry/confirmed-binding constructors, lock types and method
-visibility remain module-precode items. Read-only inspection cannot be upgraded
+ordinary unbound store. The private API contract below refines method ownership
+and visibility. Concrete writable construction, registry/confirmed-binding
+constructors and lock/type proofs remain module-precode items. Read-only inspection cannot be upgraded
 by changing a diagnostic flag. Pre-init has no installed UUID/generation/epoch;
 atomic bootstrap creates them only after all preparation/cleanup rechecks.
 Installed admission has separate fresh installation/generation/epoch/stop and
@@ -174,7 +174,8 @@ panic, poisoned slots, token mismatch or missing accounting retain quarantine.
 A stale acknowledgment cannot retire a newer registration. Observation polling
 requires a live budget; consuming cleanup evidence may occur with an invalid
 budget under separate Retiring predicates and supplies no successful observation.
-Exact acknowledgment storage/publication/consumption APIs remain missing.
+The private API contract below bounds acknowledgment ownership and consumption;
+its concrete storage and compiler proofs remain missing.
 
 Current native `Slots.cleanup` accounts for a job; `BODY_RETURNED` records a
 worker-body disposition. Neither alone proves whole-operation cleanup, thread
@@ -191,6 +192,223 @@ are gone. Durable intent must precede future probe creation. Nonterminal,
 malformed, partial or ambiguous recovery state denies new admission; failed
 quarantine append preserves ambiguity. Actual recovery and atomic owner/root/
 generation/audit/pointer composition remain missing, distinct from this design.
+
+## Private control API contract
+
+This is a controller-selected contract refinement within Stage A, not a Rust
+implementation, complete module precode approval or source-placement migration.
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-control-api-contract)
+owns its acceptance and implementation state. The names below denote future
+private roles. No public SDK, adapter, wire type or CLI may construct these roles,
+publish a native result, inject an observer or acquire execution authority from
+an inspection response.
+
+### Crate boundary and ownership
+
+The future control root, selected writable owner, B2/C1 transaction helpers and
+whole-operation native acknowledgment producer must share one trusted Rust crate
+boundary. Select `lnsat-store` for that boundary: it already owns the actual
+connection and private selected custody and credential helpers. Future native
+implementation used by this root must be placed inside that boundary through a
+separately reviewed move/reuse of existing private code, not copied observer
+logic, a public proof-construction bridge or a store-to-daemon dependency cycle.
+Current daemon modules and ordinary APIs remain unchanged by this contract.
+Exact module placement, dependency changes and compilation are still required
+before implementation. Rust visibility is an accidental-misuse boundary; it
+does not establish protection against malicious code compiled into the process.
+
+`ControlRoot` owns one mutex containing `StoreAuthority`. `StoreAuthority` owns
+the selected writable wrapper's actual connection, credential scope, parent,
+exclusive lease and preparation directory, plus the single operation record.
+Select one private process-lifetime `OnceLock<ControlRoot>` anchor, initialized
+without custody I/O before selected admission begins. It is never taken,
+replaced or deallocated in-process. The supervisor borrows that root; it does
+not hold its final owning reference. Supervisor/coordinator unwind invalidates
+the original budget and preserves quarantine, without releasing root contents.
+Only the explicit authorized close path may remove connection/custody contents;
+the root stays anchored in Closed or Quarantined state afterward. Caller tickets
+and workers never own the last root/store/lease reference. There is no `Clone`,
+`Debug`, `Deref`, serialization, raw descriptor,
+connection getter, caller transaction or public constructor for the wrapper.
+No field ordering or destructor alone proves successful native cleanup.
+
+The operation record contains a checked, nonzero, monotonically increasing
+process-local operation ID; the original `Arc<ArtifactBudgetState>` allocation;
+optional root-begin and last-dispatched job tokens with their kinds; and one
+monotonic disposition. These process-local identities are not installation UUID,
+generation or epoch. Overflow permanently quarantines this root; IDs are never
+reset or reused. Allocation identity uses `Arc::ptr_eq` inside the trusted
+boundary, not a caller-supplied number or serialized budget. Optional tokens are
+absent only before the corresponding job was dispatched, not wildcards.
+
+`OperationTicket` is non-Clone and exposes only bounded inspection/cancellation.
+It contains the registered ID and original budget reference, never store custody.
+Drop and coordinator unwind invalidate that original allocation without waiting
+for the store mutex. They cannot close the store, consume cleanup evidence or
+turn a pending operation into a reusable slot. The supervisor observes sticky
+invalidation and advances bookkeeping; delayed bookkeeping cannot make a worker
+result valid. If the supervisor itself fails, retained custody and admission
+denial are required, not guaranteed recovery or a bounded return time.
+
+### Closed private method vocabulary
+
+The table specifies ownership, results and ordering for the future private
+methods; it is not compilable Rust or approval of unspecified argument layouts.
+`Busy`, `Denied`, `Pending`, `Retired` and `Quarantined` are finite internal
+outcomes, not raw OS/SQLite errors. Public feedback must preserve their distinct
+meaning through the existing error contract, without leaking paths, credentials
+or native diagnostic payloads. Busy supplies no authority and no retry budget.
+
+| Private method         | Input and owned result                                                                                                                                                      | Required effect                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `admit_selected_store` | Internally selected complete expectation, held confirmed profile and bounded selected owner/path inputs; returns a borrowed root interface only after B6 physical admission | Acquire and retain exclusive lease before the selected writable open; use the actual native witnesses and connection. No caller proof, ordinary-store upgrade, create/URI open, migration fallback or second inspection connection. This is physical admission, not installation or action approval.                                                     |
+| `try_begin`            | Closed preparation or installed-action intent; returns one ticket or Busy/Denied                                                                                            | Under the actual authority mutex, repeat current custody and the intent's eligibility checks, register one original budget and ID, and reserve the single slot. No native I/O or queue. Pre-init has no fabricated installed identifiers; installed intent requires current installation, generation, epoch, stop and authenticated resource predicates. |
+| `try_dispatch`         | Matching ticket and one owned closed request; returns a matching job token or Busy/Denied                                                                                   | Under authority mutex then nonwaiting native-slot access, check the original budget and current authority, register token/kind before request visibility, then release locks. Busy publishes no request and cannot reset deadline, refund counters or authorize automatic retry.                                                                         |
+| `poll_observation`     | Matching ticket and expected job kind; returns Pending, bounded unverified result or Denied                                                                                 | Check exact identities and original budget before taking a result and again before use. A result is never a permit. Late/mismatched results are disposed under native cleanup accounting; no later stage follows an invalid budget.                                                                                                                      |
+| `cancel`               | Matching ticket; returns Denied/Pending or Quarantined                                                                                                                      | Invalidate the original budget first, preserve retiring disposition, then request matching lane cancellation/wake without waiting for worker completion. A busy native slot leaves cancellation pending; it never clears invalidation. Ticket drop follows the same invalidation rule without claiming durable stop.                                     |
+| `try_retire_native`    | Matching operation record, including root-begin and last job if assigned; returns Pending, one cleanup acknowledgment or Quarantined                                        | Use cleanup-only native accounting after all outstanding request/result disposal and root-lease retirement. No live-budget requirement for consuming cleanup, no successful observation result, and no waiter holding the store mutex.                                                                                                                   |
+| `try_finish`           | Root-owned acknowledgment plus separately verified durable/probe cleanup; returns Retired or Quarantined/Pending                                                            | Under authority mutex, compare all identities, consume acknowledgment once, repeat actual store and durable-state predicates, then retire the record. No outstanding transaction, statement, native handle or effectful frame may survive successful retirement. Keep the store and exclusive lease for the next independently admitted operation.       |
+| `try_shutdown`         | Supervisor's private shutdown intent; returns Pending, Closed or Quarantined                                                                                                | Deny new admissions, invalidate any active budget, and retire it. Only a quiescent root with all actual cleanup confirmed can enter its single authorized close path. Release connection before lease; failure/uncertainty retains quarantine and available custody, without reopen or clean-success claim.                                              |
+
+The anchor starts Unadmitted, with no lease/connection and admission disabled.
+Only its private selected-admission path may enter Admitting. Store each held
+lease and returned physical owner in anchored storage before the next fallible
+verification; return only a borrowed root interface after physical admission.
+Failed/unknown opening or unwinding retains the held lease and whatever custody
+remains in Quarantined state; it cannot promise a failed native constructor left
+a connection open. No admission retry, replacement anchor or drop-driven release
+is permitted. Exact partial-owner initialization/storage and trait/lifetime
+proofs remain precode gates. Do not substitute a supervisor-owned final `Arc`.
+
+Closed requests reuse only `Procfs`, `ArtifactRead`, `RootManifestBegin`,
+`RootManifestRecheck` and `RootManifestRetire`. Owned request fields must be
+bounded and immutable except existing private budget/control accounting; no
+borrowed assertion view, SQLite object, mutex guard, selected lease, password,
+custom closure, `Any` payload or extensible path map crosses into the worker.
+The current Procfs variant has no `ArtifactBudgetState`; it cannot be relabeled
+as already bound to this whole-operation budget. Exact binding for every variant,
+finite byte/object limits, request/result layout and `Send`/`Sync` compiler
+proofs remain required. A table of names is not that complete type proof.
+
+### Retirement and disposition predicates
+
+The fixed operation slot follows this transition vocabulary:
+
+| Disposition | Permitted transition and physical ownership                                                                                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vacant      | `try_begin` may register one operation after fresh eligibility; root keeps selected store/lease.                                                                                                                                                          |
+| Active      | Only matching stages may progress under the original budget. Cancellation, stop, deadline expiry, caller drop or failure moves toward Retiring; uncertain ownership/token/poison goes to Quarantined.                                                     |
+| Retiring    | Observations deny. Only matched cleanup and durable/probe reconciliation may progress. No new operation or replacement lane.                                                                                                                              |
+| Quarantined | No action admission, new budget or clean release. Only the original operation's cleanup/reconciliation may establish quiescence; any durable uncertainty still denies. Terminal native timeout never rearms the lane in this process, even after cleanup. |
+| Retired     | All required cleanup has completed and the record is consumed. The slot may become Vacant only if root and native lane remain admissible; otherwise it stays closed to admissions.                                                                        |
+
+Shutdown is a root state, not an operation success result. It permanently closes
+admission before attempting retirement and cannot be undone by caller retry.
+Retirement before the first native dispatch has absent begin/job tokens and
+requires proof that no native request became visible; it cannot consume a
+fabricated all-zero acknowledgment. The producer handles that exact no-dispatch
+case internally. Once a job is published, its assigned identity is mandatory.
+
+`NativeCleanupAck` is private, non-Clone, non-serializable and created only by
+the actual native retirement producer. It binds operation ID, same original
+budget allocation, exact optional root-begin identity, exact last job token/kind,
+and complete accounting for all temporary and retained original descriptors.
+Before publication, no queued request, result, root lease or unaccounted close
+may remain for the operation. Acknowledgment is stored in the one bounded slot,
+moved directly into root-owned consumption and invalid after consumption. It
+cannot be reconstructed from elapsed time, an error, a job cleanup enum, thread
+body return, SQLite commit, response body or journal phase. Unknown/failed close,
+panic, poison, stale identity or incomplete accounting retains quarantine.
+Exact publication primitive and panic-safe native cleanup storage remain precode
+gates; the existing job-scoped `Slots.cleanup` is not this implementation.
+
+Native acknowledgment excludes store, recovery journal and probe-process cleanup.
+Those remain separately verified under their existing specifications. Native
+observation may complete without a valid comparison; comparison may deny while
+physical cleanup remains pending. Neither outcome permits store release.
+
+### Stop and release use the same actual authority mutex
+
+All owner, credential, recovery, session, policy, nonce, generation, epoch, stop,
+bootstrap and release authority writes must enter this same root mutex after
+integration. Existing public ordinary-store methods are not automatically
+covered; an exact call-site/constructor inventory and routing review is required.
+Offline recovery remains separately lease-exclusive. Read-only inspection cannot
+borrow its authority, and audit-only exceptions cannot mutate authorization.
+
+For a stop already authorized by the existing owner/approval predicates, acquire
+the mutex within the existing five-second, 100 ms monotonic polling contract.
+Once acquired, invalidate the operation's original budget before the durable stop
+transition. Commit the actual SQL state before reporting a durable stop; request
+matching lane cancellation as a separate conservative step. Failed or ambiguous
+commit leaves invalidation sticky and requires reconciliation, not a claimed
+committed stop. Failure to acquire returns Busy/Denied, not durable-stop success.
+Stop and dispatch use the same mutex, so committed stop before admission denies
+dispatch. Cancellation cannot interrupt a syscall already entered.
+
+The rule against native observation or worker waiting under the mutex does not
+weaken the [existing release critical section](preparation-store-source-spec.md#installation-wide-release-synchronization).
+Release checks and commit, followed by the exact potentially effectful frame
+write, retain the actual authority mutex through that write and its unfinished
+write retirement. No guard or SQLite owner transfers to the observation worker.
+A future control-side frame writer must retain its own guarded ownership while
+the write can still release an action. Write timeout is an acceptance cutoff,
+not proof the write ended or permission to drop the lock. An invalidating writer
+cannot commit between release commit and frame write. Stop may therefore return
+Busy while that critical section is occupied. Release commit first is the grant
+linearization; later stop cannot claim an already released action never occurred.
+Exact frame-writer ownership and unfinished-write cleanup remain precode gates.
+
+### Selected writable admission and final close
+
+B6's exact selected path, owner, parent, exclusive lease, mount/ACL/ancestry,
+SQLite/VFS, existing WAL, schema-18 manifest/seed and actual-byte requirements
+remain governing predicates. This API neither selects missing genuine pins nor
+implements them. Initial `query_only=ON` is a fuse; only the private eligible
+immediate transaction phase may disable it, repeat checks and restore it before
+inert preparation. C1 snapshots stay bound to the same actual credential scope
+and connection/transaction. They are not portable step-up tokens. Ordinary
+global schema-17 migration/open remains separate and rejects headless schema.
+No sidecar open/dup/hash/close is permitted as a substitute for pinned VFS
+coordination because it may interfere with POSIX locks. Current source custody
+is not complete writable native admission.
+
+The sole supervisor close path requires no active registration or in-flight
+frame and matched actual native, durable and probe cleanup. Drop transactions
+and statements before explicit connection close, retaining parent/lease until
+that outcome is known. `Connection::close` consumes the connection and can
+return it on error: that returned owner must be put back into root-held
+quarantine, never handed to a caller. SQLite success alone is not proof of all
+pinned VFS/OS close outcomes. Unknown close or unwind during authorized close
+cannot promise the connection remains open; retain remaining custody, deny
+reopen and require reconciliation. The concrete non-unwinding close/storage
+protocol and actual VFS cleanup witness are still blocking precode obligations.
+Unwind during an unfinished native operation, in contrast, must not enter this
+close path at all. Connection cleanup must precede exclusive lease release.
+
+Process death requires fresh recovery: lease acquisition is not proof of old
+resource cleanup. Durable intent precedes probe creation; partial, nonterminal,
+malformed or ambiguous records deny new admission until actual reconciliation.
+No new-budget retry, evidence deletion, pointer reset or command resend follows
+uncertainty. These rules do not implement atomic owner/root/generation/audit/
+pointer bootstrap or grant runtime/support/certification authority.
+
+### Remaining module-precode gate
+
+This contract closes the private method/disposition vocabulary and reconciles
+crate visibility, stop ordering and release-lock retention. Before any control
+implementation, one exact source packet must still provide complete expected
+entry and confirmed-binding fields/bounds/constructors; genuine required pins;
+selected writable/VFS admission and close witnesses; exact trusted module moves
+and dependency graph; finite request/result/acknowledgment storage; original
+budget binding for every job; trait/lifetime proofs; all-writer/constructor
+coverage; frame-writer and panic-safe retirement protocols; durable recovery;
+and whole-module independent precode review. A narrow inert type candidate can
+be proposed separately with exact owned paths and acceptance, but cannot be
+reported as the control root, full preparation or usable V1. No such candidate
+is implemented by this document. Genuine Linux positive/unfinished-operation
+proof, full native freeze, integration and selected packaging remain later,
+separate gates.
 
 ## Fixed image and actual process environment
 

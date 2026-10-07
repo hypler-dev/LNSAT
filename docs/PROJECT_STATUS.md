@@ -2590,6 +2590,46 @@ selected packaging and supported V1 remain unfinished. Project Status owns
 implementation truth; Phase 11 owns runtime proof. LNSAT remains standalone
 and headless; Rangoon uses ordinary adapters. No runtime/merge/release gate opens.
 
+### Stage-A private control API contract
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and controller-delegated contract decisions. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-control-api-contract)
+now defines the future private admission, begin, dispatch, observation,
+cancellation, native retirement, finish and shutdown vocabulary. A single
+process-lifetime root, privately anchored by `OnceLock` before custody I/O,
+retains actual selected writable store custody through supervisor/coordinator
+unwind; caller drop invalidates the original budget without closing it. Only
+verified explicit close removes contents; the root itself remains anchored.
+Whole-operation
+cleanup acknowledgment is private, allocation/operation/job bound and consumed
+once, with durable/probe cleanup separately required.
+
+Exact source reads found that selected custody and B2/C1 helpers are private to
+`lnsat-store`, while native candidates are private to `lnsatd`. The contract
+selects one trusted `lnsat-store` boundary for future root/owner/native producer;
+a separately reviewed move/reuse and dependency/trait proof remain required.
+No private helper is exported, native proof constructor invented or current
+daemon/store source moved by this documentation. Stop invalidates before its
+durable transition but reports committed stop only after commit. Native
+observation cannot wait under the authority mutex; the distinct existing release
+critical section retains that mutex through effectful and unfinished frame writes.
+Busy stop is not durable-stop success. SQLite close alone is not VFS cleanup.
+PHR-0072 tracks this bounded contract and independent source/direct-child review.
+
+This closes method/disposition and visibility/lock-contract decisions only.
+Complete expected entry and confirmed bindings, real pins, writable/VFS admission
+and close witnesses, module placement/dependencies, finite payload/ack storage,
+every-job budget binding, compiler lifetime/trait proofs, all-writer/constructor
+coverage, frame writer, panic-safe cleanup, durable recovery and whole-module
+precode remain open. No control root, selected writable preparation, retirement,
+activation or new executable behavior is implemented. Full CLI/API/SDK workflow,
+genuine Linux positive and unfinished-operation evidence, complete native freeze,
+integration and selected packaging remain unfinished. LNSAT remains standalone,
+neutral and headless; Rangoon uses ordinary optional adapters. Project Status
+owns implementation truth; Phase 11 owns runtime proof. No runtime, merge,
+support/certification or release gate opens.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order

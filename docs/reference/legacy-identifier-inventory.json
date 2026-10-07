@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "source_tree_sha256": "6dd015fa203be4dd2a4f29e35b51bcf787f64b298189d4f4abccdf0a9fc4201c",
+  "source_tree_sha256": "118e73eda63c329a9f80721867863b68286680772a0bbbe82c724260d0802941",
   "scope": {
     "tracked_text_files_only": true,
     "excluded_inventory_mechanics": [
