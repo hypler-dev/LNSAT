@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0065-independent-implementation-review-3b9a317a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-root-prefix-acl-stage-a"],
+  "base_revision": "eeb29fa71c3ca9230b551bc7ed96cfadcfd5b011",
+  "reviewed_revision": "3b9a317acfe1cd5a345a43e36c77b4989c9e6a57",
+  "reviewed_tree_oid": "a8df27608661da0604a55e433c94962e1f19cc12",
+  "diff_sha256": "sha256:186d7286b9b2b724a3cb384e3e48b55c03d0c895cdad0af58baf8fc7aecd34b7",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_native_root_bootstrap.rs",
+      "sha256": "sha256:779a4753aaeef125e7435682bc3160d39378407cd1044bdaa530713428c747ea"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_root_bootstrap_tests.rs",
+      "sha256": "sha256:5f66844ee972f372a526232198327f9a23f611320ddc247e19d834aa7243239a"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:0e82519e5c7b4b6c8968eb66793fadffda97fc1d6776efa0d631f8af9e24d03c"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:76e9e2e4b6f26848f781a9484d72167aa6551c17d0a0ab282a2c2346544861b0"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md",
+      "sha256": "sha256:388e7d35f59c33fb6a842105ee8b1295904dc31c8987e9f253ee8a2eb6e45b66"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md",
+      "sha256": "sha256:31e37eac0e7fe51ec13a20e7fa11cbef52901c9f90374ac0569c142984b322ef"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:396277ece4cc68f7859ca7df7b682e28e69168944f24db213eae836c4a405dce"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:9f0215af133764cdf53d0cf1e55cccebacd5ce607e3dbc7d0bab49505edc6140"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/prefix_acl_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only source review. Exact immutable parent, tree, canonical diff and all eight protected blobs match the independently reviewed staged candidate. The private retained root-manifest worker samples named access/default ACLs on canonical directory prefixes, with bounded scratch/raw copies, typed pre/post-call checkpoints including errors, complete held/named chain observations, original-baseline raw/tag comparisons, strict access-mode parsing and worker-owned cleanup. Retire adds no ACL reads or handles. Fresh review found no actionable P1/P2/P3. Focused host tests pass 121; strict host Clippy, formatting, docs, public readiness, inventory, exact public-history replay and whitespace checks pass. Full npm run check passes: 1519 TypeScript tests, 139 contract comparisons, 264 store tests with two intentional helper ignores, and 402 daemon tests. One earlier unchanged store lease test failed with DatabaseBusy; focused and normal-concurrency Rust checks and one identical full replay pass, but the original cause remains unproven and the failure is retained. The actual-Command probe rules out post-exec retention only in its exact tested path. Installed local Semgrep reports five INFO notices confined to existing test fixtures, zero production findings and zero scan errors; Gitleaks reports zero findings. The macOS target neither compiles nor executes the Linux sampler. Linux compile, genuine ACL association/substitution, blocked-operation and unfinished-close proof remain open. This candidate does not authenticate ACL absence, effective rights, kernel/LSM provenance, current root/namespace/peer association or artifact custody. Complete recipe/pins, full native freeze, product integration, runtime and packaging remain unfinished. Separate exact direct-child review remains required. No merge, execution, provisioning, release or runtime authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
