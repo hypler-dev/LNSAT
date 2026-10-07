@@ -16,13 +16,25 @@ tag object is `b622a5992f0ba88fda05f2fd037d151b4fc5cc88`, not its source
 commit. These identify researched source, not installed artifacts.
 
 The future closed registry must contain a complete, reviewed immutable recipe.
-It is selected by the schema-3 profile and root manifest; neither file may
-register predicates or choose a weaker recipe. No expression language,
-regular-expression path allowance, plugin, wildcard mount or unknown-field
-fallback is allowed. Dynamic values are limited to already authenticated
-current object associations: container ID, daemon metadata paths, host and
-container mount/namespace tokens, cgroup association, exact UID/GID and action
-target. Those values do not change the immutable predicate program.
+Independent owner/store/policy selection must retain that recipe before profile
+or root-manifest declaration comparison, in the
+[root-manifest custody order](root-manifest-source-spec.md#custody-shared-lifetime-and-invalidation).
+The schema-3 profile and root manifest carry recipe references to compare with
+that independently selected expectation; neither file selects authority,
+registers predicates or chooses a weaker recipe. Expected declaration family
+also comes from selected policy before decoding, as specified by the
+[root-layout contract](root-layout-source-spec.md#gap-and-compatibility).
+The exact registry selector and its ownership interface remain unfrozen.
+
+No expression language, regular-expression path allowance, plugin, wildcard
+mount or unknown-field fallback is allowed. Dynamic values are limited to
+already authenticated current object associations: container ID, daemon metadata
+paths, host and container mount/namespace tokens, cgroup association, exact
+UID/GID and action target. Those values do not change the immutable predicate
+program. Independently held deployment bindings supply selected values where
+the policy permits them; candidate declarations remain assertions to compare,
+and actual native association remains a separate requirement. A product-wide
+literal UID, host path or current mount token cannot substitute for that custody.
 
 The full recipe commitment uses domain `lnsat.hcfg_immutable_recipe.v1`, one
 LF, and the complete compact recursively ASCII-key-sorted recipe JSON, without

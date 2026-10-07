@@ -2463,6 +2463,13 @@ source validation and independent review. Broad source validation and immutable
 source/direct-child attestations remain mandatory before this candidate is
 treated as a reviewed checkpoint. No synthetic positive authenticates host/cache facts.
 
+The realized-recipe contract now states the same ordering as the root-manifest
+custody timeline: independently retain expected recipe first; profile/root recipe
+references are comparison assertions. Dynamic deployment UID/path bindings and
+current native object claims remain separate from immutable predicate policy.
+PHR-0069 tracks this documentation correction; it selects no compiled registry
+slot and implements no selector, binding owner, cancellation signal or quarantine.
+
 Independent owner/store selection before declaration comparison still requires
 an exact source/lifetime contract. Preparation has no installed UUID before the
 atomic bootstrap transaction; a future selector must preserve that order rather
