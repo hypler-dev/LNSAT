@@ -117,6 +117,9 @@ subsystem or proposal.
 - [HCFG-6 versioned root host-layout declaration](architecture/headless-resource-enforcement/root-layout-source-spec.md)
   — proposed private v2 representation for current daemon-cached thermal masks
   and original source types; v1 remains unchanged. No native or runtime proof.
+- [HCFG-6 internal candidate assertion view contract](architecture/headless-resource-enforcement/candidate-assertion-view-source-spec.md)
+  — typed read-only views of private profile/root codec assertions; internal crate
+  visibility, owned lifetimes and distinct v1/v2 families. No native or authority proof.
 - [HCFG-6 root-prefix ACL observation contract](architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md)
   — private named O_PATH ancestor sampling candidate; raw/no-data observations
   remain unverified. Project Status owns source evidence; Linux proof is pending.

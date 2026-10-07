@@ -6735,6 +6735,313 @@ pub const fn daemon_source_version_v1() -> &'static str {
 }
 
 #[cfg(test)]
+mod candidate_borrowed_view_tests {
+    use super::{headless_profile, headless_root_manifest};
+    use serde_json::{Value, json};
+
+    fn assert_projection(canonical: &[u8], projection: &Value) {
+        let retained: Value = serde_json::from_slice(canonical).expect("retained canonical JSON");
+        assert_eq!(projection, &retained);
+    }
+
+    pub(super) fn consume_profile(raw: &[u8]) {
+        let Ok(record) = headless_profile::parse_profile(raw) else {
+            panic!("accepted synthetic profile");
+        };
+        let view = record.candidate_view();
+        assert_eq!(view.candidate_profile_digest().len(), 32);
+        assert_eq!(view.candidate_authority_digest().len(), 32);
+        let adapter = view.adapter();
+        let engine = view.engine();
+        let filesystem = view.filesystem();
+        let headless = view.headless();
+        let isolation = view.isolation();
+        let ambient = isolation.ambient();
+        let host_access = isolation.host_access();
+        let namespaces = isolation.host_namespaces();
+        let privilege = isolation.privilege();
+        let limits = view.limits();
+        assert_projection(
+            view.canonical_bytes(),
+            &json!({
+                "adapter": {"ref": adapter.reference(), "version": adapter.version()},
+                "adapter_executable_digest": view.adapter_executable_digest(), "audience": view.audience(), "contract_id": view.contract_id(), "contract_version": view.contract_version(),
+                "engine": {"endpoint_path": engine.endpoint_path(), "implementation_manifest_digest": engine.implementation_manifest_digest(), "implementation_manifest_path": engine.implementation_manifest_path(), "verifier_git_executable_digest": engine.verifier_git_executable_digest(), "verifier_git_executable_path": engine.verifier_git_executable_path()},
+                "entrypoint": view.entrypoint(), "filesystem": {"additional_mounts": filesystem.additional_mounts(), "root_filesystem_read_only": filesystem.root_filesystem_read_only(), "target_mount_mode": filesystem.target_mount_mode(), "target_mount_path": filesystem.target_mount_path(), "workdir": filesystem.workdir()},
+                "headless": {"binding_digest": headless.binding_digest(), "image_index_digest": headless.image_index_digest(), "image_manifest_digest": headless.image_manifest_digest(), "installation_ref": headless.installation_ref(), "probe_entrypoint": headless.probe_entrypoint(), "probe_executable_digest": headless.probe_executable_digest(), "recipe_digest": headless.recipe_digest()},
+                "image_digest": view.image_digest(), "isolation": {"ambient": {"credentials": ambient.credentials(), "environment": ambient.environment(), "shell": ambient.shell()}, "host_access": {"devices": host_access.devices(), "docker_socket_mount": host_access.docker_socket_mount()}, "host_namespaces": {"ipc": namespaces.ipc(), "network": namespaces.network(), "pid": namespaces.pid()}, "network": isolation.network(), "privilege": {"capabilities_drop_all": privilege.capabilities_drop_all(), "no_new_privileges": privilege.no_new_privileges(), "privileged": privilege.privileged()}, "run_as_gid": isolation.run_as_gid(), "run_as_uid": isolation.run_as_uid(), "seccomp_profile": isolation.seccomp_profile()},
+                "limits": {"cpu_millis": limits.cpu_millis(), "memory_bytes": limits.memory_bytes(), "pids": limits.pids(), "stderr_bytes": limits.stderr_bytes(), "stdout_bytes": limits.stdout_bytes(), "wall_clock_seconds": limits.wall_clock_seconds()}, "profile_family": view.profile_family(), "profile_id": view.profile_id(), "schema_version": view.schema_version()
+            }),
+        );
+    }
+
+    use headless_root_manifest::*;
+
+    fn file(value: &FileRecordClaimView<'_>) -> Value {
+        json!({"digest": value.digest(), "path": value.path(), "size": value.size()})
+    }
+    fn executable(value: &ExecutableClaimView<'_>) -> Value {
+        json!({"device_major": value.device_major(), "device_minor": value.device_minor(), "inode": value.inode()})
+    }
+    fn directory(value: &DirectoryClaimView<'_>) -> Value {
+        json!({"device_major": value.device_major(), "device_minor": value.device_minor(), "inode": value.inode(), "path": value.path()})
+    }
+    fn image_executable(value: &ImageExecutableClaimView<'_>) -> Value {
+        json!({"container_path": value.container_path(), "snapshot": file(&value.snapshot())})
+    }
+    fn numbers(value: &NumberClaims<'_>) -> Value {
+        assert_eq!(value.is_empty(), matches!(value.len(), 0));
+        assert!(value.get(value.len()).is_none());
+        assert!(value.get(usize::MAX).is_none());
+        Value::Array(
+            (0..value.len())
+                .map(|index| json!(value.get(index).expect("bounded number")))
+                .collect(),
+        )
+    }
+    fn texts(value: &TextClaims<'_>) -> Value {
+        assert_eq!(value.is_empty(), matches!(value.len(), 0));
+        assert!(value.get(value.len()).is_none());
+        assert!(value.get(usize::MAX).is_none());
+        Value::Array(
+            (0..value.len())
+                .map(|index| json!(value.get(index).expect("bounded text")))
+                .collect(),
+        )
+    }
+    fn components(value: &ComponentClaims<'_>) -> Value {
+        assert_eq!(value.is_empty(), matches!(value.len(), 0));
+        assert!(value.get(value.len()).is_none());
+        assert!(value.get(usize::MAX).is_none());
+        Value::Array((0..value.len()).map(|index| { let value = value.get(index).expect("bounded component"); json!({"artifact": file(&value.artifact()), "build_provenance": file(&value.build_provenance()), "role": value.role(), "source_commit": value.source_commit(), "version": value.version()}) }).collect())
+    }
+    fn mounts(value: &MountClaims<'_>) -> Value {
+        assert_eq!(value.is_empty(), matches!(value.len(), 0));
+        assert!(value.get(value.len()).is_none());
+        assert!(value.get(usize::MAX).is_none());
+        Value::Array((0..value.len()).map(|index| { let value = value.get(index).expect("bounded mount"); json!({"device_major": value.device_major(), "device_minor": value.device_minor(), "filesystem_type": value.filesystem_type(), "host_mount_namespace": value.host_mount_namespace(), "idmapped": value.idmapped(), "mount_id": value.mount_id(), "mount_point": value.mount_point(), "root": value.root()}) }).collect())
+    }
+    fn paths(value: &PathTypeClaims<'_>) -> Value {
+        assert_eq!(value.is_empty(), matches!(value.len(), 0));
+        assert!(value.get(value.len()).is_none());
+        assert!(value.get(usize::MAX).is_none());
+        Value::Array(
+            (0..value.len())
+                .map(|index| {
+                    let value = value.get(index).expect("bounded path");
+                    json!({"path": value.path(), "source_type": value.source_type()})
+                })
+                .collect(),
+        )
+    }
+    fn masks(value: &MaskTypeClaims<'_>) -> Value {
+        assert_eq!(value.is_empty(), matches!(value.len(), 0));
+        assert!(value.get(value.len()).is_none());
+        assert!(value.get(usize::MAX).is_none());
+        Value::Array((0..value.len()).map(|index| { let value = value.get(index).expect("bounded mask"); json!({"mask_kind": value.mask_kind(), "path": value.path(), "source_type": value.source_type()}) }).collect())
+    }
+    fn thermals(value: &ThermalTypeClaims<'_>) -> Value {
+        assert_eq!(value.is_empty(), matches!(value.len(), 0));
+        assert!(value.get(value.len()).is_none());
+        assert!(value.get(usize::MAX).is_none());
+        Value::Array(
+            (0..value.len())
+                .map(|index| {
+                    let value = value.get(index).expect("bounded thermal");
+                    json!({"cpu_id": value.cpu_id(), "source_type": value.source_type()})
+                })
+                .collect(),
+        )
+    }
+
+    macro_rules! root_common_projection {
+        ($view:expr) => {{
+            let view = &$view;
+            let controller = view.controller(); let kernel = view.kernel(); let templates = view.templates(); let instance = view.instance(); let image = view.image();
+            json!({
+                "administrators": numbers(&view.administrators()), "components": components(&view.components()), "contract_id": view.contract_id(), "controller": {"gid": controller.gid(), "uid": controller.uid()},
+                "image": {"adapter": image_executable(&image.adapter()), "build_provenance": file(&image.build_provenance()), "config": file(&image.config()), "index": image.index().as_ref().map(file), "manifest": file(&image.manifest()), "platform": {"architecture": image.platform().architecture(), "os": image.platform().os(), "variant": image.platform().variant()}, "probe": image_executable(&image.probe())},
+                "instance": {"boot_id": instance.boot_id(), "daemon_executable": executable(&instance.daemon_executable()), "daemon_gid": instance.daemon_gid(), "daemon_pid": instance.daemon_pid(), "daemon_start_ticks": instance.daemon_start_ticks(), "daemon_uid": instance.daemon_uid(), "endpoint": {"device_major": instance.endpoint().device_major(), "device_minor": instance.endpoint().device_minor(), "inode": instance.endpoint().inode(), "path": instance.endpoint().path()}, "host_mount_namespace": instance.host_mount_namespace(), "host_user_namespace": instance.host_user_namespace(), "listener_kind": instance.listener_kind(), "metadata_roots": {"container_repository": directory(&instance.metadata_roots().container_repository()), "daemon_root": directory(&instance.metadata_roots().daemon_root()), "dedicated": instance.metadata_roots().dedicated(), "policy_id": instance.metadata_roots().policy_id()}},
+                "kernel": {"active_lsms": texts(&kernel.active_lsms()), "artifact": file(&kernel.artifact()), "build_provenance": file(&kernel.build_provenance()), "configuration": file(&kernel.configuration()), "release": kernel.release(), "source_commit": kernel.source_commit(), "source_ref": kernel.source_ref()},
+                "mounts": mounts(&view.mounts()), "recipe_digest": view.recipe_digest(), "schema_version": view.schema_version(), "templates": {"recipe_document": file(&templates.recipe_document()), "source_commit": templates.source_commit()}
+            })
+        }};
+    }
+
+    pub(super) fn consume_root_v1(raw: &[u8]) {
+        let record = headless_root_manifest::decode_root_manifest_claim(raw)
+            .expect("accepted synthetic v1 root");
+        let view = record.candidate_view();
+        assert_eq!(view.candidate_commitment().len(), 32);
+        assert_projection(view.canonical_bytes(), &root_common_projection!(view));
+    }
+
+    pub(super) fn consume_root_v2(raw: &[u8]) {
+        let record = headless_root_manifest::decode_root_manifest_layout_claim(raw)
+            .expect("accepted synthetic v2 root");
+        let view = record.candidate_view();
+        assert_eq!(view.candidate_commitment().len(), 32);
+        let mut projection = root_common_projection!(view);
+        let layout = view.host_layout();
+        projection.as_object_mut().expect("root object").insert("host_layout".to_owned(), json!({"cpu_source": layout.cpu_source(), "fixed_masks": masks(&layout.fixed_masks()), "lookup_policy": layout.lookup_policy(), "possible_cpus": numbers(&layout.possible_cpus()), "readonly_proc": paths(&layout.readonly_proc()), "thermal_masks": thermals(&layout.thermal_masks())}));
+        assert_projection(view.canonical_bytes(), &projection);
+    }
+
+    trait NotClone<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotClone<()> for T {
+        fn check() {}
+    }
+    impl<T: Clone> NotClone<u8> for T {
+        fn check() {}
+    }
+    trait NotCopy<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotCopy<()> for T {
+        fn check() {}
+    }
+    impl<T: Copy> NotCopy<u8> for T {
+        fn check() {}
+    }
+    trait NotDebug<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotDebug<()> for T {
+        fn check() {}
+    }
+    impl<T: ?Sized + std::fmt::Debug> NotDebug<u8> for T {
+        fn check() {}
+    }
+    trait NotDisplay<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotDisplay<()> for T {
+        fn check() {}
+    }
+    impl<T: ?Sized + std::fmt::Display> NotDisplay<u8> for T {
+        fn check() {}
+    }
+    trait NotSerialize<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotSerialize<()> for T {
+        fn check() {}
+    }
+    impl<T: ?Sized + serde::Serialize> NotSerialize<u8> for T {
+        fn check() {}
+    }
+    trait NotDeserialize<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotDeserialize<()> for T {
+        fn check() {}
+    }
+    impl<T: serde::Deserialize<'static>> NotDeserialize<u8> for T {
+        fn check() {}
+    }
+    trait NotSend<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotSend<()> for T {
+        fn check() {}
+    }
+    impl<T: ?Sized + Send> NotSend<u8> for T {
+        fn check() {}
+    }
+    trait NotSync<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotSync<()> for T {
+        fn check() {}
+    }
+    impl<T: ?Sized + Sync> NotSync<u8> for T {
+        fn check() {}
+    }
+    trait NotDeref<A> {
+        fn check();
+    }
+    impl<T: ?Sized> NotDeref<()> for T {
+        fn check() {}
+    }
+    impl<T: ?Sized + std::ops::Deref> NotDeref<u8> for T {
+        fn check() {}
+    }
+
+    macro_rules! assert_non_view_traits {
+        ($type:ty) => {{
+            <$type as NotClone<_>>::check();
+            <$type as NotCopy<_>>::check();
+            <$type as NotDebug<_>>::check();
+            <$type as NotDisplay<_>>::check();
+            <$type as NotSerialize<_>>::check();
+            <$type as NotDeserialize<_>>::check();
+            <$type as NotSend<_>>::check();
+            <$type as NotSync<_>>::check();
+            <$type as NotDeref<_>>::check();
+        }};
+    }
+    macro_rules! assert_unverified_traits {
+        ($type:ty) => {{
+            <$type as NotClone<_>>::check();
+            <$type as NotDebug<_>>::check();
+            <$type as NotDisplay<_>>::check();
+            <$type as NotSerialize<_>>::check();
+        }};
+    }
+
+    pub(super) fn assert_profile_view_traits() {
+        use headless_profile::*;
+        assert_unverified_traits!(UnverifiedProfile);
+        assert_non_view_traits!(ProfileClaimView<'static>);
+        assert_non_view_traits!(AdapterClaimView<'static>);
+        assert_non_view_traits!(EngineClaimView<'static>);
+        assert_non_view_traits!(FilesystemClaimView<'static>);
+        assert_non_view_traits!(HeadlessClaimView<'static>);
+        assert_non_view_traits!(IsolationClaimView<'static>);
+        assert_non_view_traits!(AmbientClaimView<'static>);
+        assert_non_view_traits!(HostAccessClaimView<'static>);
+        assert_non_view_traits!(HostNamespacesClaimView<'static>);
+        assert_non_view_traits!(PrivilegeClaimView<'static>);
+        assert_non_view_traits!(LimitsClaimView<'static>);
+    }
+
+    pub(super) fn assert_root_view_traits() {
+        use headless_root_manifest::*;
+        assert_unverified_traits!(UnverifiedRootManifest);
+        assert_unverified_traits!(UnverifiedRootManifestLayout);
+        assert_non_view_traits!(RootManifestV1ClaimView<'static>);
+        assert_non_view_traits!(RootManifestV2ClaimView<'static>);
+        assert_non_view_traits!(IdentityClaimView<'static>);
+        assert_non_view_traits!(FileRecordClaimView<'static>);
+        assert_non_view_traits!(KernelClaimView<'static>);
+        assert_non_view_traits!(ComponentClaimView<'static>);
+        assert_non_view_traits!(TemplatesClaimView<'static>);
+        assert_non_view_traits!(ExecutableClaimView<'static>);
+        assert_non_view_traits!(EndpointClaimView<'static>);
+        assert_non_view_traits!(DirectoryClaimView<'static>);
+        assert_non_view_traits!(MetadataRootsClaimView<'static>);
+        assert_non_view_traits!(InstanceClaimView<'static>);
+        assert_non_view_traits!(MountRecordClaimView<'static>);
+        assert_non_view_traits!(PlatformClaimView<'static>);
+        assert_non_view_traits!(ImageExecutableClaimView<'static>);
+        assert_non_view_traits!(ImageClaimView<'static>);
+        assert_non_view_traits!(HostLayoutClaimView<'static>);
+        assert_non_view_traits!(PathTypeClaimView<'static>);
+        assert_non_view_traits!(MaskTypeClaimView<'static>);
+        assert_non_view_traits!(ThermalTypeClaimView<'static>);
+        assert_non_view_traits!(NumberClaims<'static>);
+        assert_non_view_traits!(TextClaims<'static>);
+        assert_non_view_traits!(ComponentClaims<'static>);
+        assert_non_view_traits!(MountClaims<'static>);
+        assert_non_view_traits!(PathTypeClaims<'static>);
+        assert_non_view_traits!(MaskTypeClaims<'static>);
+        assert_non_view_traits!(ThermalTypeClaims<'static>);
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;

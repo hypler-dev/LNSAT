@@ -51,6 +51,34 @@ global login-limiter lockout findings. It withdraws Unix bearer reads before the
 first supported release, preserves browser header-pair transport, and still
 requires focused validation and independent review before release judgment.
 
+### Scoped dependency maintenance candidate
+
+Owner-authorized development restoration uses an isolated project cache, the
+pinned Node/npm pair, exact lockfile integrity and verified npm registry origins
+with lifecycle scripts disabled. A fresh advisory check identified affected
+MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4 dependencies. The current
+candidate pins the test client to 2.2.0, transitive legacy SDK to 1.31.0 and
+Sharp to 0.35.5 with its matching platform closure. Production MCP server,
+core and Node wrapper remain 2.0.0; the client resolves its own core 2.2.0.
+No OAuth client, credential intake or runtime integration is introduced.
+
+The [dependency baseline](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md#upstream-baseline)
+records exact refreshed package identities and removes a stale advisory-allowance
+claim. No audit exceptions are accepted. Quarantined installation, registry
+signatures and advisory results gate source validation; focused compatibility,
+full source checks and independent exact source/direct-child attestations gate
+completion of this candidate. Package authenticity and green source checks do
+not establish Linux native execution, supported distribution rows or release
+readiness.
+
+The [governed installation direction](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#planned-direction-governed-dependency-installation)
+is planned only. Scoped contributor permission does not implement an engine
+installer or let adapters administer the host. A future contract must bind exact
+closure, approved origins, verification, isolation, destination, privileges,
+expiry, one-use approval and bounded receipts. Rangoon supplies adapter UX;
+LNSAT retains neutral authorization and evidence. Installation and tool execution
+remain distinct permissions.
+
 ### Public HTTPS IPv6 address classification
 
 Canonical work record: this subsection. A supplied sampled review identified a
@@ -2478,11 +2506,49 @@ or recipe digest cannot manufacture expected authority. Product CompleteRecipe
 also excludes pressure helpers, driver cases and run inputs: their separate
 conformance proof is a full-freeze dependency, never a product registry entry.
 
-Complete recipe layout/admission, borrowed views, genuine acquisition/custody,
+Complete recipe layout/admission, borrowed-view integration, genuine acquisition/custody,
 cache capture feasibility, actual pins, whole-boundary freeze, integration,
 runtime and packaging remain open. No current profile, CLI, route, owner/store
 constructor, daemon operation or successful authority is added. LNSAT remains
 standalone with Rangoon using ordinary adapters; Phase 11 remains runtime owner.
+
+### Stage-A internal candidate assertion views
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and root-association reconciliation. The [candidate assertion view contract](architecture/headless-resource-enforcement/candidate-assertion-view-source-spec.md)
+received fresh independent precode review before implementation. Its candidate
+source has been implemented; implementation validation and exact immutable
+source/direct-child review remain pending under PHR-0070. This is not a completed native
+freeze, registry/comparator or supported product surface.
+
+The contract makes the existing unverified profile and distinct v1/v2 root
+codecs available through internal crate-visible `pub(super)` data interfaces.
+Both modules remain private and no external API or production consumer is added.
+Read-only typed nested/collection views retain owner-bound canonical/digest
+borrows and carry a non-allocating `!Send`/`!Sync` marker. They have no mutation,
+copying/printing/serialization traits, native handles, SQL state or authority
+conversion. Scalar/text claims are still ordinary untrusted data; the marker
+does not prevent a caller from copying claims. The controlled-floor profile
+parser remains private, and root families retain separate decoders/views.
+
+Test-only sibling consumers exercise existing exact goldens/denials, typed
+projections, explicit null and ordered collection boundaries, and negative
+ownership/serialization/thread trait invariants. Controller inspection found
+discard-only getter checks insufficient; complete value and commitment-borrow
+checks now cover that gap. Focused development validation passes 11 profile
+and 31 root-manifest tests, including distinct-field fixture mutations, all
+collection values/order and out-of-range access, and owner-buffer pointer
+identity. Full source validation and independent implementation review remain
+pending; this is not an accepted source checkpoint. Host tests of
+these platform-neutral views provide no Linux-native acquisition or enforcement
+proof. No expected policy is selected from candidate declarations.
+
+Complete recipe fields/pins/selection, confirmed binding admission, expected
+comparison, genuine current root/kernel/LSM/peer/mount/artifact/OCI association,
+writable custodian, invalidation/retirement/recovery, Linux positive and
+unfinished-operation evidence, full native freeze, integration and packaging
+remain open. LNSAT remains standalone and Rangoon uses ordinary adapters;
+Project Status owns source truth and Phase 11 remains runtime proof owner.
 
 ### Stage-A artifact read post-call checkpoint correction
 
@@ -4249,6 +4315,37 @@ Before any supported public artifact:
 LNSAT owns selected core package lifecycle evidence and support claims for
 Phase 14 rows. Graphical assets and unselected installer formats do not block
 LNSAT V1.
+
+Linux support direction now includes capability checks during DEB/RPM installation
+and again during explicit setup, service startup and consequential operation.
+The [Phase 14 plan](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#linux-capability-checks-across-lifecycle)
+records the requirements and additional RHEL, Fedora, SUSE Linux Enterprise,
+openSUSE, AlmaLinux and Amazon Linux 2023 candidate families: exact selected
+distro/kernel/security/runtime scope,
+active required LSM plus enforcing policy, unavailable/offline observations,
+actual non-root runtime identity and no automatic host-policy changes. This is
+planning only. No checker, package hook, public diagnostic contract, selected
+supported distro row, installer or runtime proof is implemented by this update.
+Existing product, native-freeze, candidate-build and publication gates remain open.
+The named **Linux Compatibility Qualification** feature is planned: owner direction
+covers these candidate families, while exact releases/architectures/kernel-policy
+and package rows remain unselected. Required work includes ABI/dependencies,
+security-policy provisioning, genuine isolation/runtime observations, service/path
+integration, bounded engine diagnostics, package lifecycle and drift/recovery.
+The [feature contract](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#planned-feature-linux-compatibility-qualification)
+requires an exact source freeze before implementation and independent per-row
+positive/denial evidence before support. No new behavior or compatibility result
+is claimed; unselected rows remain outside the initial V1 exit requirements.
+Professional enterprise/server and advanced headless/prosumer deployments define
+the Linux scope with server-first defaults. A GUI may be installed; LNSAT remains
+headless and CLI-managed, and GUI presence alone neither denies support nor proves
+readiness. Desktop-specific integrations are not selected. Arch Linux is an
+additional owner-selected candidate for advanced headless operation. The
+[headless candidate requirements](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#professional-and-prosumer-headless-linux)
+keep rolling-release freshness and any Arch package wrapper separate from existing
+DEB/RPM rows. Fedora/openSUSE qualification targets headless service deployments;
+Mint, Pop!_OS and EndeavourOS are not selected. No support claim, installed checker
+or package is added.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).

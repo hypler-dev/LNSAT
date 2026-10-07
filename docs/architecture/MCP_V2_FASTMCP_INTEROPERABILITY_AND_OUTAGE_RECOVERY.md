@@ -15,16 +15,18 @@ they do not establish production support.
 Dependency selection is evidence-gated. Versions below were checked against
 official project documentation and package registries on 2026-08-04. Before any
 install or lockfile change, recheck version, integrity, license, support state,
-security advisories, and repository identity.
+security advisories, and repository identity. The client and legacy SDK rows were
+refreshed against their official repository and npm metadata on 2026-10-07; other
+rows retain their original baseline date.
 
 | Component                      | Verified version                   | Integrity                                                                                             | License/support posture                                                           | Planned LNSAT lane                         |
 | ------------------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------ |
 | MCP specification              | `2026-07-28`                       | Versioned official specification                                                                      | Current modern protocol                                                           | Canonical experimental source protocol     |
 | `@modelcontextprotocol/server` | `2.0.0`                            | npm `sha512-YhHWdHfpFMQfd0prsEnxKeS3Qz3ytIGmsS0sth4KDjnacIT7hxk6hXHkJ9KysxlkvTM+WZAtQbbcUhdoP4Hvtw==` | MIT; Node 20+                                                                     | Native TypeScript modern server            |
-| `@modelcontextprotocol/client` | `2.0.0`                            | npm `sha512-8f1OghQ2rjzIOfqgUCP+8GiUWqRs89njoWLNqAe8kWmDePv3s1fZXseej+QXemssEuuOvLLmLO/kqM3IQHtISw==` | MIT; Node 20+                                                                     | Conformance client only when needed        |
+| `@modelcontextprotocol/client` | `2.2.0`                            | npm `sha512-LxCou/CSYQ6dwEnjhLZY0KnEuc8V4UJ3IEQCl/uR2yHobSQIEdJKUlKLRYRF5i5FqRGHy1eK7une3aAWDHLtig==` | MIT; Node 20+                                                                     | Conformance client only when needed        |
 | `@modelcontextprotocol/core`   | `2.0.0`                            | npm `sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==` | MIT; Node 20+                                                                     | Shared modern protocol types               |
 | `@modelcontextprotocol/node`   | `2.0.0`                            | npm `sha512-Y4hAC2XdGDUdDOCbLDOCA4+aL3NUldjsOWlDL/YwpAxrPhRm1xHd7lZ+mLacvZ9t3PaH28wgNoaLQGrIk1P2pg==` | MIT; Node 20+                                                                     | Node HTTP wrapper if HTTP opens            |
-| `@modelcontextprotocol/sdk`    | `1.30.0`                           | npm `sha512-xKd8OIzlqNzcqcNumGAa6g+PW2kjD5vrpcKOnfldAUPP3j7lnqMPwlTXQm8gF+UwH72z0lqaRbjr9hqGz0eITA==` | MIT; transitive through conformance tool                                          | Test-only transitive dependency            |
+| `@modelcontextprotocol/sdk`    | `1.31.0`                           | npm `sha512-UvTMgnNlnIBO/22ob2RcVGDlcvOslQs8T59+FTGdA0L27a39fdGF/EDETNtDVK4DZGpwomlsYpRdA8UXcVL/pw==` | MIT; transitive through conformance tool                                          | Test-only transitive dependency            |
 | MCP conformance                | `0.1.16`                           | npm `sha512-GI7qiN0r39/MH2srVUR3AXaEN0YLCro20lIBbnvc1frBhszenxvUifBuTzxeVQVagILfBzCIcnungUOma8OrgA==` | MIT; stable conformance release; framework supports 2025-06-18/2025-11-25 only    | Loopback legacy scenario plus declared gap |
 | FastMCP                        | `3.4.5`                            | wheel SHA-256 `5d3d438eb2917e63e6faf53e8cb8fe26d887ec3232f848093a4eecad7fa34861`                      | Apache-2.0 classifier; Python 3.10+; stable maintenance                           | Optional legacy-era interop                |
 | FastMCP                        | `4.0.0b1`                          | wheel SHA-256 `d66eb7b0763ffff2ae0fc573778ea25604dcb7e59769e5afaf9851a806eb1129`                      | Beta; modern/sessionless and dual-era features; not production-supported by LNSAT | Experimental modern interop                |
@@ -36,12 +38,18 @@ FastMCP `4.0.0b1` sdist SHA-256 is
 `f98d69588a73e1672840558641d5d0f111e207baffe001f3465713a53ebb6b4c`.
 FastMCP 2.x is outside target scope.
 
-`@modelcontextprotocol/node` 2.0.0 still pins `@hono/node-server` 1.19.x.
-Upstream advisory `GHSA-frvp-7c67-39w9` concerns the Windows `serveStatic`
-path; LNSAT imports `toNodeHandler` only and never imports or exposes
-`serveStatic`. `npm run audit:dependencies:check` accepts only that exact
-moderate advisory at the pinned package, dependency path, range, source, and
-lock versions. Any advisory or dependency drift fails closed.
+The production MCP server, core, and Node wrapper remain pinned to 2.0.0.
+The test client is pinned to 2.2.0, and the legacy SDK used by conformance is
+pinned to 1.31.0. Their patched releases address
+[GHSA-6qxp-vccf-f47h](https://github.com/advisories/GHSA-6qxp-vccf-f47h).
+LNSAT currently uses the SDK client through test-only stdio and in-memory
+transports; this refresh does not add an OAuth client or credential migration.
+Any future OAuth client integration must separately bind and validate the
+expected authorization-server issuer and address pre-existing credentials.
+
+`npm run audit:dependencies:check` rejects every reported advisory; no advisory
+allowance remains. Registry signatures and lockfile integrity authenticate the
+selected packages but do not establish runtime safety or production support.
 
 ## Support Matrix
 

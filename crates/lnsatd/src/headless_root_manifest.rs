@@ -4,6 +4,8 @@ use serde::de::{self, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha256};
 use std::fmt;
+use std::marker::PhantomData;
+use std::rc::Rc;
 use zeroize::Zeroizing;
 
 const MAX_BODY: usize = 65_536;
@@ -22,7 +24,7 @@ const DOMAIN_V2: &[u8] = b"lnsat.hcfg_root_implementation_manifest.v2\n";
 type Text = Zeroizing<String>;
 
 #[derive(Debug, Eq, PartialEq)]
-enum RootManifestError {
+pub(super) enum RootManifestError {
     InputTooLarge,
     JsonSyntax,
     JsonLimits,
@@ -33,7 +35,7 @@ enum RootManifestError {
     Canonical,
 }
 impl RootManifestError {
-    const fn code(&self) -> &'static str {
+    pub(super) const fn code(&self) -> &'static str {
         match self {
             Self::InputTooLarge => "headless_root_manifest.input_too_large",
             Self::JsonSyntax => "headless_root_manifest.json_syntax",
@@ -47,14 +49,14 @@ impl RootManifestError {
     }
 }
 
-struct UnverifiedRootManifest {
+pub(super) struct UnverifiedRootManifest {
     manifest: RootManifest,
     canonical: Zeroizing<Vec<u8>>,
     commitment: Zeroizing<[u8; 32]>,
 }
 
 /// Synthetic supplied-body representation only; no native cache or path fact is proved.
-struct UnverifiedRootManifestLayout {
+pub(super) struct UnverifiedRootManifestLayout {
     manifest: RootManifestLayout,
     canonical: Zeroizing<Vec<u8>>,
     commitment: Zeroizing<[u8; 32]>,
@@ -121,7 +123,443 @@ closed_object!(PathType { path: Text => "path", source_type: Text => "source_typ
 closed_object!(MaskType { mask_kind: Text => "mask_kind", path: Text => "path", source_type: Text => "source_type" });
 closed_object!(ThermalType { cpu_id: u32 => "cpu_id", source_type: Text => "source_type" });
 
-fn decode_root_manifest_claim(input: &[u8]) -> Result<UnverifiedRootManifest, RootManifestError> {
+macro_rules! root_claim_view {
+    ($name:ident, $inner:ty) => {
+        pub(super) struct $name<'a> {
+            value: &'a $inner,
+            marker: PhantomData<Rc<()>>,
+        }
+        impl<'a> $name<'a> {
+            fn new(value: &'a $inner) -> Self {
+                Self {
+                    value,
+                    marker: PhantomData,
+                }
+            }
+        }
+    };
+}
+macro_rules! root_claim_collection {
+    ($name:ident, $item:ty) => {
+        pub(super) struct $name<'a> {
+            values: &'a [$item],
+            marker: PhantomData<Rc<()>>,
+        }
+        impl<'a> $name<'a> {
+            fn new(values: &'a [$item]) -> Self {
+                Self {
+                    values,
+                    marker: PhantomData,
+                }
+            }
+            pub(super) fn len(&self) -> usize {
+                self.values.len()
+            }
+            pub(super) fn is_empty(&self) -> bool {
+                self.values.is_empty()
+            }
+        }
+    };
+}
+root_claim_view!(RootManifestV1ClaimView, UnverifiedRootManifest);
+root_claim_view!(RootManifestV2ClaimView, UnverifiedRootManifestLayout);
+root_claim_view!(IdentityClaimView, Identity);
+root_claim_view!(FileRecordClaimView, FileRecord);
+root_claim_view!(KernelClaimView, Kernel);
+root_claim_view!(ComponentClaimView, Component);
+root_claim_view!(TemplatesClaimView, Templates);
+root_claim_view!(ExecutableClaimView, Executable);
+root_claim_view!(EndpointClaimView, Endpoint);
+root_claim_view!(DirectoryClaimView, Directory);
+root_claim_view!(MetadataRootsClaimView, MetadataRoots);
+root_claim_view!(InstanceClaimView, Instance);
+root_claim_view!(MountRecordClaimView, MountRecord);
+root_claim_view!(PlatformClaimView, Platform);
+root_claim_view!(ImageExecutableClaimView, ImageExecutable);
+root_claim_view!(ImageClaimView, Image);
+root_claim_view!(HostLayoutClaimView, HostLayout);
+root_claim_view!(PathTypeClaimView, PathType);
+root_claim_view!(MaskTypeClaimView, MaskType);
+root_claim_view!(ThermalTypeClaimView, ThermalType);
+root_claim_collection!(NumberClaims, u32);
+root_claim_collection!(TextClaims, Text);
+root_claim_collection!(ComponentClaims, Component);
+root_claim_collection!(MountClaims, MountRecord);
+root_claim_collection!(PathTypeClaims, PathType);
+root_claim_collection!(MaskTypeClaims, MaskType);
+root_claim_collection!(ThermalTypeClaims, ThermalType);
+
+impl UnverifiedRootManifest {
+    pub(super) fn candidate_view(&self) -> RootManifestV1ClaimView<'_> {
+        RootManifestV1ClaimView::new(self)
+    }
+}
+impl UnverifiedRootManifestLayout {
+    pub(super) fn candidate_view(&self) -> RootManifestV2ClaimView<'_> {
+        RootManifestV2ClaimView::new(self)
+    }
+}
+macro_rules! root_common_view {
+    ($ty:ident, $manifest:ident) => {
+        impl<'a> $ty<'a> {
+            pub(super) fn administrators(&self) -> NumberClaims<'a> {
+                NumberClaims::new(&self.value.$manifest.administrators)
+            }
+            pub(super) fn components(&self) -> ComponentClaims<'a> {
+                ComponentClaims::new(&self.value.$manifest.components)
+            }
+            pub(super) fn contract_id(&self) -> &'a str {
+                self.value.$manifest.contract_id.as_str()
+            }
+            pub(super) fn controller(&self) -> IdentityClaimView<'a> {
+                IdentityClaimView::new(&self.value.$manifest.controller)
+            }
+            pub(super) fn image(&self) -> ImageClaimView<'a> {
+                ImageClaimView::new(&self.value.$manifest.image)
+            }
+            pub(super) fn instance(&self) -> InstanceClaimView<'a> {
+                InstanceClaimView::new(&self.value.$manifest.instance)
+            }
+            pub(super) fn kernel(&self) -> KernelClaimView<'a> {
+                KernelClaimView::new(&self.value.$manifest.kernel)
+            }
+            pub(super) fn mounts(&self) -> MountClaims<'a> {
+                MountClaims::new(&self.value.$manifest.mounts)
+            }
+            pub(super) fn recipe_digest(&self) -> &'a str {
+                self.value.$manifest.recipe_digest.as_str()
+            }
+            pub(super) fn schema_version(&self) -> u32 {
+                self.value.$manifest.schema_version
+            }
+            pub(super) fn templates(&self) -> TemplatesClaimView<'a> {
+                TemplatesClaimView::new(&self.value.$manifest.templates)
+            }
+            pub(super) fn canonical_bytes(&self) -> &'a [u8] {
+                &self.value.canonical
+            }
+            pub(super) fn candidate_commitment(&self) -> &'a [u8; 32] {
+                &self.value.commitment
+            }
+        }
+    };
+}
+root_common_view!(RootManifestV1ClaimView, manifest);
+root_common_view!(RootManifestV2ClaimView, manifest);
+impl<'a> RootManifestV2ClaimView<'a> {
+    pub(super) fn host_layout(&self) -> HostLayoutClaimView<'a> {
+        HostLayoutClaimView::new(&self.value.manifest.host_layout)
+    }
+}
+impl IdentityClaimView<'_> {
+    pub(super) fn gid(&self) -> u32 {
+        self.value.gid
+    }
+    pub(super) fn uid(&self) -> u32 {
+        self.value.uid
+    }
+}
+impl<'a> FileRecordClaimView<'a> {
+    pub(super) fn digest(&self) -> &'a str {
+        self.value.digest.as_str()
+    }
+    pub(super) fn path(&self) -> &'a str {
+        self.value.path.as_str()
+    }
+    pub(super) fn size(&self) -> u64 {
+        self.value.size
+    }
+}
+impl<'a> KernelClaimView<'a> {
+    pub(super) fn active_lsms(&self) -> TextClaims<'a> {
+        TextClaims::new(&self.value.active_lsms)
+    }
+    pub(super) fn artifact(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.artifact)
+    }
+    pub(super) fn build_provenance(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.build_provenance)
+    }
+    pub(super) fn configuration(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.configuration)
+    }
+    pub(super) fn release(&self) -> &'a str {
+        self.value.release.as_str()
+    }
+    pub(super) fn source_commit(&self) -> &'a str {
+        self.value.source_commit.as_str()
+    }
+    pub(super) fn source_ref(&self) -> &'a str {
+        self.value.source_ref.as_str()
+    }
+}
+impl<'a> ComponentClaimView<'a> {
+    pub(super) fn artifact(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.artifact)
+    }
+    pub(super) fn build_provenance(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.build_provenance)
+    }
+    pub(super) fn role(&self) -> &'a str {
+        self.value.role.as_str()
+    }
+    pub(super) fn source_commit(&self) -> &'a str {
+        self.value.source_commit.as_str()
+    }
+    pub(super) fn version(&self) -> &'a str {
+        self.value.version.as_str()
+    }
+}
+impl<'a> TemplatesClaimView<'a> {
+    pub(super) fn recipe_document(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.recipe_document)
+    }
+    pub(super) fn source_commit(&self) -> &'a str {
+        self.value.source_commit.as_str()
+    }
+}
+impl ExecutableClaimView<'_> {
+    pub(super) fn device_major(&self) -> u32 {
+        self.value.device_major
+    }
+    pub(super) fn device_minor(&self) -> u32 {
+        self.value.device_minor
+    }
+    pub(super) fn inode(&self) -> u64 {
+        self.value.inode
+    }
+}
+impl<'a> EndpointClaimView<'a> {
+    pub(super) fn device_major(&self) -> u32 {
+        self.value.device_major
+    }
+    pub(super) fn device_minor(&self) -> u32 {
+        self.value.device_minor
+    }
+    pub(super) fn inode(&self) -> u64 {
+        self.value.inode
+    }
+    pub(super) fn path(&self) -> &'a str {
+        self.value.path.as_str()
+    }
+}
+impl<'a> DirectoryClaimView<'a> {
+    pub(super) fn device_major(&self) -> u32 {
+        self.value.device_major
+    }
+    pub(super) fn device_minor(&self) -> u32 {
+        self.value.device_minor
+    }
+    pub(super) fn inode(&self) -> u64 {
+        self.value.inode
+    }
+    pub(super) fn path(&self) -> &'a str {
+        self.value.path.as_str()
+    }
+}
+impl<'a> MetadataRootsClaimView<'a> {
+    pub(super) fn container_repository(&self) -> DirectoryClaimView<'a> {
+        DirectoryClaimView::new(&self.value.container_repository)
+    }
+    pub(super) fn daemon_root(&self) -> DirectoryClaimView<'a> {
+        DirectoryClaimView::new(&self.value.daemon_root)
+    }
+    pub(super) fn dedicated(&self) -> bool {
+        self.value.dedicated
+    }
+    pub(super) fn policy_id(&self) -> &'a str {
+        self.value.policy_id.as_str()
+    }
+}
+impl<'a> InstanceClaimView<'a> {
+    pub(super) fn boot_id(&self) -> &'a str {
+        self.value.boot_id.as_str()
+    }
+    pub(super) fn daemon_executable(&self) -> ExecutableClaimView<'a> {
+        ExecutableClaimView::new(&self.value.daemon_executable)
+    }
+    pub(super) fn daemon_gid(&self) -> u32 {
+        self.value.daemon_gid
+    }
+    pub(super) fn daemon_pid(&self) -> u32 {
+        self.value.daemon_pid
+    }
+    pub(super) fn daemon_start_ticks(&self) -> u64 {
+        self.value.daemon_start_ticks
+    }
+    pub(super) fn daemon_uid(&self) -> u32 {
+        self.value.daemon_uid
+    }
+    pub(super) fn endpoint(&self) -> EndpointClaimView<'a> {
+        EndpointClaimView::new(&self.value.endpoint)
+    }
+    pub(super) fn host_mount_namespace(&self) -> u64 {
+        self.value.host_mount_namespace
+    }
+    pub(super) fn host_user_namespace(&self) -> u64 {
+        self.value.host_user_namespace
+    }
+    pub(super) fn listener_kind(&self) -> &'a str {
+        self.value.listener_kind.as_str()
+    }
+    pub(super) fn metadata_roots(&self) -> MetadataRootsClaimView<'a> {
+        MetadataRootsClaimView::new(&self.value.metadata_roots)
+    }
+}
+impl<'a> MountRecordClaimView<'a> {
+    pub(super) fn device_major(&self) -> u32 {
+        self.value.device_major
+    }
+    pub(super) fn device_minor(&self) -> u32 {
+        self.value.device_minor
+    }
+    pub(super) fn filesystem_type(&self) -> &'a str {
+        self.value.filesystem_type.as_str()
+    }
+    pub(super) fn host_mount_namespace(&self) -> u64 {
+        self.value.host_mount_namespace
+    }
+    pub(super) fn idmapped(&self) -> bool {
+        self.value.idmapped
+    }
+    pub(super) fn mount_id(&self) -> u64 {
+        self.value.mount_id
+    }
+    pub(super) fn mount_point(&self) -> &'a str {
+        self.value.mount_point.as_str()
+    }
+    pub(super) fn root(&self) -> &'a str {
+        self.value.root.as_str()
+    }
+}
+impl<'a> PlatformClaimView<'a> {
+    pub(super) fn architecture(&self) -> &'a str {
+        self.value.architecture.as_str()
+    }
+    pub(super) fn os(&self) -> &'a str {
+        self.value.os.as_str()
+    }
+    pub(super) fn variant(&self) -> &'a str {
+        self.value.variant.as_str()
+    }
+}
+impl<'a> ImageExecutableClaimView<'a> {
+    pub(super) fn container_path(&self) -> &'a str {
+        self.value.container_path.as_str()
+    }
+    pub(super) fn snapshot(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.snapshot)
+    }
+}
+impl<'a> ImageClaimView<'a> {
+    pub(super) fn adapter(&self) -> ImageExecutableClaimView<'a> {
+        ImageExecutableClaimView::new(&self.value.adapter)
+    }
+    pub(super) fn build_provenance(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.build_provenance)
+    }
+    pub(super) fn config(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.config)
+    }
+    pub(super) fn index(&self) -> Option<FileRecordClaimView<'a>> {
+        self.value.index.as_ref().map(FileRecordClaimView::new)
+    }
+    pub(super) fn manifest(&self) -> FileRecordClaimView<'a> {
+        FileRecordClaimView::new(&self.value.manifest)
+    }
+    pub(super) fn platform(&self) -> PlatformClaimView<'a> {
+        PlatformClaimView::new(&self.value.platform)
+    }
+    pub(super) fn probe(&self) -> ImageExecutableClaimView<'a> {
+        ImageExecutableClaimView::new(&self.value.probe)
+    }
+}
+impl<'a> HostLayoutClaimView<'a> {
+    pub(super) fn cpu_source(&self) -> &'a str {
+        self.value.cpu_source.as_str()
+    }
+    pub(super) fn fixed_masks(&self) -> MaskTypeClaims<'a> {
+        MaskTypeClaims::new(&self.value.fixed_masks)
+    }
+    pub(super) fn lookup_policy(&self) -> &'a str {
+        self.value.lookup_policy.as_str()
+    }
+    pub(super) fn possible_cpus(&self) -> NumberClaims<'a> {
+        NumberClaims::new(&self.value.possible_cpus)
+    }
+    pub(super) fn readonly_proc(&self) -> PathTypeClaims<'a> {
+        PathTypeClaims::new(&self.value.readonly_proc)
+    }
+    pub(super) fn thermal_masks(&self) -> ThermalTypeClaims<'a> {
+        ThermalTypeClaims::new(&self.value.thermal_masks)
+    }
+}
+impl<'a> PathTypeClaimView<'a> {
+    pub(super) fn path(&self) -> &'a str {
+        self.value.path.as_str()
+    }
+    pub(super) fn source_type(&self) -> &'a str {
+        self.value.source_type.as_str()
+    }
+}
+impl<'a> MaskTypeClaimView<'a> {
+    pub(super) fn mask_kind(&self) -> &'a str {
+        self.value.mask_kind.as_str()
+    }
+    pub(super) fn path(&self) -> &'a str {
+        self.value.path.as_str()
+    }
+    pub(super) fn source_type(&self) -> &'a str {
+        self.value.source_type.as_str()
+    }
+}
+impl<'a> ThermalTypeClaimView<'a> {
+    pub(super) fn cpu_id(&self) -> u32 {
+        self.value.cpu_id
+    }
+    pub(super) fn source_type(&self) -> &'a str {
+        self.value.source_type.as_str()
+    }
+}
+impl NumberClaims<'_> {
+    pub(super) fn get(&self, index: usize) -> Option<u32> {
+        self.values.get(index).copied()
+    }
+}
+impl<'a> TextClaims<'a> {
+    pub(super) fn get(&self, index: usize) -> Option<&'a str> {
+        self.values.get(index).map(|value| value.as_str())
+    }
+}
+impl<'a> ComponentClaims<'a> {
+    pub(super) fn get(&self, index: usize) -> Option<ComponentClaimView<'a>> {
+        self.values.get(index).map(ComponentClaimView::new)
+    }
+}
+impl<'a> MountClaims<'a> {
+    pub(super) fn get(&self, index: usize) -> Option<MountRecordClaimView<'a>> {
+        self.values.get(index).map(MountRecordClaimView::new)
+    }
+}
+impl<'a> PathTypeClaims<'a> {
+    pub(super) fn get(&self, index: usize) -> Option<PathTypeClaimView<'a>> {
+        self.values.get(index).map(PathTypeClaimView::new)
+    }
+}
+impl<'a> MaskTypeClaims<'a> {
+    pub(super) fn get(&self, index: usize) -> Option<MaskTypeClaimView<'a>> {
+        self.values.get(index).map(MaskTypeClaimView::new)
+    }
+}
+impl<'a> ThermalTypeClaims<'a> {
+    pub(super) fn get(&self, index: usize) -> Option<ThermalTypeClaimView<'a>> {
+        self.values.get(index).map(ThermalTypeClaimView::new)
+    }
+}
+
+pub(super) fn decode_root_manifest_claim(
+    input: &[u8],
+) -> Result<UnverifiedRootManifest, RootManifestError> {
     preflight(input)?;
     let manifest: RootManifest =
         serde_json::from_slice(input).map_err(|_| RootManifestError::JsonShape)?;
@@ -140,7 +578,7 @@ fn decode_root_manifest_claim(input: &[u8]) -> Result<UnverifiedRootManifest, Ro
     })
 }
 
-fn decode_root_manifest_layout_claim(
+pub(super) fn decode_root_manifest_layout_claim(
     input: &[u8],
 ) -> Result<UnverifiedRootManifestLayout, RootManifestError> {
     preflight(input)?;

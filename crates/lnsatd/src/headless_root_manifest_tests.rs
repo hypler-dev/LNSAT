@@ -76,6 +76,42 @@ fn layout_reject(raw: &[u8], code: &str) {
         Err(error) => assert_eq!(error.code(), code),
     }
 }
+
+#[test]
+fn sibling_candidate_consumer_reads_distinct_root_views() {
+    crate::candidate_borrowed_view_tests::consume_root_v1(PRESENT_VECTOR.as_bytes());
+    let mut distinct_ids = value();
+    distinct_ids["controller"]["gid"] = json!(1001);
+    crate::candidate_borrowed_view_tests::consume_root_v1(&bytes(&distinct_ids));
+    crate::candidate_borrowed_view_tests::consume_root_v2(&bytes(&layout_value(true)));
+    crate::candidate_borrowed_view_tests::consume_root_v2(&bytes(&layout_value(false)));
+    crate::candidate_borrowed_view_tests::assert_root_view_traits();
+}
+
+#[test]
+fn candidate_root_views_borrow_retained_codec_buffers() {
+    let record = accept(&value());
+    let view = record.candidate_view();
+    assert!(std::ptr::eq(
+        view.canonical_bytes().as_ptr(),
+        record.canonical.as_ptr()
+    ));
+    assert!(std::ptr::eq(
+        view.candidate_commitment(),
+        &raw const *record.commitment
+    ));
+
+    let layout = layout_accept(&layout_value(true));
+    let view = layout.candidate_view();
+    assert!(std::ptr::eq(
+        view.canonical_bytes().as_ptr(),
+        layout.canonical.as_ptr()
+    ));
+    assert!(std::ptr::eq(
+        view.candidate_commitment(),
+        &raw const *layout.commitment
+    ));
+}
 fn commitment_hex(bytes: &[u8; 32]) -> String {
     let mut text = String::new();
     for byte in bytes {
