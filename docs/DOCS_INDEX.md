@@ -136,6 +136,9 @@ subsystem or proposal.
   — finite built-in predicates, actual environment observation and five narrow
   preparation sentinels; pins, literal kernel/snapshotter normalization,
   image inventory, pressure procedures and complete-freeze review remain open.
+  Its [selection/control-ownership direction](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#independent-selection-and-control-side-ownership)
+  separates compiled expectation, confirmed deployment and genuine observation;
+  writable admission, retirement APIs and whole module precode remain open.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.

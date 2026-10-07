@@ -24,7 +24,9 @@ that independently selected expectation; neither file selects authority,
 registers predicates or chooses a weaker recipe. Expected declaration family
 also comes from selected policy before decoding, as specified by the
 [root-layout contract](root-layout-source-spec.md#gap-and-compatibility).
-The exact registry selector and its ownership interface remain unfrozen.
+The selection and control-ownership direction below narrows that interface.
+The complete entry schema, writable admission and whole-boundary precode freeze
+remain open.
 
 No expression language, regular-expression path allowance, plugin, wildcard
 mount or unknown-field fallback is allowed. Dynamic values are limited to
@@ -52,6 +54,143 @@ registry. Do not embed a full recipe/image/self-executable digest in the image
 whose bytes it hashes: that would create a circular build dependency. Immutable
 image labels below contain no such digest; container labels may bind the
 already computed recipe. Copying a digest never replaces native observation.
+
+## Independent selection and control-side ownership
+
+This subsection records controller design decisions within the accepted Stage-A
+contract work. It is not a complete module precode PASS or an implemented API.
+[Project Status](../../PROJECT_STATUS.md#stage-a-recipe-selection-and-control-custody-direction)
+owns its state. The following names describe private future roles, not public
+Rust APIs, wire contracts or supported configuration.
+
+### One build-owned product slot
+
+The initial distribution uses one private build-owned `InitialGitReference` slot.
+Select it from compiled product policy before reading profile/root declarations;
+there is no request, environment, CLI, adapter, response or discovery selector.
+Exactly one internally complete reviewed product entry must match that slot.
+Zero entries, duplicate entries, an incomplete entry, wrong platform/backend/
+family or a recomputed commitment mismatch deny. No best-match, fallback,
+automatic registration or weaker family is permitted. This decision fixes
+selection direction, not the still-missing closed entry schema or real pins.
+
+An incomplete preparation record and its finite missing-input reasons remain
+separate from `CompleteExpectedRecipe`. Neither zero/sample hashes nor an
+always-deny registry implements a supported recipe. The expectation can be
+constructed before native observation once all genuine immutable inputs exist;
+requiring host observation to construct its own comparison policy would be a
+cycle. Conversely, selection is never evidence that the current host complies.
+The expected root declaration family is a field of that independently selected
+entry, fixed before decode; the thermal-cache requirement needs the v2 family.
+The existing v1 parser remains a separate supplied-body candidate, not a
+supported fallback for the initial product slot.
+
+Keep three distinct inputs to comparison:
+
+| Input                         | Owner and responsibility                                                                                                                                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Immutable recipe              | Reviewed source/artifact/provenance pins, nested kernel/security policy commitments, exact predicates, fixed container paths and budgets; excludes current deployment identities and pressure-driver inputs |
+| Confirmed deployment bindings | Actual selected owner/store custody, held confirmed profile, distinct selected administrators, explicit host artifact/daemon locations and authenticated action resource; change no recipe predicate or pin |
+| Genuine observations          | Worker-acquired current boot/task/peer/namespace/mount/object/LSM facts, exact actual bytes and daemon original cache associations; candidates cannot supply them                                           |
+
+The binding roles are finite: selected profile, root-manifest anchor, controller,
+administrators, host artifacts, daemon deployment and action resource. They are
+not an extensible pathname map or caller assertion token. Each needs its exact
+field/bounds/admission contract before source composition. The anchor comes
+only from the held confirmed schema-3 profile and independently selected actual
+controller. Resource-free preparation has no action bind. Per-install UID/GID,
+host paths and live mount tokens must not become universal product constants.
+
+Reuse the existing distinct profile/root codecs through their private typed
+assertion views. Create those borrows where the decoded owner lives; no view,
+borrow, SQL guard or fabricated static reference crosses the worker boundary.
+Only owned immutable expectation and bounded owned unverified material may
+cross in a closed typed request. Exact `Send` bounds and finite storage must
+be proved for those owned types; getters do not constitute admission.
+
+### Physical store retention belongs to the control root
+
+The existing selected inspection opens SQLite read-only while holding an
+**exclusive** OS `try_lock` on the daemon/offline-recovery shared lock-file
+protocol. “Shared lease” in older comments names that protocol, not shared lock
+mode. `SelectedPreparationParent` exclusively borrows `&mut SqliteStore`;
+it is not a detached lifetime owner. Ordinary `SqliteStore::open` has no selected
+custody. The current daemon has a separate database-lease field and
+`Arc<Mutex<SqliteStore>>`; combining those existing handles by assertion does
+not establish selected writable preparation.
+
+Choose one fixed process-lifetime **control root**, separate from the native
+lane. It owns the actual selected store with connection, parent and exclusive
+lease retained as one physical owner. An operation registration lives beside
+that owner under the same actual-store authority mutex. Never extract the
+lease, return the last store owner to a caller ticket, open a second connection
+for an operation, or release/reacquire custody during quarantine. Connection
+closure precedes lease release. The native lane owns its own descriptors and
+receives no store, SQLite transaction, store mutex guard, lease or credential.
+
+The root retains the store across successful operations as well as denial,
+timeout, caller cancellation, ticket drop and coordinator unwind. A caller
+receives a non-Clone observation/cancellation ticket that cannot release the
+physical owner. Registration contains one nonreusable operation identity,
+original shared budget allocation, root-begin identity when assigned, current
+job token when assigned and monotonic disposition. Root-begin and later job
+identities are distinct. Token overflow, unknown identity, poisoned bookkeeping
+or uncertain ownership denies and retains custody; it never silently resets.
+There is one operation slot, no queue, replacement lane or retry budget.
+
+This is a selected physical-owner requirement, not permission to wrap an
+ordinary unbound store. Exact opaque store admission, writable connection
+construction, registry/confirmed-binding constructors, lock types and method
+visibility remain module-precode items. Read-only inspection cannot be upgraded
+by changing a diagnostic flag. Pre-init has no installed UUID/generation/epoch;
+atomic bootstrap creates them only after all preparation/cleanup rechecks.
+Installed admission has separate fresh installation/generation/epoch/stop and
+resource checks; it cannot reuse a cached pre-init result as action authority.
+
+### Dispatch, denial and retirement are different events
+
+The lock order is actual-store authority mutex, then **nonwaiting** native-slot
+access. The worker never takes the store mutex. No native operation or worker
+wait runs while the store mutex is held. All authority writers must use that
+same mutex; exact writer call-site coverage is still required before integration.
+Under it, recheck current owner/stop/revocation and publish matching operation/
+job registration before making the request worker-visible. If native slots are
+busy, dispatch nothing; any later admission repeats current authority checks.
+
+A stop committed before admission prevents dispatch. Later stop first invalidates
+the original budget, then requests matching lane cancellation/wake. These are
+ordered steps, not one atomic multi-object event. The registration preserves
+pending denial if native cancellation bookkeeping is busy. Every required
+stage/call/exchange checks the original budget before and after use. A syscall
+already entered cannot be interrupted by that flag; late result denies and
+cannot advance to another stage. No second validity flag, deadline reset or
+new-budget retry is allowed.
+
+Future control-side retirement needs a distinct cleanup-only acknowledgment:
+matching operation, original budget allocation, root-begin and last dispatched
+job, no request/result awaiting disposal, and complete accounting for all
+worker-owned temporary and original native descriptors. Failed/unknown closes,
+panic, poisoned slots, token mismatch or missing accounting retain quarantine.
+A stale acknowledgment cannot retire a newer registration. Observation polling
+requires a live budget; consuming cleanup evidence may occur with an invalid
+budget under separate Retiring predicates and supplies no successful observation.
+Exact acknowledgment storage/publication/consumption APIs remain missing.
+
+Current native `Slots.cleanup` accounts for a job; `BODY_RETURNED` records a
+worker-body disposition. Neither alone proves whole-operation cleanup, thread
+exit, durable recovery or actual store/probe cleanup. Wake, elapsed time,
+`is_finished`, parsed journal phase and a completed response are also insufficient.
+The control root remains owner when the ticket disappears; only a matched actual
+native retirement plus separately verified store/journal/probe cleanup can
+permit clean shutdown and store release. Terminal timeout never rearms the
+native lane in that process. No bounded close, hard five-second native return
+or scheduler-independent denial is promised.
+
+After process death, fresh exclusive lease acquisition cannot prove old resources
+are gone. Durable intent must precede future probe creation. Nonterminal,
+malformed, partial or ambiguous recovery state denies new admission; failed
+quarantine append preserves ambiguity. Actual recovery and atomic owner/root/
+generation/audit/pointer composition remain missing, distinct from this design.
 
 ## Fixed image and actual process environment
 

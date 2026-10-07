@@ -2516,9 +2516,10 @@ standalone with Rangoon using ordinary adapters; Phase 11 remains runtime owner.
 
 Canonical work record: this subsection under the accepted Stage-A source order
 and root-association reconciliation. The [candidate assertion view contract](architecture/headless-resource-enforcement/candidate-assertion-view-source-spec.md)
-received fresh independent precode review before implementation. Its candidate
-source has been implemented; implementation validation and exact immutable
-source/direct-child review remain pending under PHR-0070. This is not a completed native
+received fresh independent precode review before implementation. Its private candidate
+source is validated at `c31bc35af0868200ef8993293cea109f9692d495`, with
+independent exact source review and direct-child attestation
+`4cfb67de9f58619164b8c7a304217e4b7a6ac074` under PHR-0070. This is not a completed native
 freeze, registry/comparator or supported product surface.
 
 The contract makes the existing unverified profile and distinct v1/v2 root
@@ -2538,8 +2539,12 @@ discard-only getter checks insufficient; complete value and commitment-borrow
 checks now cover that gap. Focused development validation passes 11 profile
 and 31 root-manifest tests, including distinct-field fixture mutations, all
 collection values/order and out-of-range access, and owner-buffer pointer
-identity. Full source validation and independent implementation review remain
-pending; this is not an accepted source checkpoint. Host tests of
+identity. Full source validation passes: 1,519 TypeScript tests, 139 contract
+comparisons, 264 macOS store tests with two ignored and 417 daemon unit tests,
+plus the repository gates and source fixtures. Fresh independent immutable
+source/direct-child reviews and committed public-history replay pass with
+pending0/attested70; supported-release eligibility remains false. This closes
+the private source validation/review checkpoint, not product acceptance. Host tests of
 these platform-neutral views provide no Linux-native acquisition or enforcement
 proof. No expected policy is selected from candidate declarations.
 
@@ -2549,6 +2554,41 @@ writable custodian, invalidation/retirement/recovery, Linux positive and
 unfinished-operation evidence, full native freeze, integration and packaging
 remain open. LNSAT remains standalone and Rangoon uses ordinary adapters;
 Project Status owns source truth and Phase 11 remains runtime proof owner.
+
+### Stage-A recipe selection and control-custody direction
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and controller-delegated contract decisions. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#independent-selection-and-control-side-ownership)
+now records one private build-owned initial product slot, exact-one complete
+entry selection before candidate decode, separate immutable policy/deployment
+bindings/current observations, and a process-lifetime control root retaining
+actual selected store custody independently of native worker descriptors.
+No adapter, environment, declaration digest or discovered host object chooses
+expected policy. V2 remains required for the initial thermal-cache-aware product
+recipe; the private v1 supplied-body codec remains separate, without fallback.
+
+Focused source inspection verified that selected inspection's lock is exclusive,
+its parent interface is an exclusive mutable store borrow, ordinary stores lack
+selected custody, and the native process-lifetime slots contain no store owner.
+The existing daemon's separate lease and shared store handles cannot be relabeled
+as selected writable preparation. The design fixes actual-store-mutex →
+nonwaiting-native-slot lock order, registration before dispatch, original-budget
+invalidation before matching cancellation, and retention through caller drop,
+timeout and unwind. Job cleanup and worker-body return cannot stand in for a
+whole-operation retirement acknowledgment or actual durable/probe cleanup.
+PHR-0071 tracks this bounded documentation reconciliation and independent review.
+
+This closes selection/physical-owner direction only. Complete entry fields and
+real pins, exact confirmed-binding/writable admission, control-root and cleanup
+acknowledgment APIs, finite storage/Send proofs, all-writer inventory and whole
+module precode remain open. No registry, custodian, writable preparation,
+cancellation/recovery integration or successful native holder is implemented by
+this documentation. Separate Linux positive/unfinished-operation evidence,
+complete native freeze, full request/approval/execution/receipt/recovery,
+selected packaging and supported V1 remain unfinished. Project Status owns
+implementation truth; Phase 11 owns runtime proof. LNSAT remains standalone
+and headless; Rangoon uses ordinary adapters. No runtime/merge/release gate opens.
 
 ### Stage-A artifact read post-call checkpoint correction
 

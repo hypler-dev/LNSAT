@@ -571,6 +571,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0070/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0071",
+      "subject_id": "headless-recipe-control-custody-direction",
+      "review_subject_ids": ["headless-recipe-control-custody-direction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0071/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }
