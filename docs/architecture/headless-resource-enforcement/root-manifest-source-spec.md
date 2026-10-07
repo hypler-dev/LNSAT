@@ -81,6 +81,14 @@ complete immutable native/daemon/image/environment/mount/device/probe
 predicates, not this changing current-instance record. Its exact body is still
 a full-freeze item; no partial object or manifest digest substitutes for it.
 
+The original private decoder covers this v1 representation only. Its closed
+schema cannot carry the separately required current thermal-cache/source-layout
+facts. The [private v2 host-layout declaration](root-layout-source-spec.md)
+specifies a distinct private body/family/commitment; no new field, automatic
+version dispatch or fallback is added to v1. Complete recipe and future native
+composition must select their expected family independently. Neither declaration
+codec authenticates a host or supplies a trusted holder.
+
 ## Exact records
 
 | Record                       | Exact fields and comparisons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |

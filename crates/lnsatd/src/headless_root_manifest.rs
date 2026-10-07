@@ -17,7 +17,8 @@ const MAX_ARRAYS: usize = 256;
 const MAX_ARTIFACT: u64 = 256 * 1024 * 1024;
 const MAX_BLOB: u64 = 1024 * 1024;
 const MAX_DECLARED: u64 = 1024 * 1024 * 1024;
-const DOMAIN: &[u8] = b"lnsat.hcfg_root_implementation_manifest.v1\n";
+const DOMAIN_V1: &[u8] = b"lnsat.hcfg_root_implementation_manifest.v1\n";
+const DOMAIN_V2: &[u8] = b"lnsat.hcfg_root_implementation_manifest.v2\n";
 type Text = Zeroizing<String>;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -28,6 +29,7 @@ enum RootManifestError {
     JsonShape,
     Family,
     Claims,
+    Layout,
     Canonical,
 }
 impl RootManifestError {
@@ -39,6 +41,7 @@ impl RootManifestError {
             Self::JsonShape => "headless_root_manifest.json_shape",
             Self::Family => "headless_root_manifest.family",
             Self::Claims => "headless_root_manifest.claims",
+            Self::Layout => "headless_root_manifest.layout",
             Self::Canonical => "headless_root_manifest.canonical",
         }
     }
@@ -46,6 +49,13 @@ impl RootManifestError {
 
 struct UnverifiedRootManifest {
     manifest: RootManifest,
+    canonical: Zeroizing<Vec<u8>>,
+    commitment: Zeroizing<[u8; 32]>,
+}
+
+/// Synthetic supplied-body representation only; no native cache or path fact is proved.
+struct UnverifiedRootManifestLayout {
+    manifest: RootManifestLayout,
     canonical: Zeroizing<Vec<u8>>,
     commitment: Zeroizing<[u8; 32]>,
 }
@@ -89,6 +99,9 @@ fn required<T, E: de::Error>(value: Option<T>) -> Result<T, E> {
 closed_object!(RootManifest {
     administrators: Vec<u32> => "administrators", components: Vec<Component> => "components", contract_id: Text => "contract_id", controller: Identity => "controller", image: Image => "image", instance: Instance => "instance", kernel: Kernel => "kernel", mounts: Vec<MountRecord> => "mounts", recipe_digest: Text => "recipe_digest", schema_version: u32 => "schema_version", templates: Templates => "templates",
 });
+closed_object!(RootManifestLayout {
+    administrators: Vec<u32> => "administrators", components: Vec<Component> => "components", contract_id: Text => "contract_id", controller: Identity => "controller", host_layout: HostLayout => "host_layout", image: Image => "image", instance: Instance => "instance", kernel: Kernel => "kernel", mounts: Vec<MountRecord> => "mounts", recipe_digest: Text => "recipe_digest", schema_version: u32 => "schema_version", templates: Templates => "templates",
+});
 closed_object!(Identity { gid: u32 => "gid", uid: u32 => "uid" });
 closed_object!(FileRecord { digest: Text => "digest", path: Text => "path", size: u64 => "size" });
 closed_object!(Kernel { active_lsms: Vec<Text> => "active_lsms", artifact: FileRecord => "artifact", build_provenance: FileRecord => "build_provenance", configuration: FileRecord => "configuration", release: Text => "release", source_commit: Text => "source_commit", source_ref: Text => "source_ref" });
@@ -103,6 +116,10 @@ closed_object!(MountRecord { device_major: u32 => "device_major", device_minor: 
 closed_object!(Platform { architecture: Text => "architecture", os: Text => "os", variant: Text => "variant" });
 closed_object!(ImageExecutable { container_path: Text => "container_path", snapshot: FileRecord => "snapshot" });
 closed_object!(Image { adapter: ImageExecutable => "adapter", build_provenance: FileRecord => "build_provenance", config: FileRecord => "config", index: Option<FileRecord> => "index", manifest: FileRecord => "manifest", platform: Platform => "platform", probe: ImageExecutable => "probe" });
+closed_object!(HostLayout { cpu_source: Text => "cpu_source", fixed_masks: Vec<MaskType> => "fixed_masks", lookup_policy: Text => "lookup_policy", possible_cpus: Vec<u32> => "possible_cpus", readonly_proc: Vec<PathType> => "readonly_proc", thermal_masks: Vec<ThermalType> => "thermal_masks" });
+closed_object!(PathType { path: Text => "path", source_type: Text => "source_type" });
+closed_object!(MaskType { mask_kind: Text => "mask_kind", path: Text => "path", source_type: Text => "source_type" });
+closed_object!(ThermalType { cpu_id: u32 => "cpu_id", source_type: Text => "source_type" });
 
 fn decode_root_manifest_claim(input: &[u8]) -> Result<UnverifiedRootManifest, RootManifestError> {
     preflight(input)?;
@@ -112,11 +129,35 @@ fn decode_root_manifest_claim(input: &[u8]) -> Result<UnverifiedRootManifest, Ro
     let mut canonical = Zeroizing::new(Vec::new());
     serde_json::to_writer(&mut *canonical, &manifest).map_err(|_| RootManifestError::Canonical)?;
     let mut hash = Sha256::new();
-    hash.update(DOMAIN);
+    hash.update(DOMAIN_V1);
     hash.update(&*canonical);
     let mut commitment = Zeroizing::new([0_u8; 32]);
     hash.finalize_into((&mut *commitment).into());
     Ok(UnverifiedRootManifest {
+        manifest,
+        canonical,
+        commitment,
+    })
+}
+
+fn decode_root_manifest_layout_claim(
+    input: &[u8],
+) -> Result<UnverifiedRootManifestLayout, RootManifestError> {
+    preflight(input)?;
+    let manifest: RootManifestLayout =
+        serde_json::from_slice(input).map_err(|_| RootManifestError::JsonShape)?;
+    validate_layout_manifest(&manifest)?;
+    let mut canonical = Zeroizing::new(Vec::new());
+    serde_json::to_writer(&mut *canonical, &manifest).map_err(|_| RootManifestError::Canonical)?;
+    if canonical.len() > MAX_BODY {
+        return Err(RootManifestError::Canonical);
+    }
+    let mut hash = Sha256::new();
+    hash.update(DOMAIN_V2);
+    hash.update(&*canonical);
+    let mut commitment = Zeroizing::new([0_u8; 32]);
+    hash.finalize_into((&mut *commitment).into());
+    Ok(UnverifiedRootManifestLayout {
         manifest,
         canonical,
         commitment,
@@ -129,24 +170,72 @@ fn validate(m: &RootManifest) -> Result<(), RootManifestError> {
     {
         return Err(RootManifestError::Family);
     }
-    if !digest(&m.recipe_digest) {
+    validate_common(&CommonRootFields::from(m))
+}
+
+struct CommonRootFields<'a> {
+    administrators: &'a [u32],
+    components: &'a [Component],
+    controller: &'a Identity,
+    image: &'a Image,
+    instance: &'a Instance,
+    kernel: &'a Kernel,
+    mounts: &'a [MountRecord],
+    recipe_digest: &'a Text,
+    templates: &'a Templates,
+}
+
+impl<'a> From<&'a RootManifest> for CommonRootFields<'a> {
+    fn from(m: &'a RootManifest) -> Self {
+        Self {
+            administrators: &m.administrators,
+            components: &m.components,
+            controller: &m.controller,
+            image: &m.image,
+            instance: &m.instance,
+            kernel: &m.kernel,
+            mounts: &m.mounts,
+            recipe_digest: &m.recipe_digest,
+            templates: &m.templates,
+        }
+    }
+}
+
+impl<'a> From<&'a RootManifestLayout> for CommonRootFields<'a> {
+    fn from(m: &'a RootManifestLayout) -> Self {
+        Self {
+            administrators: &m.administrators,
+            components: &m.components,
+            controller: &m.controller,
+            image: &m.image,
+            instance: &m.instance,
+            kernel: &m.kernel,
+            mounts: &m.mounts,
+            recipe_digest: &m.recipe_digest,
+            templates: &m.templates,
+        }
+    }
+}
+
+fn validate_common(m: &CommonRootFields<'_>) -> Result<(), RootManifestError> {
+    if !digest(m.recipe_digest) {
         return Err(RootManifestError::Claims);
     }
-    identity(&m.controller, true)?;
+    identity(m.controller, true)?;
     if m.administrators.len() > 16
-        || !strictly_increasing(&m.administrators)
+        || !strictly_increasing(m.administrators)
         || m.administrators
             .iter()
             .any(|&u| u == 0 || u == u32::MAX || u == m.controller.uid)
     {
         return Err(RootManifestError::Claims);
     }
-    kernel(&m.kernel)?;
-    components(&m.components)?;
-    templates(&m.templates)?;
-    instance(&m.instance)?;
-    mounts(&m.mounts, m.instance.host_mount_namespace)?;
-    image(&m.image)?;
+    kernel(m.kernel)?;
+    components(m.components)?;
+    templates(m.templates)?;
+    instance(m.instance)?;
+    mounts(m.mounts, m.instance.host_mount_namespace)?;
+    image(m.image)?;
     let sizes = declared_sizes(m)?;
     if sizes > MAX_DECLARED {
         return Err(RootManifestError::Claims);
@@ -299,7 +388,7 @@ fn blob(v: &FileRecord) -> Result<(), RootManifestError> {
         Ok(())
     }
 }
-fn declared_sizes(m: &RootManifest) -> Result<u64, RootManifestError> {
+fn declared_sizes(m: &CommonRootFields<'_>) -> Result<u64, RootManifestError> {
     let mut n = 0u64;
     let mut add = |f: &FileRecord| -> Result<(), RootManifestError> {
         n = n.checked_add(f.size).ok_or(RootManifestError::Claims)?;
@@ -321,11 +410,103 @@ fn declared_sizes(m: &RootManifest) -> Result<u64, RootManifestError> {
     if let Some(i) = &m.image.index {
         add(i)?;
     }
-    for c in &m.components {
+    for c in m.components {
         add(&c.artifact)?;
         add(&c.build_provenance)?;
     }
     Ok(n)
+}
+
+fn validate_layout_manifest(m: &RootManifestLayout) -> Result<(), RootManifestError> {
+    if m.contract_id.as_str() != "lnsat.hcfg_root_implementation_manifest.v2"
+        || m.schema_version != 2
+    {
+        return Err(RootManifestError::Family);
+    }
+    validate_common(&CommonRootFields::from(m))?;
+    validate_layout(&m.host_layout)
+}
+
+const READONLY_PROC_PATHS: [&str; 5] = [
+    "/proc/bus",
+    "/proc/fs",
+    "/proc/irq",
+    "/proc/sys",
+    "/proc/sysrq-trigger",
+];
+const FIXED_MASK_PATHS: [&str; 12] = [
+    "/proc/acpi",
+    "/proc/asound",
+    "/proc/interrupts",
+    "/proc/kcore",
+    "/proc/keys",
+    "/proc/latency_stats",
+    "/proc/sched_debug",
+    "/proc/scsi",
+    "/proc/timer_list",
+    "/proc/timer_stats",
+    "/sys/devices/virtual/powercap",
+    "/sys/firmware",
+];
+
+fn validate_layout(v: &HostLayout) -> Result<(), RootManifestError> {
+    if v.cpu_source.as_str() != "sysfs_possible"
+        || v.lookup_policy.as_str() != "present_directory_or_enoent"
+        || !(1..=64).contains(&v.possible_cpus.len())
+        || v.possible_cpus.iter().any(|cpu| *cpu > 65_535)
+        || !strictly_increasing(&v.possible_cpus)
+        || v.readonly_proc.len() != READONLY_PROC_PATHS.len()
+        || v.fixed_masks.len() != FIXED_MASK_PATHS.len()
+        || v.thermal_masks.len() > 64
+    {
+        return Err(RootManifestError::Layout);
+    }
+    for (record, path) in v.readonly_proc.iter().zip(READONLY_PROC_PATHS) {
+        if record.path.as_str() != path || !source_type(&record.source_type) {
+            return Err(RootManifestError::Layout);
+        }
+    }
+    for (record, path) in v.fixed_masks.iter().zip(FIXED_MASK_PATHS) {
+        if record.path.as_str() != path || !mask_relation(&record.source_type, &record.mask_kind) {
+            return Err(RootManifestError::Layout);
+        }
+    }
+    let mut prior = None;
+    for thermal in &v.thermal_masks {
+        if thermal.cpu_id > 65_535
+            || prior.is_some_and(|cpu| cpu >= thermal.cpu_id)
+            || v.possible_cpus.binary_search(&thermal.cpu_id).is_err()
+            || thermal.source_type.as_str() != "directory"
+        {
+            return Err(RootManifestError::Layout);
+        }
+        prior = Some(thermal.cpu_id);
+    }
+    Ok(())
+}
+
+fn source_type(value: &str) -> bool {
+    matches!(
+        value,
+        "absent"
+            | "regular_file"
+            | "directory"
+            | "character_device"
+            | "block_device"
+            | "fifo"
+            | "socket"
+    )
+}
+
+fn mask_relation(source_type: &str, mask_kind: &str) -> bool {
+    match source_type {
+        "absent" => mask_kind == "absent",
+        "directory" => mask_kind == "directory_tmpfs",
+        "regular_file" | "character_device" | "block_device" | "fifo" | "socket" => {
+            mask_kind == "null_device_bind"
+        }
+        _ => false,
+    }
 }
 fn digest(v: &str) -> bool {
     v.strip_prefix("sha256:").is_some_and(hex64)

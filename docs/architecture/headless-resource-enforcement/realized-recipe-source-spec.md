@@ -191,6 +191,14 @@ uses these distinct cases:
   flags. It provides null-device behavior, not a writable host file. A blanket
   requirement that all masks are readonly is infeasible.
 
+The existing root-manifest v1 has no field for the current cached thermal list
+or original source-type vector. The [private versioned layout record](root-layout-source-spec.md)
+provides its required attestation home without widening v1. A recipe commitment
+binds static predicates, not missing daemon-cache facts. The exact root capture
+method and namespace/source-type correspondence remain positive-feasibility and
+full-freeze gates; a newly enumerated host list or container mounts cannot
+substitute for the actual named daemon cache.
+
 The adapter must obtain bounded no-follow metadata for these file masks; the
 host compares exact rows/types and current associations. Default masked paths
 alone and Docker Mounts cannot prove realization. No general writable-mount
@@ -311,6 +319,13 @@ observations, positive anchors, finite stimuli and own-object cleanup.
 It leaves normal preparation and action protocols unchanged. Exact helper/
 driver source review, immutable pins, feasible actual outcomes and explicit
 disposable conformance authorization remain required; no pressure ran here.
+
+Product recipe artifact inventory contains the normal action/preparation
+adapter/probe and justified image dependencies only. The separate pressure
+helper/driver, case selectors, test budgets and run inputs never enter the
+product CompleteRecipe, profile, startup or preparation/action registry.
+Pressure conformance remains independent proof required by the full freeze;
+its evidence dependency creates no selectable product action or permission.
 
 ## Remaining complete-freeze gates
 

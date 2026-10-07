@@ -2425,6 +2425,58 @@ native freeze, integration, runtime and packaging remain open. Project Status
 owns implementation truth; Phase 11 owns runtime proof. LNSAT remains standalone,
 with Rangoon using ordinary adapters. No product or runtime authority is opened.
 
+### Stage-A versioned root host-layout declaration
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+Independent recipe-boundary review found that the required current daemon-cached
+thermal list and original source types have no field in the implemented closed
+root-manifest v1. An immutable recipe digest cannot authenticate unrepresented
+hardware/cache state. The [versioned root-layout contract](architecture/headless-resource-enforcement/root-layout-source-spec.md)
+defines the implemented private supplied-body v2 prerequisite while preserving
+every v1 field, commitment and denial. It binds finite original path/type/mask-operation
+records and possible-CPU/thermal vectors into the same root current-instance
+commitment. Exact precode review passed before this disconnected candidate was
+implemented; it does not close the complete native or recipe freeze.
+
+Exact pinned Moby research confirms once-per-daemon caching, CPU-list fallback
+and silent omission of failed thermal lookups. The proposed selected positive
+recipe requires successful sysfs CPU provenance and directory-or-ENOENT thermal
+lookups; root must actually establish the cached-state assertion. Synthetic
+shape/commitment vectors supply no cache or native proof. Independent review
+identified an overly narrow original-type enum and a missing joint-array bound
+case; the revised contract represents finite special-object classes, checks their
+mask-operation relation and names the 256/257 aggregate-element boundary.
+
+The private decoder and its synthetic tests are confined to
+`headless_root_manifest.rs` and `headless_root_manifest_tests.rs`. The explicit
+v2 entrypoint retains zeroizing typed records, canonical bytes and commitment;
+its closed maps, fixed path/type/mask relations, CPU/thermal ordering and subset
+checks preserve the independent v1 entrypoint without dispatch or fallback.
+Focused validation passes 29 root-manifest tests, including the exact 6168/6128
+byte golden vectors and 256/257 aggregate-array boundary. Initial compile and
+two fixture failures were corrected; the original focused log was overwritten
+before preservation, so the retained failure account is not a first-run PASS.
+Fresh independent review found a missing raw unsigned-spelling test matrix for
+new CPU IDs; the focused suite now covers signed, fraction, exponent, overflow
+and malformed spellings for both CPU and thermal fields. PHR-0068 tracks exact
+source validation and independent review. Broad source validation and immutable
+source/direct-child attestations remain mandatory before this candidate is
+treated as a reviewed checkpoint. No synthetic positive authenticates host/cache facts.
+
+Independent owner/store selection before declaration comparison still requires
+an exact source/lifetime contract. Preparation has no installed UUID before the
+atomic bootstrap transaction; a future selector must preserve that order rather
+than require an already active installation. Profile installation_ref, UID/path
+or recipe digest cannot manufacture expected authority. Product CompleteRecipe
+also excludes pressure helpers, driver cases and run inputs: their separate
+conformance proof is a full-freeze dependency, never a product registry entry.
+
+Complete recipe layout/admission, borrowed views, genuine acquisition/custody,
+cache capture feasibility, actual pins, whole-boundary freeze, integration,
+runtime and packaging remain open. No current profile, CLI, route, owner/store
+constructor, daemon operation or successful authority is added. LNSAT remains
+standalone with Rangoon using ordinary adapters; Phase 11 remains runtime owner.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order

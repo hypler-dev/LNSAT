@@ -114,6 +114,9 @@ subsystem or proposal.
   — private worker-owned acquisition candidate with retained ancestry, shared
   deadline, provisional mount observations and opaque custody lifetime. Project
   Status owns source evidence; trusted root, native proof and runtime remain gated.
+- [HCFG-6 versioned root host-layout declaration](architecture/headless-resource-enforcement/root-layout-source-spec.md)
+  — proposed private v2 representation for current daemon-cached thermal masks
+  and original source types; v1 remains unchanged. No native or runtime proof.
 - [HCFG-6 root-prefix ACL observation contract](architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md)
   — private named O_PATH ancestor sampling candidate; raw/no-data observations
   remain unverified. Project Status owns source evidence; Linux proof is pending.

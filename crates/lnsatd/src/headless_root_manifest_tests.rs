@@ -23,6 +23,66 @@ fn reject(raw: &[u8], code: &str) {
 fn denied(value: &Value, code: &str) {
     reject(&bytes(value), code);
 }
+// Synthetic supplied-body vectors only. They prove grammar and commitment, never host facts.
+fn layout_value(nonempty_thermal: bool) -> Value {
+    let mut body = value();
+    body["contract_id"] = json!("lnsat.hcfg_root_implementation_manifest.v2");
+    body["schema_version"] = json!(2);
+    body["kernel"]["active_lsms"] = json!(["capability", "yama", "apparmor", "landlock"]);
+    body["host_layout"] = json!({
+        "cpu_source": "sysfs_possible",
+        "fixed_masks": [
+            {"mask_kind":"absent","path":"/proc/acpi","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/asound","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/interrupts","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/kcore","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/keys","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/latency_stats","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/sched_debug","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/scsi","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/timer_list","source_type":"absent"},
+            {"mask_kind":"absent","path":"/proc/timer_stats","source_type":"absent"},
+            {"mask_kind":"absent","path":"/sys/devices/virtual/powercap","source_type":"absent"},
+            {"mask_kind":"absent","path":"/sys/firmware","source_type":"absent"}
+        ],
+        "lookup_policy": "present_directory_or_enoent",
+        "possible_cpus": if nonempty_thermal { json!([0, 2]) } else { json!([0]) },
+        "readonly_proc": [
+            {"path":"/proc/bus","source_type":"directory"},
+            {"path":"/proc/fs","source_type":"directory"},
+            {"path":"/proc/irq","source_type":"directory"},
+            {"path":"/proc/sys","source_type":"directory"},
+            {"path":"/proc/sysrq-trigger","source_type":"regular_file"}
+        ],
+        "thermal_masks": if nonempty_thermal {
+            json!([{"cpu_id":2,"source_type":"directory"}])
+        } else { json!([]) }
+    });
+    body
+}
+fn layout_accept(value: &Value) -> UnverifiedRootManifestLayout {
+    decode_root_manifest_layout_claim(&bytes(value))
+        .unwrap_or_else(|e| panic!("layout decode: {}", e.code()))
+}
+fn layout_denied(value: &Value, code: &str) {
+    match decode_root_manifest_layout_claim(&bytes(value)) {
+        Ok(_) => panic!("unexpected layout acceptance"),
+        Err(error) => assert_eq!(error.code(), code),
+    }
+}
+fn layout_reject(raw: &[u8], code: &str) {
+    match decode_root_manifest_layout_claim(raw) {
+        Ok(_) => panic!("unexpected layout acceptance"),
+        Err(error) => assert_eq!(error.code(), code),
+    }
+}
+fn commitment_hex(bytes: &[u8; 32]) -> String {
+    let mut text = String::new();
+    for byte in bytes {
+        write!(&mut text, "{byte:02x}").unwrap();
+    }
+    text
+}
 fn change(base: &Value, path: &str, replacement: Value) -> Value {
     let mut out = base.clone();
     *out.pointer_mut(path).unwrap() = replacement;
@@ -188,6 +248,29 @@ fn every_integer_rejects_non_unsigned_spelling() {
         for spelling in ["-0", "-1", "1.0", "1e0", "18446744073709551616"] {
             let raw = encoded.replace("\"__UNSIGNED_TOKEN__\"", spelling);
             reject(raw.as_bytes(), "headless_root_manifest.json_shape");
+        }
+    }
+}
+
+// Synthetic v2 lexical checks only; no cache, CPU, or thermal host fact is implied.
+#[test]
+fn layout_cpu_identifiers_reject_non_unsigned_raw_json_spellings() {
+    let base = layout_value(true);
+    for path in [
+        "/host_layout/possible_cpus/0",
+        "/host_layout/possible_cpus/1",
+        "/host_layout/thermal_masks/0/cpu_id",
+    ] {
+        let changed = change(&base, path, json!("__LAYOUT_UNSIGNED_TOKEN__"));
+        let encoded = String::from_utf8(bytes(&changed)).unwrap();
+        assert_eq!(encoded.matches("__LAYOUT_UNSIGNED_TOKEN__").count(), 1);
+        for spelling in ["-0", "-1", "1.0", "1e0", "4294967296"] {
+            let raw = encoded.replace("\"__LAYOUT_UNSIGNED_TOKEN__\"", spelling);
+            layout_reject(raw.as_bytes(), "headless_root_manifest.json_shape");
+        }
+        for spelling in ["01", "1e+-2"] {
+            let raw = encoded.replace("\"__LAYOUT_UNSIGNED_TOKEN__\"", spelling);
+            layout_reject(raw.as_bytes(), "headless_root_manifest.json_syntax");
         }
     }
 }
@@ -936,4 +1019,412 @@ fn lexical_commit_minima_and_utf8_path_bytes_remain_exact() {
         ),
         "headless_root_manifest.json_limits",
     );
+}
+
+#[test]
+fn synthetic_layout_vectors_retain_full_body_and_v2_commitment() {
+    for (body, canonical_len, commitment) in [
+        (
+            layout_value(true),
+            6_168,
+            "1dc2c0abf8ac9b46edf6985307698d3b6465edd51379a4eb9c038a1287ba1b9a",
+        ),
+        (
+            layout_value(false),
+            6_128,
+            "7d6c82ddc497a981aa856b1cb37653f6fa68a8629c5458e36d90e36f59546521",
+        ),
+    ] {
+        let decoded = layout_accept(&body);
+        assert_eq!(decoded.canonical.len(), canonical_len);
+        assert_eq!(commitment_hex(&decoded.commitment), commitment);
+        assert_eq!(serde_json::to_value(&decoded.manifest).unwrap(), body);
+        let pretty = serde_json::to_string_pretty(&body).unwrap();
+        assert_eq!(
+            decode_root_manifest_layout_claim(format!(" \n{pretty}\t ").as_bytes())
+                .unwrap()
+                .commitment,
+            decoded.commitment
+        );
+        let escaped = String::from_utf8(bytes(&body))
+            .unwrap()
+            .replace("sysfs_possible", "sysfs_\\u0070ossible");
+        assert_eq!(
+            decode_root_manifest_layout_claim(escaped.as_bytes())
+                .unwrap()
+                .commitment,
+            decoded.commitment
+        );
+    }
+}
+
+#[test]
+fn layout_and_v1_families_do_not_dispatch_or_substitute_commitments() {
+    let v1 = value();
+    let v2 = layout_value(true);
+    accept(&v1);
+    layout_accept(&v2);
+    layout_denied(&v1, "headless_root_manifest.json_shape");
+    denied(&v2, "headless_root_manifest.json_shape");
+    layout_denied(
+        &change(
+            &v2,
+            "/contract_id",
+            json!("lnsat.hcfg_root_implementation_manifest.v1"),
+        ),
+        "headless_root_manifest.family",
+    );
+    layout_denied(
+        &change(&v2, "/schema_version", json!(1)),
+        "headless_root_manifest.family",
+    );
+    let mut missing_layout = v2.clone();
+    missing_layout
+        .as_object_mut()
+        .unwrap()
+        .remove("host_layout");
+    layout_denied(&missing_layout, "headless_root_manifest.json_shape");
+    assert_ne!(layout_accept(&v2).commitment, accept(&v1).commitment,);
+}
+
+#[test]
+fn every_new_layout_map_is_closed_required_and_map_only() {
+    let base = layout_value(true);
+    let mut paths = Vec::new();
+    objects(&base["host_layout"], "/host_layout", &mut paths);
+    for path in paths {
+        let object = base.pointer(&path).unwrap().as_object().unwrap();
+        for key in object.keys() {
+            let mut missing = base.clone();
+            missing
+                .pointer_mut(&path)
+                .unwrap()
+                .as_object_mut()
+                .unwrap()
+                .remove(key);
+            layout_denied(&missing, "headless_root_manifest.json_shape");
+        }
+        let mut unknown = base.clone();
+        unknown
+            .pointer_mut(&path)
+            .unwrap()
+            .as_object_mut()
+            .unwrap()
+            .insert("unexpected".into(), json!(false));
+        layout_denied(&unknown, "headless_root_manifest.json_shape");
+        layout_denied(
+            &change(&base, &path, json!([])),
+            "headless_root_manifest.json_shape",
+        );
+        for key in object.keys() {
+            let encoded = serde_json::to_string(base.pointer(&path).unwrap()).unwrap();
+            for duplicate in [
+                key.clone(),
+                format!("\\u{:04x}{}", key.as_bytes()[0], &key[1..]),
+            ] {
+                let payload = format!(
+                    "{{\"{duplicate}\":{},{}",
+                    serde_json::to_string(&object[key]).unwrap(),
+                    &encoded[1..]
+                );
+                let raw = String::from_utf8(bytes(&base))
+                    .unwrap()
+                    .replacen(&encoded, &payload, 1);
+                layout_reject(raw.as_bytes(), "headless_root_manifest.json_shape");
+            }
+        }
+    }
+}
+
+#[test]
+fn new_layout_members_reject_null_wrong_type_and_unrecognized_shape() {
+    let base = layout_value(true);
+    let mut paths = Vec::new();
+    members(&base["host_layout"], "/host_layout", &mut paths);
+    for (path, value) in paths {
+        layout_denied(
+            &change(&base, &path, Value::Null),
+            "headless_root_manifest.json_shape",
+        );
+        let wrong = if value.is_boolean() {
+            json!(0)
+        } else {
+            json!(false)
+        };
+        layout_denied(
+            &change(&base, &path, wrong),
+            "headless_root_manifest.json_shape",
+        );
+    }
+    for path in [
+        "/host_layout",
+        "/host_layout/possible_cpus",
+        "/host_layout/thermal_masks",
+    ] {
+        layout_denied(
+            &change(&base, path, json!({})),
+            "headless_root_manifest.json_shape",
+        );
+    }
+}
+
+#[test]
+fn layout_cpu_and_thermal_bounds_are_closed_synthetic_claims() {
+    let base = layout_value(true);
+    for bad in [json!([]), json!([0, 0]), json!([2, 0]), json!([65_536])] {
+        layout_denied(
+            &change(&base, "/host_layout/possible_cpus", bad),
+            "headless_root_manifest.layout",
+        );
+    }
+    let maximum: Vec<u32> = (0..64).collect();
+    let maximum = change(
+        &change(&base, "/host_layout/possible_cpus", json!(maximum)),
+        "/host_layout/thermal_masks",
+        json!([]),
+    );
+    layout_accept(&maximum);
+    let too_many: Vec<u32> = (0..65).collect();
+    layout_denied(
+        &change(&base, "/host_layout/possible_cpus", json!(too_many)),
+        "headless_root_manifest.layout",
+    );
+    let sparse = change(
+        &change(&base, "/host_layout/possible_cpus", json!([0, 65_535])),
+        "/host_layout/thermal_masks",
+        json!([]),
+    );
+    layout_accept(&sparse);
+    let maximum_thermal = change(
+        &sparse,
+        "/host_layout/thermal_masks",
+        json!([{"cpu_id":65_535,"source_type":"directory"}]),
+    );
+    layout_accept(&maximum_thermal);
+    for bad in [
+        json!([{"cpu_id":1,"source_type":"directory"}]),
+        json!([
+            {"cpu_id":2,"source_type":"directory"},
+            {"cpu_id":2,"source_type":"directory"}
+        ]),
+        json!([
+            {"cpu_id":2,"source_type":"directory"},
+            {"cpu_id":0,"source_type":"directory"}
+        ]),
+        json!([{"cpu_id":2,"source_type":"regular_file"}]),
+        json!([{"cpu_id":65_536,"source_type":"directory"}]),
+    ] {
+        layout_denied(
+            &change(&base, "/host_layout/thermal_masks", bad),
+            "headless_root_manifest.layout",
+        );
+    }
+    let thermal: Vec<_> = (0..65)
+        .map(|cpu| json!({"cpu_id":cpu,"source_type":"directory"}))
+        .collect();
+    layout_denied(
+        &change(&base, "/host_layout/thermal_masks", json!(thermal)),
+        "headless_root_manifest.layout",
+    );
+}
+
+#[test]
+fn layout_path_and_mask_types_have_fixed_positions_and_relations() {
+    let base = layout_value(true);
+    let source_types = [
+        "absent",
+        "regular_file",
+        "directory",
+        "character_device",
+        "block_device",
+        "fifo",
+        "socket",
+    ];
+    for source_type in source_types {
+        layout_accept(&change(
+            &base,
+            "/host_layout/readonly_proc/0/source_type",
+            json!(source_type),
+        ));
+        let mask_kind = match source_type {
+            "absent" => "absent",
+            "directory" => "directory_tmpfs",
+            _ => "null_device_bind",
+        };
+        let changed = change(
+            &change(
+                &base,
+                "/host_layout/fixed_masks/0/source_type",
+                json!(source_type),
+            ),
+            "/host_layout/fixed_masks/0/mask_kind",
+            json!(mask_kind),
+        );
+        layout_accept(&changed);
+        for wrong in ["absent", "directory_tmpfs", "null_device_bind"] {
+            if wrong != mask_kind {
+                layout_denied(
+                    &change(
+                        &changed,
+                        "/host_layout/fixed_masks/0/mask_kind",
+                        json!(wrong),
+                    ),
+                    "headless_root_manifest.layout",
+                );
+            }
+        }
+    }
+    for bad in ["symlink", "other", ""] {
+        layout_denied(
+            &change(
+                &base,
+                "/host_layout/readonly_proc/0/source_type",
+                json!(bad),
+            ),
+            "headless_root_manifest.layout",
+        );
+        layout_denied(
+            &change(&base, "/host_layout/fixed_masks/0/source_type", json!(bad)),
+            "headless_root_manifest.layout",
+        );
+    }
+    for path in [
+        "/host_layout/readonly_proc/0/path",
+        "/host_layout/fixed_masks/0/path",
+    ] {
+        layout_denied(
+            &change(&base, path, json!("/injected")),
+            "headless_root_manifest.layout",
+        );
+    }
+    let mut reordered = base.clone();
+    reordered["host_layout"]["readonly_proc"]
+        .as_array_mut()
+        .unwrap()
+        .swap(0, 1);
+    layout_denied(&reordered, "headless_root_manifest.layout");
+    let mut reordered_fixed = base.clone();
+    reordered_fixed["host_layout"]["fixed_masks"]
+        .as_array_mut()
+        .unwrap()
+        .swap(0, 1);
+    layout_denied(&reordered_fixed, "headless_root_manifest.layout");
+    for path in ["readonly_proc", "fixed_masks"] {
+        let mut missing = base.clone();
+        missing["host_layout"][path].as_array_mut().unwrap().pop();
+        layout_denied(&missing, "headless_root_manifest.layout");
+    }
+    for path in ["readonly_proc", "fixed_masks"] {
+        let mut extra = base.clone();
+        extra["host_layout"][path]
+            .as_array_mut()
+            .unwrap()
+            .push(base["host_layout"][path][0].clone());
+        layout_denied(&extra, "headless_root_manifest.layout");
+    }
+}
+
+#[test]
+fn layout_keeps_common_v2_claim_and_global_preflight_rejections() {
+    let base = layout_value(true);
+    for (path, replacement) in [
+        ("/controller/uid", json!(0)),
+        ("/kernel/release", json!("")),
+        ("/mounts/0/mount_id", json!(0)),
+        ("/image/platform/os", json!("windows")),
+    ] {
+        layout_denied(
+            &change(&base, path, replacement),
+            "headless_root_manifest.claims",
+        );
+    }
+    layout_denied(
+        &change(
+            &base,
+            "/host_layout/cpu_source",
+            json!("x".repeat(MAX_STRING + 1)),
+        ),
+        "headless_root_manifest.json_limits",
+    );
+    let mut too_large = bytes(&base);
+    too_large.extend(std::iter::repeat_n(b' ', MAX_BODY));
+    layout_reject(&too_large, "headless_root_manifest.input_too_large");
+}
+
+#[test]
+fn layout_accepts_synthetic_present_index_without_changing_golden_vectors() {
+    let base = layout_value(true);
+    let present: Value = serde_json::from_str(PRESENT_VECTOR).unwrap();
+    let with_index = change(&base, "/image/index", present["image"]["index"].clone());
+    assert_ne!(
+        layout_accept(&base).commitment,
+        layout_accept(&with_index).commitment
+    );
+}
+
+#[test]
+fn layout_fixed_literals_and_claim_mutations_change_or_deny_commitments() {
+    let base = layout_value(true);
+    for (path, value) in [
+        ("/host_layout/cpu_source", json!("runtime_num_cpu")),
+        ("/host_layout/lookup_policy", json!("ignore_errors")),
+        (
+            "/host_layout/fixed_masks/0/mask_kind",
+            json!("directory_tmpfs"),
+        ),
+    ] {
+        layout_denied(&change(&base, path, value), "headless_root_manifest.layout");
+    }
+    let changed = change(&base, "/host_layout/possible_cpus", json!([0, 3]));
+    let changed = change(
+        &changed,
+        "/host_layout/thermal_masks",
+        json!([{"cpu_id":3,"source_type":"directory"}]),
+    );
+    assert_ne!(
+        layout_accept(&base).commitment,
+        layout_accept(&changed).commitment
+    );
+    let source_type = change(
+        &base,
+        "/host_layout/readonly_proc/4/source_type",
+        json!("character_device"),
+    );
+    assert_ne!(
+        layout_accept(&base).commitment,
+        layout_accept(&source_type).commitment
+    );
+}
+
+#[test]
+fn layout_joint_256_array_elements_accept_and_257_fails_preflight_first() {
+    let mut body = layout_value(false);
+    body["administrators"] = json!((1001..=1016).collect::<Vec<_>>());
+    body["kernel"]["active_lsms"] = json!(["capability", "yama", "apparmor", "landlock"]);
+    let possible: Vec<u32> = (0..63).chain(std::iter::once(65_535)).collect();
+    body["host_layout"]["possible_cpus"] = json!(possible.clone());
+    body["host_layout"]["thermal_masks"] = json!(
+        possible
+            .iter()
+            .map(|cpu| json!({"cpu_id":cpu,"source_type":"directory"}))
+            .collect::<Vec<_>>()
+    );
+    let mount = body["mounts"][0].clone();
+    body["mounts"] = json!(
+        (0..86)
+            .map(|offset| {
+                let mut row = mount.clone();
+                row["mount_id"] = json!(11 + offset);
+                row["mount_point"] = json!(format!("/synthetic/mount{offset}"));
+                row
+            })
+            .collect::<Vec<_>>()
+    );
+    layout_accept(&body);
+    let mut overflow = body.clone();
+    let mut row = mount;
+    row["mount_id"] = json!(97);
+    row["mount_point"] = json!("/synthetic/mount86");
+    overflow["mounts"].as_array_mut().unwrap().push(row);
+    layout_reject(&bytes(&overflow), "headless_root_manifest.json_limits");
 }
