@@ -562,7 +562,7 @@
       "review_subject_ids": ["headless-recipe-selection-contract-clarification"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0069/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
