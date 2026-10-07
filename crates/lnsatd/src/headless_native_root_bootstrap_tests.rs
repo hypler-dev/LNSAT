@@ -75,8 +75,76 @@ fn held_state(
         prospective: prospective_file,
         observations: Vec::new(),
         acl: None,
+        prefix_acls: Vec::new(),
         opened,
         released: false,
+    }
+}
+
+const UNDEFINED_ACL_ID: u32 = u32::MAX;
+
+fn acl_wire(entries: &[(u16, u16, u32)]) -> Vec<u8> {
+    let mut raw = 2_u32.to_le_bytes().to_vec();
+    for (tag, permissions, id) in entries {
+        raw.extend(tag.to_le_bytes());
+        raw.extend(permissions.to_le_bytes());
+        raw.extend(id.to_le_bytes());
+    }
+    raw
+}
+
+fn base_acl(owner: u16, group: u16, other: u16) -> Vec<u8> {
+    acl_wire(&[
+        (1, owner, UNDEFINED_ACL_ID),
+        (4, group, UNDEFINED_ACL_ID),
+        (32, other, UNDEFINED_ACL_ID),
+    ])
+}
+
+fn extended_acl(owner: u16, group: u16, other: u16) -> Vec<u8> {
+    acl_wire(&[
+        (1, owner, UNDEFINED_ACL_ID),
+        (2, owner, 7),
+        (4, group, UNDEFINED_ACL_ID),
+        (16, group, UNDEFINED_ACL_ID),
+        (32, other, UNDEFINED_ACL_ID),
+    ])
+}
+
+fn prefix_acl(mode: u32) -> RootPrefixAcl {
+    let access = base_acl(7, 5, 5);
+    let default = base_acl(7, 5, 0);
+    RootPrefixAcl {
+        access: PrefixAclRead::decode(
+            PrefixReadOutcome::Bytes(access.len()),
+            PrefixAclKind::Access,
+            mode,
+            &access,
+        )
+        .unwrap(),
+        default: PrefixAclRead::decode(
+            PrefixReadOutcome::Bytes(default.len()),
+            PrefixAclKind::Default,
+            mode,
+            &default,
+        )
+        .unwrap(),
+    }
+}
+
+fn checkpoint_request(
+    token: NonZeroU64,
+    deadline: Instant,
+    budget: Arc<ArtifactBudgetState>,
+) -> Request {
+    Request {
+        token,
+        deadline,
+        dispatched: true,
+        payload: RequestPayload::Root(RootRequest::Recheck {
+            begin: NonZeroU64::new(1).unwrap(),
+            budget,
+        }),
     }
 }
 
@@ -117,6 +185,318 @@ fn root_anchor_rejects_byte_depth_control_and_gid_boundaries() {
     assert_eq!(
         RootManifestAnchor::parse(&control, 7, 8).err(),
         Some(RootBootstrapError::InvalidInput)
+    );
+}
+
+#[test]
+fn root_prefix_derives_root_unicode_maximum_and_excludes_manifest_leaf() {
+    let root = RootManifestAnchor::parse("/root/manifest.json", 7, 8).unwrap();
+    assert_eq!(root.prefix(0), Ok("/"));
+    assert_eq!(root.prefix(1), Ok("/root"));
+    assert_eq!(root.prefix(2), Err(RootBootstrapError::InvalidInput));
+
+    let unicode = RootManifestAnchor::parse("/根/é/manifest.json", 7, 8).unwrap();
+    assert_eq!(unicode.prefix(0), Ok("/"));
+    assert_eq!(unicode.prefix(1), Ok("/根"));
+    assert_eq!(unicode.prefix(2), Ok("/根/é"));
+    assert_eq!(unicode.prefix(3), Err(RootBootstrapError::InvalidInput));
+
+    let component = "a".repeat(31);
+    let maximum_path = format!(
+        "/{}",
+        std::iter::repeat_n(component, 128)
+            .collect::<Vec<_>>()
+            .join("/")
+    );
+    assert_eq!(maximum_path.len(), MAX_PATH_BYTES);
+    let maximum = RootManifestAnchor::parse(&maximum_path, 7, 8).unwrap();
+    assert_eq!(maximum.prefix(0), Ok("/"));
+    assert_eq!(maximum.prefix(127).unwrap().len(), 4_064);
+    assert_eq!(maximum.prefix(128), Err(RootBootstrapError::InvalidInput));
+    assert_eq!(
+        RootManifestAnchor::parse(&format!("{maximum_path}x"), 7, 8).err(),
+        Some(RootBootstrapError::InvalidInput)
+    );
+}
+
+#[test]
+fn root_prefix_rejects_corrupted_owned_anchor_before_named_read() {
+    let mut anchor = RootManifestAnchor::parse("/root/manifest.json", 7, 8).unwrap();
+    anchor.components[0] = "other".to_owned();
+    assert_eq!(anchor.prefix(0), Err(RootBootstrapError::InvalidInput));
+    assert_eq!(anchor.prefix(1), Err(RootBootstrapError::InvalidInput));
+}
+
+// Pure ACL result-model checks. They do not sample native ACLs or prove their meaning.
+#[test]
+fn root_prefix_acl_decode_keeps_no_data_unclassified_and_denies_bad_payloads() {
+    assert!(matches!(
+        PrefixAclRead::decode(
+            PrefixReadOutcome::NoData,
+            PrefixAclKind::Access,
+            0o040_755,
+            &[]
+        ),
+        Ok(PrefixAclRead::UnclassifiedNoData)
+    ));
+    assert_eq!(
+        PrefixAclRead::decode(
+            PrefixReadOutcome::Denied,
+            PrefixAclKind::Access,
+            0o040_755,
+            &[]
+        )
+        .err(),
+        Some(RootBootstrapError::NativeDenied)
+    );
+    for (outcome, bytes, error) in [
+        (
+            PrefixReadOutcome::Bytes(0),
+            Vec::new(),
+            RootBootstrapError::NativeDenied,
+        ),
+        (
+            PrefixReadOutcome::Bytes(4),
+            vec![2, 0, 0, 0],
+            RootBootstrapError::NativeDenied,
+        ),
+        (
+            PrefixReadOutcome::Bytes(MAX_ACL_BYTES + 1),
+            Vec::new(),
+            RootBootstrapError::LimitExceeded,
+        ),
+    ] {
+        assert_eq!(
+            PrefixAclRead::decode(outcome, PrefixAclKind::Access, 0o040_755, &bytes).err(),
+            Some(error)
+        );
+    }
+}
+
+// Pure ACL result-model checks. Access binds mode; default ACL grammar does not.
+#[test]
+fn root_prefix_acl_decode_enforces_access_mode_but_preserves_default_acl() {
+    let bytes = base_acl(7, 5, 0);
+    assert_eq!(
+        PrefixAclRead::decode(
+            PrefixReadOutcome::Bytes(bytes.len()),
+            PrefixAclKind::Access,
+            0o040_755,
+            &bytes,
+        )
+        .err(),
+        Some(RootBootstrapError::NativeDenied)
+    );
+    assert!(matches!(
+        PrefixAclRead::decode(
+            PrefixReadOutcome::Bytes(bytes.len()),
+            PrefixAclKind::Default,
+            0o040_755,
+            &bytes,
+        ),
+        Ok(PrefixAclRead::Present { .. })
+    ));
+}
+
+// Pure ACL result-model checks. Equal parsed permissions cannot hide raw/tag drift.
+#[test]
+fn root_prefix_acl_baseline_rejects_raw_tag_and_no_data_drift() {
+    let mode = 0o040_755;
+    let baseline = prefix_acl(mode);
+    let extended = extended_acl(7, 5, 5);
+    let default = base_acl(7, 5, 0);
+    let tag_drift = RootPrefixAcl {
+        access: PrefixAclRead::decode(
+            PrefixReadOutcome::Bytes(extended.len()),
+            PrefixAclKind::Access,
+            mode,
+            &extended,
+        )
+        .unwrap(),
+        default: PrefixAclRead::decode(
+            PrefixReadOutcome::Bytes(default.len()),
+            PrefixAclKind::Default,
+            mode,
+            &default,
+        )
+        .unwrap(),
+    };
+    assert_eq!(
+        baseline.require_same(&tag_drift),
+        Err(RootBootstrapError::Unstable)
+    );
+    let no_data_drift = RootPrefixAcl {
+        access: PrefixAclRead::UnclassifiedNoData,
+        default: PrefixAclRead::UnclassifiedNoData,
+    };
+    assert_eq!(
+        baseline.require_same(&no_data_drift),
+        Err(RootBootstrapError::Unstable)
+    );
+}
+
+// Pure bounded-work model. It does not run native calls.
+#[test]
+fn root_prefix_schedule_enforces_512_calls_4196352_bytes_and_checked_overflow() {
+    assert_eq!(
+        PrefixSchedule::new(0).err(),
+        Some(RootBootstrapError::LimitExceeded)
+    );
+    assert_eq!(
+        PrefixSchedule::new(MAX_COMPONENTS + 1).err(),
+        Some(RootBootstrapError::LimitExceeded)
+    );
+    let mut maximum = PrefixSchedule::new(MAX_COMPONENTS).unwrap();
+    for _ in 0..512 {
+        maximum.record(MAX_ACL_BYTES).unwrap();
+    }
+    assert_eq!(maximum.calls, 512);
+    assert_eq!(maximum.bytes, 4_196_352);
+    assert_eq!(maximum.finish(), Ok(()));
+    assert_eq!(
+        maximum.before_call(),
+        Err(RootBootstrapError::LimitExceeded)
+    );
+    assert_eq!(maximum.record(0), Err(RootBootstrapError::LimitExceeded));
+
+    let mut call_overflow = PrefixSchedule {
+        limit: usize::MAX,
+        calls: usize::MAX - 1,
+        bytes: 0,
+    };
+    assert_eq!(
+        call_overflow.record(0),
+        Err(RootBootstrapError::LimitExceeded)
+    );
+    assert_eq!(call_overflow.calls, usize::MAX - 1);
+
+    let mut byte_overflow = PrefixSchedule {
+        limit: 4,
+        calls: 0,
+        bytes: usize::MAX,
+    };
+    assert_eq!(
+        byte_overflow.record(1),
+        Err(RootBootstrapError::LimitExceeded)
+    );
+    assert_eq!(byte_overflow.bytes, usize::MAX);
+}
+
+// Pure copy model. It retains an immutable, independently owned ACL baseline.
+#[test]
+fn root_prefix_acl_copy_binds_row_count_directory_mode_and_original_bytes() {
+    let mode = 0o040_755;
+    let baseline = prefix_acl(mode);
+    let observations = [object(mode), object(0o100_640)];
+    let copied = copy_prefix_acls(std::slice::from_ref(&baseline), &observations, 1).unwrap();
+    assert_eq!(baseline.require_same(&copied[0]), Ok(()));
+    match (&baseline.access, &copied[0].access) {
+        (
+            PrefixAclRead::Present { raw: original, .. },
+            PrefixAclRead::Present { raw: copy, .. },
+        ) => {
+            assert_ne!(original.as_ptr(), copy.as_ptr());
+        }
+        _ => panic!("test baseline must retain access bytes"),
+    }
+    let no_data_baseline = RootPrefixAcl {
+        access: PrefixAclRead::decode(
+            PrefixReadOutcome::Bytes(base_acl(7, 5, 5).len()),
+            PrefixAclKind::Access,
+            mode,
+            &base_acl(7, 5, 5),
+        )
+        .unwrap(),
+        default: PrefixAclRead::UnclassifiedNoData,
+    };
+    let no_data_copy =
+        copy_prefix_acls(std::slice::from_ref(&no_data_baseline), &observations, 1).unwrap();
+    assert!(matches!(
+        no_data_copy[0].default,
+        PrefixAclRead::UnclassifiedNoData
+    ));
+    assert_eq!(
+        copy_prefix_acls(&[], &observations, 1).err(),
+        Some(RootBootstrapError::AssociationRejected)
+    );
+    assert_eq!(
+        copy_prefix_acls(std::slice::from_ref(&baseline), &[object(mode)], 1).err(),
+        Some(RootBootstrapError::AssociationRejected)
+    );
+    assert_eq!(
+        copy_prefix_acls(std::slice::from_ref(&baseline), &observations, 0).err(),
+        Some(RootBootstrapError::LimitExceeded)
+    );
+    assert_eq!(
+        copy_prefix_acls(
+            std::slice::from_ref(&baseline),
+            &[object(0o040_700), object(0o100_640)],
+            1,
+        )
+        .err(),
+        Some(RootBootstrapError::NativeDenied)
+    );
+}
+
+// Host lifecycle model. No native ACL call occurs; raw error stays hidden after checkpoint denial.
+#[test]
+fn root_prefix_post_call_checkpoint_denies_expiry_cancel_wrong_token_and_raw_error() {
+    let token = NonZeroU64::new(7).unwrap();
+
+    let live_lane = lane();
+    let live_owner = budget();
+    let live_state = held_state(live_lane, &live_owner, false);
+    let live_request =
+        checkpoint_request(token, live_state.deadline, Arc::clone(&live_state.budget));
+    live_lane
+        .control
+        .store(word(ACTIVE, token.get()), Ordering::SeqCst);
+    assert_eq!(
+        root_checkpoint(live_lane, &live_request, &live_state.budget),
+        Ok(())
+    );
+    live_lane.terminalize();
+    assert_eq!(
+        prefix_post_call(
+            &live_state,
+            &live_request,
+            Err::<(), _>(RootBootstrapError::NativeDenied),
+        ),
+        Err(RootBootstrapError::BudgetExhausted)
+    );
+    assert_eq!(
+        live_state.budget.valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
+
+    let wrong_lane = lane();
+    let wrong_owner = budget();
+    let wrong_state = held_state(wrong_lane, &wrong_owner, false);
+    let wrong_request =
+        checkpoint_request(token, wrong_state.deadline, Arc::clone(&wrong_state.budget));
+    wrong_lane
+        .control
+        .store(word(ACTIVE, token.get() + 1), Ordering::SeqCst);
+    assert_eq!(
+        root_checkpoint(wrong_lane, &wrong_request, &wrong_state.budget),
+        Err(RootBootstrapError::BudgetExhausted)
+    );
+
+    let expired_lane = lane();
+    let expired_owner = short_budget();
+    let expired_state = held_state(expired_lane, &expired_owner, false);
+    let expired_request = checkpoint_request(
+        token,
+        expired_state.deadline,
+        Arc::clone(&expired_state.budget),
+    );
+    expired_lane
+        .control
+        .store(word(ACTIVE, token.get()), Ordering::SeqCst);
+    wait_until_expired(&expired_state.budget);
+    assert_eq!(
+        root_checkpoint(expired_lane, &expired_request, &expired_state.budget),
+        Err(RootBootstrapError::BudgetExhausted)
     );
 }
 
@@ -612,6 +992,11 @@ fn root_retire_worker_order_publishes_only_exact_cleanup_receipt() {
     let owner = budget();
     let state = Arc::clone(owner.shared_state());
     let mut retained = Some(held_state(lane, &owner, false));
+    retained
+        .as_mut()
+        .unwrap()
+        .prefix_acls
+        .push(prefix_acl(0o040_755));
     let begin = NonZeroU64::new(1).unwrap();
     let mut job = RootJob::prepare(
         lane,

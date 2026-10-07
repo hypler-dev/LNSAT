@@ -1,6 +1,7 @@
 //! Private fixed root-manifest acquisition on the retained native lane.
 //! No observed bytes, mount IDs, or custody ticket confer authority.
 
+use super::super::acl::{MAX_ACL_BYTES, ParsedAcl};
 use super::{
     ACTIVE, Attempt, CleanupAccounting, CompletionOutcome, DispatchStatus, IDLE, LaneRoot,
     NonZeroU64, Ordering, READY, Request, RequestKind, RequestPayload, TOKEN_MAX,
@@ -8,6 +9,7 @@ use super::{
     phase, reserve_ready, retire_reserved, same_token, terminal, token, word,
 };
 use std::{fs::File, sync::Arc, time::Instant};
+use zeroize::Zeroizing;
 
 const MAX_COMPONENTS: usize = 128;
 const MAX_PATH_BYTES: usize = 4096;
@@ -117,9 +119,243 @@ impl RootManifestAnchor {
         })
     }
 
+    fn prefix(&self, index: usize) -> Result<&str, RootBootstrapError> {
+        if self.components.is_empty()
+            || self.components.len() > MAX_COMPONENTS
+            || index >= self.components.len()
+            || self.path.len() > MAX_PATH_BYTES
+            || !self.path.starts_with('/')
+            || self.path.ends_with('/')
+            || self.path.chars().any(char::is_control)
+            || self.components.iter().any(|part| {
+                part.is_empty() || part.len() > 255 || matches!(part.as_str(), "." | "..")
+            })
+            || !self.path[1..]
+                .split('/')
+                .eq(self.components.iter().map(String::as_str))
+        {
+            return Err(RootBootstrapError::InvalidInput);
+        }
+        if index == 0 {
+            return Ok("/");
+        }
+        let end = self.components[..index]
+            .iter()
+            .try_fold(0_usize, |end, part| {
+                end.checked_add(part.len())
+                    .and_then(|value| value.checked_add(1))
+                    .ok_or(RootBootstrapError::LimitExceeded)
+            })?;
+        self.path.get(..end).ok_or(RootBootstrapError::InvalidInput)
+    }
+
     fn copy(&self) -> Result<Self, RootBootstrapError> {
         Self::parse(&self.path, self.controller_uid, self.controller_gid)
     }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum PrefixAclKind {
+    Access,
+    Default,
+}
+
+#[derive(Clone, Copy)]
+enum PrefixReadOutcome {
+    Bytes(usize),
+    NoData,
+    Denied,
+}
+
+/// Raw shape only. `NoData` deliberately cannot mean authenticated absence.
+#[derive(Eq, PartialEq)]
+pub(super) enum PrefixAclRead {
+    UnclassifiedNoData,
+    Present {
+        raw: Zeroizing<Vec<u8>>,
+        parsed: ParsedAcl,
+    },
+}
+
+impl PrefixAclRead {
+    fn decode(
+        outcome: PrefixReadOutcome,
+        kind: PrefixAclKind,
+        mode: u32,
+        buffer: &[u8],
+    ) -> Result<Self, RootBootstrapError> {
+        let size = match outcome {
+            PrefixReadOutcome::NoData => return Ok(Self::UnclassifiedNoData),
+            PrefixReadOutcome::Denied => return Err(RootBootstrapError::NativeDenied),
+            PrefixReadOutcome::Bytes(size) => size,
+        };
+        if size > MAX_ACL_BYTES {
+            return Err(RootBootstrapError::LimitExceeded);
+        }
+        let bytes = buffer
+            .get(..size)
+            .ok_or(RootBootstrapError::LimitExceeded)?;
+        let parsed = ParsedAcl::parse(bytes).map_err(|_| RootBootstrapError::NativeDenied)?;
+        if kind == PrefixAclKind::Access {
+            parsed
+                .check_access_mode(mode)
+                .map_err(|_| RootBootstrapError::NativeDenied)?;
+        }
+        let mut raw = Vec::new();
+        raw.try_reserve_exact(size)
+            .map_err(|_| RootBootstrapError::LimitExceeded)?;
+        raw.extend_from_slice(bytes);
+        Ok(Self::Present {
+            raw: Zeroizing::new(raw),
+            parsed,
+        })
+    }
+
+    fn copy(&self, kind: PrefixAclKind, mode: u32) -> Result<Self, RootBootstrapError> {
+        match self {
+            Self::UnclassifiedNoData => Ok(Self::UnclassifiedNoData),
+            Self::Present { raw, .. } => {
+                Self::decode(PrefixReadOutcome::Bytes(raw.len()), kind, mode, raw)
+            }
+        }
+    }
+}
+
+#[derive(Eq, PartialEq)]
+pub(super) struct RootPrefixAcl {
+    pub(super) access: PrefixAclRead,
+    pub(super) default: PrefixAclRead,
+}
+
+impl RootPrefixAcl {
+    fn require_same(&self, observed: &Self) -> Result<(), RootBootstrapError> {
+        if self != observed {
+            return Err(RootBootstrapError::Unstable);
+        }
+        Ok(())
+    }
+
+    fn copy(&self, mode: u32) -> Result<Self, RootBootstrapError> {
+        Ok(Self {
+            access: self.access.copy(PrefixAclKind::Access, mode)?,
+            default: self.default.copy(PrefixAclKind::Default, mode)?,
+        })
+    }
+}
+
+fn copy_prefix_acls(
+    rows: &[RootPrefixAcl],
+    observations: &[RootObjectFacts],
+    directories: usize,
+) -> Result<Vec<RootPrefixAcl>, RootBootstrapError> {
+    let _ = PrefixSchedule::new(directories)?;
+    if rows.len() != directories
+        || observations.len()
+            != directories
+                .checked_add(1)
+                .ok_or(RootBootstrapError::LimitExceeded)?
+    {
+        return Err(RootBootstrapError::AssociationRejected);
+    }
+    let mut copied = Vec::new();
+    copied
+        .try_reserve_exact(directories)
+        .map_err(|_| RootBootstrapError::LimitExceeded)?;
+    for (row, facts) in rows.iter().zip(observations) {
+        copied.push(row.copy(facts.mode)?);
+    }
+    Ok(copied)
+}
+
+/// Per-job finite metadata work; never a fresh timeout or artifact content claim.
+struct PrefixSchedule {
+    limit: usize,
+    calls: usize,
+    bytes: usize,
+}
+
+impl PrefixSchedule {
+    fn new(directories: usize) -> Result<Self, RootBootstrapError> {
+        if !(1..=MAX_COMPONENTS).contains(&directories) {
+            return Err(RootBootstrapError::LimitExceeded);
+        }
+        let limit = directories
+            .checked_mul(4)
+            .ok_or(RootBootstrapError::LimitExceeded)?;
+        limit
+            .checked_mul(MAX_ACL_BYTES)
+            .ok_or(RootBootstrapError::LimitExceeded)?;
+        Ok(Self {
+            limit,
+            calls: 0,
+            bytes: 0,
+        })
+    }
+
+    fn before_call(&self) -> Result<(), RootBootstrapError> {
+        if self.calls >= self.limit {
+            return Err(RootBootstrapError::LimitExceeded);
+        }
+        Ok(())
+    }
+
+    fn record(&mut self, size: usize) -> Result<(), RootBootstrapError> {
+        self.before_call()?;
+        if size > MAX_ACL_BYTES {
+            return Err(RootBootstrapError::LimitExceeded);
+        }
+        let calls = self
+            .calls
+            .checked_add(1)
+            .ok_or(RootBootstrapError::LimitExceeded)?;
+        let bytes = self
+            .bytes
+            .checked_add(size)
+            .ok_or(RootBootstrapError::LimitExceeded)?;
+        let maximum = self
+            .limit
+            .checked_mul(MAX_ACL_BYTES)
+            .ok_or(RootBootstrapError::LimitExceeded)?;
+        if bytes > maximum {
+            return Err(RootBootstrapError::LimitExceeded);
+        }
+        self.calls = calls;
+        self.bytes = bytes;
+        Ok(())
+    }
+
+    fn finish(&self) -> Result<(), RootBootstrapError> {
+        if self.calls != self.limit {
+            return Err(RootBootstrapError::AssociationRejected);
+        }
+        Ok(())
+    }
+}
+
+fn root_checkpoint(
+    lane: &LaneRoot,
+    request: &Request,
+    budget: &ArtifactBudgetState,
+) -> Result<(), RootBootstrapError> {
+    if lane.control.load(Ordering::SeqCst) != word(ACTIVE, request.token.get())
+        || request.deadline != budget.deadline
+        || Instant::now() >= request.deadline
+    {
+        budget.invalidate();
+        return Err(RootBootstrapError::BudgetExhausted);
+    }
+    budget.valid().map_err(Into::into)
+}
+
+/// Preserve the raw syscall result until the exact post-call guard has passed.
+/// This accepts values only, never an injected observer or callable.
+fn prefix_post_call<T>(
+    state: &RootManifestCustodyState,
+    request: &Request,
+    result: T,
+) -> Result<T, RootBootstrapError> {
+    root_checkpoint(state.lane, request, &state.budget)?;
+    Ok(result)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -246,6 +482,7 @@ pub(super) struct BeginData {
     budget: Arc<ArtifactBudgetState>,
     anchor: RootManifestAnchor,
     observations: Vec<RootObjectFacts>,
+    prefix_acls: Vec<RootPrefixAcl>,
     read: UnverifiedArtifactRead,
 }
 
@@ -318,6 +555,7 @@ pub(super) struct RootManifestCustodyState {
     prospective: Option<File>,
     observations: Vec<RootObjectFacts>,
     acl: Option<super::super::readable::ReadableSample>,
+    prefix_acls: Vec<RootPrefixAcl>,
     opened: u16,
     released: bool,
 }
@@ -712,20 +950,7 @@ mod linux {
     use rustix::fs::{AtFlags, StatxFlags};
     use std::os::fd::{AsFd, OwnedFd};
 
-    fn checkpoint(
-        lane: &LaneRoot,
-        request: &Request,
-        budget: &ArtifactBudgetState,
-    ) -> Result<(), RootBootstrapError> {
-        if lane.control.load(Ordering::SeqCst) != word(ACTIVE, request.token.get())
-            || request.deadline != budget.deadline
-            || Instant::now() >= request.deadline
-        {
-            budget.invalidate();
-            return Err(RootBootstrapError::BudgetExhausted);
-        }
-        budget.valid().map_err(Into::into)
-    }
+    use super::root_checkpoint as checkpoint;
 
     fn statx_facts(stat: rustix::fs::Statx) -> Result<RootObjectFacts, RootBootstrapError> {
         required_statx(stat.stx_mask, stat.stx_mnt_id)?;
@@ -896,7 +1121,7 @@ mod linux {
         checkpoint(state.lane, request, &state.budget)
     }
 
-    pub(super) fn reobserve(
+    fn reobserve_directories(
         state: &RootManifestCustodyState,
         request: &Request,
     ) -> Result<(), RootBootstrapError> {
@@ -921,6 +1146,14 @@ mod linux {
             same_object(&state.observations[index], &by_name)?;
             same_object(&by_name, &by_handle)?;
         }
+        checkpoint(state.lane, request, &state.budget)
+    }
+
+    fn reobserve_leaf(
+        state: &RootManifestCustodyState,
+        request: &Request,
+    ) -> Result<(), RootBootstrapError> {
+        reobserve_directories(state, request)?;
         let parent = state
             .directories
             .last()
@@ -948,6 +1181,105 @@ mod linux {
         if state.acl.as_ref() != Some(&sampled) {
             return Err(RootBootstrapError::Unstable);
         }
+        checkpoint(state.lane, request, &state.budget)
+    }
+
+    fn sample_prefix_acl(
+        state: &RootManifestCustodyState,
+        request: &Request,
+        index: usize,
+        kind: PrefixAclKind,
+        schedule: &mut PrefixSchedule,
+        buffer: &mut Zeroizing<[u8; MAX_ACL_BYTES]>,
+    ) -> Result<PrefixAclRead, RootBootstrapError> {
+        let path = state.anchor.prefix(index)?;
+        let mode = state
+            .observations
+            .get(index)
+            .ok_or(RootBootstrapError::AssociationRejected)?
+            .mode;
+        let name = match kind {
+            PrefixAclKind::Access => c"system.posix_acl_access",
+            PrefixAclKind::Default => c"system.posix_acl_default",
+        };
+        schedule.before_call()?;
+        reobserve_directories(state, request)?;
+        buffer.fill(0);
+        checkpoint(state.lane, request, &state.budget)?;
+        let result = rustix::fs::lgetxattr(path, name, &mut **buffer);
+        let result = prefix_post_call(state, request, result)?;
+        // Even a syscall error must pass closing association before classification.
+        reobserve_directories(state, request)?;
+        let outcome = match result {
+            Ok(size) => {
+                schedule.record(size)?;
+                PrefixReadOutcome::Bytes(size)
+            }
+            Err(rustix::io::Errno::NODATA) => {
+                schedule.record(0)?;
+                PrefixReadOutcome::NoData
+            }
+            Err(_) => {
+                schedule.record(0)?;
+                PrefixReadOutcome::Denied
+            }
+        };
+        PrefixAclRead::decode(outcome, kind, mode, &**buffer)
+    }
+
+    fn sample_prefix(
+        state: &RootManifestCustodyState,
+        request: &Request,
+        index: usize,
+        schedule: &mut PrefixSchedule,
+        buffer: &mut Zeroizing<[u8; MAX_ACL_BYTES]>,
+    ) -> Result<RootPrefixAcl, RootBootstrapError> {
+        Ok(RootPrefixAcl {
+            access: sample_prefix_acl(
+                state,
+                request,
+                index,
+                PrefixAclKind::Access,
+                schedule,
+                buffer,
+            )?,
+            default: sample_prefix_acl(
+                state,
+                request,
+                index,
+                PrefixAclKind::Default,
+                schedule,
+                buffer,
+            )?,
+        })
+    }
+
+    fn compare_prefixes(
+        state: &RootManifestCustodyState,
+        request: &Request,
+        schedule: &mut PrefixSchedule,
+        buffer: &mut Zeroizing<[u8; MAX_ACL_BYTES]>,
+    ) -> Result<(), RootBootstrapError> {
+        if state.prefix_acls.len() != state.directories.len() {
+            return Err(RootBootstrapError::AssociationRejected);
+        }
+        for (index, baseline) in state.prefix_acls.iter().enumerate() {
+            baseline.require_same(&sample_prefix(state, request, index, schedule, buffer)?)?;
+        }
+        Ok(())
+    }
+
+    pub(super) fn reobserve(
+        state: &RootManifestCustodyState,
+        request: &Request,
+    ) -> Result<(), RootBootstrapError> {
+        let mut schedule = PrefixSchedule::new(state.directories.len())?;
+        let mut buffer = Zeroizing::new([0_u8; MAX_ACL_BYTES]);
+        compare_prefixes(state, request, &mut schedule, &mut buffer)?;
+        reobserve_leaf(state, request)?;
+        compare_prefixes(state, request, &mut schedule, &mut buffer)?;
+        reobserve_leaf(state, request)?;
+        schedule.finish()?;
         checkpoint(state.lane, request, &state.budget)
     }
 
@@ -984,6 +1316,12 @@ mod linux {
         published
             .try_reserve_exact(capacity)
             .map_err(|_| RootBootstrapError::LimitExceeded)?;
+        let mut prefix_acls = Vec::new();
+        prefix_acls
+            .try_reserve_exact(anchor.components.len())
+            .map_err(|_| RootBootstrapError::LimitExceeded)?;
+        let mut prefix_schedule = PrefixSchedule::new(anchor.components.len())?;
+        let mut prefix_buffer = Zeroizing::new([0_u8; MAX_ACL_BYTES]);
         // Install worker ownership before the first native open, including all failure paths.
         *retained = Some(RootManifestCustodyState {
             lane,
@@ -996,6 +1334,7 @@ mod linux {
             prospective: None,
             observations,
             acl: None,
+            prefix_acls,
             opened: 0,
             released: false,
         });
@@ -1125,6 +1464,16 @@ mod linux {
             ),
         );
         state.acl = Some(leaf_acl(state, request)?);
+        for index in 0..state.directories.len() {
+            let sampled = sample_prefix(
+                state,
+                request,
+                index,
+                &mut prefix_schedule,
+                &mut prefix_buffer,
+            )?;
+            state.prefix_acls.push(sampled);
+        }
         let (read, read_accounting) = super::super::artifact::read_root_manifest(
             lane,
             request.token,
@@ -1140,7 +1489,15 @@ mod linux {
             return Err(RootBootstrapError::CleanupUncertain);
         }
         let read = read?;
-        reobserve(state, request)?;
+        compare_prefixes(state, request, &mut prefix_schedule, &mut prefix_buffer)?;
+        reobserve_leaf(state, request)?;
+        prefix_schedule.finish()?;
+        let prefix_acls = copy_prefix_acls(
+            &state.prefix_acls,
+            &state.observations,
+            state.directories.len(),
+        )?;
+        checkpoint(state.lane, request, &state.budget)?;
         published.extend_from_slice(&state.observations);
         let expected = state.retained_count()?;
         if state.opened != expected {
@@ -1154,6 +1511,7 @@ mod linux {
             budget: Arc::clone(budget),
             anchor: data_anchor,
             observations: published,
+            prefix_acls,
             read,
         })
     }
@@ -1582,6 +1940,7 @@ pub(super) struct RootManifestFacts<'a> {
     pub(super) body: &'a [u8],
     pub(super) digest: &'a [u8; 32],
     pub(super) observations: &'a [RootObjectFacts],
+    pub(super) prefix_acls: &'a [RootPrefixAcl],
 }
 impl UnverifiedRootManifestCustody {
     fn check_basic(&self, budget: &ArtifactReadBudget) -> Result<(), RootBootstrapError> {
@@ -1635,6 +1994,7 @@ impl UnverifiedRootManifestCustody {
             body: facts.body,
             digest: facts.digest,
             observations: &self.data.observations,
+            prefix_acls: &self.data.prefix_acls,
         })
     }
     pub(super) fn try_recheck<'a>(

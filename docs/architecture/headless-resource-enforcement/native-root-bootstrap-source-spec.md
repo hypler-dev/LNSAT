@@ -405,8 +405,8 @@ rules. Unlisted, replaced, idmapped, wrong-namespace or wrong-root edges deny.
 A self-consistent mount list or matching manifest digest is insufficient.
 `ENODATA` never approves its own provenance. Search-only `O_PATH` prefix ACL
 observation is bounded by the separate
-[root-prefix ACL contract](native-root-prefix-acl-source-spec.md), whose candidate
-implementation and Linux proof remain pending. This bootstrap packet does not
+[root-prefix ACL contract](native-root-prefix-acl-source-spec.md). Project Status
+records its private source candidate; Linux proof remains pending. This bootstrap packet does not
 pretend `fgetxattr` works on those descriptors.
 
 Artifact/OCI path acquisition after bootstrap is a separate exact contract.

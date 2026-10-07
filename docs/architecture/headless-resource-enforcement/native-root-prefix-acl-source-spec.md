@@ -1,16 +1,16 @@
 # HCFG-6 Root-Prefix ACL Observation Contract
 
-Status: private Stage-A precode contract under the accepted
+Status: private Stage-A source candidate contract under the accepted
 [source-order amendment](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
-[Project Status](../../PROJECT_STATUS.md#stage-a-root-prefix-acl-observation-contract)
+[Project Status](../../PROJECT_STATUS.md#stage-a-root-prefix-acl-source-candidate)
 owns implementation and review disposition. This contract extends the existing
 [root-manifest bootstrap](native-root-bootstrap-source-spec.md); it is not a
 second acquisition lane, authenticated ACL classifier or complete native freeze.
 
 ## Outcome and ownership
 
-The existing bootstrap retains search-only `O_PATH` root/ancestor descriptors
-but observes ACLs only on its readable manifest leaf. Its next candidate must
+The preceding bootstrap retained search-only `O_PATH` root/ancestor descriptors
+and observed ACLs only on its readable manifest leaf. This candidate must
 observe each retained directory's two ACL attributes through its exact name,
 associate those observations with the held chain, preserve raw bytes or an
 explicit unclassified no-data result, and reject drift during Begin/Recheck.
@@ -197,7 +197,8 @@ then needs focused native tests, strict Clippy, full `npm run check`, installed
 local audit checks and exact source/direct-child review. Actual Linux compile,
 positive and unfinished-operation evidence, authenticated absence/effective-ACL
 classification, complete freeze, integration, runtime and packaging are separate
-unfinished gates. This contract itself implements no sampler or authority.
+unfinished gates. Project Status records the candidate source and its evidence; this contract
+alone grants no sampler, permission or runtime authority.
 
 ## Pinned API evidence
 

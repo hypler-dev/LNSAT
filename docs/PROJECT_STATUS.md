@@ -2353,6 +2353,44 @@ acquisition, complete recipe/pins, full freeze, integration, runtime and packagi
 remain unfinished. Phase 11 owns runtime proof; LNSAT remains standalone with
 Rangoon using ordinary adapters.
 
+### Stage-A root-prefix ACL source candidate
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and the independently reviewed root-prefix ACL contract. The private candidate
+adds named access/default ACL observations to each retained root-manifest
+O_PATH directory. Every named call uses the existing typed pre/post-call guard
+and complete held/named directory-chain observations before and after the call,
+including native errors. Begin records an opening baseline before manifest
+content and compares a closing sequence afterward; Recheck compares two fresh
+sequences against that original baseline. Retire adds no ACL reads or handles.
+
+The candidate keeps exact raw bytes or explicit unclassified no-data, applies
+strict access-mode agreement, preserves parsed default ACLs without applying
+the containing directory mode, and rejects raw/tag drift. Checked per-job limits
+bound 4D named calls to 512 and returned ACL bytes to 4,196,352; the unchanged
+absolute deadline still applies to the additional chain observations. Newly
+owned raw bytes and scratch storage zeroize on disposal. Coordinator facts
+receive one bounded immutable copy through the existing checked lifetime.
+No authenticated absence, effective-rights decision or trusted root is created.
+
+PHR-0065 tracks fresh independent source review and exact direct-child
+attestation. Host-source focused validation passes 121 tests, including eight
+new pure-helper/lifecycle tests for prefix boundaries, parser/mode semantics,
+raw/tag stability, finite work, immutable copies and failed-call checkpoint
+ordering. These tests exercise production helpers; they do not prove the Linux
+syscall schedule. Strict host Clippy passes. Full source checks, local audits
+and exact independent review remain required before source closeout.
+
+The installed macOS target does not compile or execute the Linux-specific
+sampler. Linux compile, genuine named/held ACL observations, substitution,
+blocked operations and unfinished-close evidence remain unproven. Stable
+samples are not atomic descriptor-bound reads and do not exclude trusted-root
+transient replacement. Authenticated kernel/LSM absence classification,
+root/namespace/peer association, artifact/OCI acquisition, complete recipe/pins,
+full native freeze, integration, runtime and packaging remain unfinished.
+Phase 11 owns runtime proof; LNSAT remains standalone and Rangoon uses ordinary
+adapters. This private candidate opens no product or runtime authority.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order
