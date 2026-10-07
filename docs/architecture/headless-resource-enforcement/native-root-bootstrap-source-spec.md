@@ -404,8 +404,10 @@ provenance; and recheck every held/named prefix under the full effective-ACL
 rules. Unlisted, replaced, idmapped, wrong-namespace or wrong-root edges deny.
 A self-consistent mount list or matching manifest digest is insufficient.
 `ENODATA` never approves its own provenance. Search-only `O_PATH` prefix ACL
-observation still needs its separately frozen named-path sampler; this packet
-does not pretend `fgetxattr` works on those descriptors.
+observation is bounded by the separate
+[root-prefix ACL contract](native-root-prefix-acl-source-spec.md), whose candidate
+implementation and Linux proof remain pending. This bootstrap packet does not
+pretend `fgetxattr` works on those descriptors.
 
 Artifact/OCI path acquisition after bootstrap is a separate exact contract.
 It must use the already authenticated bounded mount policy, not reuse the

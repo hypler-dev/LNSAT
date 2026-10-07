@@ -114,6 +114,9 @@ subsystem or proposal.
   — private worker-owned acquisition candidate with retained ancestry, shared
   deadline, provisional mount observations and opaque custody lifetime. Project
   Status owns source evidence; trusted root, native proof and runtime remain gated.
+- [HCFG-6 root-prefix ACL observation contract](architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md)
+  — private named O_PATH ancestor sampling contract; raw/no-data observations
+  remain unverified. Candidate implementation and Linux proof are pending.
 - [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
   — exact proposed schema-3 fields, native payload and separate startup contexts;
   complete wire implementation and full freeze remain pending.

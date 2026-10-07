@@ -2330,6 +2330,29 @@ actual host-root/namespace/peer association, complete recipe/pins, full native
 freeze, product integration, runtime and packaging remain unfinished. Phase 11
 continues to own runtime proof.
 
+### Stage-A root-prefix ACL observation contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [root-prefix ACL contract](architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md)
+bounds the next missing bootstrap observation: named access/default ACL samples
+associated with each already retained O_PATH root/ancestor descriptor. It reuses
+the existing worker, Begin/Recheck/Retire lifecycle, exact directory identities,
+strict ACL parser and uninterrupted budget. Raw ACL bytes and unclassified
+ENODATA remain unverified; neither successful sampling nor mode agreement proves
+current kernel provenance, ACL absence or effective enforcement.
+
+PHR-0064 tracks independent precode review and exact direct-child attestation.
+This contract adds no sampler or product caller. The later candidate must bind
+each named call to the retained chain, reject raw/tag drift, preserve the original
+baseline, and retire on the worker after deadline or observation failure. These
+root-manifest ancestors are distinct from Docker's three metadata directory
+classes; no metadata ACL matrix, provisioning or runtime authority is imported.
+Linux compilation/positive/blocked-operation proof, authenticated ACL absence and
+effective-rights classification, root/namespace/peer association, artifact/OCI
+acquisition, complete recipe/pins, full freeze, integration, runtime and packaging
+remain unfinished. Phase 11 owns runtime proof; LNSAT remains standalone with
+Rangoon using ordinary adapters.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order
