@@ -23,6 +23,25 @@ pub(super) struct ReadableSample {
     default: AclRead,
 }
 
+#[cfg(target_os = "linux")]
+impl ReadableSample {
+    /// Fixed root-manifest shape only; no ACL/provenance authority is inferred.
+    pub(super) fn check_root_manifest_controller(&self, uid: u32) -> Result<(), NativeError> {
+        if self.identity.gid != 0 || self.identity.mode & 0o7777 != 0o640 {
+            return Err(NativeError::ModeMismatch);
+        }
+        let AclRead::Present { parsed, .. } = &self.access else {
+            return Err(NativeError::InvalidAcl);
+        };
+        if !parsed.matches_root_manifest_controller(uid)
+            || !matches!(self.default, AclRead::UnclassifiedNoData)
+        {
+            return Err(NativeError::InvalidAcl);
+        }
+        Ok(())
+    }
+}
+
 #[cfg(not(target_os = "linux"))]
 pub(super) fn sample_readable(_file: &File) -> Result<ReadableSample, NativeError> {
     Err(NativeError::UnsupportedPlatform)

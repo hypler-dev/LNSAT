@@ -3,6 +3,8 @@
 use super::mountinfo::MountInfoError;
 #[path = "headless_native_artifact.rs"]
 mod artifact;
+#[path = "headless_native_root_bootstrap.rs"]
+mod root_bootstrap;
 use std::{
     fs::File,
     num::NonZeroU64,
@@ -136,6 +138,9 @@ struct NativeSample {
 enum RequestKind {
     Procfs,
     ArtifactRead,
+    RootManifestBegin,
+    RootManifestRecheck,
+    RootManifestRetire,
 }
 
 enum RequestPayload {
@@ -144,6 +149,7 @@ enum RequestPayload {
         proc_root: Arc<File>,
     },
     Artifact(artifact::ArtifactRequest),
+    Root(root_bootstrap::RootRequest),
 }
 
 struct Request {
@@ -160,7 +166,7 @@ impl Request {
                 resource,
                 proc_root,
             } => Some((resource, proc_root)),
-            RequestPayload::Artifact(_) => None,
+            RequestPayload::Artifact(_) | RequestPayload::Root(_) => None,
         }
     }
 
@@ -168,13 +174,22 @@ impl Request {
         match &self.payload {
             RequestPayload::Procfs { .. } => RequestKind::Procfs,
             RequestPayload::Artifact(_) => RequestKind::ArtifactRead,
+            RequestPayload::Root(request) => request.kind(),
         }
     }
 
     fn artifact(&self) -> Option<&artifact::ArtifactRequest> {
         match &self.payload {
-            RequestPayload::Procfs { .. } => None,
+            RequestPayload::Procfs { .. } | RequestPayload::Root(_) => None,
             RequestPayload::Artifact(request) => Some(request),
+        }
+    }
+
+    fn budget(&self) -> Option<&Arc<artifact::ArtifactBudgetState>> {
+        match &self.payload {
+            RequestPayload::Procfs { .. } => None,
+            RequestPayload::Artifact(request) => Some(&request.budget),
+            RequestPayload::Root(request) => Some(request.budget()),
         }
     }
 
@@ -194,6 +209,7 @@ impl Request {
 enum CompletionOutcome {
     Procfs(Result<NativeSample, ProcfsError>),
     Artifact(Result<artifact::UnverifiedArtifactRead, artifact::ArtifactError>),
+    Root(root_bootstrap::RootCompletion),
 }
 
 impl CompletionOutcome {
@@ -201,6 +217,7 @@ impl CompletionOutcome {
         match self {
             Self::Procfs(_) => RequestKind::Procfs,
             Self::Artifact(_) => RequestKind::ArtifactRead,
+            Self::Root(outcome) => outcome.kind(),
         }
     }
 }
@@ -215,6 +232,7 @@ impl Completion {
         match &self.outcome {
             CompletionOutcome::Procfs(_) => RequestKind::Procfs,
             CompletionOutcome::Artifact(_) => RequestKind::ArtifactRead,
+            CompletionOutcome::Root(outcome) => outcome.kind(),
         }
     }
 }
@@ -224,6 +242,7 @@ struct Slots {
     request: Option<Request>,
     completion: Option<Completion>,
     cleanup: Option<(NonZeroU64, RequestKind, CleanupAccounting)>,
+    root_lease: Option<root_bootstrap::RootLease>,
 }
 
 impl Slots {
@@ -233,6 +252,7 @@ impl Slots {
             request: None,
             completion: None,
             cleanup: None,
+            root_lease: None,
         }
     }
 }
@@ -664,8 +684,8 @@ impl Attempt {
             request.token == self.token && request.kind() == RequestKind::Procfs
         });
         if !associated {
-            if let Some(request) = slots.request.as_ref().and_then(Request::artifact) {
-                request.budget.invalidate();
+            if let Some(budget) = slots.request.as_ref().and_then(Request::budget) {
+                budget.invalidate();
             }
             self.lane.terminalize();
             self.armed = false;
@@ -822,7 +842,7 @@ impl Attempt {
         if let Some(completion) = completion {
             match completion.outcome {
                 CompletionOutcome::Procfs(outcome) => outcome.map(Some),
-                CompletionOutcome::Artifact(_) => {
+                CompletionOutcome::Artifact(_) | CompletionOutcome::Root(_) => {
                     self.lane.terminalize();
                     Err(ProcfsError::CleanupUncertain)
                 }
@@ -959,10 +979,14 @@ fn worker_body() {
     while !LANE.started.load(Ordering::SeqCst) {
         thread::park();
     }
+    let mut retained_root = None;
     loop {
+        root_bootstrap::maintain(&LANE, retained_root.as_ref());
         let state = LANE.control.load(Ordering::SeqCst);
         if terminal(state) {
-            drain_terminal(&LANE);
+            if root_bootstrap::drain(&LANE, &mut retained_root) {
+                drain_terminal(&LANE);
+            }
             return;
         }
         if phase(state) == RETIRING {
@@ -972,7 +996,7 @@ fn worker_body() {
             continue;
         }
         if phase(state) != ACTIVE {
-            thread::park();
+            root_bootstrap::park(&LANE, retained_root.as_ref());
             continue;
         }
         let request = {
@@ -991,21 +1015,23 @@ fn worker_body() {
             }
         };
         let Some(request) = request else {
-            thread::park();
+            root_bootstrap::park(&LANE, retained_root.as_ref());
             continue;
         };
         let request_token = request.token;
         let deadline = request.deadline;
         let kind = request.kind();
         let mut artifact_guard = ArtifactWorkerGuard {
-            budget: request
-                .artifact()
-                .map(|request| Arc::clone(&request.budget)),
+            budget: request.budget().map(Arc::clone),
             complete: false,
         };
-        let (outcome, mut accounting) = run_fixed_attempt(&LANE, &request);
+        let (outcome, mut accounting) = run_fixed_attempt(&LANE, &request, &mut retained_root);
         retire_request(&LANE, request, &mut accounting);
-        let artifact_success = matches!(&outcome, CompletionOutcome::Artifact(Ok(_)));
+        let budgeted_success = match &outcome {
+            CompletionOutcome::Procfs(_) => true,
+            CompletionOutcome::Artifact(result) => result.is_ok(),
+            CompletionOutcome::Root(result) => result.success(),
+        };
         let complete = accounting.complete(kind);
         let published = publish_completion(
             &LANE,
@@ -1016,8 +1042,7 @@ fn worker_body() {
             accounting,
             artifact_guard.budget.as_deref(),
         );
-        artifact_guard.complete =
-            kind != RequestKind::ArtifactRead || (artifact_success && complete && published);
+        artifact_guard.complete = budgeted_success && complete && published;
     }
 }
 
@@ -1043,7 +1068,7 @@ fn publish_completion(
     {
         budget.invalidate();
     }
-    if kind == RequestKind::ArtifactRead && budget.is_none() {
+    if kind != RequestKind::Procfs && budget.is_none() {
         deny();
         return false;
     }
@@ -1076,6 +1101,12 @@ fn publish_completion(
         deny();
         drop(slots);
         drop(outcome);
+        return false;
+    }
+    if let CompletionOutcome::Root(result) = &outcome
+        && !root_bootstrap::publish_lease(&mut slots, request_token, result, budget, accounting)
+    {
+        deny();
         return false;
     }
     slots.completion = Some(Completion {
@@ -1160,6 +1191,8 @@ fn drain_terminal(lane: &LaneRoot) {
 fn retire_request(lane: &LaneRoot, request: Request, accounting: &mut CleanupAccounting) {
     match request.payload {
         RequestPayload::Artifact(request) => artifact::retire(lane, request, accounting),
+        // Root payloads carry only bounded non-native data. Originals remain worker-local.
+        RequestPayload::Root(request) => drop(request),
         RequestPayload::Procfs {
             resource,
             proc_root,
@@ -1192,6 +1225,7 @@ struct CleanupAccounting {
     reader_close_failures: u8,
     input_references_retired: u8,
     input_close_failures: u8,
+    root: Option<root_bootstrap::RootAccounting>,
 }
 
 impl CleanupAccounting {
@@ -1203,15 +1237,36 @@ impl CleanupAccounting {
         let expected_input_references = match kind {
             RequestKind::Procfs => 2,
             RequestKind::ArtifactRead => 1,
+            RequestKind::RootManifestBegin
+            | RequestKind::RootManifestRecheck
+            | RequestKind::RootManifestRetire => 0,
+        };
+        let root_complete = if expected_input_references == 0 {
+            self.root.is_some_and(|root| root.complete(kind))
+                && self.reader_handles == 0
+                && self.reader_close_attempts == 0
+        } else {
+            self.root.is_none()
         };
         self.reader_clean()
+            && root_complete
             && self.input_references_retired == expected_input_references
             && self.input_close_failures == 0
     }
 }
 
-fn run_fixed_attempt(lane: &LaneRoot, request: &Request) -> (CompletionOutcome, CleanupAccounting) {
+fn run_fixed_attempt(
+    lane: &'static LaneRoot,
+    request: &Request,
+    retained_root: &mut Option<root_bootstrap::RootManifestCustodyState>,
+) -> (CompletionOutcome, CleanupAccounting) {
     match request.kind() {
+        RequestKind::RootManifestBegin
+        | RequestKind::RootManifestRecheck
+        | RequestKind::RootManifestRetire => {
+            let (outcome, accounting) = root_bootstrap::execute(lane, request, retained_root);
+            (CompletionOutcome::Root(outcome), accounting)
+        }
         RequestKind::Procfs => {
             #[cfg(not(target_os = "linux"))]
             let outcome = (

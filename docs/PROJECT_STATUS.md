@@ -2298,6 +2298,38 @@ and implementation. Linux positive and unfinished-operation evidence, complete
 native freeze, integration, runtime and packaging remain unfinished. Phase 11
 owns runtime proof; LNSAT remains standalone and Rangoon uses ordinary adapters.
 
+### Stage-A root manifest bootstrap source candidate
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and the independently reviewed root manifest bootstrap contract. The private
+candidate adds closed Begin, Recheck and Retire jobs to the existing single
+retained procfs lane. Original root, ancestor and manifest descriptors remain
+worker-owned outside the slot mutex; the coordinator receives only bounded
+unverified facts and an opaque lifetime ticket. Admission claims the existing
+manifest allowance once, preserves the shared absolute deadline, and prevents a
+second retained set. Retirement invalidates observation facts before worker-only
+consuming close attempts. Terminal cleanup does not require a live read budget.
+
+The Linux source follows the fixed descriptor-relative provisional ancestry
+survey, exact file and present-ACL predicates, existing held-artifact read/hash,
+and repeated named/held observations. Provisional mount observations, a matching
+ACL shape and a raw digest do not authenticate the host, kernel, namespace or
+peer. The candidate exposes no product caller, public SDK operation, trusted
+holder, initializer, schema change or activation path. LNSAT remains standalone;
+Rangoon uses the same engine contracts through ordinary adapters.
+
+PHR-0063 tracks fresh independent implementation review and exact direct-child
+attestation. Host validation exercises private admission, association, accounting,
+error and lifecycle rules plus existing procfs/artifact regressions. The installed
+macOS target does not compile or execute the Linux-specific acquisition path.
+Source review and deterministic state tests are not positive native acquisition,
+blocked-syscall or unfinished-close proof. A separately permitted Linux environment
+with an independently provisioned root-owned ext4 anchor and exact ACLs is still
+required for that evidence. Search-only prefix ACLs, artifact/OCI acquisition,
+actual host-root/namespace/peer association, complete recipe/pins, full native
+freeze, product integration, runtime and packaging remain unfinished. Phase 11
+continues to own runtime proof.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order
@@ -2316,8 +2348,9 @@ result primitive; they do not simulate or prove Linux native I/O. Named focused
 and full source validation plus fresh independent exact source/direct-child
 review are required by PHR-0062. No Linux compile, positive native read, blocked
 operation, rooted acquisition, complete native freeze, integration, runtime or
-packaging completion is claimed. The other root-bootstrap source obligations
-remain open; Phase 11 continues to own runtime proof.
+packaging completion is claimed. At this correction checkpoint, the other root-bootstrap source obligations
+remained open; the later candidate subsection records their source progress.
+Phase 11 continues to own runtime proof.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 

@@ -450,3 +450,96 @@ fn procfs_corrupted_request_token_terminalizes_without_dispatch() {
     assert_eq!(Arc::strong_count(&custody.resource), 1);
     assert_eq!(Arc::strong_count(&custody.proc_root), 1);
 }
+
+#[test]
+fn root_cleanup_cannot_reuse_procfs_or_artifact_reference_accounting() {
+    for kind in [
+        RequestKind::RootManifestBegin,
+        RequestKind::RootManifestRecheck,
+        RequestKind::RootManifestRetire,
+    ] {
+        for references in 0..=2 {
+            let accounting = CleanupAccounting {
+                input_references_retired: references,
+                ..CleanupAccounting::default()
+            };
+            assert!(!accounting.complete(kind));
+        }
+    }
+    for (kind, references) in [(RequestKind::Procfs, 2), (RequestKind::ArtifactRead, 1)] {
+        let accounting = CleanupAccounting {
+            input_references_retired: references,
+            root: Some(root_bootstrap::RootAccounting::default()),
+            ..CleanupAccounting::default()
+        };
+        assert!(!accounting.complete(kind));
+    }
+}
+
+#[test]
+fn root_denials_never_publish_as_procfs_completion() {
+    for kind in [
+        RequestKind::RootManifestBegin,
+        RequestKind::RootManifestRecheck,
+        RequestKind::RootManifestRetire,
+    ] {
+        let (lane, custody) = control_fixture();
+        let mut attempt = prepared(lane, &custody);
+        assert_eq!(attempt.dispatch(), Ok(DispatchStatus::Dispatched));
+        let request = lane.slots.lock().unwrap().request.take().unwrap();
+        let mut accounting = CleanupAccounting::default();
+        retire_request(lane, request, &mut accounting);
+        let outcome = CompletionOutcome::Root(root_bootstrap::RootCompletion::denied(
+            kind,
+            root_bootstrap::RootBootstrapError::NativeDenied,
+        ));
+        assert!(!publish_completion(
+            lane,
+            attempt.token,
+            attempt.deadline,
+            RequestKind::Procfs,
+            outcome,
+            accounting,
+            None,
+        ));
+        assert!(terminal(lane.control.load(Ordering::SeqCst)));
+        assert!(lane.slots.lock().unwrap().completion.is_none());
+        assert!(attempt.poll().is_err());
+        drain_terminal(lane);
+    }
+}
+
+#[test]
+fn root_publication_requires_budget_and_own_cleanup() {
+    for kind in [
+        RequestKind::RootManifestBegin,
+        RequestKind::RootManifestRecheck,
+        RequestKind::RootManifestRetire,
+    ] {
+        for with_budget in [false, true] {
+            let lane = LaneRoot::new();
+            let job = NonZeroU64::new(1).unwrap();
+            lane.control
+                .store(word(ACTIVE, job.get()), Ordering::SeqCst);
+            let budget = artifact::ArtifactReadBudget::begin(deadline()).unwrap();
+            let outcome = CompletionOutcome::Root(root_bootstrap::RootCompletion::denied(
+                kind,
+                root_bootstrap::RootBootstrapError::NativeDenied,
+            ));
+            assert!(!publish_completion(
+                &lane,
+                job,
+                budget.shared_state().deadline,
+                kind,
+                outcome,
+                CleanupAccounting::default(),
+                with_budget.then(|| budget.shared_state().as_ref()),
+            ));
+            assert!(terminal(lane.control.load(Ordering::SeqCst)));
+            assert!(lane.slots.lock().unwrap().completion.is_none());
+            if with_budget {
+                assert!(budget.shared_state().valid().is_err());
+            }
+        }
+    }
+}

@@ -1,6 +1,6 @@
 # HCFG-6 Root Manifest Bootstrap Source Contract
 
-Status: private Stage-A precode proposal under the accepted
+Status: private Stage-A source contract under the accepted
 [source-order amendment](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
 [Project Status](../../PROJECT_STATUS.md#stage-a-root-manifest-bootstrap-contract)
 owns implementation and review disposition. This is the next acquisition and
@@ -353,8 +353,8 @@ MASK:r--, OTHER:---`, with observed mode `0640`, GID 0, no additional entry
    identity and stability fields to match. Only then publish the bounded
    unverified result; retain every original descriptor on the worker.
 
-The existing artifact `read_content` currently maps a failed `pread` to its
-error before its post-call checkpoint. Coordinator/publication checks still
+At the precode checkpoint, the existing artifact `read_content` mapped a failed
+`pread` to its error before its post-call checkpoint. Coordinator/publication checks still
 reject late success, but that path does not satisfy the stronger per-call error
 ordering promised here. Before rooted reuse, the owned artifact source must
 capture the raw syscall result, charge every successful actual byte count even
@@ -364,7 +364,9 @@ no-retry behavior, invalidation and deterministic terminal/deadline precedence.
 An exact focused regression for a failed read whose deadline has elapsed is
 required; a synthetic error-order test is not native blocked-operation proof.
 This correction needs its own focused/full source validation and independent
-review; the prior PHR-0060 receipt does not attest it.
+review; the prior PHR-0060 receipt does not attest it. PHR-0062 now attests that
+prerequisite correction and its host regression tests; Linux blocked-operation
+proof remains separate.
 
 For every retained descriptor, capture held `fstat`/`fstatfs`/flag facts and
 `statx` with `AT_EMPTY_PATH`, `STATX_BASIC_STATS|STATX_MNT_ID`; require all used

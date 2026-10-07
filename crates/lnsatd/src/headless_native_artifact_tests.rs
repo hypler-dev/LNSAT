@@ -182,6 +182,17 @@ fn artifact_budget_keeps_earlier_deadline_and_expiry_invalidates_same_gate() {
 }
 
 #[test]
+fn artifact_budget_exposes_its_single_shared_state_allocation() {
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    assert!(Arc::ptr_eq(budget.shared_state(), &budget.state));
+    let custody = OwnedArtifactCustody::from_root_file(
+        File::open(std::env::current_exe().unwrap()).unwrap(),
+        budget.shared_state(),
+    );
+    assert!(Arc::ptr_eq(&custody.budget, budget.shared_state()));
+}
+
+#[test]
 fn artifact_budget_allows_full_manifest_and_artifact_allowance_independently() {
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     budget
@@ -529,6 +540,152 @@ fn artifact_nonarmed_disposal_retires_one_file_without_native_result() {
     assert!(accounting.complete(super::super::RequestKind::ArtifactRead));
     assert_eq!(Arc::strong_count(&custody.file), 1);
     assert!(budget.state.valid().is_ok());
+}
+
+#[test]
+fn artifact_owned_original_retirement_consumes_only_unshared_owner() {
+    let lane = LaneRoot::new();
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let owned = custody(&budget);
+    assert!(owned.borrow_file().metadata().is_ok());
+    assert_eq!(owned.retire_original(&lane), Ok(()));
+
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let owned = custody(&budget);
+    let shared = Arc::clone(&owned.file);
+    assert_eq!(
+        owned.retire_original(&lane),
+        Err(ArtifactError::CleanupUncertain)
+    );
+    assert!(super::super::terminal(lane.control.load(Ordering::SeqCst)));
+    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    drop(shared);
+}
+
+#[test]
+fn artifact_root_manifest_read_requires_claimed_same_deadline_before_native_read() {
+    let lane = LaneRoot::new();
+    lane.control.store(
+        super::super::word(super::super::ACTIVE, 1),
+        Ordering::SeqCst,
+    );
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let owned = custody(&budget);
+    let (result, accounting) = read_root_manifest(
+        &lane,
+        NonZeroU64::new(1).unwrap(),
+        budget.state.deadline,
+        &owned,
+        1,
+    );
+    assert!(matches!(result, Err(ArtifactError::ObservationInvalid)));
+    assert_eq!(accounting.input_references_retired, 0);
+    assert!(super::super::terminal(lane.control.load(Ordering::SeqCst)));
+
+    let lane = LaneRoot::new();
+    lane.control.store(
+        super::super::word(super::super::ACTIVE, 1),
+        Ordering::SeqCst,
+    );
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let owned = custody(&budget);
+    budget.state.claim_manifest().unwrap();
+    let (result, accounting) = read_root_manifest(
+        &lane,
+        NonZeroU64::new(1).unwrap(),
+        Instant::now(),
+        &owned,
+        1,
+    );
+    assert!(matches!(result, Err(ArtifactError::ObservationInvalid)));
+    assert_eq!(accounting.input_references_retired, 0);
+    assert!(super::super::terminal(lane.control.load(Ordering::SeqCst)));
+}
+
+#[test]
+fn artifact_root_facts_bind_root_purpose_body_token_and_live_budget() {
+    let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+    let result = UnverifiedArtifactRead {
+        budget: Arc::clone(&budget.state),
+        token: NonZeroU64::new(7).unwrap(),
+        purpose: ArtifactReadPurpose::RootManifest,
+        identity: ArtifactIdentity {
+            device: 1,
+            inode: 2,
+            mode: 0,
+            uid: 0,
+            gid: 0,
+            links: 1,
+            size: 3,
+            mtime_seconds: 0,
+            mtime_nanoseconds: 0,
+            ctime_seconds: 0,
+            ctime_nanoseconds: 0,
+            filesystem_type: 0,
+            descriptor_flags: 0,
+            status_flags: 0,
+        },
+        length: 3,
+        digest: Zeroizing::new([9; 32]),
+        body: Some(Zeroizing::new(vec![1, 2, 3])),
+    };
+    let facts = result
+        .root_manifest_facts(budget.shared_state(), NonZeroU64::new(7).unwrap())
+        .unwrap();
+    assert_eq!(facts.body, &[1, 2, 3]);
+    assert_eq!(facts.digest, &[9; 32]);
+    assert_eq!(facts.length, 3);
+
+    let wrong = ArtifactReadBudget::begin(deadline()).unwrap();
+    assert!(matches!(
+        result.root_manifest_facts(wrong.shared_state(), NonZeroU64::new(7).unwrap()),
+        Err(ArtifactError::AssociationRejected)
+    ));
+    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+}
+
+#[test]
+fn artifact_root_facts_reject_nonroot_token_and_body_length_mismatch() {
+    let identity = || ArtifactIdentity {
+        device: 1,
+        inode: 2,
+        mode: 0,
+        uid: 0,
+        gid: 0,
+        links: 1,
+        size: 3,
+        mtime_seconds: 0,
+        mtime_nanoseconds: 0,
+        ctime_seconds: 0,
+        ctime_nanoseconds: 0,
+        filesystem_type: 0,
+        descriptor_flags: 0,
+        status_flags: 0,
+    };
+    for (purpose, token, length, supplied_token) in [
+        (ArtifactReadPurpose::OciBody, 7, 3, 7),
+        (ArtifactReadPurpose::RootManifest, 7, 3, 8),
+        (ArtifactReadPurpose::RootManifest, 7, 2, 7),
+    ] {
+        let budget = ArtifactReadBudget::begin(deadline()).unwrap();
+        let result = UnverifiedArtifactRead {
+            budget: Arc::clone(&budget.state),
+            token: NonZeroU64::new(token).unwrap(),
+            purpose,
+            identity: identity(),
+            length,
+            digest: Zeroizing::new([0; 32]),
+            body: Some(Zeroizing::new(vec![1, 2, 3])),
+        };
+        assert!(matches!(
+            result.root_manifest_facts(
+                budget.shared_state(),
+                NonZeroU64::new(supplied_token).unwrap()
+            ),
+            Err(ArtifactError::AssociationRejected)
+        ));
+        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    }
 }
 
 #[test]

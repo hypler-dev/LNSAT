@@ -195,6 +195,10 @@ impl ArtifactReadBudget {
     fn owns(&self, state: &Arc<ArtifactBudgetState>) -> bool {
         Arc::ptr_eq(&self.state, state)
     }
+
+    pub(super) fn shared_state(&self) -> &Arc<ArtifactBudgetState> {
+        &self.state
+    }
 }
 
 /// Non-clone owner for a held original descriptor and its one budget.
@@ -209,6 +213,37 @@ impl OwnedArtifactCustody {
             file: Arc::new(file),
             budget: Arc::clone(&budget.state),
         }
+    }
+
+    /// Transfers one worker-local original without replacing its budget allocation.
+    pub(super) fn from_root_file(file: File, budget: &Arc<ArtifactBudgetState>) -> Self {
+        Self {
+            file: Arc::new(file),
+            budget: Arc::clone(budget),
+        }
+    }
+
+    pub(super) fn borrow_file(&self) -> &File {
+        self.file.as_ref()
+    }
+
+    /// Worker-only consuming retirement of the held original descriptor.
+    pub(super) fn retire_original(self, lane: &LaneRoot) -> Result<(), ArtifactError> {
+        let OwnedArtifactCustody { file, budget } = self;
+        let Some(file) = Arc::into_inner(file) else {
+            budget.invalidate();
+            lane.terminalize();
+            return Err(ArtifactError::CleanupUncertain);
+        };
+        #[cfg(target_os = "linux")]
+        if nix::unistd::close(file).is_err() {
+            budget.invalidate();
+            lane.terminalize();
+            return Err(ArtifactError::CleanupUncertain);
+        }
+        #[cfg(not(target_os = "linux"))]
+        drop(file);
+        Ok(())
     }
 }
 
@@ -396,6 +431,13 @@ struct ArtifactFacts<'a> {
     body: Option<&'a [u8]>,
 }
 
+/// Bounded root-manifest bytes only; no descriptor or identity authority.
+pub(super) struct RootArtifactFacts<'a> {
+    pub(super) body: &'a [u8],
+    pub(super) digest: &'a [u8; 32],
+    pub(super) length: u64,
+}
+
 impl UnverifiedArtifactRead {
     fn check_context(
         &self,
@@ -413,6 +455,35 @@ impl UnverifiedArtifactRead {
             length: self.length,
             digest: &self.digest,
             body: self.body.as_deref().map(Vec::as_slice),
+        })
+    }
+
+    pub(super) fn root_manifest_facts(
+        &self,
+        budget: &Arc<ArtifactBudgetState>,
+        token: NonZeroU64,
+    ) -> Result<RootArtifactFacts<'_>, ArtifactError> {
+        if self.token != token || !Arc::ptr_eq(&self.budget, budget) {
+            self.budget.invalidate();
+            return Err(ArtifactError::AssociationRejected);
+        }
+        if self.purpose != ArtifactReadPurpose::RootManifest {
+            self.budget.invalidate();
+            return Err(ArtifactError::AssociationRejected);
+        }
+        self.budget.valid()?;
+        let Some(body) = self.body.as_deref().map(Vec::as_slice) else {
+            self.budget.invalidate();
+            return Err(ArtifactError::AssociationRejected);
+        };
+        if u64::try_from(body.len()).ok() != Some(self.length) {
+            self.budget.invalidate();
+            return Err(ArtifactError::AssociationRejected);
+        }
+        Ok(RootArtifactFacts {
+            body,
+            digest: &self.digest,
+            length: self.length,
         })
     }
 }
@@ -493,6 +564,50 @@ pub(super) fn retire(
         drop(request.file);
     }
     accounting.input_references_retired += 1;
+}
+
+/// Root bootstrap reuse reads only an already-claimed, live original budget.
+/// It owns and retires one temporary worker reference before returning.
+pub(super) fn read_root_manifest(
+    lane: &LaneRoot,
+    token: NonZeroU64,
+    deadline: Instant,
+    custody: &OwnedArtifactCustody,
+    expected_length: u64,
+) -> (
+    Result<UnverifiedArtifactRead, ArtifactError>,
+    CleanupAccounting,
+) {
+    let mut accounting = CleanupAccounting::default();
+    let fail = |error| {
+        custody.budget.invalidate();
+        lane.terminalize();
+        (Err(error), accounting)
+    };
+    if deadline != custody.budget.deadline
+        || custody.budget.valid().is_err()
+        || !custody.budget.manifest_claimed.load(Ordering::SeqCst)
+        || Arc::strong_count(&custody.file) != 1
+    {
+        return fail(ArtifactError::ObservationInvalid);
+    }
+    let request = ArtifactRequest {
+        file: Arc::clone(&custody.file),
+        budget: Arc::clone(&custody.budget),
+        purpose: ArtifactReadPurpose::RootManifest,
+        expected_length,
+    };
+    let result = read(lane, token, deadline, &request);
+    retire(lane, request, &mut accounting);
+    if accounting.input_references_retired != 1 || accounting.input_close_failures != 0 {
+        custody.budget.invalidate();
+        lane.terminalize();
+        return (Err(ArtifactError::CleanupUncertain), accounting);
+    }
+    if result.is_err() {
+        custody.budget.invalidate();
+    }
+    (result, accounting)
 }
 
 #[cfg(not(target_os = "linux"))]
