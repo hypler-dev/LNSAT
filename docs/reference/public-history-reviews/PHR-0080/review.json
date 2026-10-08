@@ -1,0 +1,47 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0080-independent-implementation-review-c2a8708d",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["professional-testing-program-plan"],
+  "base_revision": "dc2de0bb9071c839fb4bef57a060ce0fe0dd8879",
+  "reviewed_revision": "c2a8708d7c8b2590052ece301ee5fcff9c290292",
+  "reviewed_tree_oid": "225b2604bfa5b478353f688811835f68990699a4",
+  "diff_sha256": "sha256:ac3217a5cc6c5bd3ee7b39c8bcda25a1e304665bdcbb6bef2b0b3e9a7e44c5d5",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:43ef9ba5bc83b868a1018e482405dcae9e94e36c99b6c300388d7cdf3f3a43b2"
+    },
+    {
+      "path": "docs/LOCAL_DEVELOPMENT.md",
+      "sha256": "sha256:57ccfbf2596a230424685854bc6a2f5c12ab1782aa1f6d3275be5a28ab0e6267"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:8de7773386599d0da078a3c3957bd5354746b95100a27501551aa0b0531aabc0"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:ec0d5a77fa826cbf55e4c7b6c8f44592f7bff6e69fa1f79d630e40f9fb026044"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:0d3df67fd11d9da0ba40cc74e6e6ab25e5868f8c5298577939f7d6ff10709930"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:4d5d2c46436c66b9b398dae083ad4452a3413d4c469229340b54772e23543283"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/testing_plan_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact six-file professional testing planning review. Source parent, tree, canonical full-index diff and protected blobs verified. Four canonical documentation files define accepted per-change regression checks, future bounded cargo-fuzz/libFuzzer campaigns, state-machine and concurrency/crash-recovery evidence, exact target qualification, pinned isolated tools, resource limits, minimized failures and permanent regressions. Explicit security oracles and positive controls prevent parser acceptance or crash-only tests from implying authorization or actual-effect custody. Project Status marks coverage-guided infrastructure and campaigns planned; no tool installation, workflow activation or execution is introduced. Existing normal toolchain, C1 contract and Phase 11/13/14 authority boundaries remain. Six proportional docs/public/inventory/format/diff/history gates PASS on the exact source tree; PHR-0080 is pending at source review. Prior 45 public-main registry entries preserved. IDs PHR-0046 through PHR-0079 belong to separate unmerged source history and are not overwritten or claimed merged. Exact direct-child metadata review and committed history replay remain separate. No production behavior, dependency, runtime, package support, certification, release or deployment authority opens."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
