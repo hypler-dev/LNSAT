@@ -54,6 +54,28 @@ separate named packets. No new runtime, support/certification or release claim
 follows. Project Status retains implementation truth; the Phase 11 operator
 packet retains real-runtime proof ownership.
 
+### Main dependency audit remediation
+
+Canonical implementation record: this subsection. The professional-testing
+plan's hosted source check identified three vulnerable packages in the existing
+public-main lockfile. A fresh manifests-only advisory query reproduced high
+advisories for MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4. The bounded
+maintenance candidate pins the test client to 2.2.0, transitive SDK to 1.31.0
+and Sharp to 0.35.5 with its exact platform dependency closure. These pins reuse
+the separately reviewed source candidate; broader private engine features are
+not included. Production MCP server, core and Node wrapper remain 2.0.0;
+the test client resolves its own core 2.2.0.
+
+The [upstream baseline](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md#upstream-baseline)
+records the package identities and removes a stale advisory-allowance claim.
+No advisory is waived. Existing registry signatures, fresh advisory audit,
+focused MCP compatibility, full source validation and fresh independent exact
+source/direct-child review gate this candidate under PHR-0081. No OAuth client,
+credential migration, provider activation, installer or new execution authority
+is introduced. Passing dependency checks does not establish runtime safety,
+package support or certification. The professional fuzzing program remains
+planned; its tooling is not installed or activated by this remediation.
+
 ## Active Security Remediation
 
 The owner accepted the
