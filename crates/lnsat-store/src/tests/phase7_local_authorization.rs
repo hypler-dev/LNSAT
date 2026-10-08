@@ -1064,3 +1064,280 @@ fn phase7_local_authorization_restart_read_expiry_and_concurrency_hold() {
         .verify_schema()
         .expect("concurrent chain must verify");
 }
+
+fn gateway_property_redeem(
+    store: &mut SqliteStore,
+    input: &Phase7CapabilityRedemptionInputV1<'_>,
+    bytes: &mut [u8; PHASE7_CAPABILITY_BYTES_V1],
+    token: &str,
+    csrf: &str,
+    now: &str,
+) -> Result<Phase7CapabilityConsumptionWriteV1, Phase7PersistenceErrorV1> {
+    store.redeem_phase7_local_execution_capability_with_sources_v1(
+        input,
+        Phase7CapabilitySecretV1::take_from_bytes(bytes),
+        token,
+        csrf,
+        || Ok(now.to_owned()),
+        || Ok(()),
+        || Ok(()),
+    )
+}
+
+#[test]
+#[allow(clippy::too_many_lines)]
+fn gateway_property_redemption_mutations_preserve_one_use_authority() {
+    let database = TestDatabase::new("gateway-property-redemption-mutations");
+    let mut store = SqliteStore::open(&database.path).expect("database must bootstrap");
+    let fixture = seed_local_authorization_source(&mut store, 141);
+    let issued = issue_at(&mut store, &fixture, 0x6d).expect("authorization must issue");
+    let input = Phase7CapabilityRedemptionInputV1 {
+        project_ref: &fixture.project_ref,
+        resource_ref: &fixture.resource_ref,
+        authorization_id: &issued.record.authorization_id,
+        operation_id: &issued.record.operation_id,
+        idempotency_key: "gateway-property:consume",
+    };
+    let now = "2026-07-22T20:03:30.000Z";
+    // Each byte independently participates in the capability binding.
+    for index in 0..PHASE7_CAPABILITY_BYTES_V1 {
+        let mut bytes = [0x6d; PHASE7_CAPABILITY_BYTES_V1];
+        bytes[index] ^= 1;
+        assert_eq!(
+            gateway_property_redeem(
+                &mut store,
+                &input,
+                &mut bytes,
+                &fixture.requester_session_token,
+                &fixture.requester_csrf_token,
+                now
+            ),
+            Err(Phase7PersistenceErrorV1::RedemptionRejected),
+            "capability byte {index}"
+        );
+        assert_eq!(bytes, [0; PHASE7_CAPABILITY_BYTES_V1]);
+        assert_eq!(table_count(&store, "lnsat_capability_consumptions"), 0);
+    }
+    let wrong_authorization = format!("xau_{}", "0".repeat(64));
+    let wrong_operation = format!("opn_{}", "0".repeat(64));
+    assert_ne!(wrong_authorization, input.authorization_id);
+    assert_ne!(wrong_operation, input.operation_id);
+    let cases = [
+        (
+            "project",
+            "project:other",
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            fixture.requester_csrf_token.as_str(),
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "resource",
+            input.project_ref,
+            "resource:other",
+            input.authorization_id,
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            fixture.requester_csrf_token.as_str(),
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "authorization",
+            input.project_ref,
+            input.resource_ref,
+            wrong_authorization.as_str(),
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            fixture.requester_csrf_token.as_str(),
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "operation",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            wrong_operation.as_str(),
+            fixture.requester_session_token.as_str(),
+            fixture.requester_csrf_token.as_str(),
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "token",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            "invalid-session-token",
+            fixture.requester_csrf_token.as_str(),
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "csrf",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            "invalid-csrf-token",
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "cross-pair",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            fixture.approver_csrf_token.as_str(),
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "approver",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            fixture.approver_session_token.as_str(),
+            fixture.approver_csrf_token.as_str(),
+            now,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "before issue",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            fixture.requester_csrf_token.as_str(),
+            "2026-07-22T20:03:01.999Z",
+            // Session activity verification rejects backward time before the redemption window.
+            Phase7PersistenceErrorV1::EvidenceDrift,
+        ),
+        (
+            "at expiry",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            fixture.requester_csrf_token.as_str(),
+            AUTHORIZATION_TTL_EXPIRES_AT,
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+        (
+            "after expiry",
+            input.project_ref,
+            input.resource_ref,
+            input.authorization_id,
+            input.operation_id,
+            fixture.requester_session_token.as_str(),
+            fixture.requester_csrf_token.as_str(),
+            "2026-07-22T20:04:02.001Z",
+            Phase7PersistenceErrorV1::RedemptionRejected,
+        ),
+    ];
+    for (
+        label,
+        project_ref,
+        resource_ref,
+        authorization_id,
+        operation_id,
+        token,
+        csrf,
+        time,
+        expected,
+    ) in cases
+    {
+        let candidate = Phase7CapabilityRedemptionInputV1 {
+            project_ref,
+            resource_ref,
+            authorization_id,
+            operation_id,
+            idempotency_key: input.idempotency_key,
+        };
+        let mut bytes = [0x6d; PHASE7_CAPABILITY_BYTES_V1];
+        assert_eq!(
+            gateway_property_redeem(&mut store, &candidate, &mut bytes, token, csrf, time),
+            Err(expected),
+            "{label}"
+        );
+        assert_eq!(bytes, [0; PHASE7_CAPABILITY_BYTES_V1], "{label}");
+        assert_eq!(
+            table_count(&store, "lnsat_capability_consumptions"),
+            0,
+            "{label}"
+        );
+    }
+    // Negative cases must leave the original authority usable, not merely deny everything.
+    let mut bytes = [0x6d; PHASE7_CAPABILITY_BYTES_V1];
+    let first = gateway_property_redeem(
+        &mut store,
+        &input,
+        &mut bytes,
+        &fixture.requester_session_token,
+        &fixture.requester_csrf_token,
+        now,
+    )
+    .expect("unchanged binding must redeem");
+    assert!(first.created);
+    assert_eq!(bytes, [0; PHASE7_CAPABILITY_BYTES_V1]);
+    drop(store);
+    let mut store = SqliteStore::open(&database.path).expect("consumed state must survive reopen");
+    for index in 0..16 {
+        let mut bytes = [0x6d; PHASE7_CAPABILITY_BYTES_V1];
+        let replay = gateway_property_redeem(
+            &mut store,
+            &input,
+            &mut bytes,
+            &fixture.requester_session_token,
+            &fixture.requester_csrf_token,
+            "2026-07-22T20:03:31.000Z",
+        )
+        .expect("exact replay must return metadata");
+        assert!(!replay.created, "replay {index}");
+        assert_eq!(replay.record, first.record, "replay {index}");
+        let key = format!("gateway-property:changed-key-{index}");
+        let changed = Phase7CapabilityRedemptionInputV1 {
+            idempotency_key: &key,
+            ..input
+        };
+        let mut bytes = [0x6d; PHASE7_CAPABILITY_BYTES_V1];
+        assert_eq!(
+            gateway_property_redeem(
+                &mut store,
+                &changed,
+                &mut bytes,
+                &fixture.requester_session_token,
+                &fixture.requester_csrf_token,
+                "2026-07-22T20:03:31.000Z"
+            ),
+            Err(Phase7PersistenceErrorV1::RedemptionRejected),
+            "changed key {index}"
+        );
+        assert_eq!(
+            table_count(&store, "lnsat_capability_consumptions"),
+            1,
+            "replay {index}"
+        );
+    }
+    for table in [
+        "lnsat_operation_attempts",
+        "lnsat_operation_receipts",
+        "lnsat_operation_reconciliations",
+    ] {
+        assert_eq!(table_count(&store, table), 0, "{table}");
+    }
+    store
+        .verify_schema()
+        .expect("final durable chain must verify");
+}

@@ -98,6 +98,39 @@ with integrations absent. Per-command implementation truth remains in
 alone owns the existing real-runtime proof gate. Design acceptance, reviewed
 source, merge, runtime, supported targets and release remain separate.
 
+### Gateway deterministic fuzz and property checks
+
+Canonical implementation record: this subsection. Owner-authorized source-only
+fuzz/property coverage extends the existing dependency-free Rust tests without
+changing production behavior, schemas, APIs or dependencies. PHR-0079 tracks
+the exact source candidate and its separate review-metadata child.
+
+Three contract properties exercise ten stale approved-packet substitutions,
+twenty-five represented request-field mutations, five canonical-byte changes
+and five binary digest changes. A fixed seed (`0x5EED_CAFE_2026_1008`) generates
+192 bounded inputs across truncation, insertion, deletion and byte-flip cases;
+Invalid UTF-8 mutations are converted lossily for the string parser; raw
+transport decoding is not exercised. Explicit positive
+controls cover canonicalized reversed object order, nested arguments/arrays and
+a distinct self-consistent request. Parser acceptance proves canonical/digest
+consistency, not linkage to the original human approval or physical custody.
+
+One store property mutates every capability byte and checks scope, session and
+time denials before a valid redemption. After reopen, sixteen exact replays
+return existing metadata and sixteen changed idempotency keys cannot create a
+second consumption. The property requires one durable consumption and no
+adapter attempt, receipt or reconciliation. This is inert source-local store
+evidence, not actual execution or runtime replay proof.
+
+Focused contract/store checks, full `npm run check`, named documentation/public/
+inventory/history gates, format/diff checks and fresh independent exact
+source/direct-child review gate this bounded candidate. These are reproducible
+regression properties and a small deterministic fuzz smoke, not a coverage-guided
+engine, broad retained corpus, long-running campaign or completed Phase 13 fuzz
+gate. Actual-effect custody, all-writer/native freeze, cumulative accounting,
+required-context integrations, real runtime and supported packaging remain
+unfinished under their existing records. No runtime or release authority opens.
+
 ### Scoped dependency maintenance candidate
 
 Owner-authorized development restoration uses an isolated project cache, the

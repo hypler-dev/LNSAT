@@ -917,4 +917,466 @@ mod tests {
             Err(ExecutionRequestV1Error::ProposalInvalid)
         );
     }
+
+    fn derive_result(
+        packet: &PacketEnvelopeV1,
+        packet_sha256: &str,
+    ) -> Result<DerivedExecutionRequestV1, ExecutionRequestV1Error> {
+        derive_execution_request_v1(&ExecutionRequestV1Input {
+            packet,
+            packet_sha256,
+            policy_decision_id: &format!("pol_{}", "3".repeat(64)),
+            approval_request_id: &format!("apr_{}", "4".repeat(64)),
+            approval_decision_id: &format!("apd_{}", "5".repeat(64)),
+            requester_ref: "identity:human:requester",
+            requester_session_ref: "session:local:requester",
+            approver_ref: "identity:human:approver",
+            approver_session_ref: "session:local:approver",
+            prepared_at: "2026-07-22T20:02:00.000Z",
+            expires_at: "2026-07-22T20:08:00Z",
+        })
+    }
+
+    #[test]
+    fn gateway_property_stale_approval_packet_substitutions_are_rejected() {
+        let approved = packet();
+        let approved_hash = hash_packet_envelope_v1(&approved).expect("approved packet hash");
+        let cases = [
+            "action.kind",
+            "action.arguments",
+            "target.resource_ref",
+            "target.identity",
+            "configuration_digest",
+            "adapter.ref",
+            "adapter.version",
+            "executable_digest",
+            "audience",
+            "project_ref",
+        ];
+
+        for (index, case) in cases.iter().enumerate() {
+            let mut substituted = approved.clone();
+            match *case {
+                "action.kind" => {
+                    substituted.constraints["execution_proposal"]["action"]["kind"] =
+                        Value::String("git.push".to_owned());
+                }
+                "action.arguments" => {
+                    substituted.constraints["execution_proposal"]["action"]["arguments"] =
+                        serde_json::json!({"message":"substituted","path":"fixture.txt"});
+                }
+                "target.resource_ref" => {
+                    substituted.constraints["execution_proposal"]["target"]["resource_ref"] =
+                        Value::String("resource:repository:other".to_owned());
+                }
+                "target.identity" => {
+                    substituted.constraints["execution_proposal"]["target"]["identity"] =
+                        serde_json::json!({"base":"def456","repository":"fixture"});
+                }
+                "configuration_digest" => {
+                    substituted.constraints["execution_proposal"]["configuration_digest"] =
+                        Value::String(format!("sha256:{}", "d".repeat(64)));
+                }
+                "adapter.ref" => {
+                    substituted.constraints["execution_proposal"]["adapter"]["ref"] =
+                        Value::String("adapter:local:other".to_owned());
+                }
+                "adapter.version" => {
+                    substituted.constraints["execution_proposal"]["adapter"]["version"] =
+                        Value::String("v2".to_owned());
+                }
+                "executable_digest" => {
+                    substituted.constraints["execution_proposal"]["executable_digest"] =
+                        Value::String(format!("sha256:{}", "f".repeat(64)));
+                }
+                "audience" => {
+                    substituted.constraints["execution_proposal"]["audience"] =
+                        Value::String("audience:gateway:other".to_owned());
+                }
+                "project_ref" => substituted.project_ref = "project:other".to_owned(),
+                _ => unreachable!("case list is closed"),
+            }
+
+            assert_eq!(
+                derive_result(&substituted, &approved_hash),
+                Err(ExecutionRequestV1Error::ChainInvalid),
+                "case={case} index={index} must not reuse the old approved packet hash"
+            );
+        }
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn gateway_property_stale_derived_evidence_rejects_one_field_mutations() {
+        let packet = packet();
+        let packet_sha256 = hash_packet_envelope_v1(&packet).expect("packet hash");
+        let derived = derive(&packet, &packet_sha256);
+        let cases = [
+            "contract_version",
+            "schema_id",
+            "derivation_profile",
+            "packet_id",
+            "packet_sha256",
+            "policy_decision_id",
+            "approval_request_id",
+            "approval_decision_id",
+            "requester_ref",
+            "requester_session_ref",
+            "approver_ref",
+            "approver_session_ref",
+            "project_ref",
+            "resource_ref",
+            "action.kind",
+            "action.arguments",
+            "target.resource_ref",
+            "target.identity",
+            "configuration_digest",
+            "adapter.ref",
+            "adapter.version",
+            "executable_digest",
+            "audience",
+            "prepared_at",
+            "expires_at",
+        ];
+
+        for (index, case) in cases.iter().enumerate() {
+            let mut stale = derived.clone();
+            match *case {
+                "contract_version" => {
+                    stale.request.contract_version = "lnsat.contracts.v9_9".to_owned();
+                }
+                "schema_id" => {
+                    stale.request.schema_id = "lnsat.execution_request.schema.v9_9".to_owned();
+                }
+                "derivation_profile" => {
+                    stale.request.derivation_profile = "lnsat.other.v1".to_owned();
+                }
+                "packet_id" => stale.request.packet_id = format!("pkt_{}", "6".repeat(64)),
+                "packet_sha256" => {
+                    stale.request.packet_sha256 = format!("sha256:{}", "d".repeat(64));
+                }
+                "policy_decision_id" => {
+                    stale.request.policy_decision_id = format!("pol_{}", "6".repeat(64));
+                }
+                "approval_request_id" => {
+                    stale.request.approval_request_id = format!("apr_{}", "6".repeat(64));
+                }
+                "approval_decision_id" => {
+                    stale.request.approval_decision_id = format!("apd_{}", "6".repeat(64));
+                }
+                "requester_ref" => stale.request.requester_ref = "identity:human:other".to_owned(),
+                "requester_session_ref" => {
+                    stale.request.requester_session_ref = "session:local:other".to_owned();
+                }
+                "approver_ref" => stale.request.approver_ref = "identity:human:other".to_owned(),
+                "approver_session_ref" => {
+                    stale.request.approver_session_ref = "session:local:other".to_owned();
+                }
+                "project_ref" => stale.request.project_ref = "project:other".to_owned(),
+                "resource_ref" => {
+                    stale.request.resource_ref = "resource:repository:other".to_owned();
+                }
+                "action.kind" => stale.request.action.kind = "git.push".to_owned(),
+                "action.arguments" => {
+                    stale.request.action.arguments.insert(
+                        "message".to_owned(),
+                        Value::String("substituted fixture commit".to_owned()),
+                    );
+                }
+                "target.resource_ref" => {
+                    stale.request.target.resource_ref = "resource:repository:other".to_owned();
+                }
+                "target.identity" => {
+                    stale
+                        .request
+                        .target
+                        .identity
+                        .insert("base".to_owned(), Value::String("def456".to_owned()));
+                }
+                "configuration_digest" => {
+                    stale.request.configuration_digest = format!("sha256:{}", "d".repeat(64));
+                }
+                "adapter.ref" => {
+                    stale.request.adapter.adapter_ref = "adapter:local:other".to_owned();
+                }
+                "adapter.version" => stale.request.adapter.version = "v2".to_owned(),
+                "executable_digest" => {
+                    stale.request.executable_digest = format!("sha256:{}", "f".repeat(64));
+                }
+                "audience" => stale.request.audience = "audience:gateway:other".to_owned(),
+                "prepared_at" => stale.request.prepared_at = "2026-07-22T20:02:01.000Z".to_owned(),
+                "expires_at" => stale.request.expires_at = "2026-07-22T20:08:01.000Z".to_owned(),
+                _ => unreachable!("case list is closed"),
+            }
+
+            assert_eq!(
+                verify_derived_execution_request_v1(&stale),
+                Err(ExecutionRequestV1Error::ChainInvalid),
+                "case={case} index={index} must invalidate stale derived evidence"
+            );
+        }
+
+        let canonical_cases = [
+            (
+                "packet_id",
+                format!("\"pkt_{}\"", "1".repeat(64)),
+                format!("\"pkt_{}\"", "6".repeat(64)),
+            ),
+            (
+                "project_ref",
+                "\"project:fixture\"".to_owned(),
+                "\"project:other\"".to_owned(),
+            ),
+            (
+                "action.kind",
+                "\"git.commit\"".to_owned(),
+                "\"git.push\"".to_owned(),
+            ),
+            (
+                "configuration_digest",
+                format!("\"sha256:{}\"", "c".repeat(64)),
+                format!("\"sha256:{}\"", "d".repeat(64)),
+            ),
+            (
+                "adapter.version",
+                "\"version\":\"v1\"".to_owned(),
+                "\"version\":\"v2\"".to_owned(),
+            ),
+        ];
+        for (index, (case, before, after)) in canonical_cases.iter().enumerate() {
+            let mut stale = derived.clone();
+            assert_eq!(
+                stale.canonical_request.matches(before.as_str()).count(),
+                1,
+                "case={case} index={index} fixture source must occur exactly once"
+            );
+            stale.canonical_request =
+                stale
+                    .canonical_request
+                    .replacen(before.as_str(), after.as_str(), 1);
+            assert!(
+                stale.canonical_request.contains(after.as_str()),
+                "case={case} index={index} replacement must occur"
+            );
+            assert_ne!(
+                stale.canonical_request, derived.canonical_request,
+                "case={case} index={index} canonical bytes must change"
+            );
+            assert_eq!(
+                verify_derived_execution_request_v1(&stale),
+                Err(ExecutionRequestV1Error::ChainInvalid),
+                "case={case} index={index} must invalidate stale canonical bytes"
+            );
+        }
+
+        let digest_cases = [
+            "request_digest",
+            "action_digest",
+            "target_digest",
+            "configuration_digest",
+            "executable_digest",
+        ];
+        for (index, case) in digest_cases.iter().enumerate() {
+            let mut stale = derived.clone();
+            match *case {
+                "request_digest" => stale.request_digest[0] ^= 1,
+                "action_digest" => stale.action_digest[0] ^= 1,
+                "target_digest" => stale.target_digest[0] ^= 1,
+                "configuration_digest" => stale.configuration_digest[0] ^= 1,
+                "executable_digest" => stale.executable_digest[0] ^= 1,
+                _ => unreachable!("case list is closed"),
+            }
+            assert_eq!(
+                verify_derived_execution_request_v1(&stale),
+                Err(ExecutionRequestV1Error::ChainInvalid),
+                "case={case} index={index} must invalidate stale binary digest evidence"
+            );
+        }
+    }
+
+    fn json_with_reversed_object_keys(value: &Value) -> String {
+        match value {
+            Value::Array(values) => {
+                let values = values
+                    .iter()
+                    .map(json_with_reversed_object_keys)
+                    .collect::<Vec<_>>()
+                    .join(",");
+                format!("[{values}]")
+            }
+            Value::Object(object) => {
+                let entries = object
+                    .iter()
+                    .rev()
+                    .map(|(key, value)| {
+                        let key = serde_json::to_string(key).expect("object key serializes");
+                        format!("{key}:{}", json_with_reversed_object_keys(value))
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                format!("{{{entries}}}")
+            }
+            _ => serde_json::to_string(value).expect("JSON scalar serializes"),
+        }
+    }
+
+    fn assert_gateway_property_parser_oracle(input: &str, case: &str, index: usize, seed: u64) {
+        if let Ok(parsed) = parse_canonical_execution_request_v1(input) {
+            assert_eq!(
+                parsed.canonical_request, input,
+                "case={case} index={index} seed={seed:#018x} accepted bytes must round-trip"
+            );
+            assert_eq!(
+                verify_derived_execution_request_v1(&parsed),
+                Ok(()),
+                "case={case} index={index} seed={seed:#018x} accepted bytes must verify"
+            );
+        }
+    }
+
+    fn assert_gateway_property_canonical_control(input: &str, case: &str) {
+        let parsed = parse_canonical_execution_request_v1(input)
+            .expect("known valid canonical control must parse");
+        assert_eq!(
+            parsed.canonical_request, input,
+            "case={case} accepted canonical bytes must round-trip"
+        );
+        assert_eq!(
+            verify_derived_execution_request_v1(&parsed),
+            Ok(()),
+            "case={case} accepted canonical bytes must verify"
+        );
+    }
+
+    fn next_fuzz_word(state: &mut u64) -> u64 {
+        *state ^= *state << 13;
+        *state ^= *state >> 7;
+        *state ^= *state << 17;
+        *state
+    }
+
+    fn fuzz_index(word: u64, bound: usize) -> usize {
+        let bound = u64::try_from(bound).expect("fuzz bound fits u64");
+        usize::try_from(word % bound).expect("bounded fuzz index fits usize")
+    }
+
+    fn assert_gateway_property_parser_positive_controls(
+        mut nested_packet: PacketEnvelopeV1,
+        derived: &DerivedExecutionRequestV1,
+    ) {
+        let value: Value = serde_json::from_str(&derived.canonical_request).expect("request value");
+        let reordered_raw = json_with_reversed_object_keys(&value);
+        assert_ne!(
+            reordered_raw, derived.canonical_request,
+            "raw key order differs"
+        );
+        assert_eq!(
+            parse_canonical_execution_request_v1(&reordered_raw),
+            Err(ExecutionRequestV1Error::ChainInvalid),
+            "raw noncanonical key order is rejected"
+        );
+        let reordered_value: Value = serde_json::from_str(&reordered_raw).expect("reordered value");
+        let reordered =
+            canonicalize_json_value(&reordered_value).expect("canonical reordered request");
+        assert_eq!(
+            reordered, derived.canonical_request,
+            "object key order canonicalizes"
+        );
+        assert_gateway_property_canonical_control(&reordered, "reordered-keys");
+
+        // Parsing proves only canonical self-consistency; custody linkage is checked elsewhere.
+        let different_request =
+            derived
+                .canonical_request
+                .replacen("\"git.commit\"", "\"git.push\"", 1);
+        assert_ne!(
+            different_request, derived.canonical_request,
+            "request bytes differ"
+        );
+        let parsed_different = parse_canonical_execution_request_v1(&different_request)
+            .expect("syntactically valid distinct request must parse");
+        assert_ne!(
+            parsed_different.request, derived.request,
+            "parsed request is not original"
+        );
+        assert_eq!(
+            verify_derived_execution_request_v1(&parsed_different),
+            Ok(()),
+            "distinct canonical request rederives self-consistent evidence"
+        );
+
+        nested_packet.constraints["execution_proposal"]["action"]["arguments"] = serde_json::json!({
+            "path": "fixture.txt",
+            "nested": {"z": [3, {"b": true, "a": false}], "a": ["one", "two"]},
+            "message": "bounded fixture commit"
+        });
+        let nested_hash = hash_packet_envelope_v1(&nested_packet).expect("nested packet hash");
+        let nested = derive(&nested_packet, &nested_hash);
+        let nested_value: Value =
+            serde_json::from_str(&nested.canonical_request).expect("nested request value");
+        let nested_reordered_raw = json_with_reversed_object_keys(&nested_value);
+        assert_ne!(
+            nested_reordered_raw, nested.canonical_request,
+            "nested raw key order differs"
+        );
+        assert_eq!(
+            parse_canonical_execution_request_v1(&nested_reordered_raw),
+            Err(ExecutionRequestV1Error::ChainInvalid),
+            "nested raw noncanonical key order is rejected"
+        );
+        let nested_reordered_value: Value =
+            serde_json::from_str(&nested_reordered_raw).expect("nested reordered value");
+        let nested_reordered = canonicalize_json_value(&nested_reordered_value)
+            .expect("canonical nested reordered request");
+        assert_eq!(
+            nested_reordered, nested.canonical_request,
+            "nested objects and arrays canonicalize"
+        );
+        assert_gateway_property_canonical_control(&nested_reordered, "nested-arguments-arrays");
+    }
+
+    #[test]
+    fn gateway_property_canonical_parser_byte_fuzz_round_trips_any_accepted_input() {
+        const FUZZ_SEED: u64 = 0x5EED_CAFE_2026_1008;
+        const FUZZ_BYTE_INPUTS: usize = 192;
+        const INSERTED_BYTES: &[u8] = b" \"{}[],:\\\n\t";
+
+        let packet = packet();
+        let packet_sha256 = hash_packet_envelope_v1(&packet).expect("packet hash");
+        let derived = derive(&packet, &packet_sha256);
+        assert_gateway_property_parser_positive_controls(packet, &derived);
+
+        let mut state = FUZZ_SEED;
+        for index in 0..FUZZ_BYTE_INPUTS {
+            let case_seed = next_fuzz_word(&mut state);
+            let mut bytes = derived.canonical_request.as_bytes().to_vec();
+            let position = fuzz_index(case_seed, bytes.len() + 1);
+            let case = match index % 4 {
+                0 => {
+                    bytes.truncate(position);
+                    "truncation"
+                }
+                1 => {
+                    let byte = INSERTED_BYTES[fuzz_index(case_seed, INSERTED_BYTES.len())];
+                    bytes.insert(position, byte);
+                    "insertion"
+                }
+                2 => {
+                    if position < bytes.len() {
+                        let width = 1 + fuzz_index(case_seed >> 8, 4);
+                        bytes.drain(position..(position + width).min(bytes.len()));
+                    }
+                    "deletion"
+                }
+                _ => {
+                    if position < bytes.len() {
+                        bytes[position] ^= 1 << ((case_seed >> 16) & 7);
+                    }
+                    "byte-flip"
+                }
+            };
+            let input = String::from_utf8_lossy(&bytes);
+            assert_gateway_property_parser_oracle(&input, case, index, case_seed);
+        }
+    }
 }
