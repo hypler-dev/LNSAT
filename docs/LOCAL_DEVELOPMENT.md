@@ -104,6 +104,17 @@ after correction. Keep state-machine, concurrency and crash/restart evidence
 separate from parser fuzz results. Successful parsing is not approved execution,
 and source tests are not real runtime or package qualification.
 
+For applicable future packets, follow the
+[standards-informed build requirements](PRODUCT_BUILD_SEQUENCE.md#standards-informed-build-requirements):
+record risk/trust boundaries, accountable owner, accepted contract, exact
+source/artifact identity, positive and denial checks, evidence, gaps and risk
+disposition. Reuse existing contracts/tests and retain honest implementation states.
+Review secret and PII handling, truthful CLI/API/SDK feedback, dependency/tool
+integrity and recovery consequences within the owned scope. This is engineering
+evidence planning; standards conformance, management systems and certification
+require separate assessments. No standards tool installation, account creation,
+external submission or runtime qualification is introduced here.
+
 ## Repository Ownership
 
 | Path                     | Owns                                                            |

@@ -381,6 +381,54 @@ percentage alone is not a completion claim. Release assessment requires no
 untriaged relevant failures and resolution of required findings; green tests do
 not grant merge, runtime, package support, certification or publication authority.
 
+## Standards-informed build requirements
+
+The owner accepted applying relevant ISO themes to standalone LNSAT engineering.
+These are project-selected build requirements, informed by the official overview
+pages verified on 2026-10-08. They are not a normative clause mapping, statement
+of applicability, completed management-system assessment or certification claim.
+[Project Status](PROJECT_STATUS.md#standards-informed-build-requirements) owns
+implementation truth; existing command and phase records retain their acceptance
+and evidence ownership.
+
+| Reference                                                                                                             | Applicable scope                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| [ISO/IEC 27001:2022](https://www.iso.org/standard/27001)                                                              | Organizational information-security management; LNSAT contributes scoped risk, access, change, incident and recovery evidence.              |
+| [ISO/IEC 27002:2022](https://www.iso.org/standard/75652.html)                                                         | Security-control guidance for risk treatment; it is not independently certifiable.                                                          |
+| [ISO/IEC 42001:2023](https://committee.iso.org/cms/live/live/en/sites/isoorg/contents/data/standard/08/12/81230.html) | Organizational AI management; LNSAT contributes action-control and outcome evidence within its declared contracts.                          |
+| [ISO/IEC 27701:2025](https://www.iso.org/standard/27701)                                                              | An independent privacy-management standard for organizations responsible for PII; local operation does not remove privacy responsibilities. |
+
+For each applicable engineering change, reuse existing implementation and tests first.
+Record the requirement, risk rationale, accountable owner, accepted contract,
+exact source or artifact identity, positive and negative checks, evidence location,
+remaining gap and risk disposition. Record implemented, experimental, withdrawn
+or missing behavior in the existing canonical status record. Planned acceptance
+evidence is not a passing result.
+
+| Build requirement                 | Evidence expected within the accepted packet                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Risk and access boundaries        | Identify actors, actions, resources, trust boundaries and bypass assumptions; prove scoped authorization, required approval, stale-evidence rejection and denial behavior. New mutation authority retains its design, policy, approval, audit and rollback gates.                                                                                                                                                             |
+| Secret and key custody            | Use secret references, the accepted local authentication/transport contract and explicit credential ownership. Document storage, key protection and rotation assumptions; test disclosure and unauthorized access denials. No implicit credential intake or remote policy dependency follows.                                                                                                                                 |
+| Secure changes and supply chain   | Retain reviewed source identities, pinned dependencies/tools, trusted origins, integrity and license evidence. Reuse Phase 13/14 artifact, SBOM, provenance and signature requirements under their separately authorized scopes.                                                                                                                                                                                              |
+| Developer interfaces and feedback | Require versioned CLI/API/SDK contracts, truthful unavailable/unsupported/denied/uncertain states, redacted errors and compatibility tests. Missing lifecycle documentation or SDK behavior remains missing under the V1 command gates.                                                                                                                                                                                       |
+| Incident handling and recovery    | Preserve operation identity and durable authority across cancellation, revocation, restart, crash, restore and upgrade/rollback. Test uncertain outcomes and unsafe retries; incident procedures and genuine target/runtime evidence retain their existing owners.                                                                                                                                                            |
+| Privacy and evidence lifecycle    | Classify actor identifiers, request metadata, logs and receipts that may contain PII. Specify minimization, redaction, access and explicit export/external-call consent. Hashing or pseudonyms alone do not establish anonymity. Retention/deletion contracts must support the operator's lawful obligations while preserving or explicitly retiring affected authority and recovery evidence; do not add blind row deletion. |
+| AI-management boundary            | Preserve provider-neutral action, approval, version/provenance and outcome evidence where the accepted contract represents it. Provider decisions and untrusted intent text never manufacture human approval or permission to execute. Model quality, model safety and provider-governance judgments retain their external owners.                                                                                            |
+
+LNSAT remains usable without Rangoon, an AI provider, a model hub, remote policy
+backend or telemetry service. Local credentials required by its accepted
+authentication contract remain distinct from consent for external calls. Optional
+integrations must expose their capabilities, provenance and unavailable states
+honestly; this packet activates none.
+
+Formal assessment requires the applicable full standards, amendments, scoped
+organizational processes, accountable reviewers and retained operational evidence.
+OpenSSF criterion mapping is a separate future assessment; current repository
+evidence establishes no completed badge assessment. Neither a certificate program
+nor broad integration coverage is added to existing local V1 exit gates. The
+accepted C1/native order, Phase 11 runtime-proof ownership and Phase 13/14 release
+gates remain unchanged. This documentation implements no new control or campaign.
+
 ## End-to-End Engine Delivery Milestones
 
 The next product outcome is one complete protected workflow:

@@ -54,6 +54,27 @@ separate named packets. No new runtime, support/certification or release claim
 follows. Project Status retains implementation truth; the Phase 11 operator
 packet retains real-runtime proof ownership.
 
+### Standards-informed build requirements
+
+Owner-accepted planning direction: apply relevant ISO/IEC 27001:2022,
+27002:2022, 42001:2023 and 27701:2025 themes to LNSAT build requirements.
+The [build requirements](PRODUCT_BUILD_SEQUENCE.md#standards-informed-build-requirements)
+cover risk/access boundaries, secret custody, secure changes and supply-chain
+evidence, versioned developer feedback, incident/recovery behavior, privacy-aware
+evidence lifecycle and provider-neutral action control. Reuse existing source and
+tests; each applicable packet links its owner, accepted contract, exact identity,
+checks, evidence, gaps and risk disposition to the existing status and phase
+records. This subsection records the accepted plan, not completion of those
+controls or a new competing completion ledger.
+
+Full standard/clause and OpenSSF criterion assessments remain unperformed in the
+recorded repository evidence. Organizational management systems, legal/privacy
+accountability, model/provider governance and certification are separately scoped.
+Local actor identifiers and receipts may contain PII; retention/deletion needs an
+explicit authority-safe contract. LNSAT stays standalone. This documentation adds
+no runtime, privacy, SDK, policy, installer, supported target, badge or certification
+implementation and preserves all existing source/design/merge/runtime/release gates.
+
 ### Main dependency audit remediation
 
 Canonical implementation record: this subsection. The professional-testing
