@@ -2775,6 +2775,39 @@ module precode/native freeze remain open. Project Status owns implementation
 truth; Phase 11 owns runtime proof. LNSAT remains neutral and standalone;
 Rangoon uses optional ordinary adapters. No runtime, merge or release gate opens.
 
+### Stage-A credential capture/compute/recheck contract
+
+Canonical work record: this subsection under accepted Stage-A source order and
+the anchored owner direction. The [existing realized-recipe specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
+freezes the next two-file private C1 prerequisite: capture current rows and the
+original scope into an opaque owned value after ending its SQL read transaction;
+consume that value in password computation with no store/view/SQL borrow; then
+reuse the existing original-scope/exact-connection transaction recheck. The
+current preparation wrapper, public store methods, schema, authentication policy
+and error families remain unchanged. PHR-0077 tracks this documentation contract
+and fresh exact source/direct-child review. No Rust extraction is implemented.
+
+Every existing dummy-verifier branch retains that actual store's nonsecret
+fallback: invalid references and successful absent/validator-accepted inactive
+identity selection, with valid lookups rolled back first. Empty/malformed
+credentials and unsupported disabled-owner evidence remain `EvidenceDrift`.
+Known rows retain their existing zeroizing PHC only until computation or drop. No
+password, replacement scope, raw address, connection getter, credential intake,
+worker interface or approval/permit is introduced. Existing eleven C1 tests
+cover current behavior; later split-specific tests and compiler/field review are
+required before claiming the extraction. Prior journal extraction and reviewed
+commits retain their own source checkpoints.
+
+This closes the bounded capture/compute/recheck contract only. Whole-store
+capture/recheck are not future Ready-cell views. Actual guard/mutex lifetimes,
+original operation budget/deadline/cancellation, PHC retention bounds, finite
+aggregate storage, selected writable/native/VFS custody, all-writer routing,
+recovery and whole-module precode/native freeze remain open. Full headless
+CLI/API/SDK lifecycle, genuine Linux proof and packaging remain unfinished.
+Project Status owns implementation truth; Phase 11 owns runtime proof. LNSAT
+remains neutral, standalone and headless with optional ordinary Rangoon adapters.
+No runtime, merge, support/certification or release authority opens.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order

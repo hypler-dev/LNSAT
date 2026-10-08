@@ -709,6 +709,167 @@ fresh exact source/direct-child review remain required. Genuine Linux positive
 and unfinished-operation proof, full native freeze, integration, packaging,
 runtime, merge, support/certification and release remain separate closed gates.
 
+## Stage-A credential capture/compute/recheck contract
+
+This bounded contract follows the accepted Stage-A source order and the anchored
+owner direction above. [Project Status](../../PROJECT_STATUS.md#stage-a-credential-capturecomputerecheck-contract)
+owns its implementation truth. It freezes an inert prerequisite in the existing
+`owner_decision_credential` component, not a selected Ready view, root guard,
+credential-intake path or complete control/native module precode. No Rust source
+is changed by this contract.
+
+### Exact component boundary
+
+The later candidate owns only
+`crates/lnsat-store/src/owner_decision_credential.rs` and its existing
+`crates/lnsat-store/src/tests/owner_decision_credential.rs`. Keep the current
+public store methods, schema 17, authentication primitives, SQL selectors,
+credential-row validator, fingerprint domain and error families unchanged.
+Do not move or duplicate those validators or change password/profile policy.
+
+Add one opaque `pub(super) CapturedCurrentOwnerCredentialV1` with private fields:
+one private material enum and zero-sized `PhantomData<Rc<()>>`. Its closed
+material alternatives are:
+
+- `Unknown`: one owned `String` copied from that actual store's existing
+  nonsecret `authentication_dummy_verifier` for every existing dummy-verifier
+  branch: a syntactically invalid reference, or a successful current-row selection
+  returning `None` for an absent or validator-accepted inactive identity. The
+  valid-reference branches end their read transaction before returning capture.
+  Do not substitute the global constant, validate it early, or accept a caller's
+  fallback. Production already initializes that policy; malformed fixture
+  fallback behavior must still follow the existing password verifier's order.
+  Selection errors keep their existing error and never become Unknown.
+  Empty/malformed credentials and unsupported disabled-owner evidence retain
+  `EvidenceDrift`.
+- `Known`: the original scope `Arc<()>`, one existing owned
+  `LocalIdentityRecordV1` and one existing `StoredLocalPasswordCredentialRow`.
+  Clone only the original scope reference; move the identity/row without
+  cloning its `Zeroizing<String>` PHC. Never allocate a replacement scope.
+
+The material enum, fields and construction stay private to this component.
+There is no lifetime parameter, store/connection/transaction/statement/view
+reference, raw pointer, password, session/CSRF secret, getter, public constructor
+or decoder. Do not add Clone, Debug, Serialize, Deref, callbacks or a worker
+interface. Compiler checks must establish the captured type is `'static` and
+neither Send nor Sync; exact field review separately establishes ownership and
+the absence of raw or borrowed handles. A static bound alone proves neither
+ownership nor memory zeroization.
+
+The capture temporarily owns an existing PHC only until computation or drop.
+The existing `Zeroizing<String>` owner remains responsible on success, mismatch,
+error and unwind. The verified snapshot retains only existing row metadata and
+fingerprint, never that PHC or the password. This contract adds no verifier-size,
+row-allocation, aggregate root-storage or cancellation-retention bound; those
+remain separate precode work. Do not call the existing row/profile validator a
+complete allocation-budget proof.
+
+The exact proposed internal signatures are:
+
+```rust
+pub(super) fn capture_current_owner_credential_v1(
+    store: &SqliteStore,
+    identity_ref: &str,
+) -> Result<CapturedCurrentOwnerCredentialV1, LocalIdentityStoreErrorV1>;
+
+pub(super) fn compute_current_owner_credential_v1(
+    captured: CapturedCurrentOwnerCredentialV1,
+    password: &str,
+) -> Result<Option<VerifiedCurrentOwnerCredentialV1>, LocalIdentityStoreErrorV1>;
+```
+
+Keep `prepare_current_owner_credential_v1(&SqliteStore, &str, &str)` as the
+existing compatibility wrapper: capture, then consume that value in compute.
+Its signature, callers and returned private snapshot remain unchanged. Capture
+takes no password; compute takes no store, selected/journal view, connection,
+transaction or caller-supplied verified evidence. These signatures are a
+contract, not a compilation claim.
+
+### Preserved order and failure semantics
+
+1. Capture first rejects any active caller transaction, including deferred,
+   with `AuthorizationRejected`, before identity or password work. An invalid
+   identity produces Unknown without adding a schema read. A syntactically valid
+   identity follows the same schema verification, original-connection read
+   transaction, existing active-row selection and complete credential validation.
+2. A successful row read must explicitly roll back its transaction before
+   returning either Unknown or Known. A selection error returns its existing
+   error and follows existing transaction-drop behavior; it must not reach
+   compute or claim an explicit successful rollback. A successful `None`
+   selection maps to Unknown with the actual-store fallback after rollback;
+   a selected active identity with an empty or malformed credential set remains
+   `EvidenceDrift`, never Unknown. Rollback failure remains
+   `PersistenceFailed` and returns no captured value. No SQL write is introduced.
+3. Compute consumes Unknown by calling the existing `verify_local_password_v1`
+   on its captured fallback, maps verifier failure to `EvidenceDrift`, ignores
+   the match boolean and returns `None`. Invalid password input remains a normal
+   mismatch before verifier validation, exactly as the existing primitive does.
+4. Compute consumes Known through the existing verifier and error mapping.
+   Preserve password verification before the Owner-role check; a valid non-owner
+   still yields no owner snapshot. Only a verified Owner produces the current
+   snapshot, moving the captured original scope and metadata and using the
+   unchanged verifier fingerprint. Moving scope capture before computation
+   supplies provenance only, not authority.
+5. Preserve `recheck_current_owner_credential_v1(&SqliteStore, &Transaction<'_>,
+&VerifiedCurrentOwnerCredentialV1)` and its algorithm unchanged: original
+   scope allocation equality, the transaction's exact connection equality with
+   the actual receiver, non-autocommit, current identity/Owner status, credential
+   ID/version/profile/creation and constant-time fingerprint comparison.
+   Do not record a store or connection address in the captured snapshot: moving
+   the same store must still work, while another instance or reopen must deny.
+
+The legacy public owner-verification wrapper still creates its later read
+transaction, verifies schema, rechecks and rolls back, mapping authorization
+rejection to generic `Rejected`. Generic credential verification, session
+issuance, rotation and offline recovery are not refactored by this candidate.
+No verified password result becomes approval, human presence or an action permit.
+
+### Future control integration remains blocking
+
+Capture and recheck still require the actual whole `SqliteStore`. This candidate
+does not let a partial anchored cell assemble that store, transfer its physical
+owners, or authenticate an arbitrary connection. Future Ready-cell extraction
+must freeze original connection/scope/schema/custody views with actual guard
+lifetimes before changing these signatures again.
+
+A selected/journal view and SQL transaction must end before Argon2id. The new
+owned capture makes a later split possible; the ordinary compatibility wrapper
+still borrows its store for the whole call and is not proof of a selected-root
+lock lifetime. Exact authority-mutex ownership, original operation budget,
+deadline/cancellation checkpoints, captured-PHC disposal, concurrent revocation
+and mandatory recheck before any later protected transaction remain unresolved
+control integration. Do not move capture or credential computation into the
+native worker, invent a long-running mutex exception, or treat this split as a
+whole-operation deadline or cleanup proof.
+
+### Exact later source acceptance
+
+Fresh independent exact component precode review precedes implementation. Keep
+all eleven existing focused C1 cases and their actual scope/connection, mutation,
+role, recovery, profile and fingerprint denials. Add focused cases for successful
+capture restoring autocommit before compute; capture producing no writes/session
+activity; capture/compute followed by wrong-store and wrong-connection rejection;
+credential rotation/recovery/substitution between capture and compute followed
+by denial at recheck; original scope surviving a store move but denying reopen;
+and malformed captured fallback preserving bounded versus invalid-password
+error ordering for invalid references and valid absent/validator-accepted
+inactive non-owner identities, including successful rollback for valid lookups.
+Preserve disabled-owner/empty/malformed evidence as `EvidenceDrift` rather than
+adding a dummy-verifier fallback. Compile-time checks and field review cover owned lifetime,
+non-copying, non-printing, non-serialization, non-dereference and thread bounds.
+Do not add callbacks or fake Argon results merely to instrument order. Source
+inspection and ownership checks establish the compute signature carries no SQL
+owner; ordinary tests do not independently prove memory zeroization.
+
+The later two-file candidate requires focused C1 tests, strict Rust format/lint,
+full `npm run check`, public/docs/inventory/history/diff gates and fresh exact
+source/direct-child review. This documentation contract uses proportional docs
+validation. Selected writable admission, root/storage/native handoffs, VFS/close
+witnesses, complete module precode/native freeze, genuine Linux evidence,
+bootstrap/control/CLI/API/SDK integration and packaging remain unfinished.
+Project Status owns source truth; Phase 11 owns runtime proof. No runtime,
+merge, support/certification or release gate opens.
+
 ## Stage-A private operation identity candidate
 
 This narrow inert prerequisite follows the independently reviewed private control

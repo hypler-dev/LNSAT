@@ -154,6 +154,9 @@ subsystem or proposal.
   Its [journal owner/view extraction candidate](architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-journal-owner-view-extraction-candidate)
   preserves the existing selected-store wrapper while separating owned journal
   state from temporary access; root/writable integration and native freeze remain open.
+  Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
+  separates an owned current-row capture from password computation while retaining
+  the actual store/scope/connection recheck; source extraction and control integration remain open.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.
