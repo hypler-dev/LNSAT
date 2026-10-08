@@ -288,6 +288,99 @@ support profile makes it required.
    publication, and stable/latest promotion. Publication never follows from a
    source merge or candidate build automatically.
 
+## Professional testing strategy
+
+Owner-accepted direction: build reusable testing infrastructure alongside each
+feature, with longer adversarial campaigns at feature completion and release
+freeze. This extends the existing [Phase 13 gate](#5-freeze-a-release-candidate)
+and preserves the required product/runtime order. [Project Status](PROJECT_STATUS.md#professional-testing-program)
+owns implementation truth; this section owns the testing plan.
+
+| Stage                      | Required evidence within the selected scope                                                                                                                                                                                |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Each change                | Focused unit/contract tests, positive and negative controls, relevant deterministic properties and replay of retained regression cases. Run the existing full source suite for meaningful source changes.                  |
+| Future automated fuzz lane | Bounded coverage-guided smoke on affected targets and longer scheduled campaigns, using reviewed local corpora and explicit CPU, memory, input-size and elapsed-time limits. Scheduling is a future implementation packet. |
+| Feature completion         | Longer campaigns, model-based state-machine sequences, concurrent invalidating writers, crash/restart and injected persistence or transport failures where applicable.                                                     |
+| Target qualification       | Exact selected OS/distribution, architecture, kernel, enabled LSM policy, filesystem and package rows in separately authorized disposable environments. Source fuzzing cannot qualify a host or package.                   |
+| Release candidate          | Exact source/artifact identities, upgrade/rollback and recovery evidence, unresolved-finding disposition and fresh independent adversarial review, under existing Phase 13/14 gates.                                       |
+
+### Security properties and test oracles
+
+A harness must define expected behavior before generating inputs. Parsing without
+crashing is one property, not authorization proof. Use independently specified
+models or reference vectors where practical; avoid an oracle that repeats the
+implementation's logic. Include successful controls so rejection cannot pass by
+denying every request.
+
+Required properties follow each component's accepted contract: changed represented
+actions invalidate stale approval evidence; one-use authority cannot create a
+second consequence; cancellation/revocation and use follow the defined admission
+ordering; stale or unavailable required context denies authorization; and an
+uncertain outcome cannot manufacture confirmed non-execution or an unsafe retry.
+Actual-effect custody and bypass coverage require their own resource/runtime
+proof. Cumulative quota properties apply only after a separately accepted feature
+contract defines atomic accounting, concurrency, restart and uncertain settlement.
+
+Input fuzzing, state-machine testing and concurrency testing are distinct families.
+Stateful models should generate valid and invalid request/approve/redeem/cancel/
+revoke/reopen sequences and compare durable outcomes with the accepted state
+machine. Small concurrency models can explore ordering; real database/process
+races and crash recovery still need dedicated integration fixtures. Sanitizers
+supplement semantic assertions and do not establish authorization correctness.
+
+### First coverage-guided harness packet
+
+The first candidate uses [cargo-fuzz](https://github.com/rust-fuzz/cargo-fuzz) and
+[libFuzzer](https://llvm.org/docs/LibFuzzer.html) for the canonical execution-request
+parser and stale derived-evidence validation. Start with pure contract code and
+reviewed fixture inputs; no adapter dispatch, credentials, network or live service.
+Accepted parser input must round-trip canonical bytes and verify its derived
+hashes; stale-chain rejection is a separate oracle. Define raw UTF-8 decoding,
+maximum input size and rejection behavior explicitly instead of inheriting the
+current deterministic smoke's lossy string conversion.
+
+Proposed ownership is limited to an isolated `fuzz/` harness workspace, its
+independently pinned manifest/lockfile/toolchain, the execution-request target
+and reviewed seed corpus, plus a bounded runner and runner tests under `scripts/`.
+The implementation packet must enumerate exact files before editing. Production
+contracts, root dependency versions, runtime authority and CI deployment are
+outside that first slice. Any required workspace or workflow integration must be
+made explicit and independently reviewed before broadening ownership.
+
+Pin cargo-fuzz, a dated nightly compiler, sanitizer configuration and runner
+identity separately from the normal Rust 1.97.1 source lane. Verify tool sources,
+checksums/lockfiles and dependency/license evidence; use user-local or disposable
+roots without changing the operator's default compiler. The runner must reject
+missing or mismatched tools and unsupported environments, disable implicit
+installation and fetching during execution, and enforce named resource limits.
+Installation/provisioning and CI activation remain separate named packets.
+
+First-slice acceptance requires positive, malformed, noncanonical and stale-evidence
+controls; deterministic corpus replay; reproducible seed/artifact handling;
+timeout/memory/input-limit failure tests; no ambient credential or network use;
+and an explicit report of reached paths and coverage gaps. Validate the owned
+runner/target and corpus, run `npm run check` for meaningful source changes, run
+existing docs/public/inventory/history and diff checks, and obtain fresh independent
+source/direct-child review. This documentation introduces no harness or scheduled
+job and does not close the Phase 13 fuzz gate.
+
+### Failure handling and retained evidence
+
+For each run, retain the source commit/tree, target and oracle versions, runner
+and toolchain identities, dependency locks, corpus hashes, seeds, sanitizer mode,
+resource limits, elapsed time, termination reason, coverage report/gaps and exact
+result. Keep only reviewed fixture data in corpora and crash artifacts; secrets,
+operator data and production inputs are not test seeds.
+
+Each failure is minimized, reproduced at an exact revision, triaged by an owner,
+and fixed with a permanent regression or recorded with a justified disposition.
+Regressions replay on subsequent relevant changes; deduplicating a corpus must
+preserve known failures. Record inconclusive, unsupported, interrupted and
+infrastructure-failed runs honestly. Input count, campaign duration or a coverage
+percentage alone is not a completion claim. Release assessment requires no
+untriaged relevant failures and resolution of required findings; green tests do
+not grant merge, runtime, package support, certification or publication authority.
+
 ## End-to-End Engine Delivery Milestones
 
 The next product outcome is one complete protected workflow:

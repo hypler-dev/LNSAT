@@ -36,6 +36,24 @@ The [V1 command and contract reconciliation](#v1-command-and-contract-completion
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
 
+### Professional testing program
+
+Owner-accepted plan; coverage-guided implementation remains planned. Existing
+source tests are narrower baseline evidence; this plan does not add source tests. This documentation packet adds no cargo-fuzz harness,
+nightly/sanitizer runner, retained coverage-guided corpus, CI schedule or executed
+campaign.
+
+The [professional testing strategy](PRODUCT_BUILD_SEQUENCE.md#professional-testing-strategy)
+integrates per-change regression checks, future bounded fuzz campaigns, state-
+machine/concurrency/crash-recovery tests, qualified target rows and independent
+adversarial review with existing Phase 13/14 gates. Its first candidate is a pure
+execution-request canonical-parser and stale-evidence harness, with explicit
+oracles, pinned tools, resource limits and reproducible failure artifacts.
+Installation, automation activation and real native/runtime qualification remain
+separate named packets. No new runtime, support/certification or release claim
+follows. Project Status retains implementation truth; the Phase 11 operator
+packet retains real-runtime proof ownership.
+
 ## Active Security Remediation
 
 The owner accepted the
