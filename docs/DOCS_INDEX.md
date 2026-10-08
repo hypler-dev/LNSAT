@@ -148,6 +148,9 @@ subsystem or proposal.
   Its [original-budget/job binding contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-original-budget-and-job-binding-contract)
   specifies shared opaque identity, one original budget/deadline and separate
   invalidated-operation cleanup; root/storage/native implementation stays open.
+  Its [anchored owner storage direction](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-anchored-owner-storage-and-borrowed-access)
+  separates retained partial owners from guarded transient helper views; exact
+  layouts, native handoffs, VFS/close witnesses and implementation remain open.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.

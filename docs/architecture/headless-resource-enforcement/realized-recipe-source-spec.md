@@ -558,6 +558,157 @@ evidence. Focused checks, full `npm run check` for meaningful source changes,
 and fresh exact source/direct-child review remain mandatory. This documentation
 adds no runtime, merge, support/certification, packaging or release authority.
 
+## Stage-A anchored owner storage and borrowed access
+
+This controller-selected ownership refinement follows the original-budget/job
+contract. [Project Status](../../PROJECT_STATUS.md#stage-a-anchored-owner-storage-contract)
+owns source truth. The following layout describes future private responsibilities,
+not implemented Rust types, physical admission or complete module precode approval.
+
+### One retained owner cell, without a self-borrow
+
+Select one root-owned `SelectedOwnerCell` inside the same anchored
+`Mutex<StoreAuthority>`. Its storage persists through Unadmitted, Admitting,
+Ready, Closing, Closed and Quarantined dispositions. Change bookkeeping in place;
+do not promote custody into a caller-owned wrapper, replace the cell, reconstruct
+an ordinary store or move it to a worker. The existing allocator remains in
+`StoreAuthority` for the root's entire lifetime. The static root anchor remains
+established before custody I/O and is never taken or replaced.
+
+Current `JournalCustody<'a>` embeds `SelectedPreparationParent<'a>`, which holds
+`&'a mut SqliteStore`. It cannot be stored alongside the owned store it borrows
+in this proposed root, nor kept alive while a second mutable store operation
+runs. Select independently owned retained journal state plus short guarded
+borrows for future integration. Do not use a self-referential struct, leaked
+mutable reference, lifetime transmute, raw-pointer getter or `Pin` label as a
+substitute for a compiler-valid ownership contract. Existing selected inspection
+and journal candidates remain unchanged until exact private helper reuse is
+independently reviewed.
+
+The cell's responsibilities are fixed as follows. `Option` means acquisition
+may not have returned an owner; it never proves absence of native effects or
+successful closure. Field labels below are not approved constructors or witness
+types. Their complete Rust layout and combined bound still require precode.
+
+| Retained responsibility | Future storage and invariants                                                                                                                                                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Selected binding        | One held independently confirmed owner/path binding; preserve B3B/B6 canonical UTF-8 selected-path bound of 4,096 bytes and exact derived names. Freeze derived-name/storage bounds before construction. No candidate declaration, filename-only mutex or installed UUID substitutes for physical selection. |
+| Parent custody          | At most one original `File` owner returned for the selected parent, retained before subsequent fallible verification. Actual native ancestry/mount/ACL association remains mandatory.                                                                                                                        |
+| Exclusive lease         | At most one original lease `File`, retained before SQLite open. It remains held through admission failure, quarantine, operation retirement and connection/VFS cleanup. Ordinary daemon lease is not selected custody.                                                                                       |
+| SQLite connection       | At most one returned `Connection` owner, retained in the cell before later configuration/native/schema/integrity checks. No second connection, filename reopen, alias descriptor or ordinary-store conversion.                                                                                               |
+| Credential scope        | One original `OwnerDecisionCredentialScopeV1` allocation for the selected connection lifetime. Initialize private inert scope before custody I/O; never replace it, copy a verified snapshot into another scope or authenticate row equality without exact connection binding.                               |
+| Authentication fallback | Existing nonsecret dummy-verifier policy only, prepared before custody I/O; no password, verifier fetched from a user, session/CSRF secret or credential-intake buffer becomes long-lived root storage. Preserve zeroizing transient credential owners.                                                      |
+| Journal custody         | At most one held preparation-root directory owner plus bounded name/owner/poison/baseline state, without a borrow of the cell or `SqliteStore`. Reuse existing root's 64-directory/64-revision/16-KiB-record/1-MiB bounds; exact aggregate baseline/name memory bounds remain required.                      |
+| Operation               | The one registered original budget owner and shared opaque identity, optional actual begin/job association and finite disposition under the prior contract. Native request/result/root-lease storage remains in its reviewed hierarchy. Store custody never transfers with these references.                 |
+| Cleanup bookkeeping     | Finite acquisition/close dispositions distinct from actual witnesses. Unknown effects or close outcome preserves quarantine and remaining owners; empty slots, Rust Drop, elapsed time and SQL success are not cleanup proof.                                                                                |
+
+Do not assemble the cell into the current mandatory-field `SqliteStore` to reuse
+methods. That would require transferring owners out of retained storage and
+would still leave the journal borrow problem. Current public ordinary-store
+constructors and read-only schema-17 inspection retain their existing behavior.
+The selected headless path remains private, physically admitted and separately
+schema-18 gated. This direction creates no public partial-storage API.
+
+### Fixed borrowed access, with actual scope and connection
+
+Future control-side helpers take short private views created only from a
+matching Ready cell while the actual authority mutex guard remains held.
+A selected view borrows the original connection, physical custody and original
+credential scope from that cell; a journal access view additionally borrows
+retained journal state. Neither view owns handles or contains another store
+owner. Fields and constructors remain inside the trusted boundary, with no
+Clone, Debug, serialization, public connection/descriptor getter, `Deref`,
+callback or extensible SQL interface. The views must be compiler-proven
+`!Send`/`!Sync`, cannot outlive their guard/cell, and cannot escape to a native
+worker. No trait or compilation proof is supplied by this documentation.
+
+Reuse the existing algorithms through exact private borrowed-interface changes,
+not parallel validators. Bootstrap's lower checks already take `&Connection`;
+that signature alone authenticates neither selected custody nor headless schema.
+Selected-parent/journal helpers currently require the whole mutable store.
+Credential prepare/recheck currently require `&SqliteStore`, and recheck compares
+both the original scope allocation and the transaction's exact connection.
+Future internal extraction must preserve both comparisons, row/version/profile/
+verifier checks, unknown-user handling and zeroization. An arbitrary connection,
+copied scope, identical credential rows or a read-only inspection is insufficient.
+
+Password verification still occurs after its read transaction is explicitly
+ended and before the later immediate authority transaction. Do not hold a SQL
+transaction or selected/journal view across Argon2id. A bounded inert credential
+snapshot may survive that computation; the later guarded selected transaction
+rechecks the actual original scope and connection. Exact authority-mutex lifetime,
+cancellation and snapshot retention during credential computation remain precode
+items; this text does not grant a long-running mutex exception.
+
+A transaction/statement borrows only the cell's original connection and stays
+inside its fixed control operation. No transaction owner crosses into a ticket,
+worker or journal field. Existing B2/C1 and schema predicates must be routed
+through these views under the same mutex; public methods are not automatically
+covered. Exact helper signatures, module visibility, ordinary/selected schema
+routing and full writer/constructor inventory remain blocking before source.
+
+### Partial admission and close obligations
+
+The selected admission attempt first reserves the root's Admitting disposition.
+Before each next fallible step, every actual returned parent/lease/connection/
+journal owner must already occupy its designated anchored slot. Any failure or
+unwind after custody I/O quarantines that attempt and retains available owners;
+no local supervisor destructor, wrapper Drop, slot reset, automatic admission
+retry or replacement connection may release them. A native constructor that
+returns no owner can still have unknown effects; retain the lease and deny
+reopen rather than claim a nonexistent returned connection remains open.
+
+This is a required storage invariant, not an implemented acquisition protocol.
+The exact source packet must show every native-return-to-slot handoff, all
+fallible/allocating/unwinding boundaries and how bounded nonwaiting coordination
+avoids waiting for a native observation worker under the authority mutex.
+It must prove retained custody when acquisition itself is unfinished. This
+refinement adds no exception to that rule or the separate retained release-frame
+critical section. Missing native/VFS interfaces cannot be hidden by claiming
+that an `Option<Connection>` or static anchor solves the I/O choreography.
+
+Ready requires complete B6 physical/writable/VFS/schema admission, every required
+owner present, exact native/current association and no poison or unknown effect.
+It grants no installation, configuration approval or action authority. Admission
+failure preserves quarantine even if no operation was dispatched. Installed
+identifiers are still absent before bootstrap; no field fabricates them.
+
+Before explicit close, admission is permanently shut, the operation/frame slots
+are quiescent and native, durable and probe cleanup are separately verified.
+Drop all statements and resolve transactions before the sole connection-close
+attempt. Track CloseInProgress separately from an empty connection slot.
+If `Connection::close` returns its owner on error, restore it directly into
+anchored quarantine before any further fallible work. On unwind or an unknown
+native close outcome, do not assert that the connection is held or closed;
+retain remaining custody and deny reopen. SQLite success still requires the
+actual pinned VFS/OS cleanup witness before journal/parent/lease release.
+Explicit descriptor-close uncertainty never authorizes retrying a possibly reused
+raw descriptor. Exact non-unwinding owner placement, close accounting and final
+lease release remain unsolved implementation/precode gates.
+
+### Next exact source boundary and validators
+
+This closes retained-cell and transient-view direction only. The next bounded
+packet must freeze the private helper/owner layouts and signatures against
+actual source, allocation and I/O handoffs, partial-state/poison handling,
+finite storage and trait/lifetime tests. Include pinned writable/VFS witnesses,
+all-writer routes, actual native module placement/dependencies, frame ownership,
+panic-safe cleanup publication, durable recovery and complete entry/binding
+fields/pins before claiming whole-module precode. No cell/view implementation,
+writable initializer or successful owner admission exists in this packet.
+
+Later source tests must cover each returned-owner/fallible boundary, acquired
+lease plus failed/unfinished open, admission unwind with retained owners,
+forbidden self-borrow/view escape, guard and transaction lifetimes, unchanged
+ordinary/read-only behavior, original-scope/wrong-connection substitution,
+credential change during computation, journal poison/bounds, unknown slot/close
+outcomes, returned connection on close error, no lease release before VFS/native/
+durable/probe/frame cleanup, duplicate admission and permanent shutdown/poison.
+Focused validation and full `npm run check` for meaningful source changes plus
+fresh exact source/direct-child review remain required. Genuine Linux positive
+and unfinished-operation proof, full native freeze, integration, packaging,
+runtime, merge, support/certification and release remain separate closed gates.
+
 ## Stage-A private operation identity candidate
 
 This narrow inert prerequisite follows the independently reviewed private control

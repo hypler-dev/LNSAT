@@ -2701,6 +2701,49 @@ unfinished gates. Project Status owns source truth; Phase 11 owns runtime proof.
 LNSAT remains neutral, standalone and headless with ordinary optional Rangoon
 adapters. No runtime/merge/support/certification/release authority is opened.
 
+### Stage-A anchored owner storage contract
+
+Canonical work record: this subsection under accepted Stage-A source order and
+the private control API/original-budget contracts. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-anchored-owner-storage-and-borrowed-access)
+selects one retained owner cell inside the anchored actual authority mutex,
+independently owned journal state and short private guarded helper views.
+Current `JournalCustody` holds a mutable whole-store borrow; storing it beside
+its owned store or allowing another mutable store operation would require an
+invalid self-borrow. The direction avoids that layout without changing source.
+
+Exact source reads show lower bootstrap checks accept a connection borrow,
+while selected parent/journal and C1 helpers require the actual `SqliteStore`.
+C1 also authenticates both original credential scope and exact transaction
+connection. Future private helper extraction must reuse algorithms and preserve
+those predicates; a generic connection view or matching rows cannot replace
+them. Public ordinary stores and selected schema-17 read-only inspection remain
+unchanged. No selected writable wrapper, view, journal refactor or root source
+is implemented. PHR-0075 tracks this documentation refinement and fresh exact
+source/direct-child review; prior checkpoints retain their own scopes.
+
+The contract requires every returned physical owner to enter anchored partial
+storage before subsequent fallible checks, and distinguishes no returned owner,
+unfinished acquisition, CloseInProgress and actual close confirmation. Returned
+connection-on-close-error must remain retained; unknown close cannot be retried
+or counted as VFS cleanup. This is not an implemented handoff/close protocol.
+No authority-mutex exception, destructor-based proof, reopen, reset or automatic
+retry is introduced. Selected Ready remains a physical gate, never approval.
+
+This closes retained-cell/transient-view ownership direction only. Exact Rust
+layouts/signatures, combined finite storage and compiler lifetime/trait proofs,
+allocation/native handoffs, unfinished acquisition, writable/VFS witnesses,
+all-writer/constructor routing, trusted native placement/dependencies, credential
+computation mutex/cancellation lifetime, frame ownership, panic-safe cleanup,
+durable recovery, complete entry/binding fields/pins and whole-module precode
+remain open. Next bounded work freezes exact private interfaces and acquisition/
+retention choreography against actual source before adding authority code.
+Genuine Linux positive/unfinished-operation evidence, native freeze, full
+bootstrap/control/CLI/API/SDK integration and selected packaging remain separate
+unfinished gates. Project Status owns source truth; Phase 11 owns runtime proof.
+LNSAT remains neutral, standalone and headless; Rangoon uses optional ordinary
+adapters. No runtime/merge/support/certification/release authority is opened.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order
