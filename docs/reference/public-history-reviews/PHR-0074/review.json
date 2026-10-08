@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0074-independent-implementation-review-48d88582",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-original-budget-job-contract"],
+  "base_revision": "40c0c05130ec7ba39c66b127d2deabafa8fd065c",
+  "reviewed_revision": "48d88582cc874c13e2941546a556111b4cc72d4b",
+  "reviewed_tree_oid": "33e1e4bd2cdc95e88d196d504300abfdd588daeb",
+  "diff_sha256": "sha256:7c6fc1bcadc5eb0b40de4287f6a941a11538d3b4adfaaf0d1dd3e9438897f1ef",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:e7f99bd2a7c673ac7b79f029405c24dcab32b86892c14e47bed0019cf1205e11"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:f1b4bd65930427919f6d04c84f2a4468a05d8e7c1eb2cca9e7af7ff4925cbe0b"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:f88aac7b3768d50b4701d25b8d15240eef375a7ce1dddb9f71955b28ede3cc27"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:c335516fc899181f0255f37de39bc649bf9fa6d6e233b5cc5cc903c3efe4b12b"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:5e4e7df7147bd4203f2d9af4c0541a0860e216352e8680b92a4af62ac57c5b07"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/patched_dependency_bypass_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the exact five-file documentation source and immutable source commit. Parent, tree, canonical full-index diff and every protected blob independently match. Contract binds private shared references to one issued opaque OperationIdentity, original budget allocation and absolute deadline, with exact token/kind/root-begin association for five closed jobs. Existing Artifact/Root budget bindings are preserved; Procfs currently has no ArtifactBudgetState and requires future binding. Existing orderly RootManifestRetire starts live and invalidates under the original deadline; whole-operation cleanup after invalidation is separate and cannot issue new observation/budget/deadline or infer cleanup from an ineligible receipt. No root/source relocation, cleanup producer or executable behavior is implemented. Six focused gates pass at the frozen source tree: docs direction, public readiness, legacy inventory, public-history review, owned formatting and diff. Full npm check is not rerun for documentation only. Root/partial-owner layouts, finite schedules/payload/ack storage, trusted moves/dependencies, compiler proofs, writable/VFS witnesses, writer/frame ownership, panic-safe cleanup, durable recovery, complete entry/binding fields/pins and whole-module precode remain open. Exact source review and scoped validator receipts remain local advisory evidence under Project Status. PHR-0074 source is pending; exact direct-child metadata review and final committed history replay remain separate obligations. No genuine Linux positive/unfinished-operation proof, native freeze, integration, runtime, supported packaging or V1 completion is claimed. LNSAT stays neutral, standalone and headless; Rangoon uses ordinary optional adapters. No Docker, host/ACL mutation, target pressure, credential intake, tool install, external GLM transfer, push, merge/main mutation, release/publication/deploy or production mutation occurred."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

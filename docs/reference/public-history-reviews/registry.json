@@ -602,7 +602,7 @@
       "review_subject_ids": ["headless-original-budget-job-contract"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0074/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
