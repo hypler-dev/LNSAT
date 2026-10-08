@@ -2744,6 +2744,37 @@ unfinished gates. Project Status owns source truth; Phase 11 owns runtime proof.
 LNSAT remains neutral, standalone and headless; Rangoon uses optional ordinary
 adapters. No runtime/merge/support/certification/release authority is opened.
 
+### Stage-A journal owner/view extraction candidate
+
+Canonical work record: this subsection under accepted Stage-A source order and
+the anchored owner storage direction. The [existing preparation/store specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-journal-owner-view-extraction-candidate)
+freezes a bounded two-file private extraction: independently owned journal
+state plus temporary access, with the existing custody wrapper retaining its
+exclusive actual selected-store borrow. Fresh independent exact module precode
+review passed before implementation. The two-file private source extraction is
+implemented: owned state retains existing files and baseline/poison, and each
+legacy operation creates one temporary access. Dependency-free compiler tests
+check the finite-lifetime/negative-trait boundaries; exact field review separately
+checks ownership. PHR-0076 tracks the bounded source/direct-child validation and
+review checkpoint. No new public API, writable store, Ready-cell view, root guard,
+constructor or active product consumer is added.
+
+Preserve original parent/connection/lease checks, bounds, stable scans,
+append/flush/readback order, baseline and poison semantics. Owned state must
+hold no store borrow; temporary access must remain private and neither Send nor
+Sync, without copy, printing, serialization or handle getters. Source validation
+requires focused existing custody/codec/selected-store/C1 tests, ownership and
+trait checks, strict format/lint, full `npm run check`, public/docs/inventory/
+history/diff gates and fresh exact source/direct-child review. Linux positives
+remain distinct from local macOS compilation and platform denial.
+
+Exact writable-parent/authority-guard interfaces, allocation/native-return
+retention, unfinished acquisition, writable/VFS witnesses, all-writer routing,
+frame ownership, panic-safe cleanup, recovery, genuine Linux evidence and whole
+module precode/native freeze remain open. Project Status owns implementation
+truth; Phase 11 owns runtime proof. LNSAT remains neutral and standalone;
+Rangoon uses optional ordinary adapters. No runtime, merge or release gate opens.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order

@@ -151,6 +151,9 @@ subsystem or proposal.
   Its [anchored owner storage direction](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-anchored-owner-storage-and-borrowed-access)
   separates retained partial owners from guarded transient helper views; exact
   layouts, native handoffs, VFS/close witnesses and implementation remain open.
+  Its [journal owner/view extraction candidate](architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-journal-owner-view-extraction-candidate)
+  preserves the existing selected-store wrapper while separating owned journal
+  state from temporary access; root/writable integration and native freeze remain open.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.

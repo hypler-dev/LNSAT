@@ -611,6 +611,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0075/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0076",
+      "subject_id": "headless-journal-owner-view-source",
+      "review_subject_ids": ["headless-journal-owner-view-source"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0076/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }
