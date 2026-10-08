@@ -51,6 +51,53 @@ global login-limiter lockout findings. It withdraws Unix bearer reads before the
 first supported release, preserves browser header-pair transport, and still
 requires focused validation and independent review before release judgment.
 
+### Standalone Gateway adversarial requirements
+
+Canonical work record: this subsection. The owner accepted applying the relevant
+adversarial boundary analysis to LNSAT as a standalone Gateway. The
+[threat model requirements](architecture/THREAT_MODEL.md#standalone-gateway-admission-and-effect-boundary)
+refine existing ADR-0008 scope and the accepted enforcement/authorization
+lifecycle. PHR-0078 tracks this documentation reconciliation. It creates no
+new execution authority, runtime implementation or dependency on Rangoon.
+
+Existing source foundations bind the represented action arguments, target,
+configuration/executable digests, adapter, audience and approval chain; finite
+per-packet budgets, source-local approval authentication, revocation denials and
+inert durable admission rechecks are reusable evidence. Digest binding alone
+does not prove custody of the actual side effect. The selected writable-store,
+native resource identity, all-writer admission/use and full native freeze gates
+remain unfinished under their existing canonical records. Experimental served
+fake-runtime evidence remains separate from the Phase 11 real-runtime packet;
+withdrawn Unix bearer interfaces remain withdrawn.
+
+The reviewed packet-budget and approval/admission spans do not establish
+cross-operation cumulative effect accounting. No whole-repository absence claim
+or implemented quota feature follows. A later selected profile that claims
+cumulative bounds needs an exact independently reviewed accounting contract,
+atomic reservations, concurrent/restart and ambiguous-outcome proof. Protected
+resource exclusions and narrow action scopes remain distinct policy choices.
+Required context facts need configured identity, scope and freshness checks;
+advisory telemetry and an external provider's allow decision cannot grant local
+approval or substitute for durable receipts. This packet implements no context
+provider, telemetry pipeline or synchronization service.
+
+Containment claims also require qualified coverage against alternate direct
+target access. Local v1 still trusts the host owner, daemon and OS administration
+and does not resist compromised root or a malicious owner. Optional assurance
+against a compromised requester workstation needs separately qualified trusted
+approval presentation and presence; a signature or OS encryption alone is
+insufficient. Those enterprise claims are unimplemented by this packet.
+
+The [build sequence](PRODUCT_BUILD_SEQUENCE.md#4-prove-the-integrated-workflow)
+keeps current source order: finish existing custody/admission, revocation and
+reconciliation work before selecting additional aggregate-accounting or context
+integration packets. Standalone headless workflows use the same engine contracts
+with integrations absent. Per-command implementation truth remains in
+[V1 command gates](#v1-command-and-contract-completion-gates); the
+[Phase 11 operator packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+alone owns the existing real-runtime proof gate. Design acceptance, reviewed
+source, merge, runtime, supported targets and release remain separate.
+
 ### Scoped dependency maintenance candidate
 
 Owner-authorized development restoration uses an isolated project cache, the

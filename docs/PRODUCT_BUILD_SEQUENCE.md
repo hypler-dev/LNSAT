@@ -378,6 +378,24 @@ mutation-management integration. Package publication retains its separate gate.
 
 ### 4. Prove the integrated workflow
 
+Apply the accepted
+[standalone Gateway requirements](PROJECT_STATUS.md#standalone-gateway-adversarial-requirements)
+within the existing lifecycle. Complete execution-bound input/resource custody,
+all-writer admission/use, alternate-path coverage and stop/revocation race
+semantics before claiming the selected profile contains actual effects. A digest
+recheck alone cannot close a mutable-resource race. Preserve current inert
+candidate order and the full native freeze gate; this refinement does not
+authorize runtime integration with partial evidence.
+
+For a selected profile that claims cumulative effect bounds or depends on
+external context facts, first freeze its exact accounting or context contract
+and negative evidence. Per-packet budgets do not prove cross-operation quotas;
+advisory telemetry and provider allow results do not grant approval. Keep those
+additional packets bounded and subordinate to the existing custody/admission
+blockers. Neither a new synchronization service nor an online consumer app is
+a prerequisite for standalone operation. Implementation status remains owned
+by Project Status; the threat model supplies the detailed security requirements.
+
 Connect the completed setup/control/enforcement lifecycle to the existing
 request, distinct-human approval, one-use claim, bounded adapter, receipt and
 reconciliation chain. Preserve the source proof in
