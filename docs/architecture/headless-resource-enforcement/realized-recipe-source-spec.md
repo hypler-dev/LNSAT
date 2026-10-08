@@ -410,6 +410,154 @@ is implemented by this document. Genuine Linux positive/unfinished-operation
 proof, full native freeze, integration and selected packaging remain later,
 separate gates.
 
+## Stage-A original-budget and job binding contract
+
+This controller-selected refinement follows the private control API and inert
+identity candidate. [Project Status](../../PROJECT_STATUS.md#stage-a-original-budget-and-job-binding-contract)
+owns implementation truth. It fixes association and cleanup semantics before
+control source is added; it does not approve complete root storage, native
+relocation, a budget implementation or the whole-module precode gate.
+
+### One registration, shared opaque identity
+
+The future anchored root retains its one `OperationIdentityAllocator` under the
+actual authority mutex for its entire lifetime. At successful `try_begin`, issue
+one identity, retain it in a private `Arc<OperationIdentity>` and register that
+reference together with the original observation budget. The registered record,
+non-Clone ticket and trusted native job envelope hold internal references to
+that same issued identity. `Arc::clone` shares the existing object; it does not
+issue another identity or require `OperationIdentity: Clone`. Identity comparison
+still uses `same_operation` and the original budget uses `Arc::ptr_eq`.
+
+Ticket and worker fields cannot borrow a mutex guard or a replaceable record.
+They hold these private owned references, never store/lease custody. Retaining
+them after cancellation keeps identity/budget allocations alive without making
+either valid. Their constructors remain within the trusted boundary and obtain
+references from the matching root registration, not from caller-supplied IDs or
+budget values. No raw ordinal, address, digest or serialized deadline is an
+association witness. Exact reference-count ceilings and Send/Sync/lifetime
+proofs for all participating owners remain part of the storage precode gate;
+the inert identity candidate's two trait checks do not establish them.
+
+Before native visibility, allocation or registration failure closes admission
+conservatively and preserves already held custody; it never refunds an issued
+ordinal. Ordinary Rust allocation failure has no promised graceful recovery.
+Identity exhaustion permanently quarantines the anchored root. No replacement
+allocator, identity, root or budget is permitted for a pending or uncertain
+operation. A later independently admitted operation needs verified whole-operation
+retirement and admissible root/lane state, not a caller retry.
+
+### Original observation budget remains one allocation
+
+Reuse the existing private `ArtifactReadBudget` / `ArtifactBudgetState` semantics
+through the separately reviewed trusted-boundary move; do not create a parallel
+budget codec or copy mutable state into a new owner. Current definitions live
+in `lnsatd`'s private artifact module and are not available to `lnsat-store`.
+The future root owns one non-Clone budget owner and registers its existing
+shared allocation before dispatch. Create it once before selected observation
+construction/acquisition, using the earlier of observation start plus five
+seconds and the enclosing uninterrupted preparation/startup deadline. Record
+that absolute deadline once; every observational job uses it exactly, including
+Procfs. Per-job admission cannot call `begin`, refresh five seconds or reset
+manifest/byte accounting. This does not extend observation time to cover arbitrary
+preparation work or replace other accepted preparation/startup limits.
+
+Existing shared state contains an immutable deadline, checked all-content
+counter, artifact/OCI counter, sticky invalid bit and one-use manifest claim.
+Only the single original worker advances read counters. Preserve existing
+purpose bounds: one root manifest at most 64 KiB, each OCI body at most 1 MiB,
+each artifact snapshot at most 256 MiB, and 1 GiB aggregate artifact/OCI reads.
+The all-content counter accounts successful actual content bytes with checked
+arithmetic; it is not another 1 GiB cap. Metadata/ACL/Procfs calls require their
+own existing finite call/object/body schedules under the same deadline; do not
+charge their bytes against artifact/OCI allowance or treat that allowance as a
+whole-worker heap, syscall or pressure bound. Complete combined call/byte/handle
+schedules and bounded result storage remain blocking before worker integration.
+
+Successful partial and late content returns charge actual returned bytes before
+post-call acceptance/error handling. Invalidity never clears and no counter or
+manifest claim refunds on Busy, cancellation or failure. Busy before registration
+publishes nothing; once a one-use claim or token is assigned, failure follows
+that candidate's sticky denial/cleanup rules. No blanket Busy retry undoes a
+manifest claim. Stop, cancel, armed ticket drop, coordinator/worker unwind,
+expiry and association uncertainty invalidate the registered allocation.
+
+### Closed native association envelope
+
+Future control dispatch uses one privately constructed envelope containing the
+registered opaque operation reference, original budget reference, its exact
+absolute observation deadline, assigned nonzero native job token and closed
+request payload. Root-related payloads additionally retain the exact original
+root-begin identity when assigned. Before dispatch, result take and observation
+use, require operation equality, original budget allocation equality, exact
+job token/kind, deadline equality and any assigned root-begin match. Optional
+begin/job identities are allowed only in the producer's proven pre-dispatch
+case; they are never matching wildcards. Admission/publication ordering and
+actual authority mutex → nonwaiting native-slot lock order remain unchanged.
+
+| Native job            | Current disconnected source                                                                                                                  | Required future root binding                                                                                                                                                                                                                                             |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Procfs`              | Request carries held resource/proc-root references and a deadline; `Request::budget()` returns `None`                                        | Add the registered original budget and opaque operation association before publication; check sticky validity and exact deadline at fixed pre/post-call checkpoints and before consuming the bounded result. Existing descriptor/namespace comparisons remain mandatory. |
+| `ArtifactRead`        | Request already carries shared artifact budget and exact deadline; native checkpoints and byte charging exist                                | Reuse that same allocation and checks; add the registered operation association and match token/kind before result use. Existing checks do not establish selected-store/root authority.                                                                                  |
+| `RootManifestBegin`   | Shared budget, one-use manifest claim and retained begin/job identities exist                                                                | Register the same operation before publication; bind any returned begin identity to that registration. No second manifest claim or body reread under an old commitment.                                                                                                  |
+| `RootManifestRecheck` | Requires retained begin, same budget/deadline and current held lease                                                                         | Add exact operation association; retain existing begin, budget, native custody and deadline checks. Successful recheck remains unverified observation data.                                                                                                              |
+| `RootManifestRetire`  | Initiated while the original budget is live, then invalidates it; retirement receipt still requires original deadline and matching lease/job | Preserve this orderly candidate path. Its job receipt is not whole-operation acknowledgment, and it cannot be dispatched as expired-budget recovery.                                                                                                                     |
+
+No public observer, injectable closure, `Any`, adapter constructor, borrowed
+candidate assertion view, SQLite object, authority mutex guard or selected lease
+crosses into a request. Finite payload/result/acknowledgment layouts, actual
+producer placement and compiler proofs are still missing. The table does not
+claim those shapes compile or that native requests currently carry operation IDs.
+
+### Invalidated-operation cleanup is separate
+
+Current `UnverifiedRootManifestCustody::try_retire` calls its live-budget
+`check_basic` before preparing a retirement job; the job invalidates that same
+budget but still uses its original deadline. Consequently late/cancelled cleanup
+cannot be implemented by pretending this existing API accepts a dead budget.
+The future whole-operation retirement producer observes original request/result/
+lease disposal and accounts all retained and temporary descriptors under the
+existing native hierarchy, after invalidation as well as before expiry. It
+issues no new observational dispatch, budget, deadline extension or usable facts.
+Physical disposal continues even when a receipt is ineligible. Expiry is an
+acceptance cutoff, not evidence that I/O or close ended.
+
+Polling cleanup is nonwaiting and does not require a valid observation budget.
+It may return Pending indefinitely while native work or close is unfinished;
+root custody and quarantine remain retained. A clean orderly root-retirement
+receipt alone cannot supply `NativeCleanupAck`: queued request/result disposal,
+root lease retirement, exact original identities and all native close outcomes
+must also be established by the actual trusted producer. Unknown close, poison,
+unwind, stale identity or missing accounting denies acknowledgment. Terminal
+native timeout never rearms that lane, even after physical disposal completes.
+Durable journal/probe cleanup and guarded effectful frame-write retirement
+remain separate prerequisites; they cannot be inferred from native cleanup.
+
+### Exact next precode and validation boundary
+
+Before implementing control integration, freeze root/partial-owner field layouts
+and fallible initialization storage, trusted native module moves/dependencies,
+finite request/result/ack slots and all-writer/constructor routes. Provide actual
+writable/VFS admission and close witnesses, effectful frame ownership, panic-safe
+cleanup publication, durable recovery and complete entry/binding fields/pins.
+The next bounded packet should define root/partial-owner storage against actual
+selected store types, rather than introduce another inert budget implementation.
+It must preserve already reviewed candidate source and obtain independent precode
+review before adding authority code.
+
+Its later source validators must cover: equal ordinals from different operation
+domains; same-operation/wrong-budget and wrong-deadline substitution; wrong job
+kind/token/begin; every Procfs pre/post-call and consumption checkpoint; no
+per-job reset/refund; late actual-byte charging; manifest-claim publication
+failure; cancellation/drop/unwind racing result publication; valid orderly
+retirement versus expired cleanup; no-dispatch retirement; unfinished native
+cleanup with retained store custody; stale/duplicate acknowledgment; permanent
+lane/root quarantine and durable/probe/frame cleanup separation. Fixed native
+producer tests cannot replace genuine Linux positive and unfinished-operation
+evidence. Focused checks, full `npm run check` for meaningful source changes,
+and fresh exact source/direct-child review remain mandatory. This documentation
+adds no runtime, merge, support/certification, packaging or release authority.
+
 ## Stage-A private operation identity candidate
 
 This narrow inert prerequisite follows the independently reviewed private control

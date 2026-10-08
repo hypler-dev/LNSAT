@@ -2666,6 +2666,41 @@ Status owns implementation truth; Phase 11 owns runtime proof. LNSAT remains
 neutral, standalone and headless; Rangoon uses ordinary optional adapters.
 No runtime/merge/support/certification/release authority is opened.
 
+### Stage-A original-budget and job binding contract
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and private control API contract. The [existing realized-recipe specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-original-budget-and-job-binding-contract)
+now fixes private shared references to one issued opaque identity, one registered
+original budget allocation and absolute deadline, and exact operation/job/begin
+association for the five closed native job kinds. No identity Clone, raw-ID bridge,
+per-job budget construction, reset/refund or deadline extension is permitted.
+
+Exact source inspection confirms Artifact/Root requests already retain shared
+artifact budget state, while Procfs returns no budget from `Request::budget()`.
+Procfs retains its separate existing deadline and native identity checks; it is
+not already whole-operation bound. Existing root retirement starts with a live
+budget and then invalidates it, retaining the original deadline. It cannot be
+relabeled as expired-operation recovery. Future whole-operation cleanup must
+account original request/result/lease/descriptor disposal after invalidation,
+without new observations or a fresh budget. Pending or uncertain cleanup retains
+custody and quarantine; terminal native timeout never rearms the lane.
+PHR-0074 tracks this documentation contract and fresh exact source/direct-child
+review. Implemented identity and disconnected native candidates remain scoped
+to their own prior source checkpoints; this packet adds no executable behavior.
+
+This closes reference-sharing, original-budget association and cleanup semantics
+only. Root/partial-owner layouts, trusted native moves/dependencies, finite
+combined call/byte/handle and payload/ack storage, compiler ownership/trait
+proofs, writable/VFS witnesses, all-writer routing, frame ownership, panic-safe
+cleanup publication, durable recovery, complete entry/binding fields/pins and
+whole-module precode remain open. Next bounded work defines actual root and
+partial-owner storage; it must not duplicate the existing budget implementation.
+Full native freeze, genuine Linux positive/unfinished-operation evidence,
+bootstrap/control/CLI/API/SDK integration and selected packaging remain separate
+unfinished gates. Project Status owns source truth; Phase 11 owns runtime proof.
+LNSAT remains neutral, standalone and headless with ordinary optional Rangoon
+adapters. No runtime/merge/support/certification/release authority is opened.
+
 ### Stage-A artifact read post-call checkpoint correction
 
 Canonical work record: this subsection under the accepted Stage-A source order
