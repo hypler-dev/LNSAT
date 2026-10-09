@@ -1395,3 +1395,110 @@ behavioral integration, the one complete freeze still must resolve:
 The source freeze cannot be declared complete by making every positive case
 deny, replacing native values with fixtures, or filling missing pins with
 sample hashes. No accepted design or runtime gate is relaxed here.
+
+## Stage-A selected-store phase feasibility
+
+This is a feasibility record under the existing Stage-A source order, not a
+selected ownership amendment or an executable source contract.
+[Project Status](../../PROJECT_STATUS.md#stage-a-selected-store-phase-feasibility)
+owns current implementation truth and decision state. The guarded-helper rules
+above remain binding, including no native observation or worker wait under the
+actual authority mutex, no selected view/transaction surviving its guard, and
+no SQL owner, borrowed parent or guard crossing the existing native worker.
+No mutex exception, second executor or sixth native job is accepted here.
+
+### Exact source evidence and incompatible requirements
+
+The inspected base is the guarded-helper contract child
+`dae00c9f44005bf339c236ef98befb2a958f9a59`. Its documentation constrains future
+integration; the following implementation facts do not establish that integration:
+
+- `selected_store.rs` retains original parent and lease files and selected path,
+  owner and device/inode identities. `verify_connection` calls the actual
+  connection's `sqlite_filestat('main')`, observes its borrowed descriptor in
+  place with `fstat`, and repeats current filesystem/lease association checks.
+  The descriptor/VFS observations are transient; retained fields contain no
+  current native/VFS witness that can replace those calls. The current selected
+  connection and parent verifier require read-only MAIN_DB.
+- `headless_preparation_custody.rs` retains an actual selected-parent borrow and
+  owned journal state. Its native open, inspect, append and flush work executes
+  synchronously in the caller. The journal owner/view extraction does not supply
+  an executor, selected-writable parent or asynchronous custody bridge.
+- `headless_native_root_bootstrap.rs` retains its own directory/manifest owners
+  in the existing native lane. Root-manifest recheck re-observes those owners,
+  not SQLite's original MAIN_DB or journal state. Root facts and cleanup results
+  cannot certify selected-store/VFS or preparation-journal cleanup.
+- `owner_decision_credential.rs` supplies the implemented non-Send owned C1
+  capture and original-scope/exact-transaction-connection recheck. It supplies
+  neither a control executor nor a native freshness protocol after computation.
+
+[B6](../headless-local-bootstrap/selected-write-source-spec.md) requires actual
+selected-writable/VFS custody checks after immediate transaction acquisition and
+before commit, as well as other acquisition/reconciliation/close boundaries.
+Its proposed writable contract has not been implemented. A guard-only SQL
+projection cannot perform those native checks, and ending the guard to call a
+native observer cannot preserve a transaction under the current guard lifetime.
+A stale cached observation, another connection, duplicated/reopened descriptor,
+or a manifest recheck does not resolve this conflict. SQLite's authorized
+transaction/coordination I/O remains distinct from explicit native custody
+observation; this record does not forbid ordinary SQLite transaction I/O.
+
+### Options and decision state
+
+| Option                                                                         | Assessment against current requirements                                                                                                                                                                                     | Decision state                                                                                   |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Cached native facts followed by guarded SQL                                    | No current physical/VFS freshness or continuous owner-phase witness; B6 post-acquisition and pre-commit observations are still missing.                                                                                     | Rejected as a completion shortcut.                                                               |
+| Existing root-manifest job or extra SQLite handle                              | Existing jobs observe different original owners; aliases/another connection do not prove the original connection and may disturb POSIX lock custody.                                                                        | Rejected as a completion shortcut; no job expansion.                                             |
+| Separate custody mutex with transaction spanning authority unlock              | Would change owner placement, lock order and selected-view/transaction lifetime. It still needs an exact executor, current witness and all-writer protocol; a second mutex alone does not provide them.                     | Unselected architecture candidate; incompatible with current contract unless explicitly amended. |
+| Dedicated retained control actor/context for fixed selected-store observations | May offer a place for original-connection observations, but is a new executor and ownership decision. It must establish construction, retention, writer routing, stop races and cleanup before any claimed mutex exception. | Unselected architecture candidate; no feasibility PASS or source authorization.                  |
+
+The first bounded design candidate should cover only fixed read-only
+selected-store custody observations using the original connection and retained
+owners. This is a design recommendation, not a new read-only implementation or
+proof that it solves the later writable transaction phase. Preparation-journal
+creation, append, flush and mutation are excluded from that first candidate.
+Their later phase requires its own original-owner retention, effect disposition,
+pre/post budget checks, close witness and durable reconciliation. B6's journal
+`bound` transition still follows exact committed SQL/audit readback; later
+journal failure quarantines rather than rewriting a successful SQL commit.
+
+### Required decision and precode packet
+
+Before selecting either architecture candidate, provide one exact source design
+that names the actual root, executor, mutex and connection owners; construction
+and failure retention before first custody I/O; fixed request/result layouts and
+finite retained slots; all constructors and invalidating writers; lock order;
+and acquisition, observation, result acceptance, retirement and close owners.
+A generic blocking pool, detached task, renamed control-side caller or timeout
+is not a retained-custody proof. The existing native observer lane's ownership
+and terminal no-rearm rules cannot silently be inherited by a second executor.
+Any actor-owned root, second executor, changed guarded-view lifetime or native
+mutex exception requires an explicit amendment and independent review before
+source implementation. Exact writable MAIN_DB/coordination-file/VFS lifecycle,
+mount/ACL association and native close witnesses remain separate blockers.
+
+Keep cancellation and durable stop distinct. Out-of-lock invalidation of the
+original budget closes result acceptance/admission only; it does not commit a
+durable stop or prove that issued work did not execute. While native work retains
+the required control context, durable stop can remain Busy/Pending. Freeze exact
+pre-transaction, pre-commit and later journal-write fences, the commit-issued
+linearization point, and the owner of uncertain completion/readback. Cancellation
+after a write/commit is issued cannot certify rollback. Late or uncertain
+completion retains quarantine and the original association; no replacement
+operation, fresh deadline or automatic retry may accept it.
+
+C1 capture and computation must stay on the same explicitly retained control
+context without relaxing the capture's non-Send contract. Capture ends all SQL
+and selected views and releases the authority guard before Argon2id. Freeze
+bounded computation/disposal state, scheduling, panic/unwind disposition and
+original-scope/connection re-entry before integration. Credential completion is
+not native cleanup. A stuck native call may retain its mutex/owners indefinitely;
+expiry is an acceptance cutoff, not a bounded return or release guarantee.
+
+Fresh independent review must assess the exact proposed amendment against the
+current contract and B6/C1 requirements before an owner decision. Later compiler
+and focused conformance tests must prove the selected layout, actual guard/view
+lifetimes, original-owner provenance, race dispositions and independent cleanup
+witnesses. Documentation review and existing source fixtures supply none of that
+native execution evidence. Full native freeze, whole-module source integration,
+genuine Linux proof and Phase11 runtime authority remain closed.

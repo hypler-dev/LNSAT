@@ -2905,6 +2905,47 @@ Project Status owns implementation truth; Phase11 packet owns runtime proof.
 LNSAT remains neutral and standalone with optional ordinary Rangoon adapters.
 No source integration, runtime, merge or release authority opens.
 
+### Stage-A selected-store phase feasibility
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and guarded-helper contract. The [supporting feasibility record](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-selected-store-phase-feasibility)
+reconciles exact selected-store, native-root, journal and C1 source evidence at
+`dae00c9f44005bf339c236ef98befb2a958f9a59`. PHR-0087 tracks this documentation
+slice's exact source/direct-child validation and independent review. It is a
+feasibility/options checkpoint, not a selected ownership amendment or source
+implementation. The current no-native-under-authority-guard rule and selected
+view/transaction lifetimes remain binding.
+
+The original connection's descriptor/VFS and current parent/lease observations
+are live native work. The existing retained root-manifest worker owns different
+files and cannot certify that connection or journal. No current persistent
+native freshness witness resolves the gap. B6's proposed native checks after
+immediate transaction acquisition and before commit conflict with releasing the
+current guard while retaining its transaction. Cached facts, another connection,
+descriptor aliases and a renamed worker are rejected completion shortcuts.
+
+A separate custody mutex and a dedicated retained control actor are explicitly
+unselected architecture candidates. Neither is independently approved as
+feasible. Initial design review rejected selecting an apparently narrow native
+mutex exception: it concealed a new executor/ownership decision. This checkpoint
+records that finding and the required construction, retained slots, all-writer
+routing, lifetime, cancellation/commit and cleanup decisions instead. The next
+bounded design candidate should isolate fixed read-only selected-store native
+observations; journal creation/append/flush/mutation require their own later
+reviewed phase. Read-only feasibility alone cannot close B6 writable custody.
+
+Out-of-lock original-budget invalidation is not durable stop or nonexecution
+proof. Native work retaining a control context can leave durable stop
+Busy/Pending. Exact transaction/commit-issued fences, uncertain completion and
+readback ownership remain unfrozen. C1's non-Send capture stays on the same
+retained control context; Argon2id remains outside the authority guard with
+bounded completion/disposal and fresh original-scope/connection re-entry still
+required. No source types, executor, mutex exception, native job expansion,
+writable/VFS witness or whole-module precode are implemented or accepted here.
+Project Status owns implementation truth; Phase11 packet owns runtime proof.
+LNSAT remains neutral and standalone with optional ordinary Rangoon adapters.
+No integration, runtime, merge, support/certification or release gate opens.
+
 ### Stage-A credential capture/compute/recheck contract
 
 Canonical work record: this subsection under accepted Stage-A source order and

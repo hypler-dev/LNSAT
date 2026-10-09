@@ -158,6 +158,10 @@ subsystem or proposal.
   records exact current helpers, the journal/native critical-phase blocker and
   capture/unlocked-computation/fresh-recheck requirements; guard/writable source
   and whole-module precode remain open.
+  Its [selected-store phase feasibility record](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-selected-store-phase-feasibility)
+  records original-connection/native phase conflicts and unselected owner/executor
+  options; current guard rules remain binding, journal mutations are separate,
+  and writable/native integration and full freeze remain open.
   Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
   defines the implemented private current-row capture/computation prerequisite
   while preserving original scope/connection recheck; control integration remains open.
