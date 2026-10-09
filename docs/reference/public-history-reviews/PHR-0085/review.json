@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0085-independent-implementation-review-1e20c3b1",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["stage-a-c1-capture-compute-source"],
+  "base_revision": "3f580c2d768d3528e9018a2d390b5e4da210f709",
+  "reviewed_revision": "1e20c3b143619329be7f6f0b73556c08d6d47b98",
+  "reviewed_tree_oid": "5930c940a7c04cd84b6e3be19e8196e5506084ea",
+  "diff_sha256": "sha256:7782cd6f434e221388f816542ba4a35da0e18050db871f92d6c3e6f57750880a",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/owner_decision_credential.rs",
+      "sha256": "sha256:d5c08cdf152c562848c8db7d068f2bbe32ac995c487312f6221abec5eaa59059"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/owner_decision_credential.rs",
+      "sha256": "sha256:11b0a2e29b32fcc92a32e08dc0baf1da44b16f8f7285a091679769e440999fc3"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:8c351d3bf9b022e446159043549f3384cedf741e79c647848f7015d1a4dd7659"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:40f5233f8511ece1ceb32f5ff399daeae2e362d5659420391930b215651e6b0a"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:b4809b68f180455bc8bfff005b03cce9a64f6f70308b48cd90b1ff96bcc30c94"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/c1_capture_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only staged and immutable-source review. Exact five-file scope extracts the private owned C1 credential capture/compute/recheck prerequisite under accepted PHR77. Capture moves the existing Zeroizing PHC row and identity with original scope, releases its read transaction before return, and uses the actual store dummy verifier for Unknown with existing password-validation order. Computation consumes an opaque non-Clone, non-Debug, non-Serialize, non-Deref, non-Send, non-Sync capture without a SQL owner. Existing prepare signature and recheck/select/fingerprint suffix preserved. Eleven existing plus eight split-focused tests PASS, including stale rotation/recovery/substitution, wrong connection/scope, inactive/absent/invalid reference, malformed evidence, and ownership compile-time checks. Full npm run check and six named source gates PASS at the unchanged staged tuple; four named gates transparently derived from the actual full-suite chain. Prior79 attestations preserved; PHR85 remains pending at source review. Direct-child review and committed history replay remain separate. No Ready, authority guard, cancellation/budget, native/control, full freeze, Linux runtime, Docker, installation, support, merge, release, or certification authority opens."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
