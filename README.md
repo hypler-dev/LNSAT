@@ -1,5 +1,7 @@
 # LNSAT
 
+<p><img src="docs/assets/lnsat-mark-light-v1.png" alt="LNSAT logo" width="160" height="160" /></p>
+
 [![Source verification](https://github.com/hypler-dev/LNSAT/actions/workflows/ci.yml/badge.svg)](https://github.com/hypler-dev/LNSAT/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](docs/PROJECT_STATUS.md)
