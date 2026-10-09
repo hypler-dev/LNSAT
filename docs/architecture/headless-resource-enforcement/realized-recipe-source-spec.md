@@ -709,6 +709,178 @@ fresh exact source/direct-child review remain required. Genuine Linux positive
 and unfinished-operation proof, full native freeze, integration, packaging,
 runtime, merge, support/certification and release remain separate closed gates.
 
+## Stage-A guarded helper routing and lock-phase contract
+
+This controller-selected refinement follows the accepted anchored ownership
+and original-budget direction plus the implemented journal/C1 extraction
+prerequisites. [Project Status](../../PROJECT_STATUS.md#stage-a-guarded-helper-routing-and-lock-phase-contract)
+owns acceptance and implementation truth. It fixes helper provenance and phase
+ordering before any authority-guard or writable-store source. It does not freeze
+the complete owner layouts, native handoffs or whole module. The existing
+no-native-operation/no-worker-wait rule under the actual authority mutex and the
+separately retained release-frame critical section remain governing rules.
+
+### Exact existing source and incompatible shortcuts
+
+The inspected source checkpoint is the immutable C1 child
+`8e030704dc3f3e40a6bcb791a508a40b3313d03b`. These are existing implementations,
+not future selected-writable or Ready-cell interfaces:
+
+| Existing source                                                    | Input and retained provenance                                                                                | Consequence for later guarded integration                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `selected_store.rs`, `SelectedPreparationParent::borrow/verify`    | The original exclusive `&mut SqliteStore`; the actual selected custody owns held parent and lease files      | Calls `verify_selected_local_store_custody_v1`, including in-place native SQLite descriptor observation, metadata and current path/owner/lease rechecks. It is not a pure borrow constructor or a guard-only state check.                                     |
+| `lib.rs`, `verify_selected_local_store_custody_v1`                 | The same actual connection and selected custody                                                              | Explicitly requires read-only MAIN_DB and matching connection path. It cannot admit B6 writable custody or be made to do so by relabeling its result.                                                                                                         |
+| `headless_preparation_custody.rs`, `JournalCustody/JournalAccess`  | Legacy selected parent plus independently owned journal state; temporary access retains the original pairing | Open, inspect and append run synchronously in the caller. They perform native directory/file association, bounded reads, creation, writes, flushes and stable rescans. The extraction changes ownership, not execution phase or I/O provenance.               |
+| `headless_bootstrap.rs`, `require_authority_empty_v1(&Connection)` | The supplied actual connection, possibly borrowed through an existing transaction                            | Reuses exact schema-17 digest/seed/namespace/integrity/empty-table algorithms; a connection argument does not prove selected custody or private schema-18 eligibility. The public inspection marker is unbound and stale, never Ready or bootstrap authority. |
+| `owner_decision_credential.rs`, capture/compute/recheck            | Actual store connection, original credential scope and actual store fallback; captured rows are owned        | Capture releases its successful read transaction; compute takes no SQL owner; recheck compares original scope and exact transaction connection. These helpers still require the whole actual store at capture/recheck and do not construct a Ready view.      |
+
+Current native jobs remain the closed `Procfs`, `ArtifactRead`,
+`RootManifestBegin`, `RootManifestRecheck` and `RootManifestRetire` vocabulary.
+No existing bridge routes preparation-journal I/O through that lane. Passing a
+`JournalAccess`, connection, store, guard or borrowed selected parent to its
+worker is prohibited. A filesystem association or `sqlite_filestat` observation
+is native evidence even when its implementation is reached through a Rust
+helper or SQLite query; SQL syntax does not remove that classification.
+
+Consequently, do not wrap the current parent verifier or journal open/inspect/
+append in an authority guard and call that integration complete. That would
+introduce native observation or filesystem I/O in the forbidden critical phase.
+Do not omit those checks, move a SQLite owner to the worker, add a second
+connection/descriptor alias, replace actual observations with cached declarations,
+or silently add a journal job to the closed lane. No mutex exception or native
+job expansion is accepted by this refinement. Exact journal/native/VFS owner
+placement, execution phases and return-to-retained-slot choreography remain
+blocking before those helpers can become guarded selected interfaces.
+
+### Guarded entry surface and lifetime requirements
+
+Only the future anchored root's private path may acquire its actual authority
+mutex and construct a selected access. A wrapper around a caller's mutex,
+arbitrary `Connection`, ordinary store or inspection marker is insufficient.
+The constructor must borrow the actual guard mutably for the full access
+lifetime and project only that root's retained cell. Its guarded work is limited
+to the fixed retained-state/SQL projections; it must not invoke the current
+native parent verifier or perform filesystem association work. Ready bookkeeping
+alone is not admission proof. Complete B6 physical/writable/VFS/schema and
+current-association checks remain mandatory, with every required owner present
+and no poison, shutdown, unfinished acquisition or uncertain close. Their
+compatible acquisition/freshness/handoff protocol is not yet frozen: no selected
+access constructor or protected writer may be implemented by substituting stale
+cached observations, skipping a predicate or running native work under the guard.
+Missing witnesses or that protocol deny integration.
+
+The future fixed access vocabulary is limited to credential capture, exact
+transactional credential recheck, the applicable complete schema/eligibility
+check, and the individually reviewed bootstrap/control operation. It exposes no
+connection, raw descriptor, transaction factory, generic SQL, `Deref`, callback
+or observer injection. Transactions and statements stay inside their fixed
+operation and borrow only the original connection. An access cannot escape to
+a ticket, journal field, result, SDK or worker, or survive release of its guard.
+
+Compiler tests must prove guard-to-access lifetime, no overlapping mutable
+projection, no use after guard/cell drop, and no Send, Sync, Clone, Debug,
+Serialize or Deref escape. Exact field and constructor review separately proves
+actual-root provenance and retained owners; lifetime/trait assertions alone do
+not authenticate the mutex. Long-lived root storage has separate Send/static
+requirements for its anchor and mutex, which cannot be inferred from non-Send
+transient views. No such types or compiler proofs are implemented here.
+
+Retain the ordinary schema-17 wrappers and all existing public signatures,
+error order and selected read-only behavior. The future selected schema-18
+route needs its own private source-selected dispatcher and exact B5 manifest,
+seeds, integrity and eligibility validation; it must not reuse the schema-17
+marker, bypass `verify_schema`, raise the global version or let a request choose
+its mode. Reuse validation algorithms through exact privately reviewed helper
+changes; do not duplicate validators or construct an ordinary `SqliteStore`
+from moved root owners to satisfy a legacy receiver type.
+
+### Credential capture, unlocked computation, fresh guarded recheck
+
+The later control-side credential operation must use these distinct phases:
+
+1. Under the actual authority guard, require admissible selected/root state and
+   matching original operation identity/budget where registered. Create only
+   the fixed selected credential access. Preserve C1's autocommit-first rejection,
+   actual-store fallback behavior and selection error families. On successful
+   capture, explicitly end the read transaction and all statements/access views.
+   Record the bounded transient credential-computation disposition before
+   releasing the guard; a captured value is not approval or a portable permit.
+2. Release the actual authority guard before Argon2id. The caller retains only
+   the owned non-Send capture plus its existing bounded private operation
+   association, never a selected/journal view, transaction or SQL owner. Run
+   existing computation on the control-side caller; do not send a password,
+   capture or verified snapshot into the native observation worker. This adds no
+   credential intake or long-lived PHC root field.
+3. Cancellation, stop, expiry, coordinator failure or root quarantine must not
+   become a successful credential result. Reacquire only the same anchored
+   authority mutex and match the same original registration/budget and disposition.
+   Use the original absolute deadline and sticky invalidation; do not reset a
+   budget or create a replacement operation to accept late computation. Failure
+   to reacquire yields no approval or mutation. Any cleanup/retirement bookkeeping
+   must still account for the original transient computation and PHC disposal.
+4. The native/VFS selected-custody freshness protocol at this lock gap is an
+   explicit unsolved integration gate. It must establish current physical
+   association after unlocked computation and before the protected write without
+   native work under the guard, SQLite/descriptor aliasing, borrowed-owner escape
+   or stale cached-proof substitution. No compatible source protocol or witness
+   currently supplies that step. Do not implement a selected writer from this
+   phase list until the exact acquisition/observation/retention/validation handoff
+   has been separately frozen and independently reviewed. Once that gate is
+   satisfied, the fresh guarded access may perform only the fixed selected SQL
+   schema/current-installation checks and C1's original-scope/exact-transaction-
+   connection/current-row/fingerprint recheck in the selected immediate operation.
+   This does not permit calling the current native parent/custody verifier there.
+   Repeat applicable authenticated session/CSRF, policy, nonce, generation/epoch/
+   stop and exact-change predicates. Password success or unchanged rows in another
+   connection never replace them. First empty-store bootstrap retains distinct
+   accepted host-owner proof; do not invent a pre-existing C1 owner for it.
+5. End statements/transaction/access before releasing the guard, retaining the
+   exact separately accepted release-frame exception when that operation applies.
+   Commit uncertainty follows the existing durable reconciliation contract;
+   password success or disposal is neither native cleanup nor a release witness.
+
+An ordinary synchronous Argon2id call is not forcibly interrupted by these
+bookkeeping rules. Expiry is an acceptance cutoff, not proof that computation
+or zeroization has finished. The fixed registered transient state and actual
+completion/disposal path need exact finite layout, panic/unwind behavior and
+compiler/source review before source integration. Native cleanup acknowledgments
+cannot certify control-side credential disposal. No callback, destructor-only
+cleanup certificate or five-second computation/close guarantee follows.
+
+### Retained admission and source precode gates
+
+Acquire/return-to-slot remains a separate protocol: lease before open, every
+returned physical owner retained before the next fallible check, unknown or
+unfinished acquisition preserved, and returned connection on close error placed
+back into quarantine before further fallible work. A borrowed helper projection
+cannot perform or prove those transfers. No native wait under the authority
+mutex, replacement owner, automatic retry, Drop-driven release or empty-slot
+cleanup inference is permitted. SQLite success alone is not the pinned VFS/OS
+close witness. The original release-frame critical section is not general
+permission for other native or journal I/O under the guard.
+
+This closes the route inventory, phase classification and credential lock-gap
+requirements only. It deliberately does not claim exact concrete guard/cell/
+writable-parent layouts or a complete source freeze. Before authority source,
+provide those layouts/constructors, journal/native/VFS execution and retained
+handoffs, finite combined storage and PHC retention, all-writer/constructor
+routing, private schema dispatch, acquisition/close witnesses, frame ownership,
+panic-safe retirement and durable recovery, then fresh whole-module precode.
+
+Later tests must exercise ordinary/read-only compatibility; forged guard/root
+or arbitrary connection denial; actual guard/view/transaction lifetime and trait
+boundaries; stop/revocation/rotation/recovery racing unlocked computation;
+late computation, failed reacquisition and disposal uncertainty; exact original
+scope/connection recheck; no unknown-user fallback for corrupt credentials;
+no journal/native observation inside the authority guard; original native lane
+job vocabulary; and each unfinished/returned-owner/close-failure handoff.
+Named focused checks, strict lint/format, full `npm run check` for meaningful
+source changes, and fresh source/direct-child reviews remain required. This
+documentation packet uses proportional docs/public/inventory/history/format/diff
+checks. Genuine Linux positive/unfinished-operation evidence, full native freeze,
+standalone CLI/API/SDK integration, packaging, merge, runtime, support/certification
+and release remain separate unfinished gates. LNSAT stays neutral and standalone.
+
 ## Stage-A credential capture/compute/recheck contract
 
 This bounded contract follows the accepted Stage-A source order and the anchored

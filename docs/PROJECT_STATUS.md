@@ -2860,6 +2860,51 @@ module precode/native freeze remain open. Project Status owns implementation
 truth; Phase 11 owns runtime proof. LNSAT remains neutral and standalone;
 Rangoon uses optional ordinary adapters. No runtime, merge or release gate opens.
 
+### Stage-A guarded helper routing and lock-phase contract
+
+Canonical work record: this subsection under the accepted Stage-A source order,
+anchored owner direction and private control API. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-guarded-helper-routing-and-lock-phase-contract)
+now fixes the exact current helper route inventory and credential lock-gap
+requirements before authority-guard or writable-store source. PHR-0086 tracks
+this documentation contract and fresh exact source/direct-child review. The
+implemented journal and C1 extractions remain scoped to their own checkpoints.
+
+Exact source inspection exposes an integration blocker: selected parent
+verification performs in-place native SQLite descriptor and filesystem custody
+observation; journal open/inspect/append run synchronous native file I/O in the
+caller. Neither is a pure guarded projection, and the parent verifier requires
+read-only MAIN_DB. No existing bridge routes journal I/O through the five closed
+native job kinds. Wrapping these helpers in the future authority mutex would
+violate its no-native-operation rule. Do not skip checks, transfer a SQL owner
+to a worker, add descriptor/connection aliases, invent a mutex exception or
+silently expand native jobs. Their exact execution/retained-handoff protocol
+remains blocking, alongside actual writable/VFS evidence.
+
+Future C1 integration captures under the actual guard, explicitly ends its read
+transaction and views, releases the guard before caller-side Argon2id, then
+reacquires the same root and repeats original operation/budget/disposition and
+fixed current SQL credential/authority predicates. Fresh selected native/VFS
+custody at this lock gap requires an explicit still-unsolved phase/provenance
+handoff before a protected writer can be implemented; neither stale cached proof
+nor native custody checks under the guard may substitute for it. Cancellation/expiry never accepts late computation or
+proves disposal; transient PHC completion and retirement need finite explicit
+accounting. First empty-store bootstrap retains separate host-owner proof.
+Ordinary schema17 and public/read-only interfaces remain unchanged; future
+selected schema18 dispatch cannot reuse a stale inspection marker or alter the
+global version. No guard, view, dispatcher, journal bridge, writer or source
+consumer is implemented here.
+
+This closes routing/phase and credential lifetime requirements only. Concrete
+private guard/cell/writable-parent layouts, all-writer routing, finite combined
+storage/PHC retention, journal/native/VFS acquisition and close handoffs, frame
+ownership, panic-safe retirement, recovery and whole-module precode remain open.
+Genuine Linux proof, full native freeze, standalone CLI/API/SDK lifecycle,
+packaging and runtime/support/certification remain separate unfinished gates.
+Project Status owns implementation truth; Phase11 packet owns runtime proof.
+LNSAT remains neutral and standalone with optional ordinary Rangoon adapters.
+No source integration, runtime, merge or release authority opens.
+
 ### Stage-A credential capture/compute/recheck contract
 
 Canonical work record: this subsection under accepted Stage-A source order and
