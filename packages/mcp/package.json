@@ -33,7 +33,7 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
-    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/client": "2.2.0",
     "@modelcontextprotocol/conformance": "0.1.16"
   },
   "license": "Apache-2.0"

@@ -1,0 +1,51 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0081-independent-implementation-review-d2ac2690",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["main-scoped-dependency-audit-remediation"],
+  "base_revision": "a91a4cfa7f1135c5105bef8a700ddd094c78b5ed",
+  "reviewed_revision": "d2ac269061d2af49f8afc15916012c6ed32dacec",
+  "reviewed_tree_oid": "c676e85ca656c8d41bd0b2f26313dc46dd6f30a3",
+  "diff_sha256": "sha256:77008377a89140528ffe3cbbf84c79cfe267d5a84a8ccfd706e5dadca2ca1eae",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:09bc9035d9eb7a62ed49d50fa70f47c977ce6d320a8e7ae54f1564b041358301"
+    },
+    {
+      "path": "docs/architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md",
+      "sha256": "sha256:16bd2882c5c32ab8afb4a37727ad308c2d8ffb34a849de32352d17784ddea109"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:383f202da25a16a13ccf64be80a9d696a5b1350e314f49970c47c6015709ab83"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:9397cd76a6aeb1303722c58383c676ac660c8c651fb491328f54798a4fbd505e"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:a08a75b729d1de869d2b337dddb8909d366b83792bdc18b4d5aa89abebfde302"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:de87b0ff923c2ffeff8bd297566582310dee9d2b025608d2b29406ce061a60f7"
+    },
+    {
+      "path": "packages/mcp/package.json",
+      "sha256": "sha256:18483516ef7223b7d8357ac3c0d72e2bc20e40aabe745d96ce62dceb5cbe6c69"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/main_dependency_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact seven-file main dependency audit remediation review. Exact source parent, tree, canonical full-index diff and protected blobs verified. Three already reviewed dependency pins and the matching MCP compatibility baseline are carried from the separate source branch to resolve the public main CI dependency audit failure: development MCP client 2.2.0, legacy SDK override 1.31.0, and Sharp 0.35.5 with matching lock closure. Production MCP server/core/node remain 2.0.0. No OAuth credential migration, provider activation, new authorization behavior, or broader unpublished engine feature is included. Fresh official registry advisory and signature checks, focused MCP tests, full npm run check, and proportional docs/public/inventory/format/diff/history checks PASS at the unchanged exact staged source. An initial main cache copy retained absolute links to a different checkout; those failed or interrupted runs are preserved and excluded from completion evidence. Only owned copied workspace links were corrected to this checkout before all final checks were rerun; original caches and module bytes remain unchanged. Project Status owns implementation truth. Prior 46 public entries, including the independent professional testing plan PHR-0080, are preserved; IDs PHR-0046 through PHR-0079 remain separate unmerged history. PHR-0081 remains pending at source review. Exact direct-child metadata review and committed history replay are separate. Source CI grants no runtime, target support, certification, release or deployment authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

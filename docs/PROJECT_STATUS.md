@@ -36,6 +36,67 @@ The [V1 command and contract reconciliation](#v1-command-and-contract-completion
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
 
+### Professional testing program
+
+Owner-accepted plan; coverage-guided implementation remains planned. Existing
+source tests are narrower baseline evidence; this plan does not add source tests. This documentation packet adds no cargo-fuzz harness,
+nightly/sanitizer runner, retained coverage-guided corpus, CI schedule or executed
+campaign.
+
+The [professional testing strategy](PRODUCT_BUILD_SEQUENCE.md#professional-testing-strategy)
+integrates per-change regression checks, future bounded fuzz campaigns, state-
+machine/concurrency/crash-recovery tests, qualified target rows and independent
+adversarial review with existing Phase 13/14 gates. Its first candidate is a pure
+execution-request canonical-parser and stale-evidence harness, with explicit
+oracles, pinned tools, resource limits and reproducible failure artifacts.
+Installation, automation activation and real native/runtime qualification remain
+separate named packets. No new runtime, support/certification or release claim
+follows. Project Status retains implementation truth; the Phase 11 operator
+packet retains real-runtime proof ownership.
+
+### Standards-informed build requirements
+
+Owner-accepted planning direction: apply relevant ISO/IEC 27001:2022,
+27002:2022, 42001:2023 and 27701:2025 themes to LNSAT build requirements.
+The [build requirements](PRODUCT_BUILD_SEQUENCE.md#standards-informed-build-requirements)
+cover risk/access boundaries, secret custody, secure changes and supply-chain
+evidence, versioned developer feedback, incident/recovery behavior, privacy-aware
+evidence lifecycle and provider-neutral action control. Reuse existing source and
+tests; each applicable packet links its owner, accepted contract, exact identity,
+checks, evidence, gaps and risk disposition to the existing status and phase
+records. This subsection records the accepted plan, not completion of those
+controls or a new competing completion ledger.
+
+Full standard/clause and OpenSSF criterion assessments remain unperformed in the
+recorded repository evidence. Organizational management systems, legal/privacy
+accountability, model/provider governance and certification are separately scoped.
+Local actor identifiers and receipts may contain PII; retention/deletion needs an
+explicit authority-safe contract. LNSAT stays standalone. This documentation adds
+no runtime, privacy, SDK, policy, installer, supported target, badge or certification
+implementation and preserves all existing source/design/merge/runtime/release gates.
+
+### Main dependency audit remediation
+
+Canonical implementation record: this subsection. The professional-testing
+plan's hosted source check identified three vulnerable packages in the existing
+public-main lockfile. A fresh manifests-only advisory query reproduced high
+advisories for MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4. The bounded
+maintenance candidate pins the test client to 2.2.0, transitive SDK to 1.31.0
+and Sharp to 0.35.5 with its exact platform dependency closure. These pins reuse
+the separately reviewed source candidate; broader private engine features are
+not included. Production MCP server, core and Node wrapper remain 2.0.0;
+the test client resolves its own core 2.2.0.
+
+The [upstream baseline](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md#upstream-baseline)
+records the package identities and removes a stale advisory-allowance claim.
+No advisory is waived. Existing registry signatures, fresh advisory audit,
+focused MCP compatibility, full source validation and fresh independent exact
+source/direct-child review gate this candidate under PHR-0081. No OAuth client,
+credential migration, provider activation, installer or new execution authority
+is introduced. Passing dependency checks does not establish runtime safety,
+package support or certification. The professional fuzzing program remains
+planned; its tooling is not installed or activated by this remediation.
+
 ## Active Security Remediation
 
 The owner accepted the

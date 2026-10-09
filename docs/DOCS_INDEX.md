@@ -25,6 +25,14 @@ subsystem or proposal.
 8. [Contributing](../CONTRIBUTING.md) — first-contribution, pull-request, DCO,
    security, and review requirements.
 
+- [Professional testing strategy](PRODUCT_BUILD_SEQUENCE.md#professional-testing-strategy)
+  — accepted plan for regression, fuzz, state-machine, concurrency and target
+  qualification evidence; tooling and campaigns remain planned.
+
+- [Standards-informed build requirements](PRODUCT_BUILD_SEQUENCE.md#standards-informed-build-requirements)
+  — accepted risk, access, privacy, recovery and AI-management-boundary requirements;
+  formal assessments and missing controls remain planned.
+
 ## Community
 
 - [Support](../SUPPORT.md) — public issue scope and pre-release support limits.
