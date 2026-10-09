@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0088-independent-implementation-review-121d6465",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["stage-a-read-only-control-observer-proposal"],
+  "base_revision": "1b26e08440551debfacdd3adc0030ed50bfbbd95",
+  "reviewed_revision": "121d6465dc03cd9b6c0cba433cb7778c584ef371",
+  "reviewed_tree_oid": "6ccc8f9e6bea470295818f3c6a597c810ceb649d",
+  "diff_sha256": "sha256:fec0c3a315055a4f9e7f10573198184f986d29aa1fc679e1d3fa37dc7ebbb2f2",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:1b0bf15b918d42860a3fbe9b845990ee6b5d7737b707da2758d1f50094354512"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:9d9e427b0cdb692903b9c99c2ca217369ad0285ba990b5d1ddfa42ce7f76e6a5"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:257a2ced14e0f0474765c52c90d1a78a033c91386f758301b9cd9001186ef38e"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:e39321e9607eff36e1674088e8d6b3c762df467ecbafed1924ab370a0b0ead73"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:c94e8d41e15a18ca2f65efaeade4b34911d98c0d078f4c0b5185aa63daad1842"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/readonly_control_protocol_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent exact staged and immutable-source documentation review. One separately retained read-only control observer and a narrow original-connection native-under-guard exception are explicitly PROPOSED, pending owner/project amendment acceptance and exact precode. Current guard rules remain binding. Root original physical owners and guard-bound views do not move; existing native lane remains unchanged. Independent proposal reviews found three P1 publication/retirement, cancellation/limit-cleanup and published-but-unentered retirement holes. Final protocol seals Reserved-to-Published under authority then mailbox with exact original association and live-budget recheck, preserves visible InFrame ownership after transfer, and requires cleanup-only exact prior-limit restoration and checked statement finalization under original guard on every exit after possible changes. Actual private ControlFrameCleanupAck, ControlFrameUnenteredAck and sealed NoDispatch proof remain distinct from native/store/VFS/journal/durable cleanup. Historical observation status grants no current custody, approval or execution authority. C1, journal mutations, writers, durable stop, release frames and writable schema18/B6 integration remain excluded. Original-operation budget/identity bridge, construction retention, finite aggregate layout, native call/handle ledger, original-owner acquisition/close, checked cleanup layout and compiler proof remain source precode blockers. Six exact proportional source checks PASS; PHR88 pending in source, all82 prior entries/manifests exact. This approved documentation attestation accepts only the proposed protocol record, not its amendment or source/native feasibility. No source/schema/API/README/assets/dependencies/runtime-packet changes, runtime/support/certification, GLM transfer, install, push/main/merge/release/publication/deploy authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
