@@ -24,8 +24,13 @@ Those remain documentation only; provider integration and the release writer
 are unfinished.
 
 The latest bounded engine source candidate is the
-[private raw OCI chain decoder](#stage-a-private-raw-oci-chain-contract),
-following the attested private root-manifest and daemon-response prerequisites.
+[private C1 credential capture/compute split](#stage-a-credential-capturecomputerecheck-contract).
+It separates owned credential capture from password computation while preserving
+original-scope and exact-connection recheck. PHR-0085 tracks its bounded source
+and direct-child review; it adds no configuration or execution authority.
+The [private raw OCI chain decoder](#stage-a-private-raw-oci-chain-contract)
+remains the latest bounded native/image prerequisite, following the attested
+private root-manifest and daemon-response candidates.
 It retains supplied config/manifest/optional-index records, raw identities and
 internal parent links. PHR-0056 attests its precode contract; source validation
 and exact independent source/direct-child review are tracked under PHR-0057.
@@ -2864,8 +2869,10 @@ original scope into an opaque owned value after ending its SQL read transaction;
 consume that value in password computation with no store/view/SQL borrow; then
 reuse the existing original-scope/exact-connection transaction recheck. The
 current preparation wrapper, public store methods, schema, authentication policy
-and error families remain unchanged. PHR-0077 tracks this documentation contract
-and fresh exact source/direct-child review. No Rust extraction is implemented.
+and error families remain unchanged. PHR-0077 preserves the accepted documentation
+contract. Fresh independent exact component precode review passed before the
+two-file private source extraction. PHR-0085 tracks its separate source and
+direct-child review and validation; no public or native consumer is added.
 
 Every existing dummy-verifier branch retains that actual store's nonsecret
 fallback: invalid references and successful absent/validator-accepted inactive
@@ -2873,12 +2880,27 @@ identity selection, with valid lookups rolled back first. Empty/malformed
 credentials and unsupported disabled-owner evidence remain `EvidenceDrift`.
 Known rows retain their existing zeroizing PHC only until computation or drop. No
 password, replacement scope, raw address, connection getter, credential intake,
-worker interface or approval/permit is introduced. Existing eleven C1 tests
-cover current behavior; later split-specific tests and compiler/field review are
-required before claiming the extraction. Prior journal extraction and reviewed
-commits retain their own source checkpoints.
+worker interface or approval/permit is introduced. The owned capture contains
+only the closed material enum and a zero-sized `PhantomData<Rc<()>>` marker.
+Known material moves the existing zeroizing row and original scope; Unknown
+copies only that store's nonsecret fallback. Capture and computation remain
+private; the unchanged preparation wrapper composes them. The complete recheck
+and credential-selection/fingerprint helpers are unchanged.
 
-This closes the bounded capture/compute/recheck contract only. Whole-store
+All eleven existing C1 cases remain, with eight split-specific cases covering
+autocommit and no writes/session activity, original scope/connection and store
+move/drop/reopen, rotation/recovery/valid verifier substitution between capture
+and computation, actual captured fallback/error order, and empty/malformed
+selection rejection. The disabled-owner fixture also rejects at capture.
+Dependency-free compiler assertions check the capture is `'static` and neither
+Clone, Debug, Serialize, Deref, Send nor Sync; exact field review separately checks
+ownership and absence of borrowed/raw handles. Ordinary tests do not prove memory
+zeroization. Nineteen focused cases and strict Clippy pass. Full `npm run check`,
+named public/docs/inventory/history/diff checks and fresh exact source/direct-child
+review remain required before source checkpoint closure. Prior journal extraction
+and reviewed commits retain their own source checkpoints.
+
+This finishes only the bounded private capture/compute prerequisite. Whole-store
 capture/recheck are not future Ready-cell views. Actual guard/mutex lifetimes,
 original operation budget/deadline/cancellation, PHC retention bounds, finite
 aggregate storage, selected writable/native/VFS custody, all-writer routing,
