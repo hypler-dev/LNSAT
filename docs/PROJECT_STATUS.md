@@ -2946,6 +2946,62 @@ Project Status owns implementation truth; Phase11 packet owns runtime proof.
 LNSAT remains neutral and standalone with optional ordinary Rangoon adapters.
 No integration, runtime, merge, support/certification or release gate opens.
 
+### Stage-A read-only control observer proposal
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and selected-store phase feasibility checkpoint. The [supporting ownership
+proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-control-observer-proposal)
+names one recommended **PROPOSED** amendment, pending explicit owner/project
+acceptance and exact source precode. PHR-0088 tracks this documentation slice's
+exact source/direct-child validation and independent review. The current
+no-native-under-authority-guard rule and guarded-view/transaction lifetimes remain
+binding. Review of a coherent proposal does not accept the amendment or establish
+source feasibility.
+
+The proposal adds one separately retained read-only control observer alongside
+the existing native observer: two dedicated contexts, with separate construction
+and cleanup records. Its sole proposed native-under-guard exception covers the
+fixed original-connection read-only custody sequence. Original physical owners
+stay in the anchored authority cell; selected/SQL views remain guard-bound. The
+existing native lane receives no SQLite owner, guard or selected view. A distinct
+proposed ObservationOnly purpose uses actual read-only MAIN_DB/schema17 and
+cannot become Ready, writable schema18, an ordinary-store adoption or a product
+caller. Original-owner acquisition/close and exact private Rust layout remain
+unimplemented. C1 capture/computation, journal mutation, authorized writers,
+durable stop and release frames are excluded. This does not solve B6's writable
+pre-commit custody or full native freeze.
+
+Independent proposal reviews found three P1 lifecycle holes. Publication now requires
+an atomic original-association/live-budget Reserved-to-Published transition under
+authority then mailbox; retirement seals never-published reservations, and a
+visible InFrame marker survives request transfer even when payload slots are
+empty. Stale producers cannot publish into, consume or retire another operation.
+After possible SQLite limit/statement changes, cancellation or expiry stops new
+observations but cannot skip fixed cleanup under the original guard. Only actual
+private ControlFrameCleanupAck binds explicit checked statement finalization,
+exact prior-limit restoration and ended projection. Unknown cleanup quarantines;
+body return, Drop and an empty slot cannot certify it. A distinct actual worker-produced ControlFrameUnenteredAck handles published
+work cancelled before guard entry or denied Busy; it cannot masquerade as
+never-published NoDispatch or entered-frame cleanup. Retiring/Published remains
+visible until the worker drains that exact request. Control-frame cleanup
+remains separate from native-worker/store/VFS/journal/probe/durable cleanup.
+
+Only the original operation identity and budget allocation may cross the fixed
+metadata slots; no fresh budget, deadline, paths, SQL, descriptors, callbacks or
+credential material. ObservedReadOnlySequence is historical unverified status,
+never a current custody witness, approval or execution permission. Expiry closes
+admission permanently; a stuck native call/finalizer can retain the guard and
+original owners indefinitely. Cancellation is not durable stop or nonexecution,
+and guarded durable stop may remain Busy/Pending. Source gates still require
+owner amendment acceptance, construction/retained-handle proof, exact finite
+aggregate layout, original-owner acquisition/close, checked cleanup layout,
+shared native call/handle accounting, private crate/module bridge, compiler
+traits and fresh exact precode review. No Rust/schema/API/native implementation,
+full freeze or genuine Linux proof is supplied by this documentation checkpoint.
+Project Status owns implementation truth; Phase11 packet owns runtime proof.
+LNSAT stays neutral and standalone with optional ordinary Rangoon adapters.
+No integration, runtime, merge, support/certification or release gate opens.
+
 ### Stage-A credential capture/compute/recheck contract
 
 Canonical work record: this subsection under accepted Stage-A source order and

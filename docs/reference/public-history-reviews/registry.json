@@ -667,6 +667,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0087/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0088",
+      "subject_id": "stage-a-read-only-control-observer-proposal",
+      "review_subject_ids": ["stage-a-read-only-control-observer-proposal"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0088/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

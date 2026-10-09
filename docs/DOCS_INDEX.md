@@ -162,6 +162,11 @@ subsystem or proposal.
   records original-connection/native phase conflicts and unselected owner/executor
   options; current guard rules remain binding, journal mutations are separate,
   and writable/native integration and full freeze remain open.
+  Its [read-only control observer proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-control-observer-proposal)
+  recommends an explicitly proposed second retained context and narrow native
+  observation exception, with sealed publication, visible frame ownership and
+  mandatory checked cleanup; owner acceptance, exact source layout, writable
+  integration and native proof remain open. Current guard rules stay binding.
   Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
   defines the implemented private current-row capture/computation prerequisite
   while preserving original scope/connection recheck; control integration remains open.
