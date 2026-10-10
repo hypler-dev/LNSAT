@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0090-independent-implementation-review-4e2a45b3",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["stage-a-native-validator-precode"],
+  "base_revision": "d5de38e7ebad60239c5ad83ea451da5e666e863a",
+  "reviewed_revision": "4e2a45b364bfdf709c21b943e7981ef1048961de",
+  "reviewed_tree_oid": "077d9154fa308ce9319f451bd5f34ebaea4bb465",
+  "diff_sha256": "sha256:c79d83d65f524833caee8f5f61f6feabc710f1547092fd406197016ad6cd67d0",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:1196627dcac62bdad399f5047a93933e20e5d96a01a37a09d1a5a0d501b16165"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:f589b3abb5bde7dbf6ec5d0cc1bf7e971948e6d35837feeee5d8062b635d7569"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:e24d5228624036f12d2b16cf68bfd3b6053b458713a65baa2cd811b56bd43a64"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:1808592ab077bfbd91e783c607f4ec2c2cfd3d873fed50e78139ec290f3a907f"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:3564108b7d58f1d40c59b2bd29849e3f617878e63e516061357d8b9bd2ae20c6"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/native_validator_docs_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent exact staged and immutable-source documentation review. Human owner accepted only docs-only ACL erratum correction and hardened package-isolated Linux validator precode. Canonical ACL test-location correction closes prior P3; ten ACL cases in root tests, fourteen path edges and 131 lexical annotations are static inventory, not compiled/passing evidence. Current daemon-only rustix graph rejects add-store/retain-daemon relocation before Cargo; future fixed dual-owner policy transition and negative tests require separately accepted source ownership. Proposed fixed package-only Linux baseline/store compile/list actions retain hardened pinned offline full metadata/env/config guards, native-host checks, bound phase-specific immutable inputs and exact nonzero native-case equivalence. Validator, harness/receipt binding, graph policy transition, relocation and actual Linux baseline/store proof remain missing; no implementation or native/source feasibility PASS. Independent P3 corrected before commit: native test-list comparison includes ignored registrations; no test body, including ignored bodies, executes. Six exact proportional source checks PASS. PHR90 pending in source; all84 prior entries/manifests preserved. No production Rust/Cargo/scripts/API/schema/dependency/README/assets/runtime packet edits, native execution, installs, GLM transfer, push/main/merge/release/publication/deploy or support/certification authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
