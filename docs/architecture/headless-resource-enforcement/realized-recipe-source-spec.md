@@ -1511,12 +1511,14 @@ feasibility checkpoint. The inspected base is
 `1b26e08440551debfacdd3adc0030ed50bfbbd95`. PHR-0088 tracks this documentation
 slice's exact source/direct-child validation and independent review.
 
-This is one recommended **PROPOSED** architecture amendment, pending explicit
-owner/project acceptance and exact source precode. Developing and reviewing the
-proposal is authorized; the proposal does not authorize its implementation. The
-current guarded-helper rules remain binding until the amendment is accepted.
-No root, observer, bridge, mutex exception or observation-only admission is
-implemented here. No Rust/schema/API/native/runtime behavior changes.
+At PHR-0088 this was one recommended **PROPOSED** architecture amendment,
+pending explicit acceptance and exact source precode. The human owner accepted
+its narrow observer amendment on October 9, 2026; the [current component precode](#stage-a-read-only-observer-rust-precode)
+and Project Status record that acceptance and remaining gates. This historical
+proposal does not authorize implementation. Guard-bound lifetimes still bind;
+only the fixed original-read-only-connection observation/required cleanup has
+the accepted native-under-guard exception. No root, observer, private bridge,
+owner admission or Rust/schema/API/native/runtime behavior is implemented here.
 
 The exact implementation evidence is
 [`selected_store.rs`](../../../crates/lnsat-store/src/selected_store.rs),
@@ -1525,8 +1527,8 @@ The exact implementation evidence is
 and the existing daemon artifact budget/native lane. The selected store retains
 the original connection, parent and lease; its descriptor observations are
 transient. Its current native producer applies the temporary SQLite length limit
-before producing `FILESTAT` JSON and restores the original limit before returning
-even on failure. Operation identity is private to `lnsat-store`, while the artifact
+before producing `FILESTAT` JSON and restores the original limit on ordinary returned Result paths; it does not
+prove restoration on panic/unwind. Operation identity is private to `lnsat-store`, while the artifact
 budget and native lane are private to `lnsatd`. No private cross-crate bridge or
 complete shared call/handle accounting currently exists.
 
@@ -1575,3 +1577,251 @@ Lock-free original-budget invalidation/admission closure is cancellation only. D
 Source implementation remains blocked until explicit owner amendment acceptance, exact private Rust layouts/constructors and aggregate bounds, original-owner read-only acquisition/close protocol, native primitive/call ledger, private module/dependency placement, original budget/identity sharing bridge, compiler traits and fresh exact precode review. Identity currently belongs privately to lnsat-store; artifact budget/native primitives privately to lnsatd; no cross-crate bridge or complete whole-operation budget currently exists. Changing visibility or moving trusted modules requires its own exact source ownership review; this packet does not pretend protocol field labels are compilable Rust.
 
 Later focused validators: original readonly/schema17/public-wrapper compatibility; genuine positive original-connection observation and drift denials; nonforgeable root/association, fixed slot/transfer peak bounds, no view/guard/handle crossing; sealed reservation/publication race and visible InFrame while slots empty; worker root contention with actual unentered ack; cancellation after publication/before transfer and after transfer/before guard with visible retiring occupancy; admission closure drains already-published request; timeout during each native/check/finalize phase; late/mismatched completion; poisoned/unwinding construction and callback absence; cancel/expiry/failed-call cleanup-only exact prior-limit restoration and checked finalization; separate control-frame/native/store/journal cleanup; original budget no reset/new allowance. Native positive/blocked-call/close evidence remains separately authorized Linux proof. Synthetic scheduler tests cannot certify that native behavior.
+
+## Stage-A read-only observer Rust precode
+
+Canonical authority: [Project Status](../../PROJECT_STATUS.md#stage-a-read-only-observer-rust-precode). On October 9, 2026, the human owner accepted the narrow D88 amendment: one separately retained read-only control observer alongside the existing native observer, the fixed original-read-only-connection custody observation under the actual authority guard, and an ObservationOnly purpose distinct from Ready. This supersedes only D88's pending-acceptance state. PHR-0089 records this documentation/precode slice. Acceptance does not authorize production Rust changes, original-owner acquisition/close, writable B6, C1 integration, journal effects, native job expansion, full native freeze, runtime, merge or release.
+
+The following is exact component precode: selected private placement, field ownership, function boundaries and finite lifecycle obligations for later review. Rust declaration blocks describe future private source; signature blocks are not complete implementations or a compilable module. No Rust compiler, trait, genuine original-connection observation, native cleanup or source-feasibility PASS is claimed. Construction, admission and shared full-native accounting remain separate gates; this component cannot acquire owners or become a product caller.
+
+### Private placement and prerequisite source order
+
+Use the already selected `lnsat-store` trusted boundary. A separately reviewed prerequisite must move/reuse the existing private daemon native closure, without copying implementations or exporting a proof constructor. Exact move set: `headless_native.rs`, `headless_native_acl.rs`, `headless_native_fdinfo.rs`, `headless_native_mountinfo.rs`, `headless_native_procfs.rs`, `headless_native_readable.rs`, `headless_native_artifact.rs`, `headless_native_root_bootstrap.rs`, `headless_native_tests.rs`, `headless_native_fdinfo_tests.rs`, `headless_native_mountinfo_tests.rs`, `headless_native_procfs_tests.rs`, `headless_native_readable_tests.rs`, `headless_native_artifact_tests.rs`, and `headless_native_root_bootstrap_tests.rs`, each from `crates/lnsatd/src/` to `crates/lnsat-store/src/`. Preserve relative `#[path]`, private dependency edges, platform gates and tests; ACL tests are inline. Remove the old private daemon module declaration and add the store-private declaration. No public re-export, store-to-daemon dependency, duplicated observer or new consumer.
+
+The moved Linux closure needs the existing pinned `rustix = 1.1.5` dependency with its existing `std`, `alloc`, `fs` features and disabled defaults in store Cargo metadata/lock edges. Existing store `nix` filesystem/user support is available; no evidence supports adding daemon socket/poll capabilities. Preserve workspace Rust 1.97.1, edition 2024, unsafe-code forbid and dependency versions. Exact dependency compilation remains required; this document performs no migration, dependency update or installation.
+
+After that prerequisite, extract/reuse the one actual `ArtifactBudgetState`, `ArtifactReadBudget`, `ArtifactReadPurpose` and `ArtifactError` definitions into store-root-private `headless_control_budget.rs`. Move their existing implementations/constants together; retain the native-error conversion at its native boundary. Internal `pub(super)` imports/aliases preserve migrated artifact/root-bootstrap use. The original native `NativeError` needs only store-internal parent visibility for that conversion. Move/reuse the exact deadline helper into the same private budget boundary, preserving its five-second/enclosing-deadline behavior. Replace artifact references to private budget fields with narrowly scoped internal methods, not public fields or copied state. No second budget type, fresh per-observer `begin`, caller-supplied identity, public bridge or broadened Rust API.
+
+Place the observation component as a private child of `selected_store`: `#[path = "headless_readonly_control.rs"] mod readonly_control;`. This child can use the actual selected custody fields and store-root private scope/identity/budget types without sibling-private field shortcuts. Native and ordinary selected-store callers remain unchanged until their separately reviewed source packets. Exact observation helper extraction must preserve the original algorithms, not manufacture a `SqliteStore` from borrowed fields.
+
+### Exact owner and association shape
+
+These declarations live inside that private selected-store child after prerequisites. `OwnerDecisionCredentialScopeV1`, `SelectedStoreCustodyV1`, `OperationIdentityAllocator`, `OperationIdentity` and the original budget are reused types. Imports and platform-specific selected custody behavior must compile on every existing target before source acceptance. No type below derives Clone, Debug, serialization or Deref; no external constructor, raw getter, callback or arbitrary SQL entry exists.
+
+```rust
+static ROOT: OnceLock<ControlRoot> = OnceLock::new();
+static OBSERVER: OnceLock<ObserverHeader> = OnceLock::new();
+
+struct ControlRoot {
+    authority: Mutex<StoreAuthority>,
+    admission_closed: AtomicBool,
+}
+struct StoreAuthority {
+    identities: OperationIdentityAllocator,
+    owner: ObservationOwnerState,
+    operation: Option<OperationRecord>,
+}
+enum ObservationOwnerState {
+    Unadmitted,
+    ObservationOnly(ObservationOwner),
+}
+struct ObservationOwner {
+    connection: Connection,
+    custody: SelectedStoreCustodyV1,
+    original_scope: OwnerDecisionCredentialScopeV1,
+}
+struct Association {
+    root: &'static ControlRoot,
+    identity: Arc<OperationIdentity>,
+    budget: Arc<ArtifactBudgetState>,
+    tag: ReadOnlyTag,
+}
+enum ReadOnlyTag { OriginalConnectionCustody }
+struct OperationRecord {
+    association: Association,
+    control_issued: bool,
+    disposition: RootDisposition,
+    obligation: FrameObligation,
+}
+enum RootDisposition { Reserved, Published, Outstanding, AwaitingControlCompletion, Retiring, Retired, Quarantined }
+struct ObservationTicket {
+    association: Association,
+    observer: &'static ObserverHeader,
+}
+```
+
+Quarantine is recorded in the operation and root/header flags while the owner variant remains retained. There is no owner-replacing quarantine variant. Connection/custody fields are owned inside the actual authority mutex, never in tickets, mailbox, frame association or native worker. Drop order is not cleanup proof. Root/observer anchors are established inert before any custody I/O and never taken/replaced/deallocated in-process.
+
+No producer for `ObservationOwner` is supplied here. Actual original read-only admission must retain every partial return and verify original scope, schema17, MAIN_DB read-only, path/parent/lease identity, finite path storage and original association before this variant can exist. It requires a separate acquisition/retention/close packet; the accepted under-guard exception does not permit opening/closing SQLite, parent or lease owners. Ordinary store adoption, reconstructed custody, borrowed-parent owner wrappers, reopen/migration and writable schema18 are forbidden. Until admission and native non-dispatch/accounting producers are reviewed, the root remains Unadmitted and cannot dispatch a positive observation.
+
+Match association using the same static root, `Arc::ptr_eq` on original identity and budget allocations, `same_operation` in the original allocator domain, and the closed tag. Issue one control request per original operation; no sequence reset, reused identity or frame ABA. Identity exhaustion, mismatch and budget invalidation close admission. Historical status never carries current custody, approval or execution authority.
+
+### Retained construction and mailbox
+
+```rust
+struct ObserverHeader {
+    root: &'static ControlRoot,
+    closed: AtomicBool,
+    started: AtomicBool,
+    slots: Mutex<ObserverSlots>,
+    wake: Condvar,
+}
+struct ObserverSlots {
+    construction: Construction,
+    handle: Option<JoinHandle<()>>,
+    mailbox: Mailbox,
+}
+enum Construction { Inert, Reserved, Retained, Failed }
+struct Request { association: Association }
+struct Completion { outcome: Outcome, disposition: ControlDisposition }
+enum Outcome { ObservedReadOnlySequence, Denied(Denial) }
+enum Denial { Busy, Cancelled, InvalidAssociation, NativeRejected }
+enum ControlDisposition {
+    Entered(ControlFrameCleanupAck),
+    Unentered(ControlFrameUnenteredAck),
+}
+struct ControlFrameCleanupAck { association: Association }
+struct ControlFrameUnenteredAck { association: Association }
+struct SealedNoDispatch { association: Association }
+enum Mailbox {
+    Vacant,
+    Reserved(Request),
+    Published(Request),
+    RetiringPublished(Request),
+    InFrame { association: Association, retiring: bool },
+    CompletionPending(Completion),
+    RetiringNoDispatch(SealedNoDispatch),
+    Quarantined { association: Association },
+    Retired,
+}
+```
+
+One construction reservation; one 2 MiB requested thread stack; one actual retained JoinHandle; no replacement or general pool. Hold only the construction/mailbox mutex across spawn, outside authority. Worker waits behind the start barrier without custody access. Move the returned handle immediately into the fixed slot before another fallible step; then publish start. Spawn failure, poison or unwind permanently closes admission. The exact stdlib spawn-return/unwind and retained-handle source proof is still required; stack size does not bound TLS, guard pages, SQLite heap or RSS.
+
+Mailbox enum carries occupancy even when the worker owns the request/completion. At most one request, one unpublished completion and one visible marker. Request association moves into the retained authority frame on entry; it is not cloned into an additional concurrent request/frame owner. Peak association copies: root record, ticket, mailbox marker, worker request-or-frame and worker completion: five identity Arc references and five original-budget Arc references, excluding preexisting original budget/native owners. No paths, SQL strings, descriptors, secret material, dynamic queue, callback or result body crosses these slots. Types above contain finite metadata; actual `size_of` and aggregate library/owner allocation validators remain required, not assumed byte caps.
+
+### Exact private entry boundaries
+
+These are signatures for the future private component, not executable stubs:
+
+```rust
+fn reserve(root: &'static ControlRoot, observer: &'static ObserverHeader)
+    -> Result<ObservationTicket, Denial>;
+fn publish(ticket: &ObservationTicket) -> Result<(), Denial>;
+fn invalidate(ticket: &ObservationTicket);
+fn seal_never_published(ticket: &ObservationTicket)
+    -> Result<(), Denial>;
+fn worker_main(observer: &'static ObserverHeader);
+fn consume(ticket: &ObservationTicket) -> Result<Outcome, Denial>;
+fn retire_control_frame(ticket: ObservationTicket) -> Result<(), Denial>;
+```
+
+Reservation/publication/consumption/retirement use authority then nonblocking mailbox acquisition. Reserve requires actual ObservationOnly admission, original retained owners and root/budget, no outstanding native work and an actual native-lane non-dispatch disposition; absence of a native request is not that proof. The native producer/whole-operation integration is missing, so these checks cannot be replaced with booleans or zero counters to enable source execution.
+
+Publish rechecks the exact live original association and Reserved state atomically under both guards, then transitions to Published. Wake after both guards end. Failure invalidates/retains, without retry. Supervisor can create SealedNoDispatch only by sealing matching never-published Reserved under both guards. Published cancellation becomes RetiringPublished. Worker installs InFrame before moving Request, releases mailbox before trying authority and drains already-published requests after admission closes. Busy or pre-entry cancellation produces only actual worker-created Unentered acknowledgment; after any guard acquisition it must use entered cleanup. Quarantined occupancy is never cleared from empty slots, body return, Drop or a stale producer.
+
+Consumption rechecks matching root operation, identity, budget and tag before/after extraction. Only live nonretiring operations accept ObservedReadOnlySequence. Invalid operations may consume their exact cleanup disposition for retirement, without accepting observation success or resetting budget. Control retirement is not whole-operation/native/store/VFS/journal/probe/durable retirement; Vacant reuse requires independent original-operation retirement. Expired/quarantined observers never rearm. Tickets invalidate on abandonment without acquiring either mutex and cannot mint acknowledgment.
+
+### Guard, projection and terminal retention
+
+```rust
+struct RetainedAuthorityFrame {
+    guard: Option<MutexGuard<'static, StoreAuthority>>,
+    association: Association,
+    observer: &'static ObserverHeader,
+    completion_transferred: bool,
+}
+struct GuardedReadonly<'g> {
+    connection: &'g Connection,
+    custody: &'g SelectedStoreCustodyV1,
+    original_scope: &'g OwnerDecisionCredentialScopeV1,
+    obligation: &'g mut FrameObligation,
+    not_send_sync: PhantomData<Rc<()>>,
+}
+struct FrameObligation {
+    limit: LimitObligation,
+    statement: StatementObligation,
+    projection_live: bool,
+    uncertain: bool,
+}
+enum LimitObligation {
+    Unchanged,
+    MayHaveChanged,
+    PriorKnown(i32),
+    Restoring(i32),
+    Restored(i32),
+}
+enum StatementObligation { None, Creating, Active, Finalizing, Finalized, Uncertain }
+```
+
+Projection is a private borrow of the actual retained guard's fields, with its lifetime tied to `&mut RetainedAuthorityFrame`; no self-referential owner/view struct and no detached Connection constructor. A statement/Rows lifetime cannot escape that projection or release the guard. Operation bookkeeping owns no borrowed Statement. A frame acquired but rejected before projection still uses entered cleanup, with Unchanged/no-statement facts, never Unentered.
+
+Normal checked completion has an exact retained sequence: end Rows/statements/projection and verify all original obligations under the actual guard; construct the original-association cleanup acknowledgment and bounded Completion before releasing the guard; set the original operation to AwaitingControlCompletion; release only that checked guard while retaining the frame with `completion_transferred == false`; then atomically publish the exact Completion from matching InFrame/RetiringInFrame into CompletionPending under mailbox. Only after actual transfer, while the same mailbox guard is still held, may the worker set `completion_transferred = true`. No fallible call or callback occurs between that transition and disarming. A panic before disarming closes acceptance even if Completion reached the slot; it cannot invent success. AwaitingControlCompletion remains occupied and forbids new operation/witness permission.
+
+The retained frame lives through publication, not merely through native observation. Its terminal destructor closes root/header admission and invalidates the same original budget whenever publication was not disarmed, including after guard release. With a held guard it also marks the actual matching original operation Quarantined, then intentionally forgets that guard. After checked release it takes no new mutex: terminal root/header flags are authoritative quarantine, while the root record remains occupied AwaitingControlCompletion until an actual guarded consumer mirrors Quarantined. No guardless Drop manufactures a root-record update or cleanup acknowledgment. Mismatch never changes another operation; closing this observer/root still prevents new admission. A complete transfer with no held guard is the only disarmed frame disposition.
+
+The planned terminal destructor is safe Rust, with no native calls or mutex acquisition. `same_association` is the fixed private root/identity-domain/identity-Arc/budget-Arc/tag comparison defined above, not an injectable predicate:
+
+```rust
+impl Drop for RetainedAuthorityFrame {
+    fn drop(&mut self) {
+        if self.completion_transferred && self.guard.is_none() {
+            return;
+        }
+        self.association.root.admission_closed.store(true, Ordering::SeqCst);
+        self.observer.closed.store(true, Ordering::SeqCst);
+        self.association.budget.invalidate();
+        if let Some(mut guard) = self.guard.take() {
+            if let Some(operation) = guard.operation.as_mut() {
+                if same_association(&operation.association, &self.association) {
+                    operation.disposition = RootDisposition::Quarantined;
+                }
+            }
+            std::mem::forget(guard);
+        }
+    }
+}
+```
+
+Guard-present unresolved drop/unwind retains the actual mutex forever; the process-lifetime root retains original connection/custody owners. Guardless post-cleanup publication failure still closes admission permanently and preserves outstanding mailbox/root occupancy, without promising that an already checked/released guard remains locked. There is no force unlock, wait under guard, recover-and-reuse poison, replacement root or destructor-derived cleanup. Worker lifetime failure separately closes the retained observer; actual construction/thread-exit proof remains required. Abort/process termination is not in-process retention or crash-recovery proof.
+
+A caught panic may permit best-effort known cleanup while the retained frame remains outside the unwind boundary; it never restores clean status. If unwind destroys a statement or Rows, its unchecked Drop disposition is uncertain. No unsafe FFI, ManuallyDrop extraction, public raw pointer or relaxed unsafe-code policy is allowed. Cleanup that blocks retains frame/guard/owners indefinitely; deadline is acceptance cutoff, not return/close guarantee.
+
+### Original-budget API-unit ledger
+
+The planned extension is one private field `readonly_control: ReadonlyControlQuota` in the existing `ArtifactBudgetState`, initialized only with that original budget. No standalone quota constructor is exposed:
+
+```rust
+struct ReadonlyControlQuota {
+    reserved: AtomicBool,
+    observation_units: AtomicU32,
+    cleanup_units: AtomicU32,
+    statement_attempts: AtomicU32,
+}
+const READONLY_OBSERVATION_UNITS: u32 = 16_384;
+const READONLY_CLEANUP_UNITS: u32 = 64;
+const READONLY_STATEMENT_ATTEMPTS: u32 = 8;
+```
+
+Reservation uses one checked false-to-true transition. Counts begin at zero only when the original budget is allocated. Checked monotonic charge refuses overflow or cap excess and invalidates that budget; no increment failure can silently authorize a call. Cleanup charges require the same original root/identity/budget/tag and a recorded outstanding obligation, not a caller-selected cleanup flag. Private visibility and extraction compilation remain prerequisite proofs.
+
+The component extends the one original budget allocation with a one-shot read-only reservation and monotonic control counters. Reserve at most 16,384 observation API units, 64 cleanup API units and eight statement-creation attempts for the single request. No refund/reset/fresh budget. Reserve before publication; failure denies and invalidates. A unit is one named Rust wrapper API invocation, including its internal library work; it is not a kernel syscall, VFS operation, allocation or hard execution-time bound. Check/charge before every invocation and recheck original budget after every observation call, including errors before propagation. Invalid budget permits only the pre-reserved original-association cleanup counters, never new observation work.
+
+Fixed planned ledger, per original-connection sequence:
+
+| Invocation family                                                                                                                                                                        | Maximum observation units |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------: |
+| Three custody association passes: UID/eUID, canonicalize, held/named parent metadata, named database metadata, held/named lease metadata                                                 |                        24 |
+| Two in-place descriptor fstat calls; exact connection path and MAIN_DB read-only checks                                                                                                  |                         4 |
+| Two FILESTAT producer passes, each including length-limit change/check, SQLite version, bounded function-list inspection, source-ID/DEBUG/FILESTAT queries, checked restoration/readback |                    12,342 |
+| Total planned ceiling                                                                                                                                                                    |                    12,370 |
+
+Each producer pass is at most 6,171 units: set/check limit and version (3); function-list prepare/query/finalize (3), at most 1,025 Rows::next and 5,120 Row::get calls (6,145 combined); source-ID, DEBUG and FILESTAT each prepare/query/two next/one get/finalize (18); restoration/readback (2). Function list permits at most 1,024 rows, as current code does; extra/early failure is denial. Eight statement-creation attempts cover four per pass; only one live statement. The 16,384 cap has slack, not permission to add SQL or additional observations. Cleanup allowance covers explicit outstanding finalization and exact limit restoration/readback; cleanup does not run a new function-list or FILESTAT observation. Count natural successful-path finalization/restoration once as observation; abnormal cleanup draws only cleanup quota. An operation-level precode test must bind every actual wrapper to this table and fail on added invocation paths.
+
+This is a control-component wrapper ledger, not completed whole-native accounting. Existing procfs requests still have no budget; existing artifact/root jobs have byte/deadline bookkeeping but no complete shared native call/handle ledger. The first component cannot dispatch any of those jobs through the control root or certify their cleanup. Their registration, retained-handle accounting and original-operation budget participation remain full-native gates. Native observer absence/non-dispatch needs its actual private producer, never an invented zero-count witness.
+
+### Checked SQL cleanup and known upstream limitation
+
+Use only fixed literals and explicitly owned `Statement`, never prepare_cached/query_row as cleanup proof. At most one live statement. For normal SQL completion, consume final Rows::next yielding Ok(None), which checks rusqlite reset; end Rows and explicitly consume Statement::finalize with a checked Ok result. Every scalar query checks exactly one bounded value then EOF. Function-list predicate rules, SQLite 3.53.2/source-ID/DEBUG/unix origin checks and FILESTAT JSON/parser bounds remain unchanged; producer length bound stays 4,096.
+
+Rusqlite 0.40.1 offers no safe public checked early Rows reset. Rows Drop discards reset result; step error also discards reset result before returning its error. Thus cancellation/expiry, decode/row-cap errors, native step/reset error or panic with active Rows permanently marks cleanup uncertain. Attempt explicit finalization and known prior-limit restoration under the same guard when possible, but neither later finalize Ok nor body return repairs that unknown reset. No clean acknowledgment, guard release or observer rearm follows. This is a conservative availability cost, not a newly implemented runtime fix or reason to introduce unsafe FFI/vendor patches.
+
+Record MayHaveChanged before set_limit. Its returned previous value is the only exact restoration target and is retained before another fallible call. An optional initial limit read cannot replace that returned value; disagreement quarantines while restoring the actual returned prior. Restore with set_limit(prior), then verify limit()==prior. Unknown prior, failed/unknown restore, unchecked statement/Rows cleanup or panic yields no acknowledgment. Cancellation after possible change runs only fixed cleanup with original association and retained guard; it does not bypass restoration because the live observation budget expired. Existing selected_store.rs ordinary-result restoration is not panic/unwind proof.
+
+### Exact remaining packets and validators
+
+1. Private placement prerequisite: only the fifteen move pairs, `crates/lnsatd/src/lib.rs`, `crates/lnsat-store/src/lib.rs`, store Cargo metadata/lock edges and canonical status/inventory/review records. Preserve existing private interfaces and tests; no control root, observer, acquisition, public caller or mutation activation. Named validators: all moved native unit modules on existing supported targets, store/daemon compilation and strict Clippy with pinned offline toolchain, meaningful-source `npm run check`, public/docs/inventory/history/diff checks, fresh exact staged/immutable source and direct-child review. Failed compilation returns to controller; no install.
+2. Private budget extraction/component precode: exact budget module, migrated artifact/procfs/root-bootstrap imports/deadline helper and original `OperationIdentity` reuse; no physical admission. Freeze original-begin ownership, private visibility, one-shot quota and existing fixture compatibility. Compiler/negative trait checks must prove nonforgeable tickets/acks, static anchored root, actual guard-borrow lifetimes, no Send/Sync projection, no Clone/Debug/Serialize/Deref authority types, finite mailbox/Arc peaks and sticky exhaustion. Safe frame terminal retention, construction unwind and every reservation/publication/transfer/cancellation/cleanup phase require focused race/conformance tests. Existing tests alone supply none of these new proofs.
+3. Original-owner admission/retention/close and shared native non-dispatch/full call/handle accounting remain separately designed and reviewed before an observation component can be source-integrated or acquire/dispatch. Genuine Linux positive, drift, blocked-call/finalizer/close and original-owner evidence require separate runtime authority. Writable B6, C1 scheduling, journal writes/commit-issued fences, stop/recovery/release and full-module freeze stay closed.
+
+No broader integration, runtime/support/certification, merge, push, release, publication, deploy, host change, credential intake, install or external source transfer is authorized. Project Status remains implementation truth; Phase11 remains runtime proof. LNSAT stays neutral and standalone.

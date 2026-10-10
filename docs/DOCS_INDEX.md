@@ -163,10 +163,14 @@ subsystem or proposal.
   options; current guard rules remain binding, journal mutations are separate,
   and writable/native integration and full freeze remain open.
   Its [read-only control observer proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-control-observer-proposal)
-  recommends an explicitly proposed second retained context and narrow native
-  observation exception, with sealed publication, visible frame ownership and
-  mandatory checked cleanup; owner acceptance, exact source layout, writable
-  integration and native proof remain open. Current guard rules stay binding.
+  preserves the independently reviewed D88 protocol; the human-accepted narrow
+  amendment is recorded in the current precode work record.
+  Its [read-only observer Rust precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-observer-rust-precode)
+  selects exact private placement, retained owner/guard/mailbox shape, original
+  wrapper-unit quota and conservative checked SQL cleanup. Component precode is
+  not compiled source; private move/reuse, budget extraction, original-owner
+  admission/close, full native accounting, compiler proofs and writable/runtime
+  integration remain gated.
   Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
   defines the implemented private current-row capture/computation prerequisite
   while preserving original scope/connection recheck; control integration remains open.

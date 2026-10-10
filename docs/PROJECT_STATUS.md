@@ -2948,14 +2948,14 @@ No integration, runtime, merge, support/certification or release gate opens.
 
 ### Stage-A read-only control observer proposal
 
-Canonical work record: this subsection under the accepted Stage-A source order
-and selected-store phase feasibility checkpoint. The [supporting ownership
-proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-control-observer-proposal)
-names one recommended **PROPOSED** amendment, pending explicit owner/project
-acceptance and exact source precode. PHR-0088 tracks this documentation slice's
-exact source/direct-child validation and independent review. The current
-no-native-under-authority-guard rule and guarded-view/transaction lifetimes remain
-binding. Review of a coherent proposal does not accept the amendment or establish
+Historical work record: this subsection preserves the PHR-0088 proposal and its
+independent review. The human owner accepted its narrow observer amendment on
+October 9, 2026; the [current Rust precode record](#stage-a-read-only-observer-rust-precode)
+owns that acceptance and remaining source gates. The existing
+[supporting ownership proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-control-observer-proposal)
+remains historical design context. Guard-bound view/transaction lifetimes still
+bind; the accepted exception covers only fixed original-read-only-connection
+custody observation and its required cleanup. Proposal review does not establish
 source feasibility.
 
 The proposal adds one separately retained read-only control observer alongside
@@ -2992,7 +2992,7 @@ credential material. ObservedReadOnlySequence is historical unverified status,
 never a current custody witness, approval or execution permission. Expiry closes
 admission permanently; a stuck native call/finalizer can retain the guard and
 original owners indefinitely. Cancellation is not durable stop or nonexecution,
-and guarded durable stop may remain Busy/Pending. Source gates still require
+and guarded durable stop may remain Busy/Pending. At the proposal checkpoint, source gates required
 owner amendment acceptance, construction/retained-handle proof, exact finite
 aggregate layout, original-owner acquisition/close, checked cleanup layout,
 shared native call/handle accounting, private crate/module bridge, compiler
@@ -3001,6 +3001,82 @@ full freeze or genuine Linux proof is supplied by this documentation checkpoint.
 Project Status owns implementation truth; Phase11 packet owns runtime proof.
 LNSAT stays neutral and standalone with optional ordinary Rangoon adapters.
 No integration, runtime, merge, support/certification or release gate opens.
+
+### Stage-A read-only observer Rust precode
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The human owner explicitly accepted the narrow D88 observer amendment and exact
+Rust precode development on October 9, 2026. The [component precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-observer-rust-precode)
+records exact private placement, owner/association/mailbox/frame declarations,
+entry boundaries, wrapper API-unit limits and checked cleanup obligations.
+PHR-0089 tracks this documentation/precode slice's exact source/direct-child
+validation and independent review. Acceptance covers the second separately
+retained read-only observer, fixed original-read-only-connection observation
+under the actual authority guard, and ObservationOnly distinct from Ready.
+Production Rust implementation, owner acquisition/close and all other gates
+remain closed. This is component precode, not a compiled full module or a source
+feasibility/native-freeze claim.
+
+Select the existing trusted `lnsat-store` boundary. A separately reviewed
+prerequisite must move/reuse the exact fifteen-file private daemon native closure
+and its existing pinned dependency edges; no copied observer, public proof bridge
+or store-to-daemon cycle. Then extract/reuse the one original budget and its
+private deadline/error/purpose definitions. The observation component belongs
+inside selected_store's private child so it can borrow actual custody fields
+without sibling-private field shortcuts. Neither move nor extraction is
+performed here. Existing ordinary store/daemon behavior stays unchanged.
+
+The process-lifetime root retains original connection, custody and scope inside
+its actual authority mutex. Fixed metadata carries only the same root/private
+identity/original budget/tag; one control request per operation prevents frame
+ABA. Reserved publication remains sealed under authority then mailbox. Published
+work drains after admission closure, with visible InFrame occupancy and distinct
+actual entered-cleanup, unentered and sealed-no-dispatch dispositions. No empty
+slot, historical result, body return or Drop supplies authority or cleanup proof.
+
+Exact precode keeps the retained frame alive through completion publication,
+including after checked guard release. Unresolved drop/unwind closes admission
+and invalidates the same budget even when no guard remains. With a held guard it
+marks the matching original operation Quarantined and intentionally forgets that
+guard, retaining the actual mutex/owners permanently. After checked release,
+root/header terminal flags quarantine while AwaitingControlCompletion stays
+occupied; no new mutex or fabricated acknowledgment. Actual completion transfer
+alone disarms the frame. These fail-closed availability costs are explicit;
+there is no force unlock, replacement root/worker, five-second return or close
+promise. Process termination/abort is not in-process retention or crash recovery
+proof.
+
+Source inspection exposed a concrete upstream cleanup limitation: rusqlite
+0.40.1 lacks a safe public checked early Rows reset. Normal EOF checks reset,
+and explicit consuming Statement::finalize checks finalization. Early row exit,
+step/reset failure or unwind leaves unknown reset/finalization disposition;
+later finalize success cannot repair it. The component must quarantine without a
+clean acknowledgment or guard release while attempting known fixed cleanup.
+Exact returned prior SQLite length limit is retained immediately and restored
+with checked readback; invalidated observation budgets do not skip those
+obligations. No unsafe FFI, vendor patch, dependency upgrade or runtime fix is
+introduced.
+
+The planned single-request ledger caps 16,384 observation wrapper API units,
+64 cleanup units and eight statement-creation attempts from the same original
+budget allocation, with no refund/reset. The fixed observation ceiling is 12,370
+units; only one live statement. These count named Rust wrapper calls, not kernel
+syscalls, VFS/internal SQLite allocations, RSS or execution time. Complete shared
+native call/handle accounting and procfs budget participation remain missing.
+Actual native non-dispatch proof cannot be invented from zero counters.
+
+The first root stays Unadmitted until separately reviewed original-owner
+read-only acquisition/partial retention/close and native registration/accounting
+producers exist. No ordinary-store adoption, read-only upgrade, schema18/writable
+Ready, product caller, C1 scheduling, journal effect, writer, durable stop or
+release activation is included. Next safe packet is private move/reuse precode
+and exact source-ownership review; source changes need their own named validators,
+full npm run check and fresh exact review before integration. Construction,
+traits/lifetimes, aggregate native/library allocation and race/quota/cleanup
+source proofs remain unfinished. Project Status owns implementation truth;
+Phase11 owns genuine Linux/runtime proof. LNSAT remains neutral and standalone.
+No runtime, support/certification, merge, push, release, publication or deploy
+gate opens.
 
 ### Stage-A credential capture/compute/recheck contract
 
