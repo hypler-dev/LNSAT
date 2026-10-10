@@ -683,6 +683,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0089/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0090",
+      "subject_id": "stage-a-native-validator-precode",
+      "review_subject_ids": ["stage-a-native-validator-precode"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0090/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

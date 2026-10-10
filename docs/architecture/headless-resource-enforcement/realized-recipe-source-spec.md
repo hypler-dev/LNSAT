@@ -1586,13 +1586,81 @@ The following is exact component precode: selected private placement, field owne
 
 ### Private placement and prerequisite source order
 
-Use the already selected `lnsat-store` trusted boundary. A separately reviewed prerequisite must move/reuse the existing private daemon native closure, without copying implementations or exporting a proof constructor. Exact move set: `headless_native.rs`, `headless_native_acl.rs`, `headless_native_fdinfo.rs`, `headless_native_mountinfo.rs`, `headless_native_procfs.rs`, `headless_native_readable.rs`, `headless_native_artifact.rs`, `headless_native_root_bootstrap.rs`, `headless_native_tests.rs`, `headless_native_fdinfo_tests.rs`, `headless_native_mountinfo_tests.rs`, `headless_native_procfs_tests.rs`, `headless_native_readable_tests.rs`, `headless_native_artifact_tests.rs`, and `headless_native_root_bootstrap_tests.rs`, each from `crates/lnsatd/src/` to `crates/lnsat-store/src/`. Preserve relative `#[path]`, private dependency edges, platform gates and tests; ACL tests are inline. Remove the old private daemon module declaration and add the store-private declaration. No public re-export, store-to-daemon dependency, duplicated observer or new consumer.
+Use the already selected `lnsat-store` trusted boundary. A separately reviewed prerequisite must move/reuse the existing private daemon native closure, without copying implementations or exporting a proof constructor. Exact move set: `headless_native.rs`, `headless_native_acl.rs`, `headless_native_fdinfo.rs`, `headless_native_mountinfo.rs`, `headless_native_procfs.rs`, `headless_native_readable.rs`, `headless_native_artifact.rs`, `headless_native_root_bootstrap.rs`, `headless_native_tests.rs`, `headless_native_fdinfo_tests.rs`, `headless_native_mountinfo_tests.rs`, `headless_native_procfs_tests.rs`, `headless_native_readable_tests.rs`, `headless_native_artifact_tests.rs`, and `headless_native_root_bootstrap_tests.rs`, each from `crates/lnsatd/src/` to `crates/lnsat-store/src/`. Preserve relative `#[path]`, private dependency edges, platform gates and tests; ACL cases live in `headless_native_tests.rs`; the ACL module retains its cfg(test) `entries` helper. Remove the old private daemon module declaration and add the store-private declaration. No public re-export, store-to-daemon dependency, duplicated observer or new consumer.
 
 The moved Linux closure needs the existing pinned `rustix = 1.1.5` dependency with its existing `std`, `alloc`, `fs` features and disabled defaults in store Cargo metadata/lock edges. Existing store `nix` filesystem/user support is available; no evidence supports adding daemon socket/poll capabilities. Preserve workspace Rust 1.97.1, edition 2024, unsafe-code forbid and dependency versions. Exact dependency compilation remains required; this document performs no migration, dependency update or installation.
 
 After that prerequisite, extract/reuse the one actual `ArtifactBudgetState`, `ArtifactReadBudget`, `ArtifactReadPurpose` and `ArtifactError` definitions into store-root-private `headless_control_budget.rs`. Move their existing implementations/constants together; retain the native-error conversion at its native boundary. Internal `pub(super)` imports/aliases preserve migrated artifact/root-bootstrap use. The original native `NativeError` needs only store-internal parent visibility for that conversion. Move/reuse the exact deadline helper into the same private budget boundary, preserving its five-second/enclosing-deadline behavior. Replace artifact references to private budget fields with narrowly scoped internal methods, not public fields or copied state. No second budget type, fresh per-observer `begin`, caller-supplied identity, public bridge or broadened Rust API.
 
 Place the observation component as a private child of `selected_store`: `#[path = "headless_readonly_control.rs"] mod readonly_control;`. This child can use the actual selected custody fields and store-root private scope/identity/budget types without sibling-private field shortcuts. Native and ordinary selected-store callers remain unchanged until their separately reviewed source packets. Exact observation helper extraction must preserve the original algorithms, not manufacture a `SqliteStore` from borrowed fields.
+
+### Private native relocation and package-isolated Linux validator precode
+
+On October 10, 2026, the human owner authorized this documentation-only erratum and validator precode, tracked by PHR-0090 under the same [Project Status work record](../../PROJECT_STATUS.md#stage-a-read-only-observer-rust-precode). The earlier relocation review is advisory; its frozen reports and reviewed commits remain intact. The canonical ACL erratum is corrected above: ten `headless_native_acl_*` cases are in the root native test module, not inline in the ACL module. The fifteen-file closure has fourteen relative `#[path]` edges and 131 lexical `#[test]` annotations across seven test files. These are static counts, not compiled, selected or passing tests. No ACL-specific test file is invented.
+
+**Existing blocker.** The current `scripts/sqlite-native-build-policy.mjs` requires exactly one incoming rustix dependency edge, from `lnsatd`. Adding a store edge while retaining the daemon edge, as proposed by the earlier metadata precode, fails `sqlite_native.graph_rejected` before any selected Cargo build command. The earlier fifteen moves plus four metadata edits are therefore insufficient with the unchanged policy. Package isolation must preserve the full locked/offline metadata graph guard, including workspace feature unification; `--no-deps` metadata cannot replace it.
+
+A future, separately accepted source packet must transition that guard and its existing negative tests to one exact post-move topology: one registry rustix package at existing version 1.1.5, unchanged locked checksum and features exactly `alloc,fs,std`; exactly two incoming edges; distinct owners exactly the single `lnsatd` and single `lnsat-store` package IDs; each dependency named `rustix`, each with exactly `[{kind:null,target:'cfg(target_os = "linux")'}]`. Reject missing, duplicate, alternate or third edges, extra owners, alternate sources, version/checksum/feature drift and target/kind changes. Preserve every existing SQLite, rusqlite, nix_stat, environment and config assertion. This is a fixed transition, not an owner allowlist or automatic legacy-or-dual fallback. Ordinary source checks use the same transitioned guard; the new validator cannot bypass a failing legacy guard.
+
+Future relocation ownership is the exact fifteen source/destination pairs above plus `crates/lnsatd/src/lib.rs`, `crates/lnsat-store/src/lib.rs`, `crates/lnsat-store/Cargo.toml` and `Cargo.lock`. Adding `scripts/sqlite-native-build-policy.mjs` and `scripts/sqlite-native-build-policy.test.mjs` makes 21 logical owned items / 36 path endpoints. Separately reviewed validator ownership is `scripts/run-rust-workspace.mjs` and a new `scripts/run-rust-workspace.test.mjs`. No other production path, dependency version, public export, budget extraction or observer admission is included. Their source order, exact accepted base/patch tuples and Linux execution permission must be frozen in the later implementation packet. Neither source packet is authorized here.
+
+**Fixed future runner contract.** Extend the existing hardened runner rather than introduce direct Cargo bypass. Proposed actions are `native-daemon-baseline` and `native-store-proof`; the existing exactly-one-action CLI remains binding. No caller package, target, feature, config or extra command argument passes through. Baseline is collected in an isolated pre-move checkout with the daemon-only graph guard; store proof is collected in an isolated post-move checkout with the reviewed dual-edge guard. Do not choose graph policy from an action, environment variable, fixture or caller claim. Each checkout's accepted immutable source tuple selects its single reviewed policy implementation.
+
+Both actions require native Linux x64, pinned Cargo/rustc 1.97.1 and `rustc -vV` release 1.97.1 with host exactly `x86_64-unknown-linux-gnu`. This is a proposed single validator row, not a distro support claim or an established CI architecture: the current Ubuntu CI label does not declare architecture. Reject other hosts, cross execution or unavailable tools; never install or fetch. Retain physical-repository/config-path and environment rejection before invoking tools, `RUSTUP_AUTO_INSTALL=0`, `CARGO_NET_OFFLINE=true`, forced exact `SQLITE_ENABLE_FILESTAT`, and full `cargo metadata --format-version 1 --locked --offline` graph verification before package commands. A separately accepted harness creates an empty, uniquely owned target directory outside source checkouts and other caches; the runner sets `CARGO_TARGET_DIR` to that directory after rejecting ambient overrides. There is no caller target-directory CLI option or reused build output. Existing verified dependency/tool caches remain read-only inputs. Trusted developer host/toolchain remains an assumption, not release-artifact authentication or hostile-host protection.
+
+After preflight, use these exact arrays, with fixed `P = "lnsatd"` for baseline or `P = "lnsat-store"` for post-move proof; no user-supplied substitution:
+
+```javascript
+const target = "x86_64-unknown-linux-gnu";
+const check = [
+  "check",
+  "--package",
+  P,
+  "--lib",
+  "--locked",
+  "--offline",
+  "--target",
+  target,
+];
+const clippy = [
+  "clippy",
+  "--package",
+  P,
+  "--all-targets",
+  "--locked",
+  "--offline",
+  "--target",
+  target,
+  "--",
+  "-D",
+  "warnings",
+];
+const buildTests = [
+  "test",
+  "--package",
+  P,
+  "--lib",
+  "--no-run",
+  "--locked",
+  "--offline",
+  "--target",
+  target,
+  "--message-format=json",
+];
+const listTests = ["--list", "--format=terse"];
+```
+
+Package isolation means the selected package and necessary dependencies are compiled; full metadata still inspects the workspace. Clippy checks all targets of that selected package. These actions do not select workspace-wide compilation or `--all-features`. Test listings include ignored test registrations in the exact native-case comparison; no test body, including an ignored test body, is executed. Building and listing executables are themselves future Linux tool/process execution and remain gated now. Later actual native test-body/positive/blocked-call/cleanup proof belongs to its separately authorized Phase11 lane.
+
+**Bound evidence and honest selection.** Before each action, require the accepted immutable checkout HEAD/tree, clean tracked state, original fifteen source blob OIDs/SHA-256 and exact relocation map, all fourteen path edges, config/lock/policy blobs, pinned tool outputs, native host, fixed argv and the fresh owned target directory. Refuse changed or missing inputs. Baseline output binds those inputs and raw compiler/listing outputs, actual process exits and executable digest. The later source packet must pin the exact baseline receipt path and SHA-256 as a private harness input; the runner accepts no arbitrary receipt, count or baseline through CLI/environment. No baseline exists from this docs-only checkpoint. Before/after receipt schemas and the harness binding must pass independent source review before running either action. Cross-phase comparison preserves mapped native module blobs, config, tools, host and profile; changed root declarations, manifests, lock and graph-policy blobs must match their respective reviewed phase tuples, not each other. No accepted baseline may be inferred from static source counts.
+
+Parse bounded Cargo JSON output (8 MiB maximum) and require exactly one selected library test `compiler-artifact`, exact package ID from the verified metadata, library source/kind and test profile, and a regular executable whose resolved path stays beneath this action's fresh owned target directory. Reject duplicates, wrong package/target, symlink escapes, absent artifacts, nonzero exit or truncated/malformed output. Invoke only that executable with the fixed listing arguments; capture raw stdout/stderr with an 8 MiB limit per stream and actual exit. No test body is invoked by listing. Independently pin the baseline's compiled, fully qualified `headless_native::` test names; require nonempty baseline selection, ten root ACL cases and exact same native test-name set after byte-preserving relocation. Reject duplicate, missing or additional native cases and any target/config/tool/profile mismatch or mismatch against the phase-specific accepted blobs. Non-native package tests may differ and must remain visible in the full raw listing. Never equate 131 lexical annotations with a target's compiled count or treat zero selected tests as PASS. Listing equivalence proves registration on this row, not behavior, native correctness, resource bounds or whole-module feasibility.
+
+Every stage stops on its first failed assertion/process exit. Retain a failed/partial receipt, never a success certificate, retry, network fallback, install or rewritten prior report. Cleanup removes only verified action-owned build/evidence scratch when authorized; it never edits original caches, other checkouts or accepted receipts.
+
+**Required future mocked checks.** The runner test file uses a pure injected process/config seam with fixed fixture results; it launches no Cargo, compiler or native process. Cover unknown/extra CLI arguments; wrong OS/architecture/host/version; absent tools/caches; config symlinks/ancestor/home config; forbidden environment and target overrides; package/workspace/feature/target argument drift; malformed/oversized graph/artifact/list output; wrong or escaping artifacts; no artifact; zero, duplicate or mismatched native names; missing baseline, digest or immutable-source mismatch; failed stages and no later execution. Existing policy tests must add exact dual-owner positive fixtures and negative missing/duplicate/third/alternate-owner/name/kind/target/source/version/checksum/feature edges while preserving current invariant tests. Fixture PASS does not prove actual Cargo behavior. Meaningful later source changes require full `npm run check`, these focused mocked/policy checks, exact Linux package evidence where separately authorized, and fresh independent source/direct-child attestations.
+
+**Current outcome and next gate.** Only the ACL prose correction and this precode are complete. Runner actions, harness/receipt binding, graph transition/tests, module relocation and actual baseline/store Linux evidence are missing. The next safe step is acceptance of exact validator/graph-transition source ownership and execution boundaries; production source remains closed until separately authorized. Original budget extraction, read-only owner acquisition/close, native admission/dispatch, full native accounting/freeze, writable B6/C1/journal/writers, Docker/host/ACL/pressure/credentials/provider calls/installs and push/main/merge/release/publication/deploy remain closed. Project Status owns implementation truth; Phase11 owns runtime proof. LNSAT remains neutral and standalone.
 
 ### Exact owner and association shape
 

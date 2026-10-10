@@ -3026,6 +3026,23 @@ inside selected_store's private child so it can borrow actual custody fields
 without sibling-private field shortcuts. Neither move nor extraction is
 performed here. Existing ordinary store/daemon behavior stays unchanged.
 
+On October 10, 2026, the human owner accepted only the docs-only ACL erratum
+correction and [package-isolated Linux validator precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-native-relocation-and-package-isolated-linux-validator-precode).
+PHR-0090 tracks this exact documentation checkpoint. ACL cases reside in the
+root native test module; ten ACL cases, fourteen path edges and 131 lexical test
+annotations are static inventory, not compiled/passing evidence. Prior reviewed
+commits and frozen advisory relocation reports remain preserved.
+
+The current native-build policy accepts exactly one daemon-owned rustix edge.
+The proposed add-store/retain-daemon metadata transition would fail before Cargo;
+it requires a separately reviewed fixed dual-owner graph transition and negative
+tests. Existing policy/runner/Cargo/Rust source is unchanged here. The precode
+specifies fixed package-only baseline/store actions, native-host checks, pinned
+offline hardened preflight, fresh owned build directories, compile/list receipts
+and nonzero exact native-case comparison. These actions and receipts are not
+implemented or executed. Source migration, dependency compilation and full
+native feasibility remain unproven; Ubuntu CI architecture is not inferred.
+
 The process-lifetime root retains original connection, custody and scope inside
 its actual authority mutex. Fixed metadata carries only the same root/private
 identity/original budget/tag; one control request per operation prevents frame
@@ -3069,9 +3086,12 @@ The first root stays Unadmitted until separately reviewed original-owner
 read-only acquisition/partial retention/close and native registration/accounting
 producers exist. No ordinary-store adoption, read-only upgrade, schema18/writable
 Ready, product caller, C1 scheduling, journal effect, writer, durable stop or
-release activation is included. Next safe packet is private move/reuse precode
-and exact source-ownership review; source changes need their own named validators,
-full npm run check and fresh exact review before integration. Construction,
+release activation is included. Next safe packet is acceptance of exact
+validator/graph-transition source ownership and Linux execution boundaries under
+the existing work record. Source changes require separate authorization, named
+focused validators, full npm run check and fresh exact independent source and
+direct-child attestations before integration. No source or Linux execution is
+authorized by this docs-only acceptance. Construction,
 traits/lifetimes, aggregate native/library allocation and race/quota/cleanup
 source proofs remain unfinished. Project Status owns implementation truth;
 Phase11 owns genuine Linux/runtime proof. LNSAT remains neutral and standalone.

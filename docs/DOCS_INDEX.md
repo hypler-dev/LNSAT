@@ -171,6 +171,11 @@ subsystem or proposal.
   not compiled source; private move/reuse, budget extraction, original-owner
   admission/close, full native accounting, compiler proofs and writable/runtime
   integration remain gated.
+  Its [private native relocation and package-isolated Linux validator precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-native-relocation-and-package-isolated-linux-validator-precode)
+  corrects ACL test location and records the daemon-only rustix graph blocker,
+  exact future dual-owner transition, fixed offline package compilation/listing
+  and receipt/negative-test requirements. Validator, graph-policy transition,
+  relocation and actual Linux proof remain unimplemented and separately gated.
   Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
   defines the implemented private current-row capture/computation prerequisite
   while preserving original scope/connection recheck; control integration remains open.
