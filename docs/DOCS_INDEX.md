@@ -176,6 +176,10 @@ subsystem or proposal.
   exact future dual-owner transition, fixed offline package compilation/listing
   and receipt/negative-test requirements. Validator, graph-policy transition,
   relocation and actual Linux proof remain unimplemented and separately gated.
+  Its [validator/graph-policy ownership and receipt-schema precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#validator-and-graph-policy-ownership-and-receipt-schema-precode)
+  freezes M0/M1 source ownership, separate private harness ownership, real-baseline
+  ordering and closed canonical compile/list evidence shapes. Source, parsers,
+  harness and Linux execution remain separately gated and unimplemented.
   Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
   defines the implemented private current-row capture/computation prerequisite
   while preserving original scope/connection recheck; control integration remains open.

@@ -3043,6 +3043,19 @@ and nonzero exact native-case comparison. These actions and receipts are not
 implemented or executed. Source migration, dependency compilation and full
 native feasibility remain unproven; Ubuntu CI architecture is not inferred.
 
+On October 10, 2026, the human owner accepted the documentation-only
+[validator/graph-policy ownership and receipt-schema precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#validator-and-graph-policy-ownership-and-receipt-schema-precode).
+PHR-0091 tracks this checkpoint under this same work record. Future M0 owns two
+runner/test paths, preserving existing actions and daemon-only policy; future M1
+owns the exact 21 logical relocation/metadata/policy items atomically. One
+separately reviewed private evidence harness is explicitly outside repository
+ownership. Real B0 Linux compile/list evidence must precede M1; B1 binds that
+accepted baseline and its own reviewed source tuple. Closed canonical binding
+and receipt shapes reject forged prefixes, exits, hashes, paths, zero selections
+and phase mismatches. Runner lock-checksum validation is distinct from metadata
+graph validation. These are plans, not implemented parsers/harness/actions or
+executed Linux proof. No source or execution gate opens.
+
 The process-lifetime root retains original connection, custody and scope inside
 its actual authority mutex. Fixed metadata carries only the same root/private
 identity/original budget/tag; one control request per operation prevents frame
@@ -3086,9 +3099,11 @@ The first root stays Unadmitted until separately reviewed original-owner
 read-only acquisition/partial retention/close and native registration/accounting
 producers exist. No ordinary-store adoption, read-only upgrade, schema18/writable
 Ready, product caller, C1 scheduling, journal effect, writer, durable stop or
-release activation is included. Next safe packet is acceptance of exact
-validator/graph-transition source ownership and Linux execution boundaries under
-the existing work record. Source changes require separate authorization, named
+release activation is included. Next safe packet is separately accepted M0 two-file
+validator source implementation with offline mocked checks under the existing
+work record. Full npm run check includes Cargo/native execution and requires its
+separate validation gate before source acceptance; Linux execution remains
+closed here. M1 requires a genuine accepted baseline, not fixture evidence. Source changes require separate authorization, named
 focused validators, full npm run check and fresh exact independent source and
 direct-child attestations before integration. No source or Linux execution is
 authorized by this docs-only acceptance. Construction,

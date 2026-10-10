@@ -691,6 +691,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0090/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0091",
+      "subject_id": "stage-a-validator-receipt-precode",
+      "review_subject_ids": ["stage-a-validator-receipt-precode"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0091/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }
