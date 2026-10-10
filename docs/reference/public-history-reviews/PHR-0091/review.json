@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0091-independent-implementation-review-6e7023ea",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["stage-a-validator-receipt-precode"],
+  "base_revision": "7afcf53a2193832f6f7dc091e91b1b7720d8e7ef",
+  "reviewed_revision": "6e7023ea4e23730ad207527643311c7f3156544b",
+  "reviewed_tree_oid": "29bb070736baafee9b5f9e5c2662952513948ac3",
+  "diff_sha256": "sha256:ec62cb520ea97599c53a800df6233c32b87f6229c6e588053a9828ba8f840686",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:2a7a830ba8d09036f80a87ca8ef7c0db53b0860e3848dffde9b55ba9e59b4651"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:af3140a235a9c903a7e5b95511178b11df72d5af11747fb9526f95fe413bd250"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:a536a57045cf5d2713d40b8ea5bb84fe5fe36391d19c7773fc5ef0fef0c8bc19"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:fcf9cf44a84ea08f8f5fe60cd75734d5e4563a524623cb328acc152a6c7c54a1"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:95958f45507bf6b3245c55663255361b3dbc3dd922e0cc774f32be5247b9abe0"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/validator_receipt_precode_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent exact staged and immutable source documentation review. Human owner accepted docs-only exact validator and graph-policy source ownership plan and receipt-schema precode. M0 owns two runner/test repository paths; M1 owns atomic fifteen-module move plus four metadata and two policy items (21 logical items / 36 path endpoints); one private evidence harness is separately owned. Genuine separately authorized baseline precedes relocation. Fixed daemon-only then dual-owner policy implementations; no caller selector or fallback. Runner checksum parser responsibility distinct from structural Cargo metadata graph. Initial independent P2 gaps in exact JSON escaping, predecode depth/node bounds and closed failure stage/code/prefix mapping were corrected and independently rereviewed before final validation; frozen original findings remain retained. Closed canonical binding/compile-list receipt shapes, independent approval pins, actual source/input/tool/output hashes, bounded paths/streams, exact process prefixes/exits, strict artifact/list parsing and honest partial/failure states. No fixture or compiled-listed receipt grants native behavior, admission, support/certification, merge or release authority. Six exact proportional source checks PASS. PHR91 pending in source; all 85 prior registry entries/manifests preserved. Production Rust/Cargo/scripts/API/schema/dependency/README/assets/runtime packet bytes unchanged. Source implementation, private harness/parser/actions, genuine Linux compile/list/body execution and all other gates remain closed. No installs, external GLM transfer, push/main/merge/release/publication/deploy/production."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
