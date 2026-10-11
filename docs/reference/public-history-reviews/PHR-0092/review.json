@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0092-independent-implementation-review-dcdec824",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["stage-a-native-validator-m0"],
+  "base_revision": "1217c694c3918dfc2f8197e6fdf5d95a7c9bf703",
+  "reviewed_revision": "dcdec824726390bfdbfbb763bd52bb6136b30368",
+  "reviewed_tree_oid": "387db109b480e59b66e6cd4a3fd630b015237bdf",
+  "diff_sha256": "sha256:c91722c607e15199405603b084552b5c52cd8c803cf50b71d7fb4162ffc14630",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:13c6a16daa78799049b58d1ba7a274ad14baa6158dd56dd431a00d5e823dd248"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:acc6a9c059d9474ee14316e8ae5fc4be19b8d87a013db20c306fea308cb89836"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:18f54c985ddc6e42b1651ecbd8eadb4d2eef84c44b3c2f55c3c79338fead2987"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:f67052017d01dd9600a9f7d3fd15ca2a70966004a29d5808094112583f044300"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:d717338d0b4d894936333e5bd6d278439d4ec0d64b6f12a7766949ab4c4f8cee"
+    },
+    {
+      "path": "scripts/run-rust-workspace.mjs",
+      "sha256": "sha256:9a325e20ec64496e39534cfaa354553f703ce06f5ff26769892aacf23c1e180e"
+    },
+    {
+      "path": "scripts/run-rust-workspace.test.mjs",
+      "sha256": "sha256:bac555bf228378a55684852f2ea685e177183921d2acb341ed88071c2e561945"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.test.mjs",
+      "sha256": "sha256:ca11b6a045ba13e2ca65b18985693da0749636cfbc09c76cba28b96ce3d50930"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/m0_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent staged-source, fixture/environment/final-evidence and immutable-source reviews; all final reviews PASS with no actionable findings. Immutable-source review sha256:3f53f4dd39806b0c56e4c427036f5cb06621eb3db771bd5f41dcf0b461a64a55. Human owner accepted exact M0 source and local source/direct-child attestation. Fixed private package actions, bounded canonical binding/receipt parsers, independently pinned harness context, rustix lock-checksum validation, raw evidence verification and injected offline compile/list fixtures. Ordinary native CLI rejects before process launch; six legacy action arrays and daemon-only graph policy preserved. Fixture-only ownership setup preserves every existing assertion and fake Cargo behavior. Focused 35/35 tests PASS. Offline macOS npm run check PASS on the accepted staged tree, reused only through exact immutable commit tree/diff/eight-blob equivalence; it was not rerun on the later commit SHA. All 21 declared stages completed, 1519 workspace tests passed; explicit source-snapshot historical skips and two parent-invoked ignored store helpers remain qualified. First three failed full-check attempts retained as failures; fourth full attempt passed after existing pinned cache corrections. No install or download. Prior 86 registry entries and manifests preserved. Source documentation remains the immutable pre-acceptance checkpoint snapshot; this manifest attests source history only. Linux proof, private harness, genuine B0/B1, M1 relocation/graph transition, observer/runtime integration, main, push/merge, support/certification and release remain closed. No additional external GLM transfer or real host/ACL/target-pressure action."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
