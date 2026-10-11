@@ -746,7 +746,7 @@
       "review_subject_ids": ["main-integration-linux-clippy"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0093/review.json",
       "review_type": "independent_implementation_review",
-      "state": "pending"
+      "state": "attested"
     }
   ]
 }
