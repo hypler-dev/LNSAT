@@ -42,6 +42,67 @@ The [V1 command and contract reconciliation](#v1-command-and-contract-completion
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
 
+### Professional testing program
+
+Owner-accepted plan; coverage-guided implementation remains planned. Existing
+source tests are narrower baseline evidence; this plan does not add source tests. This documentation packet adds no cargo-fuzz harness,
+nightly/sanitizer runner, retained coverage-guided corpus, CI schedule or executed
+campaign.
+
+The [professional testing strategy](PRODUCT_BUILD_SEQUENCE.md#professional-testing-strategy)
+integrates per-change regression checks, future bounded fuzz campaigns, state-
+machine/concurrency/crash-recovery tests, qualified target rows and independent
+adversarial review with existing Phase 13/14 gates. Its first candidate is a pure
+execution-request canonical-parser and stale-evidence harness, with explicit
+oracles, pinned tools, resource limits and reproducible failure artifacts.
+Installation, automation activation and real native/runtime qualification remain
+separate named packets. No new runtime, support/certification or release claim
+follows. Project Status retains implementation truth; the Phase 11 operator
+packet retains real-runtime proof ownership.
+
+### Standards-informed build requirements
+
+Owner-accepted planning direction: apply relevant ISO/IEC 27001:2022,
+27002:2022, 42001:2023 and 27701:2025 themes to LNSAT build requirements.
+The [build requirements](PRODUCT_BUILD_SEQUENCE.md#standards-informed-build-requirements)
+cover risk/access boundaries, secret custody, secure changes and supply-chain
+evidence, versioned developer feedback, incident/recovery behavior, privacy-aware
+evidence lifecycle and provider-neutral action control. Reuse existing source and
+tests; each applicable packet links its owner, accepted contract, exact identity,
+checks, evidence, gaps and risk disposition to the existing status and phase
+records. This subsection records the accepted plan, not completion of those
+controls or a new competing completion ledger.
+
+Full standard/clause and OpenSSF criterion assessments remain unperformed in the
+recorded repository evidence. Organizational management systems, legal/privacy
+accountability, model/provider governance and certification are separately scoped.
+Local actor identifiers and receipts may contain PII; retention/deletion needs an
+explicit authority-safe contract. LNSAT stays standalone. This documentation adds
+no runtime, privacy, SDK, policy, installer, supported target, badge or certification
+implementation and preserves all existing source/design/merge/runtime/release gates.
+
+### Main dependency audit remediation
+
+Canonical implementation record: this subsection. The professional-testing
+plan's hosted source check identified three vulnerable packages in the existing
+public-main lockfile. A fresh manifests-only advisory query reproduced high
+advisories for MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4. The bounded
+maintenance candidate pins the test client to 2.2.0, transitive SDK to 1.31.0
+and Sharp to 0.35.5 with its exact platform dependency closure. These pins reuse
+the separately reviewed source candidate; broader private engine features are
+not included. Production MCP server, core and Node wrapper remain 2.0.0;
+the test client resolves its own core 2.2.0.
+
+The [upstream baseline](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md#upstream-baseline)
+records the package identities and removes a stale advisory-allowance claim.
+No advisory is waived. Existing registry signatures, fresh advisory audit,
+focused MCP compatibility, full source validation and fresh independent exact
+source/direct-child review gate this candidate under PHR-0081. No OAuth client,
+credential migration, provider activation, installer or new execution authority
+is introduced. Passing dependency checks does not establish runtime safety,
+package support or certification. The professional fuzzing program remains
+planned; its tooling is not installed or activated by this remediation.
+
 ## Active Security Remediation
 
 The owner accepted the
@@ -3064,8 +3125,8 @@ and an injected compile/list pipeline. Ordinary native CLI calls fail before any
 process. The existing daemon-only graph policy and six legacy action arrays are
 preserved; `fmt` also runs the new mocked suite before Cargo. This is tooling
 source, not an engine API, genuine compiled evidence or an execution approval.
-PHR-0092 is pending; source acceptance and its direct-child attestation are not
-complete.
+At that implementation checkpoint, PHR-0092 was pending; source acceptance
+and its direct-child attestation were not complete.
 
 The human owner subsequently authorized a fixture-only ownership amendment in
 `scripts/sqlite-native-build-policy.test.mjs` and offline full source validation
@@ -3076,9 +3137,29 @@ checksum and graph guards are unchanged. No dependency or toolchain is installed
 This amendment permits the existing Cargo/native stages of `npm run check` for
 source validation only. It does not permit Linux package proof, a private harness,
 M1, runtime integration, main or release. Exact results and fresh independent
-review are required before source acceptance; PHR-0092 remains pending without
-an approved source/direct-child attestation. No genuine B0/B1 receipt exists,
-and unrelated deletions remain untouched.
+review were required before source acceptance. That fixture-validation authority
+did not itself approve PHR-0092 or its source/direct-child attestation.
+
+The human owner subsequently accepted the exact M0 source and authorized its
+local source/direct-child attestations. Source commit
+`dcdec824726390bfdbfbb763bd52bb6136b30368` has accepted tree
+`387db109b480e59b66e6cd4a3fd630b015237bdf`; its exact direct child is
+`c24770de65077399353941de7e7dc958a486209b`.
+[PHR-0092](reference/public-history-reviews/PHR-0092/review.json) is attested and
+pins the source parent, commit, tree, canonical diff and all eight protected
+files. Fresh immutable-source, staged-child and immutable-child reviews passed
+without actionable findings. Focused runner/policy validation passed 35/35; the
+full offline macOS source check completed all 21 root stages and 1,519 workspace
+tests. Full-check reuse is limited to the exact accepted source tree; it was not
+rerun on the later source or child commit SHA. Retained failed attempts, explicit
+historical-source skips and parent-invoked ignored helper tests remain qualified.
+
+Main integration is separately authorized through normal protected source gates.
+This acceptance supplies tooling source and source-history evidence only. It
+does not implement or invoke the private harness, produce a genuine B0/B1
+receipt, relocate native modules or open M1, runtime, support/certification or
+release authority. Linux proof and the other execution gates remain closed;
+unrelated deletions remain untouched.
 
 The process-lifetime root retains original connection, custody and scope inside
 its actual authority mutex. Fixed metadata carries only the same root/private

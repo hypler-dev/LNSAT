@@ -82,6 +82,39 @@ npm run control-center:readback:test
 Run root checks before submitting a pull request because contract packages are
 shared by API, MCP, CLI, and console workspaces.
 
+## Professional testing workflow
+
+The [professional testing strategy](PRODUCT_BUILD_SEQUENCE.md#professional-testing-strategy)
+defines the accepted direction. Use focused positive/negative contract tests and
+existing deterministic properties now; replay relevant retained regressions when
+their component changes. Record exact commands and revisions, and run the normal
+full source suite for meaningful source changes.
+
+Coverage-guided tooling remains planned. The first candidate is an isolated
+cargo-fuzz/libFuzzer execution-request parser and stale-evidence harness with a
+reviewed local corpus, explicit oracles and bounded resources. Its dated
+nightly/sanitizer runner and locked dependencies will be separate from the normal
+Rust 1.97.1 lane. This documentation supplies no installation command, scheduled
+job or executed campaign. Tool provisioning, CI activation and native qualification
+require their own exact packets; validation scripts must never install implicitly.
+
+When a harness exists, reproduce failures using the retained revision, seed/corpus,
+toolchain and resource limits; minimize each failure and add a permanent regression
+after correction. Keep state-machine, concurrency and crash/restart evidence
+separate from parser fuzz results. Successful parsing is not approved execution,
+and source tests are not real runtime or package qualification.
+
+For applicable future packets, follow the
+[standards-informed build requirements](PRODUCT_BUILD_SEQUENCE.md#standards-informed-build-requirements):
+record risk/trust boundaries, accountable owner, accepted contract, exact
+source/artifact identity, positive and denial checks, evidence, gaps and risk
+disposition. Reuse existing contracts/tests and retain honest implementation states.
+Review secret and PII handling, truthful CLI/API/SDK feedback, dependency/tool
+integrity and recovery consequences within the owned scope. This is engineering
+evidence planning; standards conformance, management systems and certification
+require separate assessments. No standards tool installation, account creation,
+external submission or runtime qualification is introduced here.
+
 ## Repository Ownership
 
 | Path                     | Owns                                                            |

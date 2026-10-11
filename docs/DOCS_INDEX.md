@@ -25,6 +25,14 @@ subsystem or proposal.
 8. [Contributing](../CONTRIBUTING.md) — first-contribution, pull-request, DCO,
    security, and review requirements.
 
+- [Professional testing strategy](PRODUCT_BUILD_SEQUENCE.md#professional-testing-strategy)
+  — accepted plan for regression, fuzz, state-machine, concurrency and target
+  qualification evidence; tooling and campaigns remain planned.
+
+- [Standards-informed build requirements](PRODUCT_BUILD_SEQUENCE.md#standards-informed-build-requirements)
+  — accepted risk, access, privacy, recovery and AI-management-boundary requirements;
+  formal assessments and missing controls remain planned.
+
 ## Community
 
 - [Support](../SUPPORT.md) — public issue scope and pre-release support limits.
@@ -174,13 +182,13 @@ subsystem or proposal.
   Its [private native relocation and package-isolated Linux validator precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-native-relocation-and-package-isolated-linux-validator-precode)
   corrects ACL test location and records the daemon-only rustix graph blocker,
   exact future dual-owner transition, fixed offline package compilation/listing
-  and receipt/negative-test requirements. M0 tooling has a source candidate;
+  and receipt/negative-test requirements. M0 tooling source is accepted and locally attested;
   graph-policy transition, relocation and genuine Linux proof remain missing.
   Its [validator/graph-policy ownership and receipt-schema precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#validator-and-graph-policy-ownership-and-receipt-schema-precode)
   freezes M0/M1 source ownership, separate private harness ownership, real-baseline
   ordering and closed canonical compile/list evidence shapes. The M0 runner/parser
-  candidate awaits acceptance; its fixture-only amendment and offline macOS full
-  source validation are authorized. Harness and Linux proof remain missing.
+  source and fixture amendment are accepted and locally attested by PHR-0092;
+  offline macOS full source validation passed. Harness and Linux proof remain missing.
   Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
   defines the implemented private current-row capture/computation prerequisite
   while preserving original scope/connection recheck; control integration remains open.

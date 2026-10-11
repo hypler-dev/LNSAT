@@ -1793,7 +1793,8 @@ product authorization service. Trusted host/toolchain assumptions and transient
 mutation limitations remain unchanged. Fixture receipts provide conformance
 coverage only and must never be presented as genuine B0/B1 evidence.
 
-Source acceptance remains pending. The human owner subsequently authorized the
+At the implementation checkpoint, source acceptance remained pending. The human
+owner subsequently authorized the
 fixture-only third path `scripts/sqlite-native-build-policy.test.mjs` and offline
 full `npm run check` on the current macOS host using existing pinned tools and
 caches. The config-free copied fixture receives Cargo.lock and the pinned TOML
@@ -1801,10 +1802,22 @@ parser package while preserving every assertion and fake Cargo behavior. The
 mandatory lock guard and graph policy are unchanged; no dependency or toolchain
 is installed. This narrow source-validation authority allows the existing
 Cargo/native test stages, not Linux package proof or private harness execution.
-Pending PHR-0092 cannot become an approved source/direct-child attestation until
-the named checks and fresh exact reviews complete. Genuine B0 must still precede
-M1. No private harness is created or invoked. Linux proof, M1, runtime, main,
-release and the other gates stay closed; unrelated deletions remain untouched.
+The named checks and fresh exact reviews were required before source acceptance.
+The human owner then accepted source commit
+`dcdec824726390bfdbfbb763bd52bb6136b30368`, accepted tree
+`387db109b480e59b66e6cd4a3fd630b015237bdf`, and its exact local direct-child
+attestation `c24770de65077399353941de7e7dc958a486209b`.
+[PHR-0092](../../reference/public-history-reviews/PHR-0092/review.json) binds all
+eight protected source files; independent source and direct-child reviews
+passed. Focused checks passed 35/35 and the offline macOS full source suite
+passed on the accepted staged tree. Its evidence is reused only through exact
+source-tree/diff/blob equivalence, not claimed executed on later commit SHAs.
+Earlier failures, historical-source skips and ignored-helper qualifications
+remain explicit. This is accepted tooling source, not genuine compiled Linux
+evidence. Main integration has separate human authorization through normal
+protected source gates. Genuine B0 must still precede M1. No private harness is
+created or invoked. Linux proof, M1, runtime, support/certification, release and
+the other execution gates stay closed; unrelated deletions remain untouched.
 
 ### Exact owner and association shape
 

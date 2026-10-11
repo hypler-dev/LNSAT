@@ -1,0 +1,39 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0083-independent-implementation-review-1e421754",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["main-readme-light-logo"],
+  "base_revision": "74bfd79344c35089baef8fa6b01a1e667bdfb1ff",
+  "reviewed_revision": "1e42175444f9665363f8b31a3894131b85111ca1",
+  "reviewed_tree_oid": "7a9c5f903b5d15282c7ac9ae9d272ff0176e2bf1",
+  "diff_sha256": "sha256:340739ea3d1f7fd7e8ecd92a5fdadeb84fa765a79d43ea77e0d5227502cef98e",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:4558daa00a3df0a42ff5bbee0ebaf4d6acd2c1890559a40ac0e5f196cb47d6d2"
+    },
+    {
+      "path": "docs/assets/lnsat-mark-light-v1.png",
+      "sha256": "sha256:ad9e7f0b0a02f0e8bc5ba68f33aa1890bccc63e33d60c749519d1d18904c22cd"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:cd62db63251f7e968e68524af0f43f2c60238991fe73d974aef3745bda9040ef"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:7fb62a3725e684ef820dff91956e6f8c6ac2365f4792db1a4e2c0eca075bbb45"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/logo_main_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the exact README/logo source packet. The accepted light PNG is reused byte-for-byte from source commit 75cc0e40cde5eb5cbd01c86f1d6d3c34aa9261f2 and prior local review PHR-0066, with SHA-256 ad9e7f0b0a02f0e8bc5ba68f33aa1890bccc63e33d60c749519d1d18904c22cd, 1254x1254 RGB and 1098914 bytes. Scope is README header, exact asset, inventory, and review registry only. No image generation, runtime, release, production, support, or certification authority opens. Prior unmerged history remains preserved. Six focused source gates PASS on the exact source tree; pending1/attested48 at source review. external transfer closed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
