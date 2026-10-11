@@ -939,7 +939,13 @@ fn retire_retained(
 #[cfg(target_os = "linux")]
 mod linux {
     use super::super::super::readable::{ReadableSample, sample_artifact_readable};
-    use super::*;
+    use super::{
+        Arc, ArtifactBudgetState, BeginData, File, LaneRoot, MAX_ACL_BYTES, MAX_RETAINED,
+        PrefixAclKind, PrefixAclRead, PrefixReadOutcome, PrefixSchedule, Request, RootAccounting,
+        RootBootstrapError, RootManifestAnchor, RootManifestCustodyState, RootObjectFacts,
+        RootPrefixAcl, Zeroizing, copy_prefix_acls, prefix_post_call, required_statx, same_object,
+        validate_object,
+    };
     use nix::{
         fcntl::{FcntlArg, OFlag, OpenHow, ResolveFlag, fcntl, open, openat2},
         sys::{
@@ -1031,14 +1037,14 @@ mod linux {
             return Err(RootBootstrapError::NativeDenied);
         }
         checkpoint(state.lane, request, &state.budget)?;
-        let statx = rustix::fs::statx(
+        let observation = rustix::fs::statx(
             file,
             c"",
             AtFlags::EMPTY_PATH,
             StatxFlags::BASIC_STATS | StatxFlags::MNT_ID,
         );
         checkpoint(state.lane, request, &state.budget)?;
-        let facts = statx_facts(statx.map_err(|_| RootBootstrapError::NativeDenied)?)?;
+        let facts = statx_facts(observation.map_err(|_| RootBootstrapError::NativeDenied)?)?;
         let standard = RootObjectFacts {
             device_major: u32::try_from(major(stat.st_dev))
                 .map_err(|_| RootBootstrapError::NativeDenied)?,
@@ -1115,7 +1121,7 @@ mod linux {
         state: &RootManifestCustodyState,
         request: &Request,
     ) -> Result<(), RootBootstrapError> {
-        if state.prospective.is_some() || state.opened >= MAX_RETAINED + 1 {
+        if state.prospective.is_some() || state.opened > MAX_RETAINED {
             return Err(RootBootstrapError::CleanupUncertain);
         }
         checkpoint(state.lane, request, &state.budget)

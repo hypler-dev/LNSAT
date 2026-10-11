@@ -670,6 +670,10 @@ fn read_content(
         None
     };
     let mut body = retained;
+    #[expect(
+        clippy::large_stack_arrays,
+        reason = "The fixed 64 KiB worker scratch buffer preserves the bounded stack allocation and zeroization contract."
+    )]
     let mut scratch = Zeroizing::new([0_u8; READ_CHUNK]);
     let mut hash = Sha256::new();
     let mut offset = 0_u64;

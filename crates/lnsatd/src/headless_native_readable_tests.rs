@@ -82,7 +82,7 @@ fn headless_native_readable_root_manifest_controller_requires_exact_access_and_d
             root_access_acl(uid),
             AclRead::UnclassifiedNoData,
             0,
-            0o100640
+            0o100_640
         )
         .check_root_manifest_controller(uid),
         Ok(())
@@ -92,13 +92,13 @@ fn headless_native_readable_root_manifest_controller_requires_exact_access_and_d
             AclRead::UnclassifiedNoData,
             AclRead::UnclassifiedNoData,
             0,
-            0o100640
+            0o100_640
         )
         .check_root_manifest_controller(uid),
         Err(NativeError::InvalidAcl)
     );
     assert_eq!(
-        root_manifest_sample(root_access_acl(uid), root_access_acl(uid), 0, 0o100640)
+        root_manifest_sample(root_access_acl(uid), root_access_acl(uid), 0, 0o100_640)
             .check_root_manifest_controller(uid),
         Err(NativeError::InvalidAcl)
     );
@@ -107,7 +107,7 @@ fn headless_native_readable_root_manifest_controller_requires_exact_access_and_d
             root_access_acl(uid),
             AclRead::UnclassifiedNoData,
             1,
-            0o100640
+            0o100_640
         )
         .check_root_manifest_controller(uid),
         Err(NativeError::ModeMismatch)
@@ -117,7 +117,7 @@ fn headless_native_readable_root_manifest_controller_requires_exact_access_and_d
             root_access_acl(uid),
             AclRead::UnclassifiedNoData,
             0,
-            0o100600
+            0o100_600
         )
         .check_root_manifest_controller(uid),
         Err(NativeError::ModeMismatch)

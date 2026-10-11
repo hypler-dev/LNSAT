@@ -1231,7 +1231,7 @@ mod linux_held_file {
     #[test]
     #[ignore = "requires explicitly selected disposable ext4 directory"]
     fn artifact_linux_snapshot_streams_chunks_and_rejects_size_drift() {
-        let bytes = (0..(READ_CHUNK + 1))
+        let bytes = (0..=READ_CHUNK)
             .map(|index| u8::try_from(index % 251).unwrap())
             .collect::<Vec<_>>();
         let (_fixture, file) = fixture(&bytes);

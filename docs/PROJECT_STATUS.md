@@ -3161,6 +3161,20 @@ receipt, relocate native modules or open M1, runtime, support/certification or
 release authority. Linux proof and the other execution gates remain closed;
 unrelated deletions remain untouched.
 
+The first protected main-integration attempt at
+`f5a9c016a2ef7d71d4fb1d11b219b284a4067ed1` passed committed source-history
+replay with 91 attestations but failed Linux Clippy in source CI run
+`38108777788`. The source correction is limited to explicit Linux module
+imports, an observation-binding rename, equivalent descriptor-bound and test
+range expressions, and readable octal test literals. A declaration-scoped
+`clippy::large_stack_arrays` expectation documents the existing fixed 64 KiB
+zeroizing worker buffer; it preserves allocation and cleanup behavior. No lint
+profile, workflow, native authority, module ownership or runtime gate changes.
+The failed CI receipt remains part of the evidence. Fresh exact source and
+direct-child review, source-history replay and the required public CI remain
+integration gates; these source checks provide no Linux package or runtime
+qualification.
+
 The process-lifetime root retains original connection, custody and scope inside
 its actual authority mutex. Fixed metadata carries only the same root/private
 identity/original budget/tag; one control request per operation prevents frame
