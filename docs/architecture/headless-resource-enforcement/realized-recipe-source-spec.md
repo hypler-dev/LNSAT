@@ -1762,6 +1762,50 @@ Artifact is null until stage 7 output has passed artifact checks; listing is nul
 
 **Current completion and remaining gates.** Exact future repository/private-harness ownership, atomic source order and closed receipt/binding shape are documented; receipt parsing, actual source changes, harness files and compiled baseline/store evidence are missing. No source or Linux execution gate opens. Next safe packet is separately accepted M0 two-file source implementation with mocked validation; its full-check/native execution requirements must be resolved explicitly before source acceptance. M1 cannot begin on fixture-only baseline. All owner acquisition/close, observation/admission/dispatch, budget extraction/full native accounting/freeze, writable B6/C1/journal/writers, Docker/real host/ACL/pressure/credentials/provider/installation, push/main/merge/release/publication/deploy/production and external GLM transfer gates remain closed. Historical preservation failures and reviewed reports/commits remain intact; unrelated deletions are not this packet's property.
 
+### M0 validator source candidate
+
+The subsequent human instruction authorized the M0 two-file source candidate and
+mocked validation under the existing [Project Status work record](../../PROJECT_STATUS.md#stage-a-read-only-observer-rust-precode).
+It does not retroactively change the preceding documentation-only acceptance.
+The candidate lives in `scripts/run-rust-workspace.mjs` and
+`scripts/run-rust-workspace.test.mjs`; no private harness, relocation, dependency
+policy transition or runtime entry is added.
+
+The runner freezes the exact fifteen relocation pairs, sorted fourteen path
+edges, ten fully qualified `headless_native::tests::headless_native_acl_*` names
+and twenty-seven phase input paths. It implements canonical bounded JSON,
+closed phase-binding and compile/list receipt parsing, lock checksum assertion,
+fixed eight-stage actions and actual raw-file evidence revalidation. An injected
+synchronous process/filesystem seam supports offline fixtures; the future private
+harness entry uses fixed real functions. Ordinary CLI has no binding path,
+additional arguments, graph selector or environment-selected mock. Native calls
+through that CLI reject before process launch. All six legacy arrays remain
+fixed; their preflight now requires the pinned rustix checksum before Cargo, and
+`fmt` runs both policy and runner mocked suites before Cargo.
+
+The independently supplied operator record has closed fields
+`binding_sha256`, `harness_sha256`, `harness_path`, `binding_path`, `source`,
+`roots`, `tools` and `baseline`. Its hashes and source/root/tool/baseline tuples
+must match the canonical binding; harness and binding paths are the fixed private
+paths above. The record's presence does not prove human acceptance. That remains
+an external review gate enforced by the trusted private harness/operator, not a
+product authorization service. Trusted host/toolchain assumptions and transient
+mutation limitations remain unchanged. Fixture receipts provide conformance
+coverage only and must never be presented as genuine B0/B1 evidence.
+
+Source acceptance remains pending. The human owner subsequently authorized the
+fixture-only third path `scripts/sqlite-native-build-policy.test.mjs` and offline
+full `npm run check` on the current macOS host using existing pinned tools and
+caches. The config-free copied fixture receives Cargo.lock and the pinned TOML
+parser package while preserving every assertion and fake Cargo behavior. The
+mandatory lock guard and graph policy are unchanged; no dependency or toolchain
+is installed. This narrow source-validation authority allows the existing
+Cargo/native test stages, not Linux package proof or private harness execution.
+Pending PHR-0092 cannot become an approved source/direct-child attestation until
+the named checks and fresh exact reviews complete. Genuine B0 must still precede
+M1. No private harness is created or invoked. Linux proof, M1, runtime, main,
+release and the other gates stay closed; unrelated deletions remain untouched.
+
 ### Exact owner and association shape
 
 These declarations live inside that private selected-store child after prerequisites. `OwnerDecisionCredentialScopeV1`, `SelectedStoreCustodyV1`, `OperationIdentityAllocator`, `OperationIdentity` and the original budget are reused types. Imports and platform-specific selected custody behavior must compile on every existing target before source acceptance. No type below derives Clone, Debug, serialization or Deref; no external constructor, raw getter, callback or arbitrary SQL entry exists.

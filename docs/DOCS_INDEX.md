@@ -174,12 +174,13 @@ subsystem or proposal.
   Its [private native relocation and package-isolated Linux validator precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-native-relocation-and-package-isolated-linux-validator-precode)
   corrects ACL test location and records the daemon-only rustix graph blocker,
   exact future dual-owner transition, fixed offline package compilation/listing
-  and receipt/negative-test requirements. Validator, graph-policy transition,
-  relocation and actual Linux proof remain unimplemented and separately gated.
+  and receipt/negative-test requirements. M0 tooling has a source candidate;
+  graph-policy transition, relocation and genuine Linux proof remain missing.
   Its [validator/graph-policy ownership and receipt-schema precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#validator-and-graph-policy-ownership-and-receipt-schema-precode)
   freezes M0/M1 source ownership, separate private harness ownership, real-baseline
-  ordering and closed canonical compile/list evidence shapes. Source, parsers,
-  harness and Linux execution remain separately gated and unimplemented.
+  ordering and closed canonical compile/list evidence shapes. The M0 runner/parser
+  candidate awaits acceptance; its fixture-only amendment and offline macOS full
+  source validation are authorized. Harness and Linux proof remain missing.
   Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
   defines the implemented private current-row capture/computation prerequisite
   while preserving original scope/connection recheck; control integration remains open.

@@ -3056,6 +3056,30 @@ and phase mismatches. Runner lock-checksum validation is distinct from metadata
 graph validation. These are plans, not implemented parsers/harness/actions or
 executed Linux proof. No source or execution gate opens.
 
+On October 10, 2026, the human owner authorized M0 source implementation with
+offline mocked validation. The two-file candidate adds an import-safe runner,
+fixed package actions, bounded canonical binding/receipt parsers, independently
+pinned harness context, rustix lock-checksum validation, raw evidence verification
+and an injected compile/list pipeline. Ordinary native CLI calls fail before any
+process. The existing daemon-only graph policy and six legacy action arrays are
+preserved; `fmt` also runs the new mocked suite before Cargo. This is tooling
+source, not an engine API, genuine compiled evidence or an execution approval.
+PHR-0092 is pending; source acceptance and its direct-child attestation are not
+complete.
+
+The human owner subsequently authorized a fixture-only ownership amendment in
+`scripts/sqlite-native-build-policy.test.mjs` and offline full source validation
+on the current macOS host using existing pinned tools and caches. The copied
+config-free fixture now receives Cargo.lock and the pinned TOML parser package;
+every existing assertion and fake Cargo behavior is preserved. The mandatory
+checksum and graph guards are unchanged. No dependency or toolchain is installed.
+This amendment permits the existing Cargo/native stages of `npm run check` for
+source validation only. It does not permit Linux package proof, a private harness,
+M1, runtime integration, main or release. Exact results and fresh independent
+review are required before source acceptance; PHR-0092 remains pending without
+an approved source/direct-child attestation. No genuine B0/B1 receipt exists,
+and unrelated deletions remain untouched.
+
 The process-lifetime root retains original connection, custody and scope inside
 its actual authority mutex. Fixed metadata carries only the same root/private
 identity/original budget/tag; one control request per operation prevents frame
@@ -3099,14 +3123,14 @@ The first root stays Unadmitted until separately reviewed original-owner
 read-only acquisition/partial retention/close and native registration/accounting
 producers exist. No ordinary-store adoption, read-only upgrade, schema18/writable
 Ready, product caller, C1 scheduling, journal effect, writer, durable stop or
-release activation is included. Next safe packet is separately accepted M0 two-file
-validator source implementation with offline mocked checks under the existing
-work record. Full npm run check includes Cargo/native execution and requires its
-separate validation gate before source acceptance; Linux execution remains
-closed here. M1 requires a genuine accepted baseline, not fixture evidence. Source changes require separate authorization, named
-focused validators, full npm run check and fresh exact independent source and
-direct-child attestations before integration. No source or Linux execution is
-authorized by this docs-only acceptance. Construction,
+release activation is included. The current M0 two-file candidate remains under
+this work record. Its next acceptance steps are the narrow policy-fixture input
+amendment, separately authorized full source validation and fresh exact
+independent source/direct-child review. Linux execution remains closed until its
+explicit validation gate opens. M1 requires a genuine accepted baseline, not
+fixture evidence. Earlier documentation acceptance did not authorize source or
+Linux execution; subsequent M0 source authorization does not authorize either
+native validation or relocation. Construction,
 traits/lifetimes, aggregate native/library allocation and race/quota/cleanup
 source proofs remain unfinished. Project Status owns implementation truth;
 Phase11 owns genuine Linux/runtime proof. LNSAT remains neutral and standalone.
