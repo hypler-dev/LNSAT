@@ -1,0 +1,55 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0049-independent-implementation-review-2659420f",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-daemon-create-wait-decoder-stage-a"],
+  "base_revision": "0c799d0c12eac4562497fe8b22913a99130ab8f3",
+  "reviewed_revision": "2659420ff01e8cc9f6341173b9dfc605d0e1e997",
+  "reviewed_tree_oid": "df5311dcdcebe5f27e6c4c4d7ab567c0e4623479",
+  "diff_sha256": "sha256:460aee65b8914fb0fdbff7c19717943d124294148b49dc65a8888dfb7c9482a7",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_daemon_container_response.rs",
+      "sha256": "sha256:410c0636ec24e212ccef55735c8ab24e19afaf8f70f091a415179b45446ca3dd"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_daemon_container_response_tests.rs",
+      "sha256": "sha256:bbf320e27b82383cd201b911985bca6ca4445456050e4aae5a51e55a7c492102"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:fb4f4fc01d963a0bc79ef3d978ceae5a68e6c4384c36ad54e62a3dc0abf69e1c"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:48288c9860462dff826beeb920d345b7275897eba2fe1c3584195ba29d054520"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/docker-response-source-spec.md",
+      "sha256": "sha256:f4013da28096ea790b0fd3a3a46b5853a58c7fc6fb0d7d5957a2703137efb70a"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:7ff0b1ad42f4858964276d40ca1b30d8ca45079d8356ca72a427755c0ee63b77"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:85a6581386e434706901511b60b932af344e68b4f4cd07687027800ae0b511cc"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:a4fc38ea81463b710cc828327e9495269f08fb94bb47d4231afb85a988a07d6c"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/container_response_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact source and contract review. Private supplied-body Create/Wait decoders with bounded allocation-free preflight, closed typed maps, fixed errors, zeroizing input-derived owners and unverified projections. Independently authored synthetic matrix plus controller integration cases; focused and full source checks, strict Clippy, formatting and proportional docs/public/inventory/history checks pass. Initial sandbox fixture-bind failure is preserved separately; unchanged source passed the permission-scoped full rerun. Scoped Semgrep has no new-file findings and only an unchanged test-only temporary-directory INFO in lib.rs; redacted Gitleaks has zero findings. No caller, transport, public API, dependency, native provenance, runtime, merge, artifact or release authority. Separate exact direct-child audit required."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

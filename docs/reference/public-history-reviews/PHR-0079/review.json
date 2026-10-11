@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0079-independent-implementation-review-3ee7908f",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["gateway-deterministic-fuzz-properties"],
+  "base_revision": "3665ba84e698af5965ee3b613d583d15e89a5614",
+  "reviewed_revision": "3ee7908f1cb5549d56b1239b9e970c0be217b85c",
+  "reviewed_tree_oid": "742229fd07a77dbfe7feaf0dae6b0ffde0f53e72",
+  "diff_sha256": "sha256:4fc4bbe46263e173c27304a1eb1190a688281e348bc0386e9e70e2da93812170",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-contracts/src/execution.rs",
+      "sha256": "sha256:05b563a60e41fdc7351804afd662384f1f87449cc5a667f3441ef5576c393e38"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/phase7_local_authorization.rs",
+      "sha256": "sha256:f17e01086c869997fa535dcf25ffd125488cbf62ebc16df4af0e216689b96b55"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:f69d84436558dc4001636766b4ed41a02823e5677cb93025f0e2a11553802e66"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:a2213906fce366d49ed116c2e3be1c0a0d392728a7af7df14f14aeecab3127dc"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:43de25a87d6bb0155c0459c244d9ef3bf3c7790206987f383ba698c606de8cef"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/c1_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact five-file standalone Gateway deterministic fuzz/property test review. Exact source parent, tree, canonical full-index diff and protected blobs verified. Three new contract properties cover ten stale approved-packet substitutions, twenty-five structured request fields, five canonical-byte substitutions, five binary derived digests and 192 fixed-seed bounded parser inputs with explicit canonical/nested/distinct-request positive controls. Accepted parser input proves canonical/digest self-consistency, never original approval authority or physical effect custody. One source-local store property exercises each capability byte, scope/session/time denials, valid redemption, metadata-only replay after reopen and changed-idempotency rejection with one durable consumption and no adapter attempt/receipt/reconciliation. Existing examples remain. No production behavior, schema, API or dependency changes. Fixed seed and case labels make the bounded smoke reproducible; no coverage-guided engine, broad corpus or long-running fuzz coverage claim. Sandbox full-suite failure was limited to 55 denied ephemeral TCP/Unix listener fixtures and is preserved. An interrupted approved retry and an approved retry with missing workspace-local dependencies are also retained without PASS claims. A subsequent exact full retry found test-only pedantic Clippy failures; semicolons and a positive-control helper extraction corrected them without production changes. The failed run and superseded static review remain preserved. Exact locked workspace caches were verified and copied without installation; typecheck preflight passed before the final full retry. Exact focused contracts/store checks and the approved local-test full npm run check and six proportional docs/public/inventory/format/diff/history validators PASS at the unchanged staged source tree; PHR-0079 remains pending at source review. Exact direct-child review and committed history replay remain separate. Actual-effect custody/all-writer native freeze, cumulative accounting, required-context integrations, real runtime, target support, SDK lifecycle and packaging remain open. No Rangoon dependency, runtime, merge, release or support/certification authority opens."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

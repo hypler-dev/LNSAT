@@ -1,0 +1,59 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0068-independent-implementation-review-b16521f3",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-root-host-layout-declaration-source"],
+  "base_revision": "9dbe5d9ec14246d0cf77fccb77eec35c90fef267",
+  "reviewed_revision": "b16521f37b4c51ae96cdf2f5eacd49b7e8a2b0d2",
+  "reviewed_tree_oid": "5b7c91c8afb4e7d3ae7c16458f8b9700c6f986de",
+  "diff_sha256": "sha256:dbc1f44e6a61ae90ece6d729365bc67c4600577d51ced35839b3e4695488a593",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_root_manifest.rs",
+      "sha256": "sha256:85f7bd400d31bc310176fd06f7cb1bbce567b85cd2ca187b198d880ffe6ab69c"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_root_manifest_tests.rs",
+      "sha256": "sha256:4b183038eec67a292a885823bd3cc3b05b514cac1df85c3066418ead41b93f9f"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:56f9208be9bf440953f792701ccd2dcf53cb25e4b543e48c7ce74a2ed668e200"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:38396802520349ea5a085027ec171f4ef27cc08e9d18ffc46ff7071f8399e534"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:c4a5635d08bc80bf48787c7ce84f18d502f1dc4bdd335aede5c378fb408a6b00"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/root-layout-source-spec.md",
+      "sha256": "sha256:3b530e81b0256f514a564fbcfcfa60587062450e9cc78097285ef68a7db9f9e2"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/root-manifest-source-spec.md",
+      "sha256": "sha256:bb1d8cdbca43d66306f15137d9e0b8893cd7389c47959faa49cba7f1df7a3956"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:49facf6e6bd98ae30e11f8ca91423c24bdcf81d0071b85b3dfc9ccbc1e5fe2dc"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:e4360aef2bf021a7a038a1c7e96bd439cf6314500e617ecf627cb65bb736cd09"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/prefix_acl_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only implementation review. Exact immutable source parent, tree, canonical diff and nine protected blobs match the reviewed formatted scope. The private supplied-body root-manifest v2 adds bounded original path/type/mask relations and ordered possible-CPU/thermal claims with zeroizing typed records, canonical bytes and domain-separated commitment. It preserves the distinct v1 decoder, fields, denials and goldens without automatic dispatch or fallback. Twenty-nine focused synthetic tests cover exact 6168/6128-byte vectors, 256/257 aggregate-array limits and raw unsigned CPU/thermal spelling. Full npm run check passed in1290.28 seconds:1519 workspace TypeScript tests,139 contract comparisons,macOS store264 passed plus2 intentionally ignored,daemon413 passed. Pinned Rust format/lint, docs direction, public readiness, inventory and staged public-history evidence passed. Local two-file Rust-rule Semgrep reports zero findings/errors; nine-snapshot redacted Gitleaks reports zero findings. Scan inputs/results/logs and full result/log are bound to exact source scope. Full execution scope uses documented local controller prelaunch capture and repeated frozen-state checks, not independently authenticated cryptographic executor provenance. Initial compile/fixture failures, stale-inventory run, sandbox listener failures and pinned-format failure are retained; the overwritten initial focused log limitation is explicit. Fresh immutable review has no remaining actionable P1/P2/P3. This is unverified declaration representation only: no genuine daemon cache, native Linux compilation/execution, trusted holder, CompleteRecipe admission, owner/store selector, public caller, full native freeze, integration, runtime or packaging proof. Actual pins and positive feasibility remain blocking; pressure proof remains separate from product recipe. LNSAT remains standalone and Rangoon uses ordinary adapters. Direct-child validation/review remains required. No merge, Docker, host mutation, execution, supported-release or runtime authority follows."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

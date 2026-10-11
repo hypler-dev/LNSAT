@@ -430,6 +430,114 @@ activation, grant, one-use release or runtime integration is opened. Full
 source/pin/positive-feasibility freeze, candidate artifact construction and
 real runtime proof remain separately gated. All pins remain `UNSET_BLOCKING`.
 
+## Stage-A journal owner/view extraction candidate
+
+This bounded private refactor follows the accepted Stage-A source order and
+[anchored owner storage direction](realized-recipe-source-spec.md#stage-a-anchored-owner-storage-and-borrowed-access).
+[Project Status](../../PROJECT_STATUS.md#stage-a-journal-owner-view-extraction-candidate)
+owns implementation truth. Fresh independent exact module precode review must
+precede source. This is an extraction prerequisite; it does not implement the
+future Ready-cell views or complete root/native module precode.
+
+### Exact ownership and interfaces
+
+The two owned source paths are
+`crates/lnsat-store/src/headless_preparation_custody.rs` and its existing
+`headless_preparation_custody_tests.rs`. No other Rust file, dependency, feature,
+public API, selected-store constructor or product consumer changes.
+
+Keep `JournalCustody<'store>` as the legacy private wrapper. Its fields become
+`parent: SelectedPreparationParent<'store>` and `state: OwnedJournalState`.
+The parent still holds the same exclusive `&'store mut SqliteStore` obtained
+only through the existing custody-verified selected inspection bridge.
+Ordinary unbound stores still deny; macOS construction still denies before any
+journal creation. The wrapper cannot outlive, duplicate or replace that borrow.
+
+`OwnedJournalState` has no lifetime parameter or store/connection/custody borrow.
+It owns exactly the existing `root: File`, `root_name: String`, `owner: u32`,
+`poisoned: bool`, and `baseline: Option<RootState>` fields. Existing test-only
+one-shot interventions move with that state, remain absent from production and
+never return successful observations. Existing `RootState`, stamps, journal
+codec values, bounds and algorithms retain their current representations.
+No new baseline, file owner, allocation domain or persistence format is added.
+A compile-time `'static` bound must prove that this type requires no finite
+borrowed lifetime. Exact field review separately rules out references, raw
+pointers and borrowed handles; a `'static` bound alone does not do that.
+This is not a finite aggregate-storage or native handoff proof.
+
+One private `JournalAccess<'view, 'store>` temporarily borrows
+`&'view SelectedPreparationParent<'store>` and `&'view mut OwnedJournalState`.
+A zero-sized `PhantomData<Rc<()>>` marker makes this access neither Send nor
+Sync without adding a runtime allocation. No Clone, Debug, Serialize, Deref,
+raw/connection getter, public constructor, callback parameter or extensible SQL
+interface is added. Compile-time negative trait assertions must cover these
+thread, copying and printing/serialization boundaries.
+
+The only production access constructor is the wrapper's private
+`access(&mut self) -> JournalAccess<'_, 'store>`, which borrows that wrapper's
+original parent and state together. No accessor returns independent state,
+parent or handle owners; no separate reattachment constructor accepts another
+store. This construction provenance preserves the existing pairing. The
+compiler must retain both borrow lifetimes, preventing access after wrapper
+or store drop and overlapping mutable accesses. Full root authority-guard
+lifetimes and a future selected writable-parent view are not provided here.
+
+The wrapper preserves its existing signatures:
+
+```rust
+fn open(store: &'store mut SqliteStore) -> Result<Self, CustodyError>;
+fn inspect(&mut self) -> Result<RootSnapshot, CustodyError>;
+fn append(&mut self, frame: &[u8]) -> Result<(), CustodyError>;
+```
+
+`open` retains the existing platform denial, parent verification, owner/name
+lookup, root acquisition and complete initial snapshot sequence. It stores
+parent plus owned state in the wrapper and initializes the baseline through a
+temporary access. `inspect` and `append` delegate immediately to temporary
+access. Current snapshot/read/append algorithms move to `JournalAccess` with
+only field projections adjusted through `state`; pure append-delta validation
+remains one shared private helper. No parallel validator or I/O implementation
+is introduced.
+
+### Preserved custody and failure behavior
+
+Every existing parent/native connection/lease verification and named/held root
+association remains in the same operation sequence. Preserve two-scan stability,
+pre-operation baseline matching, expected append delta, all byte/entry/revision
+bounds, actual read/write/flush/recheck ordering and data-free error precedence.
+A failed inspect or append poisons the retained state; dropping temporary access
+must not clear poison or update baseline. Baseline changes only after complete
+successful append. No reopen, reset, retry, cleanup certificate or SQL is added.
+Current wrapper drop and failed-open behavior remain unchanged; they do not
+satisfy future anchored admission retention or VFS/native cleanup witnesses.
+
+This candidate is private to the existing custody module. It exposes no new
+callers or selected writable store; moving owned state into a future anchored
+cell still requires exact selected-parent provenance, guard lifetimes, partial
+owner handoffs, writable/VFS admission and close, all-writer routing and whole
+module precode. Neither this access nor stored untrusted journal assertions
+supply Ready, approval, cleanup, bootstrap or execution authority.
+
+### Named validation and review
+
+Run focused `lnsat-store` custody, codec, selected-store and C1 credential tests
+using the installed pinned toolchain and offline cache; strict Rust formatting
+and lint; owned documentation formatting; docs direction, public readiness,
+legacy inventory, public-history review and diff checks; full `npm run check`.
+Fresh independent exact precode and immutable source/direct-child reviews are
+required. Preserve existing Linux genuine disposable positive/denial tests,
+including lease retention, selected replacement, post-read replacement/rewrite,
+post-create failure, partial state and sticky poison. Update only test field
+projections when interventions move; do not weaken existing assertions.
+Add host-independent compile-time ownership and negative trait checks.
+
+Local macOS compilation and platform-denial tests do not execute Linux journal
+positives. Exact public-head Linux source CI remains required before claiming
+that platform's source checkpoint; it supplies no kernel/LSM feasibility or
+runtime authority. No Docker, real host/ACL changes, target pressure, credential
+intake, installation, activation, artifact capture, merge, publication, release
+or deploy is opened. Source review does not complete the native freeze.
+
 ## Atomic bootstrap and schema migration
 
 The future source packet adds migration 18, derived from the actual current

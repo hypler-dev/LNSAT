@@ -519,6 +519,24 @@ mutation-management integration. Package publication retains its separate gate.
 
 ### 4. Prove the integrated workflow
 
+Apply the accepted
+[standalone Gateway requirements](PROJECT_STATUS.md#standalone-gateway-adversarial-requirements)
+within the existing lifecycle. Complete execution-bound input/resource custody,
+all-writer admission/use, alternate-path coverage and stop/revocation race
+semantics before claiming the selected profile contains actual effects. A digest
+recheck alone cannot close a mutable-resource race. Preserve current inert
+candidate order and the full native freeze gate; this refinement does not
+authorize runtime integration with partial evidence.
+
+For a selected profile that claims cumulative effect bounds or depends on
+external context facts, first freeze its exact accounting or context contract
+and negative evidence. Per-packet budgets do not prove cross-operation quotas;
+advisory telemetry and provider allow results do not grant approval. Keep those
+additional packets bounded and subordinate to the existing custody/admission
+blockers. Neither a new synchronization service nor an online consumer app is
+a prerequisite for standalone operation. Implementation status remains owned
+by Project Status; the threat model supplies the detailed security requirements.
+
 Connect the completed setup/control/enforcement lifecycle to the existing
 request, distinct-human approval, one-use claim, bounded adapter, receipt and
 reconciliation chain. Preserve the source proof in
@@ -562,20 +580,12 @@ The private reader source candidate is implemented; actual Linux compilation,
 genuine positive and unfinished-operation evidence remain outstanding. Do not
 reopen the already accepted owner decision. Actual native results and the complete
 recovery/native freeze remain distinct later gates.
-In parallel, retain exact existing
-source/test mappings for the protected workflow and prepare only independently
-reviewed inert prerequisites allowed by Stage A. The private profile and
-context/challenge codecs have source validation and exact attestations. The
-private Version decoder has sixteen focused test groups, full host-source
-validation and exact source/direct-child attestations under PHR-0037. The next
-bounded candidate is the
-[private Info decoder contract](PROJECT_STATUS.md#stage-a-private-daemon-info-decoder-contract).
-It separates retained comparison claims from typed discarded data, closes exact
-presence/error/boundary rules and corrects the named pinned source references.
-Fresh independent precode review passed. Its private source candidate and
-twenty-two synthetic test groups pass focused and full host-source validation.
-Exact source/direct-child review bindings remain separate under PHR-0038. No decoder opens
-CLI setup or replaces native evidence.
+In parallel, retain exact existing source/test mappings for the protected workflow
+and prepare only independently reviewed inert prerequisites allowed by Stage A.
+[Project Status](PROJECT_STATUS.md#stage-a-private-raw-oci-chain-contract) owns the
+current private candidate and its source/direct-child review disposition; the
+[accepted Stage-A order](architecture/headless-resource-enforcement/source-freeze-staging-decision.md#a-reviewed-inert-candidate-source)
+owns sequencing. No decoder opens CLI setup or replaces native evidence.
 Do not restart completed
 prerequisites, implement fake success or treat an always-deny implementation as
 the required positive case. Full freeze, integration, real runtime, RC and

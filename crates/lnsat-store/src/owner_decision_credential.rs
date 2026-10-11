@@ -11,7 +11,7 @@ use super::{
     validate_stored_local_password_credentials_v1, verify_local_password_v1,
 };
 use rusqlite::Transaction;
-use std::sync::Arc;
+use std::{marker::PhantomData, rc::Rc, sync::Arc};
 use subtle::ConstantTimeEq as _;
 
 /// Transient provenance of one store instance, never durable custody evidence.
@@ -35,18 +35,37 @@ pub(super) struct VerifiedCurrentOwnerCredentialV1 {
     verifier_fingerprint: [u8; 32],
 }
 
-pub(super) fn prepare_current_owner_credential_v1(
+/// Owned current-row capture; it carries no SQL owner or execution authority.
+/// The thread marker keeps this transient credential material in its caller.
+pub(super) struct CapturedCurrentOwnerCredentialV1 {
+    material: CapturedOwnerCredentialMaterialV1,
+    _caller_thread: PhantomData<Rc<()>>,
+}
+
+enum CapturedOwnerCredentialMaterialV1 {
+    Unknown(String),
+    Known {
+        scope: Arc<()>,
+        identity: LocalIdentityRecordV1,
+        credential: StoredLocalPasswordCredentialRow,
+    },
+}
+
+pub(super) fn capture_current_owner_credential_v1(
     store: &SqliteStore,
     identity_ref: &str,
-    password: &str,
-) -> Result<Option<VerifiedCurrentOwnerCredentialV1>, LocalIdentityStoreErrorV1> {
-    // No caller transaction, including a deferred one, may span Argon2id.
+) -> Result<CapturedCurrentOwnerCredentialV1, LocalIdentityStoreErrorV1> {
+    // Reject even a deferred caller transaction before any identity work.
     if !store.connection.is_autocommit() {
         return Err(LocalIdentityStoreErrorV1::AuthorizationRejected);
     }
     if !is_local_human_identity_ref_v1(identity_ref) {
-        store.reject_unknown_local_password_candidate_v1(password)?;
-        return Ok(None);
+        return Ok(CapturedCurrentOwnerCredentialV1 {
+            material: CapturedOwnerCredentialMaterialV1::Unknown(
+                store.authentication_dummy_verifier.clone(),
+            ),
+            _caller_thread: PhantomData,
+        });
     }
     store
         .verify_schema()
@@ -59,11 +78,39 @@ pub(super) fn prepare_current_owner_credential_v1(
     transaction
         .rollback()
         .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
-    let Some((identity, credential)) = captured else {
-        store.reject_unknown_local_password_candidate_v1(password)?;
-        return Ok(None);
+    let material = match captured {
+        Some((identity, credential)) => CapturedOwnerCredentialMaterialV1::Known {
+            scope: Arc::clone(&store.owner_decision_credential_scope.0),
+            identity,
+            credential,
+        },
+        None => {
+            CapturedOwnerCredentialMaterialV1::Unknown(store.authentication_dummy_verifier.clone())
+        }
     };
-    // The read transaction has ended; PHC storage zeroizes on every exit path.
+    Ok(CapturedCurrentOwnerCredentialV1 {
+        material,
+        _caller_thread: PhantomData,
+    })
+}
+
+pub(super) fn compute_current_owner_credential_v1(
+    captured: CapturedCurrentOwnerCredentialV1,
+    password: &str,
+) -> Result<Option<VerifiedCurrentOwnerCredentialV1>, LocalIdentityStoreErrorV1> {
+    let (scope, identity, credential) = match captured.material {
+        CapturedOwnerCredentialMaterialV1::Unknown(fallback) => {
+            verify_local_password_v1(password, &fallback)
+                .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
+            return Ok(None);
+        }
+        CapturedOwnerCredentialMaterialV1::Known {
+            scope,
+            identity,
+            credential,
+        } => (scope, identity, credential),
+    };
+    // No SQL owner reaches computation; the existing PHC guard owns disposal.
     let verified = verify_local_password_v1(password, &credential.password_verifier)
         .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
     if !verified || identity.role != LocalIdentityRoleV1::Owner {
@@ -71,7 +118,7 @@ pub(super) fn prepare_current_owner_credential_v1(
     }
     let verifier_fingerprint = fingerprint(&credential.password_verifier);
     Ok(Some(VerifiedCurrentOwnerCredentialV1 {
-        scope: Arc::clone(&store.owner_decision_credential_scope.0),
+        scope,
         identity,
         credential_id: credential.credential_id,
         credential_version: credential.credential_version,
@@ -79,6 +126,17 @@ pub(super) fn prepare_current_owner_credential_v1(
         created_at: credential.created_at,
         verifier_fingerprint,
     }))
+}
+
+pub(super) fn prepare_current_owner_credential_v1(
+    store: &SqliteStore,
+    identity_ref: &str,
+    password: &str,
+) -> Result<Option<VerifiedCurrentOwnerCredentialV1>, LocalIdentityStoreErrorV1> {
+    compute_current_owner_credential_v1(
+        capture_current_owner_credential_v1(store, identity_ref)?,
+        password,
+    )
 }
 
 pub(super) fn recheck_current_owner_credential_v1(

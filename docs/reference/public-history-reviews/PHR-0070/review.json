@@ -1,0 +1,83 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0070-independent-implementation-review-c31bc35a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-candidate-assertion-view-source"],
+  "base_revision": "4c1ccce9d8a18236b669a723d1fcb5b55335ad27",
+  "reviewed_revision": "c31bc35af0868200ef8993293cea109f9692d495",
+  "reviewed_tree_oid": "40931938b59ba7c8c9eca4d91814e5191af120bc",
+  "diff_sha256": "sha256:289bb8977028428a44744520d5561cebb4876a6a3189b4d0c6a9ebc9812b12db",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_profile.rs",
+      "sha256": "sha256:bc943fd24b470d205b10cdb860ab49dcbdeb4cb9c34c8965fc2f714a40ea4d59"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_profile_tests.rs",
+      "sha256": "sha256:e2547df9d5aa5ed468040f507f8755fe01b030d3715c78765f05cff8187f950a"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_root_manifest.rs",
+      "sha256": "sha256:35ca7683a32ad429b6e22af56cd64d03b9a113cf1a8cf37e4eeba05d7e00b134"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_root_manifest_tests.rs",
+      "sha256": "sha256:04cf8563d9f72a47eeb558fbccb11d4999a8b187b38a769ad3f1383c2047c09e"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:7a83eba154a300c57a37c66de0f769f8d63718cdcfed3ea0a7f12dcaf0938d44"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:da139fd811852244a79229bf4027baf65cf3673fc1c3916cc15524f4b2a9ee60"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:58ca6d91b21a5ccd926b500c9632d4c8b495ddadd69910a9746349dd953faba7"
+    },
+    {
+      "path": "docs/architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md",
+      "sha256": "sha256:3f8c507634fdbd60b3b537f7ce4c1a7d5f2a67402bd34e390c63a8bbdd108f1c"
+    },
+    {
+      "path": "docs/architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md",
+      "sha256": "sha256:16bd2882c5c32ab8afb4a37727ad308c2d8ffb34a849de32352d17784ddea109"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/candidate-assertion-view-source-spec.md",
+      "sha256": "sha256:6b1d27311a5ae30ec47e475be9d4bd507a126d0c5957084d456b04e98f056eb8"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:7cfe9e927e53226fe4e04314a41ade4d65ecd61f1e329377b3dd32861aa972e1"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:331700f76b8468dc012ba125f5a32a120ef7c5c13abfe8ac6c9d8aab4a645323"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:a08a75b729d1de869d2b337dddb8909d366b83792bdc18b4d5aa89abebfde302"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:de87b0ff923c2ffeff8bd297566582310dee9d2b025608d2b29406ce061a60f7"
+    },
+    {
+      "path": "packages/mcp/package.json",
+      "sha256": "sha256:18483516ef7223b7d8357ac3c0d72e2bc20e40aabe745d96ce62dceb5cbe6c69"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/complete_slice_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only review of the exact fifteen-file source checkpoint and immutable commit. Canonical diff, direct source parent, tree and every protected blob were independently verified. Private candidate assertion views borrow retained supplied profile/root records, remain internal and non-transferable, and create no authority conversion or production consumer. Tests cover canonical projection, nullable and collection claims, retained borrows and trait restrictions. Owner-approved Linux qualification and governed installation directions remain planned, server-first and neutral; Rangoon uses ordinary adapters. Narrow dependency maintenance pins test client 2.2.0, transitive legacy SDK 1.31.0 and Sharp 0.35.5 with matching platform closure; production MCP core/server/node remain 2.0.0. A separate fresh Terra xhigh bypass/regression review found no surviving affected lock copy or source bypass; its missing supplied validation-evidence obligation is closed by retained exact-source receipts. Verified registry-only quarantine installation disabled lifecycle scripts. Registry signatures have zero invalid/missing results; repository advisory gate has zero findings and no exceptions. MCP build, 104 transport/conformance tests, 15 OAuth tests and console static build pass. The full npm run check passes at unchanged tree with 1519 TypeScript tests, 139 contract comparisons, 264 macOS store tests plus two ignored and 417 daemon unit tests. Owned formatting, public/docs/inventory/history gates and staged redacted Gitleaks pass; Gitleaks found zero findings. Five unchanged Rust blobs match the earlier scoped Semgrep binding with one unchanged INFO test temporary-directory helper and zero errors; this is not a zero-finding Semgrep result. Initial dependency-resolution, TLS, unavailable direct npm identity and external-symlink console failures remain preserved; verified narrow corrections precede successful gates. Validation uses the existing macOS/aarch64 toolchain and source fixtures only. Exact validation result/log hashes are retained locally. No genuine Linux/native proof, full recipe or native freeze, bootstrap/activation integration, supported distro/package row, release or V1 completion is established. Registry authenticity and source checks grant no runtime/support/certification or merge authority. Fresh direct-child metadata review and committed history replay remain separately required. No Docker, host policy change, credential intake, global install, GLM transfer, push, merge, publication, deployment or production mutation occurred."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

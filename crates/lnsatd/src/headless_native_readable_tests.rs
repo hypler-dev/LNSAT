@@ -36,6 +36,94 @@ impl Drop for Fixture {
     }
 }
 
+#[cfg(target_os = "linux")]
+fn root_manifest_sample(access: AclRead, default: AclRead, gid: u32, mode: u32) -> ReadableSample {
+    ReadableSample {
+        identity: Identity {
+            device: 1,
+            inode: 2,
+            uid: 0,
+            gid,
+            mode,
+            links: 1,
+            ctime_seconds: 0,
+            ctime_nanoseconds: 0,
+            filesystem_type: nix::sys::statfs::FsType(0xef53),
+        },
+        access,
+        default,
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn root_access_acl(uid: u32) -> AclRead {
+    let mut raw = 2_u32.to_le_bytes().to_vec();
+    for (tag, permissions, id) in [
+        (1_u16, 6_u16, u32::MAX),
+        (2, 4, uid),
+        (4, 0, u32::MAX),
+        (16, 4, u32::MAX),
+        (32, 0, u32::MAX),
+    ] {
+        raw.extend(tag.to_le_bytes());
+        raw.extend(permissions.to_le_bytes());
+        raw.extend(id.to_le_bytes());
+    }
+    let parsed = ParsedAcl::parse(&raw).unwrap();
+    AclRead::Present { raw, parsed }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn headless_native_readable_root_manifest_controller_requires_exact_access_and_default_shape() {
+    let uid = 4242;
+    assert_eq!(
+        root_manifest_sample(
+            root_access_acl(uid),
+            AclRead::UnclassifiedNoData,
+            0,
+            0o100_640
+        )
+        .check_root_manifest_controller(uid),
+        Ok(())
+    );
+    assert_eq!(
+        root_manifest_sample(
+            AclRead::UnclassifiedNoData,
+            AclRead::UnclassifiedNoData,
+            0,
+            0o100_640
+        )
+        .check_root_manifest_controller(uid),
+        Err(NativeError::InvalidAcl)
+    );
+    assert_eq!(
+        root_manifest_sample(root_access_acl(uid), root_access_acl(uid), 0, 0o100_640)
+            .check_root_manifest_controller(uid),
+        Err(NativeError::InvalidAcl)
+    );
+    assert_eq!(
+        root_manifest_sample(
+            root_access_acl(uid),
+            AclRead::UnclassifiedNoData,
+            1,
+            0o100_640
+        )
+        .check_root_manifest_controller(uid),
+        Err(NativeError::ModeMismatch)
+    );
+    assert_eq!(
+        root_manifest_sample(
+            root_access_acl(uid),
+            AclRead::UnclassifiedNoData,
+            0,
+            0o100_600
+        )
+        .check_root_manifest_controller(uid),
+        Err(NativeError::ModeMismatch)
+    );
+}
+
 #[cfg(not(target_os = "linux"))]
 #[test]
 fn headless_native_readable_unsupported_platform_denies_before_read() {

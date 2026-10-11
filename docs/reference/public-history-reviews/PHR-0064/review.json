@@ -1,0 +1,47 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0064-independent-implementation-review-9e1d2c88",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-root-prefix-acl-contract"],
+  "base_revision": "88773fac77547caa27542ee49999dc7fc3c8ac8d",
+  "reviewed_revision": "9e1d2c887cd2bd83d284cc3ed36f811a97ceec03",
+  "reviewed_tree_oid": "f6a2426baaacc770fc91264dcb0497edc225bb04",
+  "diff_sha256": "sha256:03f28cfe8296f465532449fefea87c3520fdb6c9cb696de31ee0313c2e80cb0a",
+  "protected_files": [
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:56730c94f027428d63053975c9163d7f5357010ecdf8e628f916dae2a8cc3842"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:2c8da4c679ef295e6ab571338bb4e8aefa4212bf03f1f14f9499157468c5dac9"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md",
+      "sha256": "sha256:7d96117db8bb1a38f724046c1047e349b110df9a00fd1f04f5690b4459537103"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md",
+      "sha256": "sha256:228e441e6e3a81b2e9259b587b0447228097cb8506696af433baa034302b8d55"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:7ab5906b3fda83ceb9ae3ae859e7972987732cc5f51bdefe87b762bd87191bb4"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:47e49aa43204bf403dbf789367039053c0b50e9215e0b776a4ab771dab4cb547"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/prefix_acl_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only precode contract review. Exact immutable parent, tree, canonical diff and six protected document blobs match the independently reviewed staged packet. The contract specifies named access/default ACL observations for the existing retained root-manifest O_PATH directory chain, separately from Docker metadata directory classes. It fixes canonical prefix derivation, pinned safe lgetxattr use, whole held/named chain association around every call, typed pre/post-call checkpoints including errors, raw/tag stability, strict parsed access-mode agreement, explicit unclassified ENODATA, bounded memory and native call counts, the original deadline, checked lifetime views and worker-only retirement. The sampled named-path method explicitly does not claim atomic fd-bound evidence or protection from trusted-root transient replacement. It preserves the later kernel/LSM/ext4 absence classifier, authenticated root/namespace/peer association and effective-rights gates. Fresh review found no actionable P1/P2/P3. Docs direction, public readiness, exact formatting, legacy inventory, exact public-history replay and whitespace checks pass. This six-file documentation packet implements no sampler and changes no runtime behavior; full npm run check and native source/scanner tests are not newly claimed. Linux compile/positive/blocked-operation proof, complete freeze, integration, runtime and packaging remain unfinished. Candidate implementation requires its own focused/full source validation and independent review. Separate exact direct-child review is required. No execution, merge, runtime, release or provisioning authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

@@ -138,6 +138,82 @@ infrastructure credentials or unrestricted shell/SSH authority.
 Portable self-contained signed execution authorization is a later disconnected
 adapter profile, not an initial local-v1 requirement.
 
+### Standalone Gateway admission and effect boundary
+
+Canonical implementation truth remains in
+[Project Status](../PROJECT_STATUS.md#standalone-gateway-adversarial-requirements).
+The following requirements refine the existing authority boundary; they do not
+declare new runtime controls implemented or introduce a workbench dependency.
+
+Approval binds the represented action, arguments, target and configuration.
+That binding must survive through the actual side effect. For each selected
+execution profile, define the admission linearization point, custody of the
+approved inputs and resource identities, and the writers able to invalidate
+them. Rechecking a digest or path before dispatch is insufficient when an
+adapter subsequently rereads mutable bytes or resolves a substituted object.
+The effect must use the approved immutable input or a qualified resource handle
+whose custody and invalidation rules preserve the approved identity. Drift
+requires denial and a new approval when the proposal changes; it cannot reuse
+the old capability. Stop, cancellation and revocation races need explicit
+before-admission and after-admission semantics plus reconciliation of unknown
+effects. They cannot promise retroactive prevention of an effect already made.
+
+A profile's enforcement claim is limited to its qualified mediated paths.
+Deployment must prevent agents and adapters from reaching the same protected
+targets through independent credentials, unrestricted shells or other
+unmediated paths before claiming containment of those targets. Unsupported or
+unverifiable required coverage denies activation or use. A diagnostic view may
+show the missing coverage but cannot silently admit that profile. This does
+not extend local v1 protection to a malicious host owner or compromised root.
+
+Per-packet finite budgets and one-use capabilities do not establish cumulative
+effect limits across distinct operations. A selected policy that depends on a
+rate, quota or aggregate effect bound must define its protected resource set,
+accounting scope, units, window, reservation and settlement rules before source
+implementation. Admission must reserve against the shared bound atomically;
+concurrent operations, new operation IDs, retries and restart cannot reset it
+or oversubscribe it. Uncertain effects retain conservative accounting until
+qualified reconciliation; timeout alone cannot release a reservation. Protect
+critical resources with deterministic exclusions or narrower action scopes
+where that is the intended policy. Profiles without cumulative enforcement
+must disclose that limit and cannot claim it from per-action checks.
+
+Required negative evidence includes argument/configuration mutation after
+approval, target replacement after verification, an alternate target-access
+path, stop/revocation racing use, concurrent bound exhaustion, operation-ID
+reset, restart with unsettled effects and ambiguous reservation settlement.
+Each selected profile needs its own feasible contract and proof; this list
+does not open real-host experiments or runtime execution.
+
+### Policy context, revisions and host trust
+
+Required policy facts must come from explicitly configured sources with bound
+identity, scope, version and freshness. If a decision requires a context fact,
+missing, stale, conflicting or unauthenticated evidence denies admission or
+escalates for a new valid decision; escalation itself grants no execution
+authority. Optional advisory context and telemetry cannot replace those facts,
+the local policy decision, human approval or the durable outcome. Deterministic
+rules can constrain a dangerous action without claiming to understand an
+agent's intent. External allow decisions remain provider evidence, not LNSAT
+approval. Collect only bounded, redacted context needed for the selected policy;
+no hidden network calls, ambient credentials or raw-payload telemetry default.
+
+Content revisions and permission changes remain distinct. A harmless authoring
+revision need not widen capability scope, while a changed execution-bound
+digest still needs the approval required by its profile. Unknown capabilities
+and broader grants require explicit policy and human review. Prompt iteration
+is not a reason to substitute wildcard authority or bypass exact action binding.
+No manifest synchronization service or always-online management application is
+required by this refinement.
+
+Local owner approval retains the stated trusted-host assumption. OS encryption,
+a password, a hardware key or a valid external signature alone does not prove
+that a compromised approval workstation displayed the approved operation.
+Any optional profile claiming resistance to requester-workstation compromise
+needs independently trusted approval verification, exact operation presentation
+and qualified human-presence evidence, with its own threat model and tests.
+Local v1 does not acquire that assurance through this documentation change.
+
 ## Receipt and Audit Binding
 
 Receipt must repeat authorization identity, consumption identity, operation and

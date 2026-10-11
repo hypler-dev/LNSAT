@@ -195,6 +195,97 @@ fn assert_error<T>(result: Result<T, CustodyError>, expected: &str) {
     assert_eq!(error.code(), expected);
 }
 
+trait NotClone<A> {
+    fn check();
+}
+
+impl<T: ?Sized> NotClone<()> for T {
+    fn check() {}
+}
+
+impl<T: Clone> NotClone<u8> for T {
+    fn check() {}
+}
+
+trait NotDebug<A> {
+    fn check();
+}
+
+impl<T: ?Sized> NotDebug<()> for T {
+    fn check() {}
+}
+
+impl<T: ?Sized + std::fmt::Debug> NotDebug<u8> for T {
+    fn check() {}
+}
+
+trait NotSerialize<A> {
+    fn check();
+}
+
+impl<T: ?Sized> NotSerialize<()> for T {
+    fn check() {}
+}
+
+impl<T: ?Sized + serde::Serialize> NotSerialize<u8> for T {
+    fn check() {}
+}
+
+trait NotSend<A> {
+    fn check();
+}
+
+impl<T: ?Sized> NotSend<()> for T {
+    fn check() {}
+}
+
+impl<T: ?Sized + Send> NotSend<u8> for T {
+    fn check() {}
+}
+
+trait NotSync<A> {
+    fn check();
+}
+
+impl<T: ?Sized> NotSync<()> for T {
+    fn check() {}
+}
+
+impl<T: ?Sized + Sync> NotSync<u8> for T {
+    fn check() {}
+}
+
+trait NotDeref<A> {
+    fn check();
+}
+
+impl<T: ?Sized> NotDeref<()> for T {
+    fn check() {}
+}
+
+impl<T: ?Sized + std::ops::Deref> NotDeref<u8> for T {
+    fn check() {}
+}
+
+macro_rules! assert_non_view_traits {
+    ($type:ty) => {{
+        <$type as NotClone<_>>::check();
+        <$type as NotDebug<_>>::check();
+        <$type as NotSerialize<_>>::check();
+        <$type as NotSend<_>>::check();
+        <$type as NotSync<_>>::check();
+        <$type as NotDeref<_>>::check();
+    }};
+}
+
+#[test]
+fn owned_state_and_access_trait_boundaries_are_compile_time_checked() {
+    fn assert_static<T: 'static>() {}
+
+    assert_static::<OwnedJournalState>();
+    assert_non_view_traits!(JournalAccess<'static, 'static>);
+}
+
 #[cfg(target_os = "linux")]
 fn create_private_directory(path: &Path) {
     fs::DirBuilder::new()
@@ -581,9 +672,9 @@ fn custody_rejects_root_count_revision_count_and_malformed_hostile_corpus() {
     let mut custody = succeeds(JournalCustody::open(&mut store));
     let initial = frame(&pending(&id('a')));
     succeeds(custody.append(&initial));
-    let preparation = succeeds(open_directory(&custody.root, &id('a')));
+    let preparation = succeeds(open_directory(&custody.state.root, &id('a')));
     assert_error(
-        custody.read_revision(
+        custody.access().read_revision(
             &preparation,
             "00000000.json",
             super::super::MAX_CHAIN_BYTES - initial.len() + 1,
@@ -655,7 +746,7 @@ fn custody_denies_real_post_read_preparation_replacement_and_revision_rewrite() 
     succeeds(custody.append(&initial));
     let preparation = fixture.root().join(id('a'));
     let moved = fixture.directory.join("post-read-moved");
-    custody.post_read_intervention = Some(Box::new(move || {
+    custody.state.post_read_intervention = Some(Box::new(move || {
         fs::rename(&preparation, &moved).expect("post-read preparation must move");
         create_private_directory(&preparation);
         write_private_file(&preparation.join("00000000.json"), &initial);
@@ -682,7 +773,7 @@ fn custody_denies_real_post_read_preparation_replacement_and_revision_rewrite() 
         initial_digest
     );
     let revision = fixture.root().join(id('a')).join("00000000.json");
-    custody.post_read_intervention = Some(Box::new(move || {
+    custody.state.post_read_intervention = Some(Box::new(move || {
         fs::write(&revision, &rewritten).expect("post-read revision must rewrite");
     }));
     assert_error(custody.inspect(), "journal_custody.changed");
@@ -696,7 +787,7 @@ fn custody_poisoned_failed_append_preserves_and_reopens_partial_state() {
     let mut custody = succeeds(JournalCustody::open(&mut store));
     let database = fixture.database.clone();
     let retained = fixture.directory.join("retained-selected.sqlite");
-    custody.post_revision_create_intervention = Some(Box::new(move || {
+    custody.state.post_revision_create_intervention = Some(Box::new(move || {
         fs::rename(&database, &retained).expect("selected database must move to retained fixture");
         write_private_file(&database, b"");
     }));

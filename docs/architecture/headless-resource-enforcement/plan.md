@@ -6,7 +6,7 @@ Status: accepted
 Authority: [HCFG-6 intent](intent.md); current acceptance/implementation belongs to [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
 Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
-Last updated: 2026-10-05
+Last updated: 2026-10-06
 
 ## Scope and protected lanes
 
@@ -241,6 +241,136 @@ Source tests are synthetic and private. Project Status owns implementation and
 acceptance.
 No adapter sequence barrier, trusted observation, store release, current native
 result, integration or pending kernel/harness authority follows.
+
+### Private daemon Image prerequisite
+
+After Version and Info, the [Image-only supplied-body contract](docker-response-source-spec.md#stage-a-private-image-decoder-contract)
+bounds the next representation prerequisite for comparing the selected image
+with held raw OCI config/manifest/index. It names exact private files, source
+normalization, error precedence, retained claims and tests. Exact upstream
+verification corrected served list encodings and backend-specific image target
+identity/selection without changing the profile's raw config commitment. Fresh
+independent precode review passed after the exact authenticated pre-request
+selector rule and list-presence corrections;
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-image-decoder-contract)
+owns their disposition. The private decoder and synthetic tests now implement
+this representation prerequisite with allocation-free bounded preflight, closed
+map-only shapes and an unverified retained projection. Source review and exact
+attestations are separate gates. Decoder success remains an unverified claim.
+Raw-blob custody, selected recipe/pins, storage/daemon association, full native
+freeze, product integration and actual runtime remain separate dependencies.
+This work does not open the pending kernel/harness source packet.
+
+### Private Create and Wait prerequisite
+
+After Version, Info and Image, independently review the
+[Create/Wait supplied-body contract](docker-response-source-spec.md#stage-a-private-create-and-wait-decoder-contract)
+before implementing its named private module, synthetic tests and declaration.
+That exact precode review has passed; the named inert source scope is open
+under Stage A, with implementation evidence recorded only in Project Status.
+The two representations supply only a claimed container ID and claimed zero
+exit; they do not establish creation, ownership, consequence or cleanup. Exact
+source normalization, complete shape/recipe rules, bounds, fixed errors and
+mandatory positive/denial evidence are specified. Project Status owns precode
+and implementation disposition. Same-instance transport, attempt/journal
+custody, Inspect/native association, durable receipt and uncertainty handling
+remain later integration requirements. No pending native fixture source gate,
+full freeze, runtime or publication authority is opened by this prerequisite.
+
+### Inspect lifecycle reconciliation before private source
+
+Reconcile the [served Inspect lifecycle](docker-response-source-spec.md#inspect-lifecycle-normalization-prerequisite)
+before completing the private decoder contract. The exact created/running/exited
+representations, null ExecIDs and 64/65-member HostConfig positives are mandatory
+inputs to that contract; preserve independent native enforcement and same-attempt
+custody. Include the [backend-dependent Image identity](docker-response-source-spec.md#inspect-image-identity-by-selected-backend)
+and graphdriver, containerd manifest and containerd index cases. Preserve the
+separate raw-config commitment and selected-manifest proof; a returned storage
+branch cannot choose its own trusted comparison. Project Status owns the
+reconciliation disposition. Define exact owned
+source/test/declaration paths, retained projection, aggregate memory/error bounds
+and the full positive/denial matrix in the
+[private Inspect contract](docker-response-source-spec.md#stage-a-private-inspect-decoder-contract),
+then obtain fresh precode review before implementation. Its supplied-body result
+retains claims only; held phase/role/backend/attempt selection and every native,
+raw OCI and recipe comparison remain later integration requirements. Source
+ownership is the private Inspect module, its independently authored tests and
+one private lib.rs declaration. Project Status owns review and implementation
+state. This step does not approve native fixture source, full source/pin freeze,
+integration, artifact capture or runtime.
+
+### Private root-manifest prerequisite
+
+After the supplied Docker response candidates, the
+[private root-manifest contract](root-manifest-source-spec.md#stage-a-private-root-manifest-decoder-contract)
+bounds the declaration needed for later profile/registry/native comparison.
+It names exact source ownership, all retained current-instance and artifact
+claims, internal consistency, finite allocation/work ceilings, deterministic
+errors, canonical commitment and independently authored positive/denial tests.
+Obtain fresh exact precode review before implementing the named private module;
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-root-manifest-decoder-contract)
+owns disposition. Decoder success does not prove root origin, live association,
+raw artifact bytes or OCI parent links. Those need their own exact custody and
+comparison contracts; do not introduce caller-supplied successful evidence as
+an integration shortcut. Native fixture source, artifact capture, full freeze,
+integration, activation and runtime retain separate gates.
+
+### Private raw OCI chain prerequisite
+
+The [raw-chain contract](root-manifest-source-spec.md#stage-a-private-raw-oci-chain-contract)
+follows root-manifest representation. Freeze exact private ownership, complete
+optional-presence-aware config/manifest/index claims, raw byte hashing and parent
+links, finite allocation, fixed errors and independent positive/negative vectors
+before source. Fresh independent precode review is required;
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-raw-oci-chain-contract)
+owns disposition. The candidate receives supplied bytes and returns unverified
+comparison material. It does not acquire held files, compare an independently
+selected recipe/registry, authenticate root/daemon association or prove layers.
+
+Later custody/composition contracts must bind these exact bytes to root/profile
+pins, complete immutable recipe fields and the selected backend's Image/Inspect
+mapping. No API re-encoding, self-consistent attacker chain or unset registry
+entry can replace that work. Full native/source/pin freeze, trusted startup and
+store/recovery integration, actual runtime and packaging remain separate exits.
+
+### Cross-module association and custody contract
+
+The [association boundary](root-manifest-source-spec.md#cross-module-image-association-and-custody-boundary)
+now separates raw/canonical/recipe digest domains, backend target and selected
+child, source-derived API omission, independent controller proof and live
+artifact/peer custody. [Project Status](../../PROJECT_STATUS.md#stage-a-image-association-and-custody-boundary)
+owns its review disposition. This is a contract reconciliation, not an exact
+new module approval. Before composition source, name the private interfaces,
+read-only DTO access, complete recipe expectation shape and genuine bounded
+custody/response provenance methods. Never use a self-consistent supplied chain,
+post-call timer or generic successful witness to fill those gaps. Keep existing
+implemented prerequisites and all artifact/native/runtime gates intact.
+
+### Single-lane held artifact read prerequisite
+
+The [exact artifact-read contract](native-artifact-source-spec.md) selects a
+fixed operation in the existing retained native lane before full root/image
+composition. Freeze and independently review its request/result tags, original
+file ownership, shared byte/deadline budget, native positional-read schedule and
+per-kind cleanup before changing that worker. Do not add another worker or
+relabel a supplied digest as observed bytes. The source packet must include all
+existing procfs regressions as well as the named artifact positives/denials.
+[Project Status](../../PROJECT_STATUS.md#stage-a-held-artifact-read-contract)
+owns implementation truth. This primitive does not replace rooted ancestry,
+current peer, recipe/pins or genuine unfinished-operation evidence; source,
+full freeze, integration, native execution and runtime gates remain distinct.
+
+### Root manifest acquisition and retained custody prerequisite
+
+After the held-artifact reader, freeze and review the
+[root bootstrap contract](native-root-bootstrap-source-spec.md) before source:
+exact anchor descent, provisional mount observations, original worker-owned
+handles, shared budgeting, opaque tickets, idle expiry, recheck and final
+retirement. Reuse the existing lane and held-reader schedule. The root manifest
+must not preapprove its own bootstrap mount ancestry, and a coordinator must
+not inherit potentially blocking native cleanup. Project Status owns disposition.
+Full effective-ACL, current root/peer association, complete recipe/pins,
+artifact acquisition and composition remain separate required gates.
 
 ## Validators
 

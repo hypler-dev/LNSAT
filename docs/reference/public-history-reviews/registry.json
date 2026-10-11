@@ -373,6 +373,278 @@
       "state": "attested"
     },
     {
+      "entry_id": "PHR-0046",
+      "subject_id": "headless-daemon-image-decoder-contract-stage-a",
+      "review_subject_ids": ["headless-daemon-image-decoder-contract-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0046/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0047",
+      "subject_id": "headless-daemon-image-decoder-stage-a",
+      "review_subject_ids": ["headless-daemon-image-decoder-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0047/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0048",
+      "subject_id": "image-decoder-status-overview-reconciliation",
+      "review_subject_ids": ["image-decoder-status-overview-reconciliation"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0048/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0049",
+      "subject_id": "headless-daemon-create-wait-decoder-stage-a",
+      "review_subject_ids": ["headless-daemon-create-wait-decoder-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0049/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0050",
+      "subject_id": "inspect-lifecycle-normalization-reconciliation",
+      "review_subject_ids": ["inspect-lifecycle-normalization-reconciliation"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0050/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0051",
+      "subject_id": "inspect-backend-image-identity-correction",
+      "review_subject_ids": ["inspect-backend-image-identity-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0051/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0052",
+      "subject_id": "headless-daemon-inspect-decoder-contract-stage-a",
+      "review_subject_ids": ["headless-daemon-inspect-decoder-contract-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0052/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0053",
+      "subject_id": "headless-daemon-inspect-decoder-stage-a",
+      "review_subject_ids": ["headless-daemon-inspect-decoder-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0053/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0054",
+      "subject_id": "headless-root-manifest-decoder-contract-stage-a",
+      "review_subject_ids": ["headless-root-manifest-decoder-contract-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0054/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0055",
+      "subject_id": "headless-root-manifest-decoder-stage-a",
+      "review_subject_ids": ["headless-root-manifest-decoder-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0055/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0056",
+      "subject_id": "headless-raw-oci-chain-contract-stage-a",
+      "review_subject_ids": ["headless-raw-oci-chain-contract-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0056/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0057",
+      "subject_id": "headless-raw-oci-chain-stage-a",
+      "review_subject_ids": ["headless-raw-oci-chain-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0057/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0058",
+      "subject_id": "headless-image-association-custody-boundary",
+      "review_subject_ids": ["headless-image-association-custody-boundary"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0058/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0059",
+      "subject_id": "headless-held-artifact-read-contract",
+      "review_subject_ids": ["headless-held-artifact-read-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0059/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0060",
+      "subject_id": "headless-held-artifact-read-stage-a",
+      "review_subject_ids": ["headless-held-artifact-read-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0060/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0061",
+      "subject_id": "headless-root-manifest-bootstrap-contract",
+      "review_subject_ids": ["headless-root-manifest-bootstrap-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0061/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0062",
+      "subject_id": "headless-artifact-read-checkpoint-correction",
+      "review_subject_ids": ["headless-artifact-read-checkpoint-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0062/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0063",
+      "subject_id": "headless-root-manifest-bootstrap-stage-a",
+      "review_subject_ids": ["headless-root-manifest-bootstrap-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0063/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0064",
+      "subject_id": "headless-root-prefix-acl-contract",
+      "review_subject_ids": ["headless-root-prefix-acl-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0064/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0065",
+      "subject_id": "headless-root-prefix-acl-stage-a",
+      "review_subject_ids": ["headless-root-prefix-acl-stage-a"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0065/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0066",
+      "subject_id": "readme-light-logo",
+      "review_subject_ids": ["readme-light-logo"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0066/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0067",
+      "subject_id": "headless-root-association-contract-reconciliation",
+      "review_subject_ids": ["headless-root-association-contract-reconciliation"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0067/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0068",
+      "subject_id": "headless-root-host-layout-declaration-source",
+      "review_subject_ids": ["headless-root-host-layout-declaration-source"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0068/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0069",
+      "subject_id": "headless-recipe-selection-contract-clarification",
+      "review_subject_ids": ["headless-recipe-selection-contract-clarification"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0069/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0070",
+      "subject_id": "headless-candidate-assertion-view-source",
+      "review_subject_ids": ["headless-candidate-assertion-view-source"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0070/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0071",
+      "subject_id": "headless-recipe-control-custody-direction",
+      "review_subject_ids": ["headless-recipe-control-custody-direction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0071/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0072",
+      "subject_id": "headless-private-control-api-contract",
+      "review_subject_ids": ["headless-private-control-api-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0072/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0073",
+      "subject_id": "headless-operation-identity-source",
+      "review_subject_ids": ["headless-operation-identity-source"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0073/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0074",
+      "subject_id": "headless-original-budget-job-contract",
+      "review_subject_ids": ["headless-original-budget-job-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0074/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0075",
+      "subject_id": "headless-anchored-owner-storage-contract",
+      "review_subject_ids": ["headless-anchored-owner-storage-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0075/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0076",
+      "subject_id": "headless-journal-owner-view-source",
+      "review_subject_ids": ["headless-journal-owner-view-source"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0076/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0077",
+      "subject_id": "headless-credential-capture-contract",
+      "review_subject_ids": ["headless-credential-capture-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0077/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0078",
+      "subject_id": "standalone-gateway-adversarial-requirements",
+      "review_subject_ids": ["standalone-gateway-adversarial-requirements"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0078/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0079",
+      "subject_id": "gateway-deterministic-fuzz-properties",
+      "review_subject_ids": ["gateway-deterministic-fuzz-properties"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0079/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
       "entry_id": "PHR-0080",
       "subject_id": "professional-testing-program-plan",
       "review_subject_ids": ["professional-testing-program-plan"],
@@ -401,6 +673,78 @@
       "subject_id": "main-readme-light-logo",
       "review_subject_ids": ["main-readme-light-logo"],
       "manifest_path": "docs/reference/public-history-reviews/PHR-0083/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0085",
+      "subject_id": "stage-a-c1-capture-compute-source",
+      "review_subject_ids": ["stage-a-c1-capture-compute-source"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0085/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0086",
+      "subject_id": "stage-a-guarded-helper-phase-contract",
+      "review_subject_ids": ["stage-a-guarded-helper-phase-contract"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0086/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0087",
+      "subject_id": "stage-a-selected-store-phase-feasibility",
+      "review_subject_ids": ["stage-a-selected-store-phase-feasibility"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0087/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0088",
+      "subject_id": "stage-a-read-only-control-observer-proposal",
+      "review_subject_ids": ["stage-a-read-only-control-observer-proposal"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0088/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0089",
+      "subject_id": "stage-a-read-only-observer-rust-precode",
+      "review_subject_ids": ["stage-a-read-only-observer-rust-precode"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0089/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0090",
+      "subject_id": "stage-a-native-validator-precode",
+      "review_subject_ids": ["stage-a-native-validator-precode"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0090/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0091",
+      "subject_id": "stage-a-validator-receipt-precode",
+      "review_subject_ids": ["stage-a-validator-receipt-precode"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0091/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0092",
+      "subject_id": "stage-a-native-validator-m0",
+      "review_subject_ids": ["stage-a-native-validator-m0"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0092/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0093",
+      "subject_id": "main-integration-linux-clippy",
+      "review_subject_ids": ["main-integration-linux-clippy"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0093/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
     }

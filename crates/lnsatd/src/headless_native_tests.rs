@@ -100,6 +100,63 @@ fn headless_native_acl_default_inheritance_is_not_directory_mode() {
 }
 
 #[test]
+fn headless_native_acl_root_manifest_controller_shape_is_exact() {
+    let controller = 4242;
+    let exact = [
+        (1, 6, UNDEF),
+        (2, 4, controller),
+        (4, 0, UNDEF),
+        (16, 4, UNDEF),
+        (32, 0, UNDEF),
+    ];
+    let acl = ParsedAcl::parse(&wire(&exact)).unwrap();
+    assert!(acl.matches_root_manifest_controller(controller));
+    assert!(!acl.matches_root_manifest_controller(controller + 1));
+
+    for replacement in [
+        vec![
+            (1, 7, UNDEF),
+            (2, 4, controller),
+            (4, 0, UNDEF),
+            (16, 4, UNDEF),
+            (32, 0, UNDEF),
+        ],
+        vec![
+            (1, 6, UNDEF),
+            (2, 4, controller),
+            (4, 4, UNDEF),
+            (16, 4, UNDEF),
+            (32, 0, UNDEF),
+        ],
+        vec![
+            (1, 6, UNDEF),
+            (2, 4, controller),
+            (4, 0, UNDEF),
+            (16, 0, UNDEF),
+            (32, 0, UNDEF),
+        ],
+        vec![
+            (1, 6, UNDEF),
+            (2, 4, controller),
+            (4, 0, UNDEF),
+            (16, 4, UNDEF),
+            (32, 4, UNDEF),
+        ],
+        vec![
+            (1, 6, UNDEF),
+            (2, 4, controller),
+            (2, 4, controller + 1),
+            (4, 0, UNDEF),
+            (16, 4, UNDEF),
+            (32, 0, UNDEF),
+        ],
+    ] {
+        let acl = ParsedAcl::parse(&wire(&replacement)).unwrap();
+        assert!(!acl.matches_root_manifest_controller(controller));
+    }
+}
+
+#[test]
 fn headless_native_acl_rejects_wrong_version_endian_lengths_and_trailing_bytes() {
     let valid = wire(&base(6, 0, 0));
     for length in 0..valid.len() {

@@ -106,6 +106,42 @@ impl ParsedAcl {
         Ok(())
     }
 
+    /// Fixed root-manifest shape only; never effective-access or provenance proof.
+    pub(super) fn matches_root_manifest_controller(&self, uid: u32) -> bool {
+        self.entries.len() == 5
+            && self.mask == Some(4)
+            && matches!(
+                self.entries.as_slice(),
+                [
+                    Entry {
+                        tag: Tag::UserObject,
+                        permissions: 6,
+                        id: UNDEFINED_ID,
+                    },
+                    Entry {
+                        tag: Tag::User,
+                        permissions: 4,
+                        id,
+                    },
+                    Entry {
+                        tag: Tag::GroupObject,
+                        permissions: 0,
+                        id: UNDEFINED_ID,
+                    },
+                    Entry {
+                        tag: Tag::Mask,
+                        permissions: 4,
+                        id: UNDEFINED_ID,
+                    },
+                    Entry {
+                        tag: Tag::Other,
+                        permissions: 0,
+                        id: UNDEFINED_ID,
+                    },
+                ] if *id == uid
+            )
+    }
+
     /// Masked permissions are interpretation only, never a grant or permit.
     pub(super) fn effective_permissions(&self, entry: Entry) -> u16 {
         match entry.tag {

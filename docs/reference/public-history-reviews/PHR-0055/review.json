@@ -1,0 +1,47 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0055-independent-implementation-review-1597d9cb",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-root-manifest-decoder-stage-a"],
+  "base_revision": "d9b13277c7a87fab303d7cd0b8b9c75484bb09bd",
+  "reviewed_revision": "1597d9cb837b25d594d95ad9ed4ba17b22e297e0",
+  "reviewed_tree_oid": "7e0c08a203ad6fd5af0cb3d329b4d1ce0092b59d",
+  "diff_sha256": "sha256:2681410310c6acc3ed0f374d1f7704fea92adb4ca990869f802b500b526236b9",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_root_manifest.rs",
+      "sha256": "sha256:d8ec097d0aef1aea3b5e38c7bfb782ce8e68925f82fc922dd2daad4ae8235a06"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_root_manifest_tests.rs",
+      "sha256": "sha256:31683799bbf4cd9a6a64b94be3e384b8a8310c804424dff4ec1bfed2956b2f66"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:350b1adcd5c9173da3d221fcd6e9145fe06174579d9406b4e230b104693b06fd"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:3912c2543c914fcb266d28d8cc0c3ade04f6fab75e0c97b444766c30e65bddf5"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:d291a75a13e7dec16aaf6c3cc2f641e037c1618b6b80dda76c4906c5c2f6b826"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:f902deac00bb43bda540497cbcfe5f7a9329ef1db4c93b611506560eca53e641"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/inspect_decoder_precode_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "Native OpenAI Codex gpt_reviewer Terra xhigh independent read-only exact source review. Covers the private supplied-body root-manifest decoder, bounded JSON preflight, closed typed claims, zeroizing input-derived ownership and commitment, static errors, internal relations and canonical commitment, and exhaustive contract-derived representation tests. Review coverage gaps and commitment custody corrected before approval. Eighteen focused groups, strict all-target Clippy, full npm run check, docs/public/inventory/history and whitespace checks pass. Full check began before final corrections; its final Rust stage, focused tests, Clippy and scoped scans cover final source bytes. Full check reports 1519 TypeScript tests, 139 contract comparisons, 316 daemon tests and 264 store tests plus two existing explicitly invoked helper ignores. Scoped Semgrep has no new-file findings and one unchanged test-only informational lib.rs finding; Gitleaks found none. No dependency or feature changes. Exact immutable source binding confirmed. This attests inert declaration-consistency source only, not independently held profile/registry bindings, native root/daemon custody, raw OCI links, complete freeze, integration, runtime, hosted CI, packaging or support. Separate exact direct-child audit remains required. No execution or other authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

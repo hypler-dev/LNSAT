@@ -1,0 +1,35 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0048-independent-implementation-review-924d382a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["image-decoder-status-overview-reconciliation"],
+  "base_revision": "f4f14351795fc79f6ebda112576e7902675e281d",
+  "reviewed_revision": "924d382ae193bc2dcefe85869526f93af0a1a0a7",
+  "reviewed_tree_oid": "a191739ad63f4ccbbbbbc34a3389be39956c1724",
+  "diff_sha256": "sha256:a39306e04c5c3f9a88abe4dc89e4ca0a57a6a79ad713c6b89ef80eb5b071455c",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:7d91dcaa65994dc11b3a10e5b73a4f6f0cec0d58a5954ae935f54d972326c97c"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:7505b9a49c651462c1b1559e40791f92fafc086ef8b19104dff11201fc48d10a"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:008561a1c95d1f89f11d0243f7cea5483ca5eaa67fc9c70a192f61cade9ddf5b"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/image_public_integration_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact documentation review. Resolves P2 stale canonical Project Status overview by naming the implemented Image decoder and PHR-0047 source/direct-child chain, retaining Info and Version as predecessors and preserving unopened native/runtime gates. Exact documentation, public, inventory/history, formatting and whitespace checks pass. No production source, dependency, public contract, native proof, runtime, merge, support, packaging, release or deployment change. Existing source evidence remains bound separately by PHR-0046 and PHR-0047; this documentation-only delta does not claim a new full source or hosted CI run. Separate exact direct-child audit required."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

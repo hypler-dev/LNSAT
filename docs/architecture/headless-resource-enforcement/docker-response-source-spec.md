@@ -6,8 +6,9 @@ native freeze. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runt
 owns acceptance and implementation. The Phase 11 operator packet owns runtime
 truth. The bounded Stage-A Version-only decoder contract below is a private
 source prerequisite. The separate Info-only prerequisite below now has a private
-source candidate tracked by Project Status. No daemon verification, Docker
-operation or activation follows from either decoder.
+source candidate tracked by Project Status. Image and Create/Wait also have
+private supplied-body candidates under their exact contracts below. No daemon verification, Docker
+operation or activation follows from these decoders or their contracts.
 
 ## Source and interpretation
 
@@ -603,8 +604,12 @@ neutral contracts; Rangoon remains an optional standard-contract consumer.
 
 ## Image response
 
-Root keys are exactly image.InspectResponse. Compare Id, Architecture, Os,
+Root keys are exactly image.InspectResponse. Compare Architecture, Os,
 optional Variant, Config and RootFS to held raw OCI config and immutable recipe.
+Id has backend-specific meaning: the graphdriver backend returns the config
+digest; the containerd backend returns its target manifest/index digest, also
+present in Descriptor.digest. Do not equate the latter with the raw config
+digest. The exact selected-backend comparison and parent-link chain are required.
 OsVersion is omitted for this first Linux recipe. Config is non-null with the
 flattened DockerOCIImageConfig/ImageConfig fields in the appendix; no wrapper
 key named ImageConfig or DockerOCIImageConfigExt is admitted. Exact raw
@@ -616,8 +621,9 @@ RootFS is exactly Type `layers` and a nonempty ordered Layers array of 1..16
 full SHA-256 DiffIDs matching raw config. Metadata is exactly LastTagTime as a
 bounded RFC3339 timestamp, including the valid Go zero timestamp; discard it.
 Size is a nonnegative signed int64 and bounded by the reviewed image/storage
-recipe. RepoTags/RepoDigests are required null or bounded string arrays,
-discarded. Optional Comment/Created/Author are bounded nonempty strings;
+recipe. RepoTags/RepoDigests are required bounded string arrays, including empty
+arrays, and discarded. The served API 1.56 router normalizes backend nil lists
+to allocated empty arrays; explicit null is not accepted. Optional Comment/Created/Author are bounded nonempty strings;
 Created is RFC3339. They cannot authenticate origin.
 
 GraphDriver is omitted or exactly `{Name,Data}`; Name is a bounded string,
@@ -639,6 +645,247 @@ os.version/os.features are forbidden. Digest and size match held raw blobs,
 not RepoDigests. Presence for both descriptor fields is fixed by the selected
 storage/recipe; absent descriptors do not replace raw OCI parent-link proof.
 
+## Stage-A private Image decoder contract
+
+This is the next supplied-body prerequisite under the accepted
+[Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-daemon-image-decoder-contract)
+owns review and implementation truth. Fresh independent precode review must
+pass before implementation. The decoder accepts untrusted Image Inspect body
+bytes only; it neither obtains those bytes nor authenticates the image, daemon,
+raw OCI files or storage backend. The existing Version/Info candidates and
+locked Phase 11 path remain unchanged.
+
+### Image ownership and representation boundary
+
+The pinned served API 1.56 [router](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/server/router/image/image_routes.go)
+normalizes nil tag/digest lists to arrays. The
+[containerd backend](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/containerd/image_inspect.go)
+returns target digest Id and Descriptor with no GraphDriver at this API version;
+the [graphdriver backend](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/images/image_inspect.go)
+returns config digest Id and GraphDriver without Descriptor. The private Image
+request sends no platform query, so the containerd target is the image's
+manifest/index target, not a caller-selected child. This corrects the previous
+unconditional config-ImageID comparison. It does not change the profile's raw
+config `image_digest` commitment or authorize a backend/selector fallback.
+
+The six Image-relevant type files were checked through raw downloads and
+base64-decoded GitHub Contents responses; their recomputed Git blobs match the
+API blob IDs. Ten earlier appendix SHA-256 references across these six files
+were incorrect and are replaced; unrelated type hashes are outside this refresh.
+This is source provenance, not installed artifact or runtime evidence.
+
+| Exact source                               | Raw bytes | SHA-256                                                            |
+| ------------------------------------------ | --------- | ------------------------------------------------------------------ |
+| Moby `api/types/image/image_inspect.go`    | 5,207     | `294b967dc7bcb894188a8e17d7b69c0ccbc4da16fc668a6449d52c6038c3be68` |
+| Moby `api/types/image/image.go`            | 394       | `23365d448c646f64becfa337681cccc854fc2c1892fc6ef6ead3e89b700a05f5` |
+| Moby `api/types/storage/driver_data.go`    | 1,072     | `d0503186bea207a8b00708c0d178fea6bef698b97b245e6f5aa450ca4902be2c` |
+| Docker image-spec `specs-go/v1/image.go`   | 2,158     | `70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7` |
+| OCI image-spec `specs-go/v1/config.go`     | 4,548     | `b88c5220009106090d760c4589704a950b45e6c0f676427be9537b2abaf2a763` |
+| OCI image-spec `specs-go/v1/descriptor.go` | 3,110     | `0861d8687b818f7045ca3f076e8f8a1ef92497514235fbaea4c6af0c075f1c3a` |
+
+Moby paths use the pinned commit above. Docker image-spec tag `v1.3.1` peels
+to `f1d00ebd2d6d6805170d5543dbca4b850f35f9af`; OCI image-spec tag `v1.1.1`
+peels to `147f9c13cedb47a0c4d9a11a222961073d585877`. The linked served router
+and both backend constructors were checked at that same Moby commit, rather
+than inferring the wire solely from Go struct tags.
+
+Source ownership is exactly `crates/lnsatd/src/headless_daemon_image.rs`,
+its sibling `headless_daemon_image_tests.rs`, and one private module declaration
+in `crates/lnsatd/src/lib.rs`. The private entrypoint is
+`decode_image_claim(&[u8]) -> Result<UnverifiedImage, ImageDecodeError>`.
+No dependency, feature, shared-parser refactor, HTTP operation, filesystem
+read, clock, public constructor, caller or successful observer injection is
+included. Documentation and normal exact PHR/inventory evidence are ancillary.
+
+The output is a sealed, non-serializable collection of unverified claims. It
+has no Debug, Clone, public constructor or authority conversion. It retains
+Id, architecture, optional variant, the Config projection below, ordered
+DiffIDs, Size, optional GraphDriver name, and the complete optional Descriptor
+projection. Fixed predicates are implicit. Optional compared fields retain
+presence; absence is not a wildcard. Metadata, tag/digest lists, author/comment/
+creation text and GraphDriver.Data are typed then discarded. No digest of the
+response or identity/authority token is minted.
+
+All module-owned input-derived strings, including dynamic keys and discarded
+temporary values, use zeroizing storage. Caller input, copies outside the
+module and JSON-library scratch remain outside that scrubbing claim. No input
+value, path, offset, field name or provider diagnostic is reflected by errors.
+
+### Image bounds and error precedence
+
+The body cap is 1,048,576 bytes inclusive. Validate strict UTF-8, then complete
+an allocation-free lexical/structural preflight before typed owned decoding.
+Accept exactly one JSON object with optional JSON whitespace. Reject BOM, raw
+string controls, malformed numbers/escapes/surrogates, incomplete input and
+trailing values/data. Root depth is one; maximum depth is 32. Each object has
+at most 64 members and the complete body at most 4,096 members, including
+dictionary entries. Keys have 1..256 decoded UTF-8 bytes; all string values
+have at most 4,096 decoded UTF-8 bytes. Every array has at most 128 elements.
+These preflight caps apply to unknown and later-forbidden branches too. Charge
+each cap before entering/growing beyond it; use no dynamic stack or retained
+generic JSON tree.
+
+Typed decoding requires maps at every object position; unknown, wrong-case,
+duplicate and escaped-duplicate keys deny. No positional struct arrays,
+coercion, recursive skip or optional-null default is accepted. Required nullable
+GraphDriver.Data distinguishes missing from explicit null. Every other
+accepted field, including tag/digest lists, rejects null. Dynamic dictionaries have exactly
+bounded string keys and values, never arbitrary JSON.
+
+Size and Descriptor.size accept decimal integer tokens only, within
+0..9,223,372,036,854,775,807 inclusive. Negative tokens (including `-0`),
+fractions, exponents, strings, Booleans and overflow fail shape; malformed JSON
+number tokens fail syntax. Descriptor.size must additionally be positive.
+
+The five fixed data-free errors, in precedence order, are:
+
+1. `headless_image.input_too_large`: body cap, before UTF-8 inspection.
+2. `headless_image.json_syntax`: strict UTF-8 or preflight syntax.
+3. `headless_image.json_limits`: preflight bounds.
+4. `headless_image.json_shape`: typed presence/map/duplicate/unknown/null/type
+   failures, forbidden keys and integer spelling/range failures.
+5. `headless_image.recipe`: fixed predicates, content validity, typed collection
+   cardinality, empty present omission-tagged values and inconsistent platforms.
+
+UTF-8 precedes preflight; within preflight the first left-to-right syntax/limit
+failure wins. Complete shape validation precedes recipe validation. For an
+overlong typed array within the preflight cap, validate every element's type
+before returning its recipe cardinality error. Failure returns no partial
+projection. This precedence does not inspect an unbounded body or bypass a cap.
+
+### Image exact root and Config shape
+
+Nine root members are required: `Id,RepoTags,RepoDigests,Config,Architecture,Os,
+Size,RootFS,Metadata`. The only optional members are
+`Comment,Created,Author,Variant,GraphDriver,Descriptor`; at most fifteen root
+members are accepted. `OsVersion,Manifests,Identity` are forbidden even as
+null, empty or false placeholders. Id is `sha256:` followed by exactly 64
+lowercase hexadecimal digits. Architecture is nonempty and not `N/A`; Os is
+exactly `linux`. Variant, if present, is nonempty and not `N/A`. These platform
+strings remain unverified claims, not a selected build target.
+
+RepoTags and RepoDigests are each a required array of at most 128 bounded
+strings, including empty arrays. The API router converts nil lists to `[]`. Their strings never supply identity
+or a future image selector. Optional Comment/Author are nonempty bounded
+strings. Created, when present, obeys the same calendar-valid RFC3339 subset
+as Info.SystemTime above. Metadata is exactly a required LastTagTime string
+with that timestamp grammar; `0001-01-01T00:00:00Z` is valid. All are discarded.
+
+Config is a non-null flattened map. Its only accepted keys are `User,Env,
+Entrypoint,Cmd,WorkingDir,Labels,StopSignal,Healthcheck`, all optional.
+`ImageConfig,DockerOCIImageConfigExt,ExposedPorts,Volumes,ArgsEscaped,OnBuild,
+Shell` are forbidden even when empty, false or null. The selected raw OCI
+grammar permits only empty ports/volumes/OnBuild/Shell and false ArgsEscaped;
+the pinned API encoder omits those values. Their accepted raw presence does
+not justify their presence in this API body.
+
+User, WorkingDir and StopSignal, when present, are nonempty bounded strings.
+Env, Entrypoint and Cmd, when present, are nonempty arrays of 1..64 bounded
+strings; element strings may be empty and remain exact claims. Labels, when
+present, is a nonempty dictionary of 1..64 bounded string pairs. Healthcheck,
+when present, is exactly a map requiring Test, exactly `["NONE"]`; interval,
+timeout, retry, start-period and start-interval keys are forbidden even at zero.
+This is the selected disabled-healthcheck shape, not permission to execute a
+healthcheck. Empty Config is structurally valid and remains unverified.
+
+Retain each accepted Config field and its optional presence, preserving array
+order and exact decoded string bytes. Normalize dictionary order only, using
+bytewise key sort. Do not fill absent fields with guessed defaults. Future
+comparison must use an explicit source-derived normalization of the held raw
+OCI config: an empty raw User/Cmd/OnBuild/Shell or false ArgsEscaped can be
+omitted by this API encoder without changing the separately committed raw
+bytes. In particular the proposed raw `User=""` requires an omitted API User.
+The proposed fixed environment, entrypoint, labels and WorkingDir are later
+exact recipe comparisons; accepting a different structurally valid claim here
+does not accept a different image recipe or authorize execution.
+
+RootFS is exactly Type `layers` plus required Layers, an ordered array of
+1..16 distinct full lowercase SHA-256 DiffIDs in the same grammar as Id.
+Retain order; never sort or deduplicate it into an accepted result. GraphDriver,
+when present, is exactly required Name and Data. Name is a nonempty bounded
+string other than `N/A`, retained. Data is required null or a dictionary of
+0..64 bounded string pairs, discarded. Never open a path found in Data.
+
+Exactly one of GraphDriver and Descriptor must be present. Both or neither
+fails recipe after shape validation. These are mutually exclusive unverified
+source branches, not permission to select an alternate backend. A Descriptor
+branch additionally requires Id equal Descriptor.digest. A GraphDriver branch
+cannot establish its claimed config digest without held raw config custody.
+The later complete recipe fixes one permitted branch; it cannot silently fall
+back between them when image lookup or association fails.
+
+### Image optional descriptor
+
+Descriptor, when present, is a non-null map requiring `mediaType,digest,size`.
+The only optional keys are `annotations,platform`; `urls,data,artifactType`
+and all other keys are forbidden. mediaType is exactly
+`application/vnd.oci.image.manifest.v1+json` or
+`application/vnd.oci.image.index.v1+json`. digest is a full lowercase SHA-256
+digest in the Id grammar. size is positive within the signed-64-bit bound.
+annotations, if present, is a nonempty dictionary of 1..64 pairs; keys are
+ASCII of 1..256 bytes and values bounded UTF-8 strings. Normalize only its
+dictionary ordering. Retain media type, digest, size, annotations and presence.
+
+platform, when present, is a map requiring `architecture,os`; its only optional
+member is `variant`. Architecture is nonempty and not `N/A`, os is `linux`,
+and a present variant is nonempty and not `N/A`. `os.version,os.features` and
+other fields are forbidden. Its architecture and optional variant must equal
+the root claims, including variant presence. Retain platform presence; its
+fixed/equal values need not be duplicated in the output. Neither an omitted
+platform nor an omitted Descriptor supplies parent-link evidence.
+
+### Image mandatory evidence and integration gate
+
+Before source, verify exact upstream type bytes and the served API 1.56 image
+route/backends, including omission/flattening behavior. Build synthetic positive
+bodies from those sources with independently specified expected projections.
+Cover empty/nonempty tag and digest arrays plus explicit-null denial,
+GraphDriver absence/null-data/empty-data/nonempty-data, manifest/index descriptors, optional platform/variant/annotations and both
+disabled-healthcheck representations. Include raw-empty-to-API-omitted vectors
+without suggesting that this decoder reads or authenticates a raw OCI blob.
+Prove ordering invariance for maps/escaped keys and exact order preservation
+for Env, Entrypoint, Cmd and DiffIDs. Vary each retained claim independently;
+vary discarded data without changing the result.
+
+For every required and optional path, cover omission/null/wrong-type/empty/
+nonempty forms as applicable; every object as a positional array; duplicate,
+escaped duplicate, wrong-case and unknown keys; every forbidden root/child key;
+each fixed predicate, unavailable identity string, hash grammar, timestamp
+calendar/leap/fraction/offset boundary and descriptor/root platform mismatch.
+Cover both valid storage branches, both/neither branch denial, target Id versus
+Descriptor.digest mismatch and an index target whose digest differs from the
+held child manifest/config. A config digest cannot substitute for target Id in
+that synthetic snapshotter case. Synthetic parent blobs remain unverified.
+Test repeated, reordered and 0/1/16/17 DiffIDs; 0/1/64/65 Config array elements;
+dictionary 0/1/64/65 bounds; integer zero/max/overflow/fraction/exponent/negative
+zero; and healthcheck Test cardinality/type/content and forbidden duration keys.
+
+Exercise exact and over-cap body, decoded key/string bytes (raw UTF-8 and
+escaped Unicode), depth, local/total members and arrays, without an unrelated
+smaller cap masking the intended boundary. Include every truncation of a valid
+body, malformed escapes/surrogates/numbers/UTF-8, raw controls, BOM, trailing
+data and competing-error precedence. Secret canaries must never reach errors
+or the projection through discarded fields. Positive synthetic results must
+exist; an all-denial test suite cannot establish candidate completeness.
+
+Implementation requires focused tests, pinned host format/strict lint, full
+`npm run check`, public/inventory/history checks, scoped installed scanners and
+fresh independent exact source/direct-child review. Complete source/pin freeze
+must later bind every retained claim, exact descriptor/storage presence, Size
+limits and normalized Config to held raw OCI config/manifest/index, immutable
+reviewed recipe and authenticated daemon/endpoint/storage custody.
+For the selected containerd branch, authenticated non-null
+`headless.image_index_digest` selects the held index before any request;
+explicit null selects held `headless.image_manifest_digest`. Require exact
+target descriptor media type/digest/size and index-to-manifest-to-config parent
+links; missing/mismatched blobs deny. No response-driven selector, retry or
+backend fallback is admitted. HTTP framing,
+actual native association, current artifact pins, recovery, integration and
+runtime proof remain separate. This prerequisite does not complete V1, create
+a permit or open Docker, native fixture, installation, migration, release or
+packaging authority. LNSAT remains standalone; Rangoon consumes its contracts.
+
 ## Create and Inspect response
 
 Create is exactly `{Id:<64 lowercase hex>,Warnings:[]}`. The
@@ -655,14 +902,15 @@ ProcessLabel, RestartCount, Config, HostConfig, Mounts, NetworkSettings and
 conditional ImageManifestDescriptor. Names include the source leading slash
 plus exact private generated name. Path is the selected singleton entrypoint;
 Args is exactly `[]`. Platform is `linux`. Selected SELinux-disabled labels
-are empty; AppArmorProfile equals the required realized profile. No health,
+are empty; AppArmorProfile follows the exact lifecycle table below. No health,
 restart, unreviewed process or execution is inferred as harmless metadata.
 
-Created is bounded RFC3339. ResolvConfPath, HostnamePath and HostsPath are
-bounded strings compared to the exact trusted root-generated metadata recipe
-and associated native held objects. LogPath is empty for selected `none`
-logging. ExecIDs is the exact nil/empty encoding of an empty set; any ID
-denies. SizeRw/SizeRootFs are omitted because the request sets size=0.
+Created is bounded RFC3339Nano as emitted by the pinned Go formatter.
+ResolvConfPath, HostnamePath and HostsPath follow the lifecycle table below;
+after start they are compared to the exact trusted root-generated metadata
+recipe and associated native held objects. LogPath is empty for selected `none`
+logging. ExecIDs is required null: the empty ExecStore.List result is a nil
+slice. An omitted member, `[]` or any ID denies this exact response recipe. SizeRw/SizeRootFs are omitted because the request sets size=0.
 GraphDriver and Storage are mutually exclusive selected storage branches:
 
 - Legacy graph branch: GraphDriver non-null exactly Name/Data as above,
@@ -672,6 +920,158 @@ GraphDriver and Storage are mutually exclusive selected storage branches:
   GraphDriver omitted. Optional tags do not permit these required positive
   nested objects to disappear. Snapshot name is an identifier, not proof of
   actual workload root mount.
+
+### Inspect lifecycle normalization prerequisite
+
+This reconciles the existing Inspect recipe for the
+[private decoder contract](#stage-a-private-inspect-decoder-contract), which names
+owned source/test/declaration paths, retained projection, fixed error precedence
+and the complete positive/denial matrix. Reconciliation alone is not approval to
+implement an Inspect module; fresh precode review remains required. The selected scenario is a newly created object, one
+successful first start, then a normal zero-exit stop with no restart, restoration,
+exec, health probe, legacy link or concurrent lifecycle mutation. A response
+cannot select its own trusted phase: the later held attempt/journal chooses the
+expected phase and binds every comparison to the same object and daemon.
+
+The [API 1.56 Inspect route](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/server/router/container/inspect.go)
+forwards size=0 to the builder. Its older-version alias/MAC/descriptor/Umask and
+GraphDriver/Storage compatibility rewrites do not run for this selected version.
+Its nil-Config fallback constructs a zero Config object; that object does not
+meet the selected positive Config recipe. No older-version response is silently
+upgraded by the decoder.
+
+| Claimed field                                 | Created before first start | Held running                                                                    | Normal completed exit                                                                              |
+| --------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `AppArmorProfile`                             | Empty string               | `docker-default`                                                                | Previously held `docker-default`                                                                   |
+| `ResolvConfPath`, `HostnamePath`, `HostsPath` | Each empty string          | Exact nonempty root-generated paths, each bound independently to native custody | Same path claims as held during the attempt; retained text does not prove file survival or cleanup |
+| `ExecIDs`                                     | `null`                     | `null`                                                                          | `null`                                                                                             |
+| `State.Health`                                | Omitted                    | Omitted                                                                         | Omitted                                                                                            |
+| `NetworkSettings.SandboxID`, `SandboxKey`     | Empty strings              | Exact generated ID and trusted namespace-key claim                              | Empty strings                                                                                      |
+| `Networks.none.NetworkID`                     | Empty string               | Exact generated network ID                                                      | Same previously held network ID                                                                    |
+| `Networks.none.EndpointID`                    | Empty string               | Exact generated endpoint ID                                                     | Empty string                                                                                       |
+| `NetworkSettings.Ports`                       | `{}`                       | `{}`                                                                            | `{}`                                                                                               |
+
+The [base constructor](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/container.go#L145)
+leaves AppArmor and metadata-path state empty. Create invokes
+[setSecurityOptions](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container.go#L204),
+whose [parser](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/daemon_unix.go#L203)
+does not populate AppArmor for the selected sole no-new-privileges option.
+During [start](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/start.go#L187),
+[saveAppArmorConfig](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container_linux.go#L10)
+records the default for the selected AppArmor-supported, nonprivileged recipe.
+[WithApparmor](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/oci_linux.go#L125)
+separately selects the effective OCI profile. Empty before start is not proof of
+missing confinement, and `docker-default` after start is not proof of effective
+kernel enforcement. Existing native AppArmor and complete realized-recipe checks
+remain mandatory. Missing AppArmor support, custom/disabled profiles or a failed
+start do not enter the running positive case.
+
+Start calls initializeNetworking before OCI construction. Its
+[Unix sandbox options](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container_operations_unix.go#L578)
+set HostsPath and ResolvConfPath; then
+[BuildHostnameFile](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/container_unix.go#L48)
+sets HostnamePath. Created-state parsing must not require those paths to exist
+before their source construction. Once started, no empty-path fallback or
+caller-selected path supplies native custody. Failed or interrupted start is a
+separate reconciliation outcome, not a created/running positive with relaxed
+predicates.
+
+The [exec store](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container/exec.go#L123)
+returns a nil slice for no entries, establishing exact ExecIDs null. For a new
+container the [disabled-health path](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/health.go#L336)
+returns no probe for Test NONE and does not create Health state. Restored or
+previously configured health state is outside this positive scenario; present
+Health still denies. The existing network start/stop rules below apply under the
+same held phase, and resetting API IDs does not establish native absence.
+
+#### Inspect object bounds and mandatory future regression cases
+
+The type inventory has 41 direct HostConfig fields plus 29 flattened Resources
+fields: 70 possible JSON member names, not a nested Resources object. The selected
+preparation response emits 64 members: Annotations, StorageOpt, Tmpfs, Sysctls,
+Umask and Mounts are omitted. The action response emits 65, because its Mounts
+member is present. Runtime and Init are present in both, despite their omission
+tags. A copied 64-member per-object preflight limit would reject the valid
+action response. For the future Inspect decoder, the syntactic per-object ceiling is
+128; dictionary-specific limits remain 64 and global members remain 4,096.
+This Inspect-specific ceiling changes no existing Version/Info/Image/Create/Wait
+parser and grants no generic unknown-key allowance. Typed closed maps must still
+reject every unknown or duplicate decoded member. All existing 1 MiB, depth,
+string, element, numeric-width and pre-allocation bounds remain applicable.
+
+The complete Inspect implementation must include successful created/running/exited
+vectors for preparation and action, both selected storage representations and
+exact 64/65-member HostConfig shapes. Independently vary AppArmor and each metadata
+path across phases; reject a self-selected phase, stale running network IDs on
+exit, an empty required running ID/path, ExecIDs `[]`, any Health, unknown fields,
+escaped duplicates and null/default substitution. Test the 128/129 syntactic
+object boundary separately from the 64/65 dictionary boundary. Other mandatory
+cases include the singleton entrypoint plus empty Cmd relation to Path/Args,
+Config.Env versus actual process environment, no legacy links, dead-state graph
+metadata exceptions, and descriptor platform injection. These are future source
+acceptance cases; this documentation reconciliation does not claim they exist.
+
+Retain claimed identity, resource ceilings, labels, paths, timestamps, mounts,
+network, storage and descriptor values needed by later comparison. No discarded
+value may become a native path, cleanup selector or authority input. Exact
+retained fields, aggregate owned-memory bounds and error taxonomy are specified
+in the [private Inspect contract](#stage-a-private-inspect-decoder-contract);
+independent precode review remains its implementation gate. Container Inspect Image
+is backend-dependent, as traced below. Existing source/pin freeze and native
+association gates stay open until their own evidence passes.
+
+#### Inspect image identity by selected backend
+
+The earlier unconditional image-config interpretation of `ctr.ImageID.String()`
+was incorrect. The pinned
+[create path](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/create.go#L181)
+gets `img.ID()` from the selected image service, passes it to
+[newContainer](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/container.go#L113),
+and stores the selected manifest separately. The
+[Inspect builder](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/inspect.go#L133)
+returns that stored ImageID without converting its digest domain.
+
+| Selected backend                        | Inspect Image                                | ImageManifestDescriptor                                                               |
+| --------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Legacy graphdriver                      | Raw image-config digest from the image store | Omitted for the selected fresh create path                                            |
+| Containerd snapshotter, manifest target | Image target manifest digest                 | Selected platform manifest descriptor                                                 |
+| Containerd snapshotter, index target    | Image target index digest                    | Selected child platform manifest descriptor; its digest differs from the index target |
+
+The [graphdriver image service](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/images/image.go#L160)
+returns the [config-addressed store image](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/internal/image/store.go#L210).
+The [containerd image service](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/containerd/image.go#L62)
+passes `img.Target.Digest` to
+[dockerOciImageToDockerImagePartial](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/containerd/imagespec.go#L18),
+whose call to [NewImage](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/internal/image/image.go#L210)
+preserves that supplied ID; `Image.ID()` returns it unchanged. The internal
+field's config-digest comment does not override this containerd assignment.
+Containerd separately assigns `im.Target()` as the selected platform manifest
+descriptor. When its Platform pointer is nil, Inspect injects the stored
+ImagePlatform before returning it.
+
+Future integration must select the expected backend from held trusted context,
+then compare Image to the corresponding held config or manifest/index target.
+The response cannot select its own backend or supply the expected identity.
+The profile's raw-config `image_digest` commitment remains unchanged. For the
+containerd branch, raw OCI custody must separately prove the target-to-selected-
+manifest-to-config chain, including index membership when applicable; matching
+Image and a descriptor alone does not prove those links. Preserve Config.Image,
+Inspect Image and the descriptor as separate unverified claims for their exact
+held-recipe comparisons. No config/manifest/index substitution or backend fallback
+is permitted.
+
+The future positive/denial matrix must cover graphdriver, containerd manifest
+and containerd index targets, reject cross-domain digest substitution, and check
+the selected manifest and injected platform against the held raw chain. A valid
+index target must not be rejected merely because its digest differs from the
+selected child descriptor. These remain contract and integration acceptance
+requirements, not implemented Inspect tests or runtime evidence.
+
+The three storage-type appendix hashes below are also corrected against exact
+pinned raw bytes and independently decoded GitHub Contents bytes, with matching
+Git blob identities. This changes neither their field inventory nor the selected
+storage response shapes. No new backend, source implementation or runtime gate
+is opened by this correction.
 
 ### State phases
 
@@ -803,6 +1203,280 @@ the positive stopped response. API reset fields do not prove sandbox deletion:
 cleanup errors can remain, so durable custody and native cleanup/absence
 proof are still required before closing the preparation/action record.
 
+## Stage-A private Inspect decoder contract
+
+This supplied-body prerequisite follows the accepted
+[Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-inspect-decoder-contract)
+owns precode review and implementation truth. The lifecycle, normalization and
+backend identity sections above are normative inputs to this contract. It covers
+the fresh selected container's created, running and normal exited claims for
+preparation and action. Failed starts, restored containers, restarts, health
+transitions and exceptional exits remain denials, not alternate positives.
+
+### Inspect ownership and authority boundary
+
+Owned source is exactly `crates/lnsatd/src/headless_daemon_inspect.rs`, sibling
+`headless_daemon_inspect_tests.rs`, and one private module declaration in
+`crates/lnsatd/src/lib.rs`. The only entrypoint is private
+`decode_inspect_claim(&[u8]) -> Result<UnverifiedContainerInspect, InspectDecodeError>`.
+No existing decoder, shared parser, dependency, feature, public contract or
+product caller changes. The module performs no I/O, transport, native lookup,
+clock read, cleanup, retry, journal/store mutation or authorization.
+
+The result and its children are sealed private types, without public
+constructors, serialization, Debug/Display, Clone or authority conversions.
+It describes coherent **claimed** phase, role and storage representation.
+Those tags never select the expected trusted phase, role, backend or recipe.
+The later caller must select all expected context from held same-attempt state,
+compare every retained claim, then perform independent native/OCI/custody
+checks. A body-only decoder cannot reject a valid claim merely because it is
+from a different attempt or phase than an unavailable caller context. Such
+mismatches are mandatory later integration denials, not fictitious parser proof.
+
+The body cannot distinguish a containerd manifest target from an index target
+by digest syntax. Retain Image and the selected manifest descriptor separately;
+do not equate their digests or infer index membership. Preserve the profile's
+separate raw-config commitment and the backend comparison rules above. Parsing
+success supplies no created-object ownership, execution, cleanup or support
+claim, even when every field matches the static recipe.
+
+### Inspect preflight, allocation and error bounds
+
+Input is one UTF-8 JSON object with optional ordinary JSON whitespace and an
+inclusive 1,048,576-byte body cap. Validate UTF-8, then scan the complete body
+without a dynamic tree or dynamic scanner stack before typed allocation.
+The fixed scanner stack has root-at-one depth at most 32. Enforce these
+inclusive decoded bounds before adding the corresponding item:
+
+| Quantity                                                    | Inspect bound |
+| ----------------------------------------------------------- | ------------- |
+| Members in any object, including unknown/forbidden branches | 128           |
+| Object members across the entire body                       | 4,096         |
+| Elements in any array                                       | 128           |
+| Array elements across the entire body                       | 4,096         |
+| Decoded key bytes                                           | 1..256        |
+| Decoded string value bytes                                  | 0..4,096      |
+| Entries in an allowed typed string dictionary               | 64            |
+
+The global array bound is Inspect-specific, like the 128-member object bound;
+existing decoders remain unchanged. The 64/65-member HostConfig positives must
+fit. A dictionary's 65th entry fails typed shape even when its syntactic object
+fits the 128-member preflight cap. No fallback increases a limit.
+
+Charge all keys, strings, numbers, members and elements in unknown or forbidden
+branches during preflight. Reject BOM, invalid UTF-8, raw controls, malformed
+escapes/surrogates, malformed number syntax, incomplete input and trailing data.
+Finish syntax/limit scanning before rejecting syntactically valid fractional,
+exponent or negative-zero numeric spelling. Every number uses plain decimal
+integer spelling; no coercion from strings or booleans. Selected Linux Go int
+and int64 fields fit i64, uint and uint64 fit u64, and BlkioWeight fits u16.
+Wrong signedness or width is a shape denial; narrower recipe predicates follow.
+
+Use only these fixed data-free error codes, in stage order:
+
+1. `headless_inspect.input_too_large`, before examining an oversized body;
+2. `headless_inspect.json_syntax`, for UTF-8 or preflight syntax;
+3. `headless_inspect.json_limits`, for preflight bounds;
+4. `headless_inspect.json_shape`, for integer spelling/width or closed typed decoding;
+5. `headless_inspect.recipe`, for a completely typed shape failing fixed values or internal consistency.
+
+Within the scan, syntax/limit precedence is the first left-to-right failure.
+Subsequent stages run only after prior stages pass. Root scalars/arrays within
+syntax limits are shape denials. Missing, unknown, wrong-case, raw/escaped
+duplicate keys, positional arrays at object positions and forbidden null are
+shape denials. No error exposes input, field name, offset, path, provider text
+or partial output. A denial says nothing about whether a remote action occurred.
+
+Every module-owned input-derived string, including decoded keys and discarded
+values, has a Zeroizing owner. Any fixed preflight string buffer is also
+zeroized. Caller input and JSON-library scratch are outside that custody claim.
+Typed decoding and projection move allocations; they do not clone input text.
+Across simultaneously live module-owned decoded string payloads, the sum is at
+most the body cap: each input token contributes at most its encoded byte length
+and is owned once. Dictionary keys move into their typed records; closed-field
+keys are short-lived. No reserialized response or full input copy is retained.
+Container member/element slots are bounded by the 4,096+4,096 global counts,
+with fixed typed-record and fixed scanner-stack overhead. Vector reservation
+must respect these verified limits and cannot trust an unbounded size hint.
+These are logical payload/slot bounds, not a promise about allocator overhead,
+process RSS, library scratch or universal memory erasure. Review must verify
+actual ownership and capacity behavior rather than infer it from the body cap.
+
+### Inspect complete typed shapes
+
+The appendix gives exact JSON spellings, types and embedding; this section and
+the normalization sections restrict that inventory to the selected recipe.
+All untagged fields are required. Embedded Resources is flattened, not a key.
+Every object is a closed typed map. The only dynamic key sets are Config.Labels,
+GraphDriver.Data and descriptor annotations, each a bounded string dictionary
+with duplicate decoded keys denied. No generic JSON Value, ignored subtree,
+arbitrary empty struct, opaque serialized child or recursive skip is accepted.
+
+| Position                             | Required representation and optional-key rule                                                                                                                                                                                                                      |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Inspect root                         | All untagged InspectResponse fields required. State, Config, HostConfig, NetworkSettings non-null. Exactly one non-null GraphDriver or Storage. SizeRw/SizeRootFs forbidden. ImageManifestDescriptor omitted in graphdriver; non-null and required in snapshotter. |
+| State                                | Exactly its eleven untagged fields. Health forbidden, including null.                                                                                                                                                                                              |
+| Config                               | All untagged fields required. Healthcheck, StopSignal and StopTimeout additionally required and non-null. ExposedPorts, ArgsEscaped, NetworkDisabled, OnBuild and Shell forbidden, including empty/false/null forms.                                               |
+| Config.Healthcheck                   | Exactly Test as a non-null string array. All other health keys forbidden.                                                                                                                                                                                          |
+| Config.Volumes                       | Required null or exactly an empty object; preserve which form. No named-volume key accepted.                                                                                                                                                                       |
+| Config.Labels                        | Required non-null string dictionary. Key order is immaterial; retain the entire set for later exact held-request/image-merge comparison.                                                                                                                           |
+| HostConfig                           | All untagged direct and flattened fields required, plus Runtime and Init. Annotations, StorageOpt, Tmpfs, Sysctls and Umask forbidden. Mounts omitted for preparation, required non-null for action. Exactly 64/65 members respectively.                           |
+| HostConfig.LogConfig                 | Exactly Type string and Config empty object.                                                                                                                                                                                                                       |
+| HostConfig.RestartPolicy             | Exactly Name string and MaximumRetryCount integer.                                                                                                                                                                                                                 |
+| Empty object positions               | HostConfig.PortBindings, LogConfig.Config, NetworkSettings.Ports and empty Config.Volumes reject every member. No unsupported port/volume child parser is introduced.                                                                                              |
+| Required null positions              | ExecIDs; HostConfig.Links, MemorySwappiness and all five unused block-device throttle/weight lists; endpoint IPAMConfig, Links, Aliases, DriverOpts and DNSNames. Any non-null value is a shape denial.                                                            |
+| Required empty-only non-string lists | HostConfig.Devices, DeviceRequests and Ulimits are non-null empty arrays; an element is a shape denial. Their unselected child schemas are not modeled.                                                                                                            |
+| Other list positions                 | Required non-null typed string arrays, except ConsoleSize, exactly two u64 integers, and the exact mount arrays below. Fixed contents/lengths fail recipe after typed decoding.                                                                                    |
+| GraphDriver                          | Exactly Name string and Data, either null or a string dictionary. Data is the sole typed-discard subtree; its strings never supply filesystem selectors.                                                                                                           |
+| Storage                              | Exactly RootFS, exactly Snapshot, exactly Name string; all three nested objects required non-null despite omission tags.                                                                                                                                           |
+| Top-level Mounts                     | Non-null array of closed mount records; records require Type, Source, Destination, Mode, RW, Propagation. Name and Driver forbidden.                                                                                                                               |
+| HostConfig.Mounts elements           | Exactly Type, Source, Target, BindOptions; all required non-null. Other mount fields forbidden. BindOptions exactly Propagation string and NonRecursive boolean; other bind options forbidden.                                                                     |
+| NetworkSettings                      | Exactly SandboxID, SandboxKey, Ports and Networks; Networks exactly one non-null `none` endpoint.                                                                                                                                                                  |
+| EndpointSettings                     | All fifteen untagged fields required; null positions as above, other fields string or signed integer as listed in the appendix.                                                                                                                                    |
+| ImageManifestDescriptor              | Exactly required mediaType, digest, size and platform, plus optional non-null annotations dictionary. urls, data and artifactType forbidden. Platform exactly architecture, os and optional nonempty variant; os.version/os.features forbidden.                    |
+
+Except the explicit null/nullable positions in this table, every selected field
+is non-null. Unconditional presence/type requirements and forbidden keys are
+shape rules. The typed intermediate permits optional GraphDriver, Storage,
+ImageManifestDescriptor and HostConfig.Mounts as non-null typed values; exactly
+one storage branch and phase/role/backend-dependent presence/cardinality are
+recipe rules. Thus a graphdriver descriptor or a preparation HostConfig.Mounts
+member is a recipe denial after complete typed decoding, while a null optional
+object/array is a shape denial. This ordering never treats absence as null.
+
+GraphDriver.Data null and empty map remain permitted typed-discard variants.
+Optional descriptor annotations must have 1..64 entries when present, matching
+Go's omission tag. Their keys are ASCII of 1..256 bytes, consistent with the
+Image descriptor grammar; values remain bounded UTF-8 strings. A non-ASCII key,
+like a dictionary over64entries, is a shape denial; an empty annotations map is
+a recipe denial. Retain their exact key/value set and presence, treating map
+order as immaterial. Required-null markers and
+empty-only container visitors still reject decoded duplicates through the
+closed map rules, and preflight visits all rejected children first.
+
+### Inspect fixed predicates and retained projection
+
+Apply the fixed Config/HostConfig/mount/network normalization above after typed
+decoding. Fixed values are validated, never silently defaulted. The private
+result retains the following semantic values, using typed children; field names
+within Rust are private implementation details. Fixed fields may be omitted from
+the final result only after exact validation, as enumerated below.
+
+| Retained claim                                                                | Predicate before projection; later comparison dependency                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Id and Name                                                                   | Id exactly 64 lowercase hex. Name exactly `/lnsat-hcfg6-probe-` or `/lnsat-hcfg6-action-` plus 64 lowercase hex, consistent with claimed role. Later compare held Create ID/name and same-attempt custody; syntax is no ownership proof.                                                                                                                                                                         |
+| Created, claimed phase, State.Pid, StartedAt, FinishedAt                      | Timestamp grammar and coherent phase rules below. Retain exact strings and PID, not only booleans. Later compare held lifecycle and native PID/start-tick association.                                                                                                                                                                                                                                           |
+| Image and Config.Image                                                        | Each full `sha256:` plus 64 lowercase hex. Retain separately; no local equality or config-digest assumption replaces held backend/selector/raw OCI comparison.                                                                                                                                                                                                                                                   |
+| Driver and storage representation                                             | Driver nonempty, not `N/A`; GraphDriver.Name or Storage.RootFS.Snapshot.Name must equal it. Retain claimed representation and name; it cannot select trusted backend. GraphDriver.Data is bounded then discarded.                                                                                                                                                                                                |
+| Manifest descriptor                                                           | Retain mediaType, digest, signed size, annotations presence/full set and platform architecture/os/variant presence/value. Require mediaType exactly `application/vnd.oci.image.manifest.v1+json`, full SHA-256 digest, positive size, os linux and nonempty architecture other than `N/A`; variant absent or nonempty other than `N/A`. Later raw manifest/target/index/config/platform comparison is mandatory. |
+| Claimed role and Config.User                                                  | Role coherent across name, entrypoint and mounts. User is canonical decimal `uid:gid`, no leading zero except a single zero; each fits u32 excluding 4294967295, uid positive. Retain exact value. Actual selected UID/GID, group list and native identity are later checks.                                                                                                                                     |
+| Config.WorkingDir, Config.Labels, Config.Volumes presence variant             | Keep exact workdir, entire labels dictionary and null-versus-empty volumes marker. Require image-role label `io.lnsat.image-role=hcfg6-git-reference`. Other label keys are bounded unverified dictionary entries; only later exact held label-set comparison can admit them. No label authorizes cleanup.                                                                                                       |
+| Memory, MemorySwap, PidsLimit, CpuPeriod, CpuQuota, CgroupParent, MaskedPaths | Memory/PidsLimit positive; MemorySwap equals Memory; CpuPeriod 100000; CpuQuota at least1000, divisible by100 and i64-safe. Retain each number separately, exact parent string and nonempty ordered mask list. Later compare exact request ceilings, daemon defaults, root recipe and native cgroups/masks.                                                                                                      |
+| ResolvConfPath, HostnamePath, HostsPath                                       | Preserve each exact phase-dependent string independently. Empty in created; nonempty canonical absolute paths in running/exited. Never open them here. Later compare held generated metadata and native inode association; retained path does not prove survival.                                                                                                                                                |
+| Action Source and Destination                                                 | Top-level Source/Destination match HostConfig Source/Target and Config.WorkingDir. Preserve exact strings. Both canonical absolute paths; target cannot be `/`. Later canonical resource/native mount/overlap checks remain mandatory. Preparation has no owner mount and workdir `/`.                                                                                                                           |
+| SandboxID, SandboxKey, NetworkID, EndpointID                                  | Preserve all four exact strings, including required phase-specific emptiness. Nonempty IDs exactly64lowercase hex; nonempty key a canonical absolute path. Later held same-network/namespace association and native absence checks cannot be inferred from reset API values.                                                                                                                                     |
+
+Canonical absolute paths are `/` or `/`-separated nonempty components with no
+`.` or `..`, trailing slash, NUL or ASCII control/DEL. Strings remain at most
+4,096 decoded bytes. This lexical rule never performs resolution or proves
+custody. CgroupParent is retained as a bounded control-free string, including
+empty; its selected cgroup-driver syntax/value is a later exact recipe check.
+Labels/annotations are bounded strings, not path inputs. Unknown dictionary
+keys are unverified claims only, not a compatibility or authority fallback.
+
+The claimed role is preparation when the entrypoint is exactly the singleton
+`/usr/local/bin/lnsat-hcfg6-probe`, name uses the probe prefix, workdir is `/`,
+top Mounts is empty and HostConfig.Mounts omitted. Action uses singleton
+`/usr/local/bin/lnsat-hcfg6-adapter`, the action name prefix and exactly one
+matching writable private nonrecursive bind. Path equals that entrypoint; Args
+and Cmd are empty. Mixed-role or partially omitted representations deny.
+
+Timestamp grammar is calendar-valid RFC3339 with four-digit year0001..9999,
+seconds00..59, optional1..9 fractional digits and `Z` or numeric offset
+`+/-HH:MM` with hours00..23/minutes00..59; maximum35ASCII bytes. No leap second,
+spaces, lowercase separator or malformed date. The zero timestamp is exactly
+`0001-01-01T00:00:00Z`; equivalent alternative spellings of that instant deny.
+Created is nonzero. Compare normalized instants with checked integer arithmetic
+using signed seconds plus nanoseconds (or a wider exact representation); do not
+overflow a signed64nanosecond total for valid distant years. Retain original strings. Created state requires both State times zero and PID0;
+running requires nonzero StartedAt>=Created, FinishedAt zero, PID in1..u32::MAX;
+exited requires PID0 and nonzero FinishedAt>=StartedAt>=Created. A backward
+wall-clock result denies this selected positive recipe; timestamps never supply
+freshness, monotonic elapsed-time budgets or native process-start proof.
+All phases require ExitCode0, Error empty, Paused/Restarting/OOMKilled/Dead false;
+Running is true only for running. RestartCount is0. Apply AppArmor/metadata and
+network phase table above exactly; every other Status or mixed tuple denies.
+
+All remaining compare fields have exact fixed values and become implicit only
+after validation: linux Platform; empty MountLabel/ProcessLabel/LogPath;
+phase AppArmorProfile; null ExecIDs; Config hostname/domain/attach/TTY/stdin
+flags, ordered nine-entry Env, empty Cmd, singleton role entrypoint, disabled
+health, SIGKILL/timeout1; all fixed HostConfig booleans/strings/arrays/nulls,
+logging/restart/security/capability tuple, ShmSize67108864, zero unused integer
+controls, false OomKillDisable/Init, exact five ReadonlyPaths; fixed mount
+Type/Mode/RW/Propagation/NonRecursive; fixed endpoint null/zero/address fields
+and empty Ports. Config.Env is the exact nine strings in the linked realized
+recipe, not actual process environment. MaskedPaths must be a nonempty array
+of canonical absolute paths with no duplicate; its conditional exact contents
+remain retained for root/native comparison. No variable compare field may be
+silently discarded or replaced by a success marker.
+
+### Inspect acceptance matrix and later integration
+
+Before implementation, fresh independent precode review must pass this exact
+contract and source ownership. Source tests are independently authored against
+it and must cover:
+
+- Eighteen complete source-shaped positives: three phases × two roles ×
+  graphdriver/containerd-manifest/containerd-index. The parser does not invent a
+  manifest-versus-index tag; fixtures use distinct target/selected-manifest
+  values to demonstrate lossless retention. Verify64/65HostConfig counts,
+  both Config.Volumes forms, both GraphDriver.Data forms, descriptor annotations
+  omitted/present and platform variant omitted/present. Each dynamic retained
+  field gets at least two independent valid values with exact output assertions.
+- Every root and child field's required/optional/forbidden presence, null,
+  wrong type and case; all object positions reject positional arrays. Mutate
+  unknown and raw/escaped duplicate keys at each closed map and dynamic map,
+  including all selected storage/mount/network/descriptor children. Non-object
+  roots are shape denials. Check exact static error codes.
+- Every fixed predicate and local relation, each role/phase transition and
+  mixed tuple, resource values and integer widths/endpoints, fractional/exponent/
+  negative-zero spelling, UID/GID limits, names/IDs/digests, path grammar,
+  leap-year/timezone/fraction/time ordering, disabled-health and AppArmor rules.
+  Include valid ordered year9999 timestamps to exercise the full calendar range
+  without signed64nanosecond overflow, plus offset/fraction ordering and reversed
+  time denials. Descriptor annotations require explicit empty-map recipe denial,
+  non-ASCII-key shape denial, empty-key preflight limit denial, ASCII boundary
+  positives and64/65entry shape-boundary tests. Cover required-null versus
+  absent/empty and optional omission versus null.
+- Exact and one-over body, decoded key/string, depth, per-object/dictionary,
+  per-array/global member/global element bounds; padding an otherwise valid
+  positive to the body cap. Use scanner-level vectors where the typed schema
+  cannot reach a boundary. Cover128/129object versus64/65dictionary separately,
+  multibyte/escaped strings, surrogate pairs, malformed/truncated input,
+  unknown/forbidden deep branches and stage precedence. Verify no limit retry.
+- Projection/data lifetime review and canaries: errors never contain supplied
+  strings, no Debug/Display/Serialize/Clone escape, all owned input strings
+  zeroizing, no uncontrolled allocation or text copies, no public caller or I/O.
+  Synthetic fixtures do not count as daemon/native observations.
+
+Body-only tests cannot claim held-context rejection. Later integration must
+add negative tests for wrong expected phase/role/backend/attempt, substituted
+Create identity, raw OCI digest-domain/parent-link/platform mismatch, stale PID/
+namespace/cgroup/metadata/mount custody, unexpected labels/defaults/environment,
+changed ceilings, replay and cleanup uncertainty. Compare every retained field;
+missing expected values are blocking. Native evidence, actual artifact pins,
+root/daemon authentication and complete source/pin/positive-feasibility freeze
+remain mandatory before connection to product entrypoints. No Stage-A success
+creates a permit or a new runtime/support claim.
+
+Implementation requires focused pinned Rust tests, strict Clippy and formatting,
+full `npm run check`, scoped installed Semgrep/Gitleaks and applicable dependency
+checks, docs/public/inventory/history/whitespace validation, fresh exact source
+review and separate direct-child attestation. Contract-only changes use the
+existing proportional documentation checks and independent precode review.
+
 ## Wait, errors and complete-freeze gate
 
 Normal Wait success is exactly `{StatusCode:0}`. Error is omitted when nil.
@@ -825,6 +1499,163 @@ kernel control. Enterprise/government deployment additionally retains the
 [security requirements](../ENTERPRISE_GOVERNMENT_SECURITY_REQUIREMENTS.md)
 and Phase 13/14 evidence gates.
 
+## Stage-A private Create and Wait decoder contract
+
+This supplied-body prerequisite follows Version, Info and Image under the
+accepted [Stage-A order](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
+It prepares two representations needed by the later same-attempt lifecycle:
+the claimed created-container ID and a claimed zero-exit Wait response. Neither
+is proof of creation, ownership, termination, cleanup or the intended consequence.
+[Project Status](../../PROJECT_STATUS.md#stage-a-private-create-and-wait-decoder-contract)
+owns precode review and subsequent implementation evidence.
+
+### Source normalization and exact ownership
+
+At the pinned Moby revision above, the
+[create builder](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/create.go)
+allocates an empty warnings slice on successful creation. The
+[container router](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/daemon/server/router/container/container_routes.go)
+appends its own warnings and writes the Create response with HTTP 201. Thus an
+empty array is the selected positive encoding; any builder or router warning
+denies this candidate's recipe. API 1.56 Wait writes HTTP 200 headers before
+waiting for the result, then emits StatusCode and a non-nil Error only when the
+backend reports an error. Headers alone cannot establish a completed response.
+An empty error message is omitted within a present Error object; `{}` therefore
+remains a valid typed error representation, but always denies zero-exit success.
+
+Raw source bytes and independently decoded GitHub Contents bytes were compared,
+and their computed Git object IDs matched the returned blob identities:
+
+| Exact Moby source                                    | Bytes  | SHA-256                                                            |
+| ---------------------------------------------------- | ------ | ------------------------------------------------------------------ |
+| `api/types/container/create_response.go`             | 640    | `0bb39c935a3c4395b71350a1ac671a4057a760eff1a4ee81d8136fd2be454135` |
+| `api/types/container/wait_response.go`               | 494    | `7a99407ea3e3d28b90162fc686a5e26745f9f3ce5ebcaeae18ac15883923725a` |
+| `api/types/container/wait_exit_error.go`             | 381    | `06b9eaf565c5a8a21a4cf12d6aab0bff54160015cc4d21f5a992ba005f6ec7e7` |
+| `daemon/create.go`                                   | 13,412 | `7337eee29d341b24825f61fe48a3935877c0321905968d20b0a864a1d60839ad` |
+| `daemon/server/router/container/container_routes.go` | 44,302 | `800b1109da81fa68c3e60882c78372e0f82d65721fc3216925b129e6ceaffc09` |
+
+The WaitResponse appendix hash is corrected to these verified bytes. This
+source check establishes encoding evidence, not installed daemon provenance.
+
+Owned source is exactly `crates/lnsatd/src/headless_daemon_container_response.rs`,
+its sibling `headless_daemon_container_response_tests.rs`, and one private
+module declaration in `crates/lnsatd/src/lib.rs`. Entrypoints are private
+`decode_create_claim(&[u8]) -> Result<UnverifiedCreatedContainer, ContainerResponseDecodeError>`
+and `decode_wait_claim(&[u8]) -> Result<UnverifiedZeroExit, ContainerResponseDecodeError>`.
+The sealed, non-serializable results retain only the unverified ID for Create
+and a distinct zero-exit representation for Wait. They expose no constructor,
+authority conversion, public API or product caller. No Inspect parser, generic
+HTTP-error parser, transport, I/O, clock, dependency, feature or shared-parser
+refactor belongs to this slice. Existing decoders remain unchanged.
+
+All module-owned input-derived strings, including dynamic decoded keys,
+warnings and error messages, use zeroizing custody during typed decoding and
+projection. Fixed preflight string storage, if any, is also zeroized. Caller
+input and JSON-library scratch are outside that custody claim. No response
+text or string can become a path, cleanup selector, command or public diagnostic.
+
+### Bounds, stages and errors
+
+The whole input has an inclusive 1,048,576-byte ceiling. It contains one JSON
+object with optional JSON whitespace before and after; no canonical key order
+or terminal LF is required. Strict UTF-8 validation and allocation-free
+lexical/structural preflight precede owned typed decoding. The preflight has
+root-at-one depth 32, at most 64 members per object and 4,096 total members,
+at most 128 elements per array, keys of 1..256 decoded UTF-8 bytes, and values
+of at most 4,096 decoded UTF-8 bytes. These caps also apply to subsequently
+rejected unknown branches. Check each bound before adding the relevant
+container/member/element/string byte. No dynamic syntax tree, dynamic scanner
+stack or unbounded subtree skipping is permitted.
+
+Reject BOM, invalid UTF-8, raw string controls, malformed escapes or surrogate
+pairs, invalid JSON number syntax, trailing data and incomplete input.
+After a successful preflight, typed decoding accepts maps only at object
+positions and rejects unknown, missing, duplicate decoded or escaped-duplicate
+keys, wrong case, positional arrays, wrong types and forbidden explicit null.
+StatusCode must use plain signed decimal JSON integer spelling and fit i64;
+fractions, exponents, negative zero, strings, booleans and overflow are shape
+errors. Scan all syntax and bounds before classifying valid-but-disallowed
+numeric spellings. No numeric coercion is allowed.
+
+Both entrypoints use only these fixed, data-free codes in this stage order:
+
+1. `headless_container_response.input_too_large` before inspecting oversized input;
+2. `headless_container_response.json_syntax` for UTF-8 or preflight syntax;
+3. `headless_container_response.json_limits` for preflight bounds;
+4. `headless_container_response.json_shape` for closed typed decoding or integer representation;
+5. `headless_container_response.recipe` for the complete typed representation failing the fixed predicates below.
+
+Within the scan, syntax and limit failures use the first left-to-right failure.
+Later stages run only after earlier stages pass. Errors reveal no input, field,
+offset, provider text or partial result. A denial never authorizes retry and
+cannot establish that a remote creation or action did not occur.
+
+### Complete typed shapes and recipe predicates
+
+Create requires exactly `Id` and `Warnings`. Id is a non-null string;
+Warnings is a non-null array of non-null strings. The positive recipe requires
+Id to be exactly 64 lowercase ASCII hexadecimal characters and Warnings to be
+empty. Empty, short, long, uppercase, prefixed, nonhex or Unicode IDs are
+recipe denials after the typed stage; any warning string, including an empty
+one, is a recipe denial. Missing/null/wrong-type fields or wrong-type warning
+elements are shape denials. No all-zero digest exception is inferred: an ID is
+an unverified syntax claim, not a digest commitment or ownership proof.
+
+Wait requires StatusCode and permits only optional Error. Error, when present,
+must be a non-null object with optional Message and no other key. Message, when
+present, must be a non-null string. Empty or nonempty messages are discarded;
+the candidate denies every present Error object, including `{}` and an empty
+Message. Explicit null Error is a shape denial, not absence. The sole positive
+recipe is StatusCode zero with Error omitted. Every other representable i64
+StatusCode is a recipe denial. A successful return merely states that the
+supplied body claims zero exit without an error object.
+
+### Mandatory evidence and integration dependencies
+
+Before implementation, obtain fresh independent exact precode review. Source
+tests must be independently authored against this contract and include:
+
+- Source-shaped positives for both entrypoints, independent expected Create
+  ID projection, reversed map order, escaped equivalent keys and hex characters,
+  ordinary whitespace and trailing newline. Vary valid IDs, including all-zero
+  and all-`f`, to prove retention rather than a constant projection.
+- Both cross-family inputs and every required/optional field's omitted, null,
+  empty, scalar, array and object cases; wrong case, unknown root/nested keys,
+  raw/escaped duplicates, positional objects and warning-element wrong types.
+  For both entrypoints, directly test well-formed, in-bound non-object roots
+  (`null`, booleans, plain integers, strings and arrays) as `json_shape` denials.
+  Assert every exact fixed error, not merely `is_err`.
+- Every ID predicate, warning presence, StatusCode zero/nonzero/i64 endpoints
+  and overflow, negative zero, fractions and exponent spellings. Error omitted,
+  null, `{}`, Message omitted/empty/nonempty/null/wrong-type, nested unknown and
+  duplicate Message cases must remain distinct under the stated stages.
+- Exact byte/string/key/depth/member/array limits and one over, including a
+  genuinely valid positive padded only with JSON whitespace at the body limit.
+  For schema-impossible deep or wide inputs, exercise scanner helpers directly
+  and distinguish scanner acceptance from eventual shape denial. Cover decoded
+  multibyte/escaped byte counts, valid surrogate pairs and malformed Unicode,
+  truncated input, trailing values, invalid UTF-8/BOM and stage precedence.
+- Warning/error canaries never appear in errors or successful projections;
+  code review verifies zeroizing owners and no log/Debug/Display/Serialize
+  exposure of retained or discarded input. Synthetic vectors are not daemon
+  responses or native evidence.
+
+Run focused Rust tests, strict Clippy/format, full `npm run check`, scoped
+installed Semgrep/Gitleaks and proportional docs/public/inventory/history and
+whitespace checks. Preserve exact independent source and direct-child evidence.
+No larger response is retried automatically after a parser-bound denial.
+
+Later integration must authenticate the exact endpoint/response status and
+complete framing under a held same-instance daemon channel. Create's ID must
+be durably bound to the current attempt and cleanup journal before subsequent
+operations; malformed or lost responses leave uncertainty, never a fresh
+Create retry. Wait must follow the selected condition on that held ID and
+cannot replace Inspect/native association, action-result and consequence
+verification, durable receipt or cleanup/reconciliation. HTTP 200 headers,
+exit zero and a decoded ID supply none of those authorities. Complete native/
+source/pin freeze, product wiring, selected artifact capture and actual runtime
+proof remain separate unfinished gates. LNSAT stays neutral and standalone.
+
 ## Exact field/type appendix
 
 The following mechanically extracted inventory covers only the listed reachable
@@ -838,7 +1669,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.Config
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/config.go#L25) · snapshot SHA-256
-`4c974b6b028baed3d7246e28abe1cbf032cd30b12fe1da6269744e00a8676713`.
+`06f5e71501399a33906ef7b006d49d71a700e6c84d7442a90e9d240cb52b81ee`.
 
 | Go field          | Go type               | JSON tag     |
 | ----------------- | --------------------- | ------------ |
@@ -880,7 +1711,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.HostConfig
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L418) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field          | Go type             | JSON tag     |
 | ----------------- | ------------------- | ------------ |
@@ -930,7 +1761,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.InspectResponse
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/container.go#L117) · snapshot SHA-256
-`35510018abc7ff47a580a4ec12bdd567900365e7e1f75455ce61fb253d6b00ba`.
+`1c9f57409df799ad3b6f6f330460d58b371bf353b9920646cb31a04ea2d48c02`.
 
 | Go field                  | Go type               | JSON tag                            |
 | ------------------------- | --------------------- | ----------------------------------- |
@@ -965,7 +1796,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.LogConfig
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L358) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field | Go type             | JSON tag |
 | -------- | ------------------- | -------- |
@@ -975,7 +1806,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.MountPoint
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/container.go#L32) · snapshot SHA-256
-`35510018abc7ff47a580a4ec12bdd567900365e7e1f75455ce61fb253d6b00ba`.
+`1c9f57409df799ad3b6f6f330460d58b371bf353b9920646cb31a04ea2d48c02`.
 
 | Go field      | Go type             | JSON tag     |
 | ------------- | ------------------- | ------------ |
@@ -991,7 +1822,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.NetworkSettings
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/network_settings.go#L8) · snapshot SHA-256
-`307d67438b1a7ef337468303360e1395e7854866273fcc9d5b6145826689db72`.
+`eda0e410e1fea35131bbbb225d5b32e6abf557d2621645687bbc99570d7363aa`.
 
 | Go field     | Go type                                | JSON tag |
 | ------------ | -------------------------------------- | -------- |
@@ -1003,7 +1834,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.Resources
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L370) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field               | Go type                      | JSON tag             |
 | ---------------------- | ---------------------------- | -------------------- |
@@ -1040,7 +1871,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.RestartPolicy
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/hostconfig.go#L275) · snapshot SHA-256
-`9aadf7f6da56bca39ccd5712c75f4d0ea540ba990fb63b8d6f3729b6c9229cd9`.
+`3181a70300a106cf87e661567b1d26a25ac10a9382fbecda2c840f6d2f022160`.
 
 | Go field            | Go type             | JSON tag |
 | ------------------- | ------------------- | -------- |
@@ -1050,7 +1881,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.State
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/container.go#L75) · snapshot SHA-256
-`35510018abc7ff47a580a4ec12bdd567900365e7e1f75455ce61fb253d6b00ba`.
+`1c9f57409df799ad3b6f6f330460d58b371bf353b9920646cb31a04ea2d48c02`.
 
 | Go field     | Go type          | JSON tag     |
 | ------------ | ---------------- | ------------ |
@@ -1079,7 +1910,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### container.WaitResponse
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/container/wait_response.go#L13) · snapshot SHA-256
-`efca9bdb26fa2d35e376ed05fe618f2ceb68fc9b76cf9c48f1ab917fb562fc1d`.
+`7a99407ea3e3d28b90162fc686a5e26745f9f3ce5ebcaeae18ac15883923725a`.
 
 | Go field     | Go type          | JSON tag          |
 | ------------ | ---------------- | ----------------- |
@@ -1089,7 +1920,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### image.InspectResponse
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image_inspect.go#L17) · snapshot SHA-256
-`1e553c587dc2bfba1010a2abe92a8499520d0413104a7e2d59db7abd912743da`.
+`294b967dc7bcb894188a8e17d7b69c0ccbc4da16fc668a6449d52c6038c3be68`.
 
 | Go field       | Go type                            | JSON tag                |
 | -------------- | ---------------------------------- | ----------------------- |
@@ -1115,7 +1946,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### image.RootFS
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image_inspect.go#L10) · snapshot SHA-256
-`1e553c587dc2bfba1010a2abe92a8499520d0413104a7e2d59db7abd912743da`.
+`294b967dc7bcb894188a8e17d7b69c0ccbc4da16fc668a6449d52c6038c3be68`.
 
 | Go field | Go type    | JSON tag     |
 | -------- | ---------- | ------------ |
@@ -1125,7 +1956,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.image.Metadata
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/image/image.go#L8) · snapshot SHA-256
-`5283b17b5529f119fad533a911128837a90cd7f64bf91f728f495a70794ae2cc`.
+`23365d448c646f64becfa337681cccc854fc2c1892fc6ef6ead3e89b700a05f5`.
 
 | Go field      | Go type     | JSON tag     |
 | ------------- | ----------- | ------------ |
@@ -1134,7 +1965,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.mount.BindOptions
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/mount/mount.go#L87) · snapshot SHA-256
-`efb639220953d8176dd7b3a1fdd52dcd016669a59094d6585010a982ec4a1806`.
+`a4b9e8529fbe5ef4aa0b1144aa720a6e12f04991a988248199750471b140c91d`.
 
 | Go field                 | Go type       | JSON tag     |
 | ------------------------ | ------------- | ------------ |
@@ -1147,7 +1978,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.mount.Mount
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/mount/mount.go#L27) · snapshot SHA-256
-`efb639220953d8176dd7b3a1fdd52dcd016669a59094d6585010a982ec4a1806`.
+`a4b9e8529fbe5ef4aa0b1144aa720a6e12f04991a988248199750471b140c91d`.
 
 | Go field         | Go type           | JSON tag     |
 | ---------------- | ----------------- | ------------ |
@@ -1165,7 +1996,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.DriverData
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/driver_data.go#L12) · snapshot SHA-256
-`37dc67a62ff5cc873bd38d6f66c075844eafa9b19f9644491d6af9a558656584`.
+`d0503186bea207a8b00708c0d178fea6bef698b97b245e6f5aa450ca4902be2c`.
 
 | Go field | Go type             | JSON tag |
 | -------- | ------------------- | -------- |
@@ -1175,7 +2006,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.RootFSStorage
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/root_f_s_storage.go#L11) · snapshot SHA-256
-`ab6dab1f46602cbf1c24c64284688d14ae61b1879f465c00624068f2867baf0d`.
+`37834b03649e4ad9bee2611d4fc19831e2262b8590b913b2bd8cca265546ab13`.
 
 | Go field   | Go type                  | JSON tag             |
 | ---------- | ------------------------ | -------------------- |
@@ -1184,7 +2015,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.RootFSStorageSnapshot
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/root_f_s_storage_snapshot.go#L11) · snapshot SHA-256
-`d7ea4a7388c81e645ddc1a4927ee40efe4994c1509de7f2d54655ce696563454`.
+`05a691477fbf3659d7ccef8d25aa4fb5334246d92987c8407506b1a3c6439273`.
 
 | Go field | Go type  | JSON tag         |
 | -------- | -------- | ---------------- |
@@ -1193,7 +2024,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.api.types.storage.Storage
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/storage/storage.go#L11) · snapshot SHA-256
-`2a3fce37668a0f4fdcda47b675e87ccb412e33da858358894b6c5c6572b990a4`.
+`668328ec999d495a2057db385df4078e32bb51eb5393c17b9b738cb190b0d9ec`.
 
 | Go field | Go type          | JSON tag           |
 | -------- | ---------------- | ------------------ |
@@ -1202,7 +2033,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.docker-image-spec.v1.DockerOCIImageConfig
 
 [Exact source](https://github.com/moby/docker-image-spec/blob/v1.3.1/specs-go/v1/image.go#L20) · snapshot SHA-256
-`e94a05acb57fb873dffe0c7ffeda0b7bcc287feefc946d1d6fa0e269e49c9a93`.
+`70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7`.
 
 | Go field       | Go type                   | JSON tag |
 | -------------- | ------------------------- | -------- |
@@ -1212,7 +2043,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.docker-image-spec.v1.DockerOCIImageConfigExt
 
 [Exact source](https://github.com/moby/docker-image-spec/blob/v1.3.1/specs-go/v1/image.go#L27) · snapshot SHA-256
-`e94a05acb57fb873dffe0c7ffeda0b7bcc287feefc946d1d6fa0e269e49c9a93`.
+`70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7`.
 
 | Go field      | Go type              | JSON tag     |
 | ------------- | -------------------- | ------------ |
@@ -1223,7 +2054,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### moby.docker-image-spec.v1.HealthcheckConfig
 
 [Exact source](https://github.com/moby/docker-image-spec/blob/v1.3.1/specs-go/v1/image.go#L35) · snapshot SHA-256
-`e94a05acb57fb873dffe0c7ffeda0b7bcc287feefc946d1d6fa0e269e49c9a93`.
+`70ff081667b9f247cab5e72d89f08a99625f95d70c12809d29acad940789a9e7`.
 
 | Go field        | Go type         | JSON tag     |
 | --------------- | --------------- | ------------ |
@@ -1237,7 +2068,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### network.EndpointIPAMConfig
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/network/endpoint.go#L60) · snapshot SHA-256
-`beaa06129a8b501538f6c82f3c171224ad905c9866c812912dca03caa1620494`.
+`1316e728ea174584fc8edcaf3fdc587cccc6d5485af2c914705f4c3ac0ca2637`.
 
 | Go field       | Go type        | JSON tag                 |
 | -------------- | -------------- | ------------------------ |
@@ -1248,7 +2079,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### network.EndpointSettings
 
 [Exact source](https://github.com/moby/moby/blob/8af9fe3a36bab3e039862a2ab1cef1880c9b4d03/api/types/network/endpoint.go#L10) · snapshot SHA-256
-`beaa06129a8b501538f6c82f3c171224ad905c9866c812912dca03caa1620494`.
+`1316e728ea174584fc8edcaf3fdc587cccc6d5485af2c914705f4c3ac0ca2637`.
 
 | Go field              | Go type               | JSON tag |
 | --------------------- | --------------------- | -------- |
@@ -1271,7 +2102,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### oci.image-spec.v1.Descriptor
 
 [Exact source](https://github.com/opencontainers/image-spec/blob/v1.1.1/specs-go/v1/descriptor.go#L22) · snapshot SHA-256
-`15a2dd7bcee754aba53090539b304e06fad2b7809d0ba66cee4eb043ef2912f6`.
+`0861d8687b818f7045ca3f076e8f8a1ef92497514235fbaea4c6af0c075f1c3a`.
 
 | Go field       | Go type             | JSON tag                 |
 | -------------- | ------------------- | ------------------------ |
@@ -1287,7 +2118,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### oci.image-spec.v1.ImageConfig
 
 [Exact source](https://github.com/opencontainers/image-spec/blob/v1.1.1/specs-go/v1/config.go#L24) · snapshot SHA-256
-`27a0ba54e5c90533ce58bd84756d9bded3c7335c3609cac3295fe2381cf87935`.
+`b88c5220009106090d760c4589704a950b45e6c0f676427be9537b2abaf2a763`.
 
 | Go field       | Go type               | JSON tag                 |
 | -------------- | --------------------- | ------------------------ |
@@ -1305,7 +2136,7 @@ the mechanical extraction snapshot, not an installed artifact.
 ### oci.image-spec.v1.Platform
 
 [Exact source](https://github.com/opencontainers/image-spec/blob/v1.1.1/specs-go/v1/descriptor.go#L53) · snapshot SHA-256
-`15a2dd7bcee754aba53090539b304e06fad2b7809d0ba66cee4eb043ef2912f6`.
+`0861d8687b818f7045ca3f076e8f8a1ef92497514235fbaea4c6af0c075f1c3a`.
 
 | Go field       | Go type    | JSON tag                |
 | -------------- | ---------- | ----------------------- |

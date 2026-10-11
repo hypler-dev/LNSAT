@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0056-independent-implementation-review-35729b74",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-raw-oci-chain-contract-stage-a"],
+  "base_revision": "c2849c9ca4529580b204d8e4eed5b43bde979bff",
+  "reviewed_revision": "35729b7493505c6278a3d6b91554d4a3eb59c332",
+  "reviewed_tree_oid": "5c82332f955baea3aa2f81616c5e2df993401fe3",
+  "diff_sha256": "sha256:4f78dd0bc2f9c139576a0737380289be84d58287e4b2e60d4dec75c299bef2fc",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:217983363ecd69b7686227272974a4d7158b5f2a40ef1e27fc80b28a05970b35"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:c3c8884241da5006f7db3efbca4e8834dd66da12a3dff5666ccf6e8abd1d6f1b"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/root-manifest-source-spec.md",
+      "sha256": "sha256:d217a4223cef213524921b711c09a482a5f712e79220021a9dc60e2d4a23c37b"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:8a9eec8101fefc983665152b6362f827bbe64ab950fd9a17afe66e379305ea6d"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:9513e184fea76e57dd54413a4a0b5654a48f29b95d43446f99c2cb440b1da90c"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/inspect_decoder_precode_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "Native OpenAI Codex gpt_reviewer Terra xhigh independent read-only exact precode review. Covers private raw OCI supplied-body ownership/interface, complete presence-aware retained config/manifest/index claims, finite preflight/allocation, zeroizing ownership, exact static denial order, raw SHA-256 identities and internal parent links, independent layer/DiffID identity spaces, and required future held root/profile/registry/backend comparison. Exact source paths corrected before approval; no remaining P1/P2/P3. Documentation/public/inventory/history/format/link/diff and locked Phase11 readiness checks pass. Independently constructed synthetic chains, strengthened after an invalid initial maximum fixture, demonstrate bounded representation and raw-link feasibility only, not production parser conformance. Exact immutable documentation source binding confirmed. This attests the precode contract, not a raw OCI implementation, new full source check, hosted CI, held artifact/native custody, recipe or pin admission, complete freeze, integration, runtime, packaging or support. The named inert candidate requires its own source validation and source/direct-child reviews. Separate direct-child audit remains required. No execution or other authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

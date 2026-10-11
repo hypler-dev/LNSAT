@@ -1,7 +1,8 @@
 use super::*;
 use crate::owner_decision_credential::{
-    VerifiedCurrentOwnerCredentialV1, prepare_current_owner_credential_v1,
-    recheck_current_owner_credential_v1,
+    CapturedCurrentOwnerCredentialV1, VerifiedCurrentOwnerCredentialV1,
+    capture_current_owner_credential_v1, compute_current_owner_credential_v1,
+    prepare_current_owner_credential_v1, recheck_current_owner_credential_v1,
 };
 use rusqlite::Transaction;
 
@@ -389,6 +390,10 @@ fn owner_decision_credential_never_accepts_fixture_disabled_owner_evidence() {
         store.verify_local_owner_password_v1(OWNER, PASSWORD),
         Err(LocalIdentityStoreErrorV1::EvidenceDrift)
     );
+    assert_eq!(
+        capture_current_owner_credential_v1(&store, OWNER).err(),
+        Some(LocalIdentityStoreErrorV1::EvidenceDrift)
+    );
 }
 
 #[test]
@@ -423,4 +428,312 @@ fn owner_decision_credential_binds_store_instance_and_actual_transaction_connect
         Err(LocalIdentityStoreErrorV1::AuthorizationRejected)
     );
     assert_eq!(recheck(&reopened, &prepare(&reopened, PASSWORD)), Ok(()));
+}
+
+macro_rules! assert_credential_not_impl {
+    ($type:ty, $bound:path) => {{
+        trait AmbiguousIfImpl<A> {
+            fn check() {}
+        }
+        impl<T: ?Sized> AmbiguousIfImpl<()> for T {}
+        impl<T: ?Sized + $bound> AmbiguousIfImpl<u8> for T {}
+        <$type as AmbiguousIfImpl<_>>::check();
+    }};
+}
+
+#[test]
+fn owner_decision_credential_capture_has_owned_and_opaque_compile_time_bounds() {
+    fn assert_static<T: 'static>() {}
+
+    assert_static::<CapturedCurrentOwnerCredentialV1>();
+    assert_credential_not_impl!(CapturedCurrentOwnerCredentialV1, Clone);
+    assert_credential_not_impl!(CapturedCurrentOwnerCredentialV1, std::fmt::Debug);
+    assert_credential_not_impl!(CapturedCurrentOwnerCredentialV1, serde::Serialize);
+    assert_credential_not_impl!(CapturedCurrentOwnerCredentialV1, std::ops::Deref);
+    assert_credential_not_impl!(CapturedCurrentOwnerCredentialV1, Send);
+    assert_credential_not_impl!(CapturedCurrentOwnerCredentialV1, Sync);
+}
+
+#[test]
+fn owner_decision_credential_capture_ends_sql_without_writes_before_compute() {
+    let (_database, mut store) = owner_store("owner-capture-read-only");
+    let session = store
+        .issue_local_owner_session_v1(&owner_session_input(PASSWORD))
+        .expect("fixture owner session must issue");
+    let before_activity = session_activity(&store, &session.session.session_id);
+    let before_changes = store.connection.total_changes();
+    let captured = capture_current_owner_credential_v1(&store, OWNER)
+        .expect("owner rows must capture without password work");
+    assert!(store.connection.is_autocommit());
+    assert_eq!(store.connection.total_changes(), before_changes);
+    assert_eq!(
+        session_activity(&store, &session.session.session_id),
+        before_activity
+    );
+    // A fresh caller transaction can begin and end while capture remains owned.
+    let transaction = Transaction::new_unchecked(&store.connection, TransactionBehavior::Immediate)
+        .expect("capture must leave no SQL transaction alive");
+    transaction
+        .rollback()
+        .expect("fixture caller transaction ends");
+    let snapshot = compute_current_owner_credential_v1(captured, PASSWORD)
+        .expect("owned computation must verify")
+        .expect("owner password must produce existing snapshot");
+    assert_eq!(recheck(&store, &snapshot), Ok(()));
+    assert_eq!(store.connection.total_changes(), before_changes);
+    assert_eq!(
+        session_activity(&store, &session.session.session_id),
+        before_activity
+    );
+}
+
+#[test]
+fn owner_decision_credential_capture_binds_original_scope_and_connection() {
+    let (database, store) = owner_store("owner-capture-original-scope");
+    let captured = capture_current_owner_credential_v1(&store, OWNER)
+        .expect("original owner credential must capture");
+    let moved = Box::new(store);
+    let snapshot = compute_current_owner_credential_v1(captured, PASSWORD)
+        .expect("computation must need no SQL owner")
+        .expect("captured owner must verify");
+    let second = SqliteStore::open(&database.path).expect("same rows must open separately");
+    let transaction = second
+        .connection
+        .unchecked_transaction()
+        .expect("other caller transaction must begin");
+    assert_eq!(
+        recheck_current_owner_credential_v1(&moved, &transaction, &snapshot),
+        Err(LocalIdentityStoreErrorV1::AuthorizationRejected)
+    );
+    assert_eq!(
+        recheck_current_owner_credential_v1(&second, &transaction, &snapshot),
+        Err(LocalIdentityStoreErrorV1::AuthorizationRejected)
+    );
+    transaction
+        .rollback()
+        .expect("other caller ends transaction");
+    assert_eq!(recheck(&moved, &snapshot), Ok(()));
+    drop(second);
+    drop(moved);
+    let reopened = SqliteStore::open(&database.path).expect("original bytes must reopen");
+    assert_eq!(
+        recheck(&reopened, &snapshot),
+        Err(LocalIdentityStoreErrorV1::AuthorizationRejected)
+    );
+    let detached =
+        capture_current_owner_credential_v1(&reopened, OWNER).expect("reopened rows must capture");
+    drop(reopened);
+    assert!(
+        compute_current_owner_credential_v1(detached, PASSWORD)
+            .expect("owned row and scope survive store drop")
+            .is_some()
+    );
+}
+
+#[test]
+fn owner_decision_credential_capture_rotation_is_denied_after_compute() {
+    let (_database, mut store) = owner_store("owner-capture-rotation");
+    let session = store
+        .issue_local_owner_session_v1(&owner_session_input(PASSWORD))
+        .expect("fixture owner session must issue");
+    let captured =
+        capture_current_owner_credential_v1(&store, OWNER).expect("old credential must capture");
+    store
+        .rotate_local_password_credential_v1(
+            &session.raw_session_token,
+            &session.raw_csrf_token,
+            &LocalPasswordRotationInputV1 {
+                current_password: PASSWORD,
+                new_password: REPLACEMENT,
+                rotated_at: "2026-07-23T17:02:00Z",
+            },
+        )
+        .expect("rotation between capture and compute must commit");
+    let snapshot = compute_current_owner_credential_v1(captured, PASSWORD)
+        .expect("captured generation still verifies its own password")
+        .expect("captured owner must produce old-generation snapshot");
+    assert_eq!(
+        recheck(&store, &snapshot),
+        Err(LocalIdentityStoreErrorV1::AuthorizationRejected)
+    );
+    assert_eq!(recheck(&store, &prepare(&store, REPLACEMENT)), Ok(()));
+}
+
+#[test]
+fn owner_decision_credential_capture_recovery_is_denied_after_compute() {
+    let (database, mut store) = owner_store("owner-capture-recovery");
+    let captured =
+        capture_current_owner_credential_v1(&store, OWNER).expect("old credential must capture");
+    let authority = acquire_offline_owner_recovery_authority_v1(&database.path)
+        .expect("disposable offline fixture authority must acquire");
+    store
+        .recover_local_owner_offline_v1(
+            &authority,
+            &LocalOwnerRecoveryInputV1 {
+                expected_owner_identity_ref: OWNER,
+                new_password: REPLACEMENT,
+                recovered_at: "2026-07-23T17:02:00Z",
+            },
+        )
+        .expect("fixture recovery between capture and compute must commit");
+    let snapshot = compute_current_owner_credential_v1(captured, PASSWORD)
+        .expect("captured verifier still verifies")
+        .expect("captured owner must produce old snapshot");
+    assert_eq!(
+        recheck(&store, &snapshot),
+        Err(LocalIdentityStoreErrorV1::AuthorizationRejected)
+    );
+    assert_eq!(recheck(&store, &prepare(&store, REPLACEMENT)), Ok(()));
+}
+
+#[test]
+fn owner_decision_credential_capture_verifier_substitution_is_denied_after_compute() {
+    let (_database, store) = owner_store("owner-capture-substitution");
+    let captured =
+        capture_current_owner_credential_v1(&store, OWNER).expect("original PHC must capture");
+    let verifier = Zeroizing::new(
+        create_local_password_verifier_v1(REPLACEMENT)
+            .expect("fixture replacement verifier must derive"),
+    );
+    let credential_id = local_password_credential_id_v1(
+        OWNER,
+        1,
+        &verifier,
+        owner_bootstrap_input(PASSWORD).created_at,
+    );
+    mutate_rows(&store, "lnsat_local_password_credentials", |connection| {
+        connection
+            .execute(
+                "UPDATE lnsat_local_password_credentials SET credential_id = ?1,
+                 password_verifier = ?2 WHERE identity_ref = ?3 AND credential_version = 1",
+                params![credential_id, verifier.as_str(), OWNER],
+            )
+            .expect("fixture must substitute valid verifier and bound ID");
+    });
+    let snapshot = compute_current_owner_credential_v1(captured, PASSWORD)
+        .expect("captured original PHC must still verify")
+        .expect("captured original owner must produce snapshot");
+    assert_eq!(
+        recheck(&store, &snapshot),
+        Err(LocalIdentityStoreErrorV1::AuthorizationRejected)
+    );
+    assert_eq!(recheck(&store, &prepare(&store, REPLACEMENT)), Ok(()));
+}
+
+#[test]
+fn owner_decision_credential_capture_fallback_is_owned_and_preserves_error_order() {
+    let (_database, mut store) = owner_store("owner-capture-fallback");
+    let session = store
+        .issue_local_owner_session_v1(&owner_session_input(PASSWORD))
+        .expect("fixture owner session must issue");
+    let inactive = "identity:human:inactive-operator";
+    store
+        .create_local_identity_v1(
+            &local_identity_create_input(
+                inactive,
+                "Inactive Fixture Operator",
+                LocalIdentityRoleV1::Operator,
+                PASSWORD,
+                "2026-07-23T17:02:00Z",
+            ),
+            &session.raw_session_token,
+            &session.raw_csrf_token,
+            "2026-07-23T17:02:00Z",
+        )
+        .expect("fixture non-owner must create");
+    store
+        .disable_local_identity_v1(
+            inactive,
+            &session.raw_session_token,
+            &session.raw_csrf_token,
+            "2026-07-23T17:03:00Z",
+        )
+        .expect("valid fixture disablement must persist")
+        .expect("active non-owner must disable");
+    let valid_fallback = store.authentication_dummy_verifier.clone();
+    let before_changes = store.connection.total_changes();
+    let before_activity = session_activity(&store, &session.session.session_id);
+    for identity in ["malformed", "identity:human:absent", inactive] {
+        for password in [PASSWORD, "short"] {
+            store.authentication_dummy_verifier = "malformed captured fallback".to_owned();
+            let captured = capture_current_owner_credential_v1(&store, identity)
+                .expect("unknown capture does not eagerly validate fallback");
+            assert!(store.connection.is_autocommit());
+            store
+                .authentication_dummy_verifier
+                .clone_from(&valid_fallback);
+            let result = compute_current_owner_credential_v1(captured, password);
+            if password == PASSWORD {
+                assert_eq!(result.err(), Some(LocalIdentityStoreErrorV1::EvidenceDrift));
+            } else {
+                assert!(
+                    result
+                        .expect("invalid password rejects before verifier parsing")
+                        .is_none()
+                );
+            }
+            assert_eq!(store.connection.total_changes(), before_changes);
+            assert_eq!(
+                session_activity(&store, &session.session.session_id),
+                before_activity
+            );
+        }
+    }
+}
+
+fn remove_fixture_credential_rows(store: &SqliteStore) {
+    let trigger = "lnsat_local_password_credentials_reject_delete";
+    let ddl: String = store
+        .connection
+        .query_row(
+            "SELECT sql FROM sqlite_schema WHERE type = 'trigger' AND name = ?1",
+            [trigger],
+            |row| row.get(0),
+        )
+        .expect("fixture delete guard DDL must read");
+    store
+        .connection
+        .execute_batch(&format!("DROP TRIGGER {trigger}"))
+        .expect("fixture guard must temporarily remove");
+    store
+        .connection
+        .execute("DELETE FROM lnsat_local_password_credentials", [])
+        .expect("fixture credentials must remove");
+    store
+        .connection
+        .execute_batch(&ddl)
+        .expect("exact fixture guard DDL must restore");
+    store
+        .verify_schema()
+        .expect("fixture schema must remain exact");
+}
+
+#[test]
+fn owner_decision_credential_capture_corrupt_rows_never_become_unknown() {
+    for empty in [true, false] {
+        let (_database, store) = owner_store("owner-capture-corrupt-rows");
+        if empty {
+            remove_fixture_credential_rows(&store);
+        } else {
+            mutate_rows(&store, "lnsat_local_password_credentials", |connection| {
+                connection
+                    .pragma_update(None, "ignore_check_constraints", true)
+                    .expect("fixture constraints must temporarily bypass");
+                connection
+                    .execute(
+                        "UPDATE lnsat_local_password_credentials SET verifier_profile = ?1",
+                        ["invalid fixture profile"],
+                    )
+                    .expect("fixture credential evidence must corrupt");
+                connection
+                    .pragma_update(None, "ignore_check_constraints", false)
+                    .expect("fixture constraints must restore");
+            });
+        }
+        assert_eq!(
+            capture_current_owner_credential_v1(&store, OWNER).err(),
+            Some(LocalIdentityStoreErrorV1::EvidenceDrift)
+        );
+        assert!(store.connection.is_autocommit());
+    }
 }

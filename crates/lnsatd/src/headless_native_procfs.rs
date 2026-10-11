@@ -1,6 +1,10 @@
 //! Private bounded Stage-A procfs observation lane. No caller or authority API.
 
 use super::mountinfo::MountInfoError;
+#[path = "headless_native_artifact.rs"]
+mod artifact;
+#[path = "headless_native_root_bootstrap.rs"]
+mod root_bootstrap;
 use std::{
     fs::File,
     num::NonZeroU64,
@@ -130,24 +134,115 @@ struct NativeSample {
     mountinfo: Vec<u8>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RequestKind {
+    Procfs,
+    ArtifactRead,
+    RootManifestBegin,
+    RootManifestRecheck,
+    RootManifestRetire,
+}
+
+enum RequestPayload {
+    Procfs {
+        resource: Arc<File>,
+        proc_root: Arc<File>,
+    },
+    Artifact(artifact::ArtifactRequest),
+    Root(root_bootstrap::RootRequest),
+}
+
 struct Request {
     token: NonZeroU64,
     deadline: Instant,
     dispatched: bool,
-    resource: Arc<File>,
-    proc_root: Arc<File>,
+    payload: RequestPayload,
+}
+
+impl Request {
+    fn procfs(&self) -> Option<(&Arc<File>, &Arc<File>)> {
+        match &self.payload {
+            RequestPayload::Procfs {
+                resource,
+                proc_root,
+            } => Some((resource, proc_root)),
+            RequestPayload::Artifact(_) | RequestPayload::Root(_) => None,
+        }
+    }
+
+    const fn kind(&self) -> RequestKind {
+        match &self.payload {
+            RequestPayload::Procfs { .. } => RequestKind::Procfs,
+            RequestPayload::Artifact(_) => RequestKind::ArtifactRead,
+            RequestPayload::Root(request) => request.kind(),
+        }
+    }
+
+    fn artifact(&self) -> Option<&artifact::ArtifactRequest> {
+        match &self.payload {
+            RequestPayload::Procfs { .. } | RequestPayload::Root(_) => None,
+            RequestPayload::Artifact(request) => Some(request),
+        }
+    }
+
+    fn budget(&self) -> Option<&Arc<artifact::ArtifactBudgetState>> {
+        match &self.payload {
+            RequestPayload::Procfs { .. } => None,
+            RequestPayload::Artifact(request) => Some(&request.budget),
+            RequestPayload::Root(request) => Some(request.budget()),
+        }
+    }
+
+    fn procfs_resource(&self) -> Result<&Arc<File>, ProcfsError> {
+        self.procfs()
+            .map(|(resource, _)| resource)
+            .ok_or(ProcfsError::InvalidDescriptor)
+    }
+
+    fn procfs_root(&self) -> Result<&Arc<File>, ProcfsError> {
+        self.procfs()
+            .map(|(_, proc_root)| proc_root)
+            .ok_or(ProcfsError::InvalidDescriptor)
+    }
+}
+
+enum CompletionOutcome {
+    Procfs(Result<NativeSample, ProcfsError>),
+    Artifact(Result<artifact::UnverifiedArtifactRead, artifact::ArtifactError>),
+    Root(root_bootstrap::RootCompletion),
+}
+
+impl CompletionOutcome {
+    const fn kind(&self) -> RequestKind {
+        match self {
+            Self::Procfs(_) => RequestKind::Procfs,
+            Self::Artifact(_) => RequestKind::ArtifactRead,
+            Self::Root(outcome) => outcome.kind(),
+        }
+    }
 }
 
 struct Completion {
     token: NonZeroU64,
-    outcome: Result<NativeSample, ProcfsError>,
+    outcome: CompletionOutcome,
+}
+
+impl Completion {
+    const fn kind(&self) -> RequestKind {
+        match &self.outcome {
+            CompletionOutcome::Procfs(_) => RequestKind::Procfs,
+            CompletionOutcome::Artifact(_) => RequestKind::ArtifactRead,
+            CompletionOutcome::Root(outcome) => outcome.kind(),
+        }
+    }
 }
 
 struct Slots {
     join: Option<JoinHandle<()>>,
     request: Option<Request>,
     completion: Option<Completion>,
-    cleanup: Option<(NonZeroU64, CleanupAccounting)>,
+    cleanup: Option<(NonZeroU64, RequestKind, CleanupAccounting)>,
+    root_lease: Option<root_bootstrap::RootLease>,
 }
 
 impl Slots {
@@ -157,6 +252,7 @@ impl Slots {
             request: None,
             completion: None,
             cleanup: None,
+            root_lease: None,
         }
     }
 }
@@ -244,6 +340,50 @@ struct WorkerExitGuard;
 impl Drop for WorkerExitGuard {
     fn drop(&mut self) {
         LANE.terminalize();
+    }
+}
+
+/// Fixed artifact schedule checks; only lane descendants can construct it.
+pub(super) struct ArtifactCheckpoint<'a> {
+    lane: &'a LaneRoot,
+    token: NonZeroU64,
+    deadline: Instant,
+    budget: &'a artifact::ArtifactBudgetState,
+}
+
+impl ArtifactCheckpoint<'_> {
+    fn check(&self) -> Result<(), artifact::ArtifactError> {
+        let state = self.lane.control.load(Ordering::SeqCst);
+        if Instant::now() >= self.deadline || terminal(state) {
+            self.budget.invalidate();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        if token(state) != self.token.get() {
+            self.budget.invalidate();
+            return Err(artifact::ArtifactError::AssociationRejected);
+        }
+        self.budget.valid()
+    }
+
+    // The artifact caller repeats the exact typed check on both sampler result
+    // branches before mapping a native error. No gate denial becomes success.
+    pub(super) fn check_native(&self) -> Result<(), super::NativeError> {
+        self.check().map_err(|_| super::NativeError::ReadRejected)
+    }
+}
+
+struct ArtifactWorkerGuard {
+    budget: Option<Arc<artifact::ArtifactBudgetState>>,
+    complete: bool,
+}
+
+impl Drop for ArtifactWorkerGuard {
+    fn drop(&mut self) {
+        if !self.complete
+            && let Some(budget) = &self.budget
+        {
+            budget.invalidate();
+        }
     }
 }
 
@@ -420,8 +560,10 @@ impl Attempt {
             token: next_token,
             deadline,
             dispatched: false,
-            resource,
-            proc_root,
+            payload: RequestPayload::Procfs {
+                resource,
+                proc_root,
+            },
         });
         slots.cleanup = None;
         Ok(Self {
@@ -430,6 +572,93 @@ impl Attempt {
             deadline,
             armed: true,
         })
+    }
+
+    fn try_prepare_artifact(
+        request: artifact::ArtifactRequest,
+    ) -> Result<Option<Self>, artifact::ArtifactError> {
+        let lane = &LANE;
+        request.budget.valid()?;
+        if lane.control.load(Ordering::SeqCst) == VIRGIN {
+            construct_once().map_err(|error| match error {
+                ProcfsError::UnsupportedPlatform => artifact::ArtifactError::UnsupportedPlatform,
+                ProcfsError::StorageUnavailable => artifact::ArtifactError::StorageUnavailable,
+                _ => artifact::ArtifactError::BudgetExhausted,
+            })?;
+        }
+        Self::prepare_artifact_in(lane, request)
+    }
+
+    fn prepare_artifact_in(
+        lane: &'static LaneRoot,
+        request: artifact::ArtifactRequest,
+    ) -> Result<Option<Self>, artifact::ArtifactError> {
+        if let Err(error) = request.check_input() {
+            request.budget.invalidate();
+            return Err(error);
+        }
+        let old = lane.control.load(Ordering::SeqCst);
+        if terminal(old) {
+            request.budget.invalidate();
+            return Err(artifact::ArtifactError::ObservationInvalid);
+        }
+        if phase(old) != IDLE {
+            return Ok(None);
+        }
+        if token(old) == TOKEN_MAX {
+            lane.terminalize();
+            request.budget.invalidate();
+            return Err(artifact::ArtifactError::LimitExceeded);
+        }
+        let next_token = token(old)
+            .checked_add(1)
+            .and_then(NonZeroU64::new)
+            .ok_or(artifact::ArtifactError::LimitExceeded)?;
+        let mut slots = match lane.slots.try_lock() {
+            Ok(slots) => slots,
+            Err(std::sync::TryLockError::WouldBlock) => return Ok(None),
+            Err(std::sync::TryLockError::Poisoned(_)) => {
+                lane.terminalize();
+                request.budget.invalidate();
+                return Err(artifact::ArtifactError::CleanupUncertain);
+            }
+        };
+        if slots.request.is_some() || slots.completion.is_some() {
+            lane.terminalize();
+            request.budget.invalidate();
+            return Err(artifact::ArtifactError::CleanupUncertain);
+        }
+        request.budget.valid()?;
+        if request.purpose == artifact::ArtifactReadPurpose::RootManifest {
+            request.budget.claim_manifest()?;
+        }
+        if lane
+            .control
+            .compare_exchange(
+                old,
+                word(ACTIVE, next_token.get()),
+                Ordering::SeqCst,
+                Ordering::SeqCst,
+            )
+            .is_err()
+        {
+            request.budget.invalidate();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        let deadline = request.budget.deadline;
+        slots.request = Some(Request {
+            token: next_token,
+            deadline,
+            dispatched: false,
+            payload: RequestPayload::Artifact(request),
+        });
+        slots.cleanup = None;
+        Ok(Some(Self {
+            lane,
+            token: next_token,
+            deadline,
+            armed: true,
+        }))
     }
 
     fn dispatch(&mut self) -> Result<DispatchStatus, ProcfsError> {
@@ -451,11 +680,22 @@ impl Attempt {
                 return Err(ProcfsError::CleanupUncertain);
             }
         };
-        let valid = slots
+        let associated = slots.request.as_ref().is_some_and(|request| {
+            request.token == self.token && request.kind() == RequestKind::Procfs
+        });
+        if !associated {
+            if let Some(budget) = slots.request.as_ref().and_then(Request::budget) {
+                budget.invalidate();
+            }
+            self.lane.terminalize();
+            self.armed = false;
+            return Err(ProcfsError::InvalidDescriptor);
+        }
+        if slots
             .request
             .as_ref()
-            .is_some_and(|request| request.token == self.token && !request.dispatched);
-        if !valid {
+            .is_some_and(|request| request.dispatched)
+        {
             return Err(ProcfsError::InvalidDescriptor);
         }
         if Instant::now() >= self.deadline {
@@ -487,6 +727,70 @@ impl Attempt {
         Ok(DispatchStatus::Dispatched)
     }
 
+    fn dispatch_artifact(
+        &mut self,
+        budget: &artifact::ArtifactBudgetState,
+    ) -> Result<DispatchStatus, artifact::ArtifactError> {
+        if !self.armed || Instant::now() >= self.deadline {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        if let Err(error) = budget.valid() {
+            self.close();
+            return Err(error);
+        }
+        let expected = word(ACTIVE, self.token.get());
+        if self.lane.control.load(Ordering::SeqCst) != expected {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        let mut slots = match self.lane.slots.try_lock() {
+            Ok(slots) => slots,
+            Err(std::sync::TryLockError::WouldBlock) => return Ok(DispatchStatus::Pending),
+            Err(std::sync::TryLockError::Poisoned(_)) => {
+                budget.invalidate();
+                self.lane.terminalize();
+                self.armed = false;
+                return Err(artifact::ArtifactError::CleanupUncertain);
+            }
+        };
+        let valid = slots.request.as_ref().is_some_and(|request| {
+            request.token == self.token
+                && request.kind() == RequestKind::ArtifactRead
+                && !request.dispatched
+        });
+        if !valid {
+            budget.invalidate();
+            self.lane.terminalize();
+            self.armed = false;
+            return Err(artifact::ArtifactError::AssociationRejected);
+        }
+        if Instant::now() >= self.deadline
+            || self
+                .lane
+                .control
+                .compare_exchange(expected, expected, Ordering::SeqCst, Ordering::SeqCst)
+                .is_err()
+        {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        if Instant::now() >= self.deadline {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        if let Some(request) = slots.request.as_mut() {
+            request.dispatched = true;
+        }
+        drop(slots);
+        self.lane.wake();
+        Ok(DispatchStatus::Dispatched)
+    }
+
     fn poll(&mut self) -> Result<Option<NativeSample>, ProcfsError> {
         if !self.armed || Instant::now() >= self.deadline {
             self.close();
@@ -509,14 +813,11 @@ impl Attempt {
                 return Err(ProcfsError::CleanupUncertain);
             }
         };
-        if slots
-            .completion
-            .as_ref()
-            .is_none_or(|completion| completion.token != self.token)
-            || !slots
-                .cleanup
-                .is_some_and(|(token, accounting)| token == self.token && accounting.complete())
-        {
+        if slots.completion.as_ref().is_none_or(|completion| {
+            completion.token != self.token || completion.kind() != RequestKind::Procfs
+        }) || !slots.cleanup.is_some_and(|(token, kind, accounting)| {
+            token == self.token && kind == RequestKind::Procfs && accounting.complete(kind)
+        }) {
             self.lane.terminalize();
             self.armed = false;
             return Err(ProcfsError::CleanupUncertain);
@@ -539,10 +840,114 @@ impl Attempt {
         drop(slots);
         self.lane.wake();
         if let Some(completion) = completion {
-            completion.outcome.map(Some)
+            match completion.outcome {
+                CompletionOutcome::Procfs(outcome) => outcome.map(Some),
+                CompletionOutcome::Artifact(_) | CompletionOutcome::Root(_) => {
+                    self.lane.terminalize();
+                    Err(ProcfsError::CleanupUncertain)
+                }
+            }
         } else {
             self.lane.terminalize();
             Err(ProcfsError::CleanupUncertain)
+        }
+    }
+
+    fn poll_artifact(
+        &mut self,
+        budget: &artifact::ArtifactBudgetState,
+    ) -> Result<Option<artifact::UnverifiedArtifactRead>, artifact::ArtifactError> {
+        if !self.armed || Instant::now() >= self.deadline {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        let current = self.lane.control.load(Ordering::SeqCst);
+        if terminal(current) || !same_token(current, self.token) {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        if current != word(READY, self.token.get()) {
+            if let Err(error) = budget.valid() {
+                self.close();
+                return Err(error);
+            }
+            return Ok(None);
+        }
+        let mut slots = match self.lane.slots.try_lock() {
+            Ok(slots) => slots,
+            Err(std::sync::TryLockError::WouldBlock) => return Ok(None),
+            Err(std::sync::TryLockError::Poisoned(_)) => {
+                budget.invalidate();
+                self.lane.terminalize();
+                self.armed = false;
+                return Err(artifact::ArtifactError::CleanupUncertain);
+            }
+        };
+        let expected = slots.completion.as_ref().is_some_and(|completion| {
+            completion.token == self.token && completion.kind() == RequestKind::ArtifactRead
+        });
+        if !expected {
+            budget.invalidate();
+            self.lane.terminalize();
+            self.armed = false;
+            return Err(artifact::ArtifactError::AssociationRejected);
+        }
+        if !slots.cleanup.is_some_and(|(token, kind, accounting)| {
+            token == self.token && kind == RequestKind::ArtifactRead && accounting.complete(kind)
+        }) {
+            budget.invalidate();
+            self.lane.terminalize();
+            self.armed = false;
+            return Err(artifact::ArtifactError::CleanupUncertain);
+        }
+        // An error outcome retains its original fixed denial after its worker
+        // invalidates the observation. A success must still have a live gate.
+        let success = slots.completion.as_ref().is_some_and(|completion| {
+            matches!(&completion.outcome, CompletionOutcome::Artifact(Ok(_)))
+        });
+        if success && let Err(error) = budget.valid() {
+            self.close();
+            return Err(error);
+        }
+        if !reserve_ready(&self.lane.control, self.token) {
+            return Ok(None);
+        }
+        if Instant::now() >= self.deadline || terminal(self.lane.control.load(Ordering::SeqCst)) {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        if success && let Err(error) = budget.valid() {
+            self.close();
+            return Err(error);
+        }
+        if !retire_reserved(&self.lane.control, self.token) {
+            budget.invalidate();
+            self.close();
+            return Err(artifact::ArtifactError::BudgetExhausted);
+        }
+        self.armed = false;
+        let completion = slots.completion.take();
+        drop(slots);
+        self.lane.wake();
+        match completion {
+            Some(Completion {
+                outcome: CompletionOutcome::Artifact(outcome),
+                ..
+            }) => outcome.map(Some),
+            Some(completion) => {
+                budget.invalidate();
+                drop(completion);
+                self.lane.terminalize();
+                Err(artifact::ArtifactError::AssociationRejected)
+            }
+            None => {
+                budget.invalidate();
+                self.lane.terminalize();
+                Err(artifact::ArtifactError::CleanupUncertain)
+            }
         }
     }
 
@@ -574,10 +979,14 @@ fn worker_body() {
     while !LANE.started.load(Ordering::SeqCst) {
         thread::park();
     }
+    let mut retained_root = None;
     loop {
+        root_bootstrap::maintain(&LANE, retained_root.as_ref());
         let state = LANE.control.load(Ordering::SeqCst);
         if terminal(state) {
-            drain_terminal(&LANE);
+            if root_bootstrap::drain(&LANE, &mut retained_root) {
+                drain_terminal(&LANE);
+            }
             return;
         }
         if phase(state) == RETIRING {
@@ -587,7 +996,7 @@ fn worker_body() {
             continue;
         }
         if phase(state) != ACTIVE {
-            thread::park();
+            root_bootstrap::park(&LANE, retained_root.as_ref());
             continue;
         }
         let request = {
@@ -606,14 +1015,34 @@ fn worker_body() {
             }
         };
         let Some(request) = request else {
-            thread::park();
+            root_bootstrap::park(&LANE, retained_root.as_ref());
             continue;
         };
         let request_token = request.token;
         let deadline = request.deadline;
-        let (outcome, mut accounting) = run_fixed_procfs_attempt(&request);
+        let kind = request.kind();
+        let mut artifact_guard = ArtifactWorkerGuard {
+            budget: request.budget().map(Arc::clone),
+            complete: false,
+        };
+        let (outcome, mut accounting) = run_fixed_attempt(&LANE, &request, &mut retained_root);
         retire_request(&LANE, request, &mut accounting);
-        publish_completion(&LANE, request_token, deadline, outcome, accounting);
+        let budgeted_success = match &outcome {
+            CompletionOutcome::Procfs(_) => true,
+            CompletionOutcome::Artifact(result) => result.is_ok(),
+            CompletionOutcome::Root(result) => result.success(),
+        };
+        let complete = accounting.complete(kind);
+        let published = publish_completion(
+            &LANE,
+            request_token,
+            deadline,
+            kind,
+            outcome,
+            accounting,
+            artifact_guard.budget.as_deref(),
+        );
+        artifact_guard.complete = budgeted_success && complete && published;
     }
 }
 
@@ -623,27 +1052,62 @@ fn publish_completion(
     lane: &LaneRoot,
     request_token: NonZeroU64,
     deadline: Instant,
-    outcome: Result<NativeSample, ProcfsError>,
+    kind: RequestKind,
+    outcome: CompletionOutcome,
     accounting: CleanupAccounting,
-) {
-    if !accounting.complete() || Instant::now() >= deadline {
+    budget: Option<&artifact::ArtifactBudgetState>,
+) -> bool {
+    let deny = || {
+        if let Some(budget) = budget {
+            budget.invalidate();
+        }
         lane.terminalize();
+    };
+    if matches!(&outcome, CompletionOutcome::Artifact(Err(_)))
+        && let Some(budget) = budget
+    {
+        budget.invalidate();
+    }
+    if kind != RequestKind::Procfs && budget.is_none() {
+        deny();
+        return false;
+    }
+    if matches!(&outcome, CompletionOutcome::Artifact(Ok(_)))
+        && budget.is_none_or(|budget| budget.valid().is_err())
+    {
+        deny();
+        return false;
+    }
+    if !accounting.complete(kind) || Instant::now() >= deadline {
+        deny();
     }
     let Ok(mut slots) = lane.slots.lock() else {
-        lane.terminalize();
+        deny();
         drop(outcome);
-        return;
+        return false;
     };
-    slots.cleanup = Some((request_token, accounting));
+    if outcome.kind() != kind {
+        deny();
+        drop(slots);
+        drop(outcome);
+        return false;
+    }
+    slots.cleanup = Some((request_token, kind, accounting));
     let active = word(ACTIVE, request_token.get());
     if lane.control.load(Ordering::SeqCst) != active
         || slots.completion.is_some()
         || slots.request.is_some()
     {
-        lane.terminalize();
+        deny();
         drop(slots);
         drop(outcome);
-        return;
+        return false;
+    }
+    if let CompletionOutcome::Root(result) = &outcome
+        && !root_bootstrap::publish_lease(&mut slots, request_token, result, budget, accounting)
+    {
+        deny();
+        return false;
     }
     slots.completion = Some(Completion {
         token: request_token,
@@ -659,8 +1123,10 @@ fn publish_completion(
         )
         .is_err()
     {
-        lane.terminalize();
+        deny();
+        return false;
     }
+    true
 }
 
 fn finish_retirement(lane: &LaneRoot, state: u64) -> bool {
@@ -672,9 +1138,9 @@ fn finish_retirement(lane: &LaneRoot, state: u64) -> bool {
     };
     if slots.request.is_some()
         || slots.completion.is_some()
-        || !slots
-            .cleanup
-            .is_some_and(|(job, accounting)| same_token(state, job) && accounting.complete())
+        || !slots.cleanup.is_some_and(|(job, kind, accounting)| {
+            same_token(state, job) && accounting.complete(kind)
+        })
     {
         return false;
     }
@@ -701,9 +1167,10 @@ fn drain_terminal(lane: &LaneRoot) {
     };
     let cleanup = request.map(|request| {
         let token = request.token;
+        let kind = request.kind();
         let mut accounting = CleanupAccounting::default();
         retire_request(lane, request, &mut accounting);
-        (token, accounting)
+        (token, kind, accounting)
     });
     drop(completion);
     if let Some(cleanup) = cleanup {
@@ -722,22 +1189,32 @@ fn drain_terminal(lane: &LaneRoot) {
 }
 
 fn retire_request(lane: &LaneRoot, request: Request, accounting: &mut CleanupAccounting) {
-    #[cfg(not(target_os = "linux"))]
-    let _ = lane;
-    // Both references are retired even when the first consuming close fails.
-    for file in [request.resource, request.proc_root] {
-        #[cfg(target_os = "linux")]
-        {
-            if let Some(file) = Arc::into_inner(file)
-                && nix::unistd::close(file).is_err()
-            {
-                accounting.input_close_failures += 1;
-                lane.terminalize();
+    match request.payload {
+        RequestPayload::Artifact(request) => artifact::retire(lane, request, accounting),
+        // Root payloads carry only bounded non-native data. Originals remain worker-local.
+        RequestPayload::Root(request) => drop(request),
+        RequestPayload::Procfs {
+            resource,
+            proc_root,
+        } => {
+            #[cfg(not(target_os = "linux"))]
+            let _ = lane;
+            // Both references are retired even when the first consuming close fails.
+            for file in [resource, proc_root] {
+                #[cfg(target_os = "linux")]
+                {
+                    if let Some(file) = Arc::into_inner(file)
+                        && nix::unistd::close(file).is_err()
+                    {
+                        accounting.input_close_failures += 1;
+                        lane.terminalize();
+                    }
+                }
+                #[cfg(not(target_os = "linux"))]
+                drop(file);
+                accounting.input_references_retired += 1;
             }
         }
-        #[cfg(not(target_os = "linux"))]
-        drop(file);
-        accounting.input_references_retired += 1;
     }
 }
 
@@ -748,6 +1225,7 @@ struct CleanupAccounting {
     reader_close_failures: u8,
     input_references_retired: u8,
     input_close_failures: u8,
+    root: Option<root_bootstrap::RootAccounting>,
 }
 
 impl CleanupAccounting {
@@ -755,26 +1233,62 @@ impl CleanupAccounting {
         self.reader_handles == self.reader_close_attempts && self.reader_close_failures == 0
     }
 
-    fn complete(self) -> bool {
-        self.reader_clean() && self.input_references_retired == 2 && self.input_close_failures == 0
+    fn complete(self, kind: RequestKind) -> bool {
+        let expected_input_references = match kind {
+            RequestKind::Procfs => 2,
+            RequestKind::ArtifactRead => 1,
+            RequestKind::RootManifestBegin
+            | RequestKind::RootManifestRecheck
+            | RequestKind::RootManifestRetire => 0,
+        };
+        let root_complete = if expected_input_references == 0 {
+            self.root.is_some_and(|root| root.complete(kind))
+                && self.reader_handles == 0
+                && self.reader_close_attempts == 0
+        } else {
+            self.root.is_none()
+        };
+        self.reader_clean()
+            && root_complete
+            && self.input_references_retired == expected_input_references
+            && self.input_close_failures == 0
     }
 }
 
-#[cfg(not(target_os = "linux"))]
-fn run_fixed_procfs_attempt(
-    _request: &Request,
-) -> (Result<NativeSample, ProcfsError>, CleanupAccounting) {
-    (
-        Err(ProcfsError::UnsupportedPlatform),
-        CleanupAccounting::default(),
-    )
-}
-
-#[cfg(target_os = "linux")]
-fn run_fixed_procfs_attempt(
+fn run_fixed_attempt(
+    lane: &'static LaneRoot,
     request: &Request,
-) -> (Result<NativeSample, ProcfsError>, CleanupAccounting) {
-    linux::observe(request)
+    retained_root: &mut Option<root_bootstrap::RootManifestCustodyState>,
+) -> (CompletionOutcome, CleanupAccounting) {
+    match request.kind() {
+        RequestKind::RootManifestBegin
+        | RequestKind::RootManifestRecheck
+        | RequestKind::RootManifestRetire => {
+            let (outcome, accounting) = root_bootstrap::execute(lane, request, retained_root);
+            (CompletionOutcome::Root(outcome), accounting)
+        }
+        RequestKind::Procfs => {
+            #[cfg(not(target_os = "linux"))]
+            let outcome = (
+                Err(ProcfsError::UnsupportedPlatform),
+                CleanupAccounting::default(),
+            );
+            #[cfg(target_os = "linux")]
+            let outcome = linux::observe(request);
+            let (outcome, accounting) = outcome;
+            (CompletionOutcome::Procfs(outcome), accounting)
+        }
+        RequestKind::ArtifactRead => {
+            let token = request.token;
+            let deadline = request.deadline;
+            let artifact_request = request.artifact().expect("closed request kind");
+            let outcome = artifact::read(lane, token, deadline, artifact_request);
+            (
+                CompletionOutcome::Artifact(outcome),
+                CleanupAccounting::default(),
+            )
+        }
+    }
 }
 
 // This module has one fixed native schedule, with no supplied observer or callback.
@@ -954,7 +1468,7 @@ mod linux {
             self.check()?;
             let opened = match parent {
                 Some(parent) => openat2(self.fd(parent)?, name, how),
-                None => openat2(self.request.proc_root.as_ref(), name, how),
+                None => openat2(self.request.procfs_root()?.as_ref(), name, how),
             };
             self.retain_opened(index, opened)?;
             let observed = self.object(self.fd(index)?)?;
@@ -1112,7 +1626,7 @@ mod linux {
             let mut bytes = [0_u8; 11];
             self.check()?;
             let length = rustix::fs::readlinkat_raw(
-                self.request.proc_root.as_ref(),
+                self.request.procfs_root()?.as_ref(),
                 c"self",
                 &mut bytes[..],
             );
@@ -1222,13 +1736,13 @@ mod linux {
         }
 
         fn schedule(&mut self) -> Result<NativeSample, ProcfsError> {
-            let resource = self.object(self.request.resource.as_ref())?;
+            let resource = self.object(self.request.procfs_resource()?.as_ref())?;
             let resource_type: &[u8] = match resource.filesystem_magic {
                 EXT4_MAGIC => b"ext4",
                 TMPFS_MAGIC => b"tmpfs",
                 _ => return Err(ProcfsError::OriginRejected),
             };
-            let proc_root = self.object(self.request.proc_root.as_ref())?;
+            let proc_root = self.object(self.request.procfs_root()?.as_ref())?;
             if proc_root.mode & nix::libc::S_IFMT != nix::libc::S_IFDIR
                 || proc_root.filesystem_magic != PROC_MAGIC
             {
@@ -1245,18 +1759,33 @@ mod linux {
             let mount_namespace = self.open_namespace(c"mnt", MOUNT_NS)?;
             let user_namespace = self.open_namespace(c"user", USER_NS)?;
             let process_root = self.link(self.fd(SELF)?, c"root")?;
-            let resource_before =
-                self.fdinfo(&resource, self.request.resource.as_raw_fd(), &proc_root)?;
-            let proc_before =
-                self.fdinfo(&proc_root, self.request.proc_root.as_raw_fd(), &proc_root)?;
+            let resource_before = self.fdinfo(
+                &resource,
+                self.request.procfs_resource()?.as_raw_fd(),
+                &proc_root,
+            )?;
+            let proc_before = self.fdinfo(
+                &proc_root,
+                self.request.procfs_root()?.as_raw_fd(),
+                &proc_root,
+            )?;
             let before = self.read_record(SELF, c"mountinfo", MAX_MOUNTINFO_BYTES, &proc_root)?;
             let after = self.read_record(SELF, c"mountinfo", MAX_MOUNTINFO_BYTES, &proc_root)?;
-            let resource_after =
-                self.fdinfo(&resource, self.request.resource.as_raw_fd(), &proc_root)?;
-            let proc_after =
-                self.fdinfo(&proc_root, self.request.proc_root.as_raw_fd(), &proc_root)?;
-            if resource != self.object(self.request.resource.as_ref())?
-                || !Self::same_proc(&proc_root, &self.object(self.request.proc_root.as_ref())?)
+            let resource_after = self.fdinfo(
+                &resource,
+                self.request.procfs_resource()?.as_raw_fd(),
+                &proc_root,
+            )?;
+            let proc_after = self.fdinfo(
+                &proc_root,
+                self.request.procfs_root()?.as_raw_fd(),
+                &proc_root,
+            )?;
+            if resource != self.object(self.request.procfs_resource()?.as_ref())?
+                || !Self::same_proc(
+                    &proc_root,
+                    &self.object(self.request.procfs_root()?.as_ref())?,
+                )
                 || !Self::same_proc(&self_directory, &self.object(self.fd(SELF)?)?)
                 || !Self::same_proc(&fdinfo_directory, &self.object(self.fd(FDINFO)?)?)
                 || !Self::same_proc(&namespace_directory, &self.object(self.fd(NS)?)?)

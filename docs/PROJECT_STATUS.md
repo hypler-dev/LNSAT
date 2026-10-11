@@ -14,24 +14,30 @@ operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
 
-Latest bounded contract work prepares the
-[native procfs fixture source packet](#native-procfs-fixture-source-packet)
-for the selected Linux evidence method. Kernel/harness implementation,
-construction and execution remain unopened. The preceding contract work records
+The [native procfs fixture source packet](#native-procfs-fixture-source-packet)
+remains prepared for the selected Linux evidence method. Kernel/harness source,
+construction and execution remain unopened. Earlier contract work records
 [local OS authentication and encrypted-state design requirements](#local-os-authentication-and-encrypted-state-direction)
 and clarifies the existing
 [release-write deadline](#release-write-deadline-contract-clarification).
-Both remain documentation only; provider integration and the release writer
-are unfinished. The latest bounded engine source is the
-[private daemon Info decoder contract](#stage-a-private-daemon-info-decoder-contract),
-following the source-reviewed Version, context/challenge and earlier private
-candidates. Info now has a private supplied-body source candidate and independent
-synthetic tests. Focused and full host-source validation pass; exact source and
-direct-child attestations remain separate gates under PHR-0038.
-The prior Version source and exact
-direct-child attestation are complete under PHR-0037. These prerequisites stay
-distinct from unfinished V1 integration, native evidence, enterprise assurance
-and actual runtime gates.
+Those remain documentation only; provider integration and the release writer
+are unfinished.
+
+The latest bounded engine source candidate is the
+[private C1 credential capture/compute split](#stage-a-credential-capturecomputerecheck-contract).
+It separates owned credential capture from password computation while preserving
+original-scope and exact-connection recheck. PHR-0085 tracks its bounded source
+and direct-child review; it adds no configuration or execution authority.
+The [private raw OCI chain decoder](#stage-a-private-raw-oci-chain-contract)
+remains the latest bounded native/image prerequisite, following the attested
+private root-manifest and daemon-response candidates.
+It retains supplied config/manifest/optional-index records, raw identities and
+internal parent links. PHR-0056 attests its precode contract; source validation
+and exact independent source/direct-child review are tracked under PHR-0057.
+These are private prerequisites, distinct from unfinished V1 integration, native
+evidence, enterprise assurance and actual runtime gates. The
+[cross-module association/custody boundary](#stage-a-image-association-and-custody-boundary)
+records the remaining composition obligations without opening source integration.
 The [V1 command and contract reconciliation](#v1-command-and-contract-completion-gates)
 records those remaining product gates; the genuine reader remains a separate
 contract-first native slice.
@@ -110,6 +116,114 @@ applies source remediation for the same-UID Unix control-socket substitution and
 global login-limiter lockout findings. It withdraws Unix bearer reads before the
 first supported release, preserves browser header-pair transport, and still
 requires focused validation and independent review before release judgment.
+
+### Standalone Gateway adversarial requirements
+
+Canonical work record: this subsection. The owner accepted applying the relevant
+adversarial boundary analysis to LNSAT as a standalone Gateway. The
+[threat model requirements](architecture/THREAT_MODEL.md#standalone-gateway-admission-and-effect-boundary)
+refine existing ADR-0008 scope and the accepted enforcement/authorization
+lifecycle. PHR-0078 tracks this documentation reconciliation. It creates no
+new execution authority, runtime implementation or dependency on Rangoon.
+
+Existing source foundations bind the represented action arguments, target,
+configuration/executable digests, adapter, audience and approval chain; finite
+per-packet budgets, source-local approval authentication, revocation denials and
+inert durable admission rechecks are reusable evidence. Digest binding alone
+does not prove custody of the actual side effect. The selected writable-store,
+native resource identity, all-writer admission/use and full native freeze gates
+remain unfinished under their existing canonical records. Experimental served
+fake-runtime evidence remains separate from the Phase 11 real-runtime packet;
+withdrawn Unix bearer interfaces remain withdrawn.
+
+The reviewed packet-budget and approval/admission spans do not establish
+cross-operation cumulative effect accounting. No whole-repository absence claim
+or implemented quota feature follows. A later selected profile that claims
+cumulative bounds needs an exact independently reviewed accounting contract,
+atomic reservations, concurrent/restart and ambiguous-outcome proof. Protected
+resource exclusions and narrow action scopes remain distinct policy choices.
+Required context facts need configured identity, scope and freshness checks;
+advisory telemetry and an external provider's allow decision cannot grant local
+approval or substitute for durable receipts. This packet implements no context
+provider, telemetry pipeline or synchronization service.
+
+Containment claims also require qualified coverage against alternate direct
+target access. Local v1 still trusts the host owner, daemon and OS administration
+and does not resist compromised root or a malicious owner. Optional assurance
+against a compromised requester workstation needs separately qualified trusted
+approval presentation and presence; a signature or OS encryption alone is
+insufficient. Those enterprise claims are unimplemented by this packet.
+
+The [build sequence](PRODUCT_BUILD_SEQUENCE.md#4-prove-the-integrated-workflow)
+keeps current source order: finish existing custody/admission, revocation and
+reconciliation work before selecting additional aggregate-accounting or context
+integration packets. Standalone headless workflows use the same engine contracts
+with integrations absent. Per-command implementation truth remains in
+[V1 command gates](#v1-command-and-contract-completion-gates); the
+[Phase 11 operator packet](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md)
+alone owns the existing real-runtime proof gate. Design acceptance, reviewed
+source, merge, runtime, supported targets and release remain separate.
+
+### Gateway deterministic fuzz and property checks
+
+Canonical implementation record: this subsection. Owner-authorized source-only
+fuzz/property coverage extends the existing dependency-free Rust tests without
+changing production behavior, schemas, APIs or dependencies. PHR-0079 tracks
+the exact source candidate and its separate review-metadata child.
+
+Three contract properties exercise ten stale approved-packet substitutions,
+twenty-five represented request-field mutations, five canonical-byte changes
+and five binary digest changes. A fixed seed (`0x5EED_CAFE_2026_1008`) generates
+192 bounded inputs across truncation, insertion, deletion and byte-flip cases;
+Invalid UTF-8 mutations are converted lossily for the string parser; raw
+transport decoding is not exercised. Explicit positive
+controls cover canonicalized reversed object order, nested arguments/arrays and
+a distinct self-consistent request. Parser acceptance proves canonical/digest
+consistency, not linkage to the original human approval or physical custody.
+
+One store property mutates every capability byte and checks scope, session and
+time denials before a valid redemption. After reopen, sixteen exact replays
+return existing metadata and sixteen changed idempotency keys cannot create a
+second consumption. The property requires one durable consumption and no
+adapter attempt, receipt or reconciliation. This is inert source-local store
+evidence, not actual execution or runtime replay proof.
+
+Focused contract/store checks, full `npm run check`, named documentation/public/
+inventory/history gates, format/diff checks and fresh independent exact
+source/direct-child review gate this bounded candidate. These are reproducible
+regression properties and a small deterministic fuzz smoke, not a coverage-guided
+engine, broad retained corpus, long-running campaign or completed Phase 13 fuzz
+gate. Actual-effect custody, all-writer/native freeze, cumulative accounting,
+required-context integrations, real runtime and supported packaging remain
+unfinished under their existing records. No runtime or release authority opens.
+
+### Scoped dependency maintenance candidate
+
+Owner-authorized development restoration uses an isolated project cache, the
+pinned Node/npm pair, exact lockfile integrity and verified npm registry origins
+with lifecycle scripts disabled. A fresh advisory check identified affected
+MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4 dependencies. The current
+candidate pins the test client to 2.2.0, transitive legacy SDK to 1.31.0 and
+Sharp to 0.35.5 with its matching platform closure. Production MCP server,
+core and Node wrapper remain 2.0.0; the client resolves its own core 2.2.0.
+No OAuth client, credential intake or runtime integration is introduced.
+
+The [dependency baseline](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md#upstream-baseline)
+records exact refreshed package identities and removes a stale advisory-allowance
+claim. No audit exceptions are accepted. Quarantined installation, registry
+signatures and advisory results gate source validation; focused compatibility,
+full source checks and independent exact source/direct-child attestations gate
+completion of this candidate. Package authenticity and green source checks do
+not establish Linux native execution, supported distribution rows or release
+readiness.
+
+The [governed installation direction](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#planned-direction-governed-dependency-installation)
+is planned only. Scoped contributor permission does not implement an engine
+installer or let adapters administer the host. A future contract must bind exact
+closure, approved origins, verification, isolation, destination, privileges,
+expiry, one-use approval and bounded receipts. Rangoon supplies adapter UX;
+LNSAT retains neutral authorization and evidence. Installation and tool execution
+remain distinct permissions.
 
 ### Public HTTPS IPv6 address classification
 
@@ -1734,6 +1848,173 @@ SQL18/initializer/activation, merge/main mutation, package/image construction,
 release/publication/deploy/production or tool installation is opened. LNSAT
 remains neutral and standalone; no support or certification claim follows.
 
+### Inspect lifecycle normalization reconciliation
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [Inspect normalization prerequisite](architecture/headless-resource-enforcement/docker-response-source-spec.md#inspect-lifecycle-normalization-prerequisite)
+reconciles the pinned served API and create/start/stop paths before a complete
+Inspect private decoder contract. Thirteen stale appendix hashes are corrected
+against exact public bytes verified through raw and GitHub Contents endpoints,
+with independent Git blob identity checks. Field/type/tag inventory is unchanged.
+
+The source trace distinguishes empty created-state AppArmor/metadata paths from
+running and exited claims, fixes empty ExecIDs to null, preserves disabled-health
+and phase-specific network semantics, and records 64/65 positive HostConfig
+members. A 64-member syntactic object ceiling would reject the action positive shape;
+the future Inspect ceiling is 128 while bounded dictionaries remain at 64.
+These corrections preserve effective native confinement and held attempt/journal
+custody; API values supply neither enforcement nor absence evidence.
+
+A follow-up pinned-source trace corrects the prior unconditional config-digest
+claim for container Inspect Image: graphdriver stores the config digest, while
+containerd stores the image target manifest/index digest and retains the selected
+platform manifest descriptor separately. The
+[backend identity contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#inspect-image-identity-by-selected-backend)
+requires held-backend selection, distinct raw OCI chain comparisons and future
+cross-domain substitution tests. Three additional stale storage-type appendix
+hashes are corrected without changing field/type/tag inventory. PHR-0051 tracks
+this bounded correction; the reviewed PHR-0050 commits remain preserved.
+
+This reconciliation is documentation only. The complete private contract,
+implementation candidate and their review gates are tracked in the next
+subsection. Project Status continues to track the implemented Create/Wait
+candidate below. Full native/source/pin freeze, product integration, runtime
+and packaging remain unfinished and separately gated.
+
+### Stage-A private Inspect decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [private Inspect contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-inspect-decoder-contract)
+now names exact source/test/declaration ownership, closed typed shapes, retained
+unverified claims, finite aggregate allocation bounds, static error precedence,
+role/phase/backend coherence and the complete positive/denial matrix. It retains
+backend-dependent Image and selected-manifest claims separately and requires
+eighteen source-shaped phase/role/backend vectors. Expected phase, role, backend,
+recipe and attempt remain external held-context inputs to later integration;
+a decoder cannot authenticate the expectations from its own input.
+
+Fresh independent precode review passed for the exact contract, preserved in
+PHR-0052 and its separate direct-child attestation. The named private module,
+contract-derived sibling tests and one private lib.rs declaration now
+contain the inert supplied-body implementation candidate. It performs complete
+bounded syntax scanning before closed typed decoding and recipe validation;
+it retains coherent unverified lifecycle, role, storage, identity, metadata,
+resource, mount and network claims. Image, Config.Image and selected-manifest
+descriptor remain distinct. Input-derived owned strings use Zeroizing custody;
+static errors reveal no response text. No product caller or I/O is introduced.
+
+PHR-0053 tracks the implementation's focused/full source validation and fresh
+independent exact-source review. Its registry state remains pending until the
+separate direct attestation child records the completed review. The tests are synthetic body-only evidence,
+not current daemon, native custody or held-attempt comparisons. The candidate
+does not complete native fixture source, the full native/source/pin freeze,
+integration, runtime, packaging, release or support. The full V1 outcome remains
+unfinished. Phase 11 continues to own the separately locked runtime proof.
+
+### Stage-A private Create and Wait decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [Create/Wait supplied-body contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-create-and-wait-decoder-contract)
+prepares the next private prerequisite after Version, Info and Image. It names
+exact source/test/declaration ownership, finite preflight/typed bounds, static
+errors, source-shaped positives and the denial/boundary matrix. It retains only
+an unverified created-container ID or unverified zero-exit representation.
+Fresh independent OpenAI Terra xhigh precode review passed after explicit
+non-object-root vectors were added for both entrypoints. The named private
+source/test/declaration scope now contains the inert implementation and
+independently authored synthetic tests. Fifteen focused groups and strict host
+Clippy pass. Initial integration corrected test assertions that assumed scanner
+error traits, then added optional-object duplicate, malformed-number, stage-
+precedence and typed-discard boundary cases. Production acceptance was unchanged.
+Full source validation passed against unchanged source bytes. The initial
+sandbox run denied existing listener fixtures; the permission-scoped rerun
+passed without weakening tests, including the Trace2 Unix-socket case with no
+skip. Fresh independent OpenAI Terra xhigh source review passed with no
+actionable findings. PHR-0049 tracks the exact source and its separate direct
+attestation child. Scoped Semgrep found no new-file findings and one unchanged
+test-only informational finding in lib.rs; Gitleaks found none.
+
+Exact pinned Moby type, create-builder and container-router bytes were checked
+against independently decoded GitHub Contents and Git blob identities. The
+WaitResponse appendix hash was stale and is corrected. Successful Create has an
+allocated warnings array; router warnings still deny the selected recipe. Wait
+writes success headers before its result, so headers never imply completion;
+any present Error denies the selected zero-exit representation. These source
+facts provide no current daemon or runtime evidence.
+
+The decoder contract preserves future same-instance response/attempt/journal
+custody, uncertainty after lost creation responses, independent consequence
+verification and cleanup/reconciliation. Exact source and direct-child
+attestations remain separate from native fixture source authority, the full
+native/source/pin freeze, product wiring and runtime. These
+remain separate gates; LNSAT remains neutral and standalone.
+
+### Stage-A private daemon Image decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [Image-only supplied-body contract](architecture/headless-resource-enforcement/docker-response-source-spec.md#stage-a-private-image-decoder-contract)
+prepares the next image-identity representation prerequisite. It names exact
+private source/test/declaration ownership, finite preflight and typed bounds,
+fixed errors, API omission versus raw OCI presence, Config/RootFS/storage/
+descriptor projections and the mandatory positive/denial matrix. Exact upstream
+type/router/backend verification is complete. Fresh independent OpenAI Terra
+xhigh precode review passed after correcting the served-list null rule and
+making authenticated pre-request target selection explicit. No actionable
+P1/P2/P3 remains in that contract review; final documentation validation and
+exact source/direct-child attestations are separate gates. Ten stale appendix hash references across
+six Image-related type files were corrected using raw/Contents/Git-blob checks.
+The served API requires allocated tag/digest arrays, including empty arrays.
+The separate implementation adds a private supplied-body decoder, independently
+authored synthetic tests and one private module declaration. Allocation-free
+preflight enforces body, depth, object/global member, array and decoded-string
+bounds before closed map-only deserialization. Typed shape checks precede fixed
+recipe predicates. The sealed, non-serializable result retains unverified Config,
+layer and storage/descriptor claims; it creates no identity or authorization.
+Module-owned input-derived strings, dynamic keys and fixed decoded-key storage
+use zeroizing custody. Caller input and JSON-library scratch remain outside that
+scrubbing claim. No caller, transport, I/O, clock, dependency or feature is added.
+
+The synthetic matrix covers graphdriver and manifest/index branches, an
+independently written expected projection, source-shaped Config omissions,
+optional presence, null/type/duplicate/unknown-key denials, target and platform
+consistency, cardinality, numeric/calendar grammar and each preflight limit.
+Literal `N/A` remains allowed in nonempty-only informational and Config fields;
+identity fields retain their stricter rule. Initial integration found three test
+fixture/expectation errors: non-hex layer digests, negative descriptor-size error
+classification and the root-at-one depth boundary. These are corrected against
+the accepted contract rather than by changing production acceptance.
+
+Literal `npm run check` passes: 1,519 TypeScript tests, 139 contract comparisons,
+264 macOS store tests with two ignored, and 257 daemon tests. Fresh independent
+OpenAI Terra xhigh review found mandatory coverage gaps in null/type/presence,
+healthcheck duration rejection, depth 32, nested maps, raw map reordering and
+retained descriptor variation. The subsequent test-only expansion addresses
+those findings without changing production bytes. It receives focused tests,
+strict host Clippy and formatting; final documentation and metadata receive
+proportional checks and exact review. Scoped Semgrep finds no issue in the new
+source and only the unchanged test-only temporary-directory INFO in `lib.rs`;
+redacted scoped Gitleaks finds no secrets. These are host and synthetic source
+results. The preexisting Node cache predates three patched dependency pins;
+exact installed-dependency proof requires hosted CI. No local install occurred.
+PHR-0047 tracks this implementation while PHR-0046 preserves the contract review.
+Exact source and direct-child attestations remain separate gates.
+
+The source check also found and corrected a material comparison/selector error:
+the pinned containerd backend reports and resolves a manifest/index target
+digest, whereas the graphdriver backend uses config digest identity. The
+transport and root/OCI companions now distinguish those branches, preserve
+profile `image_digest` as the raw config commitment, and require the selected
+target's held parent-link chain. The private decoder requires exactly one
+GraphDriver/Descriptor branch and target Id/Descriptor.digest agreement. This
+does not change existing profile codecs, public contracts or active callers.
+
+Later comparison must bind every retained unverified claim to held raw OCI
+bytes, their parent links, a complete immutable image recipe and authenticated
+daemon/storage custody. Parsing alone cannot establish those facts. This work
+does not select artifact pins, complete the native freeze, open the separately
+pending kernel/harness source packet or provide Docker/runtime evidence. LNSAT
+remains standalone; Rangoon is an optional standard-contract consumer.
+
 ### Native procfs fixture source packet
 
 Canonical work record: this subsection, under the existing retained-worker
@@ -2048,6 +2329,980 @@ cover this local fdinfo source. Public main remains
 the sole runtime-proof authority, and its execution gate is unchanged. No
 reader/worker implementation, accepted custody amendment, complete native
 freeze, runtime, support or certification claim follows from these source checks.
+
+### Stage-A private root-manifest decoder contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private root-manifest contract](architecture/headless-resource-enforcement/root-manifest-source-spec.md#stage-a-private-root-manifest-decoder-contract)
+names supplied-body source/test/declaration ownership, complete retained claims,
+bounded typed decoding, internal relations, canonical commitment, fixed errors
+and the positive/denial matrix. It separates declaration consistency from
+independently held profile/registry bindings, native root/daemon custody and raw
+OCI parent links; those remain required subsequent boundaries.
+
+The exact precode contract and separate direct child are independently reviewed
+and attested by PHR-0054. The named private source, contract-derived sibling
+tests and one private declaration now contain the supplied-body candidate. It
+performs bounded UTF-8 JSON scanning, closed map-only typed decoding, internal
+claim checks and a recursively ordered canonical commitment. It retains all
+current-instance and artifact claims with zeroizing owned strings and buffers;
+static errors reveal no input. Decoder success remains unverified declaration
+consistency, not profile/registry/native or OCI custody evidence.
+
+PHR-0055 attests the implementation's focused/full source validation and fresh
+independent exact-source review; the separate direct attestation child also
+passed independent review. Eighteen focused groups and strict host Clippy pass.
+Full local source checks pass with 1,519 TypeScript tests, 139 contract comparisons,
+316 daemon tests and 264 store tests plus two existing invoked helper ignores.
+That full run began before final review corrections; its final Rust stage and
+the final focused/lint/scanner runs cover the reviewed bytes. Scoped scans found
+no new-file Semgrep issue or secret; the existing test-only informational
+`lib.rs` finding remains unchanged. These are host-source and synthetic results.
+Current pins remain
+unset; no registry, I/O, successful native constructor, product caller or
+authority conversion is introduced. The synthetic tests supply no host or
+artifact proof. Full native freeze, integration, runtime, packaging and V1
+completion remain unfinished. Phase 11 owns runtime proof.
+
+### Stage-A private raw OCI chain contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [exact private raw-chain contract](architecture/headless-resource-enforcement/root-manifest-source-spec.md#stage-a-private-raw-oci-chain-contract)
+names the next supplied-byte prerequisite: complete config/manifest/optional-index
+projections, finite preflight/allocation, raw SHA-256 identities, internal parent
+links, exact optional-field distinctions and deterministic data-free denials.
+It fixes history omission/count semantics and timestamp bounds while preserving
+compressed layer digests separately from uncompressed DiffIDs. Parent links bind
+the supplied bytes; they cannot authenticate root custody, selected recipe/pins,
+daemon association or installed layer contents.
+
+PHR-0056 attests the independently reviewed precode contract. The private source
+candidate now implements the named supplied-byte decoder, sibling synthetic tests
+and one inert module declaration. It preserves optional-field presence, complete
+ordered metadata and separate compressed-layer/DiffID identities, preflights all
+supplied bodies before typed decoding, and returns only fixed denial codes.
+PHR-0057 attests the implemented source. Nineteen focused groups, full host-source
+checks and fresh exact independent source/direct-child reviews passed. These
+results supply no native, runtime, packaging or support authority.
+
+No existing decoder or product entrypoint is widened. A self-consistent supplied
+chain is unverified data, not authenticated image provenance. Root/profile/registry
+comparison, stable artifact custody, backend-specific Image/Inspect mapping and
+complete freeze remain explicit later requirements. No new native, provisioning,
+Docker, runtime, packaging, support or Rangoon-specific authority follows. Phase 11
+remains the runtime-proof owner.
+
+### Stage-A image association and custody boundary
+
+Canonical work record: this subsection under the accepted HCFG-6 Stage-A order.
+The [cross-module boundary](architecture/headless-resource-enforcement/root-manifest-source-spec.md#cross-module-image-association-and-custody-boundary)
+connects existing private profile/root/OCI/Image/Inspect claims to the required
+independent recipe, native custody and release chain. It fixes digest domains,
+backend target versus selected-child comparisons, raw-to-API omission rules,
+controller/profile/manifest identity proof order, and shared lifetime/deadline
+obligations. Image descriptor platform reconstruction preserves the already
+validated equality; it does not reopen the reviewed decoder or invent lost data.
+
+This documentation reconciliation adds no callable source interface or trusted
+holder. PHR-0058 attests its exact independent review and direct attestation child.
+The next source packet still needs exact ownership, private read-only DTO access,
+complete recipe expectation shape, native file/peer/budget provenance and positive
+feasibility evidence appropriate to the selected method. Existing procfs source
+and tests cannot prove bounded regular-artifact I/O by implication. Actual pins,
+full native/source freeze, integration, runtime and packaging remain unfinished.
+Do not restart implemented codecs or journal custody. Project Status continues
+to own implementation truth; Phase 11 owns runtime proof.
+
+### Stage-A held artifact read contract
+
+Canonical work record: this subsection under the accepted HCFG-6 Stage-A order.
+The [held artifact read contract](architecture/headless-resource-enforcement/native-artifact-source-spec.md)
+names the next real native I/O prerequisite: a fixed artifact operation in the
+existing single retained procfs lane. It specifies original-owner descriptor
+borrows, per-kind cleanup, tagged completion checks, a shared observation
+budget, positional reads, raw streaming hashes, exact flags and stable native
+metadata/ACL samples. No second worker or injected reader is proposed.
+
+PHR-0059 attests the independently reviewed precode contract. The private source
+candidate adds the fixed held-file read/hash operation to that same retained
+lane, with closed request/result kinds, per-kind input retirement and one shared
+observation gate. A fixed private checkpoint brackets the reused ACL sampler's
+individual native calls; no caller supplies an observer or reader. The candidate
+keeps artifact bytes and raw digests unverified;
+it has no product caller, public SDK surface or successful authority constructor.
+PHR-0060 tracks its independent implementation review and exact direct-child
+attestation.
+
+Host-source validation uses the installed macOS target. Linux-specific reader
+code and disposable held-file tests are not compiled or executed by that host
+suite; pinned dependency API inspection is source evidence only. Positive Linux
+tests require an explicitly selected disposable ext4 directory and remain
+separate from ordinary host checks. These limits
+must remain explicit until a separately permitted Linux validation environment
+supplies exact evidence. Root ancestry acquisition, complete recipe/pins,
+peer/pidfd association, native positive and unfinished-operation evidence,
+whole-boundary integration, runtime and packaging remain separate unfinished
+gates. The existing procfs proof cannot be reused as artifact I/O proof.
+Phase 11 remains the runtime-proof owner.
+
+### Stage-A root manifest bootstrap contract
+
+Canonical work record: this subsection under the accepted HCFG-6 Stage-A order.
+The [root manifest bootstrap contract](architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md)
+defines the next acquisition prerequisite after the held artifact reader:
+one exact manifest path, worker-owned retained ancestry and leaf, the shared
+observation budget, bounded unverified bytes, opaque custody tickets, recheck
+and worker-only retirement. No coordinator native open or final close is
+proposed. It explicitly separates provisional bootstrap mount observations
+from the later authenticated mount, kernel, namespace and peer comparisons.
+
+PHR-0061 tracks independent precode review and exact direct-child attestation.
+At the contract checkpoint, review identified a narrow shared-reader follow-up:
+failed `pread` mapped its error before its post-call checkpoint. Existing
+coordinator and publication gates still reject expired results; the source
+correction below addresses the required per-call ordering before bootstrap reuse.
+The contract also specifies non-owning lease admission and a separate worker-only
+cleanup path that can dispose handles after observation invalidation without
+reopening read authority. These are source obligations, not implemented fixes.
+That documentation packet implemented no bootstrap source and left the held
+artifact candidate unchanged. Search-only prefix ACL sampling,
+artifact/OCI acquisition, actual host-root and current peer/pidfd association,
+complete recipe/pins and composition still need their exact source contracts
+and implementation. Linux positive and unfinished-operation evidence, complete
+native freeze, integration, runtime and packaging remain unfinished. Phase 11
+owns runtime proof; LNSAT remains standalone and Rangoon uses ordinary adapters.
+
+### Stage-A root manifest bootstrap source candidate
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and the independently reviewed root manifest bootstrap contract. The private
+candidate adds closed Begin, Recheck and Retire jobs to the existing single
+retained procfs lane. Original root, ancestor and manifest descriptors remain
+worker-owned outside the slot mutex; the coordinator receives only bounded
+unverified facts and an opaque lifetime ticket. Admission claims the existing
+manifest allowance once, preserves the shared absolute deadline, and prevents a
+second retained set. Retirement invalidates observation facts before worker-only
+consuming close attempts. Terminal cleanup does not require a live read budget.
+
+The Linux source follows the fixed descriptor-relative provisional ancestry
+survey, exact file and present-ACL predicates, existing held-artifact read/hash,
+and repeated named/held observations. Provisional mount observations, a matching
+ACL shape and a raw digest do not authenticate the host, kernel, namespace or
+peer. The candidate exposes no product caller, public SDK operation, trusted
+holder, initializer, schema change or activation path. LNSAT remains standalone;
+Rangoon uses the same engine contracts through ordinary adapters.
+
+PHR-0063 tracks fresh independent implementation review and exact direct-child
+attestation. Host validation exercises private admission, association, accounting,
+error and lifecycle rules plus existing procfs/artifact regressions. The installed
+macOS target does not compile or execute the Linux-specific acquisition path.
+Source review and deterministic state tests are not positive native acquisition,
+blocked-syscall or unfinished-close proof. A separately permitted Linux environment
+with an independently provisioned root-owned ext4 anchor and exact ACLs is still
+required for that evidence. Search-only prefix ACLs, artifact/OCI acquisition,
+actual host-root/namespace/peer association, complete recipe/pins, full native
+freeze, product integration, runtime and packaging remain unfinished. Phase 11
+continues to own runtime proof.
+
+### Stage-A root-prefix ACL observation contract
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The [root-prefix ACL contract](architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md)
+bounds the next missing bootstrap observation: named access/default ACL samples
+associated with each already retained O_PATH root/ancestor descriptor. It reuses
+the existing worker, Begin/Recheck/Retire lifecycle, exact directory identities,
+strict ACL parser and uninterrupted budget. Raw ACL bytes and unclassified
+ENODATA remain unverified; neither successful sampling nor mode agreement proves
+current kernel provenance, ACL absence or effective enforcement.
+
+PHR-0064 tracks independent precode review and exact direct-child attestation.
+This contract adds no sampler or product caller. The later candidate must bind
+each named call to the retained chain, reject raw/tag drift, preserve the original
+baseline, and retire on the worker after deadline or observation failure. These
+root-manifest ancestors are distinct from Docker's three metadata directory
+classes; no metadata ACL matrix, provisioning or runtime authority is imported.
+Linux compilation/positive/blocked-operation proof, authenticated ACL absence and
+effective-rights classification, root/namespace/peer association, artifact/OCI
+acquisition, complete recipe/pins, full freeze, integration, runtime and packaging
+remain unfinished. Phase 11 owns runtime proof; LNSAT remains standalone with
+Rangoon using ordinary adapters.
+
+### Stage-A root-prefix ACL source candidate
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and the independently reviewed root-prefix ACL contract. The private candidate
+adds named access/default ACL observations to each retained root-manifest
+O_PATH directory. Every named call uses the existing typed pre/post-call guard
+and complete held/named directory-chain observations before and after the call,
+including native errors. Begin records an opening baseline before manifest
+content and compares a closing sequence afterward; Recheck compares two fresh
+sequences against that original baseline. Retire adds no ACL reads or handles.
+
+The candidate keeps exact raw bytes or explicit unclassified no-data, applies
+strict access-mode agreement, preserves parsed default ACLs without applying
+the containing directory mode, and rejects raw/tag drift. Checked per-job limits
+bound 4D named calls to 512 and returned ACL bytes to 4,196,352; the unchanged
+absolute deadline still applies to the additional chain observations. Newly
+owned raw bytes and scratch storage zeroize on disposal. Coordinator facts
+receive one bounded immutable copy through the existing checked lifetime.
+No authenticated absence, effective-rights decision or trusted root is created.
+
+PHR-0065 tracks fresh independent source review and exact direct-child
+attestation. Host-source focused validation passes 121 tests, including eight
+new pure-helper/lifecycle tests for prefix boundaries, parser/mode semantics,
+raw/tag stability, finite work, immutable copies and failed-call checkpoint
+ordering. These tests exercise production helpers; they do not prove the Linux
+syscall schedule. Strict host Clippy passes. Full source checks, local audits
+and exact independent review remain required before source closeout.
+
+The installed macOS target does not compile or execute the Linux-specific
+sampler. Linux compile, genuine named/held ACL observations, substitution,
+blocked operations and unfinished-close evidence remain unproven. Stable
+samples are not atomic descriptor-bound reads and do not exclude trusted-root
+transient replacement. Authenticated kernel/LSM absence classification,
+root/namespace/peer association, artifact/OCI acquisition, complete recipe/pins,
+full native freeze, integration, runtime and packaging remain unfinished.
+Phase 11 owns runtime proof; LNSAT remains standalone and Rangoon uses ordinary
+adapters. This private candidate opens no product or runtime authority.
+
+### Stage-A root-association ordering and controller contract reconciliation
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+Fresh independent precode investigation identified incompatible artifact-read
+ordering between the earlier image-custody sequence and the later root-bootstrap
+prerequisite. The reconciled root-manifest timeline permits only bootstrap
+manifest/system/peer metadata before current-root/namespace/peer/mount association,
+reviewed kernel/LSM/ext4 classification and complete prefix-ACL rechecks. Every
+separate artifact/OCI acquisition follows those checks; actual bytes/pins still
+must pass before a final trusted holder or daemon request. Root current-boot
+attestation remains the accepted kernel bridge, not remote measurement.
+
+The native contract now specifies controller filesystem IDs and actual worker
+thread evidence, empty Groups, zero inheritable/permitted/effective/ambient
+capabilities, an unchanged bounded capability ceiling, and unchanged controller
+NoNewPrivs/seccomp observations under the closed no-exec/no-helper interval.
+It explicitly does not copy the workload's full hardening policy to the host,
+modify a host, or infer ordinary ACL access from a nonzero UID alone.
+
+Association requests must remain inside the existing retained procfs/root-bootstrap
+worker hierarchy with original custody and budget. The independently owned private
+CompleteRecipe must precede declaration comparison; existing profile/root codecs
+remain unverified and must be reused through deliberate private borrowed views.
+PHR-0067 tracks this documentation reconciliation and its independent review.
+
+This is not a completed precode freeze or a source reader. CompleteRecipe layout
+and admission, exact system-filesystem/task/peer acquisition, controller record
+variants and kernel mask, fixed native call/byte/descriptor schedules, ownership
+and cleanup transitions still require a concrete independently reviewed contract.
+Linux compile, positive and unfinished-operation evidence, actual pins, full
+native freeze, integration, runtime and packaging remain open. Project Status
+owns implementation truth; Phase 11 owns runtime proof. LNSAT remains standalone,
+with Rangoon using ordinary adapters. No product or runtime authority is opened.
+
+### Stage-A versioned root host-layout declaration
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+Independent recipe-boundary review found that the required current daemon-cached
+thermal list and original source types have no field in the implemented closed
+root-manifest v1. An immutable recipe digest cannot authenticate unrepresented
+hardware/cache state. The [versioned root-layout contract](architecture/headless-resource-enforcement/root-layout-source-spec.md)
+defines the implemented private supplied-body v2 prerequisite while preserving
+every v1 field, commitment and denial. It binds finite original path/type/mask-operation
+records and possible-CPU/thermal vectors into the same root current-instance
+commitment. Exact precode review passed before this disconnected candidate was
+implemented; it does not close the complete native or recipe freeze.
+
+Exact pinned Moby research confirms once-per-daemon caching, CPU-list fallback
+and silent omission of failed thermal lookups. The proposed selected positive
+recipe requires successful sysfs CPU provenance and directory-or-ENOENT thermal
+lookups; root must actually establish the cached-state assertion. Synthetic
+shape/commitment vectors supply no cache or native proof. Independent review
+identified an overly narrow original-type enum and a missing joint-array bound
+case; the revised contract represents finite special-object classes, checks their
+mask-operation relation and names the 256/257 aggregate-element boundary.
+
+The private decoder and its synthetic tests are confined to
+`headless_root_manifest.rs` and `headless_root_manifest_tests.rs`. The explicit
+v2 entrypoint retains zeroizing typed records, canonical bytes and commitment;
+its closed maps, fixed path/type/mask relations, CPU/thermal ordering and subset
+checks preserve the independent v1 entrypoint without dispatch or fallback.
+Focused validation passes 29 root-manifest tests, including the exact 6168/6128
+byte golden vectors and 256/257 aggregate-array boundary. Initial compile and
+two fixture failures were corrected; the original focused log was overwritten
+before preservation, so the retained failure account is not a first-run PASS.
+Fresh independent review found a missing raw unsigned-spelling test matrix for
+new CPU IDs; the focused suite now covers signed, fraction, exponent, overflow
+and malformed spellings for both CPU and thermal fields. PHR-0068 tracks exact
+source validation and independent review. Broad source validation and immutable
+source/direct-child attestations remain mandatory before this candidate is
+treated as a reviewed checkpoint. No synthetic positive authenticates host/cache facts.
+
+The realized-recipe contract now states the same ordering as the root-manifest
+custody timeline: independently retain expected recipe first; profile/root recipe
+references are comparison assertions. Dynamic deployment UID/path bindings and
+current native object claims remain separate from immutable predicate policy.
+PHR-0069 tracks this documentation correction; it selects no compiled registry
+slot and implements no selector, binding owner, cancellation signal or quarantine.
+
+Independent owner/store selection before declaration comparison still requires
+an exact source/lifetime contract. Preparation has no installed UUID before the
+atomic bootstrap transaction; a future selector must preserve that order rather
+than require an already active installation. Profile installation_ref, UID/path
+or recipe digest cannot manufacture expected authority. Product CompleteRecipe
+also excludes pressure helpers, driver cases and run inputs: their separate
+conformance proof is a full-freeze dependency, never a product registry entry.
+
+Complete recipe layout/admission, borrowed-view integration, genuine acquisition/custody,
+cache capture feasibility, actual pins, whole-boundary freeze, integration,
+runtime and packaging remain open. No current profile, CLI, route, owner/store
+constructor, daemon operation or successful authority is added. LNSAT remains
+standalone with Rangoon using ordinary adapters; Phase 11 remains runtime owner.
+
+### Stage-A internal candidate assertion views
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and root-association reconciliation. The [candidate assertion view contract](architecture/headless-resource-enforcement/candidate-assertion-view-source-spec.md)
+received fresh independent precode review before implementation. Its private candidate
+source is validated at `c31bc35af0868200ef8993293cea109f9692d495`, with
+independent exact source review and direct-child attestation
+`4cfb67de9f58619164b8c7a304217e4b7a6ac074` under PHR-0070. This is not a completed native
+freeze, registry/comparator or supported product surface.
+
+The contract makes the existing unverified profile and distinct v1/v2 root
+codecs available through internal crate-visible `pub(super)` data interfaces.
+Both modules remain private and no external API or production consumer is added.
+Read-only typed nested/collection views retain owner-bound canonical/digest
+borrows and carry a non-allocating `!Send`/`!Sync` marker. They have no mutation,
+copying/printing/serialization traits, native handles, SQL state or authority
+conversion. Scalar/text claims are still ordinary untrusted data; the marker
+does not prevent a caller from copying claims. The controlled-floor profile
+parser remains private, and root families retain separate decoders/views.
+
+Test-only sibling consumers exercise existing exact goldens/denials, typed
+projections, explicit null and ordered collection boundaries, and negative
+ownership/serialization/thread trait invariants. Controller inspection found
+discard-only getter checks insufficient; complete value and commitment-borrow
+checks now cover that gap. Focused development validation passes 11 profile
+and 31 root-manifest tests, including distinct-field fixture mutations, all
+collection values/order and out-of-range access, and owner-buffer pointer
+identity. Full source validation passes: 1,519 TypeScript tests, 139 contract
+comparisons, 264 macOS store tests with two ignored and 417 daemon unit tests,
+plus the repository gates and source fixtures. Fresh independent immutable
+source/direct-child reviews and committed public-history replay pass with
+pending0/attested70; supported-release eligibility remains false. This closes
+the private source validation/review checkpoint, not product acceptance. Host tests of
+these platform-neutral views provide no Linux-native acquisition or enforcement
+proof. No expected policy is selected from candidate declarations.
+
+Complete recipe fields/pins/selection, confirmed binding admission, expected
+comparison, genuine current root/kernel/LSM/peer/mount/artifact/OCI association,
+writable custodian, invalidation/retirement/recovery, Linux positive and
+unfinished-operation evidence, full native freeze, integration and packaging
+remain open. LNSAT remains standalone and Rangoon uses ordinary adapters;
+Project Status owns source truth and Phase 11 remains runtime proof owner.
+
+### Stage-A recipe selection and control-custody direction
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and controller-delegated contract decisions. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#independent-selection-and-control-side-ownership)
+now records one private build-owned initial product slot, exact-one complete
+entry selection before candidate decode, separate immutable policy/deployment
+bindings/current observations, and a process-lifetime control root retaining
+actual selected store custody independently of native worker descriptors.
+No adapter, environment, declaration digest or discovered host object chooses
+expected policy. V2 remains required for the initial thermal-cache-aware product
+recipe; the private v1 supplied-body codec remains separate, without fallback.
+
+Focused source inspection verified that selected inspection's lock is exclusive,
+its parent interface is an exclusive mutable store borrow, ordinary stores lack
+selected custody, and the native process-lifetime slots contain no store owner.
+The existing daemon's separate lease and shared store handles cannot be relabeled
+as selected writable preparation. The design fixes actual-store-mutex →
+nonwaiting-native-slot lock order, registration before dispatch, original-budget
+invalidation before matching cancellation, and retention through caller drop,
+timeout and unwind. Job cleanup and worker-body return cannot stand in for a
+whole-operation retirement acknowledgment or actual durable/probe cleanup.
+PHR-0071 tracks this bounded documentation reconciliation and independent review.
+
+This closes selection/physical-owner direction only. Complete entry fields and
+real pins, exact confirmed-binding/writable admission, control-root and cleanup
+acknowledgment APIs, finite storage/Send proofs, all-writer inventory and whole
+module precode remain open. No registry, custodian, writable preparation,
+cancellation/recovery integration or successful native holder is implemented by
+this documentation. Separate Linux positive/unfinished-operation evidence,
+complete native freeze, full request/approval/execution/receipt/recovery,
+selected packaging and supported V1 remain unfinished. Project Status owns
+implementation truth; Phase 11 owns runtime proof. LNSAT remains standalone
+and headless; Rangoon uses ordinary adapters. No runtime/merge/release gate opens.
+
+### Stage-A private control API contract
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and controller-delegated contract decisions. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-control-api-contract)
+now defines the future private admission, begin, dispatch, observation,
+cancellation, native retirement, finish and shutdown vocabulary. A single
+process-lifetime root, privately anchored by `OnceLock` before custody I/O,
+retains actual selected writable store custody through supervisor/coordinator
+unwind; caller drop invalidates the original budget without closing it. Only
+verified explicit close removes contents; the root itself remains anchored.
+Whole-operation
+cleanup acknowledgment is private, allocation/operation/job bound and consumed
+once, with durable/probe cleanup separately required.
+
+Exact source reads found that selected custody and B2/C1 helpers are private to
+`lnsat-store`, while native candidates are private to `lnsatd`. The contract
+selects one trusted `lnsat-store` boundary for future root/owner/native producer;
+a separately reviewed move/reuse and dependency/trait proof remain required.
+No private helper is exported, native proof constructor invented or current
+daemon/store source moved by this documentation. Stop invalidates before its
+durable transition but reports committed stop only after commit. Native
+observation cannot wait under the authority mutex; the distinct existing release
+critical section retains that mutex through effectful and unfinished frame writes.
+Busy stop is not durable-stop success. SQLite close alone is not VFS cleanup.
+PHR-0072 tracks this bounded contract and independent source/direct-child review.
+
+This closes method/disposition and visibility/lock-contract decisions only.
+Complete expected entry and confirmed bindings, real pins, writable/VFS admission
+and close witnesses, module placement/dependencies, finite payload/ack storage,
+every-job budget binding, compiler lifetime/trait proofs, all-writer/constructor
+coverage, frame writer, panic-safe cleanup, durable recovery and whole-module
+precode remain open. No control root, selected writable preparation, retirement,
+activation or new executable behavior is implemented. Full CLI/API/SDK workflow,
+genuine Linux positive and unfinished-operation evidence, complete native freeze,
+integration and selected packaging remain unfinished. LNSAT remains standalone,
+neutral and headless; Rangoon uses ordinary optional adapters. Project Status
+owns implementation truth; Phase 11 owns runtime proof. No runtime, merge,
+support/certification or release gate opens.
+
+### Stage-A private operation identity source candidate
+
+Canonical work record: this subsection under the accepted Stage-A source order,
+the private control API contract above and the human instruction to proceed with
+its next inert prerequisite. The [existing realized-recipe specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-private-operation-identity-candidate)
+bounds the two-file private `lnsat-store` identity candidate. Fresh independent
+module precode review passed before implementation. This is a narrow permitted
+candidate, not the missing complete control-module precode or native freeze.
+
+The private allocator creates a fresh strong allocation domain, issues checked
+nonzero ordinals under exclusive mutable access, reserves `u64::MAX`, and denies
+permanently after overflow. Opaque identities compare allocation domain plus
+ordinal; equal ordinals from distinct domains do not match, and retained
+identities keep their old domains alive after allocator drop. No public export,
+Clone/Debug/serialization/raw getter/reset/decoder/callback or product caller is
+added for the allocator or identity. Six host tests cover normal/domain/drop/
+exhaustion behavior and Send/Sync bounds for only these inert types. PHR-0073
+requires focused and full source validation plus independent exact source and
+direct-child review; previous 72 records remain scoped to their own checkpoints.
+
+Implemented as private inert source only. This allocation domain is not actual
+selected store/root/native provenance or an approval/permit. No original budget,
+validity flag, deadline, selected custody, worker job, dispatch, cancellation,
+cleanup acknowledgment, store release or active entrypoint is implemented by
+this candidate. The future anchored root's one-allocator lifetime and permanent
+quarantine are still integration obligations. Complete entry/binding fields,
+pins, partial-owner storage, trusted module placement/dependencies, every-job
+budget binding, writable/VFS admission/close witness, finite request/result/ack
+storage, all-writer/constructor coverage, frame writer, panic-safe retirement,
+durable recovery and whole-module precode remain open. Genuine Linux positive
+and unfinished-operation evidence, full native freeze, bootstrap/control/SDK
+integration and selected packaging remain separate unfinished gates. Project
+Status owns implementation truth; Phase 11 owns runtime proof. LNSAT remains
+neutral, standalone and headless; Rangoon uses ordinary optional adapters.
+No runtime/merge/support/certification/release authority is opened.
+
+### Stage-A original-budget and job binding contract
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and private control API contract. The [existing realized-recipe specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-original-budget-and-job-binding-contract)
+now fixes private shared references to one issued opaque identity, one registered
+original budget allocation and absolute deadline, and exact operation/job/begin
+association for the five closed native job kinds. No identity Clone, raw-ID bridge,
+per-job budget construction, reset/refund or deadline extension is permitted.
+
+Exact source inspection confirms Artifact/Root requests already retain shared
+artifact budget state, while Procfs returns no budget from `Request::budget()`.
+Procfs retains its separate existing deadline and native identity checks; it is
+not already whole-operation bound. Existing root retirement starts with a live
+budget and then invalidates it, retaining the original deadline. It cannot be
+relabeled as expired-operation recovery. Future whole-operation cleanup must
+account original request/result/lease/descriptor disposal after invalidation,
+without new observations or a fresh budget. Pending or uncertain cleanup retains
+custody and quarantine; terminal native timeout never rearms the lane.
+PHR-0074 tracks this documentation contract and fresh exact source/direct-child
+review. Implemented identity and disconnected native candidates remain scoped
+to their own prior source checkpoints; this packet adds no executable behavior.
+
+This closes reference-sharing, original-budget association and cleanup semantics
+only. Root/partial-owner layouts, trusted native moves/dependencies, finite
+combined call/byte/handle and payload/ack storage, compiler ownership/trait
+proofs, writable/VFS witnesses, all-writer routing, frame ownership, panic-safe
+cleanup publication, durable recovery, complete entry/binding fields/pins and
+whole-module precode remain open. Next bounded work defines actual root and
+partial-owner storage; it must not duplicate the existing budget implementation.
+Full native freeze, genuine Linux positive/unfinished-operation evidence,
+bootstrap/control/CLI/API/SDK integration and selected packaging remain separate
+unfinished gates. Project Status owns source truth; Phase 11 owns runtime proof.
+LNSAT remains neutral, standalone and headless with ordinary optional Rangoon
+adapters. No runtime/merge/support/certification/release authority is opened.
+
+### Stage-A anchored owner storage contract
+
+Canonical work record: this subsection under accepted Stage-A source order and
+the private control API/original-budget contracts. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-anchored-owner-storage-and-borrowed-access)
+selects one retained owner cell inside the anchored actual authority mutex,
+independently owned journal state and short private guarded helper views.
+Current `JournalCustody` holds a mutable whole-store borrow; storing it beside
+its owned store or allowing another mutable store operation would require an
+invalid self-borrow. The direction avoids that layout without changing source.
+
+Exact source reads show lower bootstrap checks accept a connection borrow,
+while selected parent/journal and C1 helpers require the actual `SqliteStore`.
+C1 also authenticates both original credential scope and exact transaction
+connection. Future private helper extraction must reuse algorithms and preserve
+those predicates; a generic connection view or matching rows cannot replace
+them. Public ordinary stores and selected schema-17 read-only inspection remain
+unchanged. No selected writable wrapper, view, journal refactor or root source
+is implemented. PHR-0075 tracks this documentation refinement and fresh exact
+source/direct-child review; prior checkpoints retain their own scopes.
+
+The contract requires every returned physical owner to enter anchored partial
+storage before subsequent fallible checks, and distinguishes no returned owner,
+unfinished acquisition, CloseInProgress and actual close confirmation. Returned
+connection-on-close-error must remain retained; unknown close cannot be retried
+or counted as VFS cleanup. This is not an implemented handoff/close protocol.
+No authority-mutex exception, destructor-based proof, reopen, reset or automatic
+retry is introduced. Selected Ready remains a physical gate, never approval.
+
+This closes retained-cell/transient-view ownership direction only. Exact Rust
+layouts/signatures, combined finite storage and compiler lifetime/trait proofs,
+allocation/native handoffs, unfinished acquisition, writable/VFS witnesses,
+all-writer/constructor routing, trusted native placement/dependencies, credential
+computation mutex/cancellation lifetime, frame ownership, panic-safe cleanup,
+durable recovery, complete entry/binding fields/pins and whole-module precode
+remain open. Next bounded work freezes exact private interfaces and acquisition/
+retention choreography against actual source before adding authority code.
+Genuine Linux positive/unfinished-operation evidence, native freeze, full
+bootstrap/control/CLI/API/SDK integration and selected packaging remain separate
+unfinished gates. Project Status owns source truth; Phase 11 owns runtime proof.
+LNSAT remains neutral, standalone and headless; Rangoon uses optional ordinary
+adapters. No runtime/merge/support/certification/release authority is opened.
+
+### Stage-A journal owner/view extraction candidate
+
+Canonical work record: this subsection under accepted Stage-A source order and
+the anchored owner storage direction. The [existing preparation/store specification](architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-journal-owner-view-extraction-candidate)
+freezes a bounded two-file private extraction: independently owned journal
+state plus temporary access, with the existing custody wrapper retaining its
+exclusive actual selected-store borrow. Fresh independent exact module precode
+review passed before implementation. The two-file private source extraction is
+implemented: owned state retains existing files and baseline/poison, and each
+legacy operation creates one temporary access. Dependency-free compiler tests
+check the finite-lifetime/negative-trait boundaries; exact field review separately
+checks ownership. PHR-0076 tracks the bounded source/direct-child validation and
+review checkpoint. No new public API, writable store, Ready-cell view, root guard,
+constructor or active product consumer is added.
+
+Preserve original parent/connection/lease checks, bounds, stable scans,
+append/flush/readback order, baseline and poison semantics. Owned state must
+hold no store borrow; temporary access must remain private and neither Send nor
+Sync, without copy, printing, serialization or handle getters. Source validation
+requires focused existing custody/codec/selected-store/C1 tests, ownership and
+trait checks, strict format/lint, full `npm run check`, public/docs/inventory/
+history/diff gates and fresh exact source/direct-child review. Linux positives
+remain distinct from local macOS compilation and platform denial.
+
+Exact writable-parent/authority-guard interfaces, allocation/native-return
+retention, unfinished acquisition, writable/VFS witnesses, all-writer routing,
+frame ownership, panic-safe cleanup, recovery, genuine Linux evidence and whole
+module precode/native freeze remain open. Project Status owns implementation
+truth; Phase 11 owns runtime proof. LNSAT remains neutral and standalone;
+Rangoon uses optional ordinary adapters. No runtime, merge or release gate opens.
+
+### Stage-A guarded helper routing and lock-phase contract
+
+Canonical work record: this subsection under the accepted Stage-A source order,
+anchored owner direction and private control API. The [existing realized-recipe
+specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-guarded-helper-routing-and-lock-phase-contract)
+now fixes the exact current helper route inventory and credential lock-gap
+requirements before authority-guard or writable-store source. PHR-0086 tracks
+this documentation contract and fresh exact source/direct-child review. The
+implemented journal and C1 extractions remain scoped to their own checkpoints.
+
+Exact source inspection exposes an integration blocker: selected parent
+verification performs in-place native SQLite descriptor and filesystem custody
+observation; journal open/inspect/append run synchronous native file I/O in the
+caller. Neither is a pure guarded projection, and the parent verifier requires
+read-only MAIN_DB. No existing bridge routes journal I/O through the five closed
+native job kinds. Wrapping these helpers in the future authority mutex would
+violate its no-native-operation rule. Do not skip checks, transfer a SQL owner
+to a worker, add descriptor/connection aliases, invent a mutex exception or
+silently expand native jobs. Their exact execution/retained-handoff protocol
+remains blocking, alongside actual writable/VFS evidence.
+
+Future C1 integration captures under the actual guard, explicitly ends its read
+transaction and views, releases the guard before caller-side Argon2id, then
+reacquires the same root and repeats original operation/budget/disposition and
+fixed current SQL credential/authority predicates. Fresh selected native/VFS
+custody at this lock gap requires an explicit still-unsolved phase/provenance
+handoff before a protected writer can be implemented; neither stale cached proof
+nor native custody checks under the guard may substitute for it. Cancellation/expiry never accepts late computation or
+proves disposal; transient PHC completion and retirement need finite explicit
+accounting. First empty-store bootstrap retains separate host-owner proof.
+Ordinary schema17 and public/read-only interfaces remain unchanged; future
+selected schema18 dispatch cannot reuse a stale inspection marker or alter the
+global version. No guard, view, dispatcher, journal bridge, writer or source
+consumer is implemented here.
+
+This closes routing/phase and credential lifetime requirements only. Concrete
+private guard/cell/writable-parent layouts, all-writer routing, finite combined
+storage/PHC retention, journal/native/VFS acquisition and close handoffs, frame
+ownership, panic-safe retirement, recovery and whole-module precode remain open.
+Genuine Linux proof, full native freeze, standalone CLI/API/SDK lifecycle,
+packaging and runtime/support/certification remain separate unfinished gates.
+Project Status owns implementation truth; Phase11 packet owns runtime proof.
+LNSAT remains neutral and standalone with optional ordinary Rangoon adapters.
+No source integration, runtime, merge or release authority opens.
+
+### Stage-A selected-store phase feasibility
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and guarded-helper contract. The [supporting feasibility record](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-selected-store-phase-feasibility)
+reconciles exact selected-store, native-root, journal and C1 source evidence at
+`dae00c9f44005bf339c236ef98befb2a958f9a59`. PHR-0087 tracks this documentation
+slice's exact source/direct-child validation and independent review. It is a
+feasibility/options checkpoint, not a selected ownership amendment or source
+implementation. The current no-native-under-authority-guard rule and selected
+view/transaction lifetimes remain binding.
+
+The original connection's descriptor/VFS and current parent/lease observations
+are live native work. The existing retained root-manifest worker owns different
+files and cannot certify that connection or journal. No current persistent
+native freshness witness resolves the gap. B6's proposed native checks after
+immediate transaction acquisition and before commit conflict with releasing the
+current guard while retaining its transaction. Cached facts, another connection,
+descriptor aliases and a renamed worker are rejected completion shortcuts.
+
+A separate custody mutex and a dedicated retained control actor are explicitly
+unselected architecture candidates. Neither is independently approved as
+feasible. Initial design review rejected selecting an apparently narrow native
+mutex exception: it concealed a new executor/ownership decision. This checkpoint
+records that finding and the required construction, retained slots, all-writer
+routing, lifetime, cancellation/commit and cleanup decisions instead. The next
+bounded design candidate should isolate fixed read-only selected-store native
+observations; journal creation/append/flush/mutation require their own later
+reviewed phase. Read-only feasibility alone cannot close B6 writable custody.
+
+Out-of-lock original-budget invalidation is not durable stop or nonexecution
+proof. Native work retaining a control context can leave durable stop
+Busy/Pending. Exact transaction/commit-issued fences, uncertain completion and
+readback ownership remain unfrozen. C1's non-Send capture stays on the same
+retained control context; Argon2id remains outside the authority guard with
+bounded completion/disposal and fresh original-scope/connection re-entry still
+required. No source types, executor, mutex exception, native job expansion,
+writable/VFS witness or whole-module precode are implemented or accepted here.
+Project Status owns implementation truth; Phase11 packet owns runtime proof.
+LNSAT remains neutral and standalone with optional ordinary Rangoon adapters.
+No integration, runtime, merge, support/certification or release gate opens.
+
+### Stage-A read-only control observer proposal
+
+Historical work record: this subsection preserves the PHR-0088 proposal and its
+independent review. The human owner accepted its narrow observer amendment on
+October 9, 2026; the [current Rust precode record](#stage-a-read-only-observer-rust-precode)
+owns that acceptance and remaining source gates. The existing
+[supporting ownership proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-control-observer-proposal)
+remains historical design context. Guard-bound view/transaction lifetimes still
+bind; the accepted exception covers only fixed original-read-only-connection
+custody observation and its required cleanup. Proposal review does not establish
+source feasibility.
+
+The proposal adds one separately retained read-only control observer alongside
+the existing native observer: two dedicated contexts, with separate construction
+and cleanup records. Its sole proposed native-under-guard exception covers the
+fixed original-connection read-only custody sequence. Original physical owners
+stay in the anchored authority cell; selected/SQL views remain guard-bound. The
+existing native lane receives no SQLite owner, guard or selected view. A distinct
+proposed ObservationOnly purpose uses actual read-only MAIN_DB/schema17 and
+cannot become Ready, writable schema18, an ordinary-store adoption or a product
+caller. Original-owner acquisition/close and exact private Rust layout remain
+unimplemented. C1 capture/computation, journal mutation, authorized writers,
+durable stop and release frames are excluded. This does not solve B6's writable
+pre-commit custody or full native freeze.
+
+Independent proposal reviews found three P1 lifecycle holes. Publication now requires
+an atomic original-association/live-budget Reserved-to-Published transition under
+authority then mailbox; retirement seals never-published reservations, and a
+visible InFrame marker survives request transfer even when payload slots are
+empty. Stale producers cannot publish into, consume or retire another operation.
+After possible SQLite limit/statement changes, cancellation or expiry stops new
+observations but cannot skip fixed cleanup under the original guard. Only actual
+private ControlFrameCleanupAck binds explicit checked statement finalization,
+exact prior-limit restoration and ended projection. Unknown cleanup quarantines;
+body return, Drop and an empty slot cannot certify it. A distinct actual worker-produced ControlFrameUnenteredAck handles published
+work cancelled before guard entry or denied Busy; it cannot masquerade as
+never-published NoDispatch or entered-frame cleanup. Retiring/Published remains
+visible until the worker drains that exact request. Control-frame cleanup
+remains separate from native-worker/store/VFS/journal/probe/durable cleanup.
+
+Only the original operation identity and budget allocation may cross the fixed
+metadata slots; no fresh budget, deadline, paths, SQL, descriptors, callbacks or
+credential material. ObservedReadOnlySequence is historical unverified status,
+never a current custody witness, approval or execution permission. Expiry closes
+admission permanently; a stuck native call/finalizer can retain the guard and
+original owners indefinitely. Cancellation is not durable stop or nonexecution,
+and guarded durable stop may remain Busy/Pending. At the proposal checkpoint, source gates required
+owner amendment acceptance, construction/retained-handle proof, exact finite
+aggregate layout, original-owner acquisition/close, checked cleanup layout,
+shared native call/handle accounting, private crate/module bridge, compiler
+traits and fresh exact precode review. No Rust/schema/API/native implementation,
+full freeze or genuine Linux proof is supplied by this documentation checkpoint.
+Project Status owns implementation truth; Phase11 packet owns runtime proof.
+LNSAT stays neutral and standalone with optional ordinary Rangoon adapters.
+No integration, runtime, merge, support/certification or release gate opens.
+
+### Stage-A read-only observer Rust precode
+
+Canonical work record: this subsection under the accepted Stage-A source order.
+The human owner explicitly accepted the narrow D88 observer amendment and exact
+Rust precode development on October 9, 2026. The [component precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-observer-rust-precode)
+records exact private placement, owner/association/mailbox/frame declarations,
+entry boundaries, wrapper API-unit limits and checked cleanup obligations.
+PHR-0089 tracks this documentation/precode slice's exact source/direct-child
+validation and independent review. Acceptance covers the second separately
+retained read-only observer, fixed original-read-only-connection observation
+under the actual authority guard, and ObservationOnly distinct from Ready.
+Production Rust implementation, owner acquisition/close and all other gates
+remain closed. This is component precode, not a compiled full module or a source
+feasibility/native-freeze claim.
+
+Select the existing trusted `lnsat-store` boundary. A separately reviewed
+prerequisite must move/reuse the exact fifteen-file private daemon native closure
+and its existing pinned dependency edges; no copied observer, public proof bridge
+or store-to-daemon cycle. Then extract/reuse the one original budget and its
+private deadline/error/purpose definitions. The observation component belongs
+inside selected_store's private child so it can borrow actual custody fields
+without sibling-private field shortcuts. Neither move nor extraction is
+performed here. Existing ordinary store/daemon behavior stays unchanged.
+
+On October 10, 2026, the human owner accepted only the docs-only ACL erratum
+correction and [package-isolated Linux validator precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-native-relocation-and-package-isolated-linux-validator-precode).
+PHR-0090 tracks this exact documentation checkpoint. ACL cases reside in the
+root native test module; ten ACL cases, fourteen path edges and 131 lexical test
+annotations are static inventory, not compiled/passing evidence. Prior reviewed
+commits and frozen advisory relocation reports remain preserved.
+
+The current native-build policy accepts exactly one daemon-owned rustix edge.
+The proposed add-store/retain-daemon metadata transition would fail before Cargo;
+it requires a separately reviewed fixed dual-owner graph transition and negative
+tests. Existing policy/runner/Cargo/Rust source is unchanged here. The precode
+specifies fixed package-only baseline/store actions, native-host checks, pinned
+offline hardened preflight, fresh owned build directories, compile/list receipts
+and nonzero exact native-case comparison. These actions and receipts are not
+implemented or executed. Source migration, dependency compilation and full
+native feasibility remain unproven; Ubuntu CI architecture is not inferred.
+
+On October 10, 2026, the human owner accepted the documentation-only
+[validator/graph-policy ownership and receipt-schema precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#validator-and-graph-policy-ownership-and-receipt-schema-precode).
+PHR-0091 tracks this checkpoint under this same work record. Future M0 owns two
+runner/test paths, preserving existing actions and daemon-only policy; future M1
+owns the exact 21 logical relocation/metadata/policy items atomically. One
+separately reviewed private evidence harness is explicitly outside repository
+ownership. Real B0 Linux compile/list evidence must precede M1; B1 binds that
+accepted baseline and its own reviewed source tuple. Closed canonical binding
+and receipt shapes reject forged prefixes, exits, hashes, paths, zero selections
+and phase mismatches. Runner lock-checksum validation is distinct from metadata
+graph validation. These are plans, not implemented parsers/harness/actions or
+executed Linux proof. No source or execution gate opens.
+
+On October 10, 2026, the human owner authorized M0 source implementation with
+offline mocked validation. The two-file candidate adds an import-safe runner,
+fixed package actions, bounded canonical binding/receipt parsers, independently
+pinned harness context, rustix lock-checksum validation, raw evidence verification
+and an injected compile/list pipeline. Ordinary native CLI calls fail before any
+process. The existing daemon-only graph policy and six legacy action arrays are
+preserved; `fmt` also runs the new mocked suite before Cargo. This is tooling
+source, not an engine API, genuine compiled evidence or an execution approval.
+At that implementation checkpoint, PHR-0092 was pending; source acceptance
+and its direct-child attestation were not complete.
+
+The human owner subsequently authorized a fixture-only ownership amendment in
+`scripts/sqlite-native-build-policy.test.mjs` and offline full source validation
+on the current macOS host using existing pinned tools and caches. The copied
+config-free fixture now receives Cargo.lock and the pinned TOML parser package;
+every existing assertion and fake Cargo behavior is preserved. The mandatory
+checksum and graph guards are unchanged. No dependency or toolchain is installed.
+This amendment permits the existing Cargo/native stages of `npm run check` for
+source validation only. It does not permit Linux package proof, a private harness,
+M1, runtime integration, main or release. Exact results and fresh independent
+review were required before source acceptance. That fixture-validation authority
+did not itself approve PHR-0092 or its source/direct-child attestation.
+
+The human owner subsequently accepted the exact M0 source and authorized its
+local source/direct-child attestations. Source commit
+`dcdec824726390bfdbfbb763bd52bb6136b30368` has accepted tree
+`387db109b480e59b66e6cd4a3fd630b015237bdf`; its exact direct child is
+`c24770de65077399353941de7e7dc958a486209b`.
+[PHR-0092](reference/public-history-reviews/PHR-0092/review.json) is attested and
+pins the source parent, commit, tree, canonical diff and all eight protected
+files. Fresh immutable-source, staged-child and immutable-child reviews passed
+without actionable findings. Focused runner/policy validation passed 35/35; the
+full offline macOS source check completed all 21 root stages and 1,519 workspace
+tests. Full-check reuse is limited to the exact accepted source tree; it was not
+rerun on the later source or child commit SHA. Retained failed attempts, explicit
+historical-source skips and parent-invoked ignored helper tests remain qualified.
+
+Main integration is separately authorized through normal protected source gates.
+This acceptance supplies tooling source and source-history evidence only. It
+does not implement or invoke the private harness, produce a genuine B0/B1
+receipt, relocate native modules or open M1, runtime, support/certification or
+release authority. Linux proof and the other execution gates remain closed;
+unrelated deletions remain untouched.
+
+The first protected main-integration attempt at
+`f5a9c016a2ef7d71d4fb1d11b219b284a4067ed1` passed committed source-history
+replay with 91 attestations but failed Linux Clippy in source CI run
+`38108777788`. The source correction is limited to explicit Linux module
+imports, an observation-binding rename, equivalent descriptor-bound and test
+range expressions, and readable octal test literals. A declaration-scoped
+`clippy::large_stack_arrays` expectation documents the existing fixed 64 KiB
+zeroizing worker buffer; it preserves allocation and cleanup behavior. No lint
+profile, workflow, native authority, module ownership or runtime gate changes.
+The failed CI receipt remains part of the evidence. Fresh exact source and
+direct-child review, source-history replay and the required public CI remain
+integration gates; these source checks provide no Linux package or runtime
+qualification.
+
+The process-lifetime root retains original connection, custody and scope inside
+its actual authority mutex. Fixed metadata carries only the same root/private
+identity/original budget/tag; one control request per operation prevents frame
+ABA. Reserved publication remains sealed under authority then mailbox. Published
+work drains after admission closure, with visible InFrame occupancy and distinct
+actual entered-cleanup, unentered and sealed-no-dispatch dispositions. No empty
+slot, historical result, body return or Drop supplies authority or cleanup proof.
+
+Exact precode keeps the retained frame alive through completion publication,
+including after checked guard release. Unresolved drop/unwind closes admission
+and invalidates the same budget even when no guard remains. With a held guard it
+marks the matching original operation Quarantined and intentionally forgets that
+guard, retaining the actual mutex/owners permanently. After checked release,
+root/header terminal flags quarantine while AwaitingControlCompletion stays
+occupied; no new mutex or fabricated acknowledgment. Actual completion transfer
+alone disarms the frame. These fail-closed availability costs are explicit;
+there is no force unlock, replacement root/worker, five-second return or close
+promise. Process termination/abort is not in-process retention or crash recovery
+proof.
+
+Source inspection exposed a concrete upstream cleanup limitation: rusqlite
+0.40.1 lacks a safe public checked early Rows reset. Normal EOF checks reset,
+and explicit consuming Statement::finalize checks finalization. Early row exit,
+step/reset failure or unwind leaves unknown reset/finalization disposition;
+later finalize success cannot repair it. The component must quarantine without a
+clean acknowledgment or guard release while attempting known fixed cleanup.
+Exact returned prior SQLite length limit is retained immediately and restored
+with checked readback; invalidated observation budgets do not skip those
+obligations. No unsafe FFI, vendor patch, dependency upgrade or runtime fix is
+introduced.
+
+The planned single-request ledger caps 16,384 observation wrapper API units,
+64 cleanup units and eight statement-creation attempts from the same original
+budget allocation, with no refund/reset. The fixed observation ceiling is 12,370
+units; only one live statement. These count named Rust wrapper calls, not kernel
+syscalls, VFS/internal SQLite allocations, RSS or execution time. Complete shared
+native call/handle accounting and procfs budget participation remain missing.
+Actual native non-dispatch proof cannot be invented from zero counters.
+
+The first root stays Unadmitted until separately reviewed original-owner
+read-only acquisition/partial retention/close and native registration/accounting
+producers exist. No ordinary-store adoption, read-only upgrade, schema18/writable
+Ready, product caller, C1 scheduling, journal effect, writer, durable stop or
+release activation is included. The current M0 two-file candidate remains under
+this work record. Its next acceptance steps are the narrow policy-fixture input
+amendment, separately authorized full source validation and fresh exact
+independent source/direct-child review. Linux execution remains closed until its
+explicit validation gate opens. M1 requires a genuine accepted baseline, not
+fixture evidence. Earlier documentation acceptance did not authorize source or
+Linux execution; subsequent M0 source authorization does not authorize either
+native validation or relocation. Construction,
+traits/lifetimes, aggregate native/library allocation and race/quota/cleanup
+source proofs remain unfinished. Project Status owns implementation truth;
+Phase11 owns genuine Linux/runtime proof. LNSAT remains neutral and standalone.
+No runtime, support/certification, merge, push, release, publication or deploy
+gate opens.
+
+### Stage-A credential capture/compute/recheck contract
+
+Canonical work record: this subsection under accepted Stage-A source order and
+the anchored owner direction. The [existing realized-recipe specification](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
+freezes the next two-file private C1 prerequisite: capture current rows and the
+original scope into an opaque owned value after ending its SQL read transaction;
+consume that value in password computation with no store/view/SQL borrow; then
+reuse the existing original-scope/exact-connection transaction recheck. The
+current preparation wrapper, public store methods, schema, authentication policy
+and error families remain unchanged. PHR-0077 preserves the accepted documentation
+contract. Fresh independent exact component precode review passed before the
+two-file private source extraction. PHR-0085 tracks its separate source and
+direct-child review and validation; no public or native consumer is added.
+
+Every existing dummy-verifier branch retains that actual store's nonsecret
+fallback: invalid references and successful absent/validator-accepted inactive
+identity selection, with valid lookups rolled back first. Empty/malformed
+credentials and unsupported disabled-owner evidence remain `EvidenceDrift`.
+Known rows retain their existing zeroizing PHC only until computation or drop. No
+password, replacement scope, raw address, connection getter, credential intake,
+worker interface or approval/permit is introduced. The owned capture contains
+only the closed material enum and a zero-sized `PhantomData<Rc<()>>` marker.
+Known material moves the existing zeroizing row and original scope; Unknown
+copies only that store's nonsecret fallback. Capture and computation remain
+private; the unchanged preparation wrapper composes them. The complete recheck
+and credential-selection/fingerprint helpers are unchanged.
+
+All eleven existing C1 cases remain, with eight split-specific cases covering
+autocommit and no writes/session activity, original scope/connection and store
+move/drop/reopen, rotation/recovery/valid verifier substitution between capture
+and computation, actual captured fallback/error order, and empty/malformed
+selection rejection. The disabled-owner fixture also rejects at capture.
+Dependency-free compiler assertions check the capture is `'static` and neither
+Clone, Debug, Serialize, Deref, Send nor Sync; exact field review separately checks
+ownership and absence of borrowed/raw handles. Ordinary tests do not prove memory
+zeroization. Nineteen focused cases and strict Clippy pass. Full `npm run check`,
+named public/docs/inventory/history/diff checks and fresh exact source/direct-child
+review remain required before source checkpoint closure. Prior journal extraction
+and reviewed commits retain their own source checkpoints.
+
+This finishes only the bounded private capture/compute prerequisite. Whole-store
+capture/recheck are not future Ready-cell views. Actual guard/mutex lifetimes,
+original operation budget/deadline/cancellation, PHC retention bounds, finite
+aggregate storage, selected writable/native/VFS custody, all-writer routing,
+recovery and whole-module precode/native freeze remain open. Full headless
+CLI/API/SDK lifecycle, genuine Linux proof and packaging remain unfinished.
+Project Status owns implementation truth; Phase 11 owns runtime proof. LNSAT
+remains neutral, standalone and headless with optional ordinary Rangoon adapters.
+No runtime, merge, support/certification or release authority opens.
+
+### Stage-A artifact read post-call checkpoint correction
+
+Canonical work record: this subsection under the accepted Stage-A source order
+and the root manifest bootstrap prerequisite above. The private held-artifact
+reader now captures a failed `pread` result without returning before the existing
+typed post-call checkpoint. A fixed private result primitive accounts for all
+successful actual bytes, executes the checkpoint even on read or accounting
+failure, preserves accounting-error precedence, then propagates context or native
+read denial. Short and late successful returns still consume their actual byte
+allowance. No callback, injected reader, observer, retry or authority is added.
+
+Seven host regression tests cover timely failed reads, both deadline boundaries,
+terminal and stale-token contexts, sticky invalidation, short/full byte counts,
+late byte accounting and accounting-error precedence. These exercise the fixed
+result primitive; they do not simulate or prove Linux native I/O. Named focused
+and full source validation plus fresh independent exact source/direct-child
+review are required by PHR-0062. No Linux compile, positive native read, blocked
+operation, rooted acquisition, complete native freeze, integration, runtime or
+packaging completion is claimed. At this correction checkpoint, the other root-bootstrap source obligations
+remained open; the later candidate subsection records their source progress.
+Phase 11 continues to own runtime proof.
 
 ### HCFG-6 generated daemon metadata custody proposal checkpoint
 
@@ -3792,6 +5047,37 @@ Before any supported public artifact:
 LNSAT owns selected core package lifecycle evidence and support claims for
 Phase 14 rows. Graphical assets and unselected installer formats do not block
 LNSAT V1.
+
+Linux support direction now includes capability checks during DEB/RPM installation
+and again during explicit setup, service startup and consequential operation.
+The [Phase 14 plan](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#linux-capability-checks-across-lifecycle)
+records the requirements and additional RHEL, Fedora, SUSE Linux Enterprise,
+openSUSE, AlmaLinux and Amazon Linux 2023 candidate families: exact selected
+distro/kernel/security/runtime scope,
+active required LSM plus enforcing policy, unavailable/offline observations,
+actual non-root runtime identity and no automatic host-policy changes. This is
+planning only. No checker, package hook, public diagnostic contract, selected
+supported distro row, installer or runtime proof is implemented by this update.
+Existing product, native-freeze, candidate-build and publication gates remain open.
+The named **Linux Compatibility Qualification** feature is planned: owner direction
+covers these candidate families, while exact releases/architectures/kernel-policy
+and package rows remain unselected. Required work includes ABI/dependencies,
+security-policy provisioning, genuine isolation/runtime observations, service/path
+integration, bounded engine diagnostics, package lifecycle and drift/recovery.
+The [feature contract](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#planned-feature-linux-compatibility-qualification)
+requires an exact source freeze before implementation and independent per-row
+positive/denial evidence before support. No new behavior or compatibility result
+is claimed; unselected rows remain outside the initial V1 exit requirements.
+Professional enterprise/server and advanced headless/prosumer deployments define
+the Linux scope with server-first defaults. A GUI may be installed; LNSAT remains
+headless and CLI-managed, and GUI presence alone neither denies support nor proves
+readiness. Desktop-specific integrations are not selected. Arch Linux is an
+additional owner-selected candidate for advanced headless operation. The
+[headless candidate requirements](architecture/DISTRIBUTION_AND_CLIENT_INSTALLERS.md#professional-and-prosumer-headless-linux)
+keep rolling-release freshness and any Arch package wrapper separate from existing
+DEB/RPM rows. Fedora/openSUSE qualification targets headless service deployments;
+Mint, Pop!_OS and EndeavourOS are not selected. No support claim, installed checker
+or package is added.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).

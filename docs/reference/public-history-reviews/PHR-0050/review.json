@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0050-independent-implementation-review-27c1725a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["inspect-lifecycle-normalization-reconciliation"],
+  "base_revision": "2f07a5db06f1bb37d483aba613a1ecbfbc727517",
+  "reviewed_revision": "27c1725ae0fadf97d64cd4a7c830065f2863b578",
+  "reviewed_tree_oid": "0718c9c516f5ce8a6704c11079de33bf98ea7fb0",
+  "diff_sha256": "sha256:2c2c93fa2110ab994ac76db52085f715e84b92ee53141b720e7f7835b9ce4584",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:4fc718af9f7c7b74a9296954640c99b31ac0d9bfd640c46f59eacf4155cc64e9"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/docker-response-source-spec.md",
+      "sha256": "sha256:1783ef1b588bd3426109d57536d934f8725294d02fd2b5682fa53054af8595e9"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/plan.md",
+      "sha256": "sha256:d328155118c9c77ef97a67846aca7585287329d09dbe369a492c4b474bccc3f9"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:9a7b5abdc17eb893f8617157cc3257e03b6b13c5ee966671523f1c6bb79839bf"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:8238ffd4684aed08142ed9120a876e1170a79b4949f7c598626163f33f909963"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/inspect_normalization_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact documentation and pinned-source review. Reconciles created/running/exited Inspect AppArmor and metadata-path claims, exact null ExecIDs, source-shaped Health/network behavior, and thirteen stale appendix hashes. P2 reader field-count error resolved before commit:41direct HostConfig plus29Resources gives70possible names and64preparation/65action positive members. All five exact source paths and source snapshot hashes verified. Docs/public/inventory/history/format/link/whitespace checks pass. Documentation-only: no new full source or hosted CI claim; successful PR94 CI remains separately bound to parent2f07a5d. Complete private Inspect ownership/projection/error/bounds contract and precode review remain pending; no Inspect implementation, native, full-freeze, integration, runtime, merge, package, release or deployment gate opened. Separate exact direct-child audit required."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

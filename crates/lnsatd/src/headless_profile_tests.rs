@@ -174,6 +174,35 @@ fn selected_vector() -> Vec<u8> {
     )
 }
 
+#[test]
+fn sibling_candidate_consumer_reads_complete_profile_view() {
+    crate::candidate_borrowed_view_tests::consume_profile(NULL_VECTOR.as_bytes());
+    crate::candidate_borrowed_view_tests::consume_profile(&selected_vector());
+    crate::candidate_borrowed_view_tests::consume_profile(&mutate(
+        &["headless", "binding_digest"],
+        json!("sha256:9999999999999999999999999999999999999999999999999999999999999999"),
+    ));
+    crate::candidate_borrowed_view_tests::assert_profile_view_traits();
+}
+
+#[test]
+fn candidate_profile_view_borrows_retained_codec_buffers() {
+    let record = accepted(NULL_VECTOR.as_bytes());
+    let view = record.candidate_view();
+    assert!(std::ptr::eq(
+        view.canonical_bytes().as_ptr(),
+        record.canonical.as_ptr()
+    ));
+    assert!(std::ptr::eq(
+        view.candidate_profile_digest(),
+        &raw const record.profile_digest
+    ));
+    assert!(std::ptr::eq(
+        view.candidate_authority_digest(),
+        &raw const record.authority_digest
+    ));
+}
+
 fn text(bytes: &[u8; 32]) -> String {
     let mut result = String::from("sha256:");
     for byte in bytes {

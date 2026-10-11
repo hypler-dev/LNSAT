@@ -1,0 +1,47 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0053-independent-implementation-review-d9853e70",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-daemon-inspect-decoder-stage-a"],
+  "base_revision": "1745561351af34ffcc9f7e10017ef1c29830e052",
+  "reviewed_revision": "d9853e70ba2ce73491177f495a10da9a0b3dfcdc",
+  "reviewed_tree_oid": "446acaa031484b1ae2838ec5cefa5c0e315490c7",
+  "diff_sha256": "sha256:bcae04f4ec4c3340111b1e3a0a38b81dc058a3ffd59d686d0c1b2efda5360c7d",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_daemon_inspect.rs",
+      "sha256": "sha256:eb41bb2799875fb40b0050f32b23cfd84a891fb67f0d5745cd67be3bf85a0441"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_daemon_inspect_tests.rs",
+      "sha256": "sha256:08ea6d7c9261095347fe4eb21b9035885d8b89da70ec4536fe085e393ca63179"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:84d4106151b6e58ac79022dba2db2d3f246f3b7570383af277e1e554785a8f10"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:a8a8b7dd7012943fa3ed479481c837bdf38dd12a7cab0490f9abdfd7cd310bc3"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:c7c74de466e5c5e9cda580e34275144eba7ade733205d72db299eddbe467ed09"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:44cd200a07035785dff703e9e8cee9c973cf27e39f747c21bb054004250b0e02"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/inspect_decoder_precode_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only exact source review. Covers the private supplied-body Inspect decoder, bounded preflight and closed typed shapes, zeroizing input-derived ownership, static errors, retained unverified comparison claims, lifecycle/role/storage coherence, and complete source-shaped positive/denial/boundary vectors. Twenty-one focused groups, strict all-target Clippy, formatting, full npm run check, docs/public/inventory/history and whitespace checks pass. Test coverage gaps and premature evidence wording corrected before final approval. Scoped Semgrep has no new-file findings and one unchanged test-only informational lib.rs finding; Gitleaks found none. No dependency or feature changes. This attests inert source only, not held-attempt/native/OCI custody, full freeze, integration, runtime, hosted CI, packaging or support. Separate exact direct-child audit remains required. No execution or other authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0078-independent-implementation-review-a04a2063",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["standalone-gateway-adversarial-requirements"],
+  "base_revision": "5edeb3d80ec3fc9e5852289bdbff4930b027822f",
+  "reviewed_revision": "a04a20632e74207e0a3f2e7d856f57adbed2a886",
+  "reviewed_tree_oid": "18b9d7ef43cc95eb75497c7600f174f253f72632",
+  "diff_sha256": "sha256:e07db07fea159894e536e3d06a2b020e03a46eaea64ccd68d1f2185ba22403da",
+  "protected_files": [
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:47f1623d2cac1e359827c7228fa30aef4935b3c5580abc96522b1f6aafe6e636"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:23c7088fc13af6f3536643454cdc1fd3db532291545796d4d5dc6fc1f125a70c"
+    },
+    {
+      "path": "docs/architecture/THREAT_MODEL.md",
+      "sha256": "sha256:9de16698bad6c23c6d625ab355d8bfbea000b3ab3391563d5a9a36bc3a4e7b1e"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:48c4495b31e79e9d7c0532095457fc0447cb13f5a7253fb3dca32dda7c445b5a"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:a1c9f30e1ce50eba5ab163a22121a9b16c00d1ec8ede973461126fdf98406ed5"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/c1_contract_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only exact five-file standalone Gateway requirements documentation review. Exact source parent, tree, canonical full-index diff and protected blobs verified. Existing represented-action digest/approval foundations are distinguished from unfinished actual-effect custody, all-writer admission/use and bypass coverage. Conditional cumulative effect policies require a later reviewed accounting contract with atomic reservations, concurrency/restart and uncertain-effect settlement proof; finite per-packet budgets do not imply implemented aggregate quotas. Required configured context facts remain separate from advisory telemetry, external provider decisions, human approval and durable outcomes. Content revision and capability widening remain distinct. Trusted-host local v1 excludes malicious owner and compromised root; optional workstation-compromise assurance needs independent trusted presentation and qualified presence. No Rangoon dependency, synchronization service, telemetry transport, new schema/API or runtime control is introduced. Current inert candidate order, full native freeze, per-command gates and separately authorized Phase 11 runtime proof remain unchanged. Six proportional docs/public/inventory/format/diff/history validators PASS at the exact unchanged staged source tree, with PHR-0078 pending. Full npm check and Rust tests were not rerun for documentation-only changes. Independent exact direct-child review and committed history replay remain separate gates. No merge, release, support/certification or execution authority opens."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

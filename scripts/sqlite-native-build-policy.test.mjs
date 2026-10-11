@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import {
   chmodSync,
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -318,6 +319,18 @@ function configFixture() {
   mkdirSync(join(repo, ".cargo"));
   mkdirSync(join(home, "bin"), { recursive: true });
   writeFileSync(join(repo, ".cargo", "config.toml"), SQLITE_CARGO_CONFIG);
+  // The hardened runner requires the checked-in lock and pinned TOML parser
+  // even in this copied, tool-free fixture; preserve every policy assertion.
+  writeFileSync(
+    join(repo, "Cargo.lock"),
+    readFileSync(new URL("../Cargo.lock", import.meta.url)),
+  );
+  mkdirSync(join(repo, "node_modules"));
+  cpSync(
+    new URL("../node_modules/smol-toml", import.meta.url),
+    join(repo, "node_modules", "smol-toml"),
+    { recursive: true },
+  );
   for (const name of ["run-rust-workspace.mjs", "sqlite-native-build-policy.mjs"]) {
     writeFileSync(
       join(repo, "scripts", name),

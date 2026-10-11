@@ -114,6 +114,23 @@ subsystem or proposal.
   — exact inert contract for bounded byte-only mountinfo decoding with raw
   non-UTF-8 preservation and finite row, option, escape and tag rules; no I/O,
   kernel or mount authority follows.
+- [HCFG-6 held artifact-read source contract](architecture/headless-resource-enforcement/native-artifact-source-spec.md)
+  — fixed private read/hash candidate in the existing single retained native
+  lane; exact source review and genuine native evidence remain
+  distinct from rooted custody, complete freeze and runtime authority.
+- [HCFG-6 root manifest bootstrap contract](architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md)
+  — private worker-owned acquisition candidate with retained ancestry, shared
+  deadline, provisional mount observations and opaque custody lifetime. Project
+  Status owns source evidence; trusted root, native proof and runtime remain gated.
+- [HCFG-6 versioned root host-layout declaration](architecture/headless-resource-enforcement/root-layout-source-spec.md)
+  — proposed private v2 representation for current daemon-cached thermal masks
+  and original source types; v1 remains unchanged. No native or runtime proof.
+- [HCFG-6 internal candidate assertion view contract](architecture/headless-resource-enforcement/candidate-assertion-view-source-spec.md)
+  — typed read-only views of private profile/root codec assertions; internal crate
+  visibility, owned lifetimes and distinct v1/v2 families. No native or authority proof.
+- [HCFG-6 root-prefix ACL observation contract](architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md)
+  — private named O_PATH ancestor sampling candidate; raw/no-data observations
+  remain unverified. Project Status owns source evidence; Linux proof is pending.
 - [HCFG-6 profile/startup wire proposal](architecture/headless-resource-enforcement/startup-wire-source-spec.md)
   — exact proposed schema-3 fields, native payload and separate startup contexts;
   complete wire implementation and full freeze remain pending.
@@ -127,6 +144,54 @@ subsystem or proposal.
   — finite built-in predicates, actual environment observation and five narrow
   preparation sentinels; pins, literal kernel/snapshotter normalization,
   image inventory, pressure procedures and complete-freeze review remain open.
+  Its [selection/control-ownership direction](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#independent-selection-and-control-side-ownership)
+  separates compiled expectation, confirmed deployment and genuine observation;
+  Its [private control API contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-control-api-contract)
+  bounds admission/dispatch/retirement ownership, one trusted crate boundary,
+  stop ordering and retained release locks; implementation, complete type/VFS
+  proofs and whole module precode remain open.
+  Its [private operation identity candidate](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-private-operation-identity-candidate)
+  supplies allocation-domain/checked-sequence bookkeeping only; no control root,
+  budget, native provenance, cleanup acknowledgment or execution authority.
+  Its [original-budget/job binding contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-original-budget-and-job-binding-contract)
+  specifies shared opaque identity, one original budget/deadline and separate
+  invalidated-operation cleanup; root/storage/native implementation stays open.
+  Its [anchored owner storage direction](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-anchored-owner-storage-and-borrowed-access)
+  separates retained partial owners from guarded transient helper views; exact
+  layouts, native handoffs, VFS/close witnesses and implementation remain open.
+  Its [journal owner/view extraction candidate](architecture/headless-resource-enforcement/preparation-store-source-spec.md#stage-a-journal-owner-view-extraction-candidate)
+  preserves the existing selected-store wrapper while separating owned journal
+  state from temporary access; root/writable integration and native freeze remain open.
+  Its [guarded helper routing and lock-phase contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-guarded-helper-routing-and-lock-phase-contract)
+  records exact current helpers, the journal/native critical-phase blocker and
+  capture/unlocked-computation/fresh-recheck requirements; guard/writable source
+  and whole-module precode remain open.
+  Its [selected-store phase feasibility record](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-selected-store-phase-feasibility)
+  records original-connection/native phase conflicts and unselected owner/executor
+  options; current guard rules remain binding, journal mutations are separate,
+  and writable/native integration and full freeze remain open.
+  Its [read-only control observer proposal](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-control-observer-proposal)
+  preserves the independently reviewed D88 protocol; the human-accepted narrow
+  amendment is recorded in the current precode work record.
+  Its [read-only observer Rust precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-read-only-observer-rust-precode)
+  selects exact private placement, retained owner/guard/mailbox shape, original
+  wrapper-unit quota and conservative checked SQL cleanup. Component precode is
+  not compiled source; private move/reuse, budget extraction, original-owner
+  admission/close, full native accounting, compiler proofs and writable/runtime
+  integration remain gated.
+  Its [private native relocation and package-isolated Linux validator precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#private-native-relocation-and-package-isolated-linux-validator-precode)
+  corrects ACL test location and records the daemon-only rustix graph blocker,
+  exact future dual-owner transition, fixed offline package compilation/listing
+  and receipt/negative-test requirements. M0 tooling source is accepted and locally attested;
+  graph-policy transition, relocation and genuine Linux proof remain missing.
+  Its [validator/graph-policy ownership and receipt-schema precode](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#validator-and-graph-policy-ownership-and-receipt-schema-precode)
+  freezes M0/M1 source ownership, separate private harness ownership, real-baseline
+  ordering and closed canonical compile/list evidence shapes. The M0 runner/parser
+  source and fixture amendment are accepted and locally attested by PHR-0092;
+  offline macOS full source validation passed. Harness and Linux proof remain missing.
+  Its [credential capture/compute/recheck contract](architecture/headless-resource-enforcement/realized-recipe-source-spec.md#stage-a-credential-capturecomputerecheck-contract)
+  defines the implemented private current-row capture/computation prerequisite
+  while preserving original scope/connection recheck; control integration remains open.
 - [HCFG-6 generated Docker metadata custody proposal](architecture/headless-resource-enforcement/docker-metadata-source-spec.md)
   — search-only held ancestry, exact inherited ACLs, named ACL reads and current
   daemon-root association; provisioning, complete freeze and runtime remain gated.

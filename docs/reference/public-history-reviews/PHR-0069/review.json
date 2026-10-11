@@ -1,0 +1,39 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0069-independent-implementation-review-058e54f5",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-recipe-selection-contract-clarification"],
+  "base_revision": "94032d602ca7a9a10e9de9ba18dd855d81e75296",
+  "reviewed_revision": "058e54f599ca82eb5e925f06e2746bab40538d45",
+  "reviewed_tree_oid": "5168716006c7371dba53cb6988f65faab15de9eb",
+  "diff_sha256": "sha256:f03046b5756f607ba8e18357c278e839129a1dd758549ce673fa7887a2b6e7ef",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:6be48ef7a89ddb200d8171172b98acfe1e749ac37066c3ca5878563e15ea4ad9"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/realized-recipe-source-spec.md",
+      "sha256": "sha256:ed8f2add174d723abdbdbdbbdf5b5ebbb2e6158afb47d55bf9edbdb89f78db11"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:5484a27f9d2b56ca43a9e78b16fb04be6658f3dd01071dc5e3ec63cd213cb0e2"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:1d84384cd22731f214295eb5453474076ddd6d9c8b06b68d88c0cab5784e417b"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/prefix_acl_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh independent read-only review of an exact four-file documentation source checkpoint. The canonical full-index diff, source parent/tree and protected blobs are independently bound. The realized-recipe wording now requires independently retained expected recipe before profile/root comparison, keeps candidate references comparison-only, and separates dynamic deployment bindings/current observations from immutable predicates. Project Status records that correction; PHR-0069 is the only pending registry append and earlier 68 entries remain unchanged. Generated inventory changes only its source-tree digest; 2122 occurrences across 295 files remain unchanged. Exact-source docs direction, public readiness, formatting, legacy inventory through public-history staged review, cached diff checks and four-snapshot redacted Gitleaks pass; Gitleaks reports zero findings. Canonical source validation result/log/report hashes are bound locally. Initial missing-cache and stale-inventory failures, and raw-versus-canonical diff/recovery-helper review failures are preserved and corrected. These are local source receipts, not independently authenticated runtime executor provenance. No meaningful source behavior changed, so this docs-only slice did not rerun npm run check, Rust tests or Semgrep. No complete selector/recipe/binding schema or real pins, new API, writable preparation admission, cancellation/quarantine implementation, native Linux proof, full freeze, integration, runtime, package or supported release is established. LNSAT remains standalone and Rangoon uses ordinary adapters. Exact direct-child metadata validation and fresh review remain separately required. No merge, Docker, host mutation, runtime, certification or release authority follows."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

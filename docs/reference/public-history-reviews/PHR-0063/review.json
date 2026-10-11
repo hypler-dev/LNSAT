@@ -1,0 +1,83 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0063-independent-implementation-review-08db823b",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["headless-root-manifest-bootstrap-stage-a"],
+  "base_revision": "6f1051311acddd7b641e6d51caf0cdbd9d414fa1",
+  "reviewed_revision": "08db823b4f8ee3c8c7b895232e6bbbfc9ff23ce4",
+  "reviewed_tree_oid": "2d21c4d0ff5d220c4dde17b70e77f7c31073218e",
+  "diff_sha256": "sha256:2578918ac0f73fe96b92560e4a2a7972f7cd91e98af9abb97be76517fe1e0b4c",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_native_acl.rs",
+      "sha256": "sha256:bf9ce45cc6d463086b2cf2f7364b2b0ff3b751cafdcd4ed6759e48992e7f62fc"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact.rs",
+      "sha256": "sha256:f5de7a5bd7cd6881363aed398b003eb82b7eb01d82ce16dbd3c0285b28f7b713"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact_tests.rs",
+      "sha256": "sha256:49d916e2a6b3fd34366cc0f72d47d6f6ba15dca084d37804fc056603030f4328"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_procfs.rs",
+      "sha256": "sha256:79ac9023b17f48baecf1a01ea6fd4d04f1b0d3fcc5fa89f27dffe2c201901c3e"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_procfs_tests.rs",
+      "sha256": "sha256:5b8db56741d650c7da3c0c53b215af32bd36230c26427edd026d52505d98d751"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable.rs",
+      "sha256": "sha256:f524edc5a485250aae6660f8fe61139c0ad52f43053ec437a2b65e54317ecc12"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable_tests.rs",
+      "sha256": "sha256:c69727bb1040bd4e94be2ebee92904593bb2be902af109ed57b34a50abe90285"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_root_bootstrap.rs",
+      "sha256": "sha256:60b14afa6642169c51e69b40fbceb242fa084332197a6c24c0df9c2b4f3e3b7a"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_root_bootstrap_tests.rs",
+      "sha256": "sha256:7fb1dd888c1d4b55d13e778a07082a827c1fa2f0b56ca5ba8f33330c1b8bbea1"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_tests.rs",
+      "sha256": "sha256:1a5960a4cc924e5e5c5069232d2a0339023efa88ab821d70a65691a8f9cd9281"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:29918806e9a23f8bc7dc981f59b8699cfb451633b669d2dff6ce1161678c8124"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d45414a4c13d3cd14dcbb21c7cb9188f87cf446f68b9fd4e7d8b820e1c84c28b"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md",
+      "sha256": "sha256:116952091b42e5c5c7d1d017038d563da9d07fd8a968edec2635e46150b25f7f"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:b30809d4e11f61e434f97fbcfedd0d457f340afd9078f86a469670ccd6939904"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:626896401cb26352613559c06b9f34960fddb4a42c5850deac4bd8e9202fab8f"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/root_bootstrap_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh independent read-only source review. The exact immutable source parent, tree, canonical diff and all 15 protected blobs match the reviewed staged packet. The private Stage-A candidate adds closed Begin, Recheck and Retire jobs to the existing single retained procfs worker. Original root, ancestor and manifest descriptors remain worker-owned; the coordinator receives bounded unverified facts and an opaque lifetime ticket. Admission claims the existing manifest allowance once and preserves shared absolute deadlines. The Linux candidate follows fixed descriptor-relative named and held observations, exact file and present-ACL predicates, existing held-artifact read accounting and hashing, repeated baseline checks, prospective descriptor custody before post-call denial, and explicit worker-only consuming close attempts. Cleanup proceeds after read-budget invalidation; error, cancellation, expiry, unwind and retire publication remain fail-closed. The former blocking lifecycle coverage gap is closed by seven additional host-only retained-state model tests. Focused native tests pass 113; strict all-target clippy and complete npm run check pass, including 1519 TypeScript tests, 139 contract comparisons, 264 host store tests with two explicit helper ignores, and 394 daemon tests. Docs, public, inventory, history, format and whitespace checks pass. Gitleaks reports zero findings. Installed local Semgrep rules report 12 read-only test-fixture INFO matches, zero scanner errors and zero actionable production findings; the independent reviewer verified that disposition. Ordinary read-only fixture lifecycle models do not prove native root acquisition. This macOS host does not compile or execute the Linux-specific acquisition path. Linux positive and blocked-operation or unfinished-close proof, search-only prefix ACLs, artifact and OCI acquisition, actual host-root/namespace/peer association, complete recipe and pins, full native freeze, product integration, runtime and packaging remain unfinished. No product caller, public SDK operation, trusted holder, initializer, schema or activation path is added. LNSAT remains standalone and Rangoon uses ordinary adapters. Separate exact direct-child review is required. No merge, runtime, release or execution authority is granted."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

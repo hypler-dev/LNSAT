@@ -1,0 +1,51 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0093-independent-implementation-review-e6e4139d",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["main-integration-linux-clippy"],
+  "base_revision": "f5a9c016a2ef7d71d4fb1d11b219b284a4067ed1",
+  "reviewed_revision": "e6e4139d3829e8248d0936763c4be73481d45193",
+  "reviewed_tree_oid": "3cc542ad3605d5399ce29adccc403ea4c029a417",
+  "diff_sha256": "sha256:d43755f3de8d43b092dd9335d4280c4da60f98a06902125664067faf22016079",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact.rs",
+      "sha256": "sha256:358ee08f9ef1b71ad034c835bd5a9c996117a6fc63f745830cf33f051e6d2245"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact_tests.rs",
+      "sha256": "sha256:dbcd457cd155ed0c403dd5f92e2a05acc7d08b26bb67bf772f865f25621324ef"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable_tests.rs",
+      "sha256": "sha256:de59358725f60c20a60168b0779dc5d0aacab7ee0e301ef0da913e5d7addc574"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_root_bootstrap.rs",
+      "sha256": "sha256:d2af606e991308d6aebb3649da7aee066f8760270f282e58ac1572e208683e62"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:ae62ab46c30e15e2d72fa69148ad24c724d98201e7755b0564d1e4074f80bf60"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:46313f4072aa067838869ebc3cd5cc4e8ce20cad53669de3e021af5743d501f5"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:855ec78d8b027959316367508f88a19ec1d233d508d8ea324179cdc3cc3cf54d"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/main_correction_immutable_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex gpt-5.6-terra xhigh fresh corrected staged-source and immutable-source reviews PASS with no actionable findings. Immutable-source review sha256:8075315d7925b1306f5dea5d58aefe018a1a37529295b1f9b0b2ff9b2fae51c3. Seven exact source blobs, sole parent, tree and canonical diff independently pinned. Six focused docs/public/inventory/format/diff and existing-pinned Rust formatting checks passed on the exact staged source tree; reuse is limited to immutable tree/diff/blob equivalence, not a later commit SHA rerun. The 24 explicit Linux imports match the retained compiler recommendation, including RootPrefixAcl. The statement-scoped Clippy expectation retains the existing fixed 64 KiB Zeroizing stack buffer. No allocation, error path, authority, workflow, dependency or global lint profile change. First integration CI failure and an unpushed superseded candidate with a missing import remain retained evidence. No full local source check or local Linux execution is claimed. Fresh exact-head public source CI and committed source-history replay remain required before normal protected main integration. The owner authorized that source integration; Linux package proof, private harness, genuine B0/B1, M1, runtime, support, certification, release, artifact publication, deploy and production remain closed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
