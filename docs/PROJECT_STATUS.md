@@ -3991,8 +3991,12 @@ fake-runtime selector is compiled only for crate tests. Three adversarial served
 tests confirm: success/replay/idempotency drift rejection; post-consequence
 unknown survives restart and reconciles through host Git inspection only;
 unchanged-target unknown persists without receipt. Exact replay is metadata-only
-with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
--> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
+with no redispatch. The crate-test-only served path now keeps a private handle
+only for a newly created claim and re-reads the bound durable claim in an
+authenticated store transaction after payload construction, before its fake
+supervisor. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+-> D3/D4A payload -> fresh durable guard -> D4B1 supervisor -> D4B2A
+receipt/unknown. No served route
 configures or invokes Docker. P11-D4C1 adds the source-only
 `lnsat-git-reference` executable, exact D4A-retained profile mount-path handoff,
 self-executable binding, strict host/container repository-identity remapping,

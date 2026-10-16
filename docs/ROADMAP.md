@@ -64,8 +64,12 @@ routes. Its internal crate-test-only selector uses a fake Docker executable,
 disposable Unix socket, marked temporary Git target, and host Git verifier.
 Exact replay is metadata-only with no redispatch; ambiguity survives restart;
 reconciliation performs host Git inspection only, never runtime launch or
-consequence retry. P11-D4C1 adds the source-only `lnsat-git-reference`
-executable, D4A-bound profile target-mount argument, host/container path-remap
+consequence retry. The crate-test-only served path retains a private handle
+only for a newly created claim and performs an authenticated durable re-read
+of the bound attempt after payload construction, before its fake supervisor.
+This does not supply a real-Docker driver or runtime proof. P11-D4C1 adds the
+source-only `lnsat-git-reference` executable, D4A-bound profile target-mount
+argument, host/container path-remap
 validation, self-executable digest check, lazy-fetch- and Trace2-disabled
 bounded Git consequence, and exact D3 result framing under hermetic host-process tests. It uses no Docker binary,
 daemon, socket, or image operation. Phase 11 remains incomplete. Only the

@@ -161,6 +161,12 @@ This verifier is a source prerequisite. A separately reviewed runnable proof
 driver and real runtime evidence are still required before the prepared path
 can establish an execution result.
 
+The crate-test-only served fake-runtime path retains the private handle only
+for a newly created claim. After building its payload, it performs the
+authenticated durable re-read before its fake supervisor. Exact replay returns
+readback only and cannot obtain that handle. This does not invoke real Docker
+or qualify a runnable proof driver.
+
 ### 4. Prove the consequence or preserve uncertainty
 
 Dispatch acceptance is not completion. Adapter exit status is not sufficient

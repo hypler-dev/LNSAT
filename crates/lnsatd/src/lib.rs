@@ -103,6 +103,8 @@ use lnsat_store::{
     Phase7ExecutionAuthorizationTransitionInputV1, Phase7ExecutionAuthorizationTransitionV1,
     Phase7ExecutionCapabilityWireV1, Phase8OperationAttemptReadbackV1, Phase8OperationReadbackV1,
     Phase8RuntimeCompositionInputV1, Phase8RuntimeCompositionWriteV1,
+    Phase11DockerPreSupervisorBindingV1, Phase11DockerRuntimeCompositionClaimHandleV1,
+    Phase11DockerRuntimeCompositionClaimOutcomeV1, Phase11DockerRuntimeCompositionClaimV1,
     Phase11DockerRuntimeCompositionInputV1, SQLITE_SCHEMA_VERSION, SqliteStore, SqliteStoreStateV1,
     acquire_local_daemon_database_lease_v1,
 };
@@ -1408,6 +1410,8 @@ pub struct DaemonConfigV1 {
     git_executable: Option<PathBuf>,
     docker_local_runtime_profile: Option<Box<runtime_profile::LoadedDockerLocalRuntimeProfileV1>>,
     phase11_served_fake_docker_executable: Option<Box<PathBuf>>,
+    #[cfg(test)]
+    phase11_served_fake_pre_verifier_unknown: bool,
     internal_console_root: Option<PathBuf>,
     internal_console_asset_manifest: BTreeMap<String, PathBuf>,
 }
@@ -1458,6 +1462,8 @@ impl DaemonConfigV1 {
             git_executable: None,
             docker_local_runtime_profile: None,
             phase11_served_fake_docker_executable: None,
+            #[cfg(test)]
+            phase11_served_fake_pre_verifier_unknown: false,
             internal_console_root: None,
             internal_console_asset_manifest: BTreeMap::new(),
         })
@@ -1544,6 +1550,13 @@ impl DaemonConfigV1 {
         self.phase11_served_fake_docker_executable =
             Some(Box::new(fake_docker_executable.to_path_buf()));
         Ok(self)
+    }
+
+    /// Forces one post-claim durable state change in crate-only served tests.
+    #[cfg(test)]
+    fn with_phase11_served_fake_pre_verifier_unknown(mut self) -> Self {
+        self.phase11_served_fake_pre_verifier_unknown = true;
+        self
     }
 
     /// Enables source-local immutable console hosting from one exact asset
@@ -1987,6 +2000,8 @@ struct Phase8DaemonRuntimeV1 {
 struct Phase11ServedFakeRuntimeV1 {
     loaded_profile: runtime_profile::LoadedDockerLocalRuntimeProfileV1,
     fake_docker_executable: PathBuf,
+    #[cfg(test)]
+    pre_verifier_unknown: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -2211,6 +2226,9 @@ impl DaemonServerV1 {
                                 Phase11ServedFakeRuntimeV1 {
                                     loaded_profile: loaded_profile.clone(),
                                     fake_docker_executable: fake_docker_executable.clone(),
+                                    #[cfg(test)]
+                                    pre_verifier_unknown: config
+                                        .phase11_served_fake_pre_verifier_unknown,
                                 }
                             }),
                     })
@@ -3955,8 +3973,8 @@ fn execute_phase11_served_fake_runtime_v1(
     let mut locked_store = store
         .lock()
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
-    let claim = locked_store
-        .claim_phase11_docker_runtime_composition_v1(
+    let claim_outcome = locked_store
+        .claim_phase11_docker_runtime_composition_handle_or_replay_v1(
             &docker_input,
             capability,
             raw_session_token,
@@ -3965,14 +3983,18 @@ fn execute_phase11_served_fake_runtime_v1(
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
     drop(locked_store);
 
-    if !claim.created {
-        return Ok(Phase8RuntimeCompositionWriteV1 {
-            created: false,
-            consumption: claim.consumption,
-            operation: claim.operation,
-        });
-    }
-    let attempt_sequence = claim
+    let handle = match claim_outcome {
+        Phase11DockerRuntimeCompositionClaimOutcomeV1::Replayed(claim) => {
+            return Ok(Phase8RuntimeCompositionWriteV1 {
+                created: false,
+                consumption: claim.consumption,
+                operation: claim.operation,
+            });
+        }
+        Phase11DockerRuntimeCompositionClaimOutcomeV1::Created(handle) => *handle,
+    };
+    let attempt_sequence = handle
+        .claim()
         .operation
         .attempt
         .as_ref()
@@ -3997,6 +4019,12 @@ fn execute_phase11_served_fake_runtime_v1(
         mark_phase11_served_outcome_unknown_v1(store, &input.operation_id);
         return Err(LocalBrowserTransportErrorV1::Rejected);
     };
+    #[cfg(test)]
+    if fake_runtime.pre_verifier_unknown {
+        mark_phase11_served_outcome_unknown_v1(store, &input.operation_id);
+    }
+    let claim =
+        verify_phase11_served_claim_v1(store, handle, raw_session_token, raw_csrf_token, &payload)?;
     let Ok(supervised) = docker_local_supervisor::supervise_docker_local_git_execution_v1(
         &docker_local_supervisor::DockerLocalSupervisorInputV1 {
             payload: &payload,
@@ -4023,6 +4051,30 @@ fn execute_phase11_served_fake_runtime_v1(
         consumption: claim.consumption,
         operation,
     })
+}
+
+fn verify_phase11_served_claim_v1(
+    store: &Arc<Mutex<SqliteStore>>,
+    handle: Phase11DockerRuntimeCompositionClaimHandleV1,
+    raw_session_token: &str,
+    raw_csrf_token: &str,
+    payload: &docker_local_execution_payload::DockerLocalExecutionPayloadRequestFrameV1,
+) -> Result<Phase11DockerRuntimeCompositionClaimV1, LocalBrowserTransportErrorV1> {
+    let mut locked_store = store
+        .lock()
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    let proof = locked_store
+        .verify_phase11_docker_pre_supervisor_v1(
+            handle,
+            raw_session_token,
+            raw_csrf_token,
+            &Phase11DockerPreSupervisorBindingV1 {
+                execution_request_digest: payload.derived_request().request_digest,
+                tool_arguments_digest: payload.tool_arguments_digest(),
+            },
+        )
+        .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+    Ok(proof.claim().clone())
 }
 
 fn mark_phase11_served_outcome_unknown_v1(store: &Arc<Mutex<SqliteStore>>, operation_id: &str) {

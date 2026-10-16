@@ -741,6 +741,98 @@ fn pre_supervisor_guard_rebinds_structural_inputs_and_fresh_durable_claim() {
 }
 
 #[test]
+fn created_claim_handle_and_exact_replay_have_distinct_provenance() {
+    let fixture = ServedFakeRuntimeFixture::new("pre-supervisor-replay", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    assert!(handle.claim().created);
+    let mut capability = fixture.capability.clone();
+    let capability = Phase7CapabilitySecretV1::take_from_canonical_wire_v1(&mut capability)
+        .expect("fixture capability must decode");
+    let replay = store
+        .claim_phase11_docker_runtime_composition_handle_or_replay_v1(
+            &Phase11DockerRuntimeCompositionInputV1 {
+                redemption: Phase7CapabilityRedemptionInputV1 {
+                    project_ref: &fixture.packet_project_ref,
+                    resource_ref: &fixture.resource_ref,
+                    authorization_id: &fixture.authorization_id,
+                    operation_id: &fixture.operation_id,
+                    idempotency_key: EXECUTE_IDEMPOTENCY,
+                },
+                derived_request: fixture.payload.derived_request(),
+                disposable_root: &fixture.git.root,
+                verifier_git_executable: Path::new(GIT_EXECUTABLE),
+            },
+            capability,
+            &fixture.requester_session_token,
+            &fixture.requester_csrf,
+        )
+        .expect("exact replay must return readback only");
+    assert!(matches!(
+        replay,
+        Phase11DockerRuntimeCompositionClaimOutcomeV1::Replayed(claim)
+            if !claim.created && claim.operation.state == "dispatching"
+    ));
+    assert_eq!(fixture.run_count(), 0);
+}
+
+#[test]
+fn served_pre_supervisor_verifier_rejects_stale_authentication_without_dispatch() {
+    let fixture = ServedFakeRuntimeFixture::new("served-guard-denial", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let store = Arc::new(Mutex::new(store));
+
+    assert!(matches!(
+        verify_phase11_served_claim_v1(
+            &store,
+            handle,
+            &fixture.requester_session_token,
+            "wrong csrf proof",
+            &fixture.payload,
+        ),
+        Err(LocalBrowserTransportErrorV1::Rejected)
+    ));
+    assert_eq!(fixture.run_count(), 0);
+    assert_phase11_unknown(
+        &store.lock().expect("guard store lock"),
+        &fixture.operation_id,
+    );
+}
+
+#[test]
+fn served_post_claim_durable_drift_denies_before_fake_supervisor() {
+    let mut fixture = ServedFakeRuntimeFixture::new("served-guard-drift", FakeMode::Success);
+    fixture.config = fixture
+        .config
+        .clone()
+        .with_phase11_served_fake_pre_verifier_unknown();
+    let daemon = ServedDaemon::start(&fixture.config);
+
+    let denied = fixture.execute(&daemon, EXECUTE_IDEMPOTENCY);
+    response_json(&denied, "HTTP/1.1 403 Forbidden\r\n");
+    fixture.assert_public_safe(&denied);
+    assert_eq!(fixture.run_count(), 0);
+
+    let operation = response_json(&fixture.operation(&daemon), "HTTP/1.1 200 OK\r\n");
+    assert_eq!(operation["operation"]["state"], "outcome_unknown");
+    assert_eq!(
+        operation["operation"]["attempt"]["state"],
+        "outcome_unknown"
+    );
+    assert!(operation["operation"]["receipt"].is_null());
+
+    let replay = response_json(
+        &fixture.execute(&daemon, EXECUTE_IDEMPOTENCY),
+        "HTTP/1.1 200 OK\r\n",
+    );
+    assert_eq!(replay["created"], false);
+    assert_eq!(replay["operation"]["state"], "outcome_unknown");
+    assert_eq!(fixture.run_count(), 0);
+    daemon.stop();
+}
+
+#[test]
 fn pre_supervisor_guard_structural_or_durable_reject_marks_unknown() {
     let fixture =
         ServedFakeRuntimeFixture::new("pre-supervisor-guard-structural", FakeMode::Success);
