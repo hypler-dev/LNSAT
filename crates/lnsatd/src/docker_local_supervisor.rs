@@ -14,7 +14,9 @@ use crate::docker_local_execution_payload::{
 };
 use crate::runtime_profile::{DOCKER_LOCAL_ADAPTER_REF_V1, LoadedDockerLocalRuntimeProfileV1};
 use lnsat_store::{
-    Phase7GitExecutionResultV1, inspect_phase11_disposable_git_result_v1,
+    Phase7GitExecutionResultV1, Phase11DockerPreSupervisorBindingV1,
+    Phase11DockerPreSupervisorProofV1, Phase11DockerRuntimeCompositionClaimHandleV1,
+    Phase11DockerRuntimeCompositionClaimV1, SqliteStore, inspect_phase11_disposable_git_result_v1,
     validate_phase11_disposable_git_target_v1,
 };
 use sha2::{Digest, Sha256};
@@ -30,6 +32,7 @@ use std::os::unix::fs::{
 };
 use std::path::{Component, Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use zeroize::Zeroizing;
 
@@ -89,6 +92,7 @@ pub enum DockerLocalSupervisorErrorV1 {
     VerifierExecutableInvalid,
     DockerEndpointInvalid,
     TargetRejected,
+    PreSupervisorProofRejected,
     RuntimeUnavailable,
     OutcomeUnknown,
 }
@@ -105,6 +109,9 @@ impl DockerLocalSupervisorErrorV1 {
             }
             Self::DockerEndpointInvalid => "docker_local_supervisor.docker_endpoint_invalid",
             Self::TargetRejected => "docker_local_supervisor.target_rejected",
+            Self::PreSupervisorProofRejected => {
+                "docker_local_supervisor.pre_supervisor_proof_rejected"
+            }
             Self::RuntimeUnavailable => "docker_local_supervisor.runtime_unavailable",
             Self::OutcomeUnknown => "docker_local_supervisor.outcome_unknown",
         }
@@ -208,9 +215,107 @@ pub fn docker_local_launch_contract_argv_template_v1(
 ///
 /// Rejects any profile/payload/target/runtime drift before launch. Any anomaly
 /// after launch becomes [`DockerLocalSupervisorErrorV1::OutcomeUnknown`].
+#[cfg(test)]
 #[allow(clippy::too_many_lines)]
-pub fn supervise_docker_local_git_execution_v1(
+pub(crate) fn supervise_docker_local_git_execution_v1(
     input: &DockerLocalSupervisorInputV1<'_>,
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_git_execution_inner_v1(input, || Ok(()))
+}
+
+#[cfg(test)]
+pub(crate) fn supervise_docker_local_git_execution_with_test_hook_v1(
+    input: &DockerLocalSupervisorInputV1<'_>,
+    hook: impl FnOnce() -> Result<(), DockerLocalSupervisorErrorV1>,
+) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
+    supervise_docker_local_git_execution_inner_v1(input, hook)
+}
+
+/// Runs the source-only served fake supervisor after it directly re-reads one
+/// store-created claim. Callers cannot pass an already-created proof. This
+/// does not qualify a real Docker driver or establish operator authority.
+///
+/// # Errors
+///
+/// Fails before process creation if the authenticated durable re-read or
+/// payload binding fails. All ordinary supervisor failures remain unchanged.
+pub(crate) fn supervise_docker_local_git_execution_with_fresh_claim_v1(
+    input: &DockerLocalSupervisorInputV1<'_>,
+    store: &Mutex<SqliteStore>,
+    claim_handle: Phase11DockerRuntimeCompositionClaimHandleV1,
+    raw_session_token: &str,
+    raw_csrf_token: &str,
+) -> Result<
+    (
+        DockerLocalSupervisedGitResultV1,
+        Phase11DockerRuntimeCompositionClaimV1,
+    ),
+    DockerLocalSupervisorErrorV1,
+> {
+    let mut verified_claim = None;
+    let result = supervise_docker_local_git_execution_inner_v1(input, || {
+        let mut locked_store = store
+            .lock()
+            .map_err(|_| DockerLocalSupervisorErrorV1::PreSupervisorProofRejected)?;
+        let proof = locked_store
+            .verify_phase11_docker_pre_supervisor_v1(
+                claim_handle,
+                raw_session_token,
+                raw_csrf_token,
+                &Phase11DockerPreSupervisorBindingV1 {
+                    execution_request_digest: input.payload.derived_request().request_digest,
+                    tool_arguments_digest: input.payload.tool_arguments_digest(),
+                },
+            )
+            .map_err(|_| DockerLocalSupervisorErrorV1::PreSupervisorProofRejected)?;
+        if !pre_supervisor_proof_matches_payload_v1(&proof, input.payload) {
+            return Err(DockerLocalSupervisorErrorV1::PreSupervisorProofRejected);
+        }
+        verified_claim = Some(proof.claim().clone());
+        Ok(proof)
+    })?;
+    Ok((
+        result,
+        verified_claim.ok_or(DockerLocalSupervisorErrorV1::PreSupervisorProofRejected)?,
+    ))
+}
+
+fn pre_supervisor_proof_matches_payload_v1(
+    proof: &Phase11DockerPreSupervisorProofV1,
+    payload: &DockerLocalExecutionPayloadRequestFrameV1,
+) -> bool {
+    let claim = proof.claim();
+    let control = payload.control().request();
+    let derived = payload.derived_request();
+    let Some(attempt) = claim.operation.attempt.as_ref() else {
+        return false;
+    };
+    claim.created
+        && claim.execution_request_digest == derived.request_digest
+        && claim.consumption.operation_id == control.operation.operation_id
+        && claim.consumption.authorization_id == control.operation.authorization_id
+        && claim.consumption.idempotency_key == control.operation.idempotency_key
+        && claim.consumption.project_ref == derived.request.project_ref
+        && claim.consumption.resource_ref == derived.request.resource_ref
+        && claim.operation.operation_id == control.operation.operation_id
+        && claim.operation.authorization_id == control.operation.authorization_id
+        && claim.operation.consumption_id.as_deref()
+            == Some(claim.consumption.consumption_id.as_str())
+        && claim.operation.state == "dispatching"
+        && claim.operation.state_sequence == 2
+        && claim.operation.receipt_id.is_none()
+        && claim.operation.reconciliation_id.is_none()
+        && attempt.operation_id == control.operation.operation_id
+        && attempt.attempt_sequence == control.operation.attempt_sequence
+        && attempt.state == "dispatching"
+        && attempt.state_sequence == 1
+        && attempt.tool_arguments_digest == payload.tool_arguments_digest()
+}
+
+#[allow(clippy::too_many_lines)]
+fn supervise_docker_local_git_execution_inner_v1<T>(
+    input: &DockerLocalSupervisorInputV1<'_>,
+    prove: impl FnOnce() -> Result<T, DockerLocalSupervisorErrorV1>,
 ) -> Result<DockerLocalSupervisedGitResultV1, DockerLocalSupervisorErrorV1> {
     let supervisor = input
         .loaded_profile
@@ -282,6 +387,17 @@ pub fn supervise_docker_local_git_execution_v1(
         cid_path: docker_config.cid_path(),
     };
 
+    let mut command = Command::new(input.docker_executable);
+    command
+        .env_clear()
+        .args(&args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    let _pre_spawn_proof = prove()?;
+
+    // Recheck path-based identities after the durable callback: it may take
+    // time, and no earlier host check is a substitute for this last check.
     let repository_immediately_before_spawn = validate_phase11_disposable_git_target_v1(
         parsed.derived_request(),
         input.disposable_root,
@@ -314,14 +430,9 @@ pub fn supervise_docker_local_git_execution_v1(
         return Err(DockerLocalSupervisorErrorV1::DockerEndpointInvalid);
     }
 
+    // Runtime budget begins at launch, never while durable proof waits on
+    // SQLite or while host identities are rechecked.
     let started = Instant::now();
-    let mut command = Command::new(input.docker_executable);
-    command
-        .env_clear()
-        .args(&args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
     let mut child = command
         .spawn()
         .map_err(|_| DockerLocalSupervisorErrorV1::RuntimeUnavailable)?;
