@@ -1,0 +1,59 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0094-independent-implementation-review-dea43da4",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["phase11-served-claim-pre-dispatch-guard"],
+  "base_revision": "5cad4719e89395d4a0c90b7b06aacfe1f83555f5",
+  "reviewed_revision": "dea43da47d5ee17ec259d625b884613d7ab7c8a1",
+  "reviewed_tree_oid": "dc7216924dc90ea3c4fa5582c7ceb86869750794",
+  "diff_sha256": "sha256:a13df6d1b39db5aa18a50e9e406b2aa59b24190fa6f7780cc7e0a414fd69a03a",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:2377244ed653b5680ec44a71d48bdd4a4cbeef88078a472ba1fa40893ac944bc"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:8031d0314bc116525cd52a3ff6cb5fa2cddeb0381a1c81ca2a9b78e20d17e85f"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_git_adapter.rs",
+      "sha256": "sha256:2eafcafa2cbc0cef45e0c50136f691bf8320033320e8636de8faf5f61e19473c"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:25c41b05593cc1e1ea64bac90c556600e1f2ba683590397b425fe48dcdd8fd01"
+    },
+    {
+      "path": "crates/lnsatd/src/tests/phase11_served_fake_runtime.rs",
+      "sha256": "sha256:e32656faa081c565a381171d574c79722c68f25cda750c4a84afcace62c41bae"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d3d2a96542ad0945445515230557609c220ec2ab1fc79bf5501e50749db860ac"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:61804c0228c0fbb0df64190e96c92e8a919ce28c90aa0d28a0aefd57d52b5fba"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:80029746e4d401c21bb66a10af051bb7bf867f822379698039ccba66881d494f"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:c77347e5eb9759a663abb6f7f9be4d8ff38a137707314f30402d2930ab891cb2"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/lnsat_guard_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex GPT-5.6-Terra xhigh independent read-only review of exact dea43da 9-file diff and narrow call paths. PASS with no P1/P2/P3. Checked private created-claim handle versus replay readback; fresh auth/CSRF and durable re-read; post-payload pre-fake-supervisor gate; denial retaining outcome_unknown without dispatch; one-dispatch/replay/no-retry, restart/reconcile and stale-auth/durable-drift tests; docs remain source-only fake-runtime. Reviewer read source and tests, not runtime execution."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
