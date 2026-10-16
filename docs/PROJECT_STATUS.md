@@ -3992,9 +3992,16 @@ tests confirm: success/replay/idempotency drift rejection; post-consequence
 unknown survives restart and reconciles through host Git inspection only;
 unchanged-target unknown persists without receipt. Exact replay is metadata-only
 with no redispatch. The crate-test-only served path now keeps a private handle
-only for a newly created claim and re-reads the bound durable claim in an
-authenticated store transaction after payload construction, before its fake
-supervisor. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
+only for a newly created claim. Its fake supervisor directly performs the
+authenticated durable re-read after process preflight, validates the proof
+against the current payload, then rechecks target, executable, and endpoint
+identities before fake process creation. Callers cannot substitute a cached
+proof; the old unguarded launch helper is compiled only for crate tests.
+Hermetic negatives cover post-claim durable drift and target, executable, and
+endpoint mutation between initial preflight and the last pre-spawn check. The
+process wall-clock budget starts after these checks. These checks narrow
+the check/use gap but do not prove atomicity against an external filesystem or
+database actor. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
 -> D3/D4A payload -> fresh durable guard -> D4B1 supervisor -> D4B2A
 receipt/unknown. No served route
 configures or invokes Docker. P11-D4C1 adds the source-only
