@@ -681,6 +681,20 @@ deployment, release, package, or support exists. Phase 11 remains incomplete;
 a later separately authorized gate owns real disposable Docker image/runtime
 proof.
 
+The current request-bound one-use admission source seam is a private follow-on
+to this order. It combines final authenticated admission and durable launch
+reservation in one immediate transaction, reusing capability consumption and
+the existing operation/attempt records. The seam binds the immutable request
+root, unique policy decision, active sessions, nonce, authorization window,
+capability, exact derived request, and tool-arguments digest. It uses a closed
+fake adapter protocol only; no public route, real dispatch, consequence receipt,
+or supported operation is opened. A post-commit loss remains inspection-only
+and follows existing startup `outcome_unknown` reconciliation without retry.
+The source milestone does not add a schema migration: store schema 18 and the
+future headless schema 19 proposal remain unchanged. Its exact contract and
+later integration gates are recorded in
+[request-execution admission](architecture/request-execution-admission.md).
+
 The private served-driver admission seam now provides a source-only structural
 check for that later chain. It binds the run manifest to fields in a
 caller-supplied claim snapshot, canonical D3/D4A payload, loaded profile, and

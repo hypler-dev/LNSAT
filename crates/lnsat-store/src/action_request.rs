@@ -15,6 +15,115 @@ use serde_json::{Value, json};
 
 mod projection;
 
+/// Revalidates the immutable intake root and its unique policy evaluation inside
+/// the execution reservation transaction. Intake and execution digests use
+/// different domains, so compare their material fields rather than their hashes.
+pub(super) fn validate_execution_root_v1(
+    connection: &Connection,
+    request_id: &str,
+    derived: &lnsat_contracts::DerivedExecutionRequestV1,
+) -> Result<(), ActionRequestErrorV1> {
+    if !valid_request_id(request_id) {
+        return Err(ActionRequestErrorV1::InvalidInput);
+    }
+    let root = connection
+        .query_row(
+            &format!("{ROOT_SELECT} WHERE request_id=?1"),
+            [request_id],
+            map_root,
+        )
+        .optional()
+        .map_err(|_| ActionRequestErrorV1::PersistenceFailed)?
+        .ok_or(ActionRequestErrorV1::AuthorizationRejected)?;
+    validate_root(&root)?;
+    let evaluation =
+        read_evaluation(connection, &root)?.ok_or(ActionRequestErrorV1::AuthorizationRejected)?;
+    validate_root_policy_v1(connection, &root, &evaluation)?;
+    let request = &derived.request;
+    if evaluation.status != "recorded"
+        || evaluation.policy_decision_id.as_deref() != Some(&request.policy_decision_id)
+        || root.packet_id != request.packet_id
+        || root.packet_sha256 != request.packet_sha256
+        || root.project_ref != request.project_ref
+        || root.resource_ref != request.resource_ref
+        || root.requester_ref != request.requester_ref
+        || format!("session:local:{}", root.session_id) != request.requester_session_ref
+        || root.configuration_digest != request.configuration_digest
+        || root.action_digest
+            != digest(
+                "lnsat.action_request.action.v1",
+                &json!({"kind":request.action.kind,"arguments":request.action.arguments}),
+            )?
+        || root.target_digest
+            != digest(
+                "lnsat.action_request.target.v1",
+                &json!({"resource_ref":request.target.resource_ref,"identity":request.target.identity}),
+            )?
+    {
+        return Err(ActionRequestErrorV1::EvidenceDrift);
+    }
+    Ok(())
+}
+
+/// Recover the same validated request identity for reservation readback. This
+/// does not grant authority or reclassify an unknown execution outcome.
+pub(super) fn reservation_root_id_v1(
+    connection: &Connection,
+    attempt: &crate::Phase7AuthorizationAttemptRecordV1,
+) -> Result<String, ActionRequestErrorV1> {
+    let root = connection.query_row(
+        &format!("{ROOT_SELECT} WHERE request_id=(SELECT request_id FROM lnsat_action_request_evaluations WHERE policy_decision_id=?1)"),
+        [&attempt.policy_decision_id], map_root,
+    ).optional().map_err(|_| ActionRequestErrorV1::PersistenceFailed)?
+        .ok_or(ActionRequestErrorV1::EvidenceDrift)?;
+    validate_root(&root)?;
+    let evaluation =
+        read_evaluation(connection, &root)?.ok_or(ActionRequestErrorV1::EvidenceDrift)?;
+    if evaluation.status != "recorded"
+        || evaluation.policy_decision_id.as_deref() != Some(&attempt.policy_decision_id)
+        || root.packet_id != attempt.packet_id
+        || root.packet_sha256 != attempt.packet_sha256
+        || root.project_ref != attempt.project_ref
+        || root.resource_ref != attempt.resource_ref
+        || root.requester_ref != attempt.requester_ref
+        || format!("session:local:{}", root.session_id) != attempt.requester_session_ref
+    {
+        return Err(ActionRequestErrorV1::EvidenceDrift);
+    }
+    validate_root_policy_v1(connection, &root, &evaluation)?;
+    Ok(root.request_id)
+}
+
+/// Shares the projection's canonical packet/policy/root validation without
+/// applying operator-response row/byte limits to historical store integrity.
+fn validate_root_policy_v1(
+    connection: &Connection,
+    root: &ActionRequestRootV1,
+    evaluation: &ActionRequestEvaluationV1,
+) -> Result<(), ActionRequestErrorV1> {
+    let payload: String = connection
+        .query_row(
+            "SELECT json_object('canonical_packet',packet.canonical_packet,
+          'decision',policy.decision,'evaluated_at',policy.evaluated_at,
+          'expires_at',policy.expires_at,'requires_approval',policy.requires_approval)
+         FROM lnsat_policy_decisions AS policy
+         JOIN lnsat_packet_envelopes AS packet ON packet.packet_id=policy.packet_id
+           AND packet.packet_sha256=policy.packet_sha256 AND packet.project_ref=policy.project_ref
+         WHERE policy.decision_id=?1 AND policy.packet_id=?2
+           AND policy.packet_sha256=?3 AND policy.project_ref=?4",
+            params![
+                evaluation.policy_decision_id,
+                root.packet_id,
+                root.packet_sha256,
+                root.project_ref
+            ],
+            |row| row.get(0),
+        )
+        .map_err(|_| ActionRequestErrorV1::EvidenceDrift)?;
+    let value = serde_json::from_str(&payload).map_err(|_| ActionRequestErrorV1::EvidenceDrift)?;
+    projection::validate_private_policy(&value, root, evaluation)
+}
+
 /// Maximum encoded operator record, including its envelope.
 pub const ACTION_REQUEST_RECORD_MAX_BYTES_V1: usize = 65_536;
 

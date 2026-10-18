@@ -1,0 +1,83 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0095-independent-implementation-review-76942a7a",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["request-execution-admission"],
+  "base_revision": "0ff8ea8b97589e2fe1d4a9a569cfed87503b0dd7",
+  "reviewed_revision": "76942a7ab5032313520d919cfe7f8b372189c9f7",
+  "reviewed_tree_oid": "36ebf021ced48ffbf56d93f599ba1a1d975b8a2b",
+  "diff_sha256": "sha256:0163eb15ea6b6c905a6cae92ad4d8e158382f951eb53746f95451dd137e84b0a",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:c201e2b529ee2f8a12bc2a88b4a2a02a477d8a2300007cc5406e67e9f78c0a70"
+    },
+    {
+      "path": "crates/lnsat-store/src/action_request.rs",
+      "sha256": "sha256:6e1a18563a852f24c0daa7a5cd1f80ae593e8d76700a0e1cea967f436eacffb4"
+    },
+    {
+      "path": "crates/lnsat-store/src/action_request/projection.rs",
+      "sha256": "sha256:c1c29083c7b3c8b69165ac6f4df617ea4ed08d2c25ed8460d911f09aebda973a"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:77b3e088522ae847f1cd2d2cc038e4081fbd6960e546826624adf2b4a5527df6"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption.rs",
+      "sha256": "sha256:f4e56b7ab734eb29b682ec6b990f9ad0439fea983193eb1381c0749e9a9e31f8"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission.rs",
+      "sha256": "sha256:ae7240c1a3a39ed51dd717d1748f54bda6856cea18a4bb45429882df92bf1c1f"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_git_adapter.rs",
+      "sha256": "sha256:53e558435af02e7f45d4abfdd0a7263733a37c609864c27c49bdedb26c2dafd2"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/request_execution_admission.rs",
+      "sha256": "sha256:02a47bb5e42ea9a7727890bc08dd9aeffa2be487f7bdce2ec2596959c6cd5d22"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:363a072f40b18905c095ef3db1789b0e53cfbb74b5f4ec5ccb4bbc6f363e23d6"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:2b139dcd28d19d42e09220ae23068a2b4b7c494677b1fd2c18c624b9acae46fb"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:fb1183e87baff817dfe6da74005c70115a6f973c3ed81d325de07ddfc31d8344"
+    },
+    {
+      "path": "docs/architecture/action-request-record.md",
+      "sha256": "sha256:a485ab1fa072421c6c31f797b46dd69dc4e460162ffe28dab39603d6f1ab9dbc"
+    },
+    {
+      "path": "docs/architecture/request-execution-admission.md",
+      "sha256": "sha256:cb44b9c6c0911ec7cc9b02faf474a1d49077b8e52e40edab6a8be20ad586980c"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:7620673cc421858484671ad2ec6cb94bbc2e52084d174895912e48f6b03a027f"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:3e77f70583893be260d2ffadc2f3756191a2d9ae547a04b49ebcd665703695b9"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/admission_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured Terra/xhigh; backend runtime model ID unexposed. Independent source and evidence review plus exact committed-source and narrow registration/inventory review. Prior integrity finding resolved; no open P1/P2/P3. Reviewed atomic request-bound capability consumption, private one-use reservation, persisted lineage revalidation, fake-only adapter, and failure/replay/restart tests. Source-fixture evidence only; no formal GitHub approval or runtime qualification claimed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

@@ -1,3 +1,7 @@
+// Private source prerequisite. No public route or production dispatcher is wired.
+#[allow(dead_code)]
+pub(crate) mod request_admission;
+
 use super::{
     LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1, LocalControlPermissionV1, LocalIdentityRoleV1,
     LocalIdentityStatusV1, LocalSessionActivityVerificationV1, LocalSessionRecordV1, SqliteStore,

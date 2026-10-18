@@ -2038,6 +2038,40 @@ fn claim_phase11_docker_dispatch_in_transaction_v1(
     )
 }
 
+/// Reserves only the closed source-test adapter, using the same durable attempt
+/// and state-event machinery as existing adapters. This never launches code.
+pub(super) fn reserve_source_request_attempt_v1(
+    transaction: &Transaction<'_>,
+    consumption: &Phase7CapabilityConsumptionRecordV1,
+    derived: &DerivedExecutionRequestV1,
+    launch_digest: [u8; 32],
+    at: &str,
+) -> Result<String, Phase7GitAdapterErrorV1> {
+    use crate::phase7_consumption::request_admission::{ADAPTER_REF, ADAPTER_VERSION, PROTOCOL};
+    if derived.request.adapter.adapter_ref != ADAPTER_REF
+        || derived.request.adapter.version != ADAPTER_VERSION
+    {
+        return Err(Phase7GitAdapterErrorV1::InvalidInput);
+    }
+    // The calling transaction has revalidated the operation, authorization,
+    // consumption and every derived digest. No filesystem-shaped input exists.
+    let context = DispatchContext {
+        project_ref: consumption.project_ref.clone(),
+        resource_ref: consumption.resource_ref.clone(),
+        authorization_id: consumption.authorization_id.clone(),
+        operation_id: consumption.operation_id.clone(),
+        consumption_id: consumption.consumption_id.clone(),
+        action_digest: derived.action_digest,
+        target_digest: derived.target_digest,
+        configuration_digest: derived.configuration_digest,
+        executable_digest: derived.executable_digest,
+        adapter_ref: format!("{ADAPTER_REF}@{ADAPTER_VERSION}"),
+        operation_state: "prepared".to_owned(),
+    };
+    insert_dispatch_attempt_v1(transaction, context, launch_digest, at, PROTOCOL)
+        .map(|attempt| attempt.operation_attempt_id)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn claim_dispatch_in_transaction_for_adapter_v1(
     transaction: &Transaction<'_>,
@@ -2051,18 +2085,35 @@ fn claim_dispatch_in_transaction_for_adapter_v1(
 ) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
     let context = read_dispatch_context(transaction, input)?;
     verify_dispatch_context_for_adapter(input, &context, adapter_ref, adapter_version)?;
-    if select_attempt(transaction, input.operation_id)?.is_some() {
+    let tool_arguments_digest =
+        supplied_tool_arguments_digest.unwrap_or_else(|| tool_arguments_digest(parsed));
+    insert_dispatch_attempt_v1(
+        transaction,
+        context,
+        tool_arguments_digest,
+        claimed_at,
+        protocol_version,
+    )
+}
+
+/// Shared persistence only: no target inspection, parser, process or adapter call.
+fn insert_dispatch_attempt_v1(
+    transaction: &Transaction<'_>,
+    context: DispatchContext,
+    tool_arguments_digest: [u8; 32],
+    claimed_at: &str,
+    protocol_version: &str,
+) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
+    if select_attempt(transaction, &context.operation_id)?.is_some() {
         return Err(Phase7GitAdapterErrorV1::DispatchAlreadyClaimed);
     }
     if context.operation_state != "prepared" {
         return Err(Phase7GitAdapterErrorV1::AuthorizationNotConsumed);
     }
-    let tool_arguments_digest =
-        supplied_tool_arguments_digest.unwrap_or_else(|| tool_arguments_digest(parsed));
     let operation_attempt_id = identifier(
         "opa_",
         ATTEMPT_ID_DOMAIN,
-        &[input.operation_id.as_bytes(), &tool_arguments_digest],
+        &[context.operation_id.as_bytes(), &tool_arguments_digest],
     );
     let audit_binding_id = identifier(
         "p7a_",
@@ -3092,6 +3143,7 @@ fn select_receipt_id(
         .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)
 }
 
+#[allow(clippy::too_many_lines)] // Keep closed protocol and complete attempt integrity checks together.
 pub(super) fn verify_phase7_git_adapter_records_v1(
     connection: &Connection,
 ) -> Result<(), SqliteStoreError> {
@@ -3159,7 +3211,26 @@ pub(super) fn verify_phase7_git_adapter_records_v1(
                 == format!(
                     "{PHASE11_DOCKER_GIT_ADAPTER_REF_V1}@{PHASE11_DOCKER_GIT_ADAPTER_VERSION_V1}"
                 )
-                && attempt.protocol_version == PHASE11_DOCKER_PROTOCOL_VERSION_V1);
+                && attempt.protocol_version == PHASE11_DOCKER_PROTOCOL_VERSION_V1)
+            || (attempt.adapter_ref
+                == format!(
+                    "{}@{}",
+                    crate::phase7_consumption::request_admission::ADAPTER_REF,
+                    crate::phase7_consumption::request_admission::ADAPTER_VERSION
+                )
+                && attempt.protocol_version
+                    == crate::phase7_consumption::request_admission::PROTOCOL);
+        if attempt.protocol_version == crate::phase7_consumption::request_admission::PROTOCOL {
+            crate::phase7_consumption::request_admission::verify_reservation_binding_v1(
+                connection,
+                &attempt.project_ref,
+                &attempt.resource_ref,
+                &attempt.operation_id,
+                &attempt.tool_arguments_digest,
+                &attempt.created_at,
+            )
+            .map_err(|_| SqliteStoreError::MigrationDrift)?;
+        }
         if attempt.attempt_sequence != 1
             || !known_adapter_protocol
             || attempt.operation_attempt_id
