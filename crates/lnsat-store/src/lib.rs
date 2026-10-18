@@ -2379,6 +2379,8 @@ pub struct SqliteStore {
     connection: Connection,
     authentication_dummy_verifier: String,
     owner_decision_credential_scope: owner_decision_credential::OwnerDecisionCredentialScopeV1,
+    // Transient source-dispatch origin; not durable custody or authority.
+    request_dispatch_scope: std::sync::Arc<()>,
     // Declaration-order drop closes SQLite before releasing custody/lease.
     selected_store_custody: Option<selected_store::SelectedStoreCustodyV1>,
 }
@@ -2485,6 +2487,7 @@ impl SqliteStore {
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
             owner_decision_credential_scope:
                 crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+            request_dispatch_scope: std::sync::Arc::new(()),
             selected_store_custody: None,
         };
         store.apply_pending_migrations()?;
@@ -13517,6 +13520,7 @@ mod tests {
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
             owner_decision_credential_scope:
                 crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+            request_dispatch_scope: std::sync::Arc::new(()),
             selected_store_custody: None,
         };
         let (packet, policy, request, decision) = approval_decision_fixture();
@@ -13687,6 +13691,7 @@ mod tests {
             authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
             owner_decision_credential_scope:
                 crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+            request_dispatch_scope: std::sync::Arc::new(()),
             selected_store_custody: None,
         };
         let (packet, policy, request, decision) = approval_decision_fixture();

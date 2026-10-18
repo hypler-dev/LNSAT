@@ -1108,3 +1108,696 @@ fn request_execution_admission_concurrent_and_restart_paths_never_redispatch() {
     ));
     assert_eq!(PROTOCOL, "lnsat.request-execution-admission.source.v1");
 }
+
+fn dispatch_fake<C, F>(
+    fixture: &mut AdmissionFixture,
+    reservation: RequestLaunchReservationV1,
+    derived: &lnsat_contracts::DerivedExecutionRequestV1,
+    clock: C,
+    fake: F,
+) -> Result<(), Phase7PersistenceErrorV1>
+where
+    C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+    F: FnOnce(
+        crate::phase7_consumption::request_admission::RequestFakeDispatchGuardV1,
+    ) -> Result<(), ()>,
+{
+    let token = fixture.requester_token.clone();
+    let csrf = fixture.requester_csrf.clone();
+    fixture.store.dispatch_request_fake_with_sources_v1(
+        reservation,
+        derived,
+        (&token, &csrf),
+        clock,
+        fake,
+    )
+}
+
+fn assert_unknown_without_result(fixture: &mut AdmissionFixture, operation_id: &str) {
+    let operation = fixture
+        .store
+        .read_phase8_operation_v1(operation_id)
+        .expect("operation must read")
+        .expect("operation must exist");
+    assert_eq!(operation.state, "outcome_unknown");
+    assert_eq!(table_count(&fixture.store, "lnsat_operation_receipts"), 0);
+    assert_eq!(
+        table_count(&fixture.store, "lnsat_operation_reconciliations"),
+        0
+    );
+}
+
+#[test]
+fn request_fake_dispatch_calls_guarded_fixture_once_and_keeps_dispatching() {
+    let mut fixture = AdmissionFixture::new(901);
+    let reservation = fixture
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let attempt_id = reservation.operation_attempt_id().to_owned();
+    let request_id = fixture.request_id.clone();
+    let derived = fixture.derived.clone();
+    let calls = AtomicUsize::new(0);
+    dispatch_fake(
+        &mut fixture,
+        reservation,
+        &derived,
+        || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+        |guard| {
+            assert_eq!(guard.request_id(), request_id);
+            assert_eq!(guard.operation_attempt_id(), attempt_id);
+            assert_eq!(guard.checked_at(), "2026-07-22T20:03:31.000Z");
+            calls.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        },
+    )
+    .expect("guarded fake must dispatch once");
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    let operation = fixture
+        .store
+        .read_phase8_operation_v1(&operation_id)
+        .expect("operation must read")
+        .expect("operation must exist");
+    assert_eq!(operation.state, "dispatching");
+    assert_eq!(table_count(&fixture.store, "lnsat_operation_receipts"), 0);
+    assert_eq!(
+        table_count(&fixture.store, "lnsat_operation_reconciliations"),
+        0
+    );
+}
+
+#[test]
+fn request_fake_dispatch_rejects_live_proof_and_derived_drift_as_unknown() {
+    let calls = AtomicUsize::new(0);
+    let mut proof = AdmissionFixture::new(902);
+    let reservation = proof
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let derived = proof.derived.clone();
+    let saved = std::mem::replace(&mut proof.requester_csrf, "bad-proof".to_owned());
+    assert!(matches!(
+        dispatch_fake(
+            &mut proof,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            },
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    proof.requester_csrf = saved;
+    assert_unknown_without_result(&mut proof, &operation_id);
+
+    let mut drift = AdmissionFixture::new(903);
+    let reservation = drift
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let mut derived = drift.derived.clone();
+    derived.request.audience = "audience:gateway:other".to_owned();
+    assert!(matches!(
+        dispatch_fake(
+            &mut drift,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            },
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut drift, &operation_id);
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+#[allow(clippy::too_many_lines)] // Keep the independent post-reservation revocations together.
+fn request_fake_dispatch_rechecks_session_identity_nonce_and_expiry() {
+    let calls = AtomicUsize::new(0);
+    let mut requester = AdmissionFixture::new(904);
+    let reservation = requester
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    assert!(
+        requester
+            .store
+            .revoke_local_session_v1(
+                &requester.requester_token,
+                &requester.requester_csrf,
+                "2026-07-22T20:03:31.000Z",
+                LocalSessionRevocationReasonV1::SignOut,
+            )
+            .expect("requester must revoke")
+    );
+    let derived = requester.derived.clone();
+    assert!(matches!(
+        dispatch_fake(
+            &mut requester,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:32.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut requester, &operation_id);
+
+    let mut nonce = AdmissionFixture::new(905);
+    let reservation = nonce
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let derived = nonce.derived.clone();
+    assert!(matches!(
+        dispatch_fake(
+            &mut nonce,
+            reservation,
+            &derived,
+            || Ok(EXPIRES_AT.to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut nonce, &operation_id);
+
+    let mut approver = AdmissionFixture::new(909);
+    let reservation = approver
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    assert!(
+        approver
+            .store
+            .revoke_local_session_v1(
+                &approver.approver_token,
+                &approver.approver_csrf,
+                "2026-07-22T20:03:31.000Z",
+                LocalSessionRevocationReasonV1::SignOut,
+            )
+            .expect("approver must revoke")
+    );
+    let derived = approver.derived.clone();
+    assert!(matches!(
+        dispatch_fake(
+            &mut approver,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:32.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut approver, &operation_id);
+
+    let mut disabled = AdmissionFixture::new(910);
+    let reservation = disabled
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    disabled
+        .store
+        .disable_local_identity_v1(
+            "identity:human:approver",
+            &disabled.requester_token,
+            &disabled.requester_csrf,
+            "2026-07-22T20:03:31.000Z",
+        )
+        .expect("owner must disable approver")
+        .expect("approver must disable");
+    let derived = disabled.derived.clone();
+    assert!(matches!(
+        dispatch_fake(
+            &mut disabled,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:32.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut disabled, &operation_id);
+
+    let mut cancelled = AdmissionFixture::new(911);
+    let reservation = cancelled
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    cancelled
+        .store
+        .cancel_phase7_authorization_nonce_at_v1(
+            &Phase7AuthorizationNonceCancelInputV1 {
+                project_ref: &cancelled.project_ref,
+                resource_ref: &cancelled.resource_ref,
+                nonce_id: &cancelled.nonce_id,
+            },
+            "2026-07-22T20:03:31.000Z",
+            || Ok(()),
+        )
+        .expect("active nonce must cancel");
+    let derived = cancelled.derived.clone();
+    assert!(matches!(
+        dispatch_fake(
+            &mut cancelled,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:32.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut cancelled, &operation_id);
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn request_fake_dispatch_callback_failure_or_panic_is_terminal_unknown() {
+    let failed_calls = AtomicUsize::new(0);
+    let panic_calls = AtomicUsize::new(0);
+    let mut failed = AdmissionFixture::new(906);
+    let reservation = failed
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let attempt_id = reservation.operation_attempt_id().to_owned();
+    let digest = *reservation.launch_digest();
+    let derived = failed.derived.clone();
+    assert!(matches!(
+        dispatch_fake(
+            &mut failed,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+            |_| {
+                failed_calls.fetch_add(1, Ordering::SeqCst);
+                Err(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_eq!(failed_calls.load(Ordering::SeqCst), 1);
+    assert_unknown_without_result(&mut failed, &operation_id);
+    failed
+        .store
+        .mark_request_admission_outcome_unknown_v1(&operation_id, &attempt_id, &digest)
+        .expect("targeted unknown must be idempotent");
+    assert_unknown_without_result(&mut failed, &operation_id);
+
+    let mut panicked = AdmissionFixture::new(907);
+    let reservation = panicked
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let derived = panicked.derived.clone();
+    assert!(matches!(
+        dispatch_fake(
+            &mut panicked,
+            reservation,
+            &derived,
+            || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+            |_| {
+                panic_calls.fetch_add(1, Ordering::SeqCst);
+                panic!("fixture fake panic")
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_eq!(panic_calls.load(Ordering::SeqCst), 1);
+    assert_unknown_without_result(&mut panicked, &operation_id);
+}
+
+#[test]
+fn request_fake_dispatch_final_clock_and_reopen_paths_never_retry() {
+    let calls = AtomicUsize::new(0);
+    let mut backwards = AdmissionFixture::new(912);
+    let reservation = backwards
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let derived = backwards.derived.clone();
+    let mut clock = ["2026-07-22T20:03:32.000Z", "2026-07-22T20:03:31.000Z"].into_iter();
+    assert!(matches!(
+        dispatch_fake(
+            &mut backwards,
+            reservation,
+            &derived,
+            || Ok(clock.next().expect("two clock values").to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut backwards, &operation_id);
+
+    let mut expiry = AdmissionFixture::new(913);
+    let reservation = expiry
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let derived = expiry.derived.clone();
+    let mut clock = ["2026-07-22T20:03:31.000Z", EXPIRES_AT].into_iter();
+    assert!(matches!(
+        dispatch_fake(
+            &mut expiry,
+            reservation,
+            &derived,
+            || Ok(clock.next().expect("two clock values").to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_unknown_without_result(&mut expiry, &operation_id);
+
+    let mut origin = AdmissionFixture::new(914);
+    let path = origin.database.path.clone();
+    let reservation = origin
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let derived = origin.derived.clone();
+    drop(origin.store);
+    let mut reopened = SqliteStore::open(&path).expect("reopened store must open");
+    assert!(matches!(
+        reopened.dispatch_request_fake_with_sources_v1(
+            reservation,
+            &derived,
+            (&origin.requester_token, &origin.requester_csrf),
+            || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_eq!(
+        reopened
+            .materialize_phase8_interrupted_dispatches_v1()
+            .expect("startup must materialize persisted dispatch"),
+        1
+    );
+    let operation = reopened
+        .read_phase8_operation_v1(&operation_id)
+        .expect("reopened operation must read")
+        .expect("reopened operation must exist");
+    assert_eq!(operation.state, "outcome_unknown");
+    assert_eq!(table_count(&reopened, "lnsat_operation_receipts"), 0);
+    assert_eq!(table_count(&reopened, "lnsat_operation_reconciliations"), 0);
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn request_fake_dispatch_foreign_store_cannot_mark_origin_unknown() {
+    let calls = AtomicUsize::new(0);
+    let mut origin = AdmissionFixture::new(908);
+    let path = origin.database.path.clone();
+    let mut foreign = SqliteStore::open(&path).expect("foreign connection must open first");
+    let reservation = origin
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let derived = origin.derived.clone();
+    assert!(matches!(
+        foreign.dispatch_request_fake_with_sources_v1(
+            reservation,
+            &derived,
+            (&origin.requester_token, &origin.requester_csrf),
+            || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            },
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    let operation = origin
+        .store
+        .read_phase8_operation_v1(&operation_id)
+        .expect("origin operation must read")
+        .expect("origin operation must exist");
+    assert_eq!(operation.state, "dispatching");
+    assert_eq!(table_count(&origin.store, "lnsat_operation_receipts"), 0);
+    assert_eq!(
+        table_count(&origin.store, "lnsat_operation_reconciliations"),
+        0
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+#[allow(clippy::too_many_lines)] // Each fault uses a separate full-lineage disposable database.
+fn request_fake_dispatch_clock_error_startup_and_durable_corruption_fail_closed() {
+    let raw_state = |store: &SqliteStore, operation_id: &str, attempt_id: &str| {
+        let latest = |id: &str| -> String {
+            store
+                .connection
+                .query_row(
+                    "SELECT state FROM lnsat_phase7_state_events WHERE target_entity_id=?1
+                 ORDER BY state_sequence DESC LIMIT 1",
+                    [id],
+                    |row| row.get(0),
+                )
+                .expect("raw fixture state exists")
+        };
+        (
+            table_count(store, "lnsat_phase7_state_events"),
+            table_count(store, "lnsat_phase7_audit_bindings"),
+            latest(operation_id),
+            latest(attempt_id),
+        )
+    };
+    for case in 0..4 {
+        let mut fixture = AdmissionFixture::new(920 + case);
+        let reservation = fixture
+            .reserve_at(ADMITTED_AT)
+            .expect("reservation must commit");
+        let operation_id = reservation.operation_id().to_owned();
+        let attempt_id = reservation.operation_attempt_id().to_owned();
+        let derived = fixture.derived.clone();
+        if case == 1 {
+            assert_eq!(
+                fixture
+                    .store
+                    .materialize_phase8_interrupted_dispatches_v1()
+                    .expect("same-store startup must mark unknown"),
+                1
+            );
+        } else if case == 2 {
+            // Corrupt only this disposable fixture, then restore its exact
+            // trigger so the guard must detect row drift, not a missing guard.
+            let trigger: String = fixture.store.connection.query_row(
+                "SELECT sql FROM sqlite_schema WHERE name='lnsat_operation_attempts_reject_update'",
+                [], |row| row.get(0),
+            ).expect("fixture immutable trigger exists");
+            fixture
+                .store
+                .connection
+                .execute_batch("DROP TRIGGER lnsat_operation_attempts_reject_update")
+                .expect("remove fixture trigger for corruption injection");
+            fixture
+                .store
+                .connection
+                .execute(
+                    "UPDATE lnsat_operation_attempts SET tool_arguments_digest=zeroblob(32)
+                 WHERE operation_attempt_id=?1",
+                    [&attempt_id],
+                )
+                .expect("fixture corrupts existing attempt");
+            fixture
+                .store
+                .connection
+                .execute_batch(&trigger)
+                .expect("restore exact fixture trigger");
+        } else if case == 3 {
+            fixture.store.connection.execute_batch(
+                "CREATE TEMP TRIGGER reject_unknown BEFORE INSERT ON lnsat_phase7_state_events
+                 WHEN NEW.state='outcome_unknown' BEGIN SELECT RAISE(ABORT,'fixture unknown failure'); END;"
+            ).expect("inject unknown persistence failure");
+        }
+        let before = (case == 2).then(|| raw_state(&fixture.store, &operation_id, &attempt_id));
+        let calls = AtomicUsize::new(0);
+        let result = dispatch_fake(
+            &mut fixture,
+            reservation,
+            &derived,
+            || {
+                if case == 0 || case == 3 {
+                    Err(Phase7PersistenceErrorV1::ClockRejected)
+                } else {
+                    Ok("2026-07-22T20:03:31.000Z".to_owned())
+                }
+            },
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            },
+        );
+        assert!(matches!(
+            result,
+            Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+        ));
+        assert_eq!(calls.load(Ordering::SeqCst), 0);
+        assert_eq!(table_count(&fixture.store, "lnsat_operation_receipts"), 0);
+        assert_eq!(
+            table_count(&fixture.store, "lnsat_operation_reconciliations"),
+            0
+        );
+        if case == 2 {
+            let before = before.expect("corruption baseline captured");
+            assert_eq!(before.2, "dispatching");
+            assert_eq!(before.3, "dispatching");
+            assert_eq!(
+                raw_state(&fixture.store, &operation_id, &attempt_id),
+                before
+            );
+            let bytes: Vec<u8> = fixture.store.connection.query_row(
+                "SELECT tool_arguments_digest FROM lnsat_operation_attempts WHERE operation_attempt_id=?1",
+                [&attempt_id], |row| row.get(0),
+            ).expect("corrupt bytes remain observable");
+            assert_eq!(bytes, vec![0; 32]);
+            assert!(
+                fixture
+                    .store
+                    .read_phase8_operation_v1(&operation_id)
+                    .is_err()
+            );
+        } else if case == 3 {
+            fixture
+                .store
+                .connection
+                .execute_batch("DROP TRIGGER reject_unknown")
+                .expect("remove only fixture trigger");
+            assert_eq!(
+                fixture
+                    .store
+                    .read_phase8_operation_v1(&operation_id)
+                    .expect("reservation persists")
+                    .expect("operation exists")
+                    .state,
+                "dispatching"
+            );
+            assert!(fixture.reserve_at("2026-07-22T20:03:32.000Z").is_err());
+            assert_eq!(
+                fixture
+                    .store
+                    .materialize_phase8_interrupted_dispatches_v1()
+                    .expect("later inspection records ambiguity"),
+                1
+            );
+        } else {
+            assert_unknown_without_result(&mut fixture, &operation_id);
+        }
+    }
+}
+
+#[test]
+fn request_fake_dispatch_wrong_actor_and_unknown_audit_compatibility() {
+    let mut fixture = AdmissionFixture::new(930);
+    let reservation = fixture
+        .reserve_at(ADMITTED_AT)
+        .expect("reservation must commit");
+    let operation_id = reservation.operation_id().to_owned();
+    let attempt_id = reservation.operation_attempt_id().to_owned();
+    let derived = fixture.derived.clone();
+    let calls = AtomicUsize::new(0);
+    // A valid approver session is still not the original requester.
+    assert!(matches!(
+        fixture.store.dispatch_request_fake_with_sources_v1(
+            reservation,
+            &derived,
+            (&fixture.approver_token, &fixture.approver_csrf),
+            || Ok("2026-07-22T20:03:31.000Z".to_owned()),
+            |_| {
+                calls.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            },
+        ),
+        Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+    ));
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+    assert_unknown_without_result(&mut fixture, &operation_id);
+    let audit_id: String = fixture
+        .store
+        .connection
+        .query_row(
+            "SELECT audit.audit_binding_id FROM lnsat_phase7_audit_bindings AS audit
+         JOIN lnsat_phase7_state_events AS state ON state.state_event_id=audit.record_id
+         WHERE state.target_entity_id=?1 AND state.state='outcome_unknown'",
+            [&attempt_id],
+            |row| row.get(0),
+        )
+        .expect("unknown audit row exists");
+    let effect: String = fixture
+        .store
+        .connection
+        .query_row(
+            "SELECT authority_effect FROM lnsat_phase7_audit_bindings WHERE audit_binding_id=?1",
+            [&audit_id],
+            |row| row.get(0),
+        )
+        .expect("audit effect reads");
+    assert_eq!(effect, "none");
+    let trigger: String = fixture
+        .store
+        .connection
+        .query_row(
+            "SELECT sql FROM sqlite_schema WHERE name='lnsat_phase7_audit_bindings_reject_update'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("audit immutable trigger exists");
+    for (effect, valid) in [("adapter_executed", true), ("receipt_bound", false)] {
+        fixture
+            .store
+            .connection
+            .execute_batch("DROP TRIGGER lnsat_phase7_audit_bindings_reject_update")
+            .expect("fixture replaces audit classification only");
+        fixture.store.connection.execute(
+            "UPDATE lnsat_phase7_audit_bindings SET authority_effect=?1 WHERE audit_binding_id=?2",
+            params![effect, &audit_id],
+        ).expect("fixture audit classification changes");
+        fixture
+            .store
+            .connection
+            .execute_batch(&trigger)
+            .expect("exact trigger restored");
+        assert_eq!(
+            fixture
+                .store
+                .read_phase8_operation_v1(&operation_id)
+                .is_ok(),
+            valid
+        );
+    }
+    assert_eq!(table_count(&fixture.store, "lnsat_operation_receipts"), 0);
+    assert_eq!(
+        table_count(&fixture.store, "lnsat_operation_reconciliations"),
+        0
+    );
+}

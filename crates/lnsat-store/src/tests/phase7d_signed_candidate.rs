@@ -1636,6 +1636,7 @@ fn phase7d_open_schema_seventeen_store(path: &Path) -> SqliteStore {
         authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
         owner_decision_credential_scope:
             crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+        request_dispatch_scope: std::sync::Arc::new(()),
         selected_store_custody: None,
     }
 }

@@ -119,6 +119,16 @@ subject to existing startup reconciliation as `outcome_unknown`; it cannot be
 retried or reported as fabricated success. See
 [request-execution admission](docs/architecture/request-execution-admission.md).
 
+The guarded fake-dispatch follow-on adds a private fresh-transaction handoff.
+Reservations carry an in-memory store-instance marker and cannot cross another
+connection or reopen. The guard rechecks durable request, policy, attempt and
+digest bindings plus the live exact requester bearer/CSRF proof, approver,
+roles, nonce, and expiry windows. Only test builds can invoke the trusted fake
+callback. Callback failure or unwinding panic may record exact source-protocol
+`outcome_unknown`; success remains `dispatching` with no receipt or completion.
+Fourteen grouped admission and guarded-dispatch tests passed locally. No route,
+real adapter, schema migration, physical deadline, or post-check atomicity is implied.
+
 ### 1. Bind the proposal to exact content
 
 A versioned packet carries the declared actor, scope, resources and constraints.

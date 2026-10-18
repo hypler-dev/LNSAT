@@ -695,6 +695,20 @@ future headless schema 19 proposal remain unchanged. Its exact contract and
 later integration gates are recorded in
 [request-execution admission](architecture/request-execution-admission.md).
 
+The guarded fake-dispatch follow-on adds a private fresh `IMMEDIATE`
+transaction before the test-only callback. An in-memory store-instance marker
+rejects a retained reservation from another connection or reopen. The guard
+rechecks the durable root, unique policy and attempt lineage, reservation
+digest, live exact requester bearer/CSRF proof, approver and roles, nonce,
+expiry windows, and final clock. Callback error or unwinding panic consumes authority and
+best-effort records only the exact source-protocol `outcome_unknown`; callback
+success leaves the operation `dispatching` with no receipt, reconciliation, or
+completion. Historical integrity remains separate. Fourteen grouped local tests
+passed: eight guarded-dispatch groups and six admission regression groups.
+Earlier reservation receipts remain separate dated evidence.
+This remains source-only: no route, real adapter, schema change, physical
+deadline, or post-check atomicity claim opens.
+
 The private served-driver admission seam now provides a source-only structural
 check for that later chain. It binds the run manifest to fields in a
 caller-supplied claim snapshot, canonical D3/D4A payload, loaded profile, and

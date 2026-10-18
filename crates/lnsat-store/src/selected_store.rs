@@ -648,6 +648,7 @@ fn open_under_custody(
         authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
         owner_decision_credential_scope:
             super::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+        request_dispatch_scope: std::sync::Arc::new(()),
         selected_store_custody: Some(custody),
     };
     verify_schema_at_version(&store.connection, observed_schema_version)

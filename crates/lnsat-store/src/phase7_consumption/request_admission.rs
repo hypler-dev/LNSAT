@@ -7,9 +7,10 @@
 use super::{
     Connection, LocalControlPermissionV1, Phase7CapabilityConsumptionRecordV1,
     Phase7CapabilityRedemptionInputV1, Phase7CapabilitySecretV1, Phase7PersistenceErrorV1,
-    SqliteStore, SystemTime, Transaction, canonical_millis, canonical_system_time_v1,
-    consumption_public_record, digest_fields, params, read_validated_attempt_by_id,
-    read_validated_nonce_by_id, select_authorization_by_id,
+    SqliteStore, SystemTime, Transaction, authenticate_phase7_local_session,
+    authorize_phase7_redemption_actor, begin_immediate_transaction, canonical_millis,
+    canonical_system_time_v1, consumption_public_record, digest_fields, params,
+    read_validated_attempt_by_id, read_validated_nonce_by_id, select_authorization_by_id,
     select_consumption_by_authorization_or_operation, select_operation_by_id,
     validate_authorization_source_window, validate_phase7_session_reference,
     validate_stored_authorization, validate_stored_consumption, validate_stored_operation,
@@ -17,6 +18,7 @@ use super::{
 use crate::action_request::validate_execution_root_v1;
 use crate::phase7_git_adapter::reserve_source_request_attempt_v1;
 use lnsat_contracts::{DerivedExecutionRequestV1, verify_derived_execution_request_v1};
+use std::sync::Arc;
 
 pub(crate) const ADAPTER_REF: &str = "adapter:source-only:request-admission";
 pub(crate) const ADAPTER_VERSION: &str = "v1";
@@ -27,6 +29,7 @@ const SUPERVISOR: &str = "supervisor:source-only:fake";
 /// neither Clone nor serializable. No real adapter accepts it.
 #[derive(Debug)]
 pub(crate) struct RequestLaunchReservationV1 {
+    store_scope: Arc<()>,
     request_id: String,
     operation_id: String,
     operation_attempt_id: String,
@@ -52,7 +55,118 @@ impl RequestLaunchReservationV1 {
     }
 }
 
+/// Private one-use handoff, never a receipt or a production adapter permit.
+/// Construction requires the original store instance and fresh authenticated
+/// durable readback. No clone or serialization implementation exists.
+#[derive(Debug)]
+pub(crate) struct RequestFakeDispatchGuardV1 {
+    reservation: RequestLaunchReservationV1,
+    checked_at: String,
+}
+
+impl RequestFakeDispatchGuardV1 {
+    pub(crate) fn request_id(&self) -> &str {
+        self.reservation.request_id()
+    }
+
+    pub(crate) fn operation_attempt_id(&self) -> &str {
+        self.reservation.operation_attempt_id()
+    }
+
+    pub(crate) fn checked_at(&self) -> &str {
+        &self.checked_at
+    }
+}
+
 impl SqliteStore {
+    /// Private source prerequisite. No production adapter accepts the result.
+    pub(crate) fn guard_request_dispatch_v1(
+        &mut self,
+        reservation: RequestLaunchReservationV1,
+        derived: &DerivedExecutionRequestV1,
+        local_auth: (&str, &str),
+    ) -> Result<RequestFakeDispatchGuardV1, Phase7PersistenceErrorV1> {
+        self.guard_request_dispatch_from_sources_v1(reservation, derived, local_auth, || {
+            canonical_system_time_v1(SystemTime::now())
+        })
+    }
+
+    fn guard_request_dispatch_from_sources_v1<C>(
+        &mut self,
+        reservation: RequestLaunchReservationV1,
+        derived: &DerivedExecutionRequestV1,
+        local_auth: (&str, &str),
+        mut clock: C,
+    ) -> Result<RequestFakeDispatchGuardV1, Phase7PersistenceErrorV1>
+    where
+        C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+    {
+        // A retained value cannot cross reopen or another store connection.
+        // Do not write uncertainty into a foreign store on origin mismatch.
+        if !Arc::ptr_eq(&self.request_dispatch_scope, &reservation.store_scope) {
+            return Err(Phase7PersistenceErrorV1::OutcomeAmbiguous);
+        }
+        let checked: Result<String, Phase7PersistenceErrorV1> = (|| {
+            let transaction = begin_immediate_transaction(&self.connection)?;
+            let at = clock()?;
+            let checked_at = validate_dispatch_guard_v1(
+                &transaction,
+                &reservation,
+                derived,
+                local_auth,
+                &at,
+                &mut clock,
+            )?;
+            transaction
+                .commit()
+                .map_err(|_| Phase7PersistenceErrorV1::OutcomeAmbiguous)?;
+            Ok(checked_at)
+        })();
+        if let Ok(checked_at) = checked {
+            Ok(RequestFakeDispatchGuardV1 {
+                reservation,
+                checked_at,
+            })
+        } else {
+            let _ = self.mark_request_admission_outcome_unknown_v1(
+                &reservation.operation_id,
+                &reservation.operation_attempt_id,
+                &reservation.launch_digest,
+            );
+            Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+        }
+    }
+
+    /// Only fixture builds contain a callback dispatcher. Callback code is
+    /// trusted test code, not a sandbox or a production adapter interface.
+    #[cfg(test)]
+    pub(crate) fn dispatch_request_fake_with_sources_v1<C, F>(
+        &mut self,
+        reservation: RequestLaunchReservationV1,
+        derived: &DerivedExecutionRequestV1,
+        local_auth: (&str, &str),
+        clock: C,
+        fake: F,
+    ) -> Result<(), Phase7PersistenceErrorV1>
+    where
+        C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+        F: FnOnce(RequestFakeDispatchGuardV1) -> Result<(), ()>,
+    {
+        let guard =
+            self.guard_request_dispatch_from_sources_v1(reservation, derived, local_auth, clock)?;
+        // Cleanup bindings are evidence only; they cannot construct a guard.
+        let operation_id = guard.reservation.operation_id.clone();
+        let attempt_id = guard.reservation.operation_attempt_id.clone();
+        let digest = guard.reservation.launch_digest;
+        if let Ok(Ok(())) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| fake(guard))) {
+            Ok(())
+        } else {
+            let _ =
+                self.mark_request_admission_outcome_unknown_v1(&operation_id, &attempt_id, &digest);
+            Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
+        }
+    }
+
     /// Source-only reservation; there is no HTTP, CLI, SDK or adapter route.
     /// Server time is selected after the transaction's write lock is acquired.
     pub(crate) fn reserve_request_execution_v1(
@@ -119,6 +233,7 @@ impl SqliteStore {
             return Err(Phase7PersistenceErrorV1::SourceNotApproved);
         }
         let clock = std::cell::RefCell::new(clock);
+        let store_scope = Arc::clone(&self.request_dispatch_scope);
         let (_, reservation) = self
             .redeem_phase7_local_execution_capability_with_transaction_hook_v1(
                 redemption,
@@ -134,6 +249,7 @@ impl SqliteStore {
                             consumption,
                             at,
                             &mut *clock.borrow_mut(),
+                            store_scope,
                         )
                     },
                     precommit,
@@ -146,6 +262,130 @@ impl SqliteStore {
     }
 }
 
+#[allow(clippy::too_many_lines)] // Keep every live join in the same transaction.
+fn validate_dispatch_guard_v1<C>(
+    transaction: &Transaction<'_>,
+    reservation: &RequestLaunchReservationV1,
+    derived: &DerivedExecutionRequestV1,
+    local_auth: (&str, &str),
+    at: &str,
+    clock: &mut C,
+) -> Result<String, Phase7PersistenceErrorV1>
+where
+    C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+{
+    crate::verify_current_schema(transaction)
+        .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+    verify_derived_execution_request_v1(derived)
+        .map_err(|_| Phase7PersistenceErrorV1::InvalidInput)?;
+    validate_execution_root_v1(transaction, &reservation.request_id, derived)
+        .map_err(|_| Phase7PersistenceErrorV1::SourceNotApproved)?;
+    let requester =
+        authenticate_phase7_local_session(transaction, local_auth.0, Some(local_auth.1), at)?;
+    let operation = select_operation_by_id(
+        transaction,
+        &derived.request.project_ref,
+        &derived.request.resource_ref,
+        &reservation.operation_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let operation = validate_stored_operation(transaction, operation)?;
+    let authorization = select_authorization_by_id(
+        transaction,
+        &operation.project_ref,
+        &operation.resource_ref,
+        &operation.authorization_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let authorization = validate_stored_authorization(transaction, authorization)?;
+    authorize_phase7_redemption_actor(&authorization, &requester)?;
+    let attempt = read_validated_attempt_by_id(
+        transaction,
+        &operation.project_ref,
+        &operation.resource_ref,
+        &authorization.authorization_attempt_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let nonce = read_validated_nonce_by_id(
+        transaction,
+        &operation.project_ref,
+        &operation.resource_ref,
+        &authorization.nonce_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    validate_authorization_source_window(&attempt, &nonce, at)?;
+    let approver = validate_phase7_session_reference(
+        transaction,
+        &attempt.approver_ref,
+        &attempt.approver_session_ref,
+        at,
+    )?;
+    let consumption = select_consumption_by_authorization_or_operation(
+        transaction,
+        &operation.project_ref,
+        &authorization.authorization_id,
+        &operation.operation_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let consumption = validate_stored_consumption(transaction, consumption)?;
+    let consumption = consumption_public_record(transaction, &consumption)?;
+    verify_reservation_binding_v1(
+        transaction,
+        &operation.project_ref,
+        &operation.resource_ref,
+        &operation.operation_id,
+        &reservation.launch_digest,
+        &consumption.consumed_at,
+    )?;
+    let readback =
+        crate::phase7_git_adapter::read_phase8_operation_v1(transaction, &operation.operation_id)
+            .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?
+            .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let dispatch = readback
+        .attempt
+        .as_ref()
+        .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    if attempt.request_digest != derived.request_digest
+        || reservation.expires_at != authorization.expires_at
+        || derived.request.adapter.adapter_ref != ADAPTER_REF
+        || derived.request.adapter.version != ADAPTER_VERSION
+        || readback.state != "dispatching"
+        || readback.state_sequence != 2
+        || dispatch.state != "dispatching"
+        || dispatch.state_sequence != 1
+        || dispatch.operation_attempt_id != reservation.operation_attempt_id
+        || dispatch.protocol_version != PROTOCOL
+        || dispatch.adapter_ref != format!("{ADAPTER_REF}@{ADAPTER_VERSION}")
+        || dispatch.tool_arguments_digest != reservation.launch_digest
+        || !approver
+            .session
+            .role
+            .allows_control(LocalControlPermissionV1::DecideApproval)
+        || requester.session.identity_ref == approver.session.identity_ref
+    {
+        return Err(Phase7PersistenceErrorV1::EvidenceDrift);
+    }
+    // Recheck time after durable reads and immediately before guard commit.
+    // No physical deadline or post-commit atomicity with a target is claimed.
+    let final_at = clock()?;
+    let final_millis = canonical_millis(&final_at)?;
+    if canonical_millis(at)? < canonical_millis(&consumption.consumed_at)?
+        || final_millis < canonical_millis(at)?
+    {
+        return Err(Phase7PersistenceErrorV1::ClockRejected);
+    }
+    if final_millis >= canonical_millis(&authorization.expires_at)?
+        || final_millis >= canonical_millis(&operation.expires_at)?
+        || final_millis >= canonical_millis(&attempt.expires_at)?
+        || final_millis >= canonical_millis(&nonce.expires_at)?
+        || final_millis >= requester.active_until_millis
+        || final_millis >= approver.active_until_millis
+    {
+        return Err(Phase7PersistenceErrorV1::SourceNotApproved);
+    }
+    Ok(final_at)
+}
+
 // Keep the final transaction's complete source checks and reservation writes
 // together so no caller can accidentally omit a prerequisite.
 #[allow(clippy::too_many_lines)]
@@ -156,6 +396,7 @@ fn validate_and_reserve_v1<C>(
     consumption: &Phase7CapabilityConsumptionRecordV1,
     at: &str,
     clock: &mut C,
+    store_scope: Arc<()>,
 ) -> Result<RequestLaunchReservationV1, Phase7PersistenceErrorV1>
 where
     C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
@@ -267,6 +508,7 @@ where
         reserve_source_request_attempt_v1(transaction, consumption, derived, launch_digest, at)
             .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
     Ok(RequestLaunchReservationV1 {
+        store_scope,
         request_id: request_id.to_owned(),
         operation_id: consumption.operation_id.clone(),
         operation_attempt_id,
