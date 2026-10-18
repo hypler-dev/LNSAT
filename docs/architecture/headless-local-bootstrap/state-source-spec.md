@@ -9,6 +9,14 @@ Owner: LNSAT maintainers
 Accepted baseline: HCFG-5B `662fc5f489d70d735d9d612e9f8cce6ed3a2b593`; HCFG-6 `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`
 Last updated: 2026-10-03
 
+## Current source allocation — 2026-10-18
+
+Schema 18 is reserved for durable authenticated action-request records. The
+installation and generation state described here remains future schema-19
+design; its counts, retention families, and manifests require fresh derivation
+from schema 18. No headless initialization or runtime authority is implemented.
+See [the action-request record](../action-request-record.md).
+
 ## Behavior
 
 This supporting contract freezes the durable root and generation bindings
@@ -18,12 +26,13 @@ authority. The existing source-order gate, including its pending amendment,
 remains controlling before candidate implementation. Review of B4 is one
 part of the complete native/wire/daemon/store freeze.
 
-The four table names already specified by the
+At the original pre-2026-10-03 headless baseline, the four table names already specified by the
 [preparation/store contract](../headless-resource-enforcement/preparation-store-source-spec.md)
-are retained: `headless_installations`, `headless_generations`,
+were retained: `headless_installations`, `headless_generations`,
 `headless_active` and `headless_config_audit`. Current source remains schema 17
-and contains none of them. The next mandatory migration is provisionally 18,
-as that supporting contract states; no migration is registered here.
+and contained none of them in that historical baseline. Current schema 18 is
+now owned by the action-request record milestone. Headless installation is a
+future schema-19 candidate; no migration is registered here.
 The [B5 schema proposal](schema-source-spec.md) supplies exact candidate SQL,
 seed handling and static object expectations without executing or registering
 that SQL. Full source freeze and actual pinned schema evidence remain required.

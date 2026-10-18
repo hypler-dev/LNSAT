@@ -10,8 +10,8 @@ use std::path::Path;
 use super::SqliteStore;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use super::{
-    LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1, SQLITE_BUSY_TIMEOUT, SQLITE_SCHEMA_VERSION,
-    local_database_lease_path_v1, pragma_i64, preflight_schema,
+    LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1, SQLITE_BUSY_TIMEOUT, local_database_lease_path_v1,
+    pragma_i64, preflight_schema, verify_schema_at_version,
 };
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use nix::{
@@ -586,7 +586,7 @@ fn configure_native_boundary(connection: &Connection) -> Result<(), SelectedLoca
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn configure_read_only(connection: &Connection) -> Result<(), SelectedLocalStoreErrorV1> {
+fn configure_read_only(connection: &Connection) -> Result<i64, SelectedLocalStoreErrorV1> {
     let fail = |_| SelectedLocalStoreErrorV1::StoreUnverifiable;
     for (name, value) in [
         ("foreign_keys", "ON"),
@@ -601,15 +601,15 @@ fn configure_read_only(connection: &Connection) -> Result<(), SelectedLocalStore
             row.get::<_, String>(0)
         })
         .map_err(fail)?;
+    let version = pragma_i64(connection, "user_version")
+        .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
     if !connection.is_readonly(rusqlite::MAIN_DB).map_err(fail)?
         || journal != "wal"
-        || pragma_i64(connection, "user_version")
-            .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?
-            != SQLITE_SCHEMA_VERSION
+        || !matches!(version, 17 | 18)
     {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
-    Ok(())
+    Ok(version)
 }
 
 // Tests replace/remove paths after held custody was captured. Production has
@@ -640,7 +640,7 @@ fn open_under_custody(
     .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
     configure_native_boundary(&connection)?;
     custody.verify_connection(&connection)?;
-    configure_read_only(&connection)?;
+    let observed_schema_version = configure_read_only(&connection)?;
     preflight_schema(&connection).map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
     let store = SqliteStore {
         database_path: custody.database_path.clone(),
@@ -650,8 +650,7 @@ fn open_under_custody(
             super::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
         selected_store_custody: Some(custody),
     };
-    store
-        .verify_schema()
+    verify_schema_at_version(&store.connection, observed_schema_version)
         .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
     store
         .verify_integrity()

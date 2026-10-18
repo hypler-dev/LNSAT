@@ -9,16 +9,46 @@ Owner: LNSAT maintainers
 Accepted baseline: HCFG-5B 662fc5f489d70d735d9d612e9f8cce6ed3a2b593; HCFG-6 0dbe0a2874428721b1a4ba6bad1708ec5fdbb572
 Last updated: 2026-10-03
 
+## Current allocation reconciliation — 2026-10-18
+
+The accepted [action-request record source milestone](../action-request-record.md)
+allocates schema 18 to `0018_action_requests.sql`. Headless installation must use
+a future separately accepted schema-19 candidate. It remains unimplemented.
+
+The B5 candidate below is preserved as historical design evidence against schema 17. Its version-18 SQL, migration-text identity, 28-table emptiness guard,
+35-table/242-object expectation and v18 manifest domain are **superseded as an
+execution candidate**. They must not be copied or relabeled as schema 19.
+A future candidate must start from recognized schema 18, retain the three new
+request evidence families in retention and emptiness checks, rederive every
+object count and manifest digest, and review its schema-object budget. Neither
+the historical v17 digest nor the new request-schema v18 digest qualifies that
+future installation schema. There is no qualified schema-19 SQL or manifest in
+this document.
+
+Selected source inspection now recognizes exact schema 17 and separately pinned
+schema 18 without migrating either. Historical Phase 11 schema-17 profiles remain
+dated evidence. Ordinary additive 17-to-18 request migration is separate from
+selected headless installation authority. All installation, activation and
+runtime gates remain closed.
+
+## Historical B5 candidate (not executable authority)
+
+Everything in this section is the original pre-2026-10-18 headless baseline.
+Its schema-17 starting point, candidate schema-18 SQL, counts, and manifest
+claims are frozen historical design evidence. Current schema 18 belongs to the
+action-request record source milestone; any future headless candidate is schema
+19 and must rederive all counts and manifests.
+
 ## Behavior
 
 This proposal specifies the schema portion of the B4 durable-state contract.
 It is documentation, not a migration file, registered version, SQL fixture,
 initializer, current-state reader or activation. No new SQL was executed to
-produce this document. Complete source freeze and the pending Stage-A owner
-decision remain controlling. Current source, migration registry and schema 17
-are unchanged.
+produce the B5 proposal. At that proposal checkpoint, the complete source freeze
+and pending Stage-A owner decision remained controlling; source, migration
+registry and schema 17 were unchanged. The current allocation is recorded above.
 
-The proposed candidate migration is version 18, with ID
+The historical proposed candidate migration was version 18, with ID
 0018_headless_installation_state. It is different from the historical
 unregistered Phase 7d signed-evidence SQL18. Actual registration must reconcile
 version/schema/truth records; optional signing stays closed. The SQL block

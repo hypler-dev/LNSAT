@@ -1625,6 +1625,21 @@ fn phase7d_apply_candidate(connection: &mut Connection) -> Result<(), SqliteStor
     apply_migration(connection, PHASE7D_PUBLIC_MATERIAL_CANDIDATE)
 }
 
+fn phase7d_open_schema_seventeen_store(path: &Path) -> SqliteStore {
+    create_version_seventeen_database(path);
+    let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE)
+        .expect("schema-17 candidate database must open");
+    configure_connection(&connection).expect("schema-17 candidate database must configure");
+    SqliteStore {
+        database_path: path.to_path_buf(),
+        connection,
+        authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+        owner_decision_credential_scope:
+            crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+        selected_store_custody: None,
+    }
+}
+
 fn phase7d_prepare_signed_evidence_candidate(
     store: &mut SqliteStore,
 ) -> Phase7dSignedEvidenceFixture {
@@ -3054,9 +3069,9 @@ fn phase7d_candidate_schema_verify(connection: &Connection) -> Result<(), String
 }
 
 #[test]
-fn phase7d_public_material_candidate_is_inert_and_future_to_runtime() {
-    assert_eq!(SQLITE_SCHEMA_VERSION, 17);
-    assert_eq!(MIGRATIONS.len(), 17);
+fn phase7d_public_material_candidate_is_inert_and_unregistered_to_runtime() {
+    assert_eq!(SQLITE_SCHEMA_VERSION, 18);
+    assert_eq!(MIGRATIONS.len(), 18);
     assert!(
         MIGRATIONS
             .iter()
@@ -3069,7 +3084,7 @@ fn phase7d_public_material_candidate_is_inert_and_future_to_runtime() {
     );
 
     let database = TestDatabase::new("phase7d-candidate-inert");
-    drop(SqliteStore::open(&database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&database.path);
     let mut connection =
         Connection::open_with_flags(&database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("candidate database must open");
@@ -3082,7 +3097,7 @@ fn phase7d_public_material_candidate_is_inert_and_future_to_runtime() {
         SqliteStore::open(&database.path)
             .err()
             .expect("runtime must reject unregistered candidate"),
-        SqliteStoreError::UnsupportedSchemaVersion
+        SqliteStoreError::MigrationDrift
     );
 }
 
@@ -3090,7 +3105,7 @@ fn phase7d_public_material_candidate_is_inert_and_future_to_runtime() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_public_material_candidate_enforces_relational_invariants() {
     let database = TestDatabase::new("phase7d-candidate-invariants");
-    drop(SqliteStore::open(&database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&database.path);
     let mut connection =
         Connection::open_with_flags(&database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("candidate database must open");
@@ -3350,7 +3365,7 @@ fn phase7d_public_material_candidate_enforces_relational_invariants() {
 #[test]
 fn phase7d_public_material_candidate_orders_ten_thousand_clock_collisions() {
     let database = TestDatabase::new("phase7d-candidate-order");
-    drop(SqliteStore::open(&database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&database.path);
     let mut connection =
         Connection::open_with_flags(&database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("candidate database must open");
@@ -3406,7 +3421,7 @@ fn phase7d_public_material_candidate_orders_ten_thousand_clock_collisions() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_public_material_candidate_serializes_one_active_key_winner() {
     let database = TestDatabase::new("phase7d-candidate-race");
-    drop(SqliteStore::open(&database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&database.path);
     let mut connection =
         Connection::open_with_flags(&database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("candidate database must open");
@@ -3539,7 +3554,7 @@ fn phase7d_public_material_candidate_serializes_one_active_key_winner() {
 #[test]
 fn phase7d_public_material_candidate_precommit_failure_rolls_back() {
     let database = TestDatabase::new("phase7d-candidate-precommit");
-    drop(SqliteStore::open(&database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&database.path);
     let mut connection =
         Connection::open_with_flags(&database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("candidate database must open");
@@ -3552,7 +3567,7 @@ fn phase7d_public_material_candidate_precommit_failure_rolls_back() {
     );
     assert_eq!(
         pragma_i64(&connection, "user_version").expect("version must inspect"),
-        SQLITE_SCHEMA_VERSION
+        17
     );
     assert_eq!(
         connection
@@ -3564,7 +3579,7 @@ fn phase7d_public_material_candidate_precommit_failure_rolls_back() {
                 |row| row.get::<_, i64>(0),
             )
             .expect("metadata must inspect"),
-        SQLITE_SCHEMA_VERSION
+        17
     );
     assert_eq!(
         connection
@@ -3595,7 +3610,7 @@ fn phase7d_public_material_candidate_precommit_failure_rolls_back() {
 #[test]
 fn phase7d_public_material_candidate_sqlite_full_rolls_back() {
     let database = TestDatabase::new("phase7d-candidate-full");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     store
         .connection
         .execute_batch("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
@@ -3611,7 +3626,7 @@ fn phase7d_public_material_candidate_sqlite_full_rolls_back() {
     );
     assert_eq!(
         pragma_i64(&store.connection, "user_version").expect("version must inspect"),
-        SQLITE_SCHEMA_VERSION
+        17
     );
     assert_eq!(
         store
@@ -3630,13 +3645,13 @@ fn phase7d_public_material_candidate_sqlite_full_rolls_back() {
         .connection
         .pragma_update(None, "max_page_count", page_count + 16_384)
         .expect("page count must restore");
-    store.verify_schema().expect("v15 schema must remain exact");
+    verify_schema_at_version(&store.connection, 17).expect("schema-17 must remain exact");
 }
 
 #[test]
 fn phase7d_public_material_candidate_detects_tamper_drift_and_future_version() {
     let tamper_database = TestDatabase::new("phase7d-candidate-tamper");
-    drop(SqliteStore::open(&tamper_database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&tamper_database.path);
     let mut tamper =
         Connection::open_with_flags(&tamper_database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("tamper database must open");
@@ -3671,7 +3686,7 @@ fn phase7d_public_material_candidate_detects_tamper_drift_and_future_version() {
     assert!(phase7d_candidate_schema_verify(&tamper).is_err());
 
     let drift_database = TestDatabase::new("phase7d-candidate-drift");
-    drop(SqliteStore::open(&drift_database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&drift_database.path);
     let mut drift =
         Connection::open_with_flags(&drift_database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("drift database must open");
@@ -3688,7 +3703,7 @@ fn phase7d_public_material_candidate_detects_tamper_drift_and_future_version() {
     assert!(phase7d_candidate_schema_verify(&drift).is_err());
 
     let future_database = TestDatabase::new("phase7d-candidate-future");
-    drop(SqliteStore::open(&future_database.path).expect("v15 database must bootstrap"));
+    create_version_seventeen_database(&future_database.path);
     let mut future =
         Connection::open_with_flags(&future_database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
             .expect("future database must open");
@@ -3704,7 +3719,7 @@ fn phase7d_public_material_candidate_detects_tamper_drift_and_future_version() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_nonce_lifecycle_candidate_binds_decision_and_enforces_transitions() {
     let database = TestDatabase::new("phase7d-nonce-invariants");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let (packet, policy, request, decision) = approval_decision_fixture();
     persist_approval_chain(&mut store, &packet, &policy, &request, &decision);
     phase7d_apply_candidate(&mut store.connection).expect("candidate migration must apply");
@@ -3913,7 +3928,7 @@ fn phase7d_nonce_lifecycle_candidate_binds_decision_and_enforces_transitions() {
 #[test]
 fn phase7d_nonce_lifecycle_candidate_serializes_one_terminal_winner() {
     let database = TestDatabase::new("phase7d-nonce-race");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let (packet, policy, request, decision) = approval_decision_fixture();
     persist_approval_chain(&mut store, &packet, &policy, &request, &decision);
     phase7d_apply_candidate(&mut store.connection).expect("candidate migration must apply");
@@ -4004,7 +4019,7 @@ fn phase7d_nonce_lifecycle_candidate_serializes_one_terminal_winner() {
 #[test]
 fn phase7d_nonce_lifecycle_candidate_detects_nonce_digest_tamper() {
     let database = TestDatabase::new("phase7d-nonce-tamper");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let (packet, policy, request, decision) = approval_decision_fixture();
     persist_approval_chain(&mut store, &packet, &policy, &request, &decision);
     phase7d_apply_candidate(&mut store.connection).expect("candidate migration must apply");
@@ -4060,7 +4075,7 @@ fn phase7d_nonce_lifecycle_candidate_detects_nonce_digest_tamper() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_signed_evidence_candidate_binds_chain_and_stays_immutable() {
     let database = TestDatabase::new("phase7d-signed-evidence-invariants");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     let baseline_authority_count = store
         .connection
@@ -4176,7 +4191,7 @@ fn phase7d_signed_evidence_candidate_binds_chain_and_stays_immutable() {
 #[test]
 fn phase7d_signed_evidence_candidate_serializes_one_decision_winner() {
     let database = TestDatabase::new("phase7d-signed-evidence-race");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     drop(store);
 
@@ -4227,7 +4242,7 @@ fn phase7d_signed_evidence_candidate_serializes_one_decision_winner() {
 #[test]
 fn phase7d_signed_evidence_candidate_detects_signature_tamper() {
     let database = TestDatabase::new("phase7d-signed-evidence-tamper");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     {
         let transaction = store
@@ -4267,7 +4282,7 @@ fn phase7d_signed_evidence_candidate_detects_signature_tamper() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_evidence_issue_idempotency_candidate_replays_conflicts_and_isolates_scope() {
     let database = TestDatabase::new("phase7d-evidence-idempotency");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     let request_digest =
         phase7d_evidence_issue_request_digest(&fixture.project_ref, &fixture.decision_id);
@@ -4487,7 +4502,7 @@ fn phase7d_evidence_issue_idempotency_candidate_replays_conflicts_and_isolates_s
 #[test]
 fn phase7d_evidence_issue_idempotency_candidate_serializes_one_binding() {
     let database = TestDatabase::new("phase7d-evidence-idempotency-race");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     {
         let transaction = store
@@ -4557,7 +4572,7 @@ fn phase7d_evidence_issue_idempotency_candidate_serializes_one_binding() {
 #[test]
 fn phase7d_evidence_issue_idempotency_candidate_detects_request_digest_tamper() {
     let database = TestDatabase::new("phase7d-evidence-idempotency-tamper");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     let request_digest =
         phase7d_evidence_issue_request_digest(&fixture.project_ref, &fixture.decision_id);
@@ -4616,7 +4631,7 @@ fn phase7d_evidence_issue_idempotency_candidate_detects_request_digest_tamper() 
 #[allow(clippy::too_many_lines)]
 fn phase7d_verification_attempt_candidate_records_resolved_and_unresolved_results() {
     let database = TestDatabase::new("phase7d-verification-attempt-invariants");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     {
         let transaction = store
@@ -4833,7 +4848,7 @@ fn phase7d_verification_attempt_candidate_records_resolved_and_unresolved_result
 #[test]
 fn phase7d_verification_attempt_candidate_freezes_closed_reason_taxonomy() {
     let database = TestDatabase::new("phase7d-verification-attempt-reasons");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     for (index, reason_code) in PHASE7D_VERIFICATION_REJECTION_REASONS.iter().enumerate() {
         phase7d_record_verification_attempt(
@@ -4878,7 +4893,7 @@ fn phase7d_verification_attempt_candidate_freezes_closed_reason_taxonomy() {
 #[test]
 fn phase7d_verification_attempt_candidate_rolls_back_required_audit_failure() {
     let database = TestDatabase::new("phase7d-verification-attempt-audit-failure");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     {
         let transaction = store
@@ -4957,7 +4972,7 @@ fn phase7d_verification_attempt_candidate_rolls_back_required_audit_failure() {
 #[test]
 fn phase7d_verification_attempt_candidate_serializes_thirty_two_writers() {
     let database = TestDatabase::new("phase7d-verification-attempt-race");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     {
         let transaction = store
@@ -5029,7 +5044,7 @@ fn phase7d_verification_attempt_candidate_serializes_thirty_two_writers() {
 #[test]
 fn phase7d_verification_attempt_candidate_detects_digest_tamper() {
     let database = TestDatabase::new("phase7d-verification-attempt-tamper");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     {
         let transaction = store
@@ -5085,7 +5100,7 @@ fn phase7d_verification_attempt_candidate_detects_digest_tamper() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_nonce_consumption_candidate_binds_and_stays_immutable() {
     let database = TestDatabase::new("phase7d-nonce-consumption-invariants");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     {
         let transaction = store
@@ -5268,7 +5283,7 @@ fn phase7d_nonce_consumption_candidate_binds_and_stays_immutable() {
 #[test]
 fn phase7d_nonce_consumption_candidate_rolls_back_terminal_event_failure() {
     let database = TestDatabase::new("phase7d-nonce-consumption-rollback");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("rollback evidence must append");
@@ -5332,7 +5347,7 @@ fn phase7d_nonce_consumption_candidate_rolls_back_terminal_event_failure() {
 #[test]
 fn phase7d_nonce_consumption_candidate_serializes_thirty_two_writers() {
     let database = TestDatabase::new("phase7d-nonce-consumption-race");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("race evidence must append");
@@ -5398,7 +5413,7 @@ fn phase7d_nonce_consumption_candidate_serializes_thirty_two_writers() {
 #[test]
 fn phase7d_nonce_consumption_candidate_detects_digest_tamper() {
     let database = TestDatabase::new("phase7d-nonce-consumption-tamper");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("tamper evidence must append");
@@ -5441,7 +5456,7 @@ fn phase7d_nonce_consumption_candidate_detects_digest_tamper() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_nonce_consume_idempotency_candidate_replays_conflicts_and_isolates_scope() {
     let database = TestDatabase::new("phase7d-nonce-consume-idempotency");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("idempotent consumption evidence must append");
@@ -5734,7 +5749,7 @@ fn phase7d_nonce_consume_idempotency_candidate_replays_conflicts_and_isolates_sc
 #[test]
 fn phase7d_nonce_consume_idempotency_candidate_rolls_back_binding_failure() {
     let database = TestDatabase::new("phase7d-nonce-consume-idempotency-rollback");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("rollback evidence must append");
@@ -5810,7 +5825,7 @@ fn phase7d_nonce_consume_idempotency_candidate_rolls_back_binding_failure() {
 #[test]
 fn phase7d_nonce_consume_idempotency_candidate_serializes_exact_replays() {
     let database = TestDatabase::new("phase7d-nonce-consume-idempotency-race");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("race evidence must append");
@@ -5908,7 +5923,7 @@ fn phase7d_nonce_consume_idempotency_candidate_serializes_exact_replays() {
 #[test]
 fn phase7d_nonce_consume_idempotency_candidate_detects_request_digest_tamper() {
     let database = TestDatabase::new("phase7d-nonce-consume-idempotency-tamper");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("tamper evidence must append");
@@ -5979,7 +5994,7 @@ fn phase7d_nonce_consume_idempotency_candidate_detects_request_digest_tamper() {
 #[allow(clippy::too_many_lines)]
 fn phase7d_public_material_candidate_query_plans_use_frozen_indexes() {
     let database = TestDatabase::new("phase7d-candidate-query-plan");
-    let mut store = SqliteStore::open(&database.path).expect("v15 database must bootstrap");
+    let mut store = phase7d_open_schema_seventeen_store(&database.path);
     let fixture = phase7d_prepare_signed_evidence_candidate(&mut store);
     phase7d_append_signed_evidence(&store.connection, &fixture, PHASE7D_CANDIDATE_TIMESTAMP)
         .expect("plan signed evidence must append");

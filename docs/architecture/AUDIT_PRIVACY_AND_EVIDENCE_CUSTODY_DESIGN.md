@@ -7,6 +7,16 @@ This supports the accepted enterprise/government security direction. It selects
 no collector, storage encryption module, key service, remote transport,
 deployment or retention jurisdiction. It changes no source, schema or authority.
 
+## Current source update — 2026-10-18
+
+The [action-request record](action-request-record.md) adds three immutable
+families in schema 18, bringing retention to 31 preserve-only families. Its
+bounded record read requires paired session proof and permits the active Owner
+or original requester; it does not introduce project ACLs or general export.
+The inspected-source table below remains evidence for its named historical
+revision. Durable external collection, encryption, independent custody, and
+this proposed design's remaining implementation are still open.
+
 ## Intent and source boundary
 
 Operators need reliable evidence of mediated decisions and outcomes without

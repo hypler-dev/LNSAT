@@ -22,10 +22,21 @@
 
 ## Context
 
+### Current source allocation — 2026-10-18
+
+The accepted action-request record source milestone uses schema 18 for additive
+durable request roots, evaluation links, and first replay/conflict evidence.
+Schema-17 local-v1 history remains valid historical baseline; exact read-only
+schema-17/18 inspection does not migrate or activate stores. Optional signed
+evidence, headless installation, native enforcement, runtime dispatch,
+deployment, and release remain separately gated.
+
 Current source records authenticated local approval evidence; approval remains
 unsigned and never grants execution authority by itself. Signed-wrapper parsing
-and public-only Ed25519 primitives remain experimental and unwired. Runtime
-SQLite is schema 17 with seventeen registered migrations. Separately approved
+and public-only Ed25519 primitives remain experimental and unwired. At the
+historical Phase 7 checkpoint, runtime SQLite was schema 17 with seventeen
+registered migrations; the dated allocation above describes current schema 18.
+Separately approved
 P7-M1 through P7-X1 provide source/store proof for nonce lifecycle,
 preauthorization, atomic one-time consumption, exact-bound local authorization,
 bounded disposable Git dispatch, receipts, ambiguity, reconciliation, and

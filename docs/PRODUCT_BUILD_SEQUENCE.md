@@ -182,9 +182,10 @@ Accepted decisions changed sequencing and breadth without changing that goal:
 1. ADR-0006 makes portable signed approval optional for local v1. Private keys
    remain user controlled outside LNSAT. Core schema v16 plus corrective v17
    serve local authorization; optional signed-evidence persistence belongs to
-   separately approved signed-evidence work. The historical v18 candidate is
-   unregistered test-only SQL; it is not the proposed mandatory headless v18
-   layout. Before headless migration registration, reconcile schema/truth
+   separately approved signed-evidence work. Accepted schema 18 source work
+   now belongs to durable action-request records; the headless-installation
+   proposal is reconciled to future schema 19. Before any headless migration
+   registration, reconcile schema/truth
    records without opening optional signing. A later optional proposal must
    target the then-current schema rather than importing that historical layout.
 2. Phase 7 source packets through P7-X1 are complete. They prove the authority
@@ -254,7 +255,8 @@ support profile makes it required.
    implies success or confirmed non-execution.
 4. **Phase 10 product surfaces.** Stabilize daemon, operator CLI, dispatcher,
    configuration, paths, diagnostics, exit codes, machine output, recovery,
-   service metadata, completion, and man-page contracts. Configuration must
+   service metadata, completion, man-page contracts, and the accepted
+   action-request record source slice. Configuration must
    expose redacted resolved precedence, permit only monotonic narrowing, and
    preserve an authority-managed stop across reload and restart.
 5. **Phase 11 served reference workflow.** Prove the complete local loop
@@ -733,8 +735,8 @@ Until an exact later gate says otherwise:
   receipt, or recovery mutation route beyond the exact existing Phase 8
   loopback disposable-reference set;
 - no production or user-repository consequence;
-- no private-key intake, key generation, provider credential, signer call, or
-  migration 0018;
+- no private-key intake, key generation, provider credential, signer call,
+  headless-installation migration 0019, or signed-evidence migration;
 - no package or binary claim, host installation, service registration/start,
   tag, release, artifact/package publication, deployment, or production write;
 - no automatic promotion from one phase or packet to the next.

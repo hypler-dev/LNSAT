@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Source milestone
+
+- Added an experimental authenticated action-request source contract with an
+  immutable durable request root, explicit failed or unknown evaluation,
+  first replay/conflict evidence, bounded requester/owner operator readback,
+  and schema-18 additive persistence. Focused local evidence passed; runtime
+  dispatch, headless installation, native enforcement, deployment, release,
+  and supported operation remain gated.
+
 ### Security
 
 - Bounded daemon and MCP request ingestion with absolute five-second read

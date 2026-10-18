@@ -35,6 +35,17 @@ public history.
 
 ## Selected Engineering Timeline
 
+### Current source milestone — 2026-10-18
+
+The accepted public source milestone adds durable authenticated action-request
+records and bounded evidence readback. It is source-only experimental evidence:
+86 bounded Rust tests pass across request/store, historical candidate
+compatibility, daemon classifiers, and readiness serialization, while runtime
+dispatch, headless/native gates, deployment, release, and support remain
+unproven. Schema 18 is reserved for this milestone; prior headless schema-18
+proposals are future schema 19 and require fresh counts and manifests. See
+[the action-request record](docs/architecture/action-request-record.md).
+
 Dates are recorded committer timestamps. "Current public evidence" names the
 present public paths that carry each milestone forward; it does not claim that
 their current bytes are identical to the historical revision.

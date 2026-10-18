@@ -6,14 +6,13 @@ storage, release, or deployment.
 
 ## Implemented Boundary
 
-Schema version 7 introduced immutable retention policy evidence. Schema version
-8 preserves it and adds the recovery-inspection event family. Current families:
-
-- packet envelopes and resource references;
-- policy decisions;
-- approval requests and decisions;
-- audit events and ordered reason codes.
-- recovery inspection events.
+Schema version 7 introduced immutable retention policy evidence. Schema 18
+preserves all prior families and adds action requests, request evaluations, and
+first replay/conflict observations. There are 31 preserve-only families across
+packet, policy, approval, audit, identity/session, authorization, operation,
+receipt/reconciliation, recovery, and request evidence. The exact family set is
+verified by the store and the authored migration; it is not a configurable
+cleanup allowlist. See the [request-record contract](action-request-record.md).
 
 Every row uses retention class `control_plane`, disposition `preserve`,
 `cleanup_eligible = 0`, and no time-based deletion deadline. Current records
@@ -30,7 +29,7 @@ closed as migration drift.
 `SqliteStore::plan_retention_v1` accepts a candidate limit from 1 through 1024.
 It:
 
-1. reads all eight immutable retention policies in stable order;
+1. reads all 31 immutable retention policies in stable order;
 2. rejects missing or changed policy evidence;
 3. counts protected records across current families;
 4. returns zero cleanup candidates;
@@ -43,7 +42,7 @@ maintenance.
 ## Future Removable Families
 
 Bounded cleanup remains unimplemented because no current family is safely
-removable. A future session, cache, derived-knowledge, or other transient family
+removable. A future removable cache, derived-knowledge, or other transient family
 must add all of:
 
 1. versioned retention class and purpose;

@@ -25,7 +25,7 @@ names the version needed to interpret it.
 | Gateway wire contract         | `lnsat.contracts.v1_0`                                                       | Stable source contract target; no supported product artifact exists    |
 | Deprecated wire compatibility | `lnsat.contracts.v0_1`                                                       | Accepted only on explicitly documented compatibility surfaces          |
 | Product-surface selector      | `lnsat.product_surface.v1` default; `lnsat.product_surface.v2` explicit      | v2 is opt-in source diagnostics; no range or fallback                  |
-| Local persistence schema      | SQLite schema `17`                                                           | Source implementation only; not a release or migration service         |
+| Local persistence schema      | SQLite schema `18`                                                           | Source implementation only; not a release or migration service         |
 | Phase 11 proof preparation    | proof source `b41aa756bccd85843ac540abfd927e8c5693d5fe`; packet PR #39 merge | Source-only operator preparation; not execution-ready                  |
 
 PR #39 integrated the operator packet at merge

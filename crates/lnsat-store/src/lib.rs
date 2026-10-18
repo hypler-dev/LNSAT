@@ -35,6 +35,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use zeroize::Zeroizing;
 
+pub mod action_request;
 mod headless_bootstrap;
 #[allow(
     dead_code,
@@ -104,7 +105,7 @@ use std::os::unix::fs::{MetadataExt as _, OpenOptionsExt as _, PermissionsExt as
 use std::os::windows::ffi::OsStrExt as _;
 
 /// Current ordered `SQLite` schema version.
-pub const SQLITE_SCHEMA_VERSION: i64 = 17;
+pub const SQLITE_SCHEMA_VERSION: i64 = 18;
 
 /// Bounded wait for a competing local `SQLite` writer.
 pub const SQLITE_BUSY_TIMEOUT: Duration = Duration::from_secs(5);
@@ -267,6 +268,39 @@ const RETENTION_RECORD_FAMILIES_V16: [&str; 28] = [
     "recovery_inspection_event",
 ];
 const RETENTION_RECORD_FAMILIES_V17: [&str; 28] = RETENTION_RECORD_FAMILIES_V16;
+const RETENTION_RECORD_FAMILIES_V18: [&str; 31] = [
+    "action_request",
+    "action_request_evaluation",
+    "action_request_observation",
+    "approval_decision",
+    "approval_request",
+    "audit_event",
+    "audit_event_reason_code",
+    "authorization_attempt",
+    "authorization_nonce",
+    "capability_consumption",
+    "execution_authorization",
+    "local_identity",
+    "local_identity_event",
+    "local_identity_status",
+    "local_password_credential",
+    "local_session",
+    "local_session_activity",
+    "local_session_event",
+    "local_session_revocation",
+    "local_session_rotation",
+    "operation",
+    "operation_attempt",
+    "operation_receipt",
+    "operation_reconciliation",
+    "packet_envelope",
+    "packet_resource_ref",
+    "phase7_audit_binding",
+    "phase7_entity",
+    "phase7_state_event",
+    "policy_decision",
+    "recovery_inspection_event",
+];
 /// Minimum accepted idle timeout for authenticated local sessions.
 pub const LOCAL_SESSION_IDLE_TIMEOUT_MIN_SECONDS_V1: u32 = 60;
 /// Maximum accepted idle timeout for authenticated local sessions.
@@ -281,7 +315,8 @@ const RETENTION_CANDIDATE_LIMIT_MAX: u32 = 1_024;
 const MIGRATION_0016_SQL: &str = include_str!("../migrations/0016_phase7_core_persistence.sql");
 const MIGRATION_0017_SQL: &str =
     include_str!("../migrations/0017_phase7_core_semantics_correction.sql");
-const MIGRATIONS: [Migration; 17] = [
+const MIGRATION_0018_SQL: &str = include_str!("../migrations/0018_action_requests.sql");
+const MIGRATIONS: [Migration; 18] = [
     Migration {
         version: 1,
         id: "0001_bootstrap",
@@ -366,6 +401,11 @@ const MIGRATIONS: [Migration; 17] = [
         version: 17,
         id: "0017_phase7_core_semantics_correction",
         sql: MIGRATION_0017_SQL,
+    },
+    Migration {
+        version: 18,
+        id: "0018_action_requests",
+        sql: MIGRATION_0018_SQL,
     },
 ];
 const REQUIRED_TABLES_V1: [&str; 2] = ["lnsat_schema_migrations", "lnsat_store_metadata"];
@@ -584,6 +624,42 @@ const REQUIRED_TABLES_V16: [&str; 31] = [
     "lnsat_store_metadata",
 ];
 const REQUIRED_TABLES_V17: [&str; 31] = REQUIRED_TABLES_V16;
+const REQUIRED_TABLES_V18: [&str; 34] = [
+    "lnsat_action_request_evaluations",
+    "lnsat_action_request_observations",
+    "lnsat_action_requests",
+    "lnsat_approval_decisions",
+    "lnsat_approval_requests",
+    "lnsat_audit_event_reason_codes",
+    "lnsat_audit_events",
+    "lnsat_authorization_attempts",
+    "lnsat_authorization_nonces",
+    "lnsat_capability_consumptions",
+    "lnsat_execution_authorizations",
+    "lnsat_local_identities",
+    "lnsat_local_identity_events",
+    "lnsat_local_identity_status_events",
+    "lnsat_local_password_credentials",
+    "lnsat_local_session_activity_events",
+    "lnsat_local_session_events",
+    "lnsat_local_session_revocations",
+    "lnsat_local_session_rotations",
+    "lnsat_local_sessions",
+    "lnsat_operation_attempts",
+    "lnsat_operation_receipts",
+    "lnsat_operation_reconciliations",
+    "lnsat_operations",
+    "lnsat_packet_envelopes",
+    "lnsat_packet_resource_refs",
+    "lnsat_phase7_audit_bindings",
+    "lnsat_phase7_entities",
+    "lnsat_phase7_state_events",
+    "lnsat_policy_decisions",
+    "lnsat_recovery_inspection_events",
+    "lnsat_retention_policies",
+    "lnsat_schema_migrations",
+    "lnsat_store_metadata",
+];
 const REQUIRED_TRIGGERS_V1: [&str; 0] = [];
 const REQUIRED_TRIGGERS_V2: [&str; 4] = [
     "lnsat_packet_envelopes_reject_delete",
@@ -930,6 +1006,14 @@ const REQUIRED_TRIGGERS_V16: [&str; 58] = [
 ];
 const EXECUTION_AUTHORIZATION_BINDING_TRIGGER_V17: &str =
     "lnsat_execution_authorizations_enforce_attempt_binding";
+const ACTION_REQUEST_TRIGGERS_V18: [&str; 6] = [
+    "lnsat_action_request_evaluations_reject_delete",
+    "lnsat_action_request_evaluations_reject_update",
+    "lnsat_action_request_observations_reject_delete",
+    "lnsat_action_request_observations_reject_update",
+    "lnsat_action_requests_reject_delete",
+    "lnsat_action_requests_reject_update",
+];
 
 #[derive(Clone, Copy)]
 struct Migration {
@@ -2338,7 +2422,7 @@ pub fn acquire_offline_owner_recovery_authority_v1(
 }
 
 impl SqliteStore {
-    /// Opens one explicitly selected, existing schema-17 store read-only while
+    /// Opens one explicitly selected schema-17 or schema-18 store read-only while
     /// retaining observed process/file/parent custody and the shared lease.
     ///
     /// This never migrates or initializes a store. Main `SQLite` descriptor
@@ -3562,7 +3646,7 @@ impl SqliteStore {
         self.verify_schema()
             .map_err(|_| SqliteRetentionErrorV1::EvidenceDrift)?;
         let policies = read_retention_policies_v1(&self.connection)?;
-        verify_retention_policies_v1(&policies, &RETENTION_RECORD_FAMILIES_V17)?;
+        verify_retention_policies_v1(&policies, &RETENTION_RECORD_FAMILIES_V18)?;
         let protected_record_count = count_protected_records_v1(&self.connection)?;
         Ok(SqliteRetentionPlanV1 {
             candidate_limit,
@@ -4592,6 +4676,7 @@ fn verify_required_schema_objects(
         15 => &REQUIRED_TABLES_V15,
         16 => &REQUIRED_TABLES_V16,
         17 => &REQUIRED_TABLES_V17,
+        18 => &REQUIRED_TABLES_V18,
         _ => return Err(SqliteStoreError::MigrationDrift),
     };
     if tables
@@ -4602,9 +4687,12 @@ fn verify_required_schema_objects(
     {
         return Err(SqliteStoreError::MigrationDrift);
     }
-    if version == 17 {
+    if version == 17 || version == 18 {
         let mut required_triggers = REQUIRED_TRIGGERS_V16.to_vec();
         required_triggers.push(EXECUTION_AUTHORIZATION_BINDING_TRIGGER_V17);
+        if version == 18 {
+            required_triggers.extend(ACTION_REQUEST_TRIGGERS_V18);
+        }
         required_triggers.sort_unstable();
         verify_trigger_definitions(connection, &required_triggers)?;
         return Ok(());
@@ -4709,6 +4797,7 @@ fn verify_schema_at_version(connection: &Connection, version: i64) -> Result<(),
             15 => &RETENTION_RECORD_FAMILIES_V15,
             16 => &RETENTION_RECORD_FAMILIES_V16,
             17 => &RETENTION_RECORD_FAMILIES_V17,
+            18 => &RETENTION_RECORD_FAMILIES_V18,
             _ => return Err(SqliteStoreError::MigrationDrift),
         };
         verify_retention_policies_v1(&policies, expected_families)
@@ -6734,7 +6823,10 @@ fn count_protected_records_v1(connection: &Connection) -> Result<i64, SqliteRete
     connection
         .query_row(
             "SELECT
-               (SELECT count(*) FROM lnsat_approval_decisions)
+               (SELECT count(*) FROM lnsat_action_requests)
+             + (SELECT count(*) FROM lnsat_action_request_evaluations)
+             + (SELECT count(*) FROM lnsat_action_request_observations)
+             + (SELECT count(*) FROM lnsat_approval_decisions)
              + (SELECT count(*) FROM lnsat_approval_requests)
              + (SELECT count(*) FROM lnsat_audit_events)
              + (SELECT count(*) FROM lnsat_audit_event_reason_codes)
@@ -9353,6 +9445,9 @@ fn expected_trigger_parts(
             return Err(SqliteStoreError::MigrationDrift);
         };
     let message = match table_name {
+        "lnsat_action_requests" => "action requests are immutable",
+        "lnsat_action_request_evaluations" => "request evaluations are immutable",
+        "lnsat_action_request_observations" => "request observations are immutable",
         "lnsat_approval_decisions" => "approval decisions are immutable",
         "lnsat_approval_requests" => "approval requests are immutable",
         "lnsat_audit_event_reason_codes" => "audit event reason codes are immutable",
@@ -9585,6 +9680,16 @@ mod tests {
             .expect("version-sixteen database must open");
         configure_connection(&connection).expect("version-sixteen database must configure");
         for migration in MIGRATIONS.iter().copied().take(16) {
+            apply_migration(&mut connection, migration).expect("ordered migration must apply");
+        }
+    }
+
+    fn create_version_seventeen_database(path: &Path) {
+        prepare_database_file(path).expect("version-seventeen file must create");
+        let mut connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE)
+            .expect("version-seventeen database must open");
+        configure_connection(&connection).expect("version-seventeen database must configure");
+        for migration in MIGRATIONS.iter().copied().take(17) {
             apply_migration(&mut connection, migration).expect("ordered migration must apply");
         }
     }
@@ -13115,13 +13220,13 @@ mod tests {
         let fresh_database = TestDatabase::new("phase7-core-fresh");
         let upgraded_database = TestDatabase::new("phase7-core-upgraded");
 
-        let fresh = SqliteStore::open(&fresh_database.path).expect("fresh v17 must bootstrap");
+        let fresh = SqliteStore::open(&fresh_database.path).expect("fresh v18 must bootstrap");
         assert_eq!(
             fresh
                 .state()
                 .expect("fresh state must inspect")
                 .schema_version,
-            17
+            SQLITE_SCHEMA_VERSION
         );
         let fresh_manifest = sqlite_schema_manifest(&fresh.connection);
         fresh.verify_schema().expect("fresh schema must verify");
@@ -13138,10 +13243,10 @@ mod tests {
         assert_eq!(pending.migration_count, Some(15));
 
         let upgraded =
-            SqliteStore::open(&upgraded_database.path).expect("v15 database must upgrade to v17");
+            SqliteStore::open(&upgraded_database.path).expect("v15 database must upgrade to v18");
         let state = upgraded.state().expect("upgraded state must inspect");
-        assert_eq!(state.schema_version, 17);
-        assert_eq!(state.migration_count, 17);
+        assert_eq!(state.schema_version, SQLITE_SCHEMA_VERSION);
+        assert_eq!(state.migration_count, SQLITE_SCHEMA_VERSION);
         assert_eq!(sqlite_schema_manifest(&upgraded.connection), fresh_manifest);
         assert_eq!(
             upgraded
@@ -13167,15 +13272,27 @@ mod tests {
                 .expect("v17 migration must inspect"),
             "0017_phase7_core_semantics_correction"
         );
+        assert_eq!(
+            upgraded
+                .connection
+                .query_row(
+                    "SELECT migration_id FROM lnsat_schema_migrations
+                     WHERE schema_version = 18",
+                    [],
+                    |row| row.get::<_, String>(0),
+                )
+                .expect("v18 migration must inspect"),
+            "0018_action_requests"
+        );
         upgraded
             .verify_schema()
             .expect("upgraded schema must verify");
         drop(upgraded);
 
         SqliteStore::open(&upgraded_database.path)
-            .expect("upgraded v17 must reopen")
+            .expect("upgraded v18 must reopen")
             .verify_schema()
-            .expect("reopened v17 must verify");
+            .expect("reopened v18 must verify");
     }
 
     #[test]
@@ -13243,11 +13360,11 @@ mod tests {
                 .state()
                 .expect("state must inspect")
                 .schema_version,
-            17
+            SQLITE_SCHEMA_VERSION
         );
         recovered
             .verify_schema()
-            .expect("recovered v17 must verify");
+            .expect("recovered current schema must verify");
     }
 
     #[test]
@@ -13302,17 +13419,161 @@ mod tests {
         );
         drop(connection);
 
-        let recovered = SqliteStore::open(&database.path).expect("v17 migration must recover");
+        let recovered = SqliteStore::open(&database.path).expect("current migration must recover");
         assert_eq!(
             recovered
                 .state()
                 .expect("state must inspect")
                 .schema_version,
-            17
+            SQLITE_SCHEMA_VERSION
         );
         recovered
             .verify_schema()
-            .expect("recovered v17 must verify");
+            .expect("recovered current schema must verify");
+    }
+
+    #[test]
+    fn action_request_migration_rolls_back_then_recovers() {
+        let database = TestDatabase::new("action-request-migration-interrupted");
+        create_version_seventeen_database(&database.path);
+        let mut connection =
+            Connection::open_with_flags(&database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
+                .expect("v17 database must open");
+        configure_connection(&connection).expect("v17 database must configure");
+        assert_eq!(
+            apply_migration_with_precommit(&mut connection, MIGRATIONS[17], || {
+                Err(SqliteStoreError::MigrationFailed)
+            }),
+            Err(SqliteStoreError::MigrationFailed)
+        );
+        assert_eq!(
+            pragma_i64(&connection, "user_version").expect("version must inspect"),
+            17
+        );
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT schema_version FROM lnsat_store_metadata WHERE singleton = 1",
+                    [],
+                    |row| row.get::<_, i64>(0),
+                )
+                .expect("metadata must inspect"),
+            17
+        );
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT count(*) FROM lnsat_schema_migrations WHERE schema_version = 18",
+                    [],
+                    |row| row.get::<_, i64>(0),
+                )
+                .expect("migration ledger must inspect"),
+            0
+        );
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT count(*) FROM sqlite_schema WHERE name = 'lnsat_action_requests'",
+                    [],
+                    |row| row.get::<_, i64>(0),
+                )
+                .expect("rolled-back schema must inspect"),
+            0
+        );
+        assert_eq!(
+            connection
+                .query_row("SELECT count(*) FROM lnsat_retention_policies", [], |row| {
+                    row.get::<_, i64>(0)
+                })
+                .expect("v17 retention must inspect"),
+            i64::try_from(RETENTION_RECORD_FAMILIES_V17.len()).expect("count must fit")
+        );
+        drop(connection);
+
+        let recovered = SqliteStore::open(&database.path).expect("v18 migration must recover");
+        assert_eq!(
+            recovered
+                .state()
+                .expect("state must inspect")
+                .schema_version,
+            SQLITE_SCHEMA_VERSION
+        );
+        recovered
+            .verify_schema()
+            .expect("recovered current schema must verify");
+    }
+
+    #[test]
+    fn action_request_migration_preserves_existing_packet_and_authority_rows() {
+        let database = TestDatabase::new("action-request-migration-preserves-evidence");
+        create_version_seventeen_database(&database.path);
+        let connection =
+            Connection::open_with_flags(&database.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
+                .expect("v17 database must open");
+        configure_connection(&connection).expect("v17 database must configure");
+        let mut legacy = SqliteStore {
+            database_path: database.path.clone(),
+            connection,
+            authentication_dummy_verifier: LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1.to_owned(),
+            owner_decision_credential_scope:
+                crate::owner_decision_credential::OwnerDecisionCredentialScopeV1::new(),
+            selected_store_custody: None,
+        };
+        let (packet, policy, request, decision) = approval_decision_fixture();
+        persist_approval_chain(&mut legacy, &packet, &policy, &request, &decision);
+        let before = [
+            "lnsat_packet_envelopes",
+            "lnsat_policy_decisions",
+            "lnsat_approval_requests",
+            "lnsat_approval_decisions",
+        ]
+        .map(|table| {
+            legacy
+                .connection
+                .query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                    row.get::<_, i64>(0)
+                })
+                .expect("legacy evidence must inspect")
+        });
+        drop(legacy);
+
+        let upgraded = SqliteStore::open(&database.path).expect("v17 database must upgrade");
+        assert_eq!(
+            upgraded.state().expect("state must inspect").schema_version,
+            SQLITE_SCHEMA_VERSION
+        );
+        for (table, expected) in [
+            "lnsat_packet_envelopes",
+            "lnsat_policy_decisions",
+            "lnsat_approval_requests",
+            "lnsat_approval_decisions",
+        ]
+        .into_iter()
+        .zip(before)
+        {
+            assert_eq!(
+                upgraded
+                    .connection
+                    .query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                        row.get::<_, i64>(0)
+                    })
+                    .expect("upgraded evidence must inspect"),
+                expected,
+                "{table} must survive schema-18 migration"
+            );
+        }
+        assert_eq!(
+            upgraded
+                .connection
+                .query_row("SELECT count(*) FROM lnsat_action_requests", [], |row| {
+                    row.get::<_, i64>(0)
+                })
+                .expect("new evidence table must inspect"),
+            0
+        );
+        upgraded
+            .verify_schema()
+            .expect("upgraded schema must verify");
     }
 
     #[test]
@@ -14354,10 +14615,10 @@ mod tests {
         let backup_evidence = store
             .create_online_backup_v1(&backup.path)
             .expect("backup must succeed");
-        assert_eq!(backup_evidence.schema_version, 17);
+        assert_eq!(backup_evidence.schema_version, SQLITE_SCHEMA_VERSION);
         let restore_evidence = SqliteStore::restore_backup_v1(&backup.path, &restored.path)
             .expect("restore must succeed");
-        assert_eq!(restore_evidence.schema_version, 17);
+        assert_eq!(restore_evidence.schema_version, SQLITE_SCHEMA_VERSION);
         assert!(!restore_evidence.activated);
 
         let restored_store = SqliteStore::open(&restored.path).expect("restore must reopen");
@@ -15256,7 +15517,7 @@ mod tests {
                 .map(|event| event.reason_codes.len())
                 .sum::<usize>();
         assert_eq!(plan.candidate_limit, 64);
-        assert_eq!(plan.policies.len(), RETENTION_RECORD_FAMILIES_V16.len());
+        assert_eq!(plan.policies.len(), RETENTION_RECORD_FAMILIES_V18.len());
         assert_eq!(
             plan.protected_record_count,
             i64::try_from(expected_count).expect("fixture count must fit")
@@ -15659,7 +15920,7 @@ mod tests {
                     row.get::<_, i64>(0)
                 },)
                 .expect("retention families must inspect"),
-            i64::try_from(RETENTION_RECORD_FAMILIES_V16.len()).expect("family count must fit")
+            i64::try_from(RETENTION_RECORD_FAMILIES_V18.len()).expect("family count must fit")
         );
         assert_eq!(
             store
@@ -15702,7 +15963,7 @@ mod tests {
                     row.get::<_, i64>(0)
                 })
                 .expect("retention families must inspect"),
-            i64::try_from(RETENTION_RECORD_FAMILIES_V16.len()).expect("family count must fit")
+            i64::try_from(RETENTION_RECORD_FAMILIES_V18.len()).expect("family count must fit")
         );
         store
             .verify_schema()
@@ -15734,7 +15995,7 @@ mod tests {
                     row.get::<_, i64>(0)
                 })
                 .expect("retention families must inspect"),
-            i64::try_from(RETENTION_RECORD_FAMILIES_V16.len()).expect("family count must fit")
+            i64::try_from(RETENTION_RECORD_FAMILIES_V18.len()).expect("family count must fit")
         );
         store
             .verify_schema()
@@ -15804,7 +16065,7 @@ mod tests {
                     row.get::<_, i64>(0)
                 })
                 .expect("retention families must inspect"),
-            i64::try_from(RETENTION_RECORD_FAMILIES_V16.len()).expect("family count must fit")
+            i64::try_from(RETENTION_RECORD_FAMILIES_V18.len()).expect("family count must fit")
         );
         assert_eq!(
             store.verify_local_password_credential_v1(
@@ -18372,6 +18633,9 @@ mod tests {
         }
     }
 
+    mod action_request;
+    mod action_request_history;
+    mod action_request_migration;
     mod headless_bootstrap;
     mod owner_bootstrap_transaction;
     mod owner_decision_credential;

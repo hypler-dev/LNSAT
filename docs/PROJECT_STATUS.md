@@ -9,10 +9,59 @@ Product/source SemVer remains unpublished `0.1.0` across the root npm package,
 every private npm workspace, and the unpublished Cargo workspace. The stable
 Gateway wire target is `lnsat.contracts.v1_0`; the default product surface is
 `lnsat.product_surface.v1` with explicit source-diagnostic v2 selection; local
-SQLite schema is `17`. These layers are independent. PR #39 merged Phase 11
+SQLite schema is `18` in the accepted request-record source milestone; schema
+17 remains the historical local-v1 baseline. These layers are independent. PR
+#39 merged Phase 11
 operator preparation into public `main`, but changed no product, wire, family,
 persistence, runtime-profile, or adapter-protocol version and created no tag or
 release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
+
+## Public Action-Request Record Source Milestone
+
+Direct human acceptance on 2026-10-18 authorized design reconciliation and
+source implementation for durable authenticated action-request records. The
+source milestone is implemented with bounded local fixture evidence. It does
+not open runtime dispatch, a new authority, Phase 10 exit,
+Phase 11 proof, deployment, release, or support.
+
+The source contract adds authenticated `POST /v1/action-requests` intake and
+read-only `GET /v1/action-requests/{arq_64hex}/operator-record`. Intake commits
+an immutable request root before policy evaluation, records a separate
+evaluation outcome, preserves `evaluation_unknown` after an unrecordable
+failure, and limits replay and changed-packet conflict observations to the
+first occurrence of each kind. Retries never reevaluate a committed root.
+The read scope is active Owner or the original requester identity with
+`ReadEvidence`; no per-project ACL model is introduced. Strict browser
+transport, CSRF, and existing permission checks remain required.
+
+The bounded public projection uses a public-safe allowlist, a 16-query ceiling,
+a 64 KiB serialized-response ceiling, and at most 64 rows per linked evidence
+family plus an overflow sentinel. It excludes raw packet content, sessions,
+keys, credentials, and provider logs. Inconsistent or oversized lineage
+degrades the whole projection rather than presenting partial linked data as
+complete. Existing schema-17 authority rows are preserved without backfill;
+selected read-only inspection accepts exact schema 17 or pinned schema 18 and
+performs no migration.
+
+Schema 18 is reserved for the request-record source milestone. The earlier
+unimplemented headless-installation proposal is reconciled to future schema
+19 and remains unimplemented. Mutual-authentication transport withdrawal,
+private CLI boundaries, signed-key-provider work, headless installation, and
+host/runtime operations remain closed. See [action-request record](architecture/action-request-record.md)
+and [headless schema source proposal](architecture/headless-local-bootstrap/schema-source-spec.md).
+
+Focused validation passed 86 Rust tests: 51 store, 30 historical signed-candidate
+compatibility, four daemon classifier, and one readiness serializer test on the
+existing local Rust 1.97.1 toolchain with offline dependencies. The classifier
+fixtures do not bind a server or dispatch actions. Full npm validation remains
+blocked at the Node engine guard (available 24.21.0; required 22.22.3); security
+conformance and public-history checks also lack installed dependencies.
+Direct public/docs/Phase 7/10 checks are narrower evidence. See the source
+contract's [validation boundary](architecture/action-request-record.md#validation-boundary).
+
+Earlier packet sections below retain their dated schema-17 and proposed
+headless-schema-18 observations. This milestone supersedes those current-version
+labels only; their completed evidence and operational restrictions remain intact.
 
 The [native procfs fixture source packet](#native-procfs-fixture-source-packet)
 remains prepared for the selected Linux evidence method. Kernel/harness source,
@@ -827,10 +876,11 @@ Draft PR #78 remains unmerged at exact head
 successfully at `2026-10-03T20:54:17Z`. This validates the source draft; no
 merge, initialization or runtime authority follows.
 
-The proposed next headless migration 18 cannot silently import the unrelated
-historical Phase 7d signed-evidence v18 test-only layout. Actual registration
-requires reconciliation of the compiled schema, exhaustive eligibility and
-legacy truth labels; optional signing remains blocked. The complete native/
+The proposed next headless migration 19 cannot silently import the unrelated
+historical Phase 7d signed-evidence v18 test-only layout or the accepted
+schema-18 action-request migration. Actual registration requires reconciliation
+of the compiled schema, exhaustive eligibility and legacy truth labels;
+optional signing remains blocked. The complete native/
 wire/daemon/store freeze retains its gates. Source-order acceptance was pending
 at this checkpoint and was accepted later in the canonical staging record.
 No Stage-A implementation, initialization, activation, Docker, host ACL,
@@ -893,7 +943,7 @@ read-only main-descriptor custody, ordinary `SqliteStore::open` remains unbound
 and automatically migrates its legacy list, and B2/C1 supply only owner and
 credential prerequisites. None implements this writable initializer.
 
-The proposal keeps candidate schema 18 outside the ordinary migration list,
+The proposal keeps candidate schema 19 outside the ordinary migration list,
 requires the lease before a no-create fixed-VFS writable open, repeats exact
 schema/empty-state checks inside explicit immediate transactions, and preserves
 actual main-descriptor observation without an extra database alias. WAL/SHM
@@ -902,7 +952,7 @@ proof; the concrete observer and full writer/mutex freeze remain outstanding.
 No source, schema, pragma or existing ordinary-open behavior changes here.
 
 Migration commits before preparation. The proposed preparation store digest
-binds actual B4 file/path custody to schema 18 and its future exact manifest;
+binds actual B4 file/path custody to schema 19 and its future exact manifest;
 no precommit installation UUID or schema-17 journal is repurposed. Preparation
 and cleanup precede one atomic owner/root/generation/audit/pointer transaction.
 Credential scopes follow the actual connection, unknown commits require exact

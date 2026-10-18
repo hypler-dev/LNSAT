@@ -20,11 +20,21 @@
 
 ## Decision Summary
 
+### Current source allocation — 2026-10-18
+
+Schema 18 is reserved by the accepted action-request record source milestone.
+This ADR remains proposed test-only historical evidence; its optional signed
+evidence candidate is not the registered migration 18. Any future headless or signed schema
+must start from schema 18 and rederive all table, retention, object, and
+manifest counts. No runtime, installation, native, deployment, or release gate
+opens from this allocation.
+
 The candidate SQL remains useful relational and concurrency design evidence,
 but it must not be promoted wholesale as migration 0016. ADR-0006 assigns core
 local authorization, nonce, consumption, operation, receipt, reconciliation,
 and audit state to now-implemented v16 plus corrective v17. Public-key lifecycle
-and signed approval evidence move to optional v18 work. PostgreSQL/HA, fleet, formal
+and signed approval evidence remain optional future work. The historical
+candidate label v18 does not reserve a current migration number. PostgreSQL/HA, fleet, formal
 compliance, and contractual RPO/RTO do not block the bounded single-node local
 authority loop. Lighter backup/restore, retention, diagnostics, resource,
 runbook, update/rollback, data-loss, audit-health, and supported-platform
@@ -115,9 +125,11 @@ Signed payloads can contain personal or commercially sensitive references even
 when signatures are public. Before implementation, privacy/legal review must
 approve field minimization, retention, and any pseudonymous reference scheme.
 
-## Existing Store Gap Matrix
+## Historical Phase 7 Store Gap Matrix
 
-Current SQLite schema v17 provides core local authority-loop persistence. It
+At the frozen Phase 7 checkpoint, SQLite schema v17 provided core local
+authority-loop persistence. This matrix records that baseline; current schema
+allocation is described above. The baseline
 does not contain this candidate's public-key or signed-evidence model and must
 not be treated as runtime authority by persistence alone.
 
@@ -745,11 +757,15 @@ The checked-in public signature fixture is structural source evidence only. It
 is not a valid signature over the LNSAT preimage and makes no cryptographic,
 signing, verification, or runtime authenticity claim.
 
-Runtime schema version and registered migration array are both 17, with core
+At the historical Phase 7 checkpoint, runtime schema version and registered
+migration array were both 17, with core
 `0016_phase7_core_persistence` and corrective
 `0017_phase7_preauthorization_hardening` registered. Candidate schema is
-test-only v18; normal store open rejects a manually candidate-upgraded database
-as a future unsupported schema. No public store method reads or writes
+test-only v18; at that checkpoint normal store open rejected a manually
+candidate-upgraded database as a future unsupported schema. Current schema 18
+is the distinct action-request migration. Historical candidate fixtures still
+start from schema 17; ordinary current open rejects their unregistered candidate
+layout as migration drift. No public store method reads or writes
 candidate public-key or signed-evidence tables.
 
 Candidate content, request, and chain verification uses SHA-256 with these
@@ -811,8 +827,9 @@ authorization, or any API. Separate P7-N1 source owns current nonce lifecycle.
 
 ## Unresolved Decisions And Approval Gates
 
-ADR-0006 supersedes these nine items as one indivisible runtime gate. Current
-disposition:
+ADR-0006 superseded these nine items as one indivisible runtime gate. The
+following disposition records that historical Phase 7 checkpoint; the current
+schema allocation above supersedes its proposed version number:
 
 1. physical schema split completed for core v16 plus corrective v17; optional v18 remains
    `P7-K1`;

@@ -21,6 +21,15 @@ execution authority.
 > package, container, or hosted service. Real Docker runtime proof remains
 > unfinished. The Control Center is an experimental read-only preview.
 
+Current source milestone (2026-10-18): authenticated action-request intake
+now has a durable immutable request record, explicit failed/unknown evaluation,
+first replay/conflict evidence, and bounded read-only operator projection.
+Focused local evidence passes; runtime dispatch, headless installation, native
+resource enforcement, mutual-authenticated Unix transport, deployment, release,
+and supported operation remain gated. Schema 18 belongs to this request-record
+source milestone; earlier headless schema-18 proposals are future schema 19 and
+must be rederived. See [the action-request record contract](docs/architecture/action-request-record.md).
+
 [Architecture](#architecture-and-trust-boundaries) ·
 [Authority flow](#from-proposal-to-consequence) ·
 [CLI](#current-cli-and-service-interfaces) ·
@@ -194,7 +203,7 @@ Several identities coexist and must not be substituted for one another:
 | Gateway wire target                   | `lnsat.contracts.v1_0`     | Exact contract family/version negotiation                         |
 | Default product-surface diagnostic    | `lnsat.product_surface.v1` | Current default manifest/status contract                          |
 | Explicit headless diagnostic selector | `lnsat.product_surface.v2` | Opt-in source diagnostics; no version range or automatic fallback |
-| Local SQLite schema                   | `17`                       | Durable store layout, independent of API and product versions     |
+| Local SQLite schema                   | `18`                       | Durable store layout, independent of API and product versions     |
 
 Contract identity includes the selected schema and validation behavior.
 Unsupported versions, wrong-route selectors, malformed selectors and duplicate
@@ -238,8 +247,10 @@ creates a fresh, verified, inert destination. It does not silently activate
 restored authority. Existing offline owner recovery is distinct from the
 unfinished initial headless bootstrap and activation transaction.
 
-The current schema remains `17`; proposed schema-18 and headless initializer
-work are not implemented by the private preparation codecs. Persistent storage,
+Schema `18` adds experimental durable action-request records. The unimplemented
+headless-installation proposal is reserved for a future schema `19`; its earlier
+schema-18 candidate is historical. See the [request-record source contract](docs/architecture/action-request-record.md).
+The private preparation codecs do not implement a headless initializer. Persistent storage,
 temporary files, journals and backups also need the selected encryption and
 key-custody lifecycle before an encrypted installation can be claimed.
 SQLite transaction tests alone cannot establish that property.

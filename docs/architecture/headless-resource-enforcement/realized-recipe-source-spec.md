@@ -8,6 +8,14 @@ snapshotter/kernel option table, immutable image inventory, pressure-test
 procedures and coherent independent freeze review remain blocking. No Docker,
 image build, provisioning, activation or runtime proof is performed.
 
+## Current source allocation — 2026-10-18
+
+Schema 18 belongs to the accepted authenticated action-request record source
+milestone. This realized recipe remains future schema-19 headless/native design;
+all future counts and manifests require fresh derivation from schema 18. No
+host operation, mutual-authenticated transport, runtime, deployment, release,
+or support proof is established. See [the action-request record](../action-request-record.md).
+
 ## Source and commitment boundary
 
 Use Moby commit `8af9fe3a36bab3e039862a2ab1cef1880c9b4d03` and runc v1.5.2

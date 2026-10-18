@@ -6,6 +6,18 @@ Canonical readiness states: Phase 7a signed-evidence design = complete; Phase 7b
 
 ## A. Current-truth matrix
 
+Current source allocation (2026-10-18): schema 18 belongs to the accepted
+action-request record source milestone. The frozen Phase 7 readiness sentence
+above remains historical Phase 7 truth; it does not allocate schema 18 to a
+future signed-evidence or headless proposal. Exact schema-17/18 read-only
+inspection is source evidence only. Runtime authority, headless installation,
+native enforcement, deployment, and release remain closed. Future schema-19
+work must rederive all counts and manifests from schema 18.
+
+The `Runtime schema` row below is frozen historical Phase 7 truth at schema
+17/17. Current schema 18 belongs to the accepted action-request record source
+milestone; it does not alter the Phase 7 row or open runtime authority.
+
 | Capability                          | Current                                  | Current evidence                                                                                                                                                                                                                                                                        | Missing                                                                                                        | Approval                                      | Authority                           |
 | ----------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----------------------------------- |
 | Phase 6 source exit                 | `complete`                               | Authenticated local identities, sessions, approval requests/decisions, durable SQLite evidence, read-only Gateway/MCP, and source conformance exist.                                                                                                                                    | Supported runtime authority loop.                                                                              | none                                          | no new transition                   |
@@ -232,6 +244,12 @@ legacy-evidence migration requires a separately approved future packet.
 
 ### 10) P7-K1
 
+This packet ladder entry is frozen historical Phase 7 planning from before
+2026-10-18. Its optional schema-18 language is not current allocation: schema
+18 now belongs to the action-request record source milestone. Any future
+signed-evidence or headless schema is schema 19 or later and requires fresh
+counts and manifests.
+
 - `objective`: Implement optional v18 public verification-material enrollment and lifecycle with user-owned private keys.
 - `prerequisites`: `[P7-M1]`
 - `allowed scope`: Public-key registration, strict parsing, proof of possession, versioning, rotation, retirement, revocation, compromise status, audit, backup/restore, and owner-governed APIs.
@@ -408,7 +426,8 @@ production adapter target, deployment choice, or package target is granted by
 P7-X1. Key/public-material input remains deferred until separately approved
 `P7-K1` enrollment design and ceremony exist.
 
-Migrations 0016 and 0017 are registered. Migration 0018 remains optional,
+Migrations 0016 and 0017 are registered in this frozen Phase 7 baseline.
+Migration 0018 remains optional,
 test-only candidate scope. Attempt preparation, nonce issuance/read/cancel,
 atomic consumption, and route-neutral local authorization/capability issue,
 metadata read, cancel/revoke, and authenticated redemption are source
