@@ -8,6 +8,14 @@ Owner: LNSAT maintainers
 Accepted by: human owner in development conversation on 2026-09-30
 Last updated: 2026-10-01
 
+## Current source allocation — 2026-10-18
+
+The accepted action-request source milestone owns schema 18. This plan's
+headless installation remains future schema-19 work and has no implementation,
+native, runtime, deployment, or release completion. Recalculate all future
+schema counts and manifests from schema 18; do not relabel historical schema-18
+text. See [the action-request record](../action-request-record.md).
+
 ## Scope and protected lanes
 
 Design authority: one atomic local owner/installation/first-configuration bootstrap, selected-store admission binding, and inert official restore. Human owner acceptance of the [specification](spec.md) authorizes a later source implementation packet within these bounds. This packet itself opens no source mutation, migration, route, OS permission, Docker operation, merge, production action, package, or release. HCFG-5A online apply, fresh owner decision, emergency stop, restored-store recovery activation, HCFG-6 platform enforcement, and Phase 11 runtime proof retain separate gates.

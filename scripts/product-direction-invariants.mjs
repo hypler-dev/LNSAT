@@ -25,7 +25,7 @@ const currentVersionSnapshotRows = [
   ],
   [
     "Local persistence schema",
-    "SQLite schema `17`",
+    "SQLite schema `18`",
     "Source implementation only; not a release or migration service",
   ],
   [

@@ -9,6 +9,15 @@ Owner: LNSAT maintainers
 Accepted baseline: HCFG-5B `662fc5f489d70d735d9d612e9f8cce6ed3a2b593`; HCFG-6 `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`
 Last updated: 2026-10-03
 
+## Current source allocation — 2026-10-18
+
+Schema 18 belongs to the accepted action-request record source milestone. This
+selected-writable-store design remains future schema-19 work; historical
+schema-18 proposal text is not an implementation candidate. Any future
+initializer must rederive every count and manifest from schema 18. Writable
+headless custody, native checks, runtime activation, deployment, and release
+remain gated. See [the action-request record](../action-request-record.md).
+
 ## Behavior
 
 This proposal specifies the connection and migration ordering between B3B's
@@ -22,15 +31,19 @@ read-only diagnostic, an ordinary store reopened by filename or a serialized
 permit cannot supply it. The connection stays privately owned under the shared
 lease; the preparation journal stays separate inert custody evidence.
 
-Current source remains distinct:
+At the original pre-2026-10-03 headless baseline, current source remained distinct:
 
-- `open_selected_local_store_inspection_v1` opens schema 17 read-only through
+- `open_selected_local_store_inspection_v1` opened schema 17 read-only through
   the fixed `unix` VFS. Its custody verifier explicitly requires read-only mode.
-- `SqliteStore::open` prepares a path, opens read/write, configures WAL and
+- `SqliteStore::open` prepared a path, opened read/write, configured WAL and
   applies the global migration list without selected custody.
-- B2 inserts identity, credential and owner-event rows in a caller-owned
+- B2 inserted identity, credential and owner-event rows in a caller-owned
   transaction. C1 checks its actual original store scope and borrowed connection.
   Neither creates an installation or supplies writable custody.
+
+Current schema 18 belongs to the accepted action-request record source
+milestone. This headless writable-custody design remains future schema-19 work;
+all future counts and manifests require fresh derivation.
 
 These APIs are unchanged here. B5's SQL must not enter global `MIGRATIONS`.
 
@@ -249,13 +262,17 @@ remain V1 assurance gates.
 
 ## Compatibility and migration
 
-Product `0.1.0`, Gateway `lnsat.contracts.v1_0`, current schema 17, B1/B2/B3B/C1,
+At the original headless baseline, Product `0.1.0`, Gateway `lnsat.contracts.v1_0`,
+schema 17, B1/B2/B3B/C1,
 ordinary opens and the Phase 11 packet are unchanged. Candidate 18 and this
 ownership contract are proposed. Owner acceptance of the source-order
 amendment, candidate source review, actual schema capture, complete integration
 freeze and separate runtime/merge/release gates remain required. Declaration-
 only, fixture-injected, empty-only or always-denying substitutes cannot complete
 the nonempty usable engine requirement.
+
+Current schema 18 belongs to the accepted action-request record source
+milestone; future headless schema-19 work must rederive counts and manifests.
 
 ## Acceptance mapping
 

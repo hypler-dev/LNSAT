@@ -1683,13 +1683,23 @@ function validateSources(root, errors) {
     );
   }
   assert(
-    /pub const SQLITE_SCHEMA_VERSION: i64 = 17;/.test(libText),
-    "crates/lnsat-store/src/lib.rs: SQLITE_SCHEMA_VERSION must be 17",
+    /pub const SQLITE_SCHEMA_VERSION: i64 = 18;/.test(libText),
+    "crates/lnsat-store/src/lib.rs: SQLITE_SCHEMA_VERSION must be 18",
     errors,
   );
   assert(
-    /const MIGRATIONS:\s*\[Migration; 17\]/.test(libText),
-    "crates/lnsat-store/src/lib.rs: MIGRATIONS must be [Migration; 17]",
+    /const MIGRATIONS:\s*\[Migration; 18\]/.test(libText),
+    "crates/lnsat-store/src/lib.rs: MIGRATIONS must be [Migration; 18]",
+    errors,
+  );
+  // The immutable Phase 7 ledger above describes schema 17. Current source
+  // registers action-request evidence at 18, not the frozen signed candidate.
+  assert(
+    libText.includes('include_str!("../migrations/0018_action_requests.sql")') &&
+      /version: 18,\s*id: "0018_action_requests",\s*sql: MIGRATION_0018_SQL,/u.test(
+        libText,
+      ),
+    "crates/lnsat-store/src/lib.rs: migration 18 must be action-request evidence",
     errors,
   );
   assert(

@@ -13,6 +13,15 @@ owns acceptance and implementation truth. This document and the linked
 [generated daemon metadata custody](docker-metadata-source-spec.md), form one freeze. No
 companion independently opens activation or runtime execution.
 
+## Current source allocation — 2026-10-18
+
+Schema 18 is reserved for the accepted authenticated action-request record
+source milestone. This native source freeze remains future schema-19 headless
+work. Native observation, mutual-authenticated transport, runtime activation,
+deployment, release, and support remain gated; future schema counts and
+manifests must be rederived from schema 18. See
+[the action-request record](../action-request-record.md).
+
 ## Source ownership and integration order
 
 The primary controller owns this complete freeze and integration. Exact later

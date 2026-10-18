@@ -1,7 +1,7 @@
 use super::{
     ApprovalDecisionStoreErrorV1, ApprovalRequestStoreErrorV1, MIGRATION_0016_SQL,
-    MIGRATION_0017_SQL, PacketStoreErrorV1, PolicyStoreErrorV1, SqliteStore, SqliteStoreError,
-    canonical_utc_timestamp_millis_v1, decode_approval_decision_record,
+    MIGRATION_0017_SQL, MIGRATION_0018_SQL, PacketStoreErrorV1, PolicyStoreErrorV1, SqliteStore,
+    SqliteStoreError, canonical_utc_timestamp_millis_v1, decode_approval_decision_record,
     decode_approval_request_record, decode_packet_record, decode_policy_record,
     is_valid_reference_v1, normalize_sql, select_approval_decision_by_project,
     select_approval_request_by_project, select_packet_by_project, select_policy_by_project,
@@ -537,11 +537,26 @@ pub(super) fn verify_phase7_persistence_schema_v1(
     }
     let phase7_indexes: &[&str] = match version {
         16 => &PHASE7_INDEXES,
-        17 => &PHASE7_INDEXES_V17,
+        17 | 18 => &PHASE7_INDEXES_V17,
         _ => return Err(SqliteStoreError::MigrationDrift),
     };
     for index in phase7_indexes {
         verify_schema_definition(connection, version, "index", index)?;
+    }
+    if version == 18 {
+        for table in [
+            "lnsat_action_requests",
+            "lnsat_action_request_evaluations",
+            "lnsat_action_request_observations",
+        ] {
+            verify_schema_definition(connection, version, "table", table)?;
+        }
+        verify_schema_definition(
+            connection,
+            version,
+            "index",
+            "lnsat_policy_decisions_request_binding_idx",
+        )?;
     }
     verify_entity_correspondence(connection)?;
     let unopened_families = connection
@@ -626,13 +641,17 @@ fn verify_index_names(connection: &Connection, version: i64) -> Result<(), Sqlit
         .map_err(|_| SqliteStoreError::MigrationDrift)?;
     let expected_indexes: &[&str] = match version {
         16 => &REQUIRED_INDEXES_V16,
-        17 => &REQUIRED_INDEXES_V17,
+        17 | 18 => &REQUIRED_INDEXES_V17,
         _ => return Err(SqliteStoreError::MigrationDrift),
     };
-    let expected = expected_indexes
+    let mut expected = expected_indexes
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<_>>();
+    if version == 18 {
+        expected.push("lnsat_policy_decisions_request_binding_idx".to_owned());
+        expected.sort_unstable();
+    }
     if names != expected {
         return Err(SqliteStoreError::MigrationDrift);
     }
@@ -674,6 +693,7 @@ fn migration_schema_statement(version: i64, object_type: &str, name: &str) -> Op
     let migrations: &[&str] = match version {
         16 => &[MIGRATION_0016_SQL],
         17 => &[MIGRATION_0017_SQL, MIGRATION_0016_SQL],
+        18 => &[MIGRATION_0018_SQL, MIGRATION_0017_SQL, MIGRATION_0016_SQL],
         _ => return None,
     };
     for migration in migrations {

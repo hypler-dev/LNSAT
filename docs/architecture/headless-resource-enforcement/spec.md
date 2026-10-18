@@ -8,6 +8,15 @@ Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
 Last updated: 2026-10-03
 
+## Current source allocation — 2026-10-18
+
+Schema 18 is reserved for the accepted authenticated action-request record
+source milestone. HCFG-6 resource enforcement remains future headless/native
+work, with no runtime, mutual-authenticated transport, deployment, release, or
+support proof. Any future schema-19 installation work must rederive counts,
+retention families, and manifests from schema 18. See
+[the action-request record](../action-request-record.md).
+
 The bounded S1 pure decoder prerequisite is specified separately in
 [HCFG-6 S1 source specification](bindings-source-spec.md). That document
 records source-level input grammar and commitments from the exact contract;
@@ -140,7 +149,20 @@ Bindings and host/runtime observations contain private paths, UIDs, mount/cgroup
 
 ## Compatibility and migration
 
-No current contract, parser, schema 17 migration, Phase 11 source lock, profile 1/2, public negotiation, CLI, route or running process changes in this design. Old/fake-runtime demonstrations remain experimental; they cannot be upgraded into HCFG-6 evidence. Activation of the new profile/protocol requires separately reviewed source integration with exact HCFG-5 generation/epoch/configuration binding. General historical-store/restore activation and automatic downgrade fallback remain closed. Phase 14 separately selects exact core-target rows and immutable artifacts after full headless/runtime/reliability gates.
+At the original pre-2026-10-03 HCFG-6 baseline, no contract, parser, schema
+17 migration, Phase 11 source lock, profile 1/2, public negotiation, CLI,
+route or running process changed in this design. Old/fake-runtime demonstrations
+remain experimental; they cannot be upgraded into HCFG-6 evidence. Activation of
+the new profile/protocol requires separately reviewed source integration with
+exact HCFG-5 generation/epoch/configuration binding. General historical-store/
+restore activation and automatic downgrade fallback remain closed. Phase 14
+separately selects exact core-target rows and immutable artifacts after full
+headless/runtime/reliability gates.
+
+Current schema 18 belongs to the accepted action-request record source
+milestone. HCFG-6 remains future headless/native work against future schema 19;
+counts and manifests require fresh derivation. No migration or runtime gate
+opens here.
 
 ## Acceptance mapping
 

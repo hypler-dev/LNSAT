@@ -1,6 +1,7 @@
 use super::*;
 use crate::headless_bootstrap::{
-    require_authority_empty_v1, require_empty_tables_v1, schema_digest_v1,
+    require_authority_empty_v1, require_empty_tables_at_version_v1, require_empty_tables_v1,
+    schema_digest_v1,
 };
 
 fn inspection(
@@ -13,11 +14,11 @@ fn inspection(
 fn headless_bootstrap_pristine_snapshot_is_non_authorizing_and_read_only() {
     let database = TestDatabase::new("headless-bootstrap-pristine");
     let mut store = SqliteStore::open(&database.path).expect("fresh store must open");
-    // Independently generated from the 17 authored migrations with Python
-    // sqlite3 and compact JSON; binds all 218 objects, including autoindexes.
+    // Independently generated from the 18 authored migrations with Python
+    // sqlite3 and compact JSON; binds all 234 objects, including autoindexes.
     assert_eq!(
         schema_digest_v1(&store.connection).unwrap(),
-        "66911985ea6357018f9a55890e28e68394a59abdbc90d9cb4aa04f3a7c75b62a"
+        "ab97d48b025622cf5f9d04d1ee1986794b2b14c164ea148d2de17df9ae83a55b"
     );
     let schema = sqlite_schema_manifest(&store.connection);
     let changes: i64 = store
@@ -40,7 +41,7 @@ fn headless_bootstrap_pristine_snapshot_is_non_authorizing_and_read_only() {
             .unwrap(),
         changes
     );
-    assert_eq!(store.state().unwrap().schema_version, 17);
+    assert_eq!(store.state().unwrap().schema_version, SQLITE_SCHEMA_VERSION);
 }
 
 #[test]
@@ -97,6 +98,43 @@ fn headless_bootstrap_every_authority_table_footprint_is_rejected() {
         assert_eq!(
             require_authority_empty_v1(&connection),
             Err(HeadlessBootstrapStoreErrorV1::UnverifiableStore)
+        );
+    }
+}
+
+#[test]
+fn headless_bootstrap_schema_eighteen_every_authority_table_footprint_is_rejected() {
+    // Schema-18 action-request evidence must have the same empty-store gate as
+    // all prior authority/evidence families.
+    let metadata = [
+        "lnsat_schema_migrations",
+        "lnsat_store_metadata",
+        "lnsat_retention_policies",
+    ];
+    let tables: Vec<_> = REQUIRED_TABLES_V18
+        .iter()
+        .copied()
+        .filter(|name| !metadata.contains(name))
+        .collect();
+    assert_eq!(tables.len(), 31);
+    for occupied in &tables {
+        let connection = Connection::open_in_memory().unwrap();
+        for table in &tables {
+            connection
+                .execute_batch(&format!("CREATE TABLE \"{table}\" (value TEXT)"))
+                .unwrap();
+        }
+        assert_eq!(require_empty_tables_at_version_v1(&connection, 18), Ok(()));
+        connection
+            .execute(
+                &format!("INSERT INTO \"{occupied}\" VALUES ('prior evidence')"),
+                [],
+            )
+            .unwrap();
+        assert_eq!(
+            require_empty_tables_at_version_v1(&connection, 18),
+            Err(HeadlessBootstrapStoreErrorV1::NotAuthorityEmpty),
+            "{occupied}"
         );
     }
 }
@@ -161,7 +199,7 @@ fn headless_bootstrap_temp_shadows_and_attached_namespaces_deny() {
 #[test]
 fn headless_bootstrap_schema_and_seed_drift_deny_without_repairs() {
     for (label, sql) in [
-        ("future-schema", "PRAGMA user_version = 18"),
+        ("future-schema", "PRAGMA user_version = 19"),
         ("old-schema", "PRAGMA user_version = 16"),
         ("metadata", "DELETE FROM lnsat_store_metadata"),
         (

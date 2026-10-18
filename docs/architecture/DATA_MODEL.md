@@ -1,24 +1,27 @@
 # Data Model
 
 LNSAT models intent, decisions, evidence, and controlled substrate access as
-versioned records. TypeScript contracts remain authoritative for product
-records. PostgreSQL artifacts cover the experimental audit-ledger boundary;
+versioned records. TypeScript contracts own their existing product families;
+the experimental action-request record is currently a Rust store/Gateway
+contract with no TypeScript client parity claim. PostgreSQL artifacts cover
+the experimental audit-ledger boundary;
 the embedded SQLite crate currently owns bootstrap metadata, migration evidence,
 secure connection posture, integrity checks, and immutable stable v1 packet,
 policy-decision, approval-request, approval-decision, audit-event, and retention
-policy records, plus immutable recovery-inspection events.
+policy records, plus immutable recovery-inspection and action-request evidence.
 
 ## Primary Entities
 
-| Entity            | Purpose                                     | Owner                               |
-| ----------------- | ------------------------------------------- | ----------------------------------- |
-| Packet            | Bounded request or evidence envelope        | `packages/packets`                  |
-| Actor and session | Identity and execution context references   | `packages/core`, `packages/packets` |
-| Policy decision   | Allow, approval-required, or block result   | `packages/policy`                   |
-| Approval record   | Scoped human authorization evidence         | `packages/policy`                   |
-| Audit record      | Immutable decision and action evidence      | `packages/audit`                    |
-| Knowledge record  | Source-derived content with citations       | `packages/packets`                  |
-| Substrate record  | Inventory, capability, and adapter evidence | `packages/packets`                  |
+| Entity            | Purpose                                                  | Owner                               |
+| ----------------- | -------------------------------------------------------- | ----------------------------------- |
+| Action request    | Durable intake, evaluation, replay and conflict evidence | `crates/lnsat-store`                |
+| Packet            | Bounded request or evidence envelope                     | `packages/packets`                  |
+| Actor and session | Identity and execution context references                | `packages/core`, `packages/packets` |
+| Policy decision   | Allow, approval-required, or block result                | `packages/policy`                   |
+| Approval record   | Scoped human authorization evidence                      | `packages/policy`                   |
+| Audit record      | Immutable decision and action evidence                   | `packages/audit`                    |
+| Knowledge record  | Source-derived content with citations                    | `packages/packets`                  |
+| Substrate record  | Inventory, capability, and adapter evidence              | `packages/packets`                  |
 
 Future managed-agent-content families include immutable instruction, skill,
 profile, context, graph, model-overlay, assignment, work-context, compatibility,
@@ -54,8 +57,8 @@ state; audit evidence follows its declared retention class.
 
 ## Persistence Status
 
-The repository includes versioned PostgreSQL audit-ledger artifacts and 17
-registered embedded SQLite migrations through schema v17. SQLite packet rows bind
+The repository includes versioned PostgreSQL audit-ledger artifacts and 18
+registered embedded SQLite migrations through schema v18. SQLite packet rows bind
 canonical bytes and SHA-256 identity to packet id, project, ordered resource references, and a
 project-scoped idempotency key. Policy rows bind deterministic decision id,
 packet digest, project, evaluation time, expiry, and outcome to that immutable
@@ -152,13 +155,24 @@ test path. Raw hostile input and raw authorization bytes are never stored. The
 test-only verifier reuses the closed wrapper parser and independently rederives
 request, scope, attempt, authorization, consumption, and chain digests; it
 performs no cryptographic verification or operational authorization validation.
-Runtime schema and registered migrations are v17/17. Public Phase 7 store
+At the historical Phase 7 checkpoint, runtime schema and registered migrations
+were v17/17. Public Phase 7 store
 source includes source-only consumption, authorization, disposable Git adapter,
 receipt, ambiguity, and reconciliation behavior. No signer, private material,
 operational signed-evidence verification, served/public Gateway/API activation,
 production adapter target, or deployment authority was added. Broader proposal
 keeps SQLite only inside a measured same-host envelope and defines
 service-engine gates.
+
+## Current source milestone — 2026-10-18
+
+Schema 18 is now reserved for the additive authenticated action-request record
+source milestone: three immutable request/evaluation/replay-conflict families,
+31 retention families, 34 tables, and 234 schema objects. Existing schema-17
+authority rows remain preserved; exact schema-17 and separately pinned schema-18
+read-only inspection do not migrate or activate a store. Earlier headless
+schema-18 counts and manifests are historical proposal evidence and must be
+rederived as future schema 19. See [the action-request record](action-request-record.md).
 
 ## Schema Evolution
 

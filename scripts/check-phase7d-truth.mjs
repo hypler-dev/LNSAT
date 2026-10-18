@@ -40,9 +40,10 @@ includes(registry, "auto_authorize: false");
 includes(identity, "action_authorized: false");
 includes(controlCenter, "runtime_connected: false");
 includes(controlCenter, "frontend_can_authorize: false");
-includes(store, "pub const SQLITE_SCHEMA_VERSION: i64 = 17;");
+includes(store, "pub const SQLITE_SCHEMA_VERSION: i64 = 18;");
 includes(store, 'id: "0016_phase7_core_persistence"');
 includes(store, 'id: "0017_phase7_core_semantics_correction"');
+includes(store, 'id: "0018_action_requests"');
 includes(nonceStore, "pub const PHASE7_NONCE_BYTES_V1: usize = 32;");
 includes(nonceStore, "pub const PHASE7_NONCE_TTL_SECONDS_V1: u64 = 300;");
 includes(nonceStore, "getrandom::getrandom(bytes)");
@@ -68,9 +69,10 @@ process.stdout.write(
     p1_public_trust_status: "unset",
     runtime_signing: false,
     provider_calls_enabled: false,
-    sqlite_schema_version: 17,
+    sqlite_schema_version: 18,
     sqlite_migration_0016_present: true,
     sqlite_migration_0017_present: true,
+    sqlite_migration_0018_action_requests_present: true,
     postgresql_migration_0016_present: false,
     postgresql_migration_0017_present: false,
     nonce_store_source_implemented: true,

@@ -489,7 +489,7 @@ test("plan parser fails when a later ## section is no longer recognized as bound
 
 const NEGATIVES = [
   {
-    name: "fails when runtime sqlite schema version is not 17",
+    name: "fails when frozen Phase 7 ledger schema version is not 17",
     mutate(root) {
       editLedger(root, (ledger) => {
         ledger.runtime_truth.sqlite_schema_version = 16;
@@ -498,25 +498,34 @@ const NEGATIVES = [
     expect: "ledger.runtime_truth.sqlite_schema_version",
   },
   {
-    name: "fails when source sqlite schema version is not 17",
+    name: "fails when current source sqlite schema version is not 18",
     mutate(root) {
       editFile(root, "crates/lnsat-store/src/lib.rs", [
         [
-          /pub const SQLITE_SCHEMA_VERSION: i64 = 17;/g,
+          /pub const SQLITE_SCHEMA_VERSION: i64 = 18;/g,
           "pub const SQLITE_SCHEMA_VERSION: i64 = 16;",
         ],
       ]);
     },
-    expect: "lib.rs: SQLITE_SCHEMA_VERSION must be 17",
+    expect: "lib.rs: SQLITE_SCHEMA_VERSION must be 18",
   },
   {
-    name: "fails when migration list is not 17",
+    name: "fails when current migration list is not 18",
     mutate(root) {
       editFile(root, "crates/lnsat-store/src/lib.rs", [
-        [/const MIGRATIONS:\s*\[Migration; 17\]/g, "const MIGRATIONS: [Migration; 16]"],
+        [/const MIGRATIONS:\s*\[Migration; 18\]/g, "const MIGRATIONS: [Migration; 16]"],
       ]);
     },
-    expect: "lib.rs: MIGRATIONS must be [Migration; 17]",
+    expect: "lib.rs: MIGRATIONS must be [Migration; 18]",
+  },
+  {
+    name: "fails when current migration 18 adopts the frozen signed candidate",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/lib.rs", [
+        ['id: "0018_action_requests"', 'id: "0018_signed_candidate"'],
+      ]);
+    },
+    expect: "lib.rs: migration 18 must be action-request evidence",
   },
   {
     name: "fails when nonce width is not 32 bytes",

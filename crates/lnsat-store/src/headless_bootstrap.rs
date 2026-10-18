@@ -5,8 +5,8 @@
 //! together with host-owner, lease, file, declaration, and platform checks.
 
 use super::{
-    Connection, REQUIRED_TABLES_V17, SQLITE_SCHEMA_VERSION, SqliteStore, TransactionBehavior,
-    verify_connection_integrity, verify_current_schema,
+    Connection, REQUIRED_TABLES_V17, REQUIRED_TABLES_V18, SqliteStore, TransactionBehavior,
+    pragma_i64, verify_connection_integrity, verify_schema_at_version,
 };
 use core::fmt;
 use core::fmt::Write as _;
@@ -14,7 +14,9 @@ use rusqlite::types::ValueRef;
 use sha2::{Digest, Sha256};
 
 const SCHEMA_V17_DIGEST: &str = "66911985ea6357018f9a55890e28e68394a59abdbc90d9cb4aa04f3a7c75b62a";
-const SCHEMA_DOMAIN: &[u8] = b"lnsat.headless_bootstrap.schema.v17\n";
+const SCHEMA_V18_DIGEST: &str = "ab97d48b025622cf5f9d04d1ee1986794b2b14c164ea148d2de17df9ae83a55b";
+const SCHEMA_V17_DOMAIN: &[u8] = b"lnsat.headless_bootstrap.schema.v17\n";
+const SCHEMA_V18_DOMAIN: &[u8] = b"lnsat.headless_bootstrap.schema.v18\n";
 const MAX_SCHEMA_OBJECTS: usize = 256;
 const MAX_SCHEMA_BYTES: usize = 262_144;
 
@@ -85,7 +87,7 @@ impl HeadlessBootstrapStoreInspectionV1 {
 }
 
 impl SqliteStore {
-    /// Inspects all schema-17 authority/evidence tables in one read snapshot.
+    /// Inspects all schema-17 or schema-18 authority/evidence tables in one read snapshot.
     ///
     /// This creates no owner, generation, audit row, schema, or activation. It
     /// does not verify host ownership, lease custody, resource identity, or OS
@@ -114,13 +116,28 @@ pub(super) fn require_authority_empty_v1(
     connection: &Connection,
 ) -> Result<(), HeadlessBootstrapStoreErrorV1> {
     verify_namespaces_v1(connection)?;
-    if SQLITE_SCHEMA_VERSION != 17 || schema_digest_v1(connection)? != SCHEMA_V17_DIGEST {
+    let version = schema_version_v1(connection)?;
+    let expected_digest = match version {
+        17 => SCHEMA_V17_DIGEST,
+        18 => SCHEMA_V18_DIGEST,
+        _ => return Err(HeadlessBootstrapStoreErrorV1::UnverifiableStore),
+    };
+    if schema_digest_v1(connection)? != expected_digest {
         return Err(HeadlessBootstrapStoreErrorV1::UnverifiableStore);
     }
-    verify_current_schema(connection)
+    verify_schema_at_version(connection, version)
         .and_then(|()| verify_connection_integrity(connection))
         .map_err(|_| HeadlessBootstrapStoreErrorV1::UnverifiableStore)?;
-    require_empty_tables_v1(connection)
+    if version == 17 {
+        require_empty_tables_v1(connection)
+    } else {
+        require_empty_tables_at_version_v1(connection, version)
+    }
+}
+
+fn schema_version_v1(connection: &Connection) -> Result<i64, HeadlessBootstrapStoreErrorV1> {
+    pragma_i64(connection, "user_version")
+        .map_err(|_| HeadlessBootstrapStoreErrorV1::UnverifiableStore)
 }
 
 fn verify_namespaces_v1(connection: &Connection) -> Result<(), HeadlessBootstrapStoreErrorV1> {
@@ -157,6 +174,11 @@ fn verify_namespaces_v1(connection: &Connection) -> Result<(), HeadlessBootstrap
 pub(super) fn schema_digest_v1(
     connection: &Connection,
 ) -> Result<String, HeadlessBootstrapStoreErrorV1> {
+    let domain = match schema_version_v1(connection)? {
+        17 => SCHEMA_V17_DOMAIN,
+        18 => SCHEMA_V18_DOMAIN,
+        _ => return Err(HeadlessBootstrapStoreErrorV1::UnverifiableStore),
+    };
     let mut statement = connection
         .prepare("SELECT type, name, tbl_name, sql FROM main.sqlite_schema ORDER BY type, name LIMIT 257")
         .map_err(|_| HeadlessBootstrapStoreErrorV1::UnverifiableStore)?;
@@ -201,7 +223,7 @@ pub(super) fn schema_digest_v1(
     let canonical = serde_json::to_vec(&manifest)
         .map_err(|_| HeadlessBootstrapStoreErrorV1::UnverifiableStore)?;
     let mut digest = Sha256::new();
-    digest.update(SCHEMA_DOMAIN);
+    digest.update(domain);
     digest.update(canonical);
     let mut encoded = String::with_capacity(64);
     for byte in digest.finalize() {
@@ -214,8 +236,20 @@ pub(super) fn schema_digest_v1(
 pub(super) fn require_empty_tables_v1(
     connection: &Connection,
 ) -> Result<(), HeadlessBootstrapStoreErrorV1> {
-    for table in REQUIRED_TABLES_V17 {
-        if SEED_TABLES.contains(&table) {
+    require_empty_tables_at_version_v1(connection, 17)
+}
+
+pub(super) fn require_empty_tables_at_version_v1(
+    connection: &Connection,
+    version: i64,
+) -> Result<(), HeadlessBootstrapStoreErrorV1> {
+    let tables: &[&str] = match version {
+        17 => &REQUIRED_TABLES_V17,
+        18 => &REQUIRED_TABLES_V18,
+        _ => return Err(HeadlessBootstrapStoreErrorV1::UnverifiableStore),
+    };
+    for table in tables {
+        if SEED_TABLES.contains(table) {
             continue;
         }
         // Identifiers come only from the compiled exact schema inventory, never

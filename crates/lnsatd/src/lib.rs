@@ -85,6 +85,7 @@ use lnsat_contracts::{
 };
 #[cfg(test)]
 use lnsat_store::LocalSessionVerificationV1;
+use lnsat_store::action_request::{ActionRequestRecordV1, ActionRequestSubmissionV1};
 use lnsat_store::{
     ApprovalDecisionStoreRecordV1, ApprovalDecisionStoreWriteV1, ApprovalRequestStoreRecordV1,
     ApprovalRequestStoreWriteV1, AuditEventStoreRecordV1, AuthenticatedPacketIntakeStoreWriteV1,
@@ -286,6 +287,12 @@ const GATEWAY_APPROVAL_DECISION_READ_CONTRACT_V1: &str =
 const GATEWAY_AUDIT_EVENT_READ_CONTRACT_V1: &str = "lnsat.gateway.audit_event_read.v1_0";
 const GATEWAY_EVIDENCE_READ_ACTIVITY_SIDE_EFFECT_V1: &str = "session_activity_evidence_may_append";
 const LOCAL_PACKET_INTAKE_GATEWAY_PATH_V1: &str = "/v1/packets";
+const LOCAL_ACTION_REQUEST_GATEWAY_PATH_V1: &str = "/v1/action-requests";
+const LOCAL_ACTION_REQUEST_RECORD_GATEWAY_PREFIX_V1: &str = "/v1/action-requests/";
+const LOCAL_ACTION_REQUEST_RECORD_GATEWAY_SUFFIX_V1: &str = "/operator-record";
+const GATEWAY_ACTION_REQUEST_SUBMISSION_ERROR_CODE_V1: &str =
+    "gateway.action_request_submission.denied";
+const GATEWAY_ACTION_REQUEST_RECORD_ERROR_CODE_V1: &str = "gateway.action_request_record.denied";
 const GATEWAY_PACKET_INTAKE_CONTRACT_V1: &str = "lnsat.gateway.action_intake.v1_0";
 const GATEWAY_PACKET_INTAKE_ERROR_CODE_V1: &str = "gateway.action_intake.denied";
 const GATEWAY_PACKET_INTAKE_LIMITER_SIDE_EFFECT_V1: &str = "authentication_limiter_advanced";
@@ -2545,6 +2552,15 @@ enum HttpResponseV1 {
     },
     PacketIntakeAccepted(AuthenticatedPacketIntakeStoreWriteV1),
     PacketIntakeRejected,
+    ActionRequestSubmitted(ActionRequestSubmissionV1),
+    ActionRequestSubmissionRejected,
+    ActionRequestRecord {
+        record: ActionRequestRecordV1,
+        head_only: bool,
+    },
+    ActionRequestRecordRejected {
+        head_only: bool,
+    },
     ApprovalRequestCreated(ApprovalRequestStoreWriteV1),
     ApprovalRequestRejected,
     ApprovalDecisionRecorded(ApprovalDecisionStoreWriteV1),
@@ -2964,6 +2980,7 @@ fn parse_http_request_v1(request: &[u8]) -> Result<ParsedHttpRequestV1<'_>, ()> 
 
 fn request_body_limit_v1(target: &str) -> usize {
     if target == LOCAL_PACKET_INTAKE_GATEWAY_PATH_V1
+        || target == LOCAL_ACTION_REQUEST_GATEWAY_PATH_V1
         || target == LOCAL_EXECUTION_AUTHORIZATIONS_PATH_V1
         || target.starts_with(LOCAL_EXECUTION_AUTHORIZATIONS_PREFIX_V1)
         || target.starts_with(LOCAL_OPERATIONS_PREFIX_V1)
@@ -3196,6 +3213,26 @@ fn classify_versioned_gateway_route_v1(
             context.store,
             context.authentication_limiter,
         );
+    }
+    if request.target == LOCAL_ACTION_REQUEST_GATEWAY_PATH_V1 {
+        return classify_local_action_request_submission_v1(
+            request,
+            body,
+            peer_address,
+            context.bound_address,
+            context.store,
+            context.authentication_limiter,
+        );
+    }
+    if let Some(response) = classify_local_action_request_record_v1(
+        request_bytes,
+        request,
+        body,
+        peer_address,
+        context.bound_address,
+        context.store,
+    ) {
+        return response;
     }
     if let Some(response) = classify_exact_evidence_read_route_v1(
         request_bytes,
@@ -4443,6 +4480,142 @@ fn classify_local_packet_intake_v1(
     }
 }
 
+/// Accepts a packet-backed request record. This route persists evidence only;
+/// it neither opens dispatch nor grants execution authority.
+fn classify_local_action_request_submission_v1(
+    request: ParsedRequestHeadV1<'_>,
+    body: &[u8],
+    peer_address: IpAddr,
+    bound_address: SocketAddr,
+    store: &Arc<Mutex<SqliteStore>>,
+    authentication_limiter: &LocalAuthenticationLimiterV1,
+) -> HttpResponseV1 {
+    if request.method != "POST" {
+        return HttpResponseV1::MethodNotAllowed { allow: "POST" };
+    }
+    if request.content_length.is_none_or(|length| length == 0) {
+        return HttpResponseV1::ActionRequestSubmissionRejected;
+    }
+    let submitted = parse_local_browser_transport_head_v1(request, peer_address, bound_address)
+        .and_then(|request| {
+            let packet = parse_packet_envelope_v1(body)
+                .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let Some(raw_csrf_token) = request.raw_csrf_token() else {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            };
+            let mut store = store
+                .lock()
+                .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+            let authorized = authorize_local_browser_transport_request_v1(&mut store, &request)?;
+            if authorized.class != LocalBrowserRequestClassV1::MutationPreflight
+                || !authentication_limiter.admit_verified_session(&authorized.session.session_id)
+            {
+                return Err(LocalBrowserTransportErrorV1::Rejected);
+            }
+            let recorded_at = canonical_system_time_v1(SystemTime::now())
+                .map_err(|()| LocalBrowserTransportErrorV1::Rejected)?;
+            store
+                .append_authenticated_action_request_v1(
+                    &packet,
+                    request.raw_session_token(),
+                    raw_csrf_token,
+                    &recorded_at,
+                )
+                .map_err(|_| LocalBrowserTransportErrorV1::Rejected)
+        });
+    match submitted {
+        Ok(submission) => HttpResponseV1::ActionRequestSubmitted(submission),
+        Err(_) => HttpResponseV1::ActionRequestSubmissionRejected,
+    }
+}
+
+fn local_action_request_record_id_from_target_v1(target: &str) -> Result<Option<&str>, ()> {
+    let Some(remainder) = target.strip_prefix(LOCAL_ACTION_REQUEST_RECORD_GATEWAY_PREFIX_V1) else {
+        return Ok(None);
+    };
+    let Some(request_id) = remainder.strip_suffix(LOCAL_ACTION_REQUEST_RECORD_GATEWAY_SUFFIX_V1)
+    else {
+        return Err(());
+    };
+    if request_id.len() != 68
+        || !request_id.starts_with("arq_")
+        || !request_id.as_bytes()[4..]
+            .iter()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(byte))
+    {
+        return Err(());
+    }
+    Ok(Some(request_id))
+}
+
+fn classify_local_action_request_record_v1(
+    request_bytes: &[u8],
+    request: ParsedRequestHeadV1<'_>,
+    body: &[u8],
+    peer_address: IpAddr,
+    bound_address: SocketAddr,
+    store: &Arc<Mutex<SqliteStore>>,
+) -> Option<HttpResponseV1> {
+    let head_only = request.method == "HEAD";
+    let request_id = match local_action_request_record_id_from_target_v1(request.target) {
+        Ok(Some(request_id)) => request_id,
+        Ok(None) => return None,
+        Err(()) => {
+            return Some(if matches!(request.method, "GET" | "HEAD") {
+                HttpResponseV1::ActionRequestRecordRejected { head_only }
+            } else {
+                HttpResponseV1::NotFound
+            });
+        }
+    };
+    if !matches!(request.method, "GET" | "HEAD") {
+        return Some(HttpResponseV1::MethodNotAllowed { allow: "GET, HEAD" });
+    }
+    if !body.is_empty()
+        || request.content_length.is_some_and(|length| length != 0)
+        || request.evidence_read_forbidden_header_present
+    {
+        return Some(HttpResponseV1::ActionRequestRecordRejected { head_only });
+    }
+    let record =
+        parse_local_browser_transport_request_v1(request_bytes, peer_address, bound_address)
+            .and_then(|transport| {
+                let mut store = store
+                    .lock()
+                    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
+                // The store verifies the active session and requester access in its
+                // read transaction. Avoid a second session query chain here.
+                if transport.target() != request.target
+                    || transport.classify_after_session_verification(false)?
+                        != LocalBrowserRequestClassV1::ReadOnly
+                {
+                    return Err(LocalBrowserTransportErrorV1::Rejected);
+                }
+                let read_at = canonical_system_time_v1(SystemTime::now())
+                    .map_err(|()| LocalBrowserTransportErrorV1::Rejected)?;
+                store
+                    .read_authenticated_action_request_v1(
+                        request_id,
+                        transport.raw_session_token(),
+                        transport
+                            .raw_csrf_token()
+                            .ok_or(LocalBrowserTransportErrorV1::Rejected)?,
+                        &read_at,
+                    )
+                    .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?
+                    .ok_or(LocalBrowserTransportErrorV1::Rejected)
+            });
+    Some(match record {
+        Ok(record)
+            if action_request_record_body_v1(&record).len()
+                <= lnsat_store::action_request::ACTION_REQUEST_RECORD_MAX_BYTES_V1 =>
+        {
+            HttpResponseV1::ActionRequestRecord { record, head_only }
+        }
+        Ok(_) | Err(_) => HttpResponseV1::ActionRequestRecordRejected { head_only },
+    })
+}
+
 fn classify_local_approval_request_v1(
     request: ParsedRequestHeadV1<'_>,
     body: &[u8],
@@ -4917,6 +5090,26 @@ fn compose_http_response_v1(
         }
         HttpResponseV1::PacketIntakeAccepted(value) => packet_intake_response_parts_v1(&value),
         HttpResponseV1::PacketIntakeRejected => packet_intake_denied_parts_v1(),
+        HttpResponseV1::ActionRequestSubmitted(submission) => {
+            action_request_submission_response_parts_v1(&submission)
+        }
+        HttpResponseV1::ActionRequestSubmissionRejected => {
+            action_request_submission_denied_parts_v1()
+        }
+        HttpResponseV1::ActionRequestRecord { record, head_only } => (
+            "200 OK",
+            action_request_record_body_v1(&record),
+            None,
+            head_only,
+            None,
+        ),
+        HttpResponseV1::ActionRequestRecordRejected { head_only } => (
+            "403 Forbidden",
+            action_request_record_denied_body_v1(),
+            None,
+            head_only,
+            None,
+        ),
         HttpResponseV1::ApprovalRequestCreated(value) => approval_request_response_parts_v1(&value),
         HttpResponseV1::ApprovalRequestRejected => approval_request_denied_parts_v1(),
         HttpResponseV1::ApprovalDecisionRecorded(value) => {
@@ -5335,6 +5528,33 @@ fn packet_intake_denied_parts_v1() -> HttpResponsePartsTupleV1 {
     (
         "403 Forbidden",
         gateway_packet_intake_rejected_body_v1(),
+        None,
+        false,
+        None,
+    )
+}
+
+fn action_request_submission_response_parts_v1(
+    submission: &ActionRequestSubmissionV1,
+) -> HttpResponsePartsTupleV1 {
+    (
+        if submission.disposition == "created" {
+            "201 Created"
+        } else {
+            "200 OK"
+        },
+        serde_json::to_string(submission)
+            .expect("action request submission response must serialize"),
+        None,
+        false,
+        None,
+    )
+}
+
+fn action_request_submission_denied_parts_v1() -> HttpResponsePartsTupleV1 {
+    (
+        "403 Forbidden",
+        gateway_action_request_submission_rejected_body_v1(),
         None,
         false,
         None,
@@ -6271,6 +6491,28 @@ fn gateway_packet_intake_rejected_body_v1() -> String {
         "adapter_dispatched": false,
         "receipt_created": false,
         "mutation_authority": false,
+    })
+    .to_string()
+}
+
+fn gateway_action_request_submission_rejected_body_v1() -> String {
+    serde_json::json!({
+        "schema": "lnsat.action_request_submission.v1",
+        "ok": false,
+        "error": { "code": GATEWAY_ACTION_REQUEST_SUBMISSION_ERROR_CODE_V1 },
+    })
+    .to_string()
+}
+
+fn action_request_record_body_v1(record: &ActionRequestRecordV1) -> String {
+    serde_json::to_string(record).expect("action request record response must serialize")
+}
+
+fn action_request_record_denied_body_v1() -> String {
+    serde_json::json!({
+        "schema": "lnsat.action_request_record.v1",
+        "ok": false,
+        "error": { "code": GATEWAY_ACTION_REQUEST_RECORD_ERROR_CODE_V1 },
     })
     .to_string()
 }
@@ -8699,7 +8941,7 @@ mod tests {
                 "X-Content-Type-Options: nosniff\r\n",
                 "Connection: close\r\n\r\n",
                 "{\"contract\":\"lnsat.daemon.readiness.v1_0\",\"status\":\"ready\",",
-                "\"schema_version\":17,\"migration_count\":17,",
+                "\"schema_version\":18,\"migration_count\":18,",
                 "\"bind_scope\":\"loopback\",\"mutation_authority\":false}"
             )
         );
@@ -8951,7 +9193,7 @@ mod tests {
         for (path, expected) in [
             (
                 AUTHENTICATED_HEALTH_PATH_V1,
-                include_str!("../../../fixtures/contracts/phase10-health-v1.json"),
+                include_str!("../../../fixtures/contracts/daemon-health-schema18-v1.json"),
             ),
             (
                 AUTHENTICATED_STATUS_PATH_V1,
@@ -14536,6 +14778,380 @@ mod tests {
             Some(Path::new("/tmp/lnsat-fixtures"))
         );
         assert_eq!(config.git_executable(), Some(Path::new("/usr/bin/git")));
+    }
+
+    #[test]
+    fn action_request_schema_eighteen_readiness_serializer_grants_no_authority() {
+        let directory = TestDirectory::new("action-request-readiness-schema");
+        let store = SqliteStore::open(directory.database_path()).expect("fixture store");
+        let body = readiness_body_v1(&store.state().expect("fixture state"));
+        let value: serde_json::Value = serde_json::from_str(&body).expect("readiness JSON");
+        assert_eq!(value["schema_version"], 18);
+        assert_eq!(value["migration_count"], 18);
+        assert_eq!(value["mutation_authority"], false);
+        assert_eq!(body.len(), 151);
+    }
+
+    #[test]
+    fn action_request_record_route_accepts_only_exact_lowercase_identifier_path() {
+        let request_id = format!("arq_{}", "a".repeat(64));
+        let exact = format!(
+            "{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_PREFIX_V1}{request_id}{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_SUFFIX_V1}"
+        );
+        assert_eq!(
+            local_action_request_record_id_from_target_v1(&exact),
+            Ok(Some(request_id.as_str()))
+        );
+        for invalid in [
+            format!("{exact}?cursor=1"),
+            format!("{exact}/child"),
+            format!(
+                "{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_PREFIX_V1}{request_id}%2Foperator-record"
+            ),
+            format!(
+                "{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_PREFIX_V1}arq_{}{}",
+                "A".repeat(64),
+                LOCAL_ACTION_REQUEST_RECORD_GATEWAY_SUFFIX_V1
+            ),
+        ] {
+            assert_eq!(
+                local_action_request_record_id_from_target_v1(&invalid),
+                Err(())
+            );
+        }
+    }
+
+    #[test]
+    fn action_request_submission_response_is_bounded_safe_dto_or_fixed_denial() {
+        let submission = ActionRequestSubmissionV1 {
+            schema: "lnsat.action_request_submission.v1",
+            request_id: format!("arq_{}", "b".repeat(64)),
+            disposition: "created",
+            evaluation_state: "policy_recorded",
+        };
+        let (_, body, _, _, _) = action_request_submission_response_parts_v1(&submission);
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&body).expect("submission must be JSON"),
+            serde_json::json!({
+                "schema": "lnsat.action_request_submission.v1",
+                "request_id": submission.request_id,
+                "disposition": "created",
+                "evaluation_state": "policy_recorded",
+            })
+        );
+        let denied = gateway_action_request_submission_rejected_body_v1();
+        assert!(denied.contains(GATEWAY_ACTION_REQUEST_SUBMISSION_ERROR_CODE_V1));
+        assert!(!denied.contains("sqlite"));
+        assert!(!denied.contains("token"));
+    }
+
+    struct ActionRequestRouteFixtureV1 {
+        _directory: TestDirectory,
+        store: Arc<Mutex<SqliteStore>>,
+        limiter: Arc<LocalAuthenticationLimiterV1>,
+        active: Arc<AtomicBool>,
+        shutdown: DaemonShutdownV1,
+        address: SocketAddr,
+        owner_token: String,
+        owner_csrf: String,
+        other_token: String,
+        other_csrf: String,
+        owner_session_id: String,
+    }
+
+    impl ActionRequestRouteFixtureV1 {
+        fn new(label: &str) -> Self {
+            let directory = TestDirectory::new(label);
+            let address: SocketAddr = "127.0.0.1:7447".parse().expect("fixture address");
+            let limiter = Arc::new(LocalAuthenticationLimiterV1::new());
+            let mut store = SqliteStore::open(directory.database_path()).expect("fixture store");
+            let created_at = canonical_system_time_v1(
+                SystemTime::now()
+                    .checked_sub(Duration::from_secs(1))
+                    .expect("fixture clock"),
+            )
+            .expect("fixture timestamp");
+            store
+                .bootstrap_local_owner_v1(&lnsat_store::LocalOwnerBootstrapInputV1 {
+                    identity_ref: "identity:human:action-route-owner",
+                    display_name: "Action Route Owner",
+                    password: "action route owner password",
+                    created_at: &created_at,
+                })
+                .expect("owner bootstrap");
+            let owner = issue_local_browser_session_v1(
+                &mut store,
+                &limiter,
+                &LocalBrowserSessionIssueRequestV1 {
+                    identity_ref: "identity:human:action-route-owner",
+                    password: "action route owner password",
+                    lifetime_seconds: 300,
+                },
+            )
+            .expect("owner session");
+            let owner_token = owner.secret_headers().token().to_owned();
+            let owner_csrf = owner.secret_headers().proof().to_owned();
+            let owner_session_id = owner.session().session_id.clone();
+            let identity_at =
+                canonical_system_time_v1(SystemTime::now()).expect("fixture timestamp");
+            store
+                .create_local_identity_v1(
+                    &lnsat_store::LocalIdentityCreateInputV1 {
+                        identity_ref: "identity:human:action-route-other",
+                        display_name: "Action Route Other",
+                        role: LocalIdentityRoleV1::Operator,
+                        password: "action route other password",
+                        created_at: &identity_at,
+                    },
+                    &owner_token,
+                    &owner_csrf,
+                    &identity_at,
+                )
+                .expect("other identity");
+            let other = issue_local_browser_session_v1(
+                &mut store,
+                &limiter,
+                &LocalBrowserSessionIssueRequestV1 {
+                    identity_ref: "identity:human:action-route-other",
+                    password: "action route other password",
+                    lifetime_seconds: 300,
+                },
+            )
+            .expect("other session");
+            Self {
+                _directory: directory,
+                store: Arc::new(Mutex::new(store)),
+                limiter,
+                active: Arc::new(AtomicBool::new(false)),
+                shutdown: DaemonShutdownV1 {
+                    requested: Arc::new(AtomicBool::new(false)),
+                    wake_address: address,
+                },
+                address,
+                owner_token,
+                owner_csrf,
+                other_token: other.secret_headers().token().to_owned(),
+                other_csrf: other.secret_headers().proof().to_owned(),
+                owner_session_id,
+            }
+        }
+
+        fn classify(&self, request: &str) -> HttpResponseV1 {
+            classify_request(
+                request.as_bytes(),
+                "127.0.0.1".parse().expect("loopback peer"),
+                GatewayRuntimeContextV1 {
+                    bound_address: self.address,
+                    store: &self.store,
+                    authentication_limiter: &self.limiter,
+                    phase8_runtime: None,
+                    phase9_console: None,
+                    consequential_dispatch_active: &self.active,
+                    shutdown: &self.shutdown,
+                },
+            )
+            .response
+        }
+
+        fn packet(&self, label: &str) -> String {
+            let fixture: serde_json::Value = serde_json::from_str(include_str!(
+                "../../../fixtures/contracts/packet-envelope-v1_0.json"
+            ))
+            .expect("packet fixture");
+            let mut packet = fixture["vectors"][0]["packet"].clone();
+            let sequence = NEXT_TEST_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+            let now = SystemTime::now();
+            packet["packet_id"] = serde_json::json!(format!("pkt_action_route_{label}_{sequence}"));
+            packet["idempotency_key"] =
+                serde_json::json!(format!("idem_action_route_{label}_{sequence}"));
+            packet["actor_ref"] = serde_json::json!("identity:human:action-route-owner");
+            packet["session_ref"] =
+                serde_json::json!(format!("session:local:{}", self.owner_session_id));
+            packet["resource_refs"] = serde_json::json!(["resource:repository:action-route"]);
+            packet["permission_envelope"]["allow"] = serde_json::json!(["deploy.request"]);
+            packet["requires_approval"] = serde_json::json!(true);
+            packet["constraints"] = serde_json::json!({
+                "execution_proposal": {
+                    "schema_id": "lnsat.execution_proposal.schema.v1_0",
+                    "derivation_profile": "lnsat.execution_request.packet_embedded.v1",
+                    "action": { "kind": "git.commit", "arguments": { "message": "route fixture", "path": "fixture.txt" } },
+                    "target": { "resource_ref": "resource:repository:action-route", "identity": { "base": "abc123", "repository": "action-route" } },
+                    "configuration_digest": format!("sha256:{}", "c".repeat(64)),
+                    "adapter": { "ref": "adapter:local:git-commit", "version": "v1" },
+                    "executable_digest": format!("sha256:{}", "e".repeat(64)),
+                    "audience": "audience:gateway:local"
+                }
+            });
+            packet["created_at"] = serde_json::json!(
+                canonical_system_time_v1(
+                    now.checked_sub(Duration::from_secs(1))
+                        .expect("fixture clock")
+                )
+                .expect("fixture timestamp")
+            );
+            packet["expires_at"] = serde_json::json!(
+                canonical_system_time_v1(
+                    now.checked_add(Duration::from_mins(4))
+                        .expect("fixture clock")
+                )
+                .expect("fixture timestamp")
+            );
+            serde_json::to_string(&packet).expect("packet JSON")
+        }
+
+        fn post(&self, body: &str, token: &str, csrf: &str) -> String {
+            format!(
+                concat!(
+                    "POST /v1/action-requests HTTP/1.1\r\n",
+                    "Host: {address}\r\n",
+                    "{version_name}: {version}\r\n",
+                    "Origin: http://{address}\r\n",
+                    "Sec-Fetch-Site: same-origin\r\n",
+                    "Content-Type: application/json\r\n",
+                    "Content-Length: {length}\r\n",
+                    "{token_name}: {token}\r\n",
+                    "{proof_name}: {csrf}\r\n\r\n",
+                    "{body}"
+                ),
+                address = self.address,
+                version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+                version = CONTRACT_VERSION_V1_0,
+                length = body.len(),
+                token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+                proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
+                token = token,
+                csrf = csrf,
+                body = body,
+            )
+        }
+
+        fn get(&self, target: &str, token: &str, proof: &str) -> String {
+            format!(
+                concat!(
+                    "GET {target} HTTP/1.1\r\n",
+                    "Host: {address}\r\n",
+                    "{version_name}: {version}\r\n",
+                    "Sec-Fetch-Site: same-origin\r\n",
+                    "{token_name}: {token}\r\n",
+                    "{proof_name}: {proof}\r\n\r\n"
+                ),
+                address = self.address,
+                version_name = GATEWAY_CONTRACT_VERSION_HEADER_NAME_V1,
+                version = CONTRACT_VERSION_V1_0,
+                token_name = LOCAL_BROWSER_SESSION_TOKEN_HEADER_NAME_V1,
+                proof_name = LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1,
+                target = target,
+                token = token,
+                proof = proof,
+            )
+        }
+    }
+
+    #[test]
+    fn action_request_routes_accept_read_replay_and_conflict_without_dispatch() {
+        let fixture = ActionRequestRouteFixtureV1::new("action-request-routes");
+        let body = fixture.packet("accept");
+        let created =
+            fixture.classify(&fixture.post(&body, &fixture.owner_token, &fixture.owner_csrf));
+        let HttpResponseV1::ActionRequestSubmitted(created) = created else {
+            panic!("action request must create");
+        };
+        assert_eq!(created.disposition, "created");
+        assert_eq!(created.evaluation_state, "policy_recorded");
+        let target = format!(
+            "{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_PREFIX_V1}{}{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_SUFFIX_V1}",
+            created.request_id
+        );
+        let read =
+            fixture.classify(&fixture.get(&target, &fixture.owner_token, &fixture.owner_csrf));
+        let HttpResponseV1::ActionRequestRecord { record, .. } = read else {
+            panic!("owner must read action request record");
+        };
+        assert_eq!(record.status, "complete");
+        assert_eq!(record.request_id, created.request_id);
+        assert_eq!(record.evaluation_state, "policy_recorded");
+        assert!(record.evidence.is_some());
+        // A valid token paired with another valid session's proof must fail.
+        let wrong_proof = fixture.get(&target, &fixture.owner_token, &fixture.other_csrf);
+        for request in [
+            wrong_proof.clone(),
+            wrong_proof.replacen("GET ", "HEAD ", 1),
+        ] {
+            assert!(matches!(
+                fixture.classify(&request),
+                HttpResponseV1::ActionRequestRecordRejected { .. }
+            ));
+        }
+        assert!(matches!(
+            fixture.classify(&fixture.get(&target, &fixture.other_token, &fixture.other_csrf)),
+            HttpResponseV1::ActionRequestRecordRejected { .. }
+        ));
+
+        let replay =
+            fixture.classify(&fixture.post(&body, &fixture.owner_token, &fixture.owner_csrf));
+        let HttpResponseV1::ActionRequestSubmitted(replay) = replay else {
+            panic!("exact packet must replay");
+        };
+        assert_eq!(replay.disposition, "replay");
+        assert_eq!(replay.request_id, created.request_id);
+
+        let mut changed: serde_json::Value = serde_json::from_str(&body).expect("packet JSON");
+        changed["intent"] = serde_json::json!("changed route submission");
+        let changed = serde_json::to_string(&changed).expect("changed packet JSON");
+        let conflict =
+            fixture.classify(&fixture.post(&changed, &fixture.owner_token, &fixture.owner_csrf));
+        let HttpResponseV1::ActionRequestSubmitted(conflict) = conflict else {
+            panic!("changed packet must record conflict");
+        };
+        assert_eq!(conflict.disposition, "conflict");
+        assert_eq!(conflict.request_id, created.request_id);
+    }
+
+    #[test]
+    fn action_request_routes_deny_bad_transport_body_method_and_record_probing() {
+        let fixture = ActionRequestRouteFixtureV1::new("action-request-route-denials");
+        let body = fixture.packet("denial");
+        let missing_csrf = fixture
+            .post(&body, &fixture.owner_token, &fixture.owner_csrf)
+            .replace(
+                &format!(
+                    "{LOCAL_BROWSER_SESSION_PROOF_HEADER_NAME_V1}: {}\r\n",
+                    fixture.owner_csrf
+                ),
+                "",
+            );
+        let malformed = fixture.post("{", &fixture.owner_token, &fixture.owner_csrf);
+        for request in [missing_csrf, malformed] {
+            assert!(matches!(
+                fixture.classify(&request),
+                HttpResponseV1::ActionRequestSubmissionRejected
+            ));
+        }
+        let get_submission = fixture
+            .post(&body, &fixture.owner_token, &fixture.owner_csrf)
+            .replacen("POST /v1/action-requests", "GET /v1/action-requests", 1);
+        assert!(matches!(
+            fixture.classify(&get_submission),
+            HttpResponseV1::MethodNotAllowed { allow: "POST" }
+        ));
+        let unknown = format!("arq_{}", "a".repeat(64));
+        let target = format!(
+            "{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_PREFIX_V1}{unknown}{LOCAL_ACTION_REQUEST_RECORD_GATEWAY_SUFFIX_V1}"
+        );
+        for rejected_target in [format!("{target}?cursor=1"), format!("{target}/child")] {
+            assert!(matches!(
+                fixture.classify(&fixture.get(
+                    &rejected_target,
+                    &fixture.other_token,
+                    &fixture.other_csrf,
+                )),
+                HttpResponseV1::ActionRequestRecordRejected { .. }
+            ));
+        }
+        assert!(matches!(
+            fixture.classify(&fixture.get(&target, &fixture.other_token, &fixture.other_csrf)),
+            HttpResponseV1::ActionRequestRecordRejected { .. }
+        ));
     }
 
     fn request_once(label: &str, request: &[u8]) -> String {

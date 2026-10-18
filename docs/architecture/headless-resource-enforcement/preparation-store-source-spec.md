@@ -9,6 +9,14 @@ installation-wide synchronization and the complete native freeze remain future
 work. This document supplies no Docker, selected-target, package, release or
 production evidence.
 
+## Current source allocation — 2026-10-18
+
+Schema 18 is reserved for the accepted authenticated action-request record
+source milestone. This preparation and synchronization design remains future
+schema-19 headless work. Recalculate all schema counts, retention families, and
+manifests from schema 18 before implementation; no native, runtime, deployment,
+release, or support gate opens here. See [the action-request record](../action-request-record.md).
+
 ## Authority and scope
 
 [Project Status](../../PROJECT_STATUS.md) owns current HCFG-6 acceptance and

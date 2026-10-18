@@ -46,7 +46,7 @@ test("current version snapshot binds complete table assertions", () => {
   const mutations = [
     ["| `0.1.0`", "| `0.2.0`", "Product/source SemVer"],
     ["| `lnsat.contracts.v1_0`", "| `lnsat.contracts.v1_1`", "Gateway wire contract"],
-    ["| SQLite schema `17`", "| SQLite schema `18`", "Local persistence schema"],
+    ["| SQLite schema `18`", "| SQLite schema `19`", "Local persistence schema"],
     [
       "| proof source `b41aa756bccd85843ac540abfd927e8c5693d5fe`; packet PR #39 merge",
       "| proof source `0000000000000000000000000000000000000000`; packet PR #39 merge",

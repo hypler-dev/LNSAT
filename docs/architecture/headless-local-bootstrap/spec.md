@@ -8,6 +8,14 @@ Owner: LNSAT maintainers
 Accepted by: human owner in development conversation on 2026-09-30
 Last updated: 2026-10-01
 
+## Current source allocation — 2026-10-18
+
+Schema 18 is reserved for the accepted authenticated action-request record
+source milestone. This headless bootstrap design remains future schema-19
+work. Its source, installation, native, and runtime gates remain open; any
+future schema candidate must rederive counts, retention families, and manifests
+from schema 18. See [the action-request record](../action-request-record.md).
+
 ## Behavior
 
 The supported V1 initialization is one local `lnsatctl` operation against one fresh authority-empty SQLite store. It creates the sole owner, installation, first immutable deny-by-default configuration generation, active-generation pointer, initial authority epoch, and linked owner/configuration audit evidence in **one immediate SQLite transaction**. It reuses the existing owner-bootstrap validation and credential/event construction inside that transaction; calling today's separate `bootstrap_local_owner_v1` and later adding a first configuration is not a supported V1 sequence. There is no HTTP, MCP, agent, browser, or UI bootstrap route.

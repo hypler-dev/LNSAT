@@ -34,6 +34,12 @@ impl PrivateDatabase {
         fixture
     }
 
+    fn version_seventeen() -> Self {
+        let fixture = Self::new();
+        create_version_seventeen_database(&fixture.path);
+        fixture
+    }
+
     fn lease_path(&self) -> PathBuf {
         local_database_lease_path_v1(&self.path).expect("fixture lease path must derive")
     }
@@ -69,6 +75,7 @@ fn selected_store_reads_fresh_schema_without_owner_or_initialization_authority()
     let mut store = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path)
         .expect("private current selection must open read-only");
     assert!(store.connection.is_readonly(rusqlite::MAIN_DB).unwrap());
+    assert_eq!(pragma_i64(&store.connection, "user_version"), Ok(18));
     assert_eq!(store.verify_selected_local_store_custody_v1(), Ok(()));
     let inspection = store.inspect_headless_bootstrap_store_v1().unwrap();
     assert!(inspection.authority_empty());
@@ -86,6 +93,41 @@ fn selected_store_reads_fresh_schema_without_owner_or_initialization_authority()
     );
     drop(store);
     assert_eq!(fs::read(&fixture.path).unwrap(), original_database);
+}
+
+#[test]
+fn selected_store_reads_schema_seventeen_without_migration_or_authority() {
+    let fixture = PrivateDatabase::version_seventeen();
+    let before = fs::read(&fixture.path).expect("schema-17 database bytes must read");
+    let mut store = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path)
+        .expect("private schema-17 selection must open read-only");
+    assert!(store.connection.is_readonly(rusqlite::MAIN_DB).unwrap());
+    assert_eq!(pragma_i64(&store.connection, "user_version"), Ok(17));
+    assert_eq!(store.verify_selected_local_store_custody_v1(), Ok(()));
+    let inspection = store.inspect_headless_bootstrap_store_v1().unwrap();
+    assert!(inspection.authority_empty());
+    assert!(!inspection.initialization_available());
+    assert!(!inspection.grants_action_authority());
+    drop(store);
+    assert_eq!(
+        fs::read(&fixture.path).expect("schema-17 database bytes must reread"),
+        before
+    );
+}
+
+#[test]
+fn selected_store_future_schema_denies_without_migration() {
+    let fixture = PrivateDatabase::current();
+    let connection = Connection::open_with_flags(&fixture.path, OpenFlags::SQLITE_OPEN_READ_WRITE)
+        .expect("current fixture must open for future-version fixture");
+    connection
+        .pragma_update(None, "user_version", 19)
+        .expect("future fixture version must set");
+    drop(connection);
+    assert_eq!(
+        open_error(&fixture.path),
+        SelectedLocalStoreErrorV1::StoreUnverifiable
+    );
 }
 
 #[test]
@@ -428,10 +470,16 @@ fn selected_store_current_schema_in_pending_wal_is_read_without_checkpoint() {
     let fixture = PrivateDatabase::new();
     create_version_sixteen_database(&fixture.path);
     let ordinary = SqliteStore::open(&fixture.path).unwrap();
-    assert_eq!(pragma_i64(&ordinary.connection, "user_version"), Ok(17));
+    assert_eq!(
+        pragma_i64(&ordinary.connection, "user_version"),
+        Ok(SQLITE_SCHEMA_VERSION)
+    );
     let before = fixture.database_bytes();
     let selected = SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
-    assert_eq!(pragma_i64(&selected.connection, "user_version"), Ok(17));
+    assert_eq!(
+        pragma_i64(&selected.connection, "user_version"),
+        Ok(SQLITE_SCHEMA_VERSION)
+    );
     assert_eq!(selected.verify_selected_local_store_custody_v1(), Ok(()));
     assert_eq!(fixture.database_bytes()[0], before[0]);
     assert_eq!(fixture.database_bytes()[1], before[1]);

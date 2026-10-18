@@ -73,3 +73,14 @@ test("P7-X1 rejects supported-artifact claim", () => {
   assert.match(errors, /support_level: mismatch/u);
   assert.match(errors, /distribution_artifact_supported: mismatch/u);
 });
+
+test("P7-X1 schema-17 reconciliation rejects an invented historical marker", () => {
+  const evidencePath = mutatedEvidence((evidence) => {
+    evidence.evidence_rows.find(
+      (row) => row.id === "schema_17_migration_freeze",
+    ).evidence_marker = "pub const SQLITE_SCHEMA_VERSION: i64 = 19;";
+  });
+  const result = validatePhase7LocalConformance({ root, evidencePath });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /evidence marker missing/u);
+});

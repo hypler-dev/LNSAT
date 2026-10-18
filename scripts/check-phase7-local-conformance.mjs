@@ -132,7 +132,17 @@ function validateEvidenceRows(root, rows, expectedIds, withCommand, path, errors
       errors.push(`${rowPath}.evidence_file: unreadable (${String(error)})`);
       continue;
     }
-    if (!source.includes(row.evidence_marker)) {
+    // The frozen Phase 7 row names the original schema-17 freeze. The accepted
+    // additive request migration keeps that migration registered while advancing
+    // the current schema; it does not rewrite the historical fixture.
+    const preservedSchema17 =
+      row.id === "schema_17_migration_freeze" &&
+      row.evidence_file === "crates/lnsat-store/src/lib.rs" &&
+      row.evidence_marker === "pub const SQLITE_SCHEMA_VERSION: i64 = 17;" &&
+      source.includes('id: "0017_phase7_core_semantics_correction"') &&
+      source.includes('id: "0018_action_requests"') &&
+      source.includes("pub const SQLITE_SCHEMA_VERSION: i64 = 18;");
+    if (!source.includes(row.evidence_marker) && !preservedSchema17) {
       errors.push(`${rowPath}: evidence marker missing from ${row.evidence_file}`);
     }
     if (
@@ -276,8 +286,50 @@ export function validatePhase7LocalConformance({
   }
 
   const migrations = readdirSync(resolve(root, "crates/lnsat-store/migrations"));
-  if (migrations.some((name) => /^0018_/u.test(name)))
-    errors.push("migrations: 0018 must remain unregistered");
+  // Frozen Phase 7/10 records retain their original scope exclusions.
+  // The separately accepted request-record migration is the only additive exception.
+  const schema18 = migrations.filter((name) => /^0018_/u.test(name));
+  if (schema18.length !== 1 || schema18[0] !== "0018_action_requests.sql") {
+    errors.push(
+      "migrations: only 0018_action_requests.sql may be present for schema 18",
+    );
+  }
+  if (migrations.some((name) => /^0019_/u.test(name))) {
+    errors.push("migrations: future schema 19 must remain unregistered");
+  }
+  if (schema18.length === 1) {
+    let migration;
+    try {
+      migration = readFileSync(
+        resolve(root, "crates/lnsat-store/migrations/0018_action_requests.sql"),
+        "utf8",
+      );
+    } catch (error) {
+      errors.push(
+        `migrations: unable to read 0018_action_requests.sql (${String(error)})`,
+      );
+      migration = "";
+    }
+    for (const table of [
+      "lnsat_action_requests",
+      "lnsat_action_request_evaluations",
+      "lnsat_action_request_observations",
+    ]) {
+      if (!migration.includes(`CREATE TABLE ${table}`)) {
+        errors.push(`migrations: schema 18 missing ${table}`);
+      }
+    }
+    const storeSource = readFileSync(
+      resolve(root, "crates/lnsat-store/src/lib.rs"),
+      "utf8",
+    );
+    if (!storeSource.includes("MIGRATION_0018_SQL"))
+      errors.push("migrations: schema 18 action-request migration is not registered");
+    if (!storeSource.includes('id: "0018_action_requests"'))
+      errors.push("migrations: schema 18 registration id mismatch");
+    if (!storeSource.includes("pub const SQLITE_SCHEMA_VERSION: i64 = 18;"))
+      errors.push("migrations: current schema version must be 18");
+  }
 
   return { ok: errors.length === 0, errors };
 }

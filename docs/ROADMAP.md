@@ -13,7 +13,23 @@ controls local-v1 trust, optional signed approval, online one-time
 authorization, revised Phase 7 lanes, and staged release breadth.
 [ADR-0001](architecture/ADR-0001_V1_SCOPE.md) remains historical and controls
 only retained decisions not superseded by ADR-0002.
+The following canonical sentence preserves the frozen Phase 7 checkpoint,
+including its historical schema-17 observation. The current allocation follows
+in the dated milestone section.
+
 Canonical readiness states: Phase 7a signed-evidence design = complete; Phase 7b wrapper verification = implemented_verification_only; Phase 7c Ed25519 primitive = implemented_not_wired; Phase 7d schema candidate = proposed_test_only; P7-ADR0 local-v1 trust-model revision = complete; P7-M1 core persistence = complete; P7-N1 nonce/expiry lifecycle = complete; P7-B1 preauthorization hardening = complete; P7-C1 atomic consumption = complete (implemented_not_wired); P7-A1 local authorization = complete (source-only, implemented_not_wired); P7-R1 Git reference adapter = complete (source-only, implemented_not_wired); P7-X1 local-v1 conformance freeze = complete (source-only evidence, no runtime/publication authority); runtime is schema 17/17 with migrations 0016 and 0017 registered; optional signed-evidence packets remain blocked.
+
+## Current source milestone — 2026-10-18
+
+The accepted action-request record source milestone reserves schema 18 for
+durable authenticated request roots, explicit failed/unknown evaluation, first
+replay/conflict evidence, and bounded operator readback. Its focused local
+evidence passes. It does not close runtime dispatch, headless installation,
+native resource enforcement, mutual-authenticated transport, deployment,
+release, or support gates. Earlier headless schema-18 proposals are future
+schema 19; all counts, retention families, and manifests must be rederived
+from schema 18 before any future implementation. See
+[the action-request record contract](architecture/action-request-record.md).
 In inherited packet labels, `publication authority` means release-artifact or
 runtime publication authority; it does not govern repository-source visibility.
 Current completed packet is `P7-X1`. Optional signed-evidence packets
@@ -457,9 +473,11 @@ optional and may become policy-required without blocking this core path.
 
 Current ADR-0004 wrapper and Ed25519 work remains useful verification-only
 foundation. Current ADR-0005 candidate SQL remains test-only v18 relational
-and concurrency evidence. It is not runtime authority. Core schema is now v17
-with seventeen registered migrations: migration 0016 adds inert persistence;
-migration 0017 corrects preauthorization semantics without opening authority.
+and concurrency evidence. It is not runtime authority. The historical Phase 7
+checkpoint used schema v17 with seventeen registered migrations: migration 0016
+added inert persistence; migration 0017 corrected preauthorization semantics.
+Current schema 18 adds the separately accepted request-record evidence without
+activating the signed candidate or granting execution authority.
 
 Core local-v1 build order:
 

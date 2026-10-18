@@ -8,6 +8,14 @@ Owner: LNSAT maintainers
 Accepted by: human owner on 2026-10-01 at exact PR #72 head `0dbe0a2874428721b1a4ba6bad1708ec5fdbb572`; see Project Status
 Last updated: 2026-10-06
 
+## Current source allocation — 2026-10-18
+
+The accepted action-request source milestone owns schema 18. HCFG-6 remains a
+future headless/native enforcement packet; no runtime, host operation,
+mutual-authenticated transport, deployment, release, or support gate closes.
+Future schema-19 installation work must rederive all counts and manifests from
+schema 18. See [the action-request record](../action-request-record.md).
+
 ## Scope and protected lanes
 
 This packet defines the complete resource-to-runtime verification boundary for the first nonempty Docker Engine Git workflow. The acceptance reconciliation checkpoint was documentation only. The pure S1 input decoder may precede the complete source freeze after its own exact contract and independent source review; it performs no observation or authority work. Behavioral verifier and integration work requires the mandatory complete native/wire/daemon/synchronization source freeze and independent review. No host permission change, Docker observation/process, selected target, migration, initialization, activation, public contract rollout, merge, supported-artifact build/pull/publish, release or production is opened. The accepted bootstrap and Phase 11 operator packet retain their own gates.
