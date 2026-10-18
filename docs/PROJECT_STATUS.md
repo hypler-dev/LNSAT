@@ -50,10 +50,11 @@ private CLI boundaries, signed-key-provider work, headless installation, and
 host/runtime operations remain closed. See [action-request record](architecture/action-request-record.md)
 and [headless schema source proposal](architecture/headless-local-bootstrap/schema-source-spec.md).
 
-Focused validation passed 86 Rust tests: 51 store, 30 historical signed-candidate
-compatibility, four daemon classifier, and one readiness serializer test on the
+Focused validation passed 95 Rust tests: 51 store, 30 historical signed-candidate
+compatibility, four daemon classifier, one readiness serializer, and nine pure
+product-surface tests on the
 existing local Rust 1.97.1 toolchain with offline dependencies. The classifier
-fixtures do not bind a server or dispatch actions. Full npm validation remains
+fixtures do not bind a server or dispatch actions. Local full npm validation remains
 blocked at the Node engine guard (available 24.21.0; required 22.22.3); security
 conformance and public-history checks also lack installed dependencies.
 Direct public/docs/Phase 7/10 checks are narrower evidence. See the source

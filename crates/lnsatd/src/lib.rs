@@ -9193,7 +9193,7 @@ mod tests {
         for (path, expected) in [
             (
                 AUTHENTICATED_HEALTH_PATH_V1,
-                include_str!("../../../fixtures/contracts/phase10-health-v1.json"),
+                include_str!("../../../fixtures/contracts/daemon-health-schema18-v1.json"),
             ),
             (
                 AUTHENTICATED_STATUS_PATH_V1,

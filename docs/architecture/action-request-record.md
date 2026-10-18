@@ -74,9 +74,9 @@ closed.
 
 ## Validation boundary
 
-On 2026-10-18, 86 bounded Rust tests passed: 51 focused store tests, 30
+On 2026-10-18, 95 bounded Rust tests passed: 51 focused store tests, 30
 historical signed-candidate compatibility tests, four daemon classifier tests,
-and one readiness serializer test. They used the existing local Rust 1.97.1
+one readiness serializer test, and nine pure product-surface tests. They used the existing local Rust 1.97.1
 toolchain and offline dependencies. They
 cover root/evaluation failures, replay/conflict, requester access, mismatched
 session proofs, redaction, linked histories and corruption, query/row/byte
@@ -89,6 +89,9 @@ the available Node 24.21.0 differs from required Node 22.22.3. Direct public,
 documentation, and Phase 7/10 source validators supply narrower evidence.
 Security-conformance and public-history checks are additionally blocked by
 missing installed MCP conformance and `smol-toml` dependencies. No dependencies
-were installed to bypass these limits. Full repository validation, native
-Linux compatibility, runtime operation, installation, Phase 10 exit, Phase 11
-proof, deployment, and release remain unproven.
+were installed to bypass these limits. These local results alone do not prove full repository validation. Hosted
+source-CI results are recorded separately in [PR #99](https://github.com/hypler-dev/LNSAT/pull/99).
+Neither local fixtures nor hosted source CI qualify native Linux compatibility,
+runtime operation, installation, Phase 10 exit, Phase 11 proof, deployment, or
+release. The original schema-17 health fixture is preserved; a separate schema-18
+health fixture changes only the two stored schema/migration values.

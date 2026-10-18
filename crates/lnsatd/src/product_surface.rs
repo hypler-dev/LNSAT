@@ -954,9 +954,27 @@ mod tests {
     }
 
     #[test]
+    fn schema18_health_fixture_changes_only_storage_schema_metadata() {
+        let mut historical: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../fixtures/contracts/phase10-health-v1.json"
+        ))
+        .expect("historical schema-17 health fixture must parse");
+        assert_eq!(historical["storage"]["schema_version"], 17);
+        assert_eq!(historical["storage"]["migration_count"], 17);
+        historical["storage"]["schema_version"] = serde_json::json!(18);
+        historical["storage"]["migration_count"] = serde_json::json!(18);
+        let current: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../fixtures/contracts/daemon-health-schema18-v1.json"
+        ))
+        .expect("current schema-18 health fixture must parse");
+        assert_eq!(current, historical);
+        assert_eq!(current["mutation_authority"], false);
+    }
+
+    #[test]
     fn authenticated_health_and_status_match_frozen_fixtures() {
         let health_fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../fixtures/contracts/phase10-health-v1.json"
+            "../../../fixtures/contracts/daemon-health-schema18-v1.json"
         ))
         .expect("health fixture must parse");
         let health = daemon_health_v1(&SqliteStoreStateV1 {
