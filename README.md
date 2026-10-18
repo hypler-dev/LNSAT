@@ -107,6 +107,18 @@ repository. It exercises the difference between requesting an action,
 authorizing it, starting it, and proving its result. It is not an unrestricted
 Git or shell executor.
 
+The current source milestone adds a private request-bound one-use execution
+admission seam. It revalidates the immutable request root, its unique recorded
+policy evaluation, authenticated active sessions, approval and authorization
+evidence, nonce and time window, capability, and exact derived request before
+atomically consuming the capability and reserving the existing operation
+attempt. The seam uses a closed fake adapter protocol and has no public route,
+real dispatch, production supervisor, consequence receipt, or supported
+operation claim. A lost post-commit reservation is inspection-only and remains
+subject to existing startup reconciliation as `outcome_unknown`; it cannot be
+retried or reported as fabricated success. See
+[request-execution admission](docs/architecture/request-execution-admission.md).
+
 ### 1. Bind the proposal to exact content
 
 A versioned packet carries the declared actor, scope, resources and constraints.

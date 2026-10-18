@@ -141,7 +141,7 @@ pub(super) fn project(
     }))
 }
 
-fn validate_private_policy(
+pub(super) fn validate_private_policy(
     value: &Value,
     root: &ActionRequestRootV1,
     evaluation: &ActionRequestEvaluationV1,

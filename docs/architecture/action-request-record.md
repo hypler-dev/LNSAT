@@ -12,6 +12,13 @@ submissions as evidence while keeping policy evaluation and execution
 authority separate. It does not claim Phase 10 exit, Phase 11 runtime proof,
 deployment, release, or support.
 
+The request root is also the immutable identity revalidated by the private
+[request-bound one-use execution admission](request-execution-admission.md)
+seam. That later source seam consumes the approved capability and reserves the
+existing operation attempt only when the root, unique policy evaluation,
+authorization lineage, active sessions, time window, and exact derived request
+still agree. This reference does not make intake an execution route.
+
 ## Contract
 
 `POST /v1/action-requests` accepts the existing authenticated packet envelope

@@ -24,6 +24,32 @@ source milestone is implemented with bounded local fixture evidence. It does
 not open runtime dispatch, a new authority, Phase 10 exit,
 Phase 11 proof, deployment, release, or support.
 
+The current source follow-on adds a private request-bound one-use execution
+admission seam. One immediate transaction revalidates the immutable request
+root and its unique recorded policy evaluation, active requester and approver
+sessions, approval and authorization lineage, nonce and time window,
+capability, and exact derived execution request before consuming the capability
+and reserving the existing operation attempt. The reservation is deliberately
+non-cloneable and non-serializable and is returned only after a fresh commit.
+The source-only fake adapter binds the request and tool-arguments digest; it
+does not expose a public route or invoke a real adapter, supervisor, process, or
+consequence. A replay, alternate approval or authorization for the same root,
+dropped reservation, or lost post-commit response cannot mint another token.
+A pre-commit rollback leaves no consumption or reservation; a later valid
+admission may still reserve the request. Startup inspection may reconcile an
+interrupted dispatch to
+`outcome_unknown`, with no retry or fabricated success. Schema 18 remains the
+current store schema and the future headless schema 19 proposal is unchanged.
+See [request-execution admission](architecture/request-execution-admission.md).
+
+The new admission suite passed six grouped fake-adapter tests, including
+second-approval denial, concurrent one-use reservation, persisted-tamper
+rejection, missing root-policy lineage, rollback, and restart ambiguity. This is
+bounded controller source evidence. Required full `npm run check` and
+`npm run public:check` remain locally
+blocked by the existing Node engine mismatch; the direct history validator is
+blocked by missing `smol-toml`. No dependency was installed or downloaded.
+
 The source contract adds authenticated `POST /v1/action-requests` intake and
 read-only `GET /v1/action-requests/{arq_64hex}/operator-record`. Intake commits
 an immutable request root before policy evaluation, records a separate
