@@ -1,11 +1,12 @@
 # Request-Bound Git Result Persistence
 
-- Status: unmerged experimental private source candidate
+- Status: merged experimental private result source; synthetic action-loop
+  fixture implemented with focused validation and independent test review
 - Acceptance: direct human acceptance on 2026-10-18 covers bounded source,
   fake-adapter tests, documentation, and independent review
-- Validation: 13 result groups and 35 affected Rust regressions passed; 34 Node
-  checks, strict Clippy, and Rustfmt passed
-- Independent review: source and test PASS, no open actionable findings
+- Parent validation: 13 result groups and 35 affected Rust regressions passed;
+  34 Node checks, strict Clippy, and Rustfmt passed
+- Parent independent review: source and test PASS, no open actionable findings
 - Product and runtime effect: none
 
 This document records a source-only result-persistence seam for an already
@@ -77,3 +78,46 @@ Full npm checks remain blocked by local Node 24.21.0 versus required 22.22.3.
 The local public-history validator remains blocked by missing `smol-toml`. No
 dependencies were installed. Independent source and test reviews passed with no open actionable findings.
 Source-test success is not runtime, release, or support qualification.
+
+## Synthetic action-loop integration fixture
+
+Direct human acceptance on 2026-10-18 opened a bounded fixture joining the
+existing authenticated request, approval/admission, test-only dispatch, result
+persistence and authenticated evidence-readback seams. The parent result source
+merged through PR #102 after PR #101. Direct acceptance on 2026-10-19
+separately opened reconciliation of the reviewed fixture onto public main after
+PR #104, public branch/PR publication and hosted source CI; it did not authorize
+merge or runtime work. The original fixture checkout is preserved. Four focused
+groups, strict Clippy and Rustfmt passed. Independent
+test review passed after two oracle gaps were corrected and the affected
+groups rerun; repeated executions are not additional unique tests.
+
+Four focused Rust groups passed using the current store APIs and linked-evidence
+projection. They cover completed-result replay followed by reopen and
+authenticated readback, unknown recovery, authorization denial, and corrupted
+linkage. The non-owner original-requester scope case uses a separate
+authenticated request; the completed-chain reads use the original Owner.
+An independent synthetic observation remains separate from the fake callback.
+Completion after reopening exposes exactly one accepted receipt and, when
+resolving an unknown attempt, one matched reconciliation. Exact result replay
+preserves the result ledger. An active reservation attempt after reopening an
+unknown result requires `RedemptionRejected` with no result-ledger changes.
+Operation and authorization IDs are anchored to fixture-owned values before
+checking projection lineage. Session
+activity recorded by authenticated reads is separate from result-ledger writes.
+Unauthorized reads and inconsistent linkage reveal no partial evidence;
+projected records are checked for redaction and response bounds.
+
+The existing ambiguous-callback path samples wall time. Its recovery fixture
+therefore uses a later canonical result time and a newly authenticated,
+118-second session before readback. This is reported chronology, not a new
+production clock seam or deadline proof. The first attempt used an invalid
+shorter session; the corrected affected group passed. Existing test groups
+were not rerun merely to acknowledge their prior results.
+
+This is a controller-local synthetic database fixture. It does not run a Git
+target, server, Docker engine, native adapter or production observer, and does
+not introduce another read projection, public mutation route or schema version.
+Store reopen is source persistence evidence, not crash durability or physical
+cleanup proof. The accepted fixture does not open Phase 11 runtime or support
+gates.

@@ -4,6 +4,9 @@
 //! create a repository, invoke Git, or claim a real consequence.
 
 use super::*;
+use crate::action_request::{
+    ACTION_REQUEST_RECORD_MAX_BYTES_V1, ActionRequestErrorV1, ActionRequestRecordV1,
+};
 use crate::phase7_consumption::request_admission::RequestLaunchReservationV1;
 use crate::phase7_git_adapter::request_result::{
     ADAPTER_REF, ADAPTER_VERSION, PROTOCOL, VerifiedRequestGitResultV1,
@@ -21,6 +24,10 @@ const RESULT_AT: &str = "2026-07-22T20:03:32.000Z";
 const LATER_RESULT_AT: &str = "2026-07-22T20:03:40.000Z";
 const EXPIRED_RESULT_AT: &str = "2026-07-22T20:04:01.000Z";
 const RECOVERED_AFTER_UNKNOWN_AT: &str = "9999-12-31T23:59:59.999Z";
+const RECONCILED_AT: &str = "9999-12-31T23:58:00.000Z";
+const READ_AFTER_RECONCILIATION_AT: &str = "9999-12-31T23:58:02.000Z";
+const RECONCILIATION_SESSION_EXPIRES_AT: &str = "9999-12-31T23:59:59.000Z";
+const ADMISSION_FIXTURE_PASSWORD: &str = "request execution admission source fixture password";
 
 fn oid(sequence: u64) -> String {
     format!("{sequence:040x}")
@@ -214,6 +221,553 @@ fn assert_unknown_without_receipt(fixture: &AdmissionFixture) {
     assert_eq!(operation.state, "outcome_unknown");
     assert_eq!(count(&fixture.store, "lnsat_operation_receipts"), 0);
     assert_eq!(count(&fixture.store, "lnsat_operation_reconciliations"), 0);
+}
+
+fn assert_action_loop_authority(
+    evidence: &serde_json::Value,
+    derived: &lnsat_contracts::DerivedExecutionRequestV1,
+    operation: &Phase8OperationReadbackV1,
+) {
+    assert_eq!(
+        evidence["schema"].as_str(),
+        Some("lnsat.action_request_linked_evidence.v1")
+    );
+    assert_eq!(
+        evidence["policy"]["decision_id"].as_str(),
+        Some(derived.request.policy_decision_id.as_str())
+    );
+    let approvals = evidence["approvals"].as_array().expect("approvals array");
+    assert_eq!(approvals.len(), 1);
+    assert_eq!(
+        approvals[0]["approval_request_id"].as_str(),
+        Some(derived.request.approval_request_id.as_str())
+    );
+    let decisions = evidence["approval_decisions"]
+        .as_array()
+        .expect("approval decisions array");
+    assert_eq!(decisions.len(), 1);
+    assert_eq!(
+        decisions[0]["approval_decision_id"].as_str(),
+        Some(derived.request.approval_decision_id.as_str())
+    );
+    let authorization_attempts = evidence["authorization_attempts"]
+        .as_array()
+        .expect("authorization attempts array");
+    assert_eq!(authorization_attempts.len(), 1);
+    assert_eq!(
+        authorization_attempts[0]["approval_decision_id"].as_str(),
+        Some(derived.request.approval_decision_id.as_str())
+    );
+    let authorizations = evidence["authorizations"]
+        .as_array()
+        .expect("authorizations array");
+    assert_eq!(authorizations.len(), 1);
+    assert_eq!(
+        authorizations[0]["authorization_id"].as_str(),
+        Some(operation.authorization_id.as_str())
+    );
+}
+
+fn assert_action_loop_lineage(
+    record: &ActionRequestRecordV1,
+    request_id: &str,
+    derived: &lnsat_contracts::DerivedExecutionRequestV1,
+    operation: &Phase8OperationReadbackV1,
+    reconciliations: usize,
+) {
+    assert_eq!(record.status, "complete");
+    assert_eq!(record.request_id, request_id);
+    assert_eq!(
+        record
+            .request
+            .as_ref()
+            .map(|request| request.request_id.as_str()),
+        Some(request_id)
+    );
+    let evidence = record
+        .evidence
+        .as_ref()
+        .expect("complete record has evidence");
+    assert_action_loop_authority(evidence, derived, operation);
+    let operations = evidence["operations"].as_array().expect("operations array");
+    assert_eq!(operations.len(), 1);
+    assert_eq!(
+        operations[0]["operation_id"].as_str(),
+        Some(operation.operation_id.as_str())
+    );
+    assert_eq!(
+        operations[0]["authorization_id"].as_str(),
+        Some(operation.authorization_id.as_str())
+    );
+    let consumptions = evidence["consumptions"]
+        .as_array()
+        .expect("consumptions array");
+    assert_eq!(consumptions.len(), 1);
+    assert_eq!(
+        consumptions[0]["operation_id"].as_str(),
+        Some(operation.operation_id.as_str())
+    );
+    assert_eq!(
+        consumptions[0]["consumption_id"].as_str(),
+        operation.consumption_id.as_deref()
+    );
+    let attempts = evidence["operation_attempts"]
+        .as_array()
+        .expect("operation attempts array");
+    assert_eq!(attempts.len(), 1);
+    assert_eq!(
+        attempts[0]["operation_id"].as_str(),
+        Some(operation.operation_id.as_str())
+    );
+    let attempt_id = attempts[0]["operation_attempt_id"]
+        .as_str()
+        .expect("attempt identifier");
+    let receipts = evidence["receipts"].as_array().expect("receipts array");
+    assert_eq!(receipts.len(), 1);
+    assert_eq!(
+        receipts[0]["receipt_id"].as_str(),
+        operation.receipt_id.as_deref()
+    );
+    assert_eq!(
+        receipts[0]["operation_id"].as_str(),
+        Some(operation.operation_id.as_str())
+    );
+    assert_eq!(
+        receipts[0]["operation_attempt_id"].as_str(),
+        Some(attempt_id)
+    );
+    assert_eq!(
+        receipts[0]["authorization_id"].as_str(),
+        Some(operation.authorization_id.as_str())
+    );
+    assert_eq!(
+        receipts[0]["consumption_id"].as_str(),
+        operation.consumption_id.as_deref()
+    );
+    assert_eq!(
+        receipts[0]["verification_status"].as_str(),
+        Some("accepted")
+    );
+    let result_digest = receipts[0]["result_digest"]
+        .as_str()
+        .expect("receipt digest");
+    assert_eq!(result_digest.len(), 71);
+    assert!(result_digest.starts_with("sha256:"));
+    let records = evidence["reconciliations"]
+        .as_array()
+        .expect("reconciliations array");
+    assert_eq!(records.len(), reconciliations);
+    if reconciliations == 1 {
+        assert_eq!(
+            records[0]["reconciliation_id"].as_str(),
+            operation.reconciliation_id.as_deref()
+        );
+        assert_eq!(
+            records[0]["operation_id"].as_str(),
+            Some(operation.operation_id.as_str())
+        );
+        assert_eq!(
+            records[0]["operation_attempt_id"].as_str(),
+            Some(attempt_id)
+        );
+        assert_eq!(records[0]["status"].as_str(), Some("matched"));
+        assert_eq!(records[0]["receipt_id"], receipts[0]["receipt_id"]);
+    }
+}
+
+fn issue_non_owner_session(
+    fixture: &mut AdmissionFixture,
+    name: &str,
+    role: LocalIdentityRoleV1,
+    created_at: &str,
+    issued_at: &str,
+) -> LocalSessionIssueResultV1 {
+    let identity_ref = format!("identity:human:{name}");
+    fixture
+        .store
+        .create_local_identity_v1(
+            &local_identity_create_input(
+                &identity_ref,
+                name,
+                role,
+                ADMISSION_FIXTURE_PASSWORD,
+                created_at,
+            ),
+            &fixture.requester_token,
+            &fixture.requester_csrf,
+            created_at,
+        )
+        .expect("fixture non-owner identity must create");
+    fixture
+        .store
+        .issue_local_session_v1(&local_session_input(
+            &identity_ref,
+            ADMISSION_FIXTURE_PASSWORD,
+            issued_at,
+            "2026-07-22T20:30:00.000Z",
+        ))
+        .expect("fixture non-owner session must issue")
+}
+
+#[test]
+fn request_action_loop_completion_replay_and_authenticated_lineage_readback() {
+    let mut fixture = git_fixture(20_001);
+    let calls = AtomicUsize::new(0);
+    let reservation = fixture
+        .reserve_git_at(RESERVED_AT)
+        .expect("request must admit once");
+    dispatch_success(&mut fixture, reservation, &calls);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+    let proof = observe(&fixture, 20_001).expect("independent result must verify");
+    let completed = persist(&mut fixture, proof, RESULT_AT).expect("first result must persist");
+    assert_eq!(completed.state, "completed");
+    assert_eq!(completed.operation_id, fixture.operation_id);
+    assert_eq!(completed.authorization_id, fixture.authorization_id);
+    let ledger_before_replay = result_ledger(&fixture.store);
+    let proof = observe(&fixture, 20_001).expect("exact replay result must verify");
+    let replay = persist(&mut fixture, proof, LATER_RESULT_AT)
+        .expect("exact result replay must read without writes");
+    assert_eq!(replay, completed);
+    assert_eq!(result_ledger(&fixture.store), ledger_before_replay);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+    let path = fixture.database_path();
+    let request_id = fixture.request_id.clone();
+    let derived = fixture.derived.clone();
+    let requester_token = fixture.requester_token.clone();
+    let requester_csrf = fixture.requester_csrf.clone();
+    let capability_wire = fixture.capability_wire.clone();
+    let session_ref = fixture.packet.session_ref.clone();
+    drop(fixture.store);
+    let mut restarted = SqliteStore::open(&path).expect("complete result must reopen");
+    let ledger_before_read = result_ledger(&restarted);
+    let record = restarted
+        .read_authenticated_action_request_v1(
+            &request_id,
+            &requester_token,
+            &requester_csrf,
+            LATER_RESULT_AT,
+        )
+        .expect("original requester read must authenticate")
+        .expect("original requester record must exist");
+    // Authentication activity may write its own audit surface. Result evidence
+    // remains read-only during projection.
+    assert_eq!(result_ledger(&restarted), ledger_before_read);
+    assert_action_loop_lineage(&record, &request_id, &derived, &completed, 0);
+    let encoded = serde_json::to_vec(&record).expect("record must serialize");
+    for forbidden in [
+        requester_token.as_str(),
+        requester_csrf.as_str(),
+        capability_wire.as_str(),
+        session_ref.as_str(),
+    ] {
+        assert!(
+            !encoded
+                .windows(forbidden.len())
+                .any(|window| window == forbidden.as_bytes())
+        );
+    }
+    assert!(encoded.len() <= ACTION_REQUEST_RECORD_MAX_BYTES_V1);
+}
+
+fn dispatch_action_loop_ambiguous(
+    fixture: &mut AdmissionFixture,
+    reservation: RequestLaunchReservationV1,
+    calls: &AtomicUsize,
+) {
+    let token = fixture.requester_token.clone();
+    let csrf = fixture.requester_csrf.clone();
+    let derived = fixture.derived.clone();
+    assert!(
+        fixture
+            .store
+            .dispatch_request_git_fake_with_sources_v1(
+                reservation,
+                &derived,
+                (&token, &csrf),
+                || Ok(DISPATCHED_AT.to_owned()),
+                |_| {
+                    calls.fetch_add(1, Ordering::SeqCst);
+                    Err(())
+                },
+            )
+            .is_err()
+    );
+}
+
+#[test]
+fn request_action_loop_reopens_unknown_and_reconciles_once_without_redispatch() {
+    let mut fixture = git_fixture(20_002);
+    let calls = AtomicUsize::new(0);
+    let reservation = fixture
+        .reserve_git_at(RESERVED_AT)
+        .expect("request must admit once");
+    dispatch_action_loop_ambiguous(&mut fixture, reservation, &calls);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    assert_unknown_without_receipt(&fixture);
+
+    let path = fixture.database_path();
+    let request_id = fixture.request_id.clone();
+    let derived = fixture.derived.clone();
+    let operation_id = fixture.operation_id.clone();
+    let authorization_id = fixture.authorization_id.clone();
+    drop(fixture.store);
+    fixture.store = SqliteStore::open(&path).expect("unknown result must reopen");
+    let unknown_ledger = result_ledger(&fixture.store);
+    // Re-decode the original capability and retry within its original validity
+    // window: durable consumption must still reject another reservation.
+    assert!(matches!(
+        fixture.reserve_git_at(LATER_RESULT_AT),
+        Err(Phase7PersistenceErrorV1::RedemptionRejected)
+    ));
+    assert_eq!(result_ledger(&fixture.store), unknown_ledger);
+    let restarted = &mut fixture.store;
+    let proof = restarted
+        .verify_request_git_result_for_test_v1(
+            &request_id,
+            &derived,
+            &operation_id,
+            &target(20_002),
+            &result(20_002),
+        )
+        .expect("fresh post-reopen result must verify");
+    // Callback ambiguity records its terminal state with `SystemTime::now()`.
+    // Use a later canonical fixture time, then issue a fresh bounded session so
+    // result persistence and authenticated readback remain chronological.
+    let completed = restarted
+        .persist_request_git_result_with_sources_v1(proof, RECONCILED_AT, || Ok(()), || Ok(()))
+        .expect("unknown result must reconcile once");
+    assert_eq!(completed.state, "completed");
+    assert_eq!(count(restarted, "lnsat_operation_receipts"), 1);
+    assert_eq!(count(restarted, "lnsat_operation_reconciliations"), 1);
+    let ledger_before_replay = result_ledger(restarted);
+    let proof = restarted
+        .verify_request_git_result_for_test_v1(
+            &request_id,
+            &derived,
+            &operation_id,
+            &target(20_002),
+            &result(20_002),
+        )
+        .expect("exact reconciliation replay result must verify");
+    let replay = restarted
+        .persist_request_git_result_with_sources_v1(
+            proof,
+            READ_AFTER_RECONCILIATION_AT,
+            || Ok(()),
+            || Ok(()),
+        )
+        .expect("exact reconciliation replay must stay read-only");
+    assert_eq!(replay, completed);
+    assert_eq!(result_ledger(restarted), ledger_before_replay);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+    let final_session = restarted
+        .issue_local_session_v1(&local_session_input(
+            "identity:human:requester",
+            ADMISSION_FIXTURE_PASSWORD,
+            "9999-12-31T23:58:01.000Z",
+            RECONCILIATION_SESSION_EXPIRES_AT,
+        ))
+        .expect("post-reconciliation requester session must issue");
+    let record = restarted
+        .read_authenticated_action_request_v1(
+            &request_id,
+            &final_session.raw_session_token,
+            &final_session.raw_csrf_token,
+            READ_AFTER_RECONCILIATION_AT,
+        )
+        .expect("post-reconciliation requester read must authenticate")
+        .expect("post-reconciliation record must exist");
+    assert_eq!(completed.operation_id, operation_id);
+    assert_eq!(completed.authorization_id, authorization_id);
+    assert_action_loop_lineage(&record, &request_id, &derived, &completed, 1);
+}
+
+#[test]
+fn request_action_loop_readback_scopes_owner_original_requester_and_csrf() {
+    let mut fixture = git_fixture(20_003);
+    let requester = issue_non_owner_session(
+        &mut fixture,
+        "loop-requester",
+        LocalIdentityRoleV1::Operator,
+        "2026-07-22T20:03:32.000Z",
+        "2026-07-22T20:03:33.000Z",
+    );
+    let other = issue_non_owner_session(
+        &mut fixture,
+        "loop-other",
+        LocalIdentityRoleV1::Operator,
+        "2026-07-22T20:03:34.000Z",
+        "2026-07-22T20:03:35.000Z",
+    );
+    let auditor = issue_non_owner_session(
+        &mut fixture,
+        "loop-auditor",
+        LocalIdentityRoleV1::Auditor,
+        "2026-07-22T20:03:36.000Z",
+        "2026-07-22T20:03:37.000Z",
+    );
+    let mut packet = fixture.packet.clone();
+    packet.packet_id = format!("pkt_{:064x}", 20_103);
+    packet.idempotency_key = format!("idem_{:064x}", 20_103);
+    packet.actor_ref = requester.session.identity_ref.clone();
+    packet.session_ref = format!("session:local:{}", requester.session.session_id);
+    let submission = fixture
+        .store
+        .append_authenticated_action_request_v1(
+            &packet,
+            &requester.raw_session_token,
+            &requester.raw_csrf_token,
+            "2026-07-22T20:03:38.000Z",
+        )
+        .expect("non-owner original requester must submit");
+    let original = fixture
+        .store
+        .read_authenticated_action_request_v1(
+            &submission.request_id,
+            &requester.raw_session_token,
+            &requester.raw_csrf_token,
+            "2026-07-22T20:03:39.000Z",
+        )
+        .expect("original requester read must authenticate")
+        .expect("original requester record must exist");
+    assert_eq!(
+        original
+            .request
+            .as_ref()
+            .map(|request| request.requester_ref.as_str()),
+        Some(requester.session.identity_ref.as_str())
+    );
+    assert!(
+        fixture
+            .store
+            .read_authenticated_action_request_v1(
+                &submission.request_id,
+                &fixture.requester_token,
+                &fixture.requester_csrf,
+                "2026-07-22T20:03:39.000Z",
+            )
+            .expect("owner read must authenticate")
+            .is_some()
+    );
+    assert!(
+        fixture
+            .store
+            .read_authenticated_action_request_v1(
+                &submission.request_id,
+                &other.raw_session_token,
+                &other.raw_csrf_token,
+                "2026-07-22T20:03:39.000Z",
+            )
+            .expect("cross-identity read has generic denial")
+            .is_none()
+    );
+    assert!(
+        fixture
+            .store
+            .read_authenticated_action_request_v1(
+                &submission.request_id,
+                &auditor.raw_session_token,
+                &auditor.raw_csrf_token,
+                "2026-07-22T20:03:39.000Z",
+            )
+            .expect("auditor read has generic denial")
+            .is_none()
+    );
+    assert_eq!(
+        fixture.store.read_authenticated_action_request_v1(
+            &submission.request_id,
+            &requester.raw_session_token,
+            &other.raw_csrf_token,
+            "2026-07-22T20:03:39.000Z",
+        ),
+        Err(ActionRequestErrorV1::AuthorizationRejected)
+    );
+}
+
+#[test]
+fn request_action_loop_bad_linkage_degrades_without_partial_evidence() {
+    let mut fixture = git_fixture(20_004);
+    let calls = AtomicUsize::new(0);
+    let reservation = fixture
+        .reserve_git_at(RESERVED_AT)
+        .expect("request must admit once");
+    dispatch_success(&mut fixture, reservation, &calls);
+    let proof = observe(&fixture, 20_004).expect("result must verify");
+    persist(&mut fixture, proof, RESULT_AT).expect("result must persist");
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    let healthy = fixture
+        .store
+        .read_authenticated_action_request_v1(
+            &fixture.request_id,
+            &fixture.requester_token,
+            &fixture.requester_csrf,
+            LATER_RESULT_AT,
+        )
+        .expect("healthy read must authenticate")
+        .expect("healthy evidence must exist");
+    let encoded = serde_json::to_vec(&healthy).expect("healthy record must serialize");
+    assert!(encoded.len() <= ACTION_REQUEST_RECORD_MAX_BYTES_V1);
+    assert!(
+        !encoded
+            .windows(fixture.capability_wire.len())
+            .any(|window| window == fixture.capability_wire.as_bytes())
+    );
+
+    let trigger: String = fixture
+        .store
+        .connection
+        .query_row(
+            "SELECT sql FROM sqlite_schema WHERE name='lnsat_operation_receipts_reject_update'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("immutable receipt trigger must exist");
+    fixture
+        .store
+        .connection
+        .execute_batch(
+            "PRAGMA foreign_keys = OFF; DROP TRIGGER lnsat_operation_receipts_reject_update;",
+        )
+        .expect("test-only linkage mutation may remove the update guard");
+    assert_eq!(
+        fixture
+            .store
+            .connection
+            .execute(
+                "UPDATE lnsat_operation_receipts SET authorization_id=?1",
+                [format!("xau_{}", "f".repeat(64))],
+            )
+            .expect("test-only receipt linkage mutation must apply"),
+        1
+    );
+    fixture
+        .store
+        .connection
+        .execute_batch("PRAGMA foreign_keys = ON;")
+        .expect("test-only linkage mutation must restore foreign keys");
+    fixture
+        .store
+        .connection
+        .execute_batch(&trigger)
+        .expect("immutable receipt trigger must restore");
+
+    let degraded = fixture
+        .store
+        .read_authenticated_action_request_v1(
+            &fixture.request_id,
+            &fixture.requester_token,
+            &fixture.requester_csrf,
+            LATER_RESULT_AT,
+        )
+        .expect("corrupt linkage remains readable only as degraded");
+    let degraded = degraded.expect("authorized requester keeps request discoverable");
+    assert_eq!(degraded.status, "degraded");
+    assert!(degraded.request.is_none());
+    assert!(degraded.evidence.is_none());
+    assert!(degraded.observations.is_empty());
 }
 
 #[test]

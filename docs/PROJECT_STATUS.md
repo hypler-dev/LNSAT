@@ -13,14 +13,16 @@ The hosted log does not identify the underlying storage error. One focused
 local baseline run passed, so the historical Linux failure is not claimed to
 have been reproduced or its root cause established.
 
-The local repair candidate separates filesystem-loader assertions from
-storage, retains startup rejection tests with a fresh database for each case,
-and adds positive asset loading and a held-lease storage-precedence regression.
-Production startup, locking, authorization, routes, and schema are unchanged.
-This test-isolation change does not establish native Linux compatibility or
-make the failed hosted run green; publication and hosted revalidation remain
-separate. The reviewed request action-loop fixture remains in its separate
-uncommitted checkout and is not included in this repair.
+The test-isolation repair merged through PR #104 after required source
+verification run `39293406285` passed at its exact reviewed head. It separates
+filesystem-loader assertions from storage, retains startup rejection tests
+with a fresh database for each case, and adds positive asset loading and a
+held-lease storage-precedence regression. Production startup, locking,
+authorization, routes, and schema are unchanged. The historical failed run
+remains failed and its underlying storage cause remains unknown; this is not
+a general storage repair or native Linux compatibility proof. The action-loop
+fixture publication preserves that merged repair and the original separate
+fixture checkout.
 
 ## Version Posture
 
@@ -85,7 +87,7 @@ sessions. The old `adapter_executed` source-unknown label remains compatible
 historical evidence only and is not execution proof. No route, real adapter,
 schema migration, physical post-check atomicity, or deadline claim follows.
 
-The current unmerged source candidate adds a distinct private request-bound
+The merged source milestone adds a distinct private request-bound
 Git-result seam. It uses
 `adapter:local:request-bound-git-commit@v1` and
 `lnsat.request-bound-git.protocol.v1`; the older
@@ -105,8 +107,34 @@ future. Focused local validation passed 13 result groups plus 35 affected Rust
 regressions and 34 Node checks, with strict Clippy and Rustfmt. Independent
 source and test reviews passed. Full npm checks remain blocked by the local
 Node engine mismatch; the history validator remains blocked by missing
-`smol-toml`. No dependency installation or source publication occurred. See
+`smol-toml`. No local dependency installation occurred. The guarded dispatch
+and result source milestones merged through PRs #101 and #102 after their
+required hosted source gates passed; those checks do not establish runtime
+proof. See
 [request-bound Git result persistence](architecture/request-bound-git-result.md).
+
+A separately accepted bounded synthetic action-loop fixture joins the merged
+seams through authenticated intake and approval,
+request-bound admission, test-only fake dispatch, independent synthetic result
+persistence, store reopen, and the existing authenticated linked-evidence
+projection. It adds no production observer, dispatch route, schema migration,
+or real Git consequence. Four distinct focused Rust groups and 34 Node contract
+tests passed. The groups cover completed-result replay followed by reopen and
+authenticated lineage projection; unknown recovery with one matched
+reconciliation; Owner/original-requester scope and CSRF denial; and corrupted
+receipt linkage with no partial projection. A first fixture attempt used a
+session shorter than the existing minimum; the corrected affected group
+passed. Independent test review passed after adding active re-admission denial
+and fixture-owned lineage assertions; the affected groups passed again.
+Strict Clippy and workspace Rustfmt passed. The separately accepted
+2026-10-19 publication reconciles those exact reviewed test bytes onto public
+main after PR #104. The original seven-file fixture checkout is preserved;
+publication does not authorize a merge or runtime action.
+
+The historical automatic main source failure and the subsequent PR #104
+test-isolation repair are recorded above. Their dated evidence remains
+separate from this fixture publication. Existing source checks do not establish
+Phase 10 exit, Phase 11 runtime, installed tools, release or support.
 
 The source contract adds authenticated `POST /v1/action-requests` intake and
 read-only `GET /v1/action-requests/{arq_64hex}/operator-record`. Intake commits
