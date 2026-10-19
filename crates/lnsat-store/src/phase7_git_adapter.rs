@@ -1982,7 +1982,13 @@ impl SqliteStore {
                 "outcome_unknown",
                 &recorded_at,
                 "operation_attempt_state_recorded",
-                "adapter_executed",
+                if attempt.protocol_version
+                    == crate::phase7_consumption::request_admission::PROTOCOL
+                {
+                    "none"
+                } else {
+                    "adapter_executed"
+                },
             )?;
             append_phase7_operation_state_event_v1(
                 &transaction,
@@ -1998,6 +2004,71 @@ impl SqliteStore {
             .commit()
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         Ok(interrupted.len())
+    }
+
+    /// Uncertainty-only transition for the closed request-admission protocol.
+    /// It cannot repair drift, reopen work, or assert an adapter consequence.
+    pub(crate) fn mark_request_admission_outcome_unknown_v1(
+        &mut self,
+        operation_id: &str,
+        operation_attempt_id: &str,
+        launch_digest: &[u8; 32],
+    ) -> Result<(), Phase7GitAdapterErrorV1> {
+        use crate::phase7_consumption::request_admission::{
+            ADAPTER_REF, ADAPTER_VERSION, PROTOCOL,
+        };
+        let transaction = self
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
+        verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        let operation = read_phase8_operation_v1(&transaction, operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        let attempt = operation
+            .attempt
+            .as_ref()
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        if attempt.operation_attempt_id != operation_attempt_id
+            || attempt.protocol_version != PROTOCOL
+            || attempt.adapter_ref != format!("{ADAPTER_REF}@{ADAPTER_VERSION}")
+            || &attempt.tool_arguments_digest != launch_digest
+            || attempt.state != operation.state
+            || !matches!(operation.state.as_str(), "dispatching" | "outcome_unknown")
+        {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        if operation.state == "outcome_unknown" {
+            return Ok(());
+        }
+        let stored = select_attempt(&transaction, operation_id)?
+            .ok_or(Phase7GitAdapterErrorV1::EvidenceDrift)?;
+        let at = canonical_system_time_v1(SystemTime::now()).map_err(map_persistence)?;
+        if at < stored.created_at {
+            return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
+        }
+        append_state_event(
+            &transaction,
+            &stored.project_ref,
+            &stored.resource_ref,
+            &stored.operation_attempt_id,
+            "operation_attempt",
+            "outcome_unknown",
+            &at,
+            "operation_attempt_state_recorded",
+            "none",
+        )?;
+        append_phase7_operation_state_event_v1(
+            &transaction,
+            &stored.project_ref,
+            &stored.resource_ref,
+            operation_id,
+            "outcome_unknown",
+            &at,
+        )
+        .map_err(map_persistence)?;
+        transaction
+            .commit()
+            .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)
     }
 }
 
@@ -2371,7 +2442,7 @@ fn read_phase8_state_v1(
 }
 
 #[allow(clippy::too_many_lines)]
-fn read_phase8_operation_v1(
+pub(super) fn read_phase8_operation_v1(
     connection: &Connection,
     operation_id: &str,
 ) -> Result<Option<Phase8OperationReadbackV1>, Phase7GitAdapterErrorV1> {
@@ -3479,10 +3550,12 @@ fn verify_attempt_state_rows(connection: &Connection) -> Result<(), SqliteStoreE
                     state.target_entity_kind, state.state_sequence, state.state,
                     state.prior_state_event_id, state.prior_state_sequence,
                     state.effective_at, state.state_digest, entity.record_digest,
-                    audit.event_kind, audit.authority_effect, audit.recorded_at
+                    audit.event_kind, audit.authority_effect, audit.recorded_at,
+                    attempt.protocol_version
              FROM lnsat_phase7_state_events AS state
              JOIN lnsat_phase7_entities AS entity ON entity.entity_id = state.state_event_id
              JOIN lnsat_phase7_audit_bindings AS audit ON audit.record_id = state.state_event_id
+             LEFT JOIN lnsat_operation_attempts AS attempt ON attempt.operation_attempt_id = state.target_entity_id
              WHERE state.target_entity_kind = 'operation_attempt'
              ORDER BY state.target_entity_id, state.state_sequence",
         )
@@ -3506,6 +3579,7 @@ fn verify_attempt_state_rows(connection: &Connection) -> Result<(), SqliteStoreE
                 row.get::<_, String>(13)?,
                 row.get::<_, String>(14)?,
                 row.get::<_, String>(15)?,
+                row.get::<_, Option<String>>(16)?,
             ))
         })
         .map_err(|_| SqliteStoreError::MigrationDrift)?
@@ -3529,6 +3603,7 @@ fn verify_attempt_state_rows(connection: &Connection) -> Result<(), SqliteStoreE
         event,
         effect,
         audit_at,
+        protocol,
     ) in rows
     {
         if prior
@@ -3588,14 +3663,18 @@ fn verify_attempt_state_rows(connection: &Connection) -> Result<(), SqliteStoreE
             || stored_digest != expected_record
             || event != "operation_attempt_state_recorded"
             || audit_at != effective_at
-            || effect
-                != if state == "completed" {
+            || !(effect
+                == if state == "completed" {
                     "receipt_bound"
                 } else if state == "outcome_unknown" {
                     "adapter_executed"
                 } else {
                     "none"
                 }
+                || (state == "outcome_unknown"
+                    && effect == "none"
+                    && protocol.as_deref()
+                        == Some(crate::phase7_consumption::request_admission::PROTOCOL)))
         {
             return Err(SqliteStoreError::MigrationDrift);
         }

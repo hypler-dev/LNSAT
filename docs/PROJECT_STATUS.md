@@ -42,13 +42,29 @@ interrupted dispatch to
 current store schema and the future headless schema 19 proposal is unchanged.
 See [request-execution admission](architecture/request-execution-admission.md).
 
-The new admission suite passed six grouped fake-adapter tests, including
-second-approval denial, concurrent one-use reservation, persisted-tamper
-rejection, missing root-policy lineage, rollback, and restart ambiguity. This is
-bounded controller source evidence. Required full `npm run check` and
-`npm run public:check` remain locally
+Fourteen grouped Rust tests passed on the guarded source: eight new dispatch
+guard groups and six admission regression groups. Twelve atomic-consumption
+and nine local-authorization regression tests also passed, as did 34 Node
+contract tests. The earlier reservation receipts remain dated evidence and are
+preserved separately.
+Required full `npm run check` and `npm run public:check` remain locally
 blocked by the existing Node engine mismatch; the direct history validator is
 blocked by missing `smol-toml`. No dependency was installed or downloaded.
+
+The guarded follow-on binds each reservation to the original in-memory store
+instance, so a retained value cannot cross another connection or store reopen.
+A private fresh `IMMEDIATE` transaction rechecks the durable request root,
+unique policy lineage, prepared operation/attempt, reservation digest, and the
+live exact requester bearer and CSRF proof, approver session, required roles,
+nonce, expiry windows, and final clock sample. Only `cfg(test)` exposes a
+trusted fake callback. Callback error or unwinding panic consumes the handoff
+and makes a best-effort exact source-protocol `outcome_unknown` transition; failed unknown
+persistence or corrupt evidence does not restore consumed authority. Fake
+success remains `dispatching` with no receipt, reconciliation, or completion.
+Historical integrity verification remains separate and does not require live
+sessions. The old `adapter_executed` source-unknown label remains compatible
+historical evidence only and is not execution proof. No route, real adapter,
+schema migration, physical post-check atomicity, or deadline claim follows.
 
 The source contract adds authenticated `POST /v1/action-requests` intake and
 read-only `GET /v1/action-requests/{arq_64hex}/operator-record`. Intake commits

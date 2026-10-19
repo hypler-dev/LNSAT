@@ -45,6 +45,30 @@ request, operation, attempt, launch digest, and authorization expiry needed by
 the later private integration seam. It is not a receipt and does not authorize
 any real adapter by itself.
 
+## Guarded fake dispatch
+
+The guarded follow-on adds a private fresh `IMMEDIATE` transaction before any
+fake handoff. Each reservation carries an in-memory marker for its originating
+`SqliteStore`; a retained value is rejected if it reaches another connection or
+store reopen. The guard revalidates the durable request root, unique policy
+lineage, prepared operation and attempt, reservation and tool-argument digest,
+and the live exact requester bearer/CSRF proof, approver session, role
+permissions, nonce, expiry windows, and final clock sample. Historical
+integrity verification stays separate and does not require sessions to remain
+active.
+
+Only `cfg(test)` exposes the fake dispatcher. Its callback is trusted test code,
+not arbitrary containment or a production adapter interface. The guard and
+callback handoff remain neither `Clone` nor serializable. Callback error or
+unwinding panic consumes the handoff and attempts a best-effort transition for the exact
+source protocol to `outcome_unknown`; a failed unknown write or corrupt
+evidence cannot restore consumed authority. Fake success leaves the operation
+`dispatching` and writes no receipt, reconciliation, or completion. Restart
+inspection remains no-retry. The `adapter_executed` source-unknown label used by
+older adapter evidence remains a compatible historical label only and does not
+prove execution here. The new source-protocol unknown event carries no
+consequence source (`none`).
+
 ## Closed adapter and failure behavior
 
 The source-only adapter identity is
@@ -62,16 +86,15 @@ lost response, a dropped reservation, or process restart: inspection may find
 the committed attempt, and existing startup reconciliation may record
 `outcome_unknown`, but the seam does not retry or fabricate success.
 
-Six grouped fake-adapter tests passed on 2026-10-18 using existing controller
-tools and an offline dependency cache. They cover one in-memory dispatch,
-exact replay, a second approval and authorization for the same root,
-changed request fields, pending/denied/failed evaluation, invalid session proof,
-expiry and revocation, pre-commit rollback, post-commit response loss,
-concurrent reservation, dropped reservation and restart ambiguity, and
-persisted attempt-digest corruption and detached root-policy lineage rejected
-during reopen. These are source conformance evidence only. They do not prove a physical
-deadline, process containment, cleanup, consequence, receipt, runtime support,
-or any specific supported operation.
+Fourteen grouped tests passed on 2026-10-18 using existing controller tools
+and an offline dependency cache: eight guarded-dispatch groups and six
+admission regression groups. Coverage includes exact one-call success, wrong
+proof and actor, revoked sessions, disabled approver, cancelled nonce, expiry
+and clock failure, another store or reopen, callback error and unwinding panic,
+corrupt binding, failed unknown persistence, and legacy unknown-audit labels.
+Earlier reservation receipts remain separate dated evidence. These tests do
+not prove a physical deadline, process containment, cleanup,
+consequence, receipt, runtime support, or any specific supported operation.
 
 Schema/open/readback verification rederives the stored launch binding from the
 root, canonical packet and policy, authorization attempt, consumption, and
