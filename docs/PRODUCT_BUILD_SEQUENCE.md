@@ -709,6 +709,24 @@ Earlier reservation receipts remain separate dated evidence.
 This remains source-only: no route, real adapter, schema change, physical
 deadline, or post-check atomicity claim opens.
 
+The current unmerged private request-bound Git-result source candidate is a
+separate follow-on. It uses
+`adapter:local:request-bound-git-commit@v1` and
+`lnsat.request-bound-git.protocol.v1`; it does not add a receipt to the older
+receipt-free admission protocol. Schema 18 is reused without migration by
+mandatory root/policy/authorization/consumption rederivation and separate full
+request and Git tool-argument commitments joined by a launch commitment. A
+non-cloneable, non-serializable proof has only a test-only independent synthetic
+observation constructor, separate from the fake callback. Its immediate result
+transaction makes exact duplicates read-only, rejects conflicts, atomically
+records a new result, and requires matched reconciliation when resolving
+`outcome_unknown`. There is no retry or re-execution path. No production
+observer or dispatch, real Git/host/native proof, public result submission, or
+Phase 11 runtime proof is added. Focused local validation passed 13 result groups, 35 affected Rust regressions,
+34 Node checks, strict Clippy, and Rustfmt. Independent source and test reviews passed. Full npm and history checks retain their local engine/dependency
+blocks; no installs or publication occurred. See
+[request-bound Git result persistence](architecture/request-bound-git-result.md).
+
 The private served-driver admission seam now provides a source-only structural
 check for that later chain. It binds the run manifest to fields in a
 caller-supplied claim snapshot, canonical D3/D4A payload, loaded profile, and

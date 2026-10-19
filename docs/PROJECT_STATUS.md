@@ -66,6 +66,29 @@ sessions. The old `adapter_executed` source-unknown label remains compatible
 historical evidence only and is not execution proof. No route, real adapter,
 schema migration, physical post-check atomicity, or deadline claim follows.
 
+The current unmerged source candidate adds a distinct private request-bound
+Git-result seam. It uses
+`adapter:local:request-bound-git-commit@v1` and
+`lnsat.request-bound-git.protocol.v1`; the older
+`lnsat.request-execution-admission.source.v1` protocol remains receipt-free.
+Within one immediate transaction, the candidate rederives immutable root,
+policy, authorization, consumption, full-request, and Git-tool bindings before
+persisting a verifier-owned synthetic result. Stable result equality excludes
+observation and persistence time. An exact duplicate performs readback only;
+a conflict is rejected; an unknown attempt completes only with matched
+reconciliation in the same transaction; and no failure or lost acknowledgement
+permits a retry or re-execution. The proof value is non-cloneable and
+non-serializable, with a test-only independent-observation constructor that is
+separate from the fake callback. This is not a production observer, dispatch,
+host or native Git proof, public submission route, runtime claim, or Phase 11
+completion. Schema 18 is reused without a migration; headless schema 19 remains
+future. Focused local validation passed 13 result groups plus 35 affected Rust
+regressions and 34 Node checks, with strict Clippy and Rustfmt. Independent
+source and test reviews passed. Full npm checks remain blocked by the local
+Node engine mismatch; the history validator remains blocked by missing
+`smol-toml`. No dependency installation or source publication occurred. See
+[request-bound Git result persistence](architecture/request-bound-git-result.md).
+
 The source contract adds authenticated `POST /v1/action-requests` intake and
 read-only `GET /v1/action-requests/{arq_64hex}/operator-record`. Intake commits
 an immutable request root before policy evaluation, records a separate

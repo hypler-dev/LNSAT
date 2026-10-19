@@ -21,27 +21,49 @@ const ISSUED_AT: &str = "2026-07-22T20:03:00.000Z";
 const EXPIRES_AT: &str = "2026-07-22T20:04:00.000Z";
 const ADMITTED_AT: &str = "2026-07-22T20:03:30.000Z";
 
-struct AdmissionFixture {
-    database: TestDatabase,
-    store: SqliteStore,
-    packet: PacketEnvelopeV1,
-    request_id: String,
-    derived: lnsat_contracts::DerivedExecutionRequestV1,
-    project_ref: String,
-    resource_ref: String,
-    authorization_id: String,
-    operation_id: String,
-    nonce_id: String,
-    requester_token: String,
-    requester_csrf: String,
-    approver_token: String,
-    approver_csrf: String,
-    capability_wire: String,
+pub(super) struct AdmissionFixture {
+    pub(super) database: TestDatabase,
+    pub(super) store: SqliteStore,
+    pub(super) packet: PacketEnvelopeV1,
+    pub(super) request_id: String,
+    pub(super) derived: lnsat_contracts::DerivedExecutionRequestV1,
+    pub(super) project_ref: String,
+    pub(super) resource_ref: String,
+    pub(super) authorization_id: String,
+    pub(super) operation_id: String,
+    pub(super) nonce_id: String,
+    pub(super) requester_token: String,
+    pub(super) requester_csrf: String,
+    pub(super) approver_token: String,
+    pub(super) approver_csrf: String,
+    pub(super) capability_wire: String,
 }
 
 impl AdmissionFixture {
     #[allow(clippy::too_many_lines)] // Keep the complete authenticated fixture lineage visible.
-    fn new(sequence: u64) -> Self {
+    pub(super) fn new(sequence: u64) -> Self {
+        Self::new_with_proposal(sequence, |packet| {
+            add_execution_proposal(packet);
+            let proposal = packet
+                .constraints
+                .get_mut("execution_proposal")
+                .and_then(serde_json::Value::as_object_mut)
+                .expect("execution proposal must be an object");
+            proposal.insert(
+                "adapter".to_owned(),
+                serde_json::json!({
+                    "ref": ADAPTER_REF,
+                    "version": ADAPTER_VERSION,
+                }),
+            );
+        })
+    }
+
+    #[allow(clippy::too_many_lines)] // Keep the complete authenticated fixture lineage visible.
+    pub(super) fn new_with_proposal<F>(sequence: u64, proposal: F) -> Self
+    where
+        F: FnOnce(&mut PacketEnvelopeV1),
+    {
         let database = TestDatabase::new("request-execution-admission");
         let mut store = SqliteStore::open(&database.path).expect("fixture store must open");
         store
@@ -92,19 +114,7 @@ impl AdmissionFixture {
         packet.requires_approval = true;
         packet.created_at = "2026-07-22T19:59:00.000Z".to_owned();
         packet.expires_at = "2026-07-22T20:20:00.000Z".to_owned();
-        add_execution_proposal(&mut packet);
-        let proposal = packet
-            .constraints
-            .get_mut("execution_proposal")
-            .and_then(serde_json::Value::as_object_mut)
-            .expect("execution proposal must be an object");
-        proposal.insert(
-            "adapter".to_owned(),
-            serde_json::json!({
-                "ref": ADAPTER_REF,
-                "version": ADAPTER_VERSION,
-            }),
-        );
+        proposal(&mut packet);
 
         let submission = store
             .append_authenticated_action_request_v1(
@@ -239,19 +249,37 @@ impl AdmissionFixture {
         }
     }
 
-    fn capability(&self) -> Phase7CapabilitySecretV1 {
+    pub(super) fn capability(&self) -> Phase7CapabilitySecretV1 {
         let mut wire = self.capability_wire.clone();
         Phase7CapabilitySecretV1::take_from_canonical_wire_v1(&mut wire)
             .expect("fixture capability must decode")
     }
 
-    fn reserve_at(
+    pub(super) fn database_path(&self) -> PathBuf {
+        self.database.path.clone()
+    }
+
+    pub(super) fn reserve_at(
         &mut self,
         at: &str,
     ) -> Result<RequestLaunchReservationV1, Phase7PersistenceErrorV1> {
         let request_id = self.request_id.clone();
         let derived = self.derived.clone();
         reserve_with_sources(
+            self,
+            &request_id,
+            &derived,
+            (|| Ok(at.to_owned()), || Ok(()), || Ok(())),
+        )
+    }
+
+    pub(super) fn reserve_git_at(
+        &mut self,
+        at: &str,
+    ) -> Result<RequestLaunchReservationV1, Phase7PersistenceErrorV1> {
+        let request_id = self.request_id.clone();
+        let derived = self.derived.clone();
+        reserve_git_with_sources(
             self,
             &request_id,
             &derived,
@@ -276,7 +304,7 @@ impl AdmissionFixture {
         root.request_id
     }
 
-    fn append_denied_root(&mut self, sequence: u64) -> String {
+    pub(super) fn append_denied_root(&mut self, sequence: u64) -> String {
         let mut packet = self.packet.clone();
         packet.packet_id = format!("pkt_{sequence:064x}");
         packet.idempotency_key = format!("idem_denied_{sequence:064x}");
@@ -318,7 +346,7 @@ impl AdmissionFixture {
     }
 
     #[allow(clippy::too_many_lines)] // Exercise the full public approval/authorization path.
-    fn reserve_second_approval_authorization(
+    pub(super) fn reserve_second_approval_authorization(
         &mut self,
     ) -> Result<RequestLaunchReservationV1, Phase7PersistenceErrorV1> {
         let policy_id = self.derived.request.policy_decision_id.clone();
@@ -440,6 +468,24 @@ impl AdmissionFixture {
             operation_id: &issued.record.operation_id,
             idempotency_key: "request-execution-admission:second",
         };
+        if derived.request.adapter.adapter_ref
+            == crate::phase7_git_adapter::request_result::ADAPTER_REF
+        {
+            return self.store.reserve_request_git_execution_with_sources_v1(
+                &self.request_id,
+                &derived,
+                &input,
+                capability_wire
+                    .take_secret_v1()
+                    .expect("second capability must decode"),
+                (&requester_token, &requester_csrf),
+                (
+                    || Ok("2026-07-22T20:03:36.000Z".to_owned()),
+                    || Ok(()),
+                    || Ok(()),
+                ),
+            );
+        }
         self.store.reserve_request_execution_with_sources_v1(
             &self.request_id,
             &derived,
@@ -483,6 +529,41 @@ where
         idempotency_key: "request-execution-admission:consume",
     };
     fixture.store.reserve_request_execution_with_sources_v1(
+        request_id,
+        derived,
+        &input,
+        capability,
+        (&requester_token, &requester_csrf),
+        sources,
+    )
+}
+
+pub(super) fn reserve_git_with_sources<C, P, A>(
+    fixture: &mut AdmissionFixture,
+    request_id: &str,
+    derived: &lnsat_contracts::DerivedExecutionRequestV1,
+    sources: (C, P, A),
+) -> Result<RequestLaunchReservationV1, Phase7PersistenceErrorV1>
+where
+    C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+    P: FnOnce() -> Result<(), Phase7PersistenceErrorV1>,
+    A: FnOnce() -> Result<(), Phase7PersistenceErrorV1>,
+{
+    let project_ref = fixture.project_ref.clone();
+    let resource_ref = fixture.resource_ref.clone();
+    let authorization_id = fixture.authorization_id.clone();
+    let operation_id = fixture.operation_id.clone();
+    let requester_token = fixture.requester_token.clone();
+    let requester_csrf = fixture.requester_csrf.clone();
+    let capability = fixture.capability();
+    let input = Phase7CapabilityRedemptionInputV1 {
+        project_ref: &project_ref,
+        resource_ref: &resource_ref,
+        authorization_id: &authorization_id,
+        operation_id: &operation_id,
+        idempotency_key: "request-git-result:consume",
+    };
+    fixture.store.reserve_request_git_execution_with_sources_v1(
         request_id,
         derived,
         &input,

@@ -103,6 +103,26 @@ authorization expiry. The closed protocol permits only `dispatching` or
 consequence receipt or reconciliation row. Historical verification does not
 require sessions to remain active; admission does.
 
+## Separate request-bound Git-result protocol
+
+The unmerged request-bound Git-result source candidate is a distinct adapter
+and protocol, not an extension of this receipt-free admission protocol:
+`adapter:local:request-bound-git-commit@v1` and
+`lnsat.request-bound-git.protocol.v1`. It reuses schema 18 rows only after
+mandatory immutable root, parent, and protocol rederivation. Its launch
+commitment joins the full request and the separate Git tool-arguments digest;
+the two digests retain distinct meanings.
+
+That candidate accepts only a private verifier-owned, non-cloneable,
+non-serializable proof. The sole constructor is test-only and models an
+independent synthetic observation; it is separate from this protocol's trusted
+fake callback. Its immediate result transaction treats an exact existing result
+as read-only, rejects a conflict, and requires one matched reconciliation when
+an unknown attempt is resolved. It permits neither a retry nor re-execution.
+It adds no production observer or dispatch, real Git/host/native evidence, or
+public result-submission route. Its 13 result groups and 35 affected Rust regressions passed locally. Independent
+source and test reviews passed. See [request-bound Git result persistence](request-bound-git-result.md).
+
 ## Schema and later gates
 
 No schema migration is introduced. Store schema 18 remains current, and the
@@ -110,11 +130,11 @@ future headless-installation schema 19 proposal remains unchanged. The seam
 uses existing operation and attempt rows and existing ambiguity/reconciliation
 states.
 
-Real consequence receipt persistence, a production adapter, supervisor
-integration, runtime/process evidence, and release qualification remain later
-separately authorized gates. A later integration must preserve the exact root,
-authorization, attempt, adapter, and digest bindings and must treat any
-post-commit uncertainty as an inspection and reconciliation problem.
+Production consequence observation and receipt evidence, a production adapter,
+supervisor integration, runtime/process evidence, and release qualification
+remain later separately authorized gates. A later integration must preserve the
+exact root, authorization, attempt, adapter, and digest bindings and must treat
+any post-commit uncertainty as an inspection and reconciliation problem.
 
 No public API, HTTP route, CLI, SDK, MCP tool, real adapter, host operation,
 deployment, package, or support claim follows from this source milestone.

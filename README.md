@@ -129,6 +129,20 @@ callback. Callback failure or unwinding panic may record exact source-protocol
 Fourteen grouped admission and guarded-dispatch tests passed locally. No route,
 real adapter, schema migration, physical deadline, or post-check atomicity is implied.
 
+A separate private request-bound Git-result source seam uses
+`adapter:local:request-bound-git-commit@v1` and
+`lnsat.request-bound-git.protocol.v1`. It does not reinterpret the older
+admission protocol or its receipt-free history. In one immediate transaction it
+rederives the immutable root, policy, authorization, consumption, full request,
+and separate Git tool commitments before it accepts a verifier-owned result
+proof. An exact duplicate is read-only; a conflicting result is rejected; and
+an `outcome_unknown` attempt can complete only with its matched reconciliation
+in that transaction. The sole proof constructor is test-only and separate from
+the fake callback, so this source seam opens no production observer, dispatch,
+Git/host proof, or public result-submission path. Thirteen bounded result groups and 35 affected Rust regressions passed locally;
+34 Node checks also passed. Independent source and test reviews passed. See
+[request-bound Git result persistence](docs/architecture/request-bound-git-result.md).
+
 ### 1. Bind the proposal to exact content
 
 A versioned packet carries the declared actor, scope, resources and constraints.
