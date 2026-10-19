@@ -14619,32 +14619,122 @@ mod tests {
         }
 
         fs::create_dir(console_root.join("assets")).expect("asset directory should create");
-        let directory_config = DaemonConfigV1::for_test(directory.database_path())
-            .with_internal_console_root(
-                &console_root,
-                BTreeMap::from([("/assets".to_owned(), PathBuf::from("assets/index.html"))]),
-            )
-            .expect("path syntax should validate before filesystem check");
-        assert_eq!(
-            DaemonServerV1::bind(&directory_config).err(),
-            Some(DaemonErrorV1::ConsoleAssetLoadFailed)
-        );
+        fs::create_dir(console_root.join("directory.html"))
+            .expect("directory with an asset extension should create");
+        // Filesystem rejection has its own oracle: startup checks storage first.
+        // Do not reacquire a shared database lease between independent asset cases.
+        for relative_path in [
+            "assets/index.html",
+            "directory.html",
+            "index.html/child.html",
+        ] {
+            assert_eq!(
+                load_phase9_console_runtime_v1(
+                    &console_root,
+                    &BTreeMap::from([("/asset".to_owned(), PathBuf::from(relative_path))]),
+                )
+                .err(),
+                Some(DaemonErrorV1::ConsoleAssetLoadFailed),
+                "{relative_path}"
+            );
+        }
 
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink("index.html", console_root.join("linked.html"))
                 .expect("test symlink should create");
-            let symlink_config = DaemonConfigV1::for_test(directory.database_path())
-                .with_internal_console_root(
-                    &console_root,
-                    BTreeMap::from([("/linked".to_owned(), PathBuf::from("linked.html"))]),
-                )
-                .expect("symlink syntax should validate before filesystem check");
             assert_eq!(
-                DaemonServerV1::bind(&symlink_config).err(),
+                load_phase9_console_runtime_v1(
+                    &console_root,
+                    &BTreeMap::from([("/linked".to_owned(), PathBuf::from("linked.html"))]),
+                )
+                .err(),
                 Some(DaemonErrorV1::ConsoleAssetLoadFailed)
             );
         }
+    }
+
+    #[test]
+    fn phase9_console_asset_loader_accepts_regular_nested_files() {
+        let directory = TestDirectory::new("phase9-console-loader-positive");
+        let console_root = directory.path.join("console");
+        fs::create_dir_all(console_root.join("assets")).expect("asset directory should create");
+        fs::write(
+            console_root.join("assets/index.html"),
+            "<main>fixture</main>",
+        )
+        .expect("asset should write");
+        let runtime = load_phase9_console_runtime_v1(
+            &console_root,
+            &BTreeMap::from([("/".to_owned(), PathBuf::from("assets/index.html"))]),
+        )
+        .expect("regular asset should load without opening storage or a listener");
+        assert_eq!(runtime.assets.len(), 1);
+        let asset = runtime
+            .assets
+            .get("/")
+            .expect("requested asset should exist");
+        assert_eq!(asset.bytes.as_slice(), b"<main>fixture</main>");
+        assert_eq!(asset.content_type, "text/html; charset=utf-8");
+    }
+
+    #[test]
+    fn phase9_console_asset_startup_rejects_missing_file_before_listener() {
+        let directory = TestDirectory::new("phase9-console-startup-missing");
+        let console_root = directory.path.join("console");
+        fs::create_dir(&console_root).expect("console root should create");
+        let config = DaemonConfigV1::for_test(directory.database_path())
+            .with_internal_console_root(
+                &console_root,
+                BTreeMap::from([("/".to_owned(), PathBuf::from("missing.html"))]),
+            )
+            .expect("asset path syntax should validate");
+        assert_eq!(
+            DaemonServerV1::bind(&config).err(),
+            Some(DaemonErrorV1::ConsoleAssetLoadFailed)
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn phase9_console_asset_startup_rejects_symlink_before_listener() {
+        let directory = TestDirectory::new("phase9-console-startup-symlink");
+        let console_root = directory.path.join("console");
+        fs::create_dir(&console_root).expect("console root should create");
+        fs::write(console_root.join("index.html"), "ok").expect("asset should write");
+        std::os::unix::fs::symlink("index.html", console_root.join("linked.html"))
+            .expect("test symlink should create");
+        let config = DaemonConfigV1::for_test(directory.database_path())
+            .with_internal_console_root(
+                &console_root,
+                BTreeMap::from([("/linked".to_owned(), PathBuf::from("linked.html"))]),
+            )
+            .expect("symlink path syntax should validate");
+        assert_eq!(
+            DaemonServerV1::bind(&config).err(),
+            Some(DaemonErrorV1::ConsoleAssetLoadFailed)
+        );
+    }
+
+    #[test]
+    fn phase9_console_asset_storage_failure_precedes_startup_asset_error() {
+        let directory = TestDirectory::new("phase9-console-storage-precedence");
+        let console_root = directory.path.join("console");
+        fs::create_dir(&console_root).expect("console root should create");
+        let manifest = BTreeMap::from([("/".to_owned(), PathBuf::from("missing.html"))]);
+        let config = DaemonConfigV1::for_test(directory.database_path())
+            .with_internal_console_root(&console_root, manifest.clone())
+            .expect("asset path syntax should validate");
+        let _lease = acquire_local_daemon_database_lease_v1(directory.database_path())
+            .expect("fixture should hold the database lease");
+        assert_eq!(
+            DaemonServerV1::bind(&config).err(),
+            Some(DaemonErrorV1::StoreOpenFailed)
+        );
+        assert_eq!(
+            load_phase9_console_runtime_v1(&console_root, &manifest).err(),
+            Some(DaemonErrorV1::ConsoleAssetLoadFailed)
+        );
     }
 
     fn phase9_console_request(label: &str, request: impl FnOnce(SocketAddr) -> String) -> String {

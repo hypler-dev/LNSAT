@@ -1,0 +1,39 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0098-independent-implementation-review-5bb405ca",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["console-asset-ci-test-isolation"],
+  "base_revision": "f5d6a592ff8302276b72196f77a7d13f5c00e3f0",
+  "reviewed_revision": "5bb405ca44ac0b479d3b001fb8777d83d22704be",
+  "reviewed_tree_oid": "e8dd5f1a52226d651f07b007339e693986e4226a",
+  "diff_sha256": "sha256:785e28cb5a39d60470bdde88305e216d2e8fe1b2ccc3dc4c38f6591624632a63",
+  "protected_files": [
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:832673d40fd917138e236d9f21b9f987fbbd0369d5daf0e65b60db7705aa0e57"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:4788edd9a18e4f2f8a922f5d022cc2beb3c94824adc6219e81da707aa3254c21"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:f6f0647c1235730ae975dcec75d197aaf9dc138f1517c9daa47f2e4c74a2e8b8"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:631b778ba42a78b24c4a4add11f93824aea107a35a19ec89ca6ad1b0923fa1d7"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/ci_repair_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured Terra/xhigh; backend runtime model ID unexposed. Completed independent source and actual-evidence review reused through exact daemon-test and status blob equality. Fresh publication metadata and committed-source binding review qualify this attestation. No actionable P1/P2/P3. Test-only repair separates filesystem asset assertions from database startup while retaining fresh-database startup rejection. Five distinct focused Rust tests and three public-rule tests passed; strict Clippy/fmt/docs/public/inventory passed. Local full npm remains blocked by Node engine mismatch and history by missing smol-toml. Historical Linux storage cause remains UNKNOWN; no production code or locking semantics changed. Hosted source CI is separate; no formal GitHub approval, native compatibility, real runtime, release or support proof."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
