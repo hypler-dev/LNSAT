@@ -25,10 +25,34 @@ pub(crate) const ADAPTER_VERSION: &str = "v1";
 pub(crate) const PROTOCOL: &str = "lnsat.request-execution-admission.source.v1";
 const SUPERVISOR: &str = "supervisor:source-only:fake";
 
+/// Closed internal protocol selection. Neither mode exposes production dispatch.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum RequestModeV1 {
+    Admission,
+    GitResult,
+}
+
+impl RequestModeV1 {
+    pub(crate) const fn adapter_ref(self) -> &'static str {
+        match self {
+            Self::Admission => ADAPTER_REF,
+            Self::GitResult => crate::phase7_git_adapter::request_result::ADAPTER_REF,
+        }
+    }
+
+    pub(crate) const fn protocol(self) -> &'static str {
+        match self {
+            Self::Admission => PROTOCOL,
+            Self::GitResult => crate::phase7_git_adapter::request_result::PROTOCOL,
+        }
+    }
+}
+
 /// Only a fresh committed reservation constructs this value. It is deliberately
 /// neither Clone nor serializable. No real adapter accepts it.
 #[derive(Debug)]
 pub(crate) struct RequestLaunchReservationV1 {
+    mode: RequestModeV1,
     store_scope: Arc<()>,
     request_id: String,
     operation_id: String,
@@ -86,6 +110,9 @@ impl SqliteStore {
         derived: &DerivedExecutionRequestV1,
         local_auth: (&str, &str),
     ) -> Result<RequestFakeDispatchGuardV1, Phase7PersistenceErrorV1> {
+        if reservation.mode != RequestModeV1::Admission {
+            return Err(Phase7PersistenceErrorV1::SourceNotApproved);
+        }
         self.guard_request_dispatch_from_sources_v1(reservation, derived, local_auth, || {
             canonical_system_time_v1(SystemTime::now())
         })
@@ -128,7 +155,8 @@ impl SqliteStore {
                 checked_at,
             })
         } else {
-            let _ = self.mark_request_admission_outcome_unknown_v1(
+            self.mark_request_unknown_for_mode_v1(
+                reservation.mode,
                 &reservation.operation_id,
                 &reservation.operation_attempt_id,
                 &reservation.launch_digest,
@@ -152,6 +180,45 @@ impl SqliteStore {
         C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
         F: FnOnce(RequestFakeDispatchGuardV1) -> Result<(), ()>,
     {
+        if reservation.mode != RequestModeV1::Admission {
+            return Err(Phase7PersistenceErrorV1::SourceNotApproved);
+        }
+        self.dispatch_request_fake_for_mode_v1(reservation, derived, local_auth, clock, fake)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn dispatch_request_git_fake_with_sources_v1<C, F>(
+        &mut self,
+        reservation: RequestLaunchReservationV1,
+        derived: &DerivedExecutionRequestV1,
+        local_auth: (&str, &str),
+        clock: C,
+        fake: F,
+    ) -> Result<(), Phase7PersistenceErrorV1>
+    where
+        C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+        F: FnOnce(RequestFakeDispatchGuardV1) -> Result<(), ()>,
+    {
+        if reservation.mode != RequestModeV1::GitResult {
+            return Err(Phase7PersistenceErrorV1::SourceNotApproved);
+        }
+        self.dispatch_request_fake_for_mode_v1(reservation, derived, local_auth, clock, fake)
+    }
+
+    #[cfg(test)]
+    fn dispatch_request_fake_for_mode_v1<C, F>(
+        &mut self,
+        reservation: RequestLaunchReservationV1,
+        derived: &DerivedExecutionRequestV1,
+        local_auth: (&str, &str),
+        clock: C,
+        fake: F,
+    ) -> Result<(), Phase7PersistenceErrorV1>
+    where
+        C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+        F: FnOnce(RequestFakeDispatchGuardV1) -> Result<(), ()>,
+    {
+        let mode = reservation.mode;
         let guard =
             self.guard_request_dispatch_from_sources_v1(reservation, derived, local_auth, clock)?;
         // Cleanup bindings are evidence only; they cannot construct a guard.
@@ -161,8 +228,7 @@ impl SqliteStore {
         if let Ok(Ok(())) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| fake(guard))) {
             Ok(())
         } else {
-            let _ =
-                self.mark_request_admission_outcome_unknown_v1(&operation_id, &attempt_id, &digest);
+            self.mark_request_unknown_for_mode_v1(mode, &operation_id, &attempt_id, &digest);
             Err(Phase7PersistenceErrorV1::OutcomeAmbiguous)
         }
     }
@@ -178,6 +244,7 @@ impl SqliteStore {
         local_auth: (&str, &str),
     ) -> Result<RequestLaunchReservationV1, Phase7PersistenceErrorV1> {
         self.reserve_request_execution_from_sources_v1(
+            RequestModeV1::Admission,
             request_id,
             derived,
             redemption,
@@ -207,12 +274,47 @@ impl SqliteStore {
         A: FnOnce() -> Result<(), Phase7PersistenceErrorV1>,
     {
         self.reserve_request_execution_from_sources_v1(
-            request_id, derived, redemption, capability, local_auth, sources,
+            RequestModeV1::Admission,
+            request_id,
+            derived,
+            redemption,
+            capability,
+            local_auth,
+            sources,
         )
     }
 
+    /// New result protocol admission is private and has no production dispatcher.
+    #[cfg(test)]
+    pub(crate) fn reserve_request_git_execution_with_sources_v1<C, P, A>(
+        &mut self,
+        request_id: &str,
+        derived: &DerivedExecutionRequestV1,
+        redemption: &Phase7CapabilityRedemptionInputV1<'_>,
+        capability: Phase7CapabilitySecretV1,
+        local_auth: (&str, &str),
+        sources: (C, P, A),
+    ) -> Result<RequestLaunchReservationV1, Phase7PersistenceErrorV1>
+    where
+        C: FnMut() -> Result<String, Phase7PersistenceErrorV1>,
+        P: FnOnce() -> Result<(), Phase7PersistenceErrorV1>,
+        A: FnOnce() -> Result<(), Phase7PersistenceErrorV1>,
+    {
+        self.reserve_request_execution_from_sources_v1(
+            RequestModeV1::GitResult,
+            request_id,
+            derived,
+            redemption,
+            capability,
+            local_auth,
+            sources,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)] // Closed mode plus unchanged complete admission inputs.
     fn reserve_request_execution_from_sources_v1<C, P, A>(
         &mut self,
+        mode: RequestModeV1,
         request_id: &str,
         derived: &DerivedExecutionRequestV1,
         redemption: &Phase7CapabilityRedemptionInputV1<'_>,
@@ -227,7 +329,7 @@ impl SqliteStore {
     {
         verify_derived_execution_request_v1(derived)
             .map_err(|_| Phase7PersistenceErrorV1::InvalidInput)?;
-        if derived.request.adapter.adapter_ref != ADAPTER_REF
+        if derived.request.adapter.adapter_ref != mode.adapter_ref()
             || derived.request.adapter.version != ADAPTER_VERSION
         {
             return Err(Phase7PersistenceErrorV1::SourceNotApproved);
@@ -243,6 +345,7 @@ impl SqliteStore {
                     || (clock.borrow_mut())(),
                     |transaction, consumption, at| {
                         validate_and_reserve_v1(
+                            mode,
                             transaction,
                             request_id,
                             derived,
@@ -259,6 +362,27 @@ impl SqliteStore {
         // Exact capability replay does not invoke the hook and cannot mint a
         // replacement reservation, including after restart or lost response.
         reservation.ok_or(Phase7PersistenceErrorV1::RedemptionRejected)
+    }
+
+    fn mark_request_unknown_for_mode_v1(
+        &mut self,
+        mode: RequestModeV1,
+        operation_id: &str,
+        attempt_id: &str,
+        digest: &[u8; 32],
+    ) {
+        match mode {
+            RequestModeV1::Admission => {
+                let _ = self.mark_request_admission_outcome_unknown_v1(
+                    operation_id,
+                    attempt_id,
+                    digest,
+                );
+            }
+            RequestModeV1::GitResult => {
+                let _ = self.mark_request_git_outcome_unknown_v1(operation_id, attempt_id, digest);
+            }
+        }
     }
 }
 
@@ -329,14 +453,26 @@ where
     .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
     let consumption = validate_stored_consumption(transaction, consumption)?;
     let consumption = consumption_public_record(transaction, &consumption)?;
-    verify_reservation_binding_v1(
-        transaction,
-        &operation.project_ref,
-        &operation.resource_ref,
-        &operation.operation_id,
-        &reservation.launch_digest,
-        &consumption.consumed_at,
-    )?;
+    match reservation.mode {
+        RequestModeV1::Admission => verify_reservation_binding_v1(
+            transaction,
+            &operation.project_ref,
+            &operation.resource_ref,
+            &operation.operation_id,
+            &reservation.launch_digest,
+            &consumption.consumed_at,
+        )?,
+        RequestModeV1::GitResult => {
+            let binding = crate::phase7_git_adapter::request_result::verify_binding_v1(
+                transaction,
+                &operation.operation_id,
+            )
+            .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+            if binding.launch_digest != reservation.launch_digest {
+                return Err(Phase7PersistenceErrorV1::EvidenceDrift);
+            }
+        }
+    }
     let readback =
         crate::phase7_git_adapter::read_phase8_operation_v1(transaction, &operation.operation_id)
             .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?
@@ -347,15 +483,15 @@ where
         .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
     if attempt.request_digest != derived.request_digest
         || reservation.expires_at != authorization.expires_at
-        || derived.request.adapter.adapter_ref != ADAPTER_REF
+        || derived.request.adapter.adapter_ref != reservation.mode.adapter_ref()
         || derived.request.adapter.version != ADAPTER_VERSION
         || readback.state != "dispatching"
         || readback.state_sequence != 2
         || dispatch.state != "dispatching"
         || dispatch.state_sequence != 1
         || dispatch.operation_attempt_id != reservation.operation_attempt_id
-        || dispatch.protocol_version != PROTOCOL
-        || dispatch.adapter_ref != format!("{ADAPTER_REF}@{ADAPTER_VERSION}")
+        || dispatch.protocol_version != reservation.mode.protocol()
+        || dispatch.adapter_ref != format!("{}@{ADAPTER_VERSION}", reservation.mode.adapter_ref())
         || dispatch.tool_arguments_digest != reservation.launch_digest
         || !approver
             .session
@@ -388,8 +524,9 @@ where
 
 // Keep the final transaction's complete source checks and reservation writes
 // together so no caller can accidentally omit a prerequisite.
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn validate_and_reserve_v1<C>(
+    mode: RequestModeV1,
     transaction: &Transaction<'_>,
     request_id: &str,
     derived: &DerivedExecutionRequestV1,
@@ -498,16 +635,31 @@ where
     {
         return Err(Phase7PersistenceErrorV1::SourceNotApproved);
     }
-    let launch_digest = reservation_digest(
-        request_id,
-        &attempt.request_digest,
-        consumption,
-        &authorization.expires_at,
-    );
-    let operation_attempt_id =
-        reserve_source_request_attempt_v1(transaction, consumption, derived, launch_digest, at)
-            .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let (launch_digest, operation_attempt_id) = match mode {
+        RequestModeV1::Admission => {
+            let digest = reservation_digest(
+                request_id,
+                &attempt.request_digest,
+                consumption,
+                &authorization.expires_at,
+            );
+            let id =
+                reserve_source_request_attempt_v1(transaction, consumption, derived, digest, at)
+                    .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+            (digest, id)
+        }
+        RequestModeV1::GitResult => crate::phase7_git_adapter::request_result::reserve_attempt_v1(
+            transaction,
+            request_id,
+            consumption,
+            derived,
+            &authorization.expires_at,
+            at,
+        )
+        .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?,
+    };
     Ok(RequestLaunchReservationV1 {
+        mode,
         store_scope,
         request_id: request_id.to_owned(),
         operation_id: consumption.operation_id.clone(),
@@ -610,4 +762,103 @@ pub(crate) fn verify_reservation_binding_v1(
         return Err(Phase7PersistenceErrorV1::EvidenceDrift);
     }
     Ok(())
+}
+
+/// Validated durable parents for the distinct request-bound result protocol.
+/// No live-session check occurs here; historical evidence survives expiry.
+pub(crate) struct GitRequestParentsV1 {
+    pub(crate) request_id: String,
+    pub(crate) derived: DerivedExecutionRequestV1,
+    pub(crate) consumption: Phase7CapabilityConsumptionRecordV1,
+    pub(crate) authorization_expires_at: String,
+}
+
+#[allow(clippy::too_many_lines)] // Reconstruct every immutable parent before returning any binding.
+pub(crate) fn read_git_request_parents_v1(
+    connection: &Connection,
+    project_ref: &str,
+    resource_ref: &str,
+    operation_id: &str,
+) -> Result<GitRequestParentsV1, Phase7PersistenceErrorV1> {
+    let operation = select_operation_by_id(connection, project_ref, resource_ref, operation_id)?
+        .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let operation = validate_stored_operation(connection, operation)?;
+    let authorization = select_authorization_by_id(
+        connection,
+        project_ref,
+        resource_ref,
+        &operation.authorization_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let authorization = validate_stored_authorization(connection, authorization)?;
+    let attempt = read_validated_attempt_by_id(
+        connection,
+        project_ref,
+        resource_ref,
+        &authorization.authorization_attempt_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let consumption = select_consumption_by_authorization_or_operation(
+        connection,
+        project_ref,
+        &authorization.authorization_id,
+        operation_id,
+    )?
+    .ok_or(Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let consumption = validate_stored_consumption(connection, consumption)?;
+    let consumption = consumption_public_record(connection, &consumption)?;
+    let request_id = crate::action_request::reservation_root_id_v1(connection, &attempt)
+        .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let count: i64 = connection.query_row(
+        "SELECT count(*) FROM lnsat_operation_attempts AS attempt
+         JOIN lnsat_operations AS operation ON operation.operation_id=attempt.operation_id
+         JOIN lnsat_execution_authorizations AS authorization ON authorization.authorization_id=operation.authorization_id
+         WHERE authorization.policy_decision_id=?1",
+        [&attempt.policy_decision_id], |row| row.get(0),
+    ).map_err(|_| Phase7PersistenceErrorV1::PersistenceFailed)?;
+    if count != 1
+        || consumption.operation_id != operation_id
+        || operation.adapter_ref
+            != format!(
+                "{}@{ADAPTER_VERSION}",
+                RequestModeV1::GitResult.adapter_ref()
+            )
+    {
+        return Err(Phase7PersistenceErrorV1::EvidenceDrift);
+    }
+    let canonical_packet: String = connection.query_row(
+        "SELECT canonical_packet FROM lnsat_packet_envelopes WHERE packet_id=?1 AND packet_sha256=?2 AND project_ref=?3",
+        params![attempt.packet_id, attempt.packet_sha256, attempt.project_ref], |row| row.get(0),
+    ).map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let packet = lnsat_contracts::parse_packet_envelope_v1(canonical_packet.as_bytes())
+        .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+    let derived =
+        lnsat_contracts::derive_execution_request_v1(&lnsat_contracts::ExecutionRequestV1Input {
+            packet: &packet,
+            packet_sha256: &attempt.packet_sha256,
+            policy_decision_id: &attempt.policy_decision_id,
+            approval_request_id: &attempt.approval_request_id,
+            approval_decision_id: &attempt.approval_decision_id,
+            requester_ref: &attempt.requester_ref,
+            requester_session_ref: &attempt.requester_session_ref,
+            approver_ref: &attempt.approver_ref,
+            approver_session_ref: &attempt.approver_session_ref,
+            prepared_at: &attempt.requested_at,
+            expires_at: &attempt.expires_at,
+        })
+        .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+    validate_execution_root_v1(connection, &request_id, &derived)
+        .map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
+    if derived.request_digest != attempt.request_digest
+        || derived.request.adapter.adapter_ref != RequestModeV1::GitResult.adapter_ref()
+        || derived.request.adapter.version != ADAPTER_VERSION
+    {
+        return Err(Phase7PersistenceErrorV1::EvidenceDrift);
+    }
+    Ok(GitRequestParentsV1 {
+        request_id,
+        derived,
+        consumption,
+        authorization_expires_at: authorization.expires_at,
+    })
 }

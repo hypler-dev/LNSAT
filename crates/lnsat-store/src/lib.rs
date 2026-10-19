@@ -18650,6 +18650,7 @@ mod tests {
     mod phase7d_signed_candidate;
     mod phase8_runtime_composition;
     mod request_execution_admission;
+    mod request_git_result;
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     mod selected_store;
 }

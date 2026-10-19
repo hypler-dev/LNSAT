@@ -771,6 +771,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0096/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0097",
+      "subject_id": "request-bound-git-result",
+      "review_subject_ids": ["request-bound-git-result"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0097/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }

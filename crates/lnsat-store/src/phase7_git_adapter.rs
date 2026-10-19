@@ -29,6 +29,12 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 use zeroize::Zeroizing;
 
+#[allow(
+    dead_code,
+    reason = "Private request-result core has no production observer or dispatch entry"
+)]
+pub(crate) mod request_result;
+
 pub const PHASE7_GIT_ADAPTER_REF_V1: &str = "adapter:local:git-commit";
 pub const PHASE7_GIT_ADAPTER_VERSION_V1: &str = "v1";
 /// Exact Docker-local Git adapter identity used by Phase 11 served dispatch.
@@ -1982,9 +1988,11 @@ impl SqliteStore {
                 "outcome_unknown",
                 &recorded_at,
                 "operation_attempt_state_recorded",
-                if attempt.protocol_version
-                    == crate::phase7_consumption::request_admission::PROTOCOL
-                {
+                if matches!(
+                    attempt.protocol_version.as_str(),
+                    crate::phase7_consumption::request_admission::PROTOCOL
+                        | request_result::PROTOCOL
+                ) {
                     "none"
                 } else {
                     "adapter_executed"
@@ -3290,7 +3298,14 @@ pub(super) fn verify_phase7_git_adapter_records_v1(
                     crate::phase7_consumption::request_admission::ADAPTER_VERSION
                 )
                 && attempt.protocol_version
-                    == crate::phase7_consumption::request_admission::PROTOCOL);
+                    == crate::phase7_consumption::request_admission::PROTOCOL)
+            || (attempt.adapter_ref
+                == format!(
+                    "{}@{}",
+                    request_result::ADAPTER_REF,
+                    request_result::ADAPTER_VERSION
+                )
+                && attempt.protocol_version == request_result::PROTOCOL);
         if attempt.protocol_version == crate::phase7_consumption::request_admission::PROTOCOL {
             crate::phase7_consumption::request_admission::verify_reservation_binding_v1(
                 connection,
@@ -3301,6 +3316,10 @@ pub(super) fn verify_phase7_git_adapter_records_v1(
                 &attempt.created_at,
             )
             .map_err(|_| SqliteStoreError::MigrationDrift)?;
+        }
+        if attempt.protocol_version == request_result::PROTOCOL {
+            request_result::verify_binding_v1(connection, &attempt.operation_id)
+                .map_err(|_| SqliteStoreError::MigrationDrift)?;
         }
         if attempt.attempt_sequence != 1
             || !known_adapter_protocol
@@ -3673,8 +3692,13 @@ fn verify_attempt_state_rows(connection: &Connection) -> Result<(), SqliteStoreE
                 }
                 || (state == "outcome_unknown"
                     && effect == "none"
-                    && protocol.as_deref()
-                        == Some(crate::phase7_consumption::request_admission::PROTOCOL)))
+                    && matches!(
+                        protocol.as_deref(),
+                        Some(
+                            crate::phase7_consumption::request_admission::PROTOCOL
+                                | request_result::PROTOCOL
+                        )
+                    )))
         {
             return Err(SqliteStoreError::MigrationDrift);
         }
