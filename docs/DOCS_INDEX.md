@@ -269,6 +269,8 @@ subsystem or proposal.
 - [Action-request record source contract](architecture/action-request-record.md)
 - [Request-bound one-use admission and guarded fake dispatch](architecture/request-execution-admission.md)
 - [Request-bound Git result persistence](architecture/request-bound-git-result.md)
+  — merged private source and the bounded synthetic action-loop fixture;
+  no production observer or real Git execution.
 - [Local authentication availability and UDS withdrawal](architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
 - [Docker-first runtime-neutral enforcement decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)

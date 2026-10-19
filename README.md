@@ -143,6 +143,12 @@ Git/host proof, or public result-submission path. Thirteen bounded result groups
 34 Node checks also passed. Independent source and test reviews passed. See
 [request-bound Git result persistence](docs/architecture/request-bound-git-result.md).
 
+A bounded synthetic action-loop fixture connects these existing seams through
+store restart and authenticated evidence readback. Four focused Rust groups
+passed; independent test review passed after two oracle gaps were corrected.
+It reuses the current receipt/reconciliation projection; no production observer,
+real Git execution, or new public route is introduced.
+
 ### 1. Bind the proposal to exact content
 
 A versioned packet carries the declared actor, scope, resources and constraints.

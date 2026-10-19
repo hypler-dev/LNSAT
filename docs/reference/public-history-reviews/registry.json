@@ -787,6 +787,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0098/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0099",
+      "subject_id": "request-action-loop-fixture",
+      "review_subject_ids": ["request-action-loop-fixture"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0099/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }
