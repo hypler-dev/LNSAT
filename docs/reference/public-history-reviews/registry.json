@@ -779,6 +779,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0097/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0098",
+      "subject_id": "console-asset-ci-test-isolation",
+      "review_subject_ids": ["console-asset-ci-test-isolation"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0098/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

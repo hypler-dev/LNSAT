@@ -3,6 +3,25 @@
 LNSAT `0.1.0` is pre-release, source-only software. Repository is suitable for
 contract evaluation and contributor development, not production operation.
 
+## Console Asset CI Test Isolation
+
+The post-merge main source run `39210746736` at `f5d6a592` failed when the
+console symlink test received `StoreOpenFailed` instead of
+`ConsoleAssetLoadFailed`. Startup validates storage before loading console
+assets; the old test reopened one database for two independent asset cases.
+The hosted log does not identify the underlying storage error. One focused
+local baseline run passed, so the historical Linux failure is not claimed to
+have been reproduced or its root cause established.
+
+The local repair candidate separates filesystem-loader assertions from
+storage, retains startup rejection tests with a fresh database for each case,
+and adds positive asset loading and a held-lease storage-precedence regression.
+Production startup, locking, authorization, routes, and schema are unchanged.
+This test-isolation change does not establish native Linux compatibility or
+make the failed hosted run green; publication and hosted revalidation remain
+separate. The reviewed request action-loop fixture remains in its separate
+uncommitted checkout and is not included in this repair.
+
 ## Version Posture
 
 Product/source SemVer remains unpublished `0.1.0` across the root npm package,
