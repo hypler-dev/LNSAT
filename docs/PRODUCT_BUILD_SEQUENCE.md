@@ -670,7 +670,14 @@ tests confirm: success/replay/idempotency drift rejection; post-consequence
 unknown survives restart and reconciles through host Git inspection only;
 unchanged-target unknown persists without receipt. Exact replay is metadata-only
 with no redispatch. The chain is D2 schema2 loaded profile -> D4B2A atomic claim
--> D3/D4A payload -> D4B1 supervisor -> D4B2A receipt/unknown. No served route
+-> D3/D4A payload -> fresh authenticated durable re-read inside the fake
+supervisor -> final target/executable/endpoint recheck -> D4B1 fake process ->
+D4B2A receipt/unknown. The served fake path accepts a store-created claim
+handle, not a caller-provided proof. Its old unguarded launch helper is
+crate-test-only. Hermetic negatives cover stale durable state and target,
+executable, and endpoint changes after initial preflight. The process
+wall-clock budget starts after the durable and host checks. These source tests do not prove atomicity
+against external actors or qualify a real Docker driver. No served route
 configures or invokes Docker. P11-D4C1 adds source-only reference-adapter
 execution: D4A retains the exact profile mount path and the supervisor supplies
 that sole repository argument; `lnsat-git-reference` rejects any raw mismatch,

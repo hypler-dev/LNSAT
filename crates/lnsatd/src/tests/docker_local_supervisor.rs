@@ -1,5 +1,22 @@
 #![cfg(unix)]
 
+use crate::adapter_process_protocol::{
+    DockerLocalAdapterProcessRequestInputV1, DockerLocalAdapterProcessResultOutcomeV1,
+    build_docker_local_adapter_process_request_v1,
+    encode_docker_local_adapter_process_result_frame_v1,
+};
+use crate::docker_local_execution_payload::{
+    DockerLocalExecutionPayloadRequestFrameV1, build_docker_local_execution_payload_request_v1,
+    parse_docker_local_execution_payload_request_v1,
+};
+use crate::docker_local_supervisor::{
+    DockerLocalSupervisorErrorV1, DockerLocalSupervisorInputV1,
+    docker_local_supervised_git_result_digest_v1, supervise_docker_local_git_execution_v1,
+};
+use crate::runtime_profile::{
+    DOCKER_LOCAL_ADAPTER_REF_V1, DOCKER_LOCAL_ADAPTER_VERSION_V1, DOCKER_LOCAL_AUDIENCE_V1,
+    LoadedDockerLocalRuntimeProfileV1, parse_docker_local_runtime_profile_v1,
+};
 use lnsat_contracts::{
     CONTRACT_VERSION_V1_0, DerivedExecutionRequestV1, EXECUTION_PROPOSAL_SCHEMA_V1_0,
     EXECUTION_REQUEST_DERIVATION_PROFILE_V1, ExecutionRequestV1Input, PacketBudgetV1,
@@ -8,23 +25,6 @@ use lnsat_contracts::{
 use lnsat_store::{
     PHASE7_GIT_FIXTURE_MARKER_V1, Phase7GitCommitMetadataV1, Phase7GitExecutionResultV1,
     inspect_phase7_disposable_git_repository_v1,
-};
-use lnsatd::adapter_process_protocol::{
-    DockerLocalAdapterProcessRequestInputV1, DockerLocalAdapterProcessResultOutcomeV1,
-    build_docker_local_adapter_process_request_v1,
-    encode_docker_local_adapter_process_result_frame_v1,
-};
-use lnsatd::docker_local_execution_payload::{
-    DockerLocalExecutionPayloadRequestFrameV1, build_docker_local_execution_payload_request_v1,
-    parse_docker_local_execution_payload_request_v1,
-};
-use lnsatd::docker_local_supervisor::{
-    DockerLocalSupervisorErrorV1, DockerLocalSupervisorInputV1,
-    docker_local_supervised_git_result_digest_v1, supervise_docker_local_git_execution_v1,
-};
-use lnsatd::runtime_profile::{
-    DOCKER_LOCAL_ADAPTER_REF_V1, DOCKER_LOCAL_ADAPTER_VERSION_V1, DOCKER_LOCAL_AUDIENCE_V1,
-    LoadedDockerLocalRuntimeProfileV1, parse_docker_local_runtime_profile_v1,
 };
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -37,9 +37,9 @@ use std::process::{Command, Stdio};
 use std::time::Instant;
 
 const PROFILE_FIXTURE: &[u8] =
-    include_bytes!("../../../fixtures/contracts/phase11-docker-local-profile-v1.json");
+    include_bytes!("../../../../fixtures/contracts/phase11-docker-local-profile-v1.json");
 const SUPERVISOR_FIXTURE: &str =
-    include_str!("../../../fixtures/contracts/phase11-docker-local-supervisor-v1.json");
+    include_str!("../../../../fixtures/contracts/phase11-docker-local-supervisor-v1.json");
 const GIT_EXECUTABLE: &str = "/usr/bin/git";
 
 #[test]
@@ -62,15 +62,17 @@ fn supervisor_fixture_locks_source_only_boundary_and_error_codes() {
             .any(|value| value == "no_production_or_user_repository")
     );
     let expected = [
-        "docker_local_supervisor.input_invalid",
-        "docker_local_supervisor.profile_binding_invalid",
-        "docker_local_supervisor.docker_executable_invalid",
-        "docker_local_supervisor.verifier_executable_invalid",
-        "docker_local_supervisor.docker_endpoint_invalid",
-        "docker_local_supervisor.target_rejected",
-        "docker_local_supervisor.runtime_unavailable",
-        "docker_local_supervisor.outcome_unknown",
-    ];
+        DockerLocalSupervisorErrorV1::InputInvalid,
+        DockerLocalSupervisorErrorV1::ProfileBindingInvalid,
+        DockerLocalSupervisorErrorV1::DockerExecutableInvalid,
+        DockerLocalSupervisorErrorV1::VerifierExecutableInvalid,
+        DockerLocalSupervisorErrorV1::DockerEndpointInvalid,
+        DockerLocalSupervisorErrorV1::TargetRejected,
+        DockerLocalSupervisorErrorV1::PreSupervisorProofRejected,
+        DockerLocalSupervisorErrorV1::RuntimeUnavailable,
+        DockerLocalSupervisorErrorV1::OutcomeUnknown,
+    ]
+    .map(DockerLocalSupervisorErrorV1::code);
     assert_eq!(
         fixture["error_codes"]
             .as_array()
@@ -399,7 +401,7 @@ impl SupervisorFixture {
     fn run(
         &self,
     ) -> Result<
-        lnsatd::docker_local_supervisor::DockerLocalSupervisedGitResultV1,
+        crate::docker_local_supervisor::DockerLocalSupervisedGitResultV1,
         DockerLocalSupervisorErrorV1,
     > {
         supervise_docker_local_git_execution_v1(&DockerLocalSupervisorInputV1 {
