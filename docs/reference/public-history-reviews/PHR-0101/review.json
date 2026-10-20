@@ -1,0 +1,67 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0101-independent-implementation-review-6e6f6406",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["request-bound-git-observer"],
+  "base_revision": "084c2a8e5b4bea7b3eec0aadc788681e4bab5da7",
+  "reviewed_revision": "6e6f64065b317e833856c97bfa281b671003c261",
+  "reviewed_tree_oid": "e1361e07882836d5af9267128f1c8a1255c3f929",
+  "diff_sha256": "sha256:20fba685ee030c67b9a812df5d51f7ffe0a61ca67ba8cffd9176c348b472cdc4",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:ca85cc7f446aaae90110e226f12862f2e4f59f060eb474039644e4cbb8400661"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator.rs",
+      "sha256": "sha256:d8270987dee775470edb21dc4cb8cdbd395a018b9e27d8ef3695ee58aa4a5765"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer.rs",
+      "sha256": "sha256:a812e394aae71a17e92cc3a6806e3571471fe14de7203bdad870d740ee29ed66"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/tests.rs",
+      "sha256": "sha256:224e1107eb44b81038efd0c684ccd978722b07825c3fb53cfeeed0ae4fb6c1ae"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:b2a76c3156ac8a859584375f81d260490c6cd1513a5b510f347ec4663b165cc6"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:6489550fafa7bdc829408edd5176772bb1c9420808d7f0027649521456cb29a2"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:5b2ecacb39349b5421a8a04aeb6fe8599e52ee0a9689ccc48b17110a52ae3cba"
+    },
+    {
+      "path": "docs/architecture/request-bound-coordinator.md",
+      "sha256": "sha256:41169cca18d52bfb2f882a580457636e16392a1458ab005bd62be9acfb9d56ab"
+    },
+    {
+      "path": "docs/architecture/request-bound-git-observer.md",
+      "sha256": "sha256:668fa2cfb3fdff1e6d74df633d3aadba8af5003613ee2bea6387c8d2d37b7aff"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:df82f6882610db9ff15002f1f9fc82923c65709adc4b327e2d53d562678ffdae"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:5270cbbea377c0bda7d12322ea4548c457d43e246224b7cdb922a6d85433c0b8"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/observer_publication_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured Terra/xhigh; backend runtime model ID unexposed. Existing exact source/test, 26-group actual fixture and docs reviews are reused through unchanged source/dependency identities. Fresh publication integration and exact committed-source/attestation review passed with no actionable P1/P2/P3. Private cfg(test) synthetic observer/verifier only: 25 behavioral groups plus G26 structural production closure. Local full npm remains blocked by Node engine mismatch and local history by missing smol-toml. Hosted source CI has a separate outcome. No formal GitHub approval, production collector, actual Git consequence, physical freshness/causality/custody/deadline/cleanup/durability, native compatibility, runtime, release or support proof."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
