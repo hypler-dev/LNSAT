@@ -172,6 +172,38 @@ A separately authorized public PR milestone preserves the same private source
 boundary; merge and runtime authority remain separate. See
 [private coordinator](architecture/request-bound-coordinator.md).
 
+### Private request-bound Git observer/verifier source conformance
+
+Direct acceptance on 2026-10-19 also authorized a private test-only observer
+and verifier child with 26 synthetic or structural groups. The child is an
+implemented source candidate under the existing `cfg(test)` coordinator. It
+keeps control-owned observer selection separate from dispatch, invokes trusted
+synthetic acquisition only after store locks and transactions are released,
+and rederives the current original-store identity, request lineage, exact
+attempt and approved Git expectation before existing test-only verification and
+result persistence. The observer child privately retains the complete validated
+operation readback, requires normal freeze to remain `dispatching`, joins recovery
+classification before observation, and rejects current readback drift before its
+proof-constructor call. These child checks model state integrity without physical
+temporal authority. It preserves schema 18, existing protocols, receipts,
+reconciliation, exact replay/conflict behavior, terminal recovery and
+uncertainty semantics. It adds no production collector, observer, proof
+constructor, route, protocol, schema, runtime or host operation.
+
+The narrow local run passed all 26 groups: 25 behavioral groups and G26
+structural production closure. Strict Clippy and workspace Rustfmt passed.
+Source and test review are pinned to source binding `a812e394aae7...` and test
+binding `224e1107eb44...`. Direct docs/public checks and generated inventory checks passed. Full
+`npm run check` and `npm run public:check` remain blocked by local Node 24.21.0
+versus required 22.22.3; history validation remains blocked by missing
+`smol-toml`. No inherited coordinator/action-loop
+counts were rerun or added here. This narrow result is fixture evidence only;
+G27–G32 remain closed later production/native/operator qualification gates
+covering acquisition provenance, causal attribution, physical limits and
+cleanup, crash durability, authenticated recovery and supported runtime
+admission. No physical Git proof, Phase 11 completion, release or support claim
+follows. See [request-bound Git observer and verifier](architecture/request-bound-git-observer.md).
+
 ### Existing public request-record source details
 
 The source contract adds authenticated `POST /v1/action-requests` intake and

@@ -272,8 +272,11 @@ subsystem or proposal.
   — merged private source and the bounded synthetic action-loop fixture;
   no production observer or real Git execution.
 - [Private request-bound coordinator](architecture/request-bound-coordinator.md)
-  — private test-only composition with 36 passing conformance groups and
-  independent source/test review; no production or runtime entry.
+  — private test-only composition with prior 36-group source evidence; the
+  observer/verifier child adds a narrow local 26-group conformance result.
+- [Request-bound Git observer and verifier](architecture/request-bound-git-observer.md)
+  — private synthetic observation and current-binding verification mechanics,
+  finite limits, recovery rules, and remaining G27–G32 qualification gates.
 - [Local authentication availability and UDS withdrawal](architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
 - [Docker-first runtime-neutral enforcement decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)

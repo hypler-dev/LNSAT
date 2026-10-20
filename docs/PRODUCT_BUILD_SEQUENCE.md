@@ -757,6 +757,26 @@ source adds no production coordinator or authority path. See
 [private request-bound coordinator](architecture/request-bound-coordinator.md).
 No Phase 10/11 ordering, native gate or supported-release criterion is waived.
 
+The next private child is an implemented request-bound Git observer/verifier
+source candidate beneath that coordinator. It keeps independent observer
+selection separate from dispatch, performs synthetic acquisition only while no
+store lock or transaction is held, and rederives current original-store and
+exact-attempt bindings before using the existing verifier and result writer. The
+controller retains the complete validated operation readback, requires normal
+freeze in `dispatching`, compares recovery classification before observation,
+and requires exact current full-readback equality after observation before the
+boundary proof-constructor call. This is modeled state integrity only; it does
+not provide physical temporal authority.
+G01–G26 cover synthetic or structural behavior. The narrow local run passed all
+26 groups: 25 behavioral groups and G26 structural production closure. Strict
+Clippy and Rustfmt passed, with source/test review pinned to the reviewed
+source and test fixtures. This is fixture evidence only; it adds no physical
+Git, professional fuzzing, native, host, runtime or causal/custody proof.
+G27–G32 remain separate production/native/operator gates for acquisition
+provenance, causal attribution, physical bounds and cleanup, crash durability,
+authenticated recovery and supported runtime admission. No source candidate
+changes the required Phase 10 -> Phase 11 -> release sequence.
+
 The private served-driver admission seam now provides a source-only structural
 check for that later chain. It binds the run manifest to fields in a
 caller-supplied claim snapshot, canonical D3/D4A payload, loaded profile, and
