@@ -819,6 +819,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0102/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0103",
+      "subject_id": "observer-ci-workflow-pin-correction",
+      "review_subject_ids": ["observer-ci-workflow-pin-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0103/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }
