@@ -1,0 +1,35 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0103-independent-implementation-review-e79455c9",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["observer-ci-workflow-pin-correction"],
+  "base_revision": "a6ab061f2ecac6bb071ac3feab57772aa2da9270",
+  "reviewed_revision": "e79455c95b7795365cc1116a3dd6bfcf9a729ff9",
+  "reviewed_tree_oid": "562cad0b0f3b580f4b3ab98f799c1257ad21528a",
+  "diff_sha256": "sha256:31fb91d66cca40e0e098d7d98883efd482f8f183cd2a7c441404b1ee6aac504c",
+  "protected_files": [
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:008c3d6a9d9dc93023ca19d19da897e819728331f2014a5ca5b6c870e8fb924b"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:94be9606e72a7bb55e01752844d8abb9d58b550158ef535e67de3490a7fbf5e2"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.mjs",
+      "sha256": "sha256:5f8d1b5e127e8101bf610db6f8a35c74a8a3493a70c2c4f54ef40d01c26c4af2"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/observer_ci_pin_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured Terra/xhigh; backend runtime model ID unexposed. Fresh exact source correction review passed with no actionable P1/P2/P3. Rebinds only strict source-only readiness workflow digest to the independently reviewed60-minute workflow. Exact digest comparison, one-workflow rule, source-gate graph pin and all Docker/runtime denials remain unchanged. Current43positive/tamper cases passed43/43, direct readiness check passed execution closed, and old workflow bytes still reject. Prior cancelled and stale-pin failed hosted runs remain unchanged. Hosted corrected source CI has a separate outcome. No merge, install, real target runtime, host/native, release or support authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
