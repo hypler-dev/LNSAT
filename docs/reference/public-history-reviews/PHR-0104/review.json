@@ -1,0 +1,43 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0104-independent-implementation-review-19ec8548",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["main-ci-hono-audit-remediation"],
+  "base_revision": "666a5552f6f2fdf29538b50e4e844fec3002e9ca",
+  "reviewed_revision": "19ec8548b5af73c320754d88031ab5ce7e82a22d",
+  "reviewed_tree_oid": "5d08441b99169bf4f1b0f78ac24d76c8481b6aeb",
+  "diff_sha256": "sha256:dcec686eb4db82326d72ba910d6745a98e15d1526f4199ad43313071ccdfccf2",
+  "protected_files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d92cb619282f21623f604ed0dabfb50dbad3ebab1085bdb41ee21dc028369e79"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:1a617236637247ca1a80370e6a06ea9037ec7dc6d507cad21875ed0ff4d9b8fa"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:55e8afc2e7010dea41a60ec8db2cdd4265bcd52f63bd6b34da9f4596772842f0"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:1d0859713f1b0c0b55f58185e3f2d1f2b2cc2b51c9a7b55314e0aec09b01c5ce"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:e19022ee88710187b93b80298925bbe86eec225996cda5822270514d69f43a1b"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/hono_audit_repair_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured Terra/xhigh; backend runtime model ID unexposed. Exact five-path source review passed with no actionable P1/P2/P3. Pins Hono 4.13.11 for GHSA-5r4p-p66f-jhc7 without changing audit/signature checks, workflow, failure conditions or other locked packages. Public registry version inventory differs only in Hono; the new Bulk Advisory response is empty. Existing audit guard tests passed 27/27 and documentation alignment tests passed 31/31. Full local npm remains blocked by the Node version mismatch; local history validation remains blocked by missing smol-toml. Hosted source and signature gates have a separate outcome. No merge, local installation, real target runtime, host operation, release or support authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

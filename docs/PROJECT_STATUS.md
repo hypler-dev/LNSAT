@@ -338,6 +338,27 @@ is introduced. Passing dependency checks does not establish runtime safety,
 package support or certification. The professional fuzzing program remains
 planned; its tooling is not installed or activated by this remediation.
 
+### Hono advisory closure refresh
+
+The dependency-audit repair candidate pins the existing Hono override and its
+single lockfile entry from 4.13.7 to 4.13.11, the patched version for
+[GHSA-5r4p-p66f-jhc7](https://github.com/honojs/hono/security/advisories/GHSA-5r4p-p66f-jhc7).
+The advisory concerns repeated path decoding in static-file handling. A fresh
+public-registry query over the 314 locked registry package names identified Hono
+as the sole advisory result; the corrected inventory returned no advisories.
+The package's dependency, optional and peer requirements, Node requirement and
+MIT license are unchanged. Its new tarball URL and integrity value come from
+official registry metadata; no archive was downloaded or installed locally.
+
+All 27 existing strict npm audit/signature harness groups passed with existing
+local tools. Audit rules, signature requirements, failure thresholds, tool pins
+and the source workflow are unchanged; no advisory is waived. Full local npm
+gates remain blocked by Node 24.21.0/npm 11.19.0 versus required
+22.22.3/10.9.8, and local history validation lacks `smol-toml`. The pinned hosted
+signature, dependency-audit and complete source checks retain their separate PR
+results. This candidate introduces no execution authority, runtime, installer,
+supported-operation or release claim.
+
 ## Active Security Remediation
 
 The owner accepted the
