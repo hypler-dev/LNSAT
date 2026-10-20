@@ -1,13 +1,14 @@
 # Private Request-Bound Coordinator
 
-- Status: private source conformance; 36 groups and independent source/test review passed
+- Status: prior private coordinator source conformance passed; observer child narrow local conformance passed
 - Scope: trusted synthetic ports under `cfg(test)`; no production entry or public API
 - Compatibility: existing request-bound Git adapter/protocol and SQLite schema 18
 
 This coordinator composes the existing immutable request, one-use reservation,
 fresh dispatch guard, independently verified synthetic observation, and atomic
-result/reconciliation seams. It changes their composition for tests, not their
-authority semantics. The module lives below
+result/reconciliation seams. Its observer/verifier child is an implemented
+source candidate whose narrow local conformance passed. It changes their
+composition for tests, not their authority semantics. The module lives below
 `phase7_consumption/request_admission.rs`; no production feature or export
 selects it. [Project Status](../PROJECT_STATUS.md) owns implementation truth.
 
@@ -60,9 +61,16 @@ A writer can change state after the read snapshot is released. Proof constructio
 and result persistence therefore revalidate their current binding. Snapshot
 classification does not provide atomic authority across an unlocked callback.
 
+The separately reviewed [observer/verifier child](request-bound-git-observer.md)
+adds controller-private full-readback equality across its unlocked observation.
+It requires normal freeze in `dispatching`, joins recovery classification before
+observation, and rejects current full-readback drift before its boundary
+proof-constructor call. These additional child checks do not change the parent
+coordinator bodies or establish physical temporal authority.
+
 ## Synthetic conformance and limits
 
-The reviewed matrix contains 36 groups, C01–C36: approved/denied/changed/repeated
+The prior coordinator matrix contains 36 groups, C01–C36: approved/denied/changed/repeated
 admission; authentication/time drift; phase ordering and unlocked ports; foreign
 or replaced stores; contention/poison; independent observation; callback
 error/unwind; lost handoffs; unknown-write failure; rollback and lost result

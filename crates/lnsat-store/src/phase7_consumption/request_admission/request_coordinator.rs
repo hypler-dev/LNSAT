@@ -17,6 +17,8 @@ use rusqlite::Transaction;
 use std::sync::{Arc, Mutex};
 
 #[cfg(test)]
+mod request_observer;
+#[cfg(test)]
 mod tests;
 
 /// A trusted synthetic observer can report one independently predeclared

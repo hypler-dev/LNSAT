@@ -157,6 +157,26 @@ exact inner-store identity, inspection-only recovery and uncertainty without
 redispatch. No production entry or OpenShell/Rangoon implementation is added.
 See the [private coordinator contract](docs/architecture/request-bound-coordinator.md).
 
+The private request-bound Git observer/verifier child is an implemented source
+candidate under that test-only coordinator. It independently selects the
+synthetic observation input, releases locks before acquisition, rederives the
+current original-store binding before verification, and preserves existing
+receipt, reconciliation, replay, conflict, terminal-recovery and uncertainty
+semantics. The narrow local run passed all 26 groups: 25 behavioral groups and
+one G26 structural production-closure group. Strict Clippy and Rustfmt passed;
+fresh source/test review is pinned to the reviewed source and test fixtures.
+G27–G32 still require separately accepted production, native and operator
+evidence. This candidate adds no production observer, real Git collector,
+proof constructor, route, protocol, schema, runtime or release claim. See the
+[request-bound Git observer architecture](docs/architecture/request-bound-git-observer.md).
+
+The controller retains the complete validated operation readback from
+expectation assembly. Normal freeze requires `dispatching`; recovery compares
+its initial coherent classification before observation. Post-observation exact
+full-readback equality rejects current readback drift before the boundary proof
+constructor call. These are modeled state checks, not physical temporal
+authority against arbitrary concurrent writers.
+
 ### 1. Bind the proposal to exact content
 
 A versioned packet carries the declared actor, scope, resources and constraints.

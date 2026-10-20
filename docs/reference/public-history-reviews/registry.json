@@ -803,6 +803,30 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0100/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0101",
+      "subject_id": "request-bound-git-observer",
+      "review_subject_ids": ["request-bound-git-observer"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0101/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0102",
+      "subject_id": "observer-ci-timeout-budget",
+      "review_subject_ids": ["observer-ci-timeout-budget"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0102/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0103",
+      "subject_id": "observer-ci-workflow-pin-correction",
+      "review_subject_ids": ["observer-ci-workflow-pin-correction"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0103/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }
