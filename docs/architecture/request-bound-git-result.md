@@ -121,3 +121,13 @@ not introduce another read projection, public mutation route or schema version.
 Store reopen is source persistence evidence, not crash durability or physical
 cleanup proof. The accepted fixture does not open Phase 11 runtime or support
 gates.
+
+## Private coordinator composition
+
+The private `cfg(test)` coordinator composes these existing authority/result
+seams with independently selected trusted synthetic ports. All 36 conformance
+groups and fresh independent source/test review passed. It preserves this
+protocol, result equality, historical resolution and atomic ledger semantics.
+The [coordinator contract](request-bound-coordinator.md) documents lock release,
+original-store identity, explicit inspection-only recovery and remaining
+physical/runtime limits. No existing result or wrapper body changes.

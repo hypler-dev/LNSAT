@@ -425,8 +425,11 @@ honestly; this packet activates none.
 
 Formal assessment requires the applicable full standards, amendments, scoped
 organizational processes, accountable reviewers and retained operational evidence.
-OpenSSF criterion mapping is a separate future assessment; current repository
-evidence establishes no completed badge assessment. Neither a certificate program
+OpenSSF Passing is accepted engineering direction. Each applicable packet maps
+criterion IDs to exact scope, accountable owners, positive and negative checks,
+retained evidence, findings and remaining gaps. The initial private criterion
+map does not establish a completed badge assessment; MUST/SHOULD/SUGGESTED and
+allowed N/A dispositions retain their official requirements. Neither a certificate program
 nor broad integration coverage is added to existing local V1 exit gates. The
 accepted C1/native order, Phase 11 runtime-proof ownership and Phase 13/14 release
 gates remain unchanged. This documentation implements no new control or campaign.
@@ -741,6 +744,18 @@ fixture checkout. Publication and any later merge remain separate from runtime
 authority.
 No real adapter, target action, new route, schema change, or
 Phase 11 runtime proof follows.
+
+The private coordinator composes these existing seams under `cfg(test)` only.
+It keeps reservation/guard/result identity joins, releases the store lock and
+transaction before each trusted synthetic port, and preserves uncertainty and
+inspection-only recovery. All 36 conformance groups passed: 35 behavioral groups
+and one structural production-closure check, including completed/failed recovery
+and a coherent entry snapshot. Strict Clippy, Rustfmt and fresh independent
+source/test review passed. Local full npm and history checks remain blocked by
+the existing Node version and missing dependency; no install occurred. This
+source adds no production coordinator or authority path. See
+[private request-bound coordinator](architecture/request-bound-coordinator.md).
+No Phase 10/11 ordering, native gate or supported-release criterion is waived.
 
 The private served-driver admission seam now provides a source-only structural
 check for that later chain. It binds the run manifest to fields in a

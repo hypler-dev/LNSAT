@@ -271,6 +271,9 @@ subsystem or proposal.
 - [Request-bound Git result persistence](architecture/request-bound-git-result.md)
   — merged private source and the bounded synthetic action-loop fixture;
   no production observer or real Git execution.
+- [Private request-bound coordinator](architecture/request-bound-coordinator.md)
+  — private test-only composition with 36 passing conformance groups and
+  independent source/test review; no production or runtime entry.
 - [Local authentication availability and UDS withdrawal](architecture/SECURITY_LOCAL_AUTH_AVAILABILITY_AND_UDS_WITHDRAWAL.md)
 - [Docker-first runtime-neutral enforcement decision](architecture/ADR-0007_DOCKER_FIRST_RUNTIME_NEUTRAL_ENFORCEMENT.md)
 - [Phase 11 real disposable Docker proof readiness](architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_READINESS.md)

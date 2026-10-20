@@ -20,6 +20,9 @@ use crate::phase7_git_adapter::reserve_source_request_attempt_v1;
 use lnsat_contracts::{DerivedExecutionRequestV1, verify_derived_execution_request_v1};
 use std::sync::Arc;
 
+#[cfg(test)]
+mod request_coordinator;
+
 pub(crate) const ADAPTER_REF: &str = "adapter:source-only:request-admission";
 pub(crate) const ADAPTER_VERSION: &str = "v1";
 pub(crate) const PROTOCOL: &str = "lnsat.request-execution-admission.source.v1";

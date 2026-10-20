@@ -136,6 +136,44 @@ test-isolation repair are recorded above. Their dated evidence remains
 separate from this fixture publication. Existing source checks do not establish
 Phase 10 exit, Phase 11 runtime, installed tools, release or support.
 
+### Private request-bound coordinator source conformance
+
+Direct acceptance on 2026-10-19 authorized the private coordinator, all
+36 synthetic groups, documentation and independent review. The only existing
+source change is a `cfg(test)` child declaration; two new private source/test
+files compose the existing reservation, guard, independent synthetic verifier
+and result/reconciliation writer. Existing production bodies, wrappers, test
+bodies, schema 18 and protocols are preserved. No public API, production observer,
+OpenShell adapter or Rangoon authority path is added.
+
+Original inner-store identity is checked in every phase. Each phase uses one
+nonblocking lock attempt; dispatch and observation run after the lock and
+transaction are released. Cleanup remains unconfirmed until durable readback.
+Uncertainty cannot redispatch. Recovery uses a coherent entry snapshot:
+completed entry is read-only before observer/proof construction; failed entry
+rejects before observation. A later explicit unknown inspection may observe
+again without new execution authority.
+
+All 36 conformance groups passed: 35 behavioral groups and C30 structural
+production closure. Strict Clippy and workspace Rustfmt passed with no current
+compiler warnings. Fresh independent source/test review passed after preserved
+compile, lint and test-oracle corrections. These counts describe trusted
+controller fixtures, not physical executions or professional fuzzing. Local
+full npm checks remain blocked by Node 24.21.0 versus required 22.22.3;
+history validation remains blocked by missing `smol-toml`. No dependencies
+were installed to bypass those gates.
+
+Tests do not establish post-check revocation, physical custody/deadline/cleanup,
+native compatibility, crash durability, Phase 10 exit, Phase 11 runtime,
+installed-tool, release or support proof. Applicable OpenSSF criteria retain
+scoped evidence and explicit global gaps, without badge or compliance claims.
+At source qualification closeout, this candidate was uncommitted and unpublished.
+A separately authorized public PR milestone preserves the same private source
+boundary; merge and runtime authority remain separate. See
+[private coordinator](architecture/request-bound-coordinator.md).
+
+### Existing public request-record source details
+
 The source contract adds authenticated `POST /v1/action-requests` intake and
 read-only `GET /v1/action-requests/{arq_64hex}/operator-record`. Intake commits
 an immutable request root before policy evaluation, records a separate
@@ -235,8 +273,11 @@ checks, evidence, gaps and risk disposition to the existing status and phase
 records. This subsection records the accepted plan, not completion of those
 controls or a new competing completion ledger.
 
-Full standard/clause and OpenSSF criterion assessments remain unperformed in the
-recorded repository evidence. Organizational management systems, legal/privacy
+OpenSSF Passing alignment is accepted engineering direction. Applicable packets
+map criterion IDs to accountable owners, exact checks, evidence and remaining
+gaps. An initial private criterion map is not a completed badge assessment.
+Full standard/clause assessments and public badge qualification remain
+unperformed in the recorded repository evidence. Organizational management systems, legal/privacy
 accountability, model/provider governance and certification are separately scoped.
 Local actor identifiers and receipts may contain PII; retention/deletion needs an
 explicit authority-safe contract. LNSAT stays standalone. This documentation adds
