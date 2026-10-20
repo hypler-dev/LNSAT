@@ -149,6 +149,14 @@ passed; independent test review passed after two oracle gaps were corrected.
 It reuses the current receipt/reconciliation projection; no production observer,
 real Git execution, or new public route is introduced.
 
+The private `cfg(test)` coordinator composes existing authority and result seams
+through unlocked synthetic dispatch and observation ports. All 36 conformance
+groups passed: 35 behavioral groups and one structural production-closure check.
+Fresh independent source/test review passed. It preserves one-use reservation,
+exact inner-store identity, inspection-only recovery and uncertainty without
+redispatch. No production entry or OpenShell/Rangoon implementation is added.
+See the [private coordinator contract](docs/architecture/request-bound-coordinator.md).
+
 ### 1. Bind the proposal to exact content
 
 A versioned packet carries the declared actor, scope, resources and constraints.

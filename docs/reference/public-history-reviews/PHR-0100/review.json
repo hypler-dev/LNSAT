@@ -1,0 +1,67 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0100-independent-implementation-review-47f3ee15",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["request-bound-coordinator"],
+  "base_revision": "7072b5cb189b824e39e1d2eccf65e1a7843af066",
+  "reviewed_revision": "47f3ee152547fc26fcf3d9db6c88a05130e4ceeb",
+  "reviewed_tree_oid": "d768f372732a538ac8ae1ece47c581d53029d207",
+  "diff_sha256": "sha256:c780b72f5c2058b40168f9a97b00f07fcc87004bb09d3562df2130d9a931c850",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:7c7180e91e89600d8c9b0f91e8de15ca68ac2cf348d3dd9cb0e9465054c1be70"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission.rs",
+      "sha256": "sha256:0ab4e795323d55cc6a2d6560e2941e50b59246f9d4a5a770e6634f93774317a4"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator.rs",
+      "sha256": "sha256:2aadf88aa468e83e9063745500f116d1c2ac97ec1e04ebe015622be082d43525"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/tests.rs",
+      "sha256": "sha256:f8dc8f269feb9a5c57e74b3c08a4103debdbd01b9305e65b088e5408e3c62f11"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:2fefc807e79eb04a059840946d52faa8eb8cf6f089d12f4d3a106bb4228e09c8"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:402a33a79a2a6f50d11aadef2ebc5cc0e32b1f9ad2640c8b7c58e992f225320d"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:409c402e91ecbc34677dbcb94fcd566965e95d67d551f49ce88924e78b145be3"
+    },
+    {
+      "path": "docs/architecture/request-bound-coordinator.md",
+      "sha256": "sha256:00cef2ad08bacfab0cf1de60b83f8a2c0f4f368f0f586c91aa809a05f5335c48"
+    },
+    {
+      "path": "docs/architecture/request-bound-git-result.md",
+      "sha256": "sha256:85b608601768ceca4daa3bc0d953d966a0cc859b2da515c15bd65e9a6e5eabbe"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:f04a2ca58082a5ae86bbdc9ea8f14c2b8837818da25760d4804485cd27daf5cb"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:a40819a42357f552cfa226344dabc476cf387606f255c09da96b533d4db0152d"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/coordinator_publication_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured Terra/xhigh; backend runtime model ID unexposed. Exact source/test and actual-evidence qualification is reused through unchanged Rust/core/dependency pins. Fresh publication integration and registration review passed with no actionable P1/P2/P3. Private cfg(test) coordinator and trusted synthetic ports only; 36 groups comprise 35 behavioral groups and C30 structural production closure. No production visibility, route, schema or protocol change. Local full npm remains blocked by Node engine mismatch and local history by missing smol-toml. Hosted source CI has a separate result. No formal GitHub approval, actual Git consequence, physical custody/deadline/cleanup, native compatibility, runtime, release or support proof."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
