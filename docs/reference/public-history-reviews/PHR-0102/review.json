@@ -1,0 +1,35 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0102-independent-implementation-review-df59b264",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["observer-ci-timeout-budget"],
+  "base_revision": "bf1709e4afd0d9232b451acc29d3a6c7238aa213",
+  "reviewed_revision": "df59b264b98c3f701171c0a50f098fdfd126c727",
+  "reviewed_tree_oid": "39fa5eb503b05efaeafb2d31e1cb40cb5b269d39",
+  "diff_sha256": "sha256:7eb94878f4d4141e9acd230210fa1e8d43aa900ec9ba88b648a3c35429450651",
+  "protected_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "sha256:56b6fba535b402f5bb839f4f881bf329e2cea8f5bece9f5e637756c938e6c035"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:17fc0fc06ed661bedcd12eda7a226fa099af00a70cc25a0dca15b8faa980b572"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:96c1aebaa848a51a47322573517556faea44459e690b1bd6e293f2378ca4d3e2"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/observer_ci_timeout_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured Terra/xhigh; backend runtime model ID unexposed. Independent exact-source review passed with no actionable P1/P2/P3. Finite hosted CI job budget30 to60 minutes only; unchanged commands, tests, assertions, cryptographic settings, tool/dependency pins, runner, permissions, events, concurrency and failure propagation. Original cancelled evidence remains preserved. Focused workflow conformance, formatting, inventory and public checks passed; hosted full source gate has a separate outcome. No merge, target runtime, native compatibility, installed-tool, release or support authority."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
