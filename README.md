@@ -635,3 +635,7 @@ unpublished vulnerability information in public issues or pull requests.
 
 LNSAT expands to Layered Network Substrate for Agent Telemetry. Licensed under
 Apache License 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+## Repository coordination
+
+VUSL specifications, LNSAT engine behavior and Rangoon application work are maintained in their respective repositories. Follow the [repository ownership and parallel-work rules](AGENTS.md#repository-ownership-and-parallel-work) for isolated worktrees, version-pinned consumer updates and reviewed cross-repository handoffs. Each project retains its own validation and release gates.
