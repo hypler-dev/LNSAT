@@ -17,7 +17,9 @@ jobs:
   verify:
     name: Node and Rust source gates
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The complete serial gate includes selected and full workspace Rust suites.
+    # Keep every check enabled while allowing bounded hosted-runner completion.
+    timeout-minutes: 60
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
