@@ -22,6 +22,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 #[cfg(test)]
+mod authenticated_recovery;
+#[cfg(test)]
 mod tests;
 
 /// Synthetic capture limits. These bound only the accepted typed payload after

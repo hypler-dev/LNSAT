@@ -66,6 +66,54 @@ test("rejects every unexpected vulnerable package", () => {
   assert.doesNotMatch(result.errors.join("\n"), /fast_uri/u);
 });
 
+test("finding diagnostics expose sorted public advisory IDs without raw report text", () => {
+  const report = cleanAuditReport();
+  report.vulnerabilities = {
+    private_name: {
+      name: secret,
+      via: [
+        { url: "https://github.com/advisories/GHSA-w74x-v6f9-j3xg", title: secret },
+        { url: "https://github.com/advisories/GHSA-5r4p-p66f-jhc7" },
+        { url: "https://github.com/advisories/GHSA-w74x-v6f9-j3xg" },
+        { url: "https://github.com.evil/advisories/GHSA-5r4p-p66f-jhc7" },
+        { url: "https://github.com/advisories/GHSA-5r4p-p66f-jhc7?" + secret },
+        { url: "https://github.com/advisories/GHSA-5r4p-p66f-jhc7\n" + secret },
+        { url: secret },
+        secret,
+        null,
+      ],
+    },
+  };
+  report.metadata.vulnerabilities.high = 1;
+  report.metadata.vulnerabilities.total = 1;
+  const result = evaluateNpmAudit(report);
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "npm audit reported 1 vulnerable package(s).",
+    "Public advisory identifiers (up to 32): GHSA-5r4p-p66f-jhc7, GHSA-w74x-v6f9-j3xg.",
+  ]);
+  assert.doesNotMatch(JSON.stringify(result), new RegExp(secret, "u"));
+  assert.doesNotMatch(result.errors.join("\n"), /private_name|github/u);
+});
+
+test("advisory diagnostics retain at most 32 identifiers independent of source order", () => {
+  const alphabet = "23456789cfghjmpqrvwx";
+  const urls = Array.from({ length: 40 }, (_, i) => ({
+    url: `https://github.com/advisories/GHSA-2222-2222-22${alphabet[Math.floor(i / 20)]}${alphabet[i % 20]}`,
+  }));
+  const report = cleanAuditReport();
+  report.vulnerabilities = { hidden: { via: urls } };
+  report.metadata.vulnerabilities.high = 1;
+  report.metadata.vulnerabilities.total = 1;
+  const forward = evaluateNpmAudit(report);
+  report.vulnerabilities.hidden.via.reverse();
+  const reverse = evaluateNpmAudit(report);
+  assert.deepEqual(forward, reverse);
+  assert.equal(forward.errors[1].match(/GHSA-/gu).length, 32);
+  assert.equal(forward.ok, false);
+  assert.deepEqual(forward.allowedAdvisories, []);
+});
+
 test("rejects npm audit top-level schema drift", () => {
   for (const report of [
     { auditReportVersion: 1, vulnerabilities: {}, metadata: {} },

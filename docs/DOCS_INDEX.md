@@ -274,6 +274,8 @@ subsystem or proposal.
 - [Private request-bound coordinator](architecture/request-bound-coordinator.md)
   — private test-only composition with prior 36-group source evidence; the
   observer/verifier child adds a narrow local 26-group conformance result.
+- [Private authenticated recovery candidate](architecture/request-bound-authenticated-recovery.md)
+  — recovered test-only source, transaction fence, and remaining product gaps.
 - [Request-bound Git observer and verifier](architecture/request-bound-git-observer.md)
   — private synthetic observation and current-binding verification mechanics,
   finite limits, recovery rules, and remaining G27–G32 qualification gates.
