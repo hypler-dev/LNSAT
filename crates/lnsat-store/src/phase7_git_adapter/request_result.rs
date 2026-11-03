@@ -41,6 +41,10 @@ pub(crate) struct VerifiedRequestGitResultV1 {
     observed: Phase7GitExecutionResultV1,
 }
 
+#[cfg(test)]
+type RecoveryFenceV1<'a> =
+    &'a mut dyn FnMut(&Transaction<'_>) -> Result<(), Phase7GitAdapterErrorV1>;
+
 pub(crate) struct RequestGitBindingV1 {
     pub(crate) launch_digest: [u8; 32],
     tool_arguments_digest: [u8; 32],
@@ -422,7 +426,14 @@ impl SqliteStore {
         proof: VerifiedRequestGitResultV1,
     ) -> Result<Phase8OperationReadbackV1, Phase7GitAdapterErrorV1> {
         let at = canonical_system_time_v1(SystemTime::now()).map_err(map_persistence)?;
-        self.persist_request_git_result_from_sources_v1(proof, &at, || Ok(()), || Ok(()))
+        self.persist_request_git_result_from_sources_v1(
+            proof,
+            &at,
+            || Ok(()),
+            || Ok(()),
+            #[cfg(test)]
+            None,
+        )
     }
 
     #[cfg(test)]
@@ -437,7 +448,37 @@ impl SqliteStore {
         P: FnOnce() -> Result<(), Phase7GitAdapterErrorV1>,
         A: FnOnce() -> Result<(), Phase7GitAdapterErrorV1>,
     {
-        self.persist_request_git_result_from_sources_v1(proof, recorded_at, precommit, after_commit)
+        self.persist_request_git_result_from_sources_v1(
+            proof,
+            recorded_at,
+            precommit,
+            after_commit,
+            None,
+        )
+    }
+
+    /// Test-only mandatory fence on the actual result transaction. This entry
+    /// cannot fall back to the historical unfenced writer.
+    #[cfg(test)]
+    pub(crate) fn persist_authenticated_request_git_result_v1<P, A>(
+        &mut self,
+        proof: VerifiedRequestGitResultV1,
+        recorded_at: &str,
+        fence: RecoveryFenceV1<'_>,
+        precommit: P,
+        after_commit: A,
+    ) -> Result<Phase8OperationReadbackV1, Phase7GitAdapterErrorV1>
+    where
+        P: FnOnce() -> Result<(), Phase7GitAdapterErrorV1>,
+        A: FnOnce() -> Result<(), Phase7GitAdapterErrorV1>,
+    {
+        self.persist_request_git_result_from_sources_v1(
+            proof,
+            recorded_at,
+            precommit,
+            after_commit,
+            Some(fence),
+        )
     }
 
     #[allow(clippy::too_many_lines)] // One lock owns revalidation, duplicate decision and all result writes.
@@ -447,6 +488,7 @@ impl SqliteStore {
         recorded_at: &str,
         precommit: P,
         after_commit: A,
+        #[cfg(test)] recovery_fence: Option<RecoveryFenceV1<'_>>,
     ) -> Result<Phase8OperationReadbackV1, Phase7GitAdapterErrorV1>
     where
         P: FnOnce() -> Result<(), Phase7GitAdapterErrorV1>,
@@ -485,6 +527,13 @@ impl SqliteStore {
             return Err(Phase7GitAdapterErrorV1::EvidenceDrift);
         }
         validate_observation(&binding, &proof.observed)?;
+        // The recovery-only authorization fence shares this exact Immediate
+        // transaction and precedes every result-ledger mutation. Non-test
+        // compilation removes the parameter, callback and branch entirely.
+        #[cfg(test)]
+        if let Some(fence) = recovery_fence {
+            fence(&transaction)?;
+        }
         let existing: Option<Vec<u8>> = transaction
             .query_row(
                 "SELECT result_digest FROM lnsat_operation_receipts WHERE operation_id=?1",

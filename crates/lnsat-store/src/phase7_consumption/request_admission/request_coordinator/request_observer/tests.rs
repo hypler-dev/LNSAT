@@ -28,7 +28,7 @@ impl TestDatabase {
     fn new(name: &str) -> Self {
         let sequence = NEXT_TEST_DATABASE.fetch_add(1, Ordering::Relaxed);
         let path = std::env::temp_dir().join(format!(
-            "lnsat-store-{}-{name}-{sequence}.sqlite3",
+            "lnsat-store-observer-{}-{name}-{sequence}.sqlite3",
             std::process::id()
         ));
         Self { path }
@@ -1699,7 +1699,7 @@ fn request_observer_g26_structural_closure() {
     );
     pin(
         include_bytes!("../../../../phase7_git_adapter/request_result.rs"),
-        "2ac4fef3d1fb5a49fdda0d031538a4a8c5e580d98b02a673fa3c7a37acbd9f9e",
+        "a017a688db1db5cc0769e721ea5a25071f4f1735362ffb7a304433c8b69e979c",
     );
     pin(
         include_bytes!("../../../../../migrations/0018_action_requests.sql"),

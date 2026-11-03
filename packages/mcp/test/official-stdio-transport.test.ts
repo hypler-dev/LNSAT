@@ -60,6 +60,8 @@ describe("@lnsat/mcp BP-0015 official SDK local stdio transport", () => {
       official_sdk_track: "v2.x",
       official_sdk_package: "@modelcontextprotocol/server",
       official_sdk_version_checked: "2.0.0",
+      official_sdk_version_checked_scope: "historical-mcp-2026-migration",
+      official_sdk_version_selected: "2.4.0",
       protocol_version: "2026-07-28",
       protocol_modes: ["legacy", "auto", "2026-07-28"],
       target_transport_import: "@modelcontextprotocol/server/stdio",
