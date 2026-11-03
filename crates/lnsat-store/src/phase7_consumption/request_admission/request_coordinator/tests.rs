@@ -28,7 +28,7 @@ impl TestDatabase {
     fn new(name: &str) -> Self {
         let sequence = NEXT_TEST_DATABASE.fetch_add(1, Ordering::Relaxed);
         let path = std::env::temp_dir().join(format!(
-            "lnsat-store-{}-{name}-{sequence}.sqlite3",
+            "lnsat-store-coordinator-{}-{name}-{sequence}.sqlite3",
             std::process::id()
         ));
         Self { path }

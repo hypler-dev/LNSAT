@@ -10,7 +10,27 @@ admission, LNSAT authorization, durable operation recovery, and production
 support. Checked-in source and tests establish experimental implementation only;
 they do not establish production support.
 
+## Selected November 3 Repair Versions
+
+The current uncommitted dependency candidate selects the versions below from
+official npm metadata. Lockfile integrity is recorded in `package-lock.json`;
+installed-tree signature verification, workspace typechecks, builds and tests
+passed.
+The protocol selection remains unchanged. Historical compatibility evidence below
+does not qualify these newly selected packages.
+
+| Package                        | Selected version |
+| ------------------------------ | ---------------- |
+| `@modelcontextprotocol/core`   | `2.4.0`          |
+| `@modelcontextprotocol/server` | `2.4.0`          |
+| `@modelcontextprotocol/client` | `2.4.0`          |
+| `@modelcontextprotocol/node`   | `2.1.2`          |
+| `@modelcontextprotocol/sdk`    | `1.32.0`         |
+
 ## Upstream Baseline
+
+The following table is a historical compatibility checkpoint, not the current
+repair candidate.
 
 Dependency selection is evidence-gated. Versions below were checked against
 official project documentation and package registries on 2026-08-04. Before any
@@ -38,9 +58,8 @@ FastMCP `4.0.0b1` sdist SHA-256 is
 `f98d69588a73e1672840558641d5d0f111e207baffe001f3465713a53ebb6b4c`.
 FastMCP 2.x is outside target scope.
 
-The production MCP server, core, and Node wrapper remain pinned to 2.0.0.
-The test client is pinned to 2.2.0, and the legacy SDK used by conformance is
-pinned to 1.31.0. Their patched releases address
+At that historical checkpoint, MCP server, core and Node wrapper were 2.0.0.
+The test client was 2.2.0 and the legacy SDK used by conformance was 1.31.0. Their patched releases address
 [GHSA-6qxp-vccf-f47h](https://github.com/advisories/GHSA-6qxp-vccf-f47h).
 LNSAT currently uses the SDK client through test-only stdio and in-memory
 transports; this refresh does not add an OAuth client or credential migration.

@@ -3,6 +3,31 @@
 LNSAT `0.1.0` is pre-release, source-only software. Repository is suitable for
 contract evaluation and contributor development, not production operation.
 
+## November 3 Functional Repair Candidate
+
+The source candidate starts from public main `35a41963`. It updates vulnerable
+locked dependencies while preserving audit thresholds and toolchain pins. The
+pinned Node 22.22.3 and npm 10.9.8 install passed registry signature verification
+with zero invalid or missing signatures. The installed-tree audit found zero
+unexpected vulnerabilities with no allowances. The October 20 main run
+`39497346100` reported three vulnerable packages without naming them. Current
+audit results do not establish the identity of those historical findings.
+
+The selected MCP versions are core/server/client `2.4.0`, Node wrapper `2.1.2`,
+and transitive legacy SDK `1.32.0`. Workspace typechecks, production builds and
+JavaScript workspace tests passed with the selected packages. The exported
+transport decision still scopes its `2.0.0` checked-version value to the historical
+migration. Older package-set paragraphs below describe historical checkpoints.
+
+The candidate integrates four hash-matched recovered Rust files. The 28
+authenticated recovery tests passed on the initial integration, including the
+current Owner/session fence on the actual result transaction. The broader Rust
+run exposed shared temporary database names and a stale writer pin. The test
+suites now use separate filename namespaces, and the structural check pins the
+reviewed successor writer. Both 32-writer tests passed when rerun in isolation.
+The recovery model and fence remain test-only. Functional readiness, Phase 10
+exit and Phase 11 runtime remain unfinished.
+
 ## Console Asset CI Test Isolation
 
 The post-merge main source run `39210746736` at `f5d6a592` failed when the
@@ -316,17 +341,18 @@ explicit authority-safe contract. LNSAT stays standalone. This documentation add
 no runtime, privacy, SDK, policy, installer, supported target, badge or certification
 implementation and preserves all existing source/design/merge/runtime/release gates.
 
-### Main dependency audit remediation
+### Historical October Dependency Audit Remediation
 
-Canonical implementation record: this subsection. The professional-testing
+Historical implementation record; the November 3 candidate above supersedes
+only the selected current package versions. The professional-testing
 plan's hosted source check identified three vulnerable packages in the existing
 public-main lockfile. A fresh manifests-only advisory query reproduced high
-advisories for MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4. The bounded
-maintenance candidate pins the test client to 2.2.0, transitive SDK to 1.31.0
+advisories for MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4. That historical bounded
+maintenance candidate pinned the test client to 2.2.0, transitive SDK to 1.31.0
 and Sharp to 0.35.5 with its exact platform dependency closure. These pins reuse
 the separately reviewed source candidate; broader private engine features are
-not included. Production MCP server, core and Node wrapper remain 2.0.0;
-the test client resolves its own core 2.2.0.
+not included. At that checkpoint, production MCP server, core and Node wrapper were 2.0.0;
+the test client resolved its own core 2.2.0.
 
 The [upstream baseline](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md#upstream-baseline)
 records the package identities and removes a stale advisory-allowance claim.
@@ -453,15 +479,15 @@ gate. Actual-effect custody, all-writer/native freeze, cumulative accounting,
 required-context integrations, real runtime and supported packaging remain
 unfinished under their existing records. No runtime or release authority opens.
 
-### Scoped dependency maintenance candidate
+### Historical Scoped Dependency Maintenance Candidate
 
 Owner-authorized development restoration uses an isolated project cache, the
 pinned Node/npm pair, exact lockfile integrity and verified npm registry origins
 with lifecycle scripts disabled. A fresh advisory check identified affected
-MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4 dependencies. The current
-candidate pins the test client to 2.2.0, transitive legacy SDK to 1.31.0 and
-Sharp to 0.35.5 with its matching platform closure. Production MCP server,
-core and Node wrapper remain 2.0.0; the client resolves its own core 2.2.0.
+MCP client 2.0.0, legacy SDK 1.30.0 and Sharp 0.35.4 dependencies. That October
+candidate pinned the test client to 2.2.0, transitive legacy SDK to 1.31.0 and
+Sharp to 0.35.5 with its matching platform closure. At that checkpoint, production MCP server,
+core and Node wrapper were 2.0.0; the client resolved its own core 2.2.0.
 No OAuth client, credential intake or runtime integration is introduced.
 
 The [dependency baseline](architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md#upstream-baseline)

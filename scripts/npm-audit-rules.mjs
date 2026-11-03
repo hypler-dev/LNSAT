@@ -39,6 +39,10 @@ export function evaluateNpmAudit(report) {
 
   if (vulnerabilityCount > 0) {
     errors.push(`npm audit reported ${vulnerabilityCount} vulnerable package(s).`);
+    const identifiers = boundedAdvisoryIdentifiers(report.vulnerabilities);
+    if (identifiers.length > 0) {
+      errors.push(`Public advisory identifiers (up to 32): ${identifiers.join(", ")}.`);
+    }
   }
 
   return {
@@ -46,6 +50,28 @@ export function evaluateNpmAudit(report) {
     errors,
     allowedAdvisories: [],
   };
+}
+
+// Report only canonical public identifiers. Names, paths, titles and raw URLs
+// may contain private or attacker-controlled text and must not reach CI logs.
+function boundedAdvisoryIdentifiers(vulnerabilities) {
+  const identifiers = new Set();
+  const canonical =
+    /^https:\/\/github\.com\/advisories\/(GHSA-[23456789cfghjmpqrvwx]{4}-[23456789cfghjmpqrvwx]{4}-[23456789cfghjmpqrvwx]{4})$/u;
+  for (const vulnerability of Object.values(vulnerabilities)) {
+    if (!Array.isArray(vulnerability?.via)) continue;
+    for (const source of vulnerability.via) {
+      if (typeof source?.url !== "string") continue;
+      const match = canonical.exec(source.url);
+      if (!match) continue;
+      identifiers.add(match[1]);
+      if (identifiers.size > 32) {
+        // Keep the lexicographically first 32 independently of input order.
+        identifiers.delete([...identifiers].sort().at(-1));
+      }
+    }
+  }
+  return [...identifiers].sort();
 }
 
 export function evaluateNpmSignatures(report) {

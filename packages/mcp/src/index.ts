@@ -308,6 +308,8 @@ export const mcpOfficialStdioTransportDecision = {
   official_sdk_track: "v2.x",
   official_sdk_package: "@modelcontextprotocol/server",
   official_sdk_version_checked: "2.0.0",
+  official_sdk_version_checked_scope: "historical-mcp-2026-migration",
+  official_sdk_version_selected: "2.4.0",
   protocol_version: MCP_MODERN_PROTOCOL_VERSION,
   protocol_modes: ["legacy", "auto", MCP_MODERN_PROTOCOL_VERSION],
   target_transport_import: "@modelcontextprotocol/server/stdio",
