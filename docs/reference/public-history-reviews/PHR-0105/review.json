@@ -1,0 +1,109 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0105-independent-implementation-review-b1cabe30",
+  "review_type": "independent_implementation_review",
+  "packet_ids": [
+    "dependency-audit-recovery-conformance"
+  ],
+  "base_revision": "35a41963ad698934c7ee00852c71355e329c34fa",
+  "reviewed_revision": "b1cabe3002cc64cc6fe305c6c8ef8952e74baa80",
+  "reviewed_tree_oid": "3a1a1f22fd2e5b90a3435c8b2ef487f76181881b",
+  "diff_sha256": "sha256:0c30763c7efd0212dad0861a47e174109cda4837336fac0ef00b5516217c8f56",
+  "protected_files": [
+    {
+      "path": "apps/api/package.json",
+      "sha256": "sha256:3dbd37c63b4effaa510d8ae59b5f06c16d321f9515862cadda70d7563bee2189"
+    },
+    {
+      "path": "apps/console/package.json",
+      "sha256": "sha256:7beea5fd29edadc8d08a9a673e5be9874234d81d05accf459b12978882e045f4"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer.rs",
+      "sha256": "sha256:f04b35d22efb34c53f6bdcbdd50f1833fa6a6a5a3b3db32e6798edf62bceb222"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/authenticated_recovery.rs",
+      "sha256": "sha256:a26262fa43aff011897cda26054a82ccf5ed8e29c3e754d5ad2019a0a26f7979"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/authenticated_recovery/tests.rs",
+      "sha256": "sha256:e75407ce1e786819c43f7702f3da7a60e8a104985ab74428182b05810c144618"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/tests.rs",
+      "sha256": "sha256:7b5a4219516f234e34d47036e7a3dbd006a3445c4320c9be3849ba2454faf6b8"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/tests.rs",
+      "sha256": "sha256:36c64d9c8d9a984e00de60a17d6d8dd35c15583e451ebf0b2052de8e70ae7304"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_git_adapter/request_result.rs",
+      "sha256": "sha256:a017a688db1db5cc0769e721ea5a25071f4f1735362ffb7a304433c8b69e979c"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:dab2934c5e5978911e696813c669a7ebebe433043a7d97b579b43a63882deca4"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:881dc028506f1db656303a0a75a38d8ca40f4015f1858aae78f69a2276d8bd24"
+    },
+    {
+      "path": "docs/architecture/MCP_V2_FASTMCP_INTEROPERABILITY_AND_OUTAGE_RECOVERY.md",
+      "sha256": "sha256:0dc1cb8853a20de7c218c20c3d8be8566cc101c04a15a48ffe408b8d97a2d2b3"
+    },
+    {
+      "path": "docs/architecture/request-bound-authenticated-recovery.md",
+      "sha256": "sha256:fce99f4f669ecdadaec011f88eaf4cfcb6e7e642c2c9c187fcc9952ffe81a91d"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:e87d86ea9129078713c157730edcbbed79185d98eb665077ee921fba4a5d9a89"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:571d41b58af154444f95de00077f95f20cf5fd12a4da6adf8a494357566a23c0"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:92596edce481c60cc2664f5465aa837a2f7d8f8bd2b80a6c12958718c0527e7a"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:2ba4404930c7ccda35f83b2c369f6e3d479a7bb40a824cb358d9218bc1b4a85c"
+    },
+    {
+      "path": "packages/mcp/package.json",
+      "sha256": "sha256:c7f611c29c67e01f82f2450c6afbbf9540353a6f5b572f7fdcaee89f9e65edb9"
+    },
+    {
+      "path": "packages/mcp/src/index.ts",
+      "sha256": "sha256:2f8c6d5052a554317a732c93c2b1287b08a32559022ce9579f9b4d76885d418a"
+    },
+    {
+      "path": "packages/mcp/test/official-stdio-transport.test.ts",
+      "sha256": "sha256:0ceded5d35d6404932672812abd28ec4103cf030097698a5d4f782340675ace6"
+    },
+    {
+      "path": "scripts/npm-audit-rules.mjs",
+      "sha256": "sha256:9517d06afba9d77bb6c2b92b90d219953aebcab870b8cfa62324a177c00d595d"
+    },
+    {
+      "path": "scripts/npm-audit-rules.test.mjs",
+      "sha256": "sha256:22307f5d2e1ccfbd1856c71bdc045d20c907624787aecc6a1d1987cc3809d125"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/repair_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh. Independent source and delta reviews covered dependency metadata, test-only recovery, audit diagnostics and fixture corrections. Installed-tree audit and signatures, build, typecheck and source test stages passed across local runs. Backend runtime model identity unexposed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
