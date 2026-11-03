@@ -2,9 +2,7 @@
   "schema_version": "lnsat.security_review.v1",
   "review_id": "PHR-0105-independent-implementation-review-b1cabe30",
   "review_type": "independent_implementation_review",
-  "packet_ids": [
-    "dependency-audit-recovery-conformance"
-  ],
+  "packet_ids": ["dependency-audit-recovery-conformance"],
   "base_revision": "35a41963ad698934c7ee00852c71355e329c34fa",
   "reviewed_revision": "b1cabe3002cc64cc6fe305c6c8ef8952e74baa80",
   "reviewed_tree_oid": "3a1a1f22fd2e5b90a3435c8b2ef487f76181881b",
