@@ -21,7 +21,12 @@ use crate::docker_local_runtime_proof_run_manifest::{
     DockerLocalRuntimeProofRunManifestSourceInputV1, DockerLocalRuntimeProofRunWindowV1,
     DockerLocalRuntimeProofTargetDeclarationV1, build_docker_local_runtime_proof_run_manifest_v1,
 };
-use crate::docker_local_supervisor::docker_local_supervised_git_result_digest_v1;
+use crate::docker_local_supervisor::{
+    DockerLocalSupervisorErrorV1, DockerLocalSupervisorInputV1,
+    docker_local_supervised_git_result_digest_v1,
+    supervise_docker_local_git_execution_with_fresh_claim_v1,
+    supervise_docker_local_git_execution_with_test_hook_v1,
+};
 use crate::runtime_profile::{
     DOCKER_LOCAL_ADAPTER_REF_V1, DOCKER_LOCAL_ADAPTER_VERSION_V1, DOCKER_LOCAL_AUDIENCE_V1,
     LoadedDockerLocalRuntimeProfileV1, load_docker_local_runtime_profile_v1,
@@ -875,6 +880,176 @@ fn pre_supervisor_guard_structural_or_durable_reject_marks_unknown() {
         Err(DockerLocalRuntimeProofDriverPreSupervisorGuardErrorV1::DurableProofRejected)
     ));
     assert_phase11_unknown(&store, &fixture.operation_id);
+}
+
+#[test]
+fn guarded_supervisor_rechecks_durable_claim_at_launch() {
+    let fixture = ServedFakeRuntimeFixture::new("guarded-supervisor-positive", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let input = DockerLocalSupervisorInputV1 {
+        payload: &fixture.payload,
+        loaded_profile: &fixture.profile,
+        docker_executable: &fixture.fake_docker_executable,
+        verifier_git_executable: Path::new(GIT_EXECUTABLE),
+        disposable_root: &fixture.git.root,
+    };
+    let result = supervise_docker_local_git_execution_with_fresh_claim_v1(
+        &input,
+        &std::sync::Mutex::new(store),
+        handle,
+        &fixture.requester_session_token,
+        &fixture.requester_csrf,
+    );
+    assert!(
+        result.is_ok(),
+        "exact proof must permit fake supervisor test: {result:?}"
+    );
+    assert_eq!(fixture.run_count(), 1);
+}
+
+#[test]
+fn guarded_supervisor_rejects_durable_drift_after_claim_before_launch() {
+    let fixture = ServedFakeRuntimeFixture::new("guarded-durable-drift", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    store
+        .mark_phase11_docker_outcome_unknown_v1(&fixture.operation_id)
+        .expect("post-claim drift");
+    let result = supervise_docker_local_git_execution_with_fresh_claim_v1(
+        &DockerLocalSupervisorInputV1 {
+            payload: &fixture.payload,
+            loaded_profile: &fixture.profile,
+            docker_executable: &fixture.fake_docker_executable,
+            verifier_git_executable: Path::new(GIT_EXECUTABLE),
+            disposable_root: &fixture.git.root,
+        },
+        &std::sync::Mutex::new(store),
+        handle,
+        &fixture.requester_session_token,
+        &fixture.requester_csrf,
+    );
+    assert!(matches!(
+        result,
+        Err(DockerLocalSupervisorErrorV1::PreSupervisorProofRejected)
+    ));
+    assert_eq!(fixture.run_count(), 0);
+}
+
+#[test]
+fn supervisor_rejects_executable_changed_after_pre_spawn_hook() {
+    let fixture = ServedFakeRuntimeFixture::new("guarded-executable-drift", FakeMode::Success);
+    let input = DockerLocalSupervisorInputV1 {
+        payload: &fixture.payload,
+        loaded_profile: &fixture.profile,
+        docker_executable: &fixture.fake_docker_executable,
+        verifier_git_executable: Path::new(GIT_EXECUTABLE),
+        disposable_root: &fixture.git.root,
+    };
+    let result = supervise_docker_local_git_execution_with_test_hook_v1(&input, || {
+        fs::write(&fixture.fake_docker_executable, b"#!/bin/sh\nexit 0\n")
+            .expect("mutate disposable fake executable");
+        Ok(())
+    });
+    assert!(matches!(
+        result,
+        Err(DockerLocalSupervisorErrorV1::DockerExecutableInvalid)
+    ));
+    assert_eq!(fixture.run_count(), 0);
+}
+
+#[test]
+fn supervisor_rejects_target_changed_after_pre_spawn_hook() {
+    let fixture = ServedFakeRuntimeFixture::new("guarded-target-drift", FakeMode::Success);
+    let input = DockerLocalSupervisorInputV1 {
+        payload: &fixture.payload,
+        loaded_profile: &fixture.profile,
+        docker_executable: &fixture.fake_docker_executable,
+        verifier_git_executable: Path::new(GIT_EXECUTABLE),
+        disposable_root: &fixture.git.root,
+    };
+    let result = supervise_docker_local_git_execution_with_test_hook_v1(&input, || {
+        fs::remove_file(fixture.git.repository.join(PHASE7_GIT_FIXTURE_MARKER_V1))
+            .expect("remove disposable target marker");
+        Ok(())
+    });
+    assert!(matches!(
+        result,
+        Err(DockerLocalSupervisorErrorV1::TargetRejected)
+    ));
+    assert_eq!(fixture.run_count(), 0);
+}
+
+#[test]
+fn supervisor_rejects_endpoint_changed_after_pre_spawn_hook() {
+    let fixture = ServedFakeRuntimeFixture::new("guarded-endpoint-drift", FakeMode::Success);
+    let input = DockerLocalSupervisorInputV1 {
+        payload: &fixture.payload,
+        loaded_profile: &fixture.profile,
+        docker_executable: &fixture.fake_docker_executable,
+        verifier_git_executable: Path::new(GIT_EXECUTABLE),
+        disposable_root: &fixture.git.root,
+    };
+    let result = supervise_docker_local_git_execution_with_test_hook_v1(&input, || {
+        fs::remove_file(&fixture.docker_socket).expect("remove disposable endpoint");
+        Ok(())
+    });
+    assert!(matches!(
+        result,
+        Err(DockerLocalSupervisorErrorV1::DockerEndpointInvalid)
+    ));
+    assert_eq!(fixture.run_count(), 0);
+}
+
+#[test]
+fn guarded_supervisor_rejects_wrong_durable_claim_before_process_creation() {
+    let source = ServedFakeRuntimeFixture::new("guarded-proof-source", FakeMode::Success);
+    let mut store = SqliteStore::open(&source.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &source);
+    let target = ServedFakeRuntimeFixture::new("guarded-proof-target", FakeMode::Success);
+    let result = supervise_docker_local_git_execution_with_fresh_claim_v1(
+        &DockerLocalSupervisorInputV1 {
+            payload: &target.payload,
+            loaded_profile: &target.profile,
+            docker_executable: &target.fake_docker_executable,
+            verifier_git_executable: Path::new(GIT_EXECUTABLE),
+            disposable_root: &target.git.root,
+        },
+        &std::sync::Mutex::new(store),
+        handle,
+        &source.requester_session_token,
+        &source.requester_csrf,
+    );
+    assert!(matches!(
+        result,
+        Err(DockerLocalSupervisorErrorV1::PreSupervisorProofRejected)
+    ));
+    assert_eq!(target.run_count(), 0);
+}
+
+#[test]
+fn guarded_supervisor_preflight_rejects_before_durable_verification() {
+    let fixture = ServedFakeRuntimeFixture::new("guarded-preflight-reject", FakeMode::Success);
+    let mut store = SqliteStore::open(&fixture.database_path).expect("guard store must open");
+    let handle = claim_pre_supervisor_guard_handle(&mut store, &fixture);
+    let result = supervise_docker_local_git_execution_with_fresh_claim_v1(
+        &DockerLocalSupervisorInputV1 {
+            payload: &fixture.payload,
+            loaded_profile: &fixture.profile,
+            docker_executable: Path::new("/missing/phase11-docker"),
+            verifier_git_executable: Path::new(GIT_EXECUTABLE),
+            disposable_root: &fixture.git.root,
+        },
+        &std::sync::Mutex::new(store),
+        handle,
+        &fixture.requester_session_token,
+        &fixture.requester_csrf,
+    );
+    assert!(matches!(
+        result,
+        Err(DockerLocalSupervisorErrorV1::DockerExecutableInvalid)
+    ));
+    assert_eq!(fixture.run_count(), 0);
 }
 
 fn claim_pre_supervisor_guard_handle(
