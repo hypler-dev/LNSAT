@@ -4,7 +4,7 @@ use crate::selected_store::{
     test_decode_native_main as decode_native_main, test_observe_native_main as observe_native_main,
     validate_metadata,
 };
-use std::os::unix::fs::{DirBuilderExt, PermissionsExt, symlink};
+use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt, symlink};
 use std::sync::atomic::AtomicBool;
 
 struct PrivateDatabase {
@@ -722,5 +722,275 @@ fn selected_store_native_filestat_allocation_is_bounded_and_other_vfs_denies() {
     assert_eq!(
         observe_native_main(&other, 4096),
         Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+    );
+}
+
+#[test]
+fn selected_write_fixture_holds_lease_and_commits_or_rolls_back_owner() {
+    use crate::owner_bootstrap::{
+        insert_local_owner_bootstrap_v1, prepare_local_owner_bootstrap_v1,
+    };
+    use crate::selected_store::writable_fixture::SelectedWriteFixture;
+
+    let fixture = PrivateDatabase::current();
+    let prepared =
+        prepare_local_owner_bootstrap_v1(&owner_bootstrap_input("fixture-owner-password")).unwrap();
+    let writer = SelectedWriteFixture::open(&fixture.path).unwrap();
+    assert_eq!(
+        open_error(&fixture.path),
+        SelectedLocalStoreErrorV1::DatabaseBusy
+    );
+    let failure = writer.transaction(|tx| {
+        insert_local_owner_bootstrap_v1(tx, &prepared).unwrap();
+        Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+    });
+    assert_eq!(failure, Err(SelectedLocalStoreErrorV1::StoreUnverifiable));
+    let mut inspected =
+        SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
+    assert!(inspected.inspect_headless_bootstrap_store_v1().is_ok());
+    drop(inspected);
+
+    SelectedWriteFixture::open(&fixture.path)
+        .unwrap()
+        .transaction(|tx| {
+            insert_local_owner_bootstrap_v1(tx, &prepared).unwrap();
+            Ok(())
+        })
+        .unwrap();
+    let mut inspected =
+        SqliteStore::open_selected_local_store_inspection_v1(&fixture.path).unwrap();
+    assert_eq!(
+        inspected.inspect_headless_bootstrap_store_v1(),
+        Err(HeadlessBootstrapStoreErrorV1::NotAuthorityEmpty)
+    );
+}
+
+#[test]
+fn selected_write_fixture_rejects_coordination_alias_before_open() {
+    use crate::selected_store::writable_fixture::SelectedWriteFixture;
+
+    let fixture = PrivateDatabase::current();
+    let wal = fixture.directory.join("store.sqlite-wal");
+    symlink(&fixture.path, &wal).unwrap();
+    assert_eq!(
+        SelectedWriteFixture::open(&fixture.path).err(),
+        Some(SelectedLocalStoreErrorV1::InvalidSelection)
+    );
+    assert!(fs::symlink_metadata(&wal).unwrap().is_symlink());
+}
+
+#[test]
+fn selected_write_fixture_rejects_replaced_wal_before_commit() {
+    use crate::selected_store::writable_fixture::SelectedWriteFixture;
+
+    let fixture = PrivateDatabase::current();
+    let wal = fixture.directory.join("store.sqlite-wal");
+    let original = fixture.directory.join("original-wal");
+    let writer = SelectedWriteFixture::open(&fixture.path).unwrap();
+    let error = writer.transaction(|_| {
+        fs::rename(&wal, &original).unwrap();
+        fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&wal)
+            .unwrap();
+        Ok(())
+    });
+    assert_eq!(error, Err(SelectedLocalStoreErrorV1::CustodyChanged));
+    assert!(original.is_file());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn selected_linux_production_migration_is_inert_and_preserves_shared_lease() {
+    use crate::selected_store::writable::SelectedWritableStore;
+    let _serial = LINUX_PRODUCTION_TEST_MUTEX.lock().unwrap();
+    let fixture = PrivateDatabase::current();
+    let session = SelectedWritableStore::open(&fixture.path).unwrap();
+    assert_eq!(
+        open_error(&fixture.path),
+        SelectedLocalStoreErrorV1::DatabaseBusy
+    );
+    let session = session.migrate_to_inert().unwrap();
+    assert_eq!(
+        open_error(&fixture.path),
+        SelectedLocalStoreErrorV1::DatabaseBusy
+    );
+    session.close().unwrap();
+    for suffix in ["-wal", "-shm"] {
+        assert!(
+            !fixture
+                .directory
+                .join(format!("store.sqlite{suffix}"))
+                .exists()
+        );
+    }
+    SelectedWritableStore::open(&fixture.path)
+        .unwrap()
+        .close()
+        .unwrap();
+
+    let connection =
+        Connection::open_with_flags(&fixture.path, OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+    crate::selected_schema::verify(&connection).unwrap();
+    crate::selected_schema::require_empty(&connection).unwrap();
+    assert!(SqliteStore::open(&fixture.path).is_err());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn selected_linux_production_denies_masked_named_acl_without_chmod_or_migration() {
+    use crate::selected_store::writable::SelectedWritableStore;
+    let _serial = LINUX_PRODUCTION_TEST_MUTEX.lock().unwrap();
+    let fixture = PrivateDatabase::current();
+    let mut acl = 2_u32.to_le_bytes().to_vec();
+    let uid = nix::unistd::getuid().as_raw().checked_add(1).unwrap();
+    for (tag, permissions, id) in [
+        (1_u16, 6_u16, u32::MAX),
+        (2, 4, uid),
+        (4, 0, u32::MAX),
+        (16, 0, u32::MAX),
+        (32, 0, u32::MAX),
+    ] {
+        acl.extend(tag.to_le_bytes());
+        acl.extend(permissions.to_le_bytes());
+        acl.extend(id.to_le_bytes());
+    }
+    rustix::fs::lsetxattr(
+        &fixture.path,
+        c"system.posix_acl_access",
+        &acl,
+        rustix::fs::XattrFlags::empty(),
+    )
+    .unwrap();
+    assert_eq!(
+        fs::symlink_metadata(&fixture.path)
+            .unwrap()
+            .permissions()
+            .mode()
+            & 0o777,
+        0o600
+    );
+    assert!(SelectedWritableStore::open(&fixture.path).is_err());
+    let connection =
+        Connection::open_with_flags(&fixture.path, OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+    assert_eq!(pragma_i64(&connection, "user_version"), Ok(18));
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn selected_linux_ancestor_acl_write_mask_is_reflected_and_denied() {
+    use crate::selected_store::writable::SelectedWritableStore;
+    let _serial = LINUX_PRODUCTION_TEST_MUTEX.lock().unwrap();
+    let fixture = PrivateDatabase::new();
+    let ancestor = fixture.directory.join("ancestor");
+    let parent = ancestor.join("private");
+    fs::DirBuilder::new().mode(0o755).create(&ancestor).unwrap();
+    fs::DirBuilder::new().mode(0o700).create(&parent).unwrap();
+    let path = parent.join("store.sqlite");
+    drop(SqliteStore::open(&path).unwrap());
+    let uid = nix::unistd::getuid().as_raw().checked_add(1).unwrap();
+    let mut acl = 2_u32.to_le_bytes().to_vec();
+    for (tag, permissions, id) in [
+        (1_u16, 7_u16, u32::MAX),
+        (2, 7, uid),
+        (4, 5, u32::MAX),
+        (16, 7, u32::MAX),
+        (32, 5, u32::MAX),
+    ] {
+        acl.extend(tag.to_le_bytes());
+        acl.extend(permissions.to_le_bytes());
+        acl.extend(id.to_le_bytes());
+    }
+    rustix::fs::lsetxattr(
+        &ancestor,
+        c"system.posix_acl_access",
+        &acl,
+        rustix::fs::XattrFlags::empty(),
+    )
+    .unwrap();
+    assert_eq!(fs::metadata(&ancestor).unwrap().mode() & 0o777, 0o775);
+    assert!(SelectedWritableStore::open(&path).is_err());
+    let connection = Connection::open_with_flags(&path, OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+    assert_eq!(pragma_i64(&connection, "user_version"), Ok(18));
+}
+
+#[cfg(target_os = "linux")]
+static LINUX_PRODUCTION_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+#[cfg(target_os = "linux")]
+#[test]
+fn selected_linux_close_quarantine_preserves_lease_and_replaced_evidence() {
+    let _serial = LINUX_PRODUCTION_TEST_MUTEX.lock().unwrap();
+    for mode in ["busy", "wal-replace"] {
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--ignored",
+                "--exact",
+                "tests::selected_store::selected_linux_close_failure_child",
+            ])
+            .env("LNSAT_SELECTED_CLOSE_TEST_MODE", mode)
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::inherit())
+            .spawn()
+            .unwrap();
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+        loop {
+            if let Some(status) = child.try_wait().unwrap() {
+                assert!(status.success(), "close quarantine child failed for {mode}");
+                break;
+            }
+            if std::time::Instant::now() >= deadline {
+                child.kill().unwrap();
+                let _ = child.wait();
+                panic!("close quarantine child timed out");
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "invoked explicitly in a disposable process by close quarantine test"]
+fn selected_linux_close_failure_child() {
+    use crate::selected_store::writable::SelectedWritableStore;
+    let fixture = PrivateDatabase::current();
+    let session = SelectedWritableStore::open(&fixture.path).unwrap();
+    match std::env::var("LNSAT_SELECTED_CLOSE_TEST_MODE")
+        .unwrap()
+        .as_str()
+    {
+        "busy" => {
+            session.leave_busy_statement_for_close_test();
+            assert_eq!(
+                session.close(),
+                Err(SelectedLocalStoreErrorV1::StoreUnverifiable)
+            );
+        }
+        "wal-replace" => {
+            let session = session.migrate_to_inert().unwrap();
+            let wal = fixture.directory.join("store.sqlite-wal");
+            let retained = fixture.directory.join("retained-wal");
+            fs::rename(&wal, &retained).unwrap();
+            fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .mode(0o600)
+                .open(&wal)
+                .unwrap();
+            assert_eq!(
+                session.close(),
+                Err(SelectedLocalStoreErrorV1::CustodyChanged)
+            );
+            assert!(wal.is_file());
+            assert!(retained.is_file());
+        }
+        _ => panic!("unknown exact close test mode"),
+    }
+    assert_eq!(
+        open_error(&fixture.path),
+        SelectedLocalStoreErrorV1::DatabaseBusy
     );
 }

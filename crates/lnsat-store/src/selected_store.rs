@@ -249,6 +249,14 @@ impl SelectedStoreCustodyV1 {
     }
 
     fn verify_native_metadata(&self, descriptor: i32) -> Result<(), SelectedLocalStoreErrorV1> {
+        self.verify_native_file(descriptor, &self.database_identity)
+    }
+
+    fn verify_native_file(
+        &self,
+        descriptor: i32,
+        identity: &FileIdentity,
+    ) -> Result<(), SelectedLocalStoreErrorV1> {
         // Safe upstream fstat(RawFd): never opens, duplicates, owns or closes
         // SQLite's descriptor. A separate close could clear other connections'
         // process-wide POSIX locks, even while those connections remain alive.
@@ -263,8 +271,8 @@ impl SelectedStoreCustodyV1 {
             || stat.st_mode & nix_stat::libc::S_IFMT != nix_stat::libc::S_IFREG
             || stat.st_mode & 0o7777 != 0o600
             || stat.st_nlink != 1
-            || device != self.database_identity.device
-            || stat.st_ino != self.database_identity.inode
+            || device != identity.device
+            || stat.st_ino != identity.inode
         {
             return Err(SelectedLocalStoreErrorV1::CustodyChanged);
         }
@@ -403,8 +411,8 @@ const NATIVE_SOURCE_ID: &str =
 #[serde(deny_unknown_fields)]
 struct NativeFileStat {
     db: NativeMainFileStat,
-    #[serde(default, rename = "journal")]
-    _journal: Option<serde::de::IgnoredAny>,
+    #[serde(default)]
+    journal: Option<NativeMainFileStat>,
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -417,8 +425,8 @@ struct NativeMainFileStat {
     _lock: Option<serde::de::IgnoredAny>,
     #[serde(default, rename = "pal")]
     _posix_locks: Option<serde::de::IgnoredAny>,
-    #[serde(default, rename = "shm")]
-    _shm: Option<serde::de::IgnoredAny>,
+    #[serde(default)]
+    shm: Option<NativeShmFileStat>,
     #[serde(default, rename = "mmapSize")]
     _mmap_size: Option<serde::de::IgnoredAny>,
     #[serde(default, rename = "nFetchOut")]
@@ -428,7 +436,24 @@ struct NativeMainFileStat {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NativeShmFileStat {
+    h: i32,
+    #[serde(rename = "nRef")]
+    _references: i32,
+    #[serde(rename = "id")]
+    _id: i32,
+    #[serde(rename = "sharedMask")]
+    _shared: i32,
+    #[serde(rename = "exclMask")]
+    _exclusive: i32,
+    #[serde(default, rename = "pal")]
+    _locks: Option<serde::de::IgnoredAny>,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn decode_native_stat(text: &str) -> Result<NativeFileStat, SelectedLocalStoreErrorV1> {
     if text.len() > usize::try_from(NATIVE_DIAGNOSTIC_BOUND).unwrap_or(0) {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
@@ -437,7 +462,7 @@ fn decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
     if stat.db.h < 0 || stat.db.vfs != "unix" {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
-    Ok(stat.db.h)
+    Ok(stat)
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -495,10 +520,10 @@ fn verify_native_origin(connection: &Connection) -> Result<(), SelectedLocalStor
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn observe_native_main(
+fn observe_native_stat(
     connection: &Connection,
     maximum: i32,
-) -> Result<i32, SelectedLocalStoreErrorV1> {
+) -> Result<NativeFileStat, SelectedLocalStoreErrorV1> {
     let fail = |_| SelectedLocalStoreErrorV1::StoreUnverifiable;
     if maximum <= 0 || maximum > NATIVE_DIAGNOSTIC_BOUND {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
@@ -516,7 +541,7 @@ fn observe_native_main(
         let text: String = connection
             .query_row("SELECT sqlite_filestat('main')", [], |row| row.get(0))
             .map_err(fail)?;
-        decode_native_main(&text)
+        decode_native_stat(&text)
     })();
     // Always restore before schema/integrity checks and before returning even
     // a failure. No temporary native bound leaks into the connection's caller.
@@ -525,6 +550,18 @@ fn observe_native_main(
         .map_err(fail)?;
     result
 }
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn observe_native_main(
+    connection: &Connection,
+    maximum: i32,
+) -> Result<i32, SelectedLocalStoreErrorV1> {
+    observe_native_stat(connection, maximum).map(|stat| stat.db.h)
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "selected_sidecars.rs"]
+mod sidecars;
 
 #[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
 pub(super) fn test_observe_native_main(
@@ -536,7 +573,7 @@ pub(super) fn test_observe_native_main(
 
 #[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
 pub(super) fn test_decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
-    decode_native_main(text)
+    decode_native_stat(text).map(|stat| stat.db.h)
 }
 
 // Only test builds observe drop sequencing. Production fields still drop in
@@ -659,3 +696,19 @@ fn open_under_custody(
     store.verify_selected_local_store_custody_v1()?;
     Ok(store)
 }
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+#[path = "selected_write_fixture.rs"]
+pub(super) mod writable_fixture;
+
+#[cfg(any(target_os = "linux", test))]
+#[path = "selected_linux.rs"]
+pub(super) mod linux;
+
+#[cfg(target_os = "linux")]
+#[path = "selected_write.rs"]
+#[allow(
+    dead_code,
+    reason = "Private production connection pending genuine preparation producer integration"
+)]
+pub(super) mod writable;

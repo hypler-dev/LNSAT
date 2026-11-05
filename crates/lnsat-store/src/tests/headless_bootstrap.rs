@@ -301,3 +301,254 @@ fn headless_bootstrap_denials_never_reflect_store_or_row_content() {
         }
     }
 }
+
+const SCHEMA_19_FIXTURE: &str = include_str!("fixtures/headless_schema_19.sql");
+
+fn assert_schema_19_fixture_manifest(connection: &Connection) {
+    // Include implicit indexes and exact SQLite DDL, including NULL SQL.
+    // Independent derivation used Python sqlite3 over migrations 1 through 18.
+    let mut statement = connection
+        .prepare(
+            "SELECT type, name, tbl_name, sql
+             FROM main.sqlite_schema ORDER BY type, name",
+        )
+        .unwrap();
+    let manifest = statement
+        .query_map([], |row| {
+            Ok([
+                row.get::<_, Option<String>>(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+            ])
+        })
+        .unwrap()
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .unwrap();
+    drop(statement);
+    let mut hash = Sha256::new();
+    hash.update(b"lnsat.headless_bootstrap.schema.v19\n");
+    hash.update(serde_json::to_vec(&manifest).unwrap());
+    assert_eq!(
+        encode_sha256(hash.finalize()),
+        "sha256:f8c18ea04ef79d33d5dd9bb86c230f0dd5672a18f20215b09e319faf8f6e0e02"
+    );
+}
+
+#[test]
+fn headless_schema_19_fixture_extends_pristine_eighteen_and_rolls_back() {
+    let database = TestDatabase::new("headless-schema-19-pristine");
+    let mut store = SqliteStore::open(&database.path).unwrap();
+    let before = sqlite_schema_manifest(&store.connection);
+    let tx = store
+        .connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .unwrap();
+    require_authority_empty_v1(&tx).unwrap();
+    tx.execute_batch(SCHEMA_19_FIXTURE).unwrap();
+
+    let counts: (i64, i64) = tx
+        .query_row(
+            "SELECT count(*), sum(type = 'table') FROM main.sqlite_schema",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(counts, (258, 38));
+
+    assert_schema_19_fixture_manifest(&tx);
+    let retained: i64 = tx
+        .query_row(
+            "SELECT count(*) FROM lnsat_retention_policies
+             WHERE retention_class = 'control_plane' AND disposition = 'preserve'
+               AND cleanup_eligible = 0 AND minimum_retention_seconds IS NULL",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(retained, 35);
+    for family in RETENTION_RECORD_FAMILIES_V18 {
+        assert!(
+            tx.query_row(
+                "SELECT EXISTS(SELECT 1 FROM lnsat_retention_policies WHERE record_family = ?1)",
+                [family],
+                |row| row.get::<_, bool>(0),
+            )
+            .unwrap()
+        );
+    }
+    assert_eq!(
+        tx.query_row(
+            "SELECT schema_version FROM lnsat_store_metadata",
+            [],
+            |row| { row.get::<_, i64>(0) }
+        )
+        .unwrap(),
+        19
+    );
+    let synthetic_digest = format!("sha256:{}", "0".repeat(64));
+    let premature_pointer = tx
+        .execute(
+            "INSERT INTO headless_active VALUES (
+                1, '00000000-0000-0000-0000-000000000000',
+                'generation:fixture', ?1, 1, 0, 0, 'config-audit:fixture', ?1
+            )",
+            [&synthetic_digest],
+        )
+        .unwrap_err();
+    assert_eq!(
+        premature_pointer.sqlite_error_code(),
+        Some(rusqlite::ErrorCode::ConstraintViolation)
+    );
+    assert_eq!(
+        premature_pointer.to_string(),
+        "headless active genesis binding failed"
+    );
+    let violations: i64 = tx
+        .query_row("SELECT count(*) FROM pragma_foreign_key_check", [], |row| {
+            row.get(0)
+        })
+        .unwrap();
+    assert_eq!(violations, 0);
+    for table in [
+        "headless_installations",
+        "headless_generations",
+        "headless_config_audit",
+        "headless_active",
+    ] {
+        let count: i64 = tx
+            .query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(count, 0);
+    }
+    tx.rollback().unwrap();
+    assert_eq!(sqlite_schema_manifest(&store.connection), before);
+    require_authority_empty_v1(&store.connection).unwrap();
+}
+
+#[test]
+fn headless_schema_19_fixture_guard_covers_every_schema_eighteen_family() {
+    let seed_tables = [
+        "lnsat_schema_migrations",
+        "lnsat_store_metadata",
+        "lnsat_retention_policies",
+    ];
+    let tables: Vec<_> = REQUIRED_TABLES_V18
+        .into_iter()
+        .filter(|table| !seed_tables.contains(table))
+        .collect();
+    let guard_end = SCHEMA_19_FIXTURE
+        .find("CREATE TABLE lnsat_store_metadata_v19")
+        .unwrap();
+    let guard = &SCHEMA_19_FIXTURE[..guard_end];
+    assert_eq!(tables.len(), 31);
+    for occupied in &tables {
+        let mut connection = Connection::open_in_memory().unwrap();
+        for table in &tables {
+            connection
+                .execute_batch(&format!("CREATE TABLE {table}(present INTEGER)"))
+                .unwrap();
+        }
+        connection
+            .execute_batch(&format!("INSERT INTO {occupied} VALUES (1)"))
+            .unwrap();
+        let tx = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .unwrap();
+        let error = tx.execute_batch(guard).expect_err(occupied);
+        assert_eq!(
+            error.sqlite_error_code(),
+            Some(rusqlite::ErrorCode::ConstraintViolation)
+        );
+        tx.rollback().unwrap();
+        let objects = sqlite_schema_manifest(&connection);
+        assert_eq!(objects.len(), tables.len());
+    }
+}
+
+#[test]
+fn headless_schema_19_fixture_genesis_rows_rollback_together() {
+    use crate::owner_bootstrap::{
+        insert_local_owner_bootstrap_v1, prepare_local_owner_bootstrap_v1,
+    };
+
+    let database = TestDatabase::new("headless-schema-19-genesis");
+    let mut store = SqliteStore::open(&database.path).unwrap();
+    let prepared =
+        prepare_local_owner_bootstrap_v1(&owner_bootstrap_input("fixture-bootstrap-password"))
+            .unwrap();
+    let tx = store
+        .connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .unwrap();
+    require_authority_empty_v1(&tx).unwrap();
+    tx.execute_batch(SCHEMA_19_FIXTURE).unwrap();
+    insert_local_owner_bootstrap_v1(&tx, &prepared).unwrap();
+    let digest = format!("sha256:{}", "a".repeat(64));
+    let preparation_id = "b".repeat(64);
+    let installation_id = "00000000-0000-0000-0000-000000000001";
+    let at = "2026-11-03T12:00:00.000Z";
+    tx.execute(
+        "INSERT INTO headless_installations
+         SELECT 1, ?1, '00000000-0000-0000-0000-000000000002',
+           'installation:fixture', i.identity_ref, e.event_id, e.event_evidence_digest,
+           c.credential_id, 1, '{}', ?2, ?3, ?2, ?2, ?2, ?2,
+           'generation:fixture', 'config-audit:fixture', ?4, ?2
+         FROM lnsat_local_identities i
+         JOIN lnsat_local_identity_events e ON e.identity_ref = i.identity_ref
+         JOIN lnsat_local_password_credentials c ON c.identity_ref = i.identity_ref",
+        rusqlite::params![installation_id, digest, preparation_id, at],
+    )
+    .unwrap();
+    tx.execute(
+        "INSERT INTO headless_generations VALUES (
+            'generation:fixture', ?1, ?2, 1, NULL, '{}', ?2, '{}', ?2,
+            '{}', ?2, '{}', ?2, ?2, 'fixture', ?2, 'fixture', ?3, ?2
+        )",
+        rusqlite::params![installation_id, digest, at],
+    )
+    .unwrap();
+    tx.execute(
+        "INSERT INTO headless_config_audit VALUES (
+            'config-audit:fixture', ?1, 1, NULL, 'headless_bootstrap.v1',
+            '{}', ?2, ?3, ?2
+        )",
+        rusqlite::params![installation_id, digest, at],
+    )
+    .unwrap();
+    tx.execute(
+        "INSERT INTO headless_active VALUES (
+            1, ?1, 'generation:fixture', ?2, 1, 0, 0, 'config-audit:fixture', ?2
+        )",
+        rusqlite::params![installation_id, digest],
+    )
+    .unwrap();
+    assert_eq!(
+        tx.query_row("SELECT count(*) FROM pragma_foreign_key_check", [], |row| {
+            row.get::<_, i64>(0)
+        })
+        .unwrap(),
+        0
+    );
+    for table in [
+        "lnsat_local_identities",
+        "lnsat_local_identity_events",
+        "lnsat_local_password_credentials",
+        "headless_installations",
+        "headless_generations",
+        "headless_config_audit",
+        "headless_active",
+    ] {
+        assert_eq!(
+            tx.query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                row.get::<_, i64>(0)
+            })
+            .unwrap(),
+            1
+        );
+    }
+    tx.rollback().unwrap();
+    require_authority_empty_v1(&store.connection).unwrap();
+}

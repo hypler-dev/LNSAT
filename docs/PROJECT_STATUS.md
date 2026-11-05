@@ -1210,6 +1210,81 @@ remain closed at this B6 checkpoint. V1 and
 enterprise/government readiness are incomplete. The Phase 11 operator packet
 retains its locked source and source-only runtime verdict.
 
+### Protected setup transaction fixtures
+
+Private tests now exercise a selected writable SQLite connection under the
+existing lease and main-descriptor checks. They check named WAL and SHM metadata,
+reject a sidecar alias before opening SQLite, and use a one-shot immediate
+transaction to verify owner commit and rollback. The writable fixture is compiled
+only for tests and relies on the trusted fixture owner for sidecar identity.
+
+The private selected-store source now decodes the pinned Unix VFS's actual
+WAL descriptor and the main file's SHM descriptor. While the write transaction
+holds both, bounded repeated samples compare in-place descriptor metadata with
+the corresponding owner-private names. The writable fixture exercises that check
+after acquiring the transaction and again before commit. A replacement WAL name
+with valid mode and owner still fails when it refers to a different inode.
+That fixture checkpoint did not implement the production writable connection;
+the later Linux candidate and its remaining qualification gates are recorded below.
+
+A separate schema-19 test composes the actual owner insert helper with synthetic
+installation, generation, audit and pointer rows. All seven rows are visible
+inside one transaction and disappear on rollback to the exact schema-18 store.
+This validates structural SQL composition. The later Linux candidate below
+implements selected custody and inert migration source. Usable setup still
+requires native validation, genuine preparation and atomic installation binding.
+
+### Production Linux selected-custody candidate — November 5
+
+The private production build now contains a Linux selected-writable session,
+not a public setup command. It retains the shared database lease before SQLite
+opens, uses a bounded process-wide setup mutex, and holds each ancestor through
+no-follow relative directory opens. Repeated statx observations bind owner,
+mode, inode, mount and current mount namespace. Ancestors require kernel POSIX
+filesystem semantics; the selected store supports persistent ext4, XFS and Btrfs
+only. Network, FUSE, overlay, tmpfs stores and unrecognized filesystems deny.
+Minimal owner-only POSIX ACLs are checked for the selected parent, lease, main,
+WAL and SHM names. Named ACL entries, inherited default ACLs and unknown xattr
+errors deny. ENODATA is an explicit mode-only case on admitted filesystems.
+
+The session checks actual pinned Unix-VFS main/WAL/SHM descriptors in place,
+retains sidecar identities across its immediate migration transaction, and
+checks retirement after SQLite closes under the same custody. Custody loss
+before close quarantines the connection without calling SQLite close, because
+close could unlink substituted coordination names. A busy close retains the
+connection, lease, ancestry and process mutex. No reusable success handle exits
+those failure paths. Trusted kernel, root and current-owner assumptions remain;
+these checks do not contain malicious code with the same UID.
+
+A separate selected-only production SQL body migrates an exact authority-empty
+schema 18 to inert schema 19. It is absent from ordinary MIGRATIONS, and ordinary
+opens continue to reject schema 19. The production successor adds an exact
+owner/event/digest/credential association trigger: 259 objects, 38 tables and 35
+retention families, manifest
+`sha256:c566334a11f4f2707b85236d2a28b121304db743d30c54565de0b74c2d6bf298`.
+The original 258-object test fixture and its f8c18ea0 manifest remain unchanged.
+A passing migration creates no installation, owner, generation or activation.
+
+Native Linux tests cover migration/lease retention, normal close and reacquisition,
+masked named ACL denial, effective ancestor ACL write denial, and quarantined
+busy-close/WAL replacement. They are authored and cross-compiled, not executed
+on this ARM macOS controller. Actual Linux execution remains a qualification gate.
+Portable schema tests cover migration/rollback, inert committed state, ordinary
+open denial, occupied-source rejection, schema/seed/namespace drift and mismatched
+owner-event digest rejection. Source validation evidence is recorded separately;
+no native compatibility or physical durability claim follows from cross-compilation.
+
+The genuine preparation producer and atomic installation initializer remain
+unimplemented. Existing journal records are untrusted assertions; no parsed
+cleanup label or fixture digest can supply observed Docker probe/cleanup,
+nonempty held resource enforcement or current profile/recipe proof. The session
+has no public constructor, initializer call or management-system dispatch route.
+The complete invalidating-writer synchronization integration also remains open;
+the new setup mutex does not yet cover every ordinary store writer.
+Rangoon and a Backstage reference client are intended consumers of the same
+versioned engine API, with no direct database or independent authority path.
+Neither integration is implemented by this custody candidate.
+
 ## HCFG-6 Resource And Runtime Enforcement Design
 
 Canonical work record: this section. The accepted V1 requirement needs real

@@ -31,6 +31,31 @@ dated evidence. Ordinary additive 17-to-18 request migration is separate from
 selected headless installation authority. All installation, activation and
 runtime gates remain closed.
 
+## Schema-19 fixture derivation — 2026-11-03
+
+The protected initial setup worktree contains a test-only schema-19 fixture.
+It starts from exact schema 18 and applies inside an immediate transaction
+after the existing authority-empty check. The fixture independently rejects
+occupancy in each of the 31 non-seed schema-18 tables and carries forward all
+31 existing preserve-only retention families. Four headless families extend
+retention to 35 rows.
+
+The candidate has 38 tables and 258 objects, including implicit indexes. Its
+ordered SQLite manifest under the `lnsat.headless_bootstrap.schema.v19` domain
+has digest `f8c18ea04ef79d33d5dd9bb86c230f0dd5672a18f20215b09e319faf8f6e0e02`.
+The independent Python derivation and bundled SQLite fixture agree. The
+258-object result exceeds the existing 256-object read limit. A separate
+schema-19 verifier needs an explicit bound while preserving the current
+schema-17 and schema-18 limits.
+
+The fixture tests check empty new tables, preserved retention, foreign-key
+consistency, exact manifest and rollback to schema 18. A second test exercises
+the occupancy guard for each of the 31 families. Both passed with Rust 1.97.1
+and independent source review found no actionable findings. The fixture is
+compiled only by tests. Selected writable custody, the migration ledger,
+canonical installation-state verification and the atomic initializer remain
+implementation work.
+
 ## Historical B5 candidate (not executable authority)
 
 Everything in this section is the original pre-2026-10-18 headless baseline.

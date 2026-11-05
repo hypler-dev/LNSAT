@@ -53,6 +53,11 @@ mod phase7_consumption;
 mod phase7_git_adapter;
 mod phase7_nonce;
 mod phase7_persistence;
+#[allow(
+    dead_code,
+    reason = "Selected-only schema pending genuine preparation and initializer integration"
+)]
+mod selected_schema;
 mod selected_store;
 
 pub use headless_bootstrap::{HeadlessBootstrapStoreErrorV1, HeadlessBootstrapStoreInspectionV1};
@@ -18651,6 +18656,7 @@ mod tests {
     mod phase8_runtime_composition;
     mod request_execution_admission;
     mod request_git_result;
+    mod selected_schema;
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     mod selected_store;
 }

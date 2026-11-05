@@ -1695,7 +1695,7 @@ fn request_observer_g26_structural_closure() {
     );
     pin(
         include_bytes!("../../../../lib.rs"),
-        "d01269a0531b37726beb57e466798e38af5b89ebbe1e5731e4989f4709195380",
+        "6b1bc8af3963fda3934857f70df159ed530a5d650075fa7bafe1dff7766174f7",
     );
     pin(
         include_bytes!("../../../../phase7_git_adapter/request_result.rs"),

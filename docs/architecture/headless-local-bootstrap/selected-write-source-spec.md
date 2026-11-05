@@ -18,6 +18,18 @@ initializer must rederive every count and manifest from schema 18. Writable
 headless custody, native checks, runtime activation, deployment, and release
 remain gated. See [the action-request record](../action-request-record.md).
 
+## Current implementation candidate — 2026-11-05
+
+The current user-authorized source work adds private Linux selected custody and
+an inert selected-only schema-19 migration. Exact implementation and remaining
+qualification truth live in [Project Status](../../PROJECT_STATUS.md#production-linux-selected-custody-candidate--november-5).
+The production successor has 259 objects and a separate c566334a manifest; the
+older 258-object f8c18ea0 fixture is preserved. Ordinary MIGRATIONS and schema-18
+opens remain unchanged. No public initializer or CLI entry exists. Actual Linux
+execution, genuine resource/probe/cleanup preparation and atomic installation
+remain unfinished. Historical schema-17/18 proposal statements below retain
+their dated meaning and do not qualify the current candidate.
+
 ## Behavior
 
 This proposal specifies the connection and migration ordering between B3B's
