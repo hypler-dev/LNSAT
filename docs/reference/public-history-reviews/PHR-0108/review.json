@@ -1,0 +1,315 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0108-independent-implementation-review-9641e46e",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["protected-setup-writer-sync-native-budget"],
+  "base_revision": "b8b66c8428ece85e9e960464ca0234700a39098d",
+  "reviewed_revision": "9641e46ebf321f911b521852b6866a4991ffedf9",
+  "reviewed_tree_oid": "fe8066b3945c0fd50d700b2eb2fa286dc09c62a4",
+  "diff_sha256": "sha256:afb37349624c5655d926045ec2c580231e3a9cf03d332518c83aef81d9c89fe0",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:e800ef14a8003458646682a58e80bc2bf71219c6c7190af9bbcd2dbe3ec1e4f6"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/composition.rs",
+      "sha256": "sha256:ea2a5cc95bf00888f13f6f101c5239717baad817e34783fe292ba2e9e3d8795a"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/composition_tests.rs",
+      "sha256": "sha256:84bcff7005f5bedb01ad020a1373aed9cc525bf8cdc79fa57e3071c2b38e5892"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/parser.rs",
+      "sha256": "sha256:7a8dfe8d5a6d8c646618c75025dbd53c071a5a6f8b543377071fba9e817d0b58"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/parser_tests.rs",
+      "sha256": "sha256:dd42c68bf228e38bf027f7f96ff65cb76a2b1caf7848f6ec66247c547602df15"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/resource_bindings.rs",
+      "sha256": "sha256:86c27028a716c6f0cff2e3237b96019a53ddbd2e2d27ddbd1d55dc997ac1b21f"
+    },
+    {
+      "path": "crates/lnsat-contracts/src/headless_config/resource_bindings_tests.rs",
+      "sha256": "sha256:26726c71d0ce9f2d190ffffba32d60b5c440b806ba5702d399f2f657a8b956d2"
+    },
+    {
+      "path": "crates/lnsat-store/Cargo.toml",
+      "sha256": "sha256:c24b1219c582c51394eb19134348218ead27b79f0eed5ec70415bcfa973b89db"
+    },
+    {
+      "path": "crates/lnsat-store/src/action_request.rs",
+      "sha256": "sha256:2435293272313ecf3a79d2ad78b72da3eb3cccca23e122f1b379232e54d6a643"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_control_budget.rs",
+      "sha256": "sha256:d747b11558489f4a1362663b358727bf13e6b0327c5fbe90b70988a588340d9c"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native.rs",
+      "sha256": "sha256:2b6bc838d8f877c27f6d8548bbc5121a9fbdf09af065c12b7cdcd65a47905727"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_acl.rs",
+      "sha256": "sha256:bf9ce45cc6d463086b2cf2f7364b2b0ff3b751cafdcd4ed6759e48992e7f62fc"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_artifact.rs",
+      "sha256": "sha256:d5a643de1c6ce0c2b1f9bbc76cbe2877027df61dc74c14221ac09924567b4bf3"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_artifact_tests.rs",
+      "sha256": "sha256:b61fec3fa154b4c0795cf5a9f53988506c17c18108803b74293ab2a21dea6a1f"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_fdinfo.rs",
+      "sha256": "sha256:317285e1cd3fe677624266eee1fc0b6086ecc0bfbbb983ea209911e8be911b2f"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_fdinfo_tests.rs",
+      "sha256": "sha256:5c167c8ee0c4d6f69d98c065a0e34c89090f35e9e2eb5cf31cb7c523c2bd0480"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_mountinfo.rs",
+      "sha256": "sha256:e384db85a7828fd4453d566c6847c75358959f431b6f33e4c32e9dbca5bf5d47"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_mountinfo_tests.rs",
+      "sha256": "sha256:5de56b8908499c1b032f46cab890b3880fc09f5008854cf5525377725fa6f4ba"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_procfs.rs",
+      "sha256": "sha256:80824ce06d624fc269434967decd19fab09d9e0318bf14b5fe1344eac85bf523"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_procfs_tests.rs",
+      "sha256": "sha256:95c00cec811786bfc72c5a4487b6256de03085c64faecbeb025dc4fa75ae5eba"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_readable.rs",
+      "sha256": "sha256:f524edc5a485250aae6660f8fe61139c0ad52f43053ec437a2b65e54317ecc12"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_readable_tests.rs",
+      "sha256": "sha256:de59358725f60c20a60168b0779dc5d0aacab7ee0e301ef0da913e5d7addc574"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_root_bootstrap.rs",
+      "sha256": "sha256:99ab9048bccc2ce65d386c800b957d78a407cd47dcfacea5100595a3d2cfc315"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_root_bootstrap_tests.rs",
+      "sha256": "sha256:7e7c06951be43d19cdd3e44c607300d6551cd0a823e2799c464a8f191c66a151"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_tests.rs",
+      "sha256": "sha256:1a5960a4cc924e5e5c5069232d2a0339023efa88ab821d70a65691a8f9cd9281"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation.rs",
+      "sha256": "sha256:34d7589a20c7853bad65c44f5d256f50e6bedabf1a4e5bd45c236512f5500b27"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_custody.rs",
+      "sha256": "sha256:0c91b46c7e6de3392859fd637f46d04fa7585110e4c0a671debacdf51c1e1478"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:20ac713ac19ee9fe3bcdbaa9202d28903c7c7c00b343e6ae1664892a1f9f6cea"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption.rs",
+      "sha256": "sha256:aa3876db34d41e8421f99f1ded812177d98061e0a970d5613de43a7540f7b92d"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/tests.rs",
+      "sha256": "sha256:3acc6b27a76007bb68e5b414cb00d9a65b7e82122bc3dbfe3d68549fc9e6c7ec"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_git_adapter.rs",
+      "sha256": "sha256:452a51ad12b8550719b4bfa0a179dbee5d772be1d5adedbcaeaaa616ead1bed0"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_git_adapter/request_result.rs",
+      "sha256": "sha256:7fa29b78c33b8fbc6d4c7dbbf699d35d25d7fc2dcff9cf199f7a6734b479219c"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_nonce.rs",
+      "sha256": "sha256:294fb99873fd15ae972c6cf83184e476cb709f8657929e2b45ddf8060b376fff"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_persistence.rs",
+      "sha256": "sha256:f37ec3e4fec60130b757ddbf48cdd7c0c94deb966f9dbcdc3319dccba6c44843"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_linux.rs",
+      "sha256": "sha256:013ca9891d8dda8aabb35cfd31923a84ef874bf3b1664f326c401910912e87b2"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:c547781116691fc16bae8e7989e858e9b778abb8d9788e7d7f3a85af47d6d681"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_write.rs",
+      "sha256": "sha256:0b5b82a57ad71caf530718b466dea326a1e64a54613cdfa87bc475201b847dc8"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/selected_store.rs",
+      "sha256": "sha256:9024be7cfede0acf1933a43c5d03e499fa69e32aef4018307c6a10608148a3e9"
+    },
+    {
+      "path": "crates/lnsat-store/src/write_sync.rs",
+      "sha256": "sha256:13537cf8f90a721bf2a76ad46d33aa98d48cbc333b1cfecf7ae036689e0e45b7"
+    },
+    {
+      "path": "crates/lnsat-store/src/writer_gate.rs",
+      "sha256": "sha256:4b39d07fb9ab1e3c2a8269f9fb289934e2097f64ead98e0ddd6ce95b543792cc"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native.rs",
+      "sha256": "sha256:2b6bc838d8f877c27f6d8548bbc5121a9fbdf09af065c12b7cdcd65a47905727"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_acl.rs",
+      "sha256": "sha256:bf9ce45cc6d463086b2cf2f7364b2b0ff3b751cafdcd4ed6759e48992e7f62fc"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact.rs",
+      "sha256": "sha256:358ee08f9ef1b71ad034c835bd5a9c996117a6fc63f745830cf33f051e6d2245"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_artifact_tests.rs",
+      "sha256": "sha256:dbcd457cd155ed0c403dd5f92e2a05acc7d08b26bb67bf772f865f25621324ef"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_fdinfo.rs",
+      "sha256": "sha256:317285e1cd3fe677624266eee1fc0b6086ecc0bfbbb983ea209911e8be911b2f"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_fdinfo_tests.rs",
+      "sha256": "sha256:5c167c8ee0c4d6f69d98c065a0e34c89090f35e9e2eb5cf31cb7c523c2bd0480"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_mountinfo.rs",
+      "sha256": "sha256:e384db85a7828fd4453d566c6847c75358959f431b6f33e4c32e9dbca5bf5d47"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_mountinfo_tests.rs",
+      "sha256": "sha256:5de56b8908499c1b032f46cab890b3880fc09f5008854cf5525377725fa6f4ba"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_procfs.rs",
+      "sha256": "sha256:79ac9023b17f48baecf1a01ea6fd4d04f1b0d3fcc5fa89f27dffe2c201901c3e"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_procfs_tests.rs",
+      "sha256": "sha256:5b8db56741d650c7da3c0c53b215af32bd36230c26427edd026d52505d98d751"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable.rs",
+      "sha256": "sha256:f524edc5a485250aae6660f8fe61139c0ad52f43053ec437a2b65e54317ecc12"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_readable_tests.rs",
+      "sha256": "sha256:de59358725f60c20a60168b0779dc5d0aacab7ee0e301ef0da913e5d7addc574"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_root_bootstrap.rs",
+      "sha256": "sha256:d2af606e991308d6aebb3649da7aee066f8760270f282e58ac1572e208683e62"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_root_bootstrap_tests.rs",
+      "sha256": "sha256:5f66844ee972f372a526232198327f9a23f611320ddc247e19d834aa7243239a"
+    },
+    {
+      "path": "crates/lnsatd/src/headless_native_tests.rs",
+      "sha256": "sha256:1a5960a4cc924e5e5c5069232d2a0339023efa88ab821d70a65691a8f9cd9281"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:a1df8714509b209a0c437af5e89e014fadf50e12278b9a008e7a2c570421d32e"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:0fa41cca37c8914b71f710c94930722408b90ae39f5f3942c4672491d0573113"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:6a407d18dac10213b7749672359953e3c6082b413c383df77825f0af73159e59"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:1c20da8e997ece96dbda8b92f68776bbf0b7fcd3d6bc6a0d0731d5b86abe3662"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-acl-candidate-source-spec.md",
+      "sha256": "sha256:e7af8dbef7f6f9bbdf11a2ecda9ca81b0ed30f42a6b661c0bbd081f1c98cf4ee"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-artifact-source-spec.md",
+      "sha256": "sha256:2fb79007b1353d7f899ea0bc5234159b0dc6cebcb26614adb250b854c502e66b"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-fixture-source-spec.md",
+      "sha256": "sha256:b870b6fdc6ade767456d00e575254375d95a7931c95b9a2dd63c7fe61b411da0"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-mountinfo-candidate-source-spec.md",
+      "sha256": "sha256:71e0abc53e811e9854af9b3793645b9617b4219888b145f0dc364462142acc62"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-root-bootstrap-source-spec.md",
+      "sha256": "sha256:7d3982c5ea966529605fd13b87970dd939b133e112c1197bc7c07dae880db6c4"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-root-prefix-acl-source-spec.md",
+      "sha256": "sha256:8a9a772d160352f8c2083028bc4635da02205e330a06882526799b36dbdf535a"
+    },
+    {
+      "path": "docs/architecture/headless-resource-enforcement/native-source-spec.md",
+      "sha256": "sha256:7d1ebc09ccb281ef49aaebb4f514816813f3a73c916ed5013105f96149386d1a"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:c2548af6b41b9f9cdc04006a35736cd48e2248ad4d362bbed0efff6ce13a351f"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/README.md",
+      "sha256": "sha256:ff38b054c8946de2190b306b53bca61970c26b8c02b9df389bcdcefbec30205e"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:b2c51ad142254bba3ecd366b72b226d5c14c59283200ed621a5829ec608ffb87"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.mjs",
+      "sha256": "sha256:22ffa90bf3c27ce614be29e7d994176feb2b5c037cdd1a0eac883b00c85192e0"
+    },
+    {
+      "path": "scripts/check-phase7-readiness-plan.test.mjs",
+      "sha256": "sha256:52b0e5aa9eba1c89c168de5feb224a35ba5dfbd77b05dc92802fc886c3168411"
+    },
+    {
+      "path": "scripts/check-public-history-review-evidence.mjs",
+      "sha256": "sha256:ce145941fa8a5b3c5bbf5b9e02b64de833ab8b2be115dcdb8adad653ec7b1cdc"
+    },
+    {
+      "path": "scripts/check-public-history-review-evidence.test.mjs",
+      "sha256": "sha256:3f174f709000be4c99cbc8332f22002bd2fd2fd9b2d683fe59dd4566c742716c"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/current_setup_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh; backend runtime model ID unexposed. Independent aggregate source, format/provider, current docs/outcome and narrow native-relocation-policy review chains passed. Exact committed-source and metadata-child binding require separate final review. Mac store600/0failed/2ignored and separate daemon/CLI suites passed; current Linux source cross-Clippy passed, new native journal cases NOT_RUN. Genuine strong-profile preparation and atomic initializer remain unfinished. Source evidence only; no runtime, merge, deployment or support qualification."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
