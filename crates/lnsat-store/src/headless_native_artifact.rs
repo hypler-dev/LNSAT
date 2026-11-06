@@ -3,83 +3,18 @@
 use super::super::NativeError;
 #[cfg(target_os = "linux")]
 use super::super::readable::sample_artifact_readable;
-use super::{Attempt, CleanupAccounting, DispatchStatus, LaneRoot, checked_deadline};
+use super::{Attempt, CleanupAccounting, DispatchStatus, LaneRoot};
+#[cfg(target_os = "linux")]
+use crate::headless_control_budget::READ_CHUNK;
+pub(super) use crate::headless_control_budget::{
+    ArtifactBudgetState, ArtifactError, ArtifactReadBudget, ArtifactReadPurpose,
+};
 #[cfg(target_os = "linux")]
 use sha2::{Digest, Sha256};
-use std::{
-    fs::File,
-    num::NonZeroU64,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, AtomicU64, Ordering},
-    },
-    time::Instant,
-};
+use std::{fs::File, num::NonZeroU64, sync::Arc, time::Instant};
 use zeroize::Zeroizing;
 
-const MANIFEST_LIMIT: u64 = 64 * 1024;
-const OCI_LIMIT: u64 = 1024 * 1024;
-const ARTIFACT_LIMIT: u64 = 256 * 1024 * 1024;
-const ARTIFACT_OCI_LIMIT: u64 = 1024 * 1024 * 1024;
-const READ_CHUNK: usize = 64 * 1024;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(super) enum ArtifactReadPurpose {
-    RootManifest,
-    OciBody,
-    ArtifactSnapshot,
-}
-
-impl ArtifactReadPurpose {
-    const fn limit(self) -> u64 {
-        match self {
-            Self::RootManifest => MANIFEST_LIMIT,
-            Self::OciBody => OCI_LIMIT,
-            Self::ArtifactSnapshot => ARTIFACT_LIMIT,
-        }
-    }
-
-    const fn retains_body(self) -> bool {
-        matches!(self, Self::RootManifest | Self::OciBody)
-    }
-
-    const fn uses_artifact_allowance(self) -> bool {
-        !matches!(self, Self::RootManifest)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(super) enum ArtifactError {
-    UnsupportedPlatform,
-    InvalidDescriptor,
-    InvalidLength,
-    ReadRejected,
-    ObjectChanged,
-    LimitExceeded,
-    StorageUnavailable,
-    BudgetExhausted,
-    ObservationInvalid,
-    AssociationRejected,
-    CleanupUncertain,
-}
-
 impl ArtifactError {
-    pub(super) const fn code(self) -> &'static str {
-        match self {
-            Self::UnsupportedPlatform => "native_artifact.unsupported_platform",
-            Self::InvalidDescriptor => "native_artifact.invalid_descriptor",
-            Self::InvalidLength => "native_artifact.invalid_length",
-            Self::ReadRejected => "native_artifact.read_rejected",
-            Self::ObjectChanged => "native_artifact.object_changed",
-            Self::LimitExceeded => "native_artifact.limit_exceeded",
-            Self::StorageUnavailable => "native_artifact.storage_unavailable",
-            Self::BudgetExhausted => "native_artifact.budget_exhausted",
-            Self::ObservationInvalid => "native_artifact.observation_invalid",
-            Self::AssociationRejected => "native_artifact.association_rejected",
-            Self::CleanupUncertain => "native_artifact.cleanup_uncertain",
-        }
-    }
-
     const fn from_native(error: NativeError) -> Self {
         match error {
             NativeError::UnsupportedPlatform => Self::UnsupportedPlatform,
@@ -93,114 +28,6 @@ impl ArtifactError {
     }
 }
 
-pub(super) struct ArtifactBudgetState {
-    pub(super) deadline: Instant,
-    all_content: AtomicU64,
-    artifact_oci_content: AtomicU64,
-    invalid: AtomicBool,
-    manifest_claimed: AtomicBool,
-}
-
-impl ArtifactBudgetState {
-    pub(super) fn valid(&self) -> Result<(), ArtifactError> {
-        if self.invalid.load(Ordering::SeqCst) {
-            return Err(ArtifactError::ObservationInvalid);
-        }
-        if Instant::now() >= self.deadline {
-            self.invalidate();
-            return Err(ArtifactError::BudgetExhausted);
-        }
-        Ok(())
-    }
-
-    pub(super) fn invalidate(&self) {
-        self.invalid.store(true, Ordering::SeqCst);
-    }
-
-    pub(super) fn claim_manifest(&self) -> Result<(), ArtifactError> {
-        self.manifest_claimed
-            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-            .map(|_| ())
-            .map_err(|_| {
-                self.invalidate();
-                ArtifactError::ObservationInvalid
-            })
-    }
-
-    fn charge(&self, purpose: ArtifactReadPurpose, count: usize) -> Result<(), ArtifactError> {
-        let Ok(count) = u64::try_from(count) else {
-            self.invalidate();
-            return Err(ArtifactError::LimitExceeded);
-        };
-        if self
-            .all_content
-            .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |old| {
-                old.checked_add(count)
-            })
-            .is_err()
-        {
-            self.invalidate();
-            return Err(ArtifactError::LimitExceeded);
-        }
-        if purpose.uses_artifact_allowance() {
-            let result =
-                self.artifact_oci_content
-                    .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |old| {
-                        old.checked_add(count)
-                            .filter(|next| *next <= ARTIFACT_OCI_LIMIT)
-                    });
-            if result.is_err() {
-                self.invalidate();
-                return Err(ArtifactError::LimitExceeded);
-            }
-        }
-        Ok(())
-    }
-
-    fn remaining(&self, purpose: ArtifactReadPurpose) -> Result<u64, ArtifactError> {
-        if !purpose.uses_artifact_allowance() {
-            return Ok(u64::MAX);
-        }
-        if let Some(remaining) =
-            ARTIFACT_OCI_LIMIT.checked_sub(self.artifact_oci_content.load(Ordering::SeqCst))
-        {
-            Ok(remaining)
-        } else {
-            self.invalidate();
-            Err(ArtifactError::LimitExceeded)
-        }
-    }
-}
-
-/// The owner creates this once; it has no reset or clone operation.
-pub(super) struct ArtifactReadBudget {
-    state: Arc<ArtifactBudgetState>,
-}
-
-impl ArtifactReadBudget {
-    pub(super) fn begin(enclosing_deadline: Instant) -> Result<Self, ArtifactError> {
-        let deadline = checked_deadline(Instant::now(), enclosing_deadline)
-            .map_err(|_| ArtifactError::BudgetExhausted)?;
-        Ok(Self {
-            state: Arc::new(ArtifactBudgetState {
-                deadline,
-                all_content: AtomicU64::new(0),
-                artifact_oci_content: AtomicU64::new(0),
-                invalid: AtomicBool::new(false),
-                manifest_claimed: AtomicBool::new(false),
-            }),
-        })
-    }
-
-    fn owns(&self, state: &Arc<ArtifactBudgetState>) -> bool {
-        Arc::ptr_eq(&self.state, state)
-    }
-
-    pub(super) fn shared_state(&self) -> &Arc<ArtifactBudgetState> {
-        &self.state
-    }
-}
-
 /// Non-clone owner for a held original descriptor and its one budget.
 pub(super) struct OwnedArtifactCustody {
     file: Arc<File>,
@@ -211,7 +38,7 @@ impl OwnedArtifactCustody {
     pub(super) fn from_file(file: File, budget: &ArtifactReadBudget) -> Self {
         Self {
             file: Arc::new(file),
-            budget: Arc::clone(&budget.state),
+            budget: Arc::clone(budget.shared_state()),
         }
     }
 
@@ -584,9 +411,9 @@ pub(super) fn read_root_manifest(
         lane.terminalize();
         (Err(error), accounting)
     };
-    if deadline != custody.budget.deadline
+    if deadline != custody.budget.deadline()
         || custody.budget.valid().is_err()
-        || !custody.budget.manifest_claimed.load(Ordering::SeqCst)
+        || !custody.budget.manifest_claimed()
         || Arc::strong_count(&custody.file) != 1
     {
         return fail(ArtifactError::ObservationInvalid);

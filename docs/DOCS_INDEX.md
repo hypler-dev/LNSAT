@@ -248,6 +248,7 @@ subsystem or proposal.
 - [Phase 7 readiness ledger](reference/phase7-readiness.json)
 - [Public source snapshot marker](reference/public-source-snapshot.json)
 - [Security review evidence boundary](reference/security-reviews/README.md)
+- [Public source review and native relocation](reference/public-history-reviews/README.md)
 - [Phase 7 local-v1 conformance freeze](architecture/PHASE_7_LOCAL_V1_CONFORMANCE_FREEZE.md)
 - [P7-B1 post-merge security review input](reference/security-reviews/P7-B1/post-merge-review-0526845.json)
 - [Phase 4 exit evidence](architecture/PHASE_4_EXIT_EVIDENCE.md)

@@ -34,7 +34,7 @@ fn short_budget() -> ArtifactReadBudget {
 }
 
 fn wait_until_expired(state: &ArtifactBudgetState) {
-    if let Some(remaining) = state.deadline.checked_duration_since(Instant::now()) {
+    if let Some(remaining) = state.deadline().checked_duration_since(Instant::now()) {
         std::thread::sleep(remaining.saturating_add(std::time::Duration::from_millis(1)));
     }
 }
@@ -63,7 +63,7 @@ fn held_state(
         lane,
         begin,
         budget,
-        deadline: owner.shared_state().deadline,
+        deadline: owner.shared_state().deadline(),
         anchor: anchor(),
         directories: vec![directory],
         leaf: Some(
@@ -822,7 +822,7 @@ fn root_poisoned_slots_and_invalid_reserved_lease_terminalize_without_holder() {
         });
         slots.request = Some(Request {
             token: begin,
-            deadline: state.deadline,
+            deadline: state.deadline(),
             dispatched: false,
             payload: RequestPayload::Root(RootRequest::Begin {
                 anchor: anchor(),
@@ -1134,15 +1134,18 @@ fn root_held_lease_survives_unrelated_serial_procfs_retirement() {
     let lane = lane();
     let owner = budget();
     let mut retained = Some(held_state(lane, &owner, false));
+    let procfs_budget = budget();
     let custody = OwnedProcfsCustody {
         resource: Arc::new(File::open(std::env::current_exe().unwrap()).unwrap()),
         proc_root: Arc::new(File::open(std::env::temp_dir()).unwrap()),
+        budget: Arc::clone(procfs_budget.shared_state()),
     };
-    let mut attempt = Attempt::prepare_in(lane, &custody, deadline()).unwrap();
+    let mut attempt = Attempt::prepare_in(lane, &custody).unwrap();
     let request_token = attempt.token;
     let request_deadline = attempt.deadline;
     assert_eq!(attempt.dispatch(), Ok(DispatchStatus::Dispatched));
     let request = lane.slots.lock().unwrap().request.take().unwrap();
+    let budget = Arc::clone(request.budget());
     let mut accounting = CleanupAccounting::default();
     retire_request(lane, request, &mut accounting);
     assert!(publish_completion(
@@ -1152,7 +1155,7 @@ fn root_held_lease_survives_unrelated_serial_procfs_retirement() {
         RequestKind::Procfs,
         CompletionOutcome::Procfs(Err(ProcfsError::ReadRejected)),
         accounting,
-        None,
+        Some(budget.as_ref()),
     ));
     assert!(matches!(attempt.poll(), Err(ProcfsError::ReadRejected)));
     let retiring = lane.control.load(Ordering::SeqCst);
@@ -1183,7 +1186,7 @@ fn root_unsupported_host_recheck_model_denies_and_invalidates() {
         .store(word(ACTIVE, token.get()), Ordering::SeqCst);
     let request = Request {
         token,
-        deadline: state.deadline,
+        deadline: state.deadline(),
         dispatched: true,
         payload: RequestPayload::Root(RootRequest::Recheck {
             begin: NonZeroU64::new(1).unwrap(),

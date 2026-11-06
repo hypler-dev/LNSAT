@@ -1238,7 +1238,7 @@ requires native validation, genuine preparation and atomic installation binding.
 
 The private production build now contains a Linux selected-writable session,
 not a public setup command. It retains the shared database lease before SQLite
-opens, uses a bounded process-wide setup mutex, and holds each ancestor through
+opens, reserves a bounded physical-file writer gate, and holds each ancestor through
 no-follow relative directory opens. Repeated statx observations bind owner,
 mode, inode, mount and current mount namespace. Ancestors require kernel POSIX
 filesystem semantics; the selected store supports persistent ext4, XFS and Btrfs
@@ -1252,7 +1252,7 @@ retains sidecar identities across its immediate migration transaction, and
 checks retirement after SQLite closes under the same custody. Custody loss
 before close quarantines the connection without calling SQLite close, because
 close could unlink substituted coordination names. A busy close retains the
-connection, lease, ancestry and process mutex. No reusable success handle exits
+connection, lease, ancestry and physical-file gate. No reusable success handle exits
 those failure paths. Trusted kernel, root and current-owner assumptions remain;
 these checks do not contain malicious code with the same UID.
 
@@ -1265,22 +1265,107 @@ retention families, manifest
 The original 258-object test fixture and its f8c18ea0 manifest remain unchanged.
 A passing migration creates no installation, owner, generation or activation.
 
-Native Linux tests cover migration/lease retention, normal close and reacquisition,
-masked named ACL denial, effective ancestor ACL write denial, and quarantined
-busy-close/WAL replacement. They are authored and cross-compiled, not executed
-on this ARM macOS controller. Actual Linux execution remains a qualification gate.
-Portable schema tests cover migration/rollback, inert committed state, ordinary
+The existing four native Linux custody groups passed on Ubuntu in draft PR #120
+Source verification run `42135629796` at exact head `b8b66c8428ece85e9e960464ca0234700a39098d`.
+That source-CI evidence covers the prior migration/ACL/close cases; it does not
+qualify later journal changes. New Linux cases for selected-journal persistence,
+masked/default journal ACL denial, journal replacement and post-close sidecar
+drift are cross-compiled only until their separately reviewed native CI run.
+Portable schema tests retain migration/rollback, inert committed state, ordinary
 open denial, occupied-source rejection, schema/seed/namespace drift and mismatched
-owner-event digest rejection. Source validation evidence is recorded separately;
-no native compatibility or physical durability claim follows from cross-compilation.
+owner-event digest rejection. Cross-compilation proves no native execution or
+physical durability.
 
-The genuine preparation producer and atomic installation initializer remain
-unimplemented. Existing journal records are untrusted assertions; no parsed
-cleanup label or fixture digest can supply observed Docker probe/cleanup,
-nonempty held resource enforcement or current profile/recipe proof. The session
-has no public constructor, initializer call or management-system dispatch route.
-The complete invalidating-writer synchronization integration also remains open;
-the new setup mutex does not yet cover every ordinary store writer.
+#### Shared writer and selected-journal integration — November 5
+
+The current source candidate routes ordinary immediate store transactions and
+pre-open configuration through a private FIFO gate keyed by the actual SQLite
+main descriptor's device/inode. The selected session reserves the same gate
+before opening and seals legacy admission before migration. Queued ordinary
+writers recheck that seal after acquiring their turn. The registry retains
+sealed/quarantined identities, prunes only inactive unsealed entries at its
+1,024-entry ceiling, and denies exhaustion. The gate is process-local
+synchronization, not authorization or an inter-process lock.
+
+Ordinary acquisition retains its five-second limit. Phase-7 redemption uses
+one non-resetting twenty-second acquisition budget, including FIFO wait,
+preserving the previous four five-second attempts. Only a failed BEGIN with
+SQLite Busy/Locked may be retried. Transaction bodies, mutations, commit,
+post-commit acknowledgement and ambiguous outcomes are never retried. SQL
+rollback/close uncertainty permanently quarantines that physical identity.
+These acquisition limits are not whole-operation or physical cleanup proofs.
+
+The selected writer can own the inert preparation journal without a
+self-referential store borrow. Each temporary view joins the original custody,
+connection and retained sidecars. Journal nodes receive native no-follow
+name/descriptor, mount, owner/mode and ACL checks. Failure latches; returning
+an old pathname or clearing an ACL cannot heal the session. Successful close
+retires the journal descriptor once before releasing custody and writer
+admission; uncertain close retains quarantine. Stored frames and snapshots
+remain untrusted assertions and cannot construct preparation authority.
+
+Both unchanged 32-writer cardinality tests passed together, inside the
+155/155 Phase-7 selection, and in the current full macOS store run. The four
+exact G26 fingerprints retain all structural denials. Current store tests passed
+600/600 with two intentionally ignored child helpers; the daemon and CLI suites,
+strict workspace Clippy and locked metadata checks also passed. The older
+contention failure cause is not established; these results do not prove its
+historical cause or physical deadline behavior.
+
+Failed validation attempts remain recorded. The first full npm run found a stale
+readiness-source guard; the corrected guard suite passed 96/96, including eight
+new rejection mutations, and the affected hostile-PATH case passed. The next
+full npm attempt reached TypeScript but could not resolve nested workspace
+dependencies. Reusing the existing admitted dependency directories through
+workspace links corrected that environment without installs or downloads;
+typechecking and workspace tests then passed. Later Rust checks found two
+formatting differences and a real read-query regression: serializer diagnostics
+used two SQLite metadata queries where the existing limit allowed one. The
+correction combines both typed origin checks in one query, preserves the
+16-query bound, and passed the focused check plus the current full store run.
+Original full-wrapper failures remain failures. Successful stages are joined by
+explicit unchanged-input reuse and separately completed affected stages, rather
+than reported as another full npm invocation.
+
+The selected reservation now uses a nonwaiting registry/gate path that cannot
+bypass existing FIFO waiters. Live checks join the exact retained permit before
+and after selected custody verification. Current gate tests passed 13/13 and
+SQLite synchronization tests passed 14/14, including actual held-mutex and
+isolated poison cases. Native Linux execution of the new selected-journal
+cases remains pending; these tests are not physical authority proof.
+
+The contract layer now emits complete bounded canonical declaration and binding
+documents, the composed declared envelope, and the initial all-deny envelope
+with five zero limits per rule. The initial resource set exactly matches final
+composition; retained denied tuples do not restore removed resources. Focused
+headless-contract tests passed 67/67, and strict contracts/store/daemon Clippy
+passed. Independent exact source/delta/outcome review passed. These are data
+encoding APIs and cannot verify resources, create a prepared installation or
+activate a configuration.
+
+The initial relocation preserved all fifteen native source files byte-for-byte
+from the daemon into the private store crate. Subsequent budget integration
+extracts the original artifact budget/error/purpose/deadline definitions into
+one store-root-private module; consumers retain private aliases and narrow
+accessors. There is no duplicate budget, deadline reset, new public
+observer/proof constructor or runtime caller. Current native-component tests
+passed 123/123 on macOS; Linux-only physical cases are not claimed as run.
+Every Procfs job now carries the existing original artifact
+budget allocation through custody, request, attempt, worker and result polling;
+queued budget/deadline substitutions deny before dispatch. Denial invalidates
+that same allocation and cannot reset it. The whole-operation registration,
+finite combined accounting and native cleanup acknowledgment remain open.
+
+The selected strong HCFG-6 producer and atomic installation initializer remain
+unfinished. Completion requires real probe/adapter/image build outputs, an
+independently selected complete immutable recipe, genuine nonempty held-resource
+validation, current host/daemon/native observations and exact probe cleanup.
+The stricter unmodified Linux v6.8/ext4/LSM profile is not established by the
+broader selected-store custody backend. Daemon-cache evidence must capture the
+actual generated OCI spec and retain daemon-instance association; fresh host
+path enumeration or Docker HostConfig cannot substitute. No parsed cleanup
+label, supplied digest, journal phase or fixture can supply these facts.
+The session has no public initializer or management-system dispatch route.
 Rangoon and a Backstage reference client are intended consumers of the same
 versioned engine API, with no direct database or independent authority path.
 Neither integration is implemented by this custody candidate.

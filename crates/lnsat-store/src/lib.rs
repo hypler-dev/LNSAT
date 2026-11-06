@@ -35,6 +35,19 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use zeroize::Zeroizing;
 
+#[allow(
+    dead_code,
+    reason = "Private original-operation budget; selected control integration remains pending"
+)]
+mod headless_control_budget;
+#[allow(
+    dead_code,
+    reason = "Reviewed inert Stage-A native candidate awaits complete freeze and integration"
+)]
+mod headless_native;
+mod write_sync;
+mod writer_gate;
+
 pub mod action_request;
 mod headless_bootstrap;
 #[allow(
@@ -2479,13 +2492,24 @@ impl SqliteStore {
     pub fn open(path: impl AsRef<Path>) -> Result<Self, SqliteStoreError> {
         let database_path = path.as_ref();
         prepare_database_file(database_path)?;
+        let open_writer = crate::write_sync::reserve_open(database_path).map_err(|error| {
+            if error.sqlite_error_code() == Some(rusqlite::ErrorCode::ReadOnly) {
+                SqliteStoreError::UnsupportedSchemaVersion
+            } else {
+                SqliteStoreError::OpenFailed
+            }
+        })?;
         let connection =
             Connection::open_with_flags(database_path, OpenFlags::SQLITE_OPEN_READ_WRITE)
                 .map_err(|_| SqliteStoreError::OpenFailed)?;
+        open_writer
+            .verify_connection(&connection)
+            .map_err(|_| SqliteStoreError::OpenFailed)?;
         preflight_schema(&connection)?;
         configure_connection(&connection)?;
         validate_local_password_verifier_v1(LOCAL_AUTHENTICATION_DUMMY_VERIFIER_V1)
             .map_err(|_| SqliteStoreError::OpenFailed)?;
+        drop(open_writer);
         let mut store = Self {
             database_path: database_path.to_path_buf(),
             connection,
@@ -2557,9 +2581,7 @@ impl SqliteStore {
 
         self.verify_schema()
             .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
         let record = owner_bootstrap::insert_local_owner_bootstrap_v1(&transaction, &prepared)?;
         transaction
@@ -2597,9 +2619,7 @@ impl SqliteStore {
         let credential_id =
             local_password_credential_id_v1(input.identity_ref, 1, &verifier, input.created_at);
 
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
         let authentication = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -2837,9 +2857,7 @@ impl SqliteStore {
         }
         self.verify_schema()
             .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
         let authentication = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -2988,9 +3006,7 @@ impl SqliteStore {
         })?;
         self.verify_schema()
             .map_err(|_| LocalOwnerRecoveryErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalOwnerRecoveryErrorV1::PersistenceFailed)?;
         let identity = select_local_identity_v1(&transaction, input.expected_owner_identity_ref)
             .map_err(map_local_identity_recovery_error_v1)?
@@ -3114,9 +3130,7 @@ impl SqliteStore {
         }
         self.verify_schema()
             .map_err(|_| LocalIdentityStoreErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalIdentityStoreErrorV1::PersistenceFailed)?;
         let authentication = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -3234,9 +3248,7 @@ impl SqliteStore {
         }
         let secrets = create_local_session_secrets_v1()
             .map_err(|_| LocalSessionStoreErrorV1::PersistenceFailed)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalSessionStoreErrorV1::PersistenceFailed)?;
         let session = insert_local_session_v1(
             &transaction,
@@ -3391,9 +3403,7 @@ impl SqliteStore {
         validate_local_session_idle_timeout_v1(idle_timeout_seconds)?;
         self.verify_schema()
             .map_err(|_| LocalSessionStoreErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalSessionStoreErrorV1::PersistenceFailed)?;
         let result = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -3429,9 +3439,7 @@ impl SqliteStore {
         validate_local_session_idle_timeout_v1(idle_timeout_seconds)?;
         self.verify_schema()
             .map_err(|_| LocalSessionStoreErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalSessionStoreErrorV1::PersistenceFailed)?;
         let verified = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -3504,9 +3512,7 @@ impl SqliteStore {
         }
         self.verify_schema()
             .map_err(|_| LocalSessionStoreErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalSessionStoreErrorV1::PersistenceFailed)?;
         let verified = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -3554,9 +3560,7 @@ impl SqliteStore {
         }
         self.verify_schema()
             .map_err(|_| LocalSessionStoreErrorV1::EvidenceDrift)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| LocalSessionStoreErrorV1::PersistenceFailed)?;
         let verified = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -3713,9 +3717,7 @@ impl SqliteStore {
         self.verify_schema()
             .map_err(|_| SqliteRecoveryInspectionEventErrorV1::EvidenceDrift)?;
 
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| SqliteRecoveryInspectionEventErrorV1::PersistenceFailed)?;
 
         if let Some(row) = select_recovery_inspection_event_by_idempotency(
@@ -3828,9 +3830,7 @@ impl SqliteStore {
         &mut self,
         packet: &PacketEnvelopeV1,
     ) -> Result<PacketStoreWriteV1, PacketStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| PacketStoreErrorV1::PersistenceFailed)?;
         let write = append_packet_in_transaction_v1(&transaction, packet)?;
         transaction
@@ -3893,9 +3893,7 @@ impl SqliteStore {
         &mut self,
         decision: &PolicyDecisionV1,
     ) -> Result<PolicyStoreWriteV1, PolicyStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| PolicyStoreErrorV1::PersistenceFailed)?;
         let write = append_policy_in_transaction_v1(&transaction, decision)?;
         transaction
@@ -3926,9 +3924,7 @@ impl SqliteStore {
         raw_csrf_token: &str,
         evaluated_at: &str,
     ) -> Result<AuthenticatedPacketIntakeStoreWriteV1, AuthenticatedPacketIntakeStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| AuthenticatedPacketIntakeStoreErrorV1::PersistenceFailed)?;
         let verified = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -4034,9 +4030,7 @@ impl SqliteStore {
         &mut self,
         request: &ApprovalRequestV1,
     ) -> Result<ApprovalRequestStoreWriteV1, ApprovalRequestStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| ApprovalRequestStoreErrorV1::PersistenceFailed)?;
         let write = append_approval_request_in_transaction_v1(&transaction, request)?;
         transaction
@@ -4065,9 +4059,7 @@ impl SqliteStore {
         raw_csrf_token: &str,
         checked_at: &str,
     ) -> Result<ApprovalRequestStoreWriteV1, ApprovalRequestStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| ApprovalRequestStoreErrorV1::PersistenceFailed)?;
         let verified = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -4196,9 +4188,7 @@ impl SqliteStore {
         raw_csrf_token: &str,
         checked_at: &str,
     ) -> Result<ApprovalDecisionStoreWriteV1, ApprovalDecisionStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| ApprovalDecisionStoreErrorV1::PersistenceFailed)?;
         let verified = verify_and_touch_local_session_on_connection_v1(
             &transaction,
@@ -4234,9 +4224,7 @@ impl SqliteStore {
         &mut self,
         decision: &ApprovalDecisionV1,
     ) -> Result<ApprovalDecisionStoreWriteV1, ApprovalDecisionStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| ApprovalDecisionStoreErrorV1::PersistenceFailed)?;
         let write = append_approval_decision_in_transaction_v1(&transaction, decision)?;
         transaction
@@ -4331,9 +4319,7 @@ impl SqliteStore {
         &mut self,
         event: &AuditEventV1,
     ) -> Result<AuditEventStoreWriteV1, AuditEventStoreErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| AuditEventStoreErrorV1::PersistenceFailed)?;
         let expected = rederive_audit_event_from_refs(
             &transaction,
@@ -4633,9 +4619,8 @@ fn apply_migration_with_precommit(
     migration: Migration,
     before_commit: impl FnOnce() -> Result<(), SqliteStoreError>,
 ) -> Result<(), SqliteStoreError> {
-    let transaction = connection
-        .transaction_with_behavior(TransactionBehavior::Immediate)
-        .map_err(|_| SqliteStoreError::MigrationFailed)?;
+    let transaction =
+        crate::write_sync::begin(connection).map_err(|_| SqliteStoreError::MigrationFailed)?;
     transaction
         .execute_batch(migration.sql)
         .map_err(|_| SqliteStoreError::MigrationFailed)?;

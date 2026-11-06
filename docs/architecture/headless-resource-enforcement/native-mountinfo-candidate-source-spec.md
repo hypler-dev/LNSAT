@@ -1,5 +1,10 @@
 # Stage-A Private Mountinfo Byte Candidate
 
+Source allocation update, November 5: the existing fifteen-file native closure
+now resides privately in `lnsat-store`, preserving its exact relocation bytes
+and module topology. Historical daemon-side evidence remains dated; relocation
+alone supplies no native execution, cleanup or authority proof.
+
 Status: exact inert candidate contract under the human-accepted source-order
 amendment. [Project Status](../../PROJECT_STATUS.md) remains the sole
 implementation and acceptance record. Fresh independent precode review gates
@@ -10,7 +15,7 @@ implementation. This does not complete native source/pin/feasibility freeze.
 Decode a bounded supplied byte slice into private, untrusted mountinfo records.
 The primary controller owns native/security semantics and implementation;
 fresh independent read-only review covers this contract and resulting source.
-Owned source is `crates/lnsatd/src/headless_native_mountinfo.rs`, its synthetic
+Owned source is `crates/lnsat-store/src/headless_native_mountinfo.rs`, its synthetic
 test file and the module declaration in `headless_native.rs`. Supporting owned
 docs are this contract, native specification, plan, README, docs index, Product
 Build Sequence and Project Status. Inventory and source-review history follow

@@ -1,5 +1,10 @@
 # Native procfs fixture source packet
 
+Source allocation update, November 5: the existing fifteen-file native closure
+now resides privately in `lnsat-store`, preserving its exact relocation bytes
+and module topology. Historical daemon-side evidence remains dated; relocation
+alone supplies no native execution, cleanup or authority proof.
+
 Status: proposed source-only implementation packet; no source, build or native
 execution authorization. [Project Status](../../PROJECT_STATUS.md#native-procfs-fixture-source-packet)
 owns acceptance and implementation truth. The already selected
@@ -36,8 +41,8 @@ is created or modified by this documentation packet.
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `crates/lnsatd/tests/fixtures/native-procfs/linux-v6.8-gate.patch` | One textual patch against exact upstream v6.8. Its internal paths are limited to the seven kernel files listed below. No vendored kernel tree or executable.                                |
 | `crates/lnsatd/tests/fixtures/native-procfs/gate.config`           | Test-only configuration fragment. It is not a complete `.config`, captured artifact or build authorization.                                                                                 |
-| `crates/lnsatd/src/headless_native_procfs_fixture_tests.rs`        | Private pure protocol/trace tests plus separately ignored Linux native tests and fixed fixture helpers. No public library or product entrypoint.                                            |
-| `crates/lnsatd/src/headless_native_procfs.rs`                      | A `#[cfg(test)]` child-module declaration and the fixed Linux test hooks below. Existing native schedule, deadline, state transitions, cleanup, errors and non-test behavior are preserved. |
+| `crates/lnsat-store/src/headless_native_procfs_fixture_tests.rs`   | Private pure protocol/trace tests plus separately ignored Linux native tests and fixed fixture helpers. No public library or product entrypoint.                                            |
+| `crates/lnsat-store/src/headless_native_procfs.rs`                 | A `#[cfg(test)]` child-module declaration and the fixed Linux test hooks below. Existing native schedule, deadline, state transitions, cleanup, errors and non-test behavior are preserved. |
 
 No Cargo manifest/lock, dependency, feature, exported constructor, existing byte
 grammar, successful sample injector, generic observer, callback or alternate
@@ -284,9 +289,9 @@ retained; this case does not claim joined-thread or zero-global-state cleanup.
 After source-only implementation is explicitly authorized, ordinary checks are:
 
 ```sh
-cargo test -p lnsatd --lib headless_native::procfs::fixture_tests::wire_
-cargo test -p lnsatd --lib headless_native::procfs::fixture_tests::binding_
-cargo test -p lnsatd --lib headless_native::procfs::fixture_tests::trace_
+cargo test -p lnsat-store --lib headless_native::procfs::fixture_tests::wire_
+cargo test -p lnsat-store --lib headless_native::procfs::fixture_tests::binding_
+cargo test -p lnsat-store --lib headless_native::procfs::fixture_tests::trace_
 npm run check
 npm run docs:direction:check
 npm run public:check

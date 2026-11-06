@@ -12,7 +12,7 @@ use std::fmt;
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[path = "headless_preparation_custody.rs"]
-mod custody;
+pub(super) mod custody;
 
 const MAX_RECORD_BYTES: usize = 16_384;
 const MAX_RECORDS: usize = 64;

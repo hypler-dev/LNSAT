@@ -108,6 +108,35 @@ fn exact_two_resource_dictionary_exposes_unverified_rows_only() {
 }
 
 #[test]
+fn canonical_binding_document_round_trips_without_changing_digest_domain() {
+    let first = parsed_bindings();
+    let mut reordered = bindings_document();
+    let object = reordered.as_object_mut().expect("object");
+    let bindings = object.remove("bindings").expect("bindings");
+    let installation_ref = object.remove("installation_ref").expect("installation");
+    let contract_version = object.remove("contract_version").expect("contract");
+    let schema_id = object.remove("schema_id").expect("schema");
+    let reordered = json!({
+        "bindings": bindings,
+        "installation_ref": installation_ref,
+        "contract_version": contract_version,
+        "schema_id": schema_id
+    });
+    let second = parse(&reordered, &declaration(&declaration_document())).expect("reordered");
+    let canonical = first.canonical_json().expect("canonical bindings");
+    assert_eq!(
+        canonical,
+        second.canonical_json().expect("canonical bindings")
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&canonical).expect("canonical JSON"),
+        bindings_document()
+    );
+    assert!(canonical.len() <= MAX_HEADLESS_RESOURCE_BINDINGS_BYTES_V1);
+    assert_eq!(first.binding_digest(), second.binding_digest());
+}
+
+#[test]
 fn nonempty_deny_all_declaration_remains_valid_unverified_input() {
     let mut document = declaration_document();
     document["layers"][0]["action_rules"] = json!([]);

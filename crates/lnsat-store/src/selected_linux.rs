@@ -297,6 +297,68 @@ mod native {
             Ok(())
         }
 
+        /// Verify one already held journal object against its no-follow name.
+        /// No extra main/WAL/SHM alias or pathname reopen is used.
+        pub(crate) fn verify_journal_node(
+            &self,
+            parent: &File,
+            name: &str,
+            file: &File,
+            owner: u32,
+            directory: bool,
+        ) -> Result<(), Error> {
+            if name.is_empty()
+                || name == "."
+                || name == ".."
+                || name.bytes().any(|byte| byte == b'/' || byte == 0)
+            {
+                return Err(Error::InvalidSelection);
+            }
+            local_filesystem(file)?;
+            let before = rustix::fs::statx(file, c"", AtFlags::EMPTY_PATH, REQUIRED)
+                .map_err(|_| Error::CustodyChanged)?;
+            let named = rustix::fs::statx(parent, name, AtFlags::SYMLINK_NOFOLLOW, REQUIRED)
+                .map_err(|_| Error::CustodyChanged)?;
+            if before.stx_mask & REQUIRED.bits() != REQUIRED.bits()
+                || named.stx_mask & REQUIRED.bits() != REQUIRED.bits()
+                || before.stx_mnt_id != self.parent.mount
+                || identity(&before) != identity(&named)
+            {
+                return Err(Error::CustodyChanged);
+            }
+            validate_metadata(
+                &file.metadata().map_err(|_| Error::CustodyChanged)?,
+                owner,
+                directory,
+            )?;
+            let mut buffer = [0_u8; MAX_ACL];
+            match rustix::fs::fgetxattr(file, c"system.posix_acl_access", &mut buffer[..]) {
+                Ok(length) => owner_only_acl(&buffer[..length], directory)?,
+                Err(rustix::io::Errno::NODATA) => (),
+                Err(_) => return Err(Error::StoreUnverifiable),
+            }
+            if directory {
+                match rustix::fs::fgetxattr(file, c"system.posix_acl_default", &mut buffer[..]) {
+                    Err(rustix::io::Errno::NODATA) => (),
+                    _ => return Err(Error::InvalidSelection),
+                }
+            }
+            let after = rustix::fs::statx(file, c"", AtFlags::EMPTY_PATH, REQUIRED)
+                .map_err(|_| Error::CustodyChanged)?;
+            let named_after = rustix::fs::statx(parent, name, AtFlags::SYMLINK_NOFOLLOW, REQUIRED)
+                .map_err(|_| Error::CustodyChanged)?;
+            if after.stx_mask & REQUIRED.bits() != REQUIRED.bits()
+                || named_after.stx_mask & REQUIRED.bits() != REQUIRED.bits()
+                || identity(&before) != identity(&after)
+                || identity(&after) != identity(&named_after)
+                || before.stx_ctime.tv_sec != after.stx_ctime.tv_sec
+                || before.stx_ctime.tv_nsec != after.stx_ctime.tv_nsec
+            {
+                return Err(Error::CustodyChanged);
+            }
+            Ok(())
+        }
+
         pub(crate) fn sidecars(
             &self,
             custody: &SelectedStoreCustodyV1,

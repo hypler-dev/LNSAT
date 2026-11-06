@@ -8,6 +8,7 @@ const FIXTURE: &str =
     include_str!("../../../../fixtures/contracts/headless-config-declaration-v1.json");
 const PRINCIPAL: &str = "identity:alice";
 const RESOURCE: &str = "resource:repo-a";
+const REMOVED_RESOURCE: &str = "resource:repo-b";
 const CAPABILITY: &str = "repository.read";
 
 fn document() -> Value {
@@ -94,6 +95,78 @@ fn ordered_narrowing_preserves_stronger_approval_and_tighter_limits() {
             limits.memory_bytes
         ),
         (1, 1, 1, 1, 1)
+    );
+}
+
+#[test]
+fn canonical_envelopes_preserve_final_intersection_and_initial_denial() {
+    let mut value = document();
+    let mut removed_rule = value["layers"][0]["action_rules"][0].clone();
+    removed_rule["resource_ref"] = json!(REMOVED_RESOURCE);
+    value["layers"][0]["action_rules"]
+        .as_array_mut()
+        .unwrap()
+        .push(removed_rule);
+    add_layer(&mut value, "operator");
+    value["layers"][1]["resource_allow"] = json!([RESOURCE]);
+    value["layers"][1]["action_rules"] = json!([value["layers"][0]["action_rules"][0].clone()]);
+    let composed = compose(&value).expect("valid narrowing");
+    let declared: Value = serde_json::from_str(
+        &composed
+            .canonical_declared_envelope_json()
+            .expect("declared envelope"),
+    )
+    .expect("canonical JSON");
+    let initial: Value = serde_json::from_str(
+        &composed
+            .canonical_initial_denied_envelope_json()
+            .expect("initial envelope"),
+    )
+    .expect("canonical JSON");
+    assert_eq!(declared["resource_allow"], json!([RESOURCE]));
+    assert_eq!(initial["resource_allow"], json!([RESOURCE]));
+
+    let declared_retained = envelope_rule(&declared, RESOURCE);
+    assert_eq!(declared_retained["mode"], "allow");
+    assert_eq!(
+        declared_retained["limits"],
+        json!({
+            "tokens": 100,
+            "runtime_seconds": 100,
+            "cost_microusd": 100,
+            "cpu_millicores": 100,
+            "memory_bytes": 100
+        })
+    );
+    let declared_removed = envelope_rule(&declared, REMOVED_RESOURCE);
+    assert_eq!(declared_removed["mode"], "deny");
+    let zero_limits = json!({
+        "tokens": 0,
+        "runtime_seconds": 0,
+        "cost_microusd": 0,
+        "cpu_millicores": 0,
+        "memory_bytes": 0
+    });
+    assert_eq!(declared_removed["limits"], zero_limits);
+    for resource_ref in [RESOURCE, REMOVED_RESOURCE] {
+        let initial_rule = envelope_rule(&initial, resource_ref);
+        assert_eq!(initial_rule["mode"], "deny");
+        assert_eq!(initial_rule["limits"], zero_limits);
+    }
+    assert_ne!(declared, initial);
+    assert!(
+        composed
+            .canonical_declared_envelope_json()
+            .expect("declared envelope")
+            .len()
+            <= 262_144
+    );
+    assert!(
+        composed
+            .canonical_initial_denied_envelope_json()
+            .expect("initial envelope")
+            .len()
+            <= 262_144
     );
 }
 
@@ -303,4 +376,17 @@ fn diagnostics_and_debug_never_expose_source_identifiers() {
         )
         .is_err()
     );
+}
+
+fn envelope_rule<'a>(envelope: &'a Value, resource_ref: &str) -> &'a Value {
+    envelope["rules"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|rule| {
+            rule["principal_ref"] == PRINCIPAL
+                && rule["resource_ref"] == resource_ref
+                && rule["capability"] == CAPABILITY
+        })
+        .expect("complete tuple")
 }

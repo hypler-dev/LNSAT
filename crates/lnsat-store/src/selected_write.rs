@@ -5,14 +5,7 @@ use super::{
     Connection, OpenFlags, SelectedLocalStoreErrorV1 as Error, SelectedStoreCustodyV1,
     configure_native_boundary, linux::LinuxCustody,
 };
-use std::{
-    path::Path,
-    sync::{Mutex, MutexGuard, TryLockError},
-};
-
-// Coarse process-wide serialization before an installation exists. This is
-// deliberately stronger than a filename-keyed map and uses bounded try-lock.
-static INSTALLATION_MUTEX: Mutex<()> = Mutex::new(());
+use std::path::Path;
 
 type Sidecars = [Option<super::FileIdentity>; 2];
 
@@ -20,8 +13,12 @@ pub(crate) struct SelectedWritableStore {
     connection: Option<Connection>,
     custody: Option<SelectedStoreCustodyV1>,
     linux: Option<LinuxCustody>,
-    mutex: Option<MutexGuard<'static, ()>>,
+    mutex: Option<crate::write_sync::WriteLease>,
     sidecars: Sidecars,
+    journal: Option<crate::headless_preparation::custody::OwnedJournalState>,
+    poisoned: bool,
+    #[cfg(test)]
+    post_close_intervention: Option<Box<dyn FnOnce()>>,
 }
 
 fn denied<T>(_: T) -> Error {
@@ -32,9 +29,16 @@ impl SelectedWritableStore {
     pub(crate) fn open(path: &Path) -> Result<Self, Error> {
         // Lease is acquired before SQLite can create a coordination file.
         let custody = SelectedStoreCustodyV1::acquire(path)?;
-        let mutex = INSTALLATION_MUTEX.try_lock().map_err(|error| match error {
-            TryLockError::WouldBlock => Error::DatabaseBusy,
-            TryLockError::Poisoned(_) => Error::StoreUnverifiable,
+        let mutex = crate::write_sync::reserve_selected(
+            custody.database_identity.device,
+            custody.database_identity.inode,
+        )
+        .map_err(|error| {
+            if error.sqlite_error_code() == Some(rusqlite::ErrorCode::DatabaseBusy) {
+                Error::DatabaseBusy
+            } else {
+                Error::StoreUnverifiable
+            }
         })?;
         let linux = LinuxCustody::acquire(&custody)?;
         let before = linux.sidecars(&custody)?;
@@ -49,6 +53,10 @@ impl SelectedWritableStore {
             linux: Some(linux),
             mutex: Some(mutex),
             sidecars: before,
+            journal: None,
+            poisoned: false,
+            #[cfg(test)]
+            post_close_intervention: None,
         };
         session.configure()?;
         session.verify(false)?;
@@ -102,22 +110,110 @@ impl SelectedWritableStore {
     }
 
     fn verify(&self, transaction: bool) -> Result<(), Error> {
-        let custody = self.custody.as_ref().ok_or(Error::StoreUnverifiable)?;
-        let linux = self.linux.as_ref().ok_or(Error::StoreUnverifiable)?;
-        linux.verify(custody)?;
-        custody.verify_connection(self.connection()?)?;
-        let current = self.current_sidecars()?;
-        if !preserved(&self.sidecars, &current, false) {
-            return Err(Error::CustodyChanged);
+        if self.poisoned {
+            return Err(Error::StoreUnverifiable);
         }
-        if transaction {
-            custody.verify_writable_sidecars(self.connection()?)?;
+        let lease = self.mutex.as_ref().ok_or(Error::StoreUnverifiable)?;
+        lease.check_held().map_err(denied)?;
+        verify_parts(
+            self.custody.as_ref().ok_or(Error::StoreUnverifiable)?,
+            self.linux.as_ref().ok_or(Error::StoreUnverifiable)?,
+            self.connection()?,
+            &self.sidecars,
+            transaction,
+        )?;
+        lease.check_held().map_err(denied)
+    }
+
+    fn check_live(&mut self, transaction: bool) -> Result<(), Error> {
+        let result = self.verify(transaction);
+        if result.is_err() {
+            self.poisoned = true;
         }
-        Ok(())
+        result
+    }
+
+    /// Opens inert journal storage only after exact migration and empty-state
+    /// verification. Its syntax assertions never become preparation proof.
+    pub(crate) fn open_preparation_journal(&mut self) -> Result<(), Error> {
+        self.check_live(false)?;
+        let result = (|| {
+            if self.journal.is_some() {
+                return Err(Error::StoreUnverifiable);
+            }
+            crate::selected_schema::verify(self.connection()?)?;
+            crate::selected_schema::require_empty(self.connection()?)?;
+            let parent = super::SelectedPreparationParent::from_writable(
+                self.custody.as_ref().ok_or(Error::StoreUnverifiable)?,
+                self.linux.as_ref().ok_or(Error::StoreUnverifiable)?,
+                self.connection()?,
+                &self.sidecars,
+            )?;
+            crate::headless_preparation::custody::OwnedJournalState::open(&parent)
+                .map_err(|_| Error::CustodyChanged)
+        })();
+        match result {
+            Ok(journal) => {
+                self.journal = Some(journal);
+                Ok(())
+            }
+            Err(error) => {
+                self.poisoned = true;
+                Err(error)
+            }
+        }
+    }
+
+    pub(crate) fn inspect_preparation_journal(
+        &mut self,
+    ) -> Result<crate::headless_preparation::custody::RootSnapshot, Error> {
+        self.check_live(false)?;
+        let result = (|| {
+            let parent = super::SelectedPreparationParent::from_writable(
+                self.custody.as_ref().ok_or(Error::StoreUnverifiable)?,
+                self.linux.as_ref().ok_or(Error::StoreUnverifiable)?,
+                self.connection.as_ref().ok_or(Error::StoreUnverifiable)?,
+                &self.sidecars,
+            )?;
+            self.journal
+                .as_mut()
+                .ok_or(Error::StoreUnverifiable)?
+                .inspect(&parent)
+                .map_err(|_| Error::CustodyChanged)
+        })();
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
+    }
+
+    pub(crate) fn persist_preparation_assertion(&mut self, frame: &[u8]) -> Result<(), Error> {
+        self.check_live(false)?;
+        let result = (|| {
+            let parent = super::SelectedPreparationParent::from_writable(
+                self.custody.as_ref().ok_or(Error::StoreUnverifiable)?,
+                self.linux.as_ref().ok_or(Error::StoreUnverifiable)?,
+                self.connection.as_ref().ok_or(Error::StoreUnverifiable)?,
+                &self.sidecars,
+            )?;
+            self.journal
+                .as_mut()
+                .ok_or(Error::StoreUnverifiable)?
+                .append(&parent, frame)
+                .map_err(|_| Error::CustodyChanged)
+        })();
+        if result.is_err() {
+            self.poisoned = true;
+        }
+        result
     }
 
     pub(crate) fn migrate_to_inert(mut self) -> Result<Self, Error> {
         self.verify(false)?;
+        self.mutex
+            .as_ref()
+            .ok_or(Error::StoreUnverifiable)?
+            .seal_legacy();
         let connection = self.connection.as_mut().ok_or(Error::StoreUnverifiable)?;
         let custody = self.custody.as_ref().ok_or(Error::StoreUnverifiable)?;
         let linux = self.linux.as_ref().ok_or(Error::StoreUnverifiable)?;
@@ -160,14 +256,20 @@ impl SelectedWritableStore {
     }
 
     fn close_inner(&mut self) -> Result<(), Error> {
-        let Some(connection) = self.connection.take() else {
+        if self.connection.is_none() {
             return Ok(());
-        };
+        }
+        // A poisoned or drifted journal is retained with the same physical
+        // store owners. Closing SQL must not silently discard that custody.
+        let journal_valid = !self.poisoned
+            && (self.journal.is_none() || self.inspect_preparation_journal().is_ok());
+        let connection = self.connection.take().ok_or(Error::StoreUnverifiable)?;
         let before = self.current_sidecars();
-        let prior_valid = match &before {
-            Ok(names) => preserved(&self.sidecars, names, false),
-            Err(_) => false,
-        };
+        let prior_valid = journal_valid
+            && match &before {
+                Ok(names) => preserved(&self.sidecars, names, false),
+                Err(_) => false,
+            };
         if !prior_valid {
             // SQLite close may unlink coordination names. After custody drift,
             // those names may belong to somebody else, so do not call close.
@@ -176,14 +278,29 @@ impl SelectedWritableStore {
         }
         match connection.close() {
             Ok(()) => {
+                #[cfg(test)]
+                if let Some(intervene) = self.post_close_intervention.take() {
+                    intervene();
+                }
                 // The last VFS connection may delete its own WAL/SHM. An
                 // unexplained replacement or newly created file still denies.
                 let after = self.current_sidecars();
                 if prior_valid
                     && matches!((&before, &after), (Ok(a), Ok(b)) if preserved(a, b, true))
                 {
+                    // Retire the journal descriptor before custody/lease and
+                    // writer admission can be released by this session's drop.
+                    if self
+                        .journal
+                        .take()
+                        .is_some_and(|journal| journal.close().is_err())
+                    {
+                        self.quarantine_resources();
+                        return Err(Error::CustodyChanged);
+                    }
                     Ok(())
                 } else {
+                    self.quarantine_resources();
                     Err(Error::CustodyChanged)
                 }
             }
@@ -197,12 +314,36 @@ impl SelectedWritableStore {
         }
     }
     fn quarantine(&mut self, connection: Connection) {
+        std::mem::forget(connection);
+        self.quarantine_resources();
+    }
+
+    fn quarantine_resources(&mut self) {
+        self.poisoned = true;
+        if let Some(permit) = self.mutex.as_mut() {
+            permit.quarantine();
+        }
         std::mem::forget((
-            connection,
             self.custody.take(),
             self.linux.take(),
             self.mutex.take(),
+            self.journal.take(),
         ));
+    }
+
+    #[cfg(test)]
+    pub(crate) fn inject_uncertain_journal_close_for_test(
+        &mut self,
+    ) -> std::sync::Arc<std::sync::atomic::AtomicUsize> {
+        self.journal
+            .as_mut()
+            .unwrap()
+            .inject_uncertain_close_for_test()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn after_close_for_test(&mut self, intervene: impl FnOnce() + 'static) {
+        self.post_close_intervention = Some(Box::new(intervene));
     }
 
     #[cfg(test)]
@@ -210,6 +351,24 @@ impl SelectedWritableStore {
         let statement = self.connection().unwrap().prepare("SELECT 1").unwrap();
         std::mem::forget(statement);
     }
+}
+
+pub(super) fn verify_parts(
+    custody: &SelectedStoreCustodyV1,
+    linux: &LinuxCustody,
+    connection: &Connection,
+    sidecars: &[Option<super::FileIdentity>; 2],
+    transaction: bool,
+) -> Result<(), Error> {
+    linux.verify(custody)?;
+    custody.verify_connection(connection)?;
+    if !preserved(sidecars, &linux.sidecars(custody)?, false) {
+        return Err(Error::CustodyChanged);
+    }
+    if transaction {
+        custody.verify_writable_sidecars(connection)?;
+    }
+    Ok(())
 }
 
 fn preserved(before: &Sidecars, after: &Sidecars, retirement: bool) -> bool {

@@ -1556,6 +1556,8 @@ function validateSources(root, errors) {
     root,
     "crates/lnsat-store/src/phase7_consumption.rs",
   );
+  const writeSyncPath = resolve(root, "crates/lnsat-store/src/write_sync.rs");
+  const writerGatePath = resolve(root, "crates/lnsat-store/src/writer_gate.rs");
   const phase7AtomicConsumptionTestPath = resolve(
     root,
     "crates/lnsat-store/src/tests/phase7_atomic_consumption.rs",
@@ -1599,6 +1601,8 @@ function validateSources(root, errors) {
     phase7PersistencePath,
     phase7NoncePath,
     phase7ConsumptionPath,
+    writeSyncPath,
+    writerGatePath,
     phase7AtomicConsumptionTestPath,
     phase7LocalAuthorizationTestPath,
     gatewayPath,
@@ -1624,6 +1628,8 @@ function validateSources(root, errors) {
   let phase7PersistenceText = "";
   let phase7NonceText = "";
   let phase7ConsumptionText = "";
+  let writeSyncText = "";
+  let writerGateText = "";
   let phase7AtomicConsumptionTestText = "";
   let phase7LocalAuthorizationTestText = "";
   let gatewayText = "";
@@ -1642,6 +1648,8 @@ function validateSources(root, errors) {
     phase7PersistenceText = readText(phase7PersistencePath);
     phase7NonceText = readText(phase7NoncePath);
     phase7ConsumptionText = readText(phase7ConsumptionPath);
+    writeSyncText = readText(writeSyncPath);
+    writerGateText = readText(writerGatePath);
     phase7AtomicConsumptionTestText = readText(phase7AtomicConsumptionTestPath);
     phase7LocalAuthorizationTestText = readText(phase7LocalAuthorizationTestPath);
     gatewayText = readText(gatewayPath);
@@ -1905,7 +1913,7 @@ function validateSources(root, errors) {
     "candidate.ct_eq(&dummy)",
     "take_from_bytes",
     "bytes.zeroize();",
-    "Transaction::new_unchecked(connection, TransactionBehavior::Immediate)",
+    "crate::write_sync::begin_phase7(connection)",
     "redeem_phase7_execution_capability_v1",
     "INSERT INTO lnsat_capability_consumptions",
     '"consumed"',
@@ -1927,6 +1935,52 @@ function validateSources(root, errors) {
     assert(
       phase7ConsumptionText.includes(marker),
       `crates/lnsat-store/src/phase7_consumption.rs: missing ${marker}`,
+      errors,
+    );
+  }
+  // Source conformance supplements reviewed behavior and runtime tests. These
+  // named checks do not authenticate code or form an authorization boundary.
+  for (const name of ["write_sync", "writer_gate"]) {
+    assert(
+      new RegExp(`^mod ${name};$`, "mu").test(libText),
+      `crates/lnsat-store/src/lib.rs: shared writer module ${name} must stay private`,
+      errors,
+    );
+  }
+  for (const marker of [
+    "Transaction::new_unchecked(connection, TransactionBehavior::Immediate)",
+    "const PHASE7_ACQUISITION_BUDGET: Duration = Duration::from_secs(20);",
+    "begin_with_budget(connection, PHASE7_ACQUISITION_BUDGET, 4)",
+    "reserve(connection_key(connection)?, deadline, false)?",
+    "connection.busy_timeout(crate::SQLITE_BUSY_TIMEOUT.min(remaining))?",
+    "rusqlite::ErrorCode::DatabaseBusy | rusqlite::ErrorCode::DatabaseLocked",
+    "drop(self.transaction.take());",
+    "self.lease.quarantine();",
+  ]) {
+    assert(
+      writeSyncText.includes(marker),
+      `crates/lnsat-store/src/write_sync.rs: missing ${marker}`,
+      errors,
+    );
+  }
+  assert(
+    (
+      writeSyncText.match(
+        /!selected && entry\.legacy_closed\.load\(Ordering::Acquire\)/gu,
+      ) ?? []
+    ).length === 2,
+    "crates/lnsat-store/src/write_sync.rs: shared writer requires both legacy seal checks",
+    errors,
+  );
+  for (const marker of [
+    "const MAX_WAITERS: usize = 1024;",
+    "state.waiters.front() == Some(&ticket)",
+    "Instant::now() >= deadline",
+    "self.next_ticket.checked_add(1).ok_or(GateError::Limit)?",
+  ]) {
+    assert(
+      writerGateText.includes(marker),
+      `crates/lnsat-store/src/writer_gate.rs: missing ${marker}`,
       errors,
     );
   }

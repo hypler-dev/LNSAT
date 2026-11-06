@@ -158,6 +158,34 @@ impl HeadlessResourceBindingsV1 {
         &self.declaration_digest
     }
 
+    /// Emits the complete validated binding declaration as bounded canonical JSON.
+    ///
+    /// The returned JSON contains sensitive resource references and source paths.
+    /// It grants no authority and proves no native observation, ownership, or activation.
+    ///
+    /// # Errors
+    ///
+    /// Returns a fixed error when canonical encoding fails or exceeds the binding ceiling.
+    pub fn canonical_json(&self) -> Result<String, HeadlessResourceBindingsErrorV1> {
+        let body = json!({
+            "schema_id": HEADLESS_RESOURCE_BINDINGS_SCHEMA_V1,
+            "contract_version": CONTRACT_VERSION_V1_0,
+            "installation_ref": self.installation_ref(),
+            "bindings": self.bindings.iter().map(|binding| json!({
+                "resource_ref": binding.resource_ref(),
+                "kind": binding.kind().as_str(),
+                "source_path": binding.source_path(),
+            })).collect::<Vec<_>>(),
+        });
+        let mut output = String::new();
+        crate::packet::write_canonical_json_value(&body, &mut output)
+            .map_err(|_| HeadlessResourceBindingsErrorV1::InvalidDeclaration)?;
+        if output.len() > MAX_HEADLESS_RESOURCE_BINDINGS_BYTES_V1 {
+            return Err(HeadlessResourceBindingsErrorV1::InvalidSize);
+        }
+        Ok(output)
+    }
+
     /// Count and fixed denial claims only; no paths, references or digests.
     #[must_use]
     pub fn redacted_diagnostic(&self) -> Value {

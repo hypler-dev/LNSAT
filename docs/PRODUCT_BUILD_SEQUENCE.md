@@ -489,9 +489,13 @@ and current state; configuration inspection cannot become activation authority.
 Exit evidence must cover a nonempty initial configuration, interrupted or
 replayed bootstrap, owner/session substitution, stale and concurrent changes,
 stop racing admission/use, restart-preserved revocation, linked durable audit
-and rollback that cannot restore broader or revoked authority. SQL18, writable
-store integration, initializer and activation retain their exact precode and
-implementation gates. Existing inert backup/restore and owner-recovery paths
+and rollback that cannot restore broader or revoked authority. Selected-only
+schema 19 migration is inert. Physical-file writer synchronization and selected
+journal integration are source candidates. Complete canonical declaration,
+binding and initial all-deny envelope encoding is available as data-only
+initializer groundwork; genuine strong-profile preparation, atomic installation,
+activation and their native qualification remain open.
+Existing inert backup/restore and owner-recovery paths
 are reused; restore must not activate an installation.
 
 ### 3. Finish the headless integration contract

@@ -419,6 +419,15 @@ startup observation, release and result codecs. These pieces are deliberately
 private prerequisites. They do not expose an operator entrypoint or complete
 the coherent native, daemon, store and revocation integration freeze.
 
+The protected-setup source candidate joins ordinary writers and the selected
+Linux session through physical-file synchronization and retains native custody
+for inert preparation-journal storage. The native acquisition closure now lives
+privately with the store. Bounded canonical declaration, binding and initial
+all-deny envelope APIs supply initializer data prerequisites. Genuine
+strong-profile preparation and atomic installation remain unfinished; these
+changes do not expose a usable setup command or grant management clients
+direct database authority.
+
 The startup message decoders accept supplied bytes. They validate bounded
 framing, closed typed maps, family/context identities, native representations,
 Git request bindings and canonical commitments. Observation/result frames have

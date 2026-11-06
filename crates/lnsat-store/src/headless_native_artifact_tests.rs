@@ -1,11 +1,11 @@
 use super::*;
+use crate::headless_control_budget::{
+    ARTIFACT_LIMIT, ARTIFACT_OCI_LIMIT, MANIFEST_LIMIT, OCI_LIMIT,
+};
 use std::{
     fs::File,
     num::NonZeroU64,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, AtomicU64, Ordering},
-    },
+    sync::{Arc, atomic::Ordering},
     time::{Duration, Instant},
 };
 
@@ -159,24 +159,20 @@ fn artifact_error_codes_and_native_mapping_are_exact_and_data_free() {
 fn artifact_budget_keeps_earlier_deadline_and_expiry_invalidates_same_gate() {
     let enclosing = deadline();
     let budget = ArtifactReadBudget::begin(enclosing).unwrap();
-    assert!(budget.state.deadline <= enclosing);
+    assert!(budget.shared_state().deadline() <= enclosing);
     assert!(matches!(
         ArtifactReadBudget::begin(Instant::now()),
         Err(ArtifactError::BudgetExhausted)
     ));
 
-    let expired = ArtifactReadBudget {
-        state: Arc::new(ArtifactBudgetState {
-            deadline: Instant::now(),
-            all_content: AtomicU64::new(0),
-            artifact_oci_content: AtomicU64::new(0),
-            invalid: AtomicBool::new(false),
-            manifest_claimed: AtomicBool::new(false),
-        }),
-    };
-    assert_eq!(expired.state.valid(), Err(ArtifactError::BudgetExhausted));
+    let mut expired = ArtifactReadBudget::begin(deadline()).unwrap();
+    expired.set_deadline_for_test(Instant::now());
     assert_eq!(
-        expired.state.valid(),
+        expired.shared_state().valid(),
+        Err(ArtifactError::BudgetExhausted)
+    );
+    assert_eq!(
+        expired.shared_state().valid(),
         Err(ArtifactError::ObservationInvalid)
     );
 }
@@ -184,7 +180,7 @@ fn artifact_budget_keeps_earlier_deadline_and_expiry_invalidates_same_gate() {
 #[test]
 fn artifact_budget_exposes_its_single_shared_state_allocation() {
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
-    assert!(Arc::ptr_eq(budget.shared_state(), &budget.state));
+    assert!(Arc::ptr_eq(budget.shared_state(), budget.shared_state()));
     let custody = OwnedArtifactCustody::from_root_file(
         File::open(std::env::current_exe().unwrap()).unwrap(),
         budget.shared_state(),
@@ -196,59 +192,57 @@ fn artifact_budget_exposes_its_single_shared_state_allocation() {
 fn artifact_budget_allows_full_manifest_and_artifact_allowance_independently() {
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     budget
-        .state
+        .shared_state()
         .charge(
             ArtifactReadPurpose::RootManifest,
             usize::try_from(MANIFEST_LIMIT).unwrap(),
         )
         .unwrap();
     budget
-        .state
+        .shared_state()
         .charge(
             ArtifactReadPurpose::ArtifactSnapshot,
             usize::try_from(ARTIFACT_OCI_LIMIT).unwrap(),
         )
         .unwrap();
     assert_eq!(
-        budget.state.all_content.load(Ordering::SeqCst),
+        budget.shared_state().content_counts().0,
         MANIFEST_LIMIT + ARTIFACT_OCI_LIMIT
     );
+    assert_eq!(budget.shared_state().content_counts().1, ARTIFACT_OCI_LIMIT);
     assert_eq!(
-        budget.state.artifact_oci_content.load(Ordering::SeqCst),
-        ARTIFACT_OCI_LIMIT
-    );
-    assert_eq!(
-        budget.state.remaining(ArtifactReadPurpose::RootManifest),
+        budget
+            .shared_state()
+            .remaining(ArtifactReadPurpose::RootManifest),
         Ok(u64::MAX)
     );
-    assert_eq!(budget.state.remaining(ArtifactReadPurpose::OciBody), Ok(0));
+    assert_eq!(
+        budget
+            .shared_state()
+            .remaining(ArtifactReadPurpose::OciBody),
+        Ok(0)
+    );
 }
 
 #[test]
 fn artifact_budget_charges_partial_returns_and_overflow_invalidates() {
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     budget
-        .state
+        .shared_state()
         .charge(ArtifactReadPurpose::OciBody, 19)
         .unwrap();
-    assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 19);
-    assert_eq!(budget.state.artifact_oci_content.load(Ordering::SeqCst), 19);
+    assert_eq!(budget.shared_state().content_counts(), (19, 19));
 
-    let overflow = ArtifactReadBudget {
-        state: Arc::new(ArtifactBudgetState {
-            deadline: deadline(),
-            all_content: AtomicU64::new(u64::MAX),
-            artifact_oci_content: AtomicU64::new(0),
-            invalid: AtomicBool::new(false),
-            manifest_claimed: AtomicBool::new(false),
-        }),
-    };
+    let overflow = ArtifactReadBudget::begin(deadline()).unwrap();
+    overflow.set_content_counts_for_test(u64::MAX, 0);
     assert_eq!(
-        overflow.state.charge(ArtifactReadPurpose::RootManifest, 1),
+        overflow
+            .shared_state()
+            .charge(ArtifactReadPurpose::RootManifest, 1),
         Err(ArtifactError::LimitExceeded)
     );
     assert_eq!(
-        overflow.state.valid(),
+        overflow.shared_state().valid(),
         Err(ArtifactError::ObservationInvalid)
     );
 }
@@ -266,8 +260,8 @@ fn result_checkpoint<'a>(
     super::super::ArtifactCheckpoint {
         lane,
         token: NonZeroU64::new(1).unwrap(),
-        deadline: budget.state.deadline,
-        budget: &budget.state,
+        deadline: budget.shared_state().deadline(),
+        budget: budget.shared_state().as_ref(),
     }
 }
 
@@ -285,9 +279,8 @@ fn artifact_failed_read_checks_live_context_without_charging_bytes() {
         ),
         Err(ArtifactError::ReadRejected)
     );
-    assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
-    assert_eq!(budget.state.artifact_oci_content.load(Ordering::SeqCst), 0);
-    assert_eq!(budget.state.valid(), Ok(()));
+    assert_eq!(budget.shared_state().content_counts(), (0, 0));
+    assert_eq!(budget.shared_state().valid(), Ok(()));
 }
 
 #[test]
@@ -296,7 +289,7 @@ fn artifact_failed_read_expiry_precedes_native_error_and_stays_invalid() {
         let lane = LaneRoot::new();
         let mut budget = ArtifactReadBudget::begin(deadline()).unwrap();
         if expired_budget {
-            Arc::get_mut(&mut budget.state).unwrap().deadline = Instant::now();
+            budget.set_deadline_for_test(Instant::now());
         }
         let mut guard = result_checkpoint(&lane, &budget);
         if expired_budget {
@@ -313,8 +306,11 @@ fn artifact_failed_read_expiry_precedes_native_error_and_stays_invalid() {
             ),
             Err(ArtifactError::BudgetExhausted)
         );
-        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
-        assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
+        assert_eq!(
+            budget.shared_state().valid(),
+            Err(ArtifactError::ObservationInvalid)
+        );
+        assert_eq!(budget.shared_state().content_counts().0, 0);
     }
 }
 
@@ -345,8 +341,11 @@ fn artifact_failed_read_terminal_or_stale_token_precedes_native_error() {
                 ArtifactError::AssociationRejected
             })
         );
-        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
-        assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
+        assert_eq!(
+            budget.shared_state().valid(),
+            Err(ArtifactError::ObservationInvalid)
+        );
+        assert_eq!(budget.shared_state().content_counts().0, 0);
     }
 }
 
@@ -355,7 +354,7 @@ fn artifact_failed_read_preserves_existing_observation_invalidation() {
     let lane = LaneRoot::new();
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     let guard = result_checkpoint(&lane, &budget);
-    budget.state.invalidate();
+    budget.shared_state().invalidate();
     assert_eq!(
         checked_read_count(
             &guard,
@@ -365,7 +364,7 @@ fn artifact_failed_read_preserves_existing_observation_invalidation() {
         ),
         Err(ArtifactError::ObservationInvalid)
     );
-    assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 0);
+    assert_eq!(budget.shared_state().content_counts().0, 0);
 }
 
 #[test]
@@ -383,11 +382,11 @@ fn artifact_short_or_complete_return_charges_actual_bytes() {
             }
         );
         assert_eq!(
-            budget.state.all_content.load(Ordering::SeqCst),
+            budget.shared_state().content_counts().0,
             u64::try_from(actual).unwrap()
         );
         assert_eq!(
-            budget.state.artifact_oci_content.load(Ordering::SeqCst),
+            budget.shared_state().content_counts().1,
             u64::try_from(actual).unwrap()
         );
     }
@@ -409,18 +408,21 @@ fn artifact_late_return_charges_actual_bytes_before_checkpoint_denial() {
                 Err(ArtifactError::BudgetExhausted)
             );
             assert_eq!(
-                budget.state.all_content.load(Ordering::SeqCst),
+                budget.shared_state().content_counts().0,
                 u64::try_from(actual).unwrap()
             );
             assert_eq!(
-                budget.state.artifact_oci_content.load(Ordering::SeqCst),
+                budget.shared_state().content_counts().1,
                 if purpose.uses_artifact_allowance() {
                     u64::try_from(actual).unwrap()
                 } else {
                     0
                 }
             );
-            assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+            assert_eq!(
+                budget.shared_state().valid(),
+                Err(ArtifactError::ObservationInvalid)
+            );
         }
     }
 }
@@ -430,21 +432,20 @@ fn artifact_post_call_accounting_failure_keeps_original_error_precedence() {
     let lane = LaneRoot::new();
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     let mut guard = result_checkpoint(&lane, &budget);
-    budget
-        .state
-        .artifact_oci_content
-        .store(ARTIFACT_OCI_LIMIT, Ordering::SeqCst);
+    budget.set_content_counts_for_test(0, ARTIFACT_OCI_LIMIT);
     guard.deadline = Instant::now();
     assert_eq!(
         checked_read_count(&guard, ArtifactReadPurpose::OciBody, 8, Ok(8)),
         Err(ArtifactError::LimitExceeded)
     );
-    assert_eq!(budget.state.all_content.load(Ordering::SeqCst), 8);
     assert_eq!(
-        budget.state.artifact_oci_content.load(Ordering::SeqCst),
-        ARTIFACT_OCI_LIMIT
+        budget.shared_state().content_counts(),
+        (8, ARTIFACT_OCI_LIMIT)
     );
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
 }
 
 #[test]
@@ -471,8 +472,8 @@ fn artifact_input_limits_reject_zero_and_each_wrong_purpose_length() {
 #[test]
 fn artifact_root_claim_is_one_use_and_two_contenders_have_one_winner() {
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
-    let first = Arc::clone(&budget.state);
-    let second = Arc::clone(&budget.state);
+    let first = Arc::clone(budget.shared_state());
+    let second = Arc::clone(budget.shared_state());
     let first = std::thread::spawn(move || first.claim_manifest());
     let second = std::thread::spawn(move || second.claim_manifest());
     let outcomes = [first.join().unwrap(), second.join().unwrap()];
@@ -484,17 +485,22 @@ fn artifact_root_claim_is_one_use_and_two_contenders_have_one_winner() {
             .count(),
         1
     );
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
 }
 
 #[test]
 fn artifact_busy_procfs_lane_does_not_claim_or_transfer_custody() {
     let lane = test_lane();
+    let procfs_budget = ArtifactReadBudget::begin(deadline()).unwrap();
     let procfs = super::super::OwnedProcfsCustody {
         resource: Arc::new(File::open(std::env::current_exe().unwrap()).unwrap()),
         proc_root: Arc::new(File::open(std::env::temp_dir()).unwrap()),
+        budget: Arc::clone(procfs_budget.shared_state()),
     };
-    let procfs_attempt = Attempt::prepare_in(lane, &procfs, deadline()).unwrap();
+    let procfs_attempt = Attempt::prepare_in(lane, &procfs).unwrap();
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     let custody = custody(&budget);
     assert!(matches!(
@@ -504,7 +510,7 @@ fn artifact_busy_procfs_lane_does_not_claim_or_transfer_custody() {
         ),
         Ok(None)
     ));
-    assert!(!budget.state.manifest_claimed.load(Ordering::SeqCst));
+    assert!(!budget.shared_state().manifest_claimed());
     assert_eq!(Arc::strong_count(&custody.file), 1);
     drop(procfs_attempt);
     super::super::drain_terminal(lane);
@@ -539,7 +545,7 @@ fn artifact_nonarmed_disposal_retires_one_file_without_native_result() {
     );
     assert!(accounting.complete(super::super::RequestKind::ArtifactRead));
     assert_eq!(Arc::strong_count(&custody.file), 1);
-    assert!(budget.state.valid().is_ok());
+    assert!(budget.shared_state().valid().is_ok());
 }
 
 #[test]
@@ -558,7 +564,10 @@ fn artifact_owned_original_retirement_consumes_only_unshared_owner() {
         Err(ArtifactError::CleanupUncertain)
     );
     assert!(super::super::terminal(lane.control.load(Ordering::SeqCst)));
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
     drop(shared);
 }
 
@@ -574,7 +583,7 @@ fn artifact_root_manifest_read_requires_claimed_same_deadline_before_native_read
     let (result, accounting) = read_root_manifest(
         &lane,
         NonZeroU64::new(1).unwrap(),
-        budget.state.deadline,
+        budget.shared_state().deadline(),
         &owned,
         1,
     );
@@ -589,7 +598,7 @@ fn artifact_root_manifest_read_requires_claimed_same_deadline_before_native_read
     );
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     let owned = custody(&budget);
-    budget.state.claim_manifest().unwrap();
+    budget.shared_state().claim_manifest().unwrap();
     let (result, accounting) = read_root_manifest(
         &lane,
         NonZeroU64::new(1).unwrap(),
@@ -606,7 +615,7 @@ fn artifact_root_manifest_read_requires_claimed_same_deadline_before_native_read
 fn artifact_root_facts_bind_root_purpose_body_token_and_live_budget() {
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
     let result = UnverifiedArtifactRead {
-        budget: Arc::clone(&budget.state),
+        budget: Arc::clone(budget.shared_state()),
         token: NonZeroU64::new(7).unwrap(),
         purpose: ArtifactReadPurpose::RootManifest,
         identity: ArtifactIdentity {
@@ -641,7 +650,10 @@ fn artifact_root_facts_bind_root_purpose_body_token_and_live_budget() {
         result.root_manifest_facts(wrong.shared_state(), NonZeroU64::new(7).unwrap()),
         Err(ArtifactError::AssociationRejected)
     ));
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
 }
 
 #[test]
@@ -669,7 +681,7 @@ fn artifact_root_facts_reject_nonroot_token_and_body_length_mismatch() {
     ] {
         let budget = ArtifactReadBudget::begin(deadline()).unwrap();
         let result = UnverifiedArtifactRead {
-            budget: Arc::clone(&budget.state),
+            budget: Arc::clone(budget.shared_state()),
             token: NonZeroU64::new(token).unwrap(),
             purpose,
             identity: identity(),
@@ -684,7 +696,10 @@ fn artifact_root_facts_reject_nonroot_token_and_body_length_mismatch() {
             ),
             Err(ArtifactError::AssociationRejected)
         ));
-        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+        assert_eq!(
+            budget.shared_state().valid(),
+            Err(ArtifactError::ObservationInvalid)
+        );
     }
 }
 
@@ -731,7 +746,10 @@ fn artifact_wrong_completion_kind_or_token_stays_closed_before_extraction() {
         ));
         assert!(super::super::terminal(lane.control.load(Ordering::SeqCst)));
         assert!(lane.slots.lock().unwrap().completion.is_some());
-        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+        assert_eq!(
+            budget.shared_state().valid(),
+            Err(ArtifactError::ObservationInvalid)
+        );
     }
 }
 
@@ -755,7 +773,8 @@ fn artifact_stale_attempt_cannot_cancel_new_lane_token() {
     let stale = Attempt {
         lane,
         token: old_token,
-        deadline: deadline(),
+        deadline: first_budget.shared_state().deadline(),
+        budget: Arc::clone(first_budget.shared_state()),
         armed: true,
     };
     drop(stale);
@@ -778,7 +797,10 @@ fn artifact_stop_expiry_and_poison_invalidate_and_retain_cleanup() {
         stopped.poll(),
         Err(ArtifactError::BudgetExhausted)
     ));
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
     super::super::drain_terminal(lane);
     assert!(
         lane.slots
@@ -802,7 +824,7 @@ fn artifact_stop_expiry_and_poison_invalidate_and_retain_cleanup() {
     expired.attempt.deadline = Instant::now();
     assert_eq!(expired.dispatch(), Err(ArtifactError::BudgetExhausted));
     assert_eq!(
-        expired_budget.state.valid(),
+        expired_budget.shared_state().valid(),
         Err(ArtifactError::ObservationInvalid)
     );
     super::super::drain_terminal(expired_lane);
@@ -822,7 +844,7 @@ fn artifact_stop_expiry_and_poison_invalidate_and_retain_cleanup() {
         Err(ArtifactError::CleanupUncertain)
     ));
     assert_eq!(
-        poisoned_budget.state.valid(),
+        poisoned_budget.shared_state().valid(),
         Err(ArtifactError::ObservationInvalid)
     );
     assert!(super::super::terminal(
@@ -835,7 +857,7 @@ fn artifact_context_rejects_wrong_owner_or_token_before_borrowing_facts() {
     let first = ArtifactReadBudget::begin(deadline()).unwrap();
     let second = ArtifactReadBudget::begin(deadline()).unwrap();
     let result = UnverifiedArtifactRead {
-        budget: Arc::clone(&first.state),
+        budget: Arc::clone(first.shared_state()),
         token: NonZeroU64::new(1).unwrap(),
         purpose: ArtifactReadPurpose::RootManifest,
         identity: ArtifactIdentity {
@@ -862,7 +884,10 @@ fn artifact_context_rejects_wrong_owner_or_token_before_borrowing_facts() {
         result.check_context(&second, NonZeroU64::new(1).unwrap()),
         Err(ArtifactError::AssociationRejected)
     ));
-    assert_eq!(first.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        first.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
     assert!(matches!(
         result.check_context(&first, NonZeroU64::new(2).unwrap()),
         Err(ArtifactError::AssociationRejected)
@@ -895,9 +920,12 @@ fn artifact_late_or_incomplete_publication_invalidates_before_terminal_cleanup()
             super::super::RequestKind::ArtifactRead,
             super::super::CompletionOutcome::Artifact(Err(ArtifactError::ReadRejected)),
             accounting,
-            Some(&budget.state),
+            Some(budget.shared_state().as_ref()),
         ));
-        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+        assert_eq!(
+            budget.shared_state().valid(),
+            Err(ArtifactError::ObservationInvalid)
+        );
         assert!(super::super::terminal(lane.control.load(Ordering::SeqCst)));
     }
 }
@@ -915,11 +943,11 @@ fn artifact_checkpoint_models_typed_denials_without_native_calls() {
         lane: expired_lane,
         token,
         deadline: Instant::now(),
-        budget: &expired_budget.state,
+        budget: expired_budget.shared_state().as_ref(),
     };
     assert_eq!(expired.check(), Err(ArtifactError::BudgetExhausted));
     assert_eq!(
-        expired_budget.state.valid(),
+        expired_budget.shared_state().valid(),
         Err(ArtifactError::ObservationInvalid)
     );
 
@@ -934,7 +962,7 @@ fn artifact_checkpoint_models_typed_denials_without_native_calls() {
         lane: stop_lane,
         token,
         deadline: deadline(),
-        budget: &stop_budget.state,
+        budget: stop_budget.shared_state().as_ref(),
     };
     assert_eq!(stopped.check(), Err(ArtifactError::BudgetExhausted));
 
@@ -948,7 +976,7 @@ fn artifact_checkpoint_models_typed_denials_without_native_calls() {
         lane: mismatch_lane,
         token,
         deadline: deadline(),
-        budget: &mismatch_budget.state,
+        budget: mismatch_budget.shared_state().as_ref(),
     };
     assert_eq!(mismatched.check(), Err(ArtifactError::AssociationRejected));
 
@@ -958,12 +986,12 @@ fn artifact_checkpoint_models_typed_denials_without_native_calls() {
         Ordering::SeqCst,
     );
     let gate_budget = ArtifactReadBudget::begin(deadline()).unwrap();
-    gate_budget.state.invalidate();
+    gate_budget.shared_state().invalidate();
     let gated = super::super::ArtifactCheckpoint {
         lane: gate_lane,
         token,
         deadline: deadline(),
-        budget: &gate_budget.state,
+        budget: gate_budget.shared_state().as_ref(),
     };
     assert_eq!(gated.check(), Err(ArtifactError::ObservationInvalid));
 }
@@ -981,7 +1009,7 @@ fn artifact_checkpoint_native_mapping_preserves_typed_denials() {
         lane: native_lane,
         token,
         deadline: Instant::now(),
-        budget: &native_budget.state,
+        budget: native_budget.shared_state().as_ref(),
     };
     assert_eq!(
         native.check_native(),
@@ -999,7 +1027,7 @@ fn artifact_checkpoint_native_mapping_preserves_typed_denials() {
         lane: native_mismatch_lane,
         token,
         deadline: deadline(),
-        budget: &native_mismatch_budget.state,
+        budget: native_mismatch_budget.shared_state().as_ref(),
     };
     assert_eq!(
         native_mismatch.check_native(),
@@ -1016,12 +1044,12 @@ fn artifact_checkpoint_native_mapping_preserves_typed_denials() {
         Ordering::SeqCst,
     );
     let native_gate_budget = ArtifactReadBudget::begin(deadline()).unwrap();
-    native_gate_budget.state.invalidate();
+    native_gate_budget.shared_state().invalidate();
     let native_gate = super::super::ArtifactCheckpoint {
         lane: native_gate_lane,
         token,
         deadline: deadline(),
-        budget: &native_gate_budget.state,
+        budget: native_gate_budget.shared_state().as_ref(),
     };
     assert_eq!(
         native_gate.check_native(),
@@ -1033,7 +1061,7 @@ fn artifact_checkpoint_native_mapping_preserves_typed_denials() {
 #[test]
 fn artifact_worker_guard_unwind_model_invalidates_budget_without_native_proof() {
     let budget = ArtifactReadBudget::begin(deadline()).unwrap();
-    let state = Arc::clone(&budget.state);
+    let state = Arc::clone(budget.shared_state());
     let _ = std::panic::catch_unwind(move || {
         let _guard = super::super::ArtifactWorkerGuard {
             budget: Some(state),
@@ -1041,7 +1069,10 @@ fn artifact_worker_guard_unwind_model_invalidates_budget_without_native_proof() 
         };
         panic!("synthetic artifact worker unwind");
     });
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
 }
 
 #[cfg(target_os = "linux")]
@@ -1203,11 +1234,17 @@ mod linux_held_file {
         let token = NonZeroU64::new(1).unwrap();
         let request = ArtifactRequest {
             file: Arc::clone(&file),
-            budget: Arc::clone(&budget.state),
+            budget: Arc::clone(budget.shared_state()),
             purpose: ArtifactReadPurpose::RootManifest,
             expected_length: bytes.len() as u64,
         };
-        let result = read(active_lane(token), token, budget.state.deadline, &request).unwrap();
+        let result = read(
+            active_lane(token),
+            token,
+            budget.shared_state().deadline(),
+            &request,
+        )
+        .unwrap();
         {
             let facts = result.check_context(&budget, token).unwrap();
             assert_eq!(facts.length, 3);
@@ -1239,11 +1276,17 @@ mod linux_held_file {
         let token = NonZeroU64::new(2).unwrap();
         let request = ArtifactRequest {
             file: Arc::clone(&file),
-            budget: Arc::clone(&budget.state),
+            budget: Arc::clone(budget.shared_state()),
             purpose: ArtifactReadPurpose::ArtifactSnapshot,
             expected_length: bytes.len() as u64,
         };
-        let result = read(active_lane(token), token, budget.state.deadline, &request).unwrap();
+        let result = read(
+            active_lane(token),
+            token,
+            budget.shared_state().deadline(),
+            &request,
+        )
+        .unwrap();
         {
             let facts = result.check_context(&budget, token).unwrap();
             assert_eq!(facts.length, bytes.len() as u64);
@@ -1258,14 +1301,8 @@ mod linux_held_file {
             );
         }
         drop(result);
-        assert_eq!(
-            budget.state.all_content.load(Ordering::SeqCst),
-            bytes.len() as u64
-        );
-        assert_eq!(
-            budget.state.artifact_oci_content.load(Ordering::SeqCst),
-            bytes.len() as u64
-        );
+        assert_eq!(budget.shared_state().content_counts().0, bytes.len() as u64);
+        assert_eq!(budget.shared_state().content_counts().1, bytes.len() as u64);
         drop(file);
         drop(Arc::try_unwrap(request.file).unwrap());
 
@@ -1274,12 +1311,17 @@ mod linux_held_file {
         let token = NonZeroU64::new(3).unwrap();
         let request = ArtifactRequest {
             file: Arc::clone(&file),
-            budget: Arc::clone(&budget.state),
+            budget: Arc::clone(budget.shared_state()),
             purpose: ArtifactReadPurpose::OciBody,
             expected_length: 4,
         };
         assert!(matches!(
-            read(active_lane(token), token, budget.state.deadline, &request),
+            read(
+                active_lane(token),
+                token,
+                budget.shared_state().deadline(),
+                &request,
+            ),
             Err(ArtifactError::InvalidDescriptor)
         ));
         drop(file);
@@ -1296,7 +1338,10 @@ fn artifact_unsupported_host_denies_before_lane_construction_and_invalidates_bud
         ArtifactAttempt::try_prepare(&custody, ArtifactReadPurpose::RootManifest, 1),
         Err(ArtifactError::UnsupportedPlatform)
     ));
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
 }
 
 #[test]
@@ -1338,7 +1383,10 @@ fn artifact_uncertain_cleanup_is_distinct_from_completion_association() {
         ));
         assert!(super::super::terminal(lane.control.load(Ordering::SeqCst)));
         assert!(lane.slots.lock().unwrap().completion.is_some());
-        assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+        assert_eq!(
+            budget.shared_state().valid(),
+            Err(ArtifactError::ObservationInvalid)
+        );
         super::super::drain_terminal(lane);
     }
 }
@@ -1364,7 +1412,10 @@ fn artifact_request_rejects_procfs_facade_before_dispatch() {
             .unwrap()
             .dispatched
     );
-    assert_eq!(budget.state.valid(), Err(ArtifactError::ObservationInvalid));
+    assert_eq!(
+        budget.shared_state().valid(),
+        Err(ArtifactError::ObservationInvalid)
+    );
     super::super::drain_terminal(lane);
     assert_eq!(Arc::strong_count(&custody.file), 1);
 }

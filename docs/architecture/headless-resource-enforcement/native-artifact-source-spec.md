@@ -1,5 +1,10 @@
 # HCFG-6 Held Artifact Read Source Contract
 
+Source allocation update, November 5: the existing fifteen-file native closure
+now resides privately in `lnsat-store`, preserving its exact relocation bytes
+and module topology. Historical daemon-side evidence remains dated; relocation
+alone supplies no native execution, cleanup or authority proof.
+
 Status: private Stage-A source proposal under the accepted
 [source ordering](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
 [Project Status](../../PROJECT_STATUS.md#stage-a-held-artifact-read-contract)
@@ -9,8 +14,8 @@ not a supplied-byte decoder, trusted root holder or complete source freeze.
 
 ## Exact ownership and preserved lane
 
-The next source slice owns `crates/lnsatd/src/headless_native_artifact.rs` and
-`crates/lnsatd/src/headless_native_artifact_tests.rs`, the existing `headless_native_procfs.rs` and its tests,
+The next source slice owns `crates/lnsat-store/src/headless_native_artifact.rs` and
+`crates/lnsat-store/src/headless_native_artifact_tests.rs`, the existing `headless_native_procfs.rs` and its tests,
 and the fixed artifact checkpoint path in `headless_native_readable.rs`.
 The new artifact module is a private child of the existing procfs lane module.
 Its only executable entry is that lane's closed worker dispatch. There is no

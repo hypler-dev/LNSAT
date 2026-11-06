@@ -3,10 +3,10 @@
 use super::{
     Connection, Digest, LOCAL_SESSION_IDLE_TIMEOUT_DEFAULT_SECONDS_V1, LocalControlPermissionV1,
     LocalIdentityRoleV1, LocalSessionActivityVerificationV1, OptionalExtension, Sha256,
-    SqliteStore, TransactionBehavior, append_packet_in_transaction_v1,
-    append_policy_in_transaction_v1, canonical_utc_timestamp_millis_v1,
-    canonicalize_packet_envelope_v1, decide_packet_envelope_policy_v1, hash_packet_envelope_v1,
-    is_valid_reference_v1, params, verify_and_touch_local_session_on_connection_v1,
+    SqliteStore, append_packet_in_transaction_v1, append_policy_in_transaction_v1,
+    canonical_utc_timestamp_millis_v1, canonicalize_packet_envelope_v1,
+    decide_packet_envelope_policy_v1, hash_packet_envelope_v1, is_valid_reference_v1, params,
+    verify_and_touch_local_session_on_connection_v1,
 };
 use core::fmt::Write as _;
 use lnsat_contracts::{PacketEnvelopeV1, parse_execution_proposal_v1};
@@ -256,9 +256,7 @@ impl SqliteStore {
         }
         let packet_sha256 =
             hash_packet_envelope_v1(packet).map_err(|_| ActionRequestErrorV1::InvalidInput)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| ActionRequestErrorV1::PersistenceFailed)?;
         let (session, _) = authenticate(&transaction, token, Some(csrf), at)?;
         if !session
@@ -332,9 +330,7 @@ impl SqliteStore {
         csrf: &str,
         at: &str,
     ) -> Result<(), ActionRequestErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| ActionRequestErrorV1::PersistenceFailed)?;
         let outcome = (|| {
             let (session, _) = authenticate(&transaction, token, Some(csrf), at)?;
@@ -373,9 +369,7 @@ impl SqliteStore {
             } else {
                 "persistence_failed"
             };
-            let failed = self
-                .connection
-                .transaction_with_behavior(TransactionBehavior::Immediate)
+            let failed = crate::write_sync::begin(&self.connection)
                 .map_err(|_| ActionRequestErrorV1::PersistenceFailed)?;
             append_evaluation(&failed, root, None, reason, at)?;
             return failed
@@ -404,9 +398,7 @@ impl SqliteStore {
         if !valid_request_id(request_id) {
             return Err(ActionRequestErrorV1::InvalidInput);
         }
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| ActionRequestErrorV1::PersistenceFailed)?;
         let (session, touched) = authenticate(&transaction, token, Some(proof), at)?;
         if !session

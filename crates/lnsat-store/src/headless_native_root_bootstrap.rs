@@ -338,7 +338,7 @@ fn root_checkpoint(
     budget: &ArtifactBudgetState,
 ) -> Result<(), RootBootstrapError> {
     if lane.control.load(Ordering::SeqCst) != word(ACTIVE, request.token.get())
-        || request.deadline != budget.deadline
+        || request.deadline != budget.deadline()
         || Instant::now() >= request.deadline
     {
         budget.invalidate();
@@ -704,10 +704,10 @@ pub(super) fn maintain(lane: &LaneRoot, retained: Option<&RootManifestCustodySta
                 }
         }
         (None, Some(lease)) => !terminal(control) && lease.phase == LeasePhase::Reserved
-            && Instant::now() < lease.budget.deadline && lease.budget.valid().is_ok()
+            && Instant::now() < lease.budget.deadline() && lease.budget.valid().is_ok()
             && control == word(ACTIVE, lease.begin.get())
             && slots.request.as_ref().is_some_and(|request| {
-                request.token == lease.begin && request.deadline == lease.budget.deadline
+                request.token == lease.begin && request.deadline == lease.budget.deadline()
                     && matches!(&request.payload, RequestPayload::Root(RootRequest::Begin { budget, .. })
                         if Arc::ptr_eq(budget, &lease.budget))
             }),
@@ -731,9 +731,12 @@ pub(super) fn park(lane: &LaneRoot, retained: Option<&RootManifestCustodyState>)
         return;
     }
     let deadline = if let Ok(slots) = lane.slots.lock() {
-        retained
-            .map(|state| state.deadline)
-            .or_else(|| slots.root_lease.as_ref().map(|lease| lease.budget.deadline))
+        retained.map(|state| state.deadline).or_else(|| {
+            slots
+                .root_lease
+                .as_ref()
+                .map(|lease| lease.budget.deadline())
+        })
     } else {
         lane.terminalize();
         return;
@@ -808,9 +811,7 @@ pub(super) fn execute(
         }
     };
     if !result.success() {
-        if let Some(budget) = request.budget() {
-            budget.invalidate();
-        }
+        request.budget().invalidate();
         lane.terminalize();
     }
     debug_assert_eq!(result.kind(), kind);
@@ -1703,7 +1704,7 @@ impl RootJob {
             budget.claim_manifest()?;
         }
         if lane.control.load(Ordering::SeqCst) != word(ACTIVE, job.get())
-            || Instant::now() >= budget.deadline
+            || Instant::now() >= budget.deadline()
         {
             return Err(RootBootstrapError::BudgetExhausted);
         }
@@ -1727,13 +1728,13 @@ impl RootJob {
         }
         slots.request = Some(Request {
             token: job,
-            deadline: budget.deadline,
+            deadline: budget.deadline(),
             dispatched: false,
             payload: RequestPayload::Root(payload),
         });
         slots.cleanup = None;
         if lane.control.load(Ordering::SeqCst) != word(ACTIVE, job.get())
-            || Instant::now() >= budget.deadline
+            || Instant::now() >= budget.deadline()
         {
             return Err(RootBootstrapError::BudgetExhausted);
         }
@@ -1746,7 +1747,8 @@ impl RootJob {
             attempt: Attempt {
                 lane,
                 token: job,
-                deadline: budget.deadline,
+                deadline: budget.deadline(),
+                budget: Arc::clone(&budget),
                 armed: true,
             },
             begin,
@@ -1802,9 +1804,7 @@ impl RootJob {
             request.token == self.attempt.token
                 && request.kind() == self.kind
                 && !request.dispatched
-                && request
-                    .budget()
-                    .is_some_and(|budget| Arc::ptr_eq(budget, &self.budget))
+                && Arc::ptr_eq(request.budget(), &self.budget)
         });
         if !valid {
             lane.terminalize();
@@ -2151,7 +2151,7 @@ pub(super) fn publish_lease(
         }
         RootCompletion::Recheck(Ok(data))
             if data.job == job
-                && data.deadline == state.deadline
+                && data.deadline == state.deadline()
                 && lease.phase == LeasePhase::Held =>
         {
             state.valid().is_ok()
@@ -2162,7 +2162,7 @@ pub(super) fn publish_lease(
         RootCompletion::Retire(Ok(data))
             if data.job == job && lease.phase == LeasePhase::Retiring(job) =>
         {
-            if Instant::now() >= state.deadline
+            if Instant::now() >= state.deadline()
                 || state.valid() != Err(ArtifactError::ObservationInvalid)
                 || accounting
                     .root

@@ -22,7 +22,7 @@ use std::rc::Rc;
 const MAX_PREPARATIONS: usize = 64;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum CustodyError {
+pub(crate) enum CustodyError {
     InvalidJournal,
     LimitExceeded,
     Changed,
@@ -43,7 +43,7 @@ impl CustodyError {
 }
 
 /// Private, untrusted syntax assertions, not a permission or cleanup proof.
-struct RootSnapshot {
+pub(crate) struct RootSnapshot {
     chains: Vec<JournalChain>,
     bytes: usize,
     state: RootState,
@@ -70,7 +70,7 @@ struct JournalCustody<'store> {
 }
 
 /// File custody state that does not borrow the selected store.
-struct OwnedJournalState {
+pub(crate) struct OwnedJournalState {
     root: File,
     root_name: String,
     owner: u32,
@@ -80,6 +80,8 @@ struct OwnedJournalState {
     post_read_intervention: Option<Box<dyn FnOnce()>>,
     #[cfg(test)]
     post_revision_create_intervention: Option<Box<dyn FnOnce()>>,
+    #[cfg(test)]
+    uncertain_close: Option<std::sync::Arc<std::sync::atomic::AtomicUsize>>,
 }
 
 /// Temporary private access bound to one existing parent/state pair.
@@ -277,12 +279,34 @@ fn names(directory: &File, owner: u32) -> Result<Vec<String>, CustodyError> {
     Ok(entries)
 }
 
-impl<'store> JournalCustody<'store> {
-    fn open(store: &'store mut SqliteStore) -> Result<Self, CustodyError> {
+impl OwnedJournalState {
+    /// Consume the sole retained journal descriptor once. A failed close is
+    /// uncertain; the selected owner must retain quarantine, never retry it.
+    pub(crate) fn close(self) -> Result<(), CustodyError> {
+        let result = nix::unistd::close(self.root).map_err(|_| CustodyError::IoRejected);
+        #[cfg(test)]
+        if let Some(attempts) = self.uncertain_close {
+            // Perform the real close once, then model an uncertain return.
+            // This tests caller quarantine, not a kernel close-error campaign.
+            attempts.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            return Err(CustodyError::IoRejected);
+        }
+        result
+    }
+
+    #[cfg(test)]
+    pub(crate) fn inject_uncertain_close_for_test(
+        &mut self,
+    ) -> std::sync::Arc<std::sync::atomic::AtomicUsize> {
+        let attempts = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        self.uncertain_close = Some(std::sync::Arc::clone(&attempts));
+        attempts
+    }
+
+    pub(crate) fn open(parent: &SelectedPreparationParent<'_>) -> Result<Self, CustodyError> {
         if !cfg!(target_os = "linux") {
             return Err(CustodyError::IoRejected);
         }
-        let parent = SelectedPreparationParent::borrow(store).map_err(|_| CustodyError::Changed)?;
         let owner = parent.owner().map_err(|_| CustodyError::Changed)?;
         let root_name = parent
             .journal_root_name()
@@ -292,23 +316,64 @@ impl<'store> JournalCustody<'store> {
             &root_name,
             owner,
         )?;
-        let mut journal = Self {
-            parent,
-            state: OwnedJournalState {
-                root,
-                root_name,
-                owner,
-                poisoned: false,
-                baseline: None,
-                #[cfg(test)]
-                post_read_intervention: None,
-                #[cfg(test)]
-                post_revision_create_intervention: None,
-            },
+        let mut state = Self {
+            root,
+            root_name,
+            owner,
+            poisoned: false,
+            baseline: None,
+            #[cfg(test)]
+            post_read_intervention: None,
+            #[cfg(test)]
+            post_revision_create_intervention: None,
+            #[cfg(test)]
+            uncertain_close: None,
         };
-        let baseline = journal.access().stable_snapshot()?.state;
-        journal.state.baseline = Some(baseline);
-        Ok(journal)
+        let baseline = JournalAccess {
+            parent,
+            state: &mut state,
+            marker: PhantomData,
+        }
+        .stable_snapshot()?
+        .state;
+        state.baseline = Some(baseline);
+        Ok(state)
+    }
+
+    pub(crate) fn inspect(
+        &mut self,
+        parent: &SelectedPreparationParent<'_>,
+    ) -> Result<RootSnapshot, CustodyError> {
+        JournalAccess {
+            parent,
+            state: self,
+            marker: PhantomData,
+        }
+        .inspect()
+    }
+
+    pub(crate) fn append(
+        &mut self,
+        parent: &SelectedPreparationParent<'_>,
+        frame: &[u8],
+    ) -> Result<(), CustodyError> {
+        JournalAccess {
+            parent,
+            state: self,
+            marker: PhantomData,
+        }
+        .append(frame)
+    }
+}
+
+impl<'store> JournalCustody<'store> {
+    fn open(store: &'store mut SqliteStore) -> Result<Self, CustodyError> {
+        if !cfg!(target_os = "linux") {
+            return Err(CustodyError::IoRejected);
+        }
+        let parent = SelectedPreparationParent::borrow(store).map_err(|_| CustodyError::Changed)?;
+        let state = OwnedJournalState::open(&parent)?;
+        Ok(Self { parent, state })
     }
 
     fn access(&mut self) -> JournalAccess<'_, 'store> {
@@ -329,9 +394,27 @@ impl<'store> JournalCustody<'store> {
 }
 
 impl JournalAccess<'_, '_> {
+    fn associate(
+        &self,
+        parent: &File,
+        name: &str,
+        file: &File,
+        owner: u32,
+        directory: bool,
+    ) -> Result<Stamp, CustodyError> {
+        let before = association(parent, name, file, owner, directory)?;
+        self.parent
+            .verify_journal_node(parent, name, file, directory)
+            .map_err(|_| CustodyError::Changed)?;
+        let after = association(parent, name, file, owner, directory)?;
+        if before != after {
+            return Err(CustodyError::Changed);
+        }
+        Ok(after)
+    }
     fn check_root(&self) -> Result<Stamp, CustodyError> {
         self.parent.verify().map_err(|_| CustodyError::Changed)?;
-        association(
+        self.associate(
             self.parent.directory().map_err(|_| CustodyError::Changed)?,
             &self.state.root_name,
             &self.state.root,
@@ -381,9 +464,9 @@ impl JournalAccess<'_, '_> {
                     descend(&prep, &name, flags, Mode::empty())
                         .map_err(|_| CustodyError::Changed)?,
                 );
-                association(&prep, &name, &file, self.state.owner, false)?
+                self.associate(&prep, &name, &file, self.state.owner, false)?
             } else {
-                association(
+                self.associate(
                     &self.state.root,
                     &node.preparation,
                     &prep,
@@ -446,7 +529,7 @@ impl JournalAccess<'_, '_> {
         used: usize,
     ) -> Result<(JournalChain, Vec<NodeStamp>, usize), CustodyError> {
         let prep = open_directory(&self.state.root, id)?;
-        let prep_before = association(&self.state.root, id, &prep, self.state.owner, true)?;
+        let prep_before = self.associate(&self.state.root, id, &prep, self.state.owner, true)?;
         let revisions = names(&prep, self.state.owner)?;
         if revisions.is_empty() {
             return Err(CustodyError::InvalidJournal);
@@ -476,7 +559,7 @@ impl JournalAccess<'_, '_> {
         if chain.records[0].preparation_id != id || chain.records[0].owner_uid != self.state.owner {
             return Err(CustodyError::InvalidJournal);
         }
-        if association(&self.state.root, id, &prep, self.state.owner, true)? != prep_before {
+        if self.associate(&self.state.root, id, &prep, self.state.owner, true)? != prep_before {
             return Err(CustodyError::Changed);
         }
         Ok((chain, nodes, bytes))
@@ -492,7 +575,7 @@ impl JournalAccess<'_, '_> {
         let mut file = File::from(
             descend(prep, name, flags, Mode::empty()).map_err(|_| CustodyError::IoRejected)?,
         );
-        let before = association(prep, name, &file, self.state.owner, false)?;
+        let before = self.associate(prep, name, &file, self.state.owner, false)?;
         let size = usize::try_from(before.size).map_err(|_| CustodyError::LimitExceeded)?;
         if size > MAX_RECORD_BYTES || used + size > MAX_CHAIN_BYTES {
             return Err(CustodyError::LimitExceeded);
@@ -505,7 +588,8 @@ impl JournalAccess<'_, '_> {
         if frame.len() > MAX_RECORD_BYTES {
             return Err(CustodyError::LimitExceeded);
         }
-        if frame.len() != size || association(prep, name, &file, self.state.owner, false)? != before
+        if frame.len() != size
+            || self.associate(prep, name, &file, self.state.owner, false)? != before
         {
             return Err(CustodyError::Changed);
         }
@@ -556,15 +640,15 @@ impl JournalAccess<'_, '_> {
             mkdirat(root, record.preparation_id.as_str(), Mode::S_IRWXU)
                 .map_err(|_| CustodyError::IoRejected)?;
             let prep = open_directory(root, &record.preparation_id)?;
-            association(root, &record.preparation_id, &prep, owner, true)?;
+            self.associate(root, &record.preparation_id, &prep, owner, true)?;
             prep.sync_all().map_err(|_| CustodyError::IoRejected)?;
-            association(root, &record.preparation_id, &prep, owner, true)?;
+            self.associate(root, &record.preparation_id, &prep, owner, true)?;
             root.sync_all().map_err(|_| CustodyError::IoRejected)?;
             self.check_root()?;
             prep
         };
         let name = format!("{:08}.json", record.revision);
-        association(root, &record.preparation_id, &prep, owner, true)?;
+        self.associate(root, &record.preparation_id, &prep, owner, true)?;
         let flags =
             OFlag::O_WRONLY | OFlag::O_CREAT | OFlag::O_EXCL | OFlag::O_CLOEXEC | OFlag::O_NOFOLLOW;
         let mut file = File::from(
@@ -576,16 +660,16 @@ impl JournalAccess<'_, '_> {
             // Induce real custody failure after exclusive create, before writing.
             intervene();
         }
-        let identity = association(&prep, &name, &file, owner, false)?;
-        let prep_stamp = association(root, &record.preparation_id, &prep, owner, true)?;
+        let identity = self.associate(&prep, &name, &file, owner, false)?;
+        let prep_stamp = self.associate(root, &record.preparation_id, &prep, owner, true)?;
         let root_stamp = self.check_root()?;
         file.write_all(frame)
             .map_err(|_| CustodyError::IoRejected)?;
         let verify = || {
-            let current = association(&prep, &name, &file, owner, false)?;
+            let current = self.associate(&prep, &name, &file, owner, false)?;
             if !identity.same_identity(current)
                 || usize::try_from(current.size).ok() != Some(frame.len())
-                || association(root, &record.preparation_id, &prep, owner, true)? != prep_stamp
+                || self.associate(root, &record.preparation_id, &prep, owner, true)? != prep_stamp
                 || self.check_root()? != root_stamp
             {
                 return Err(CustodyError::Changed);

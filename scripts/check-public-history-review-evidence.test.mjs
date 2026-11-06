@@ -8,6 +8,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -30,6 +31,24 @@ import {
   PUBLIC_SOURCE_SNAPSHOT_IMMUTABLE_PATHS,
   PUBLIC_SOURCE_SNAPSHOT_MARKER_PATH,
 } from "./public-source-snapshot-provenance.mjs";
+
+const NATIVE_MOVE_NAMES = [
+  "headless_native.rs",
+  "headless_native_acl.rs",
+  "headless_native_artifact.rs",
+  "headless_native_artifact_tests.rs",
+  "headless_native_fdinfo.rs",
+  "headless_native_fdinfo_tests.rs",
+  "headless_native_mountinfo.rs",
+  "headless_native_mountinfo_tests.rs",
+  "headless_native_procfs.rs",
+  "headless_native_procfs_tests.rs",
+  "headless_native_readable.rs",
+  "headless_native_readable_tests.rs",
+  "headless_native_root_bootstrap.rs",
+  "headless_native_root_bootstrap_tests.rs",
+  "headless_native_tests.rs",
+];
 
 const roots = [];
 const ENTRY_ID = "PHR-0001";
@@ -93,7 +112,7 @@ function registry(state = "pending") {
   };
 }
 
-function createRoot() {
+function createRoot({ nativeFiles = false, destinationPresent = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), "public-history-review-"));
   roots.push(root);
   git(root, ["init", "-q", "-b", "main"]);
@@ -109,6 +128,16 @@ function createRoot() {
   writeJson(resolve(root, LEGACY_IDENTIFIER_INVENTORY_PATH), {
     source_tree_sha256: "base",
   });
+  if (nativeFiles) {
+    for (const name of NATIVE_MOVE_NAMES) {
+      write(resolve(root, `crates/lnsatd/src/${name}`), `// original ${name}\n`);
+    }
+    if (destinationPresent)
+      write(
+        resolve(root, `crates/lnsat-store/src/${NATIVE_MOVE_NAMES[0]}`),
+        "// prior target\n",
+      );
+  }
   git(root, ["add", "."]);
   git(root, ["commit", "-q", "-m", PUBLIC_SOURCE_ROOT_SUBJECT]);
   return root;
@@ -168,13 +197,32 @@ function buildManifest(
   reviewedRevision,
   entry = registry().entries[0],
 ) {
+  const deleted = new Set(
+    gitText(root, [
+      "diff",
+      "--name-only",
+      "--no-renames",
+      "--diff-filter=D",
+      baseRevision,
+      reviewedRevision,
+      "--",
+    ]).split("\n"),
+  );
   const protectedFiles = changedPaths(root, baseRevision, reviewedRevision).map(
     (path) => ({
       path,
       sha256: sha256(
-        git(root, ["cat-file", "blob", `${reviewedRevision}:${path}`], {
-          encoding: null,
-        }),
+        git(
+          root,
+          [
+            "cat-file",
+            "blob",
+            `${deleted.has(path) ? baseRevision : reviewedRevision}:${path}`,
+          ],
+          {
+            encoding: null,
+          },
+        ),
       ),
     }),
   );
@@ -816,6 +864,116 @@ test("accepts exact staged and committed attestation", () => {
   assert.equal(committed.mode, "public_history_native");
   assert.equal(committed.pendingEntries, 0);
   assert.equal(committed.attestedEntries, 1);
+});
+
+function nativeMoveFixture({
+  partial = false,
+  missingDestination = false,
+  extraDeletion = false,
+  destinationPresent = false,
+  symlinkDestination = false,
+} = {}) {
+  const root = createRoot({ nativeFiles: true, destinationPresent });
+  const baseRevision = gitText(root, ["rev-parse", "HEAD"]);
+  const names = partial ? NATIVE_MOVE_NAMES.slice(0, -1) : NATIVE_MOVE_NAMES;
+  for (const [index, name] of names.entries()) {
+    const before = resolve(root, `crates/lnsatd/src/${name}`);
+    const after = resolve(root, `crates/lnsat-store/src/${name}`);
+    const bytes = readFileSync(before, "utf8");
+    rmSync(before);
+    if (missingDestination && index === 0) continue;
+    if (symlinkDestination && index === 0) {
+      mkdirSync(resolve(after, ".."), { recursive: true });
+      symlinkSync("../../../src/existing.txt", after);
+    } else write(after, `${bytes}// separately reviewed integration delta\n`);
+  }
+  if (extraDeletion) rmSync(resolve(root, "src/existing.txt"));
+  writeJson(resolve(root, PUBLIC_HISTORY_REVIEW_REGISTRY_PATH), registry());
+  writeJson(resolve(root, LEGACY_IDENTIFIER_INVENTORY_PATH), {
+    source_tree_sha256: "native-move",
+  });
+  git(root, ["add", "."]);
+  return { root, baseRevision };
+}
+
+function commitNativeMove(options) {
+  const fixture = nativeMoveFixture(options);
+  git(fixture.root, ["commit", "-q", "-m", "refactor: move private native closure"]);
+  return { ...fixture, reviewedRevision: gitText(fixture.root, ["rev-parse", "HEAD"]) };
+}
+
+test("attests only the complete regular native relocation through direct child", () => {
+  const fixture = nativeMoveFixture();
+  let result = validate(fixture.root);
+  assert.equal(result.ok, true, result.errors.join("\n"));
+  assert.equal(result.mode, "staged_review");
+  git(fixture.root, ["commit", "-q", "-m", "refactor: move private native closure"]);
+  fixture.reviewedRevision = gitText(fixture.root, ["rev-parse", "HEAD"]);
+  stageAttestation(fixture);
+  result = validate(fixture.root);
+  assert.equal(result.ok, true, result.errors.join("\n"));
+  assert.equal(result.mode, "staged_attestation");
+  git(fixture.root, ["commit", "-q", "-m", "chore: attest private native move"]);
+  result = validate(fixture.root);
+  assert.equal(result.ok, true, result.errors.join("\n"));
+  assert.equal(result.pendingEntries, 0);
+});
+
+for (const [name, options] of [
+  ["partial closure", { partial: true }],
+  ["missing destination", { missingDestination: true }],
+  ["extra unrelated deletion", { extraDeletion: true }],
+  ["modified pre-existing destination", { destinationPresent: true }],
+  ["symlink destination", { symlinkDestination: true }],
+]) {
+  test(`rejects native relocation ${name} in source and attestation`, () => {
+    const fixture = nativeMoveFixture(options);
+    let result = validate(fixture.root);
+    assert.equal(result.ok, false);
+    assert.match(
+      result.errors.join("\n"),
+      /exact fifteen-file regular native relocation/u,
+    );
+    git(fixture.root, ["commit", "-q", "-m", "test: rejected move"]);
+    fixture.reviewedRevision = gitText(fixture.root, ["rev-parse", "HEAD"]);
+    stageAttestation(fixture);
+    result = validate(fixture.root);
+    assert.equal(result.ok, false);
+    assert.match(
+      result.errors.join("\n"),
+      /exact fifteen-file regular native relocation/u,
+    );
+  });
+}
+
+for (const side of ["lnsatd", "lnsat-store"]) {
+  test(`rejects wrong native relocation ${side} blob hash`, () => {
+    const fixture = commitNativeMove();
+    stageAttestation(fixture, {
+      mutateManifest(manifest) {
+        const entry = manifest.protected_files.find(
+          ({ path }) => path === `crates/${side}/src/${NATIVE_MOVE_NAMES[0]}`,
+        );
+        assert.ok(entry);
+        entry.sha256 = `sha256:${"0".repeat(64)}`;
+      },
+    });
+    const result = validate(fixture.root);
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join("\n"), /raw blob SHA-256 mismatch/u);
+  });
+}
+
+test("rejects ordinary source deletion outside native relocation", () => {
+  const fixture = createStagedReviewedFixture();
+  rmSync(resolve(fixture, "src/existing.txt"));
+  git(fixture, ["add", "src/existing.txt"]);
+  const result = validate(fixture);
+  assert.equal(result.ok, false);
+  assert.match(
+    result.errors.join("\n"),
+    /exact fifteen-file regular native relocation/u,
+  );
 });
 
 test("strict JSON scanner ignores duplicate-looking reviewer string payload", () => {

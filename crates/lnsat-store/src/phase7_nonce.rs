@@ -8,7 +8,7 @@ use crate::phase7_persistence::{
     valid_prefixed_id,
 };
 use core::fmt;
-use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior, params};
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use sha2::{Digest, Sha256};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use zeroize::{Zeroize, Zeroizing};
@@ -216,9 +216,7 @@ impl SqliteStore {
     {
         validate_issue_input(input)?;
         validate_ttl_window(issued_at, ttl_expires_at)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7PersistenceErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
         let attempt = read_validated_attempt_by_id(
@@ -415,9 +413,7 @@ impl SqliteStore {
         validate_nonce_scope(project_ref, resource_ref, nonce_id)?;
         canonical_utc_timestamp_millis_v1(checked_at)
             .ok_or(Phase7PersistenceErrorV1::ClockRejected)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7PersistenceErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
         let Some(stored) = select_nonce_by_id(&transaction, project_ref, resource_ref, nonce_id)?
@@ -477,9 +473,7 @@ impl SqliteStore {
         validate_nonce_scope(input.project_ref, input.resource_ref, input.nonce_id)?;
         let cancelled_millis = canonical_utc_timestamp_millis_v1(cancelled_at)
             .ok_or(Phase7PersistenceErrorV1::ClockRejected)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7PersistenceErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
         let Some(stored) = select_nonce_by_id(

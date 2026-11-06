@@ -114,26 +114,83 @@ pub(super) struct SelectedStoreCustodyV1;
 /// No caller-selected descriptor or serialized observation can construct this.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(super) struct SelectedPreparationParent<'a> {
-    store: &'a mut SqliteStore,
+    source: PreparationParentSource<'a>,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+enum PreparationParentSource<'a> {
+    Inspected(&'a mut SqliteStore),
+    #[cfg(target_os = "linux")]
+    Writable {
+        custody: &'a SelectedStoreCustodyV1,
+        linux: &'a linux::LinuxCustody,
+        connection: &'a Connection,
+        sidecars: &'a [Option<FileIdentity>; 2],
+    },
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 impl<'a> SelectedPreparationParent<'a> {
     pub(super) fn borrow(store: &'a mut SqliteStore) -> Result<Self, SelectedLocalStoreErrorV1> {
         store.verify_selected_local_store_custody_v1()?;
-        Ok(Self { store })
+        Ok(Self {
+            source: PreparationParentSource::Inspected(store),
+        })
+    }
+
+    #[cfg(target_os = "linux")]
+    fn from_writable(
+        custody: &'a SelectedStoreCustodyV1,
+        linux: &'a linux::LinuxCustody,
+        connection: &'a Connection,
+        sidecars: &'a [Option<FileIdentity>; 2],
+    ) -> Result<Self, SelectedLocalStoreErrorV1> {
+        let parent = Self {
+            source: PreparationParentSource::Writable {
+                custody,
+                linux,
+                connection,
+                sidecars,
+            },
+        };
+        parent.verify()?;
+        Ok(parent)
     }
 
     pub(super) fn verify(&self) -> Result<(), SelectedLocalStoreErrorV1> {
-        self.store.verify_selected_local_store_custody_v1()
+        match &self.source {
+            PreparationParentSource::Inspected(store) => {
+                store.verify_selected_local_store_custody_v1()
+            }
+            #[cfg(target_os = "linux")]
+            PreparationParentSource::Writable {
+                custody,
+                linux,
+                connection,
+                sidecars,
+            } => {
+                if !connection.is_autocommit()
+                    || crate::pragma_i64(connection, "query_only")
+                        .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?
+                        != 1
+                {
+                    return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+                }
+                writable::verify_parts(custody, linux, connection, sidecars, false)
+            }
+        }
     }
 
     fn custody(&self) -> Result<&SelectedStoreCustodyV1, SelectedLocalStoreErrorV1> {
         self.verify()?;
-        self.store
-            .selected_store_custody
-            .as_ref()
-            .ok_or(SelectedLocalStoreErrorV1::UnboundStore)
+        match &self.source {
+            PreparationParentSource::Inspected(store) => store
+                .selected_store_custody
+                .as_ref()
+                .ok_or(SelectedLocalStoreErrorV1::UnboundStore),
+            #[cfg(target_os = "linux")]
+            PreparationParentSource::Writable { custody, .. } => Ok(custody),
+        }
     }
 
     pub(super) fn directory(&self) -> Result<&File, SelectedLocalStoreErrorV1> {
@@ -152,6 +209,28 @@ impl<'a> SelectedPreparationParent<'a> {
             .and_then(std::ffi::OsStr::to_str)
             .ok_or(SelectedLocalStoreErrorV1::InvalidSelection)?;
         Ok(format!("{name}.lnsat-preparations"))
+    }
+
+    pub(crate) fn verify_journal_node(
+        &self,
+        parent: &File,
+        name: &str,
+        file: &File,
+        directory: bool,
+    ) -> Result<(), SelectedLocalStoreErrorV1> {
+        match &self.source {
+            PreparationParentSource::Inspected(_) => {
+                // Even a diagnostic-only view remains bound to its retained
+                // selected owner; unsupported writable platforms gain nothing.
+                self.owner()?;
+                let _ = (parent, name, file, directory);
+                Ok(())
+            }
+            #[cfg(target_os = "linux")]
+            PreparationParentSource::Writable { custody, linux, .. } => {
+                linux.verify_journal_node(parent, name, file, custody.owner_uid, directory)
+            }
+        }
     }
 }
 
@@ -228,6 +307,27 @@ fn verify_held(
         return Err(SelectedLocalStoreErrorV1::CustodyChanged);
     }
     Ok(())
+}
+
+/// Process-local write serialization key from `SQLite`'s actual retained main
+/// descriptor. This returns no descriptor or authority capability and never
+/// opens/closes a database alias.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(super) fn connection_write_identity(
+    connection: &Connection,
+) -> Result<(u64, u64), SelectedLocalStoreErrorV1> {
+    let descriptor = observe_native_main(connection, NATIVE_DIAGNOSTIC_BOUND)?;
+    let stat = nix_stat::sys::stat::fstat(descriptor)
+        .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
+    if stat.st_mode & nix_stat::libc::S_IFMT != nix_stat::libc::S_IFREG || stat.st_nlink == 0 {
+        return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+    }
+    #[cfg(target_os = "macos")]
+    let device =
+        u64::try_from(stat.st_dev).map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
+    #[cfg(target_os = "linux")]
+    let device = stat.st_dev;
+    Ok((device, stat.st_ino))
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -505,13 +605,14 @@ fn verify_native_origin(connection: &Connection) -> Result<(), SelectedLocalStor
     if found != [1; 3] {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
-    let source: String = connection
-        .query_row("SELECT sqlite_source_id()", [], |row| row.get(0))
-        .map_err(fail)?;
-    let debug: i64 = connection
-        .query_row("SELECT sqlite_compileoption_used('DEBUG')", [], |row| {
-            row.get(0)
-        })
+    // Both builtins were verified above. Read their independent values in
+    // one fixed row without caching origin or dropping either predicate.
+    let (source, debug): (String, i64) = connection
+        .query_row(
+            "SELECT sqlite_source_id(), sqlite_compileoption_used('DEBUG')",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
         .map_err(fail)?;
     if source != NATIVE_SOURCE_ID || debug != 0 {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
