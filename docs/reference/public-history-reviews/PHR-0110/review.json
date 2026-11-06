@@ -1,0 +1,103 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0110-independent-implementation-review-3f0d12d6",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["protected-setup-rooted-storage-and-compact-schema"],
+  "base_revision": "53420ad8971c192cb2f74b6ee126388e49da2969",
+  "reviewed_revision": "3f0d12d6a27fc3e21a982e308aba979b0546b3ba",
+  "reviewed_tree_oid": "718079bd873987fd01fcba0c0209a960968a6a5a",
+  "diff_sha256": "sha256:50e7eb54631678a0b29fba7c577a90dde77a9fad7f113d49965ee457235091c4",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/headless_bootstrap.rs",
+      "sha256": "sha256:8dd956a65ebb79a03c28eaaca60684980580138594eab1cc69c2df23f369ffc3"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_empty_state.rs",
+      "sha256": "sha256:8f81595194465f91aff5dc7484bc2a0dced044ee31da66af7e85ac7d67047204"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_empty_state_tests.rs",
+      "sha256": "sha256:89c5015e11f5d37cff472d2d6053974e8e0e445512f02e358f3181516bfa068c"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_native_root_bootstrap.rs",
+      "sha256": "sha256:9b38f411f94fe54046a983b992c48e2e0a89d42fb135f73ff7ff458b5170a31c"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_selected_fresh_schema.rs",
+      "sha256": "sha256:58933b094b9739ac7d2e6b5c56ace800c9441dc3bd93177c7b0a6e66f9eed046"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_selected_fresh_schema_tests.rs",
+      "sha256": "sha256:f7705252c06657ed73afce60109072e837d8911048806f731d5f7aa9bad39e4e"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:f7153e874b87b6cdeddc8ef129e90a523ff67f755f7e12ae00d5dd4175ec2ef2"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/tests.rs",
+      "sha256": "sha256:8d94265359a0a28b9802fa78b42f2a528fdf1e202164abdb8de8f5b3ac86ae9f"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_linux.rs",
+      "sha256": "sha256:fac5f827ae01eeefea93e372f2e1924cbf2288125ff55d60372f56cbd9455ce3"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root.rs",
+      "sha256": "sha256:b61164e563fe9bd597fe85f67eb362b03f91d8be71c43d6fbcc575adf798892b"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_linux.rs",
+      "sha256": "sha256:b4fe38317b9424ec3cb98ea28dbb3451340c197f037cb6668db0d49919ac558d"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_storage.rs",
+      "sha256": "sha256:e2e816caaf989f716f62536a511e0b0409bc8f34856a0b8b5a68b6657c13d8d5"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_tests.rs",
+      "sha256": "sha256:303b039863bac1c712d9dbe82946932fac778490237b648cac1b5846f9df7954"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_schema.rs",
+      "sha256": "sha256:07e39a3515688ffe48dfd7bad5bf592d53501f2e7504087a219d4b5e5f1fb8f7"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:5d4604217447882b5bfefa8f58cf39be6b4e9200f96edba6269d9f84fea9902c"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:ec4ca137853ebbf5aab86ad305833851f30506ea52cc543b32fa88347f4c0500"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:1775150b874c1ba555a4879d4f4f13a0877ef2136eaaf2cda7b54ee03e7d0205"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/selected-write-source-spec.md",
+      "sha256": "sha256:599aa90c3badd1f548867a0f3e68bfeaef63e6193a0a1d14028ca6f199c58112"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:ea4de8d3321d19fcc8a471997245ebb3111910f9c982dbcb0607d0945c002cea"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:8cc2e7e3358a73aa24a7266a540877f121e5e49c64f8c1b3a58219ef13c7d0a4"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/current_setup_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh; backend runtime model ID unexposed. Independent source/component, current registration/delta and actual macOS full-gate reviews passed. All fifteen Rust identities match the qualified full gate: full store634/0failed/2ignored, separate daemon309/0failed/0ignored and selected155/0failed/0ignored; TypeScript139/139. Strict host/Linux cross-target Clippy passed; nineteen Linux root groups are compiled only. Exact committed-source and metadata-child binding requires separate final review. No complete production cleanup-plan constructor, genuine strong-profile preparation, atomic initializer, runtime, merge, deployment or release qualification is supplied. No formal GitHub approval is claimed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
