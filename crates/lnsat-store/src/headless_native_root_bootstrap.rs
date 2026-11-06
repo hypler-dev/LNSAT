@@ -560,6 +560,24 @@ pub(super) struct RootManifestCustodyState {
     released: bool,
 }
 
+// This is only the production permanent-owner auto-trait prerequisite. It
+// installs no root, transfers no custody, and stores no borrowed SQL owner.
+// Test-only intervention closures are outside this production type proof.
+#[cfg(all(target_os = "linux", not(test)))]
+const _: fn() = {
+    fn require_rootable<T: Send>() {
+        fn require_send_sync<U: Send + Sync>() {}
+        require_send_sync::<std::sync::OnceLock<std::sync::Mutex<T>>>();
+    }
+    require_rootable::<(
+        RootManifestCustodyState,
+        crate::selected_store::writable::SelectedWritableStore,
+        crate::owner_decision_credential::OwnerDecisionCredentialScopeV1,
+        crate::headless_operation_identity::OperationIdentity,
+        ArtifactReadBudget,
+    )>
+};
+
 impl RootManifestCustodyState {
     fn retained_count(&self) -> Result<u16, RootBootstrapError> {
         let count = self

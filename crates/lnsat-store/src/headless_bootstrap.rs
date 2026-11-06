@@ -5,8 +5,8 @@
 //! together with host-owner, lease, file, declaration, and platform checks.
 
 use super::{
-    Connection, REQUIRED_TABLES_V17, REQUIRED_TABLES_V18, SqliteStore, TransactionBehavior,
-    pragma_i64, verify_connection_integrity, verify_schema_at_version,
+    Connection, SqliteStore, TransactionBehavior, pragma_i64, verify_connection_integrity,
+    verify_schema_at_version,
 };
 use core::fmt;
 use core::fmt::Write as _;
@@ -20,14 +20,8 @@ const SCHEMA_V18_DOMAIN: &[u8] = b"lnsat.headless_bootstrap.schema.v18\n";
 const MAX_SCHEMA_OBJECTS: usize = 256;
 const MAX_SCHEMA_BYTES: usize = 262_144;
 
-// These are the only migration-created rows a pristine schema-17 store has.
-// Retention seeds are immutable preserve-only policy, verified by the existing
-// schema verifier. They are not a caller-defined metadata exception.
-const SEED_TABLES: [&str; 3] = [
-    "lnsat_schema_migrations",
-    "lnsat_store_metadata",
-    "lnsat_retention_policies",
-];
+#[path = "headless_selected_fresh_schema.rs"]
+mod selected_fresh;
 
 /// Fixed, non-reflective errors for a local store inspection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -243,27 +237,24 @@ pub(super) fn require_empty_tables_at_version_v1(
     connection: &Connection,
     version: i64,
 ) -> Result<(), HeadlessBootstrapStoreErrorV1> {
-    let tables: &[&str] = match version {
-        17 => &REQUIRED_TABLES_V17,
-        18 => &REQUIRED_TABLES_V18,
+    let sql = match version {
+        17 => crate::headless_empty_state::V17_OCCUPIED,
+        18 => crate::headless_empty_state::V18_OCCUPIED,
         _ => return Err(HeadlessBootstrapStoreErrorV1::UnverifiableStore),
     };
-    for table in tables {
-        if SEED_TABLES.contains(table) {
-            continue;
-        }
-        // Identifiers come only from the compiled exact schema inventory, never
-        // from caller input or sqlite_schema; main qualification blocks shadows.
-        let occupied: bool = connection
-            .query_row(
-                &format!("SELECT EXISTS (SELECT 1 FROM main.\"{table}\")"),
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|_| HeadlessBootstrapStoreErrorV1::UnverifiableStore)?;
-        if occupied {
-            return Err(HeadlessBootstrapStoreErrorV1::NotAuthorityEmpty);
-        }
+    let occupied: bool = connection
+        .query_row(sql, [], |row| row.get(0))
+        .map_err(|_| HeadlessBootstrapStoreErrorV1::UnverifiableStore)?;
+    if occupied {
+        return Err(HeadlessBootstrapStoreErrorV1::NotAuthorityEmpty);
     }
     Ok(())
+}
+
+/// Exact, bounded-data prerequisite for the private schema-18 selected migration.
+/// This is not a credential, rooted SQL capability, or preparation witness.
+pub(super) fn require_selected_fresh_schema_v18(
+    connection: &Connection,
+) -> Result<(), HeadlessBootstrapStoreErrorV1> {
+    selected_fresh::verify(connection)
 }

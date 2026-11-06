@@ -50,6 +50,7 @@ mod writer_gate;
 
 pub mod action_request;
 mod headless_bootstrap;
+mod headless_empty_state;
 #[allow(
     dead_code,
     reason = "Reviewed Stage-A candidate remains disconnected until complete freeze and integration"

@@ -5,7 +5,7 @@ use super::SelectedLocalStoreErrorV1 as Error;
 
 /// Only a minimal owner-only ACL is accepted. Named entries and masks deny,
 /// even when their current effective permissions happen to be zero.
-fn owner_only_acl(bytes: &[u8], directory: bool) -> Result<(), Error> {
+pub(super) fn owner_only_acl(bytes: &[u8], directory: bool) -> Result<(), Error> {
     if bytes.len() != 28 || bytes[..4] != 2_u32.to_le_bytes() {
         return Err(Error::InvalidSelection);
     }
@@ -24,12 +24,12 @@ fn owner_only_acl(bytes: &[u8], directory: bool) -> Result<(), Error> {
     Ok(())
 }
 
-fn kernel_posix_filesystem(kind: i128, ancestor: bool) -> bool {
+pub(super) fn kernel_posix_filesystem(kind: i128, ancestor: bool) -> bool {
     matches!(kind, 0xef53 | 0x5846_5342 | 0x9123_683e) || (ancestor && kind == 0x0102_1994)
 }
 
 #[cfg(target_os = "linux")]
-mod native {
+pub(super) mod native {
     use super::{Error, kernel_posix_filesystem, owner_only_acl};
     use crate::selected_store::{FileIdentity, SelectedStoreCustodyV1, validate_metadata};
     use rustix::fs::{AtFlags, CWD, Mode, OFlags, StatxFlags};
@@ -41,7 +41,7 @@ mod native {
 
     const MAX_ANCESTORS: usize = 128;
     const MAX_ACL: usize = 1024;
-    const REQUIRED: StatxFlags = StatxFlags::TYPE
+    pub(in crate::selected_store) const REQUIRED: StatxFlags = StatxFlags::TYPE
         .union(StatxFlags::MODE)
         .union(StatxFlags::UID)
         .union(StatxFlags::GID)
@@ -51,11 +51,11 @@ mod native {
         .union(StatxFlags::MNT_ID);
 
     #[derive(Clone, Copy, Eq, PartialEq)]
-    struct Identity {
+    pub(in crate::selected_store) struct Identity {
         major: u32,
         minor: u32,
         inode: u64,
-        mount: u64,
+        pub(in crate::selected_store) mount: u64,
         uid: u32,
         gid: u32,
         mode: u16,
@@ -71,7 +71,7 @@ mod native {
         Ok(value)
     }
 
-    fn identity(value: &rustix::fs::Statx) -> Identity {
+    pub(in crate::selected_store) fn identity(value: &rustix::fs::Statx) -> Identity {
         Identity {
             major: value.stx_dev_major,
             minor: value.stx_dev_minor,
@@ -151,7 +151,7 @@ mod native {
         Ok(identity(&value))
     }
 
-    fn ancestor_valid(value: Identity, uid: u32) -> bool {
+    pub(in crate::selected_store) fn ancestor_valid(value: Identity, uid: u32) -> bool {
         value.mode & 0o170_000 == 0o040_000
             && (value.uid == 0 || value.uid == uid)
             && (value.mode & 0o022 == 0 || (value.uid == 0 && value.mode & 0o1000 != 0))

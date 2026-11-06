@@ -137,6 +137,44 @@ name to manufacture disappearance. This narrows completed retirement; it does
 not prove physical ABA containment or eventual cleanup. Source tests and native
 Linux execution remain separately recorded in Project Status.
 
+The private finite-empty-state implementation uses one fixed main-qualified
+`EXISTS` predicate for each exact schema-17/18/19 authority-table set. Only the
+three compiled seed tables are excluded from emptiness; separate exact
+namespace, structure, seed and integrity checks remain mandatory. Reduced
+statement creation does not establish checked SQL retirement, the complete
+cleanup quota or initializer authority. Only selected inert migration uses the
+compact fresh-schema-18 preflight: it retains the existing exact schema digest,
+namespace, integrity and nonseed emptiness gates plus exact typed metadata,
+migration and retention rows with bounded EOF checks. General ordinary open and
+public snapshot inspection keep their existing verifiers. Empty authority tables
+make populated-record correspondence checks vacuous; no populated store is
+admitted by this path. Its current private focused and full macOS source
+validation is recorded in Project Status. The earlier retirement-repair Ubuntu
+evidence has a different head; the combined compact-SQL/root checkpoint needs
+its own native Linux execution evidence.
+
+The statement-finalization and Rows-reset subset uses 132 reservations. A
+separate direct-execute reset raises the known successful-path SQL lower bound
+to 133. Neither value is a complete cleanup plan. At 128 retained ancestry files,
+selected parent and lease raise the known minimum to 263 before other native,
+temporary, root or transaction obligations. The fixed writable cleanup class
+remains 256. A complete conservative plan must deny oversized or unmapped
+selection before acquisition; a shorter path or successful SQL gate alone does
+not establish whole-operation fit or initialization.
+
+The new private `selected_root` source supplies actual rooted partial file slots
+and a separately retained original control context. It has no production
+complete-plan constructor or product caller. Its fixture-only capacity plans
+cannot authorize acquisition by an initializer. The frame binds the exact static
+root, original budget and returned control-thread identity; returned owners are
+published before postchecks. Failed or late calls retain the actual guard and
+remaining owners without retry or cleanup acknowledgment. Fourteen macOS groups
+pass and 19 Linux groups cross-compile with strict lint; Linux native execution,
+complete checked SQL, original credential-core sharing and genuine preparation
+remain separate requirements. The controlled close/delay oracles are not a
+physical failure or deadline campaign. No connection or public setup command is
+created by this supporting source.
+
 The preparation journal is neither SQLite WAL nor SHM and substitutes for
 neither. No hostile trusted-owner anti-tamper claim is made.
 

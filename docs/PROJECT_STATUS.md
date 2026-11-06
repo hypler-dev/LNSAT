@@ -1390,7 +1390,112 @@ The full store suite passed 607 tests with two ignored child helpers; the
 daemon suite passed 309 tests, and the separate selected Phase-7 suite passed
 155 tests. These are separate suite counts, not a summed unique total. Strict
 macOS and Linux cross-target Clippy passed; cross-compilation is not native
-Linux execution. The corrected new-head Ubuntu outcome remains pending.
+Linux execution. The corrected new-head Ubuntu Source verification run
+`42212253944`, attempt 1, passed at published head
+`53420ad8971c192cb2f74b6ee126388e49da2969`. Actual synthetic PR checkout
+`f756c9a0ad7d98a19164f2b966921b10337fbb33` has the exact public base/head
+parents and reviewed head tree. The full store suite passed 627 tests with five
+ignored helpers; daemon passed 309 tests and the separate selected Phase-7
+suite passed 155 tests. Counts are separate, not summed unique tests. All
+source/build, signature and audit steps passed; independent terminal-evidence
+review passed. PR #120 remains draft and unmerged. This is source-fixture
+execution on Ubuntu, not strong-profile runtime, actual target or main-run proof.
+
+#### Finite empty-state SQL integration candidate — November 6
+
+The private integration candidate replaces repeated schema-17/18/19 emptiness
+queries with one fixed main-qualified predicate for each exact compiled table
+set. The three immutable seed tables remain excluded only from emptiness;
+existing namespace, schema, seed and integrity verification still applies.
+The original five predicate groups remain component evidence. A new
+selected-only fresh-schema-18 preflight preserves the existing exact schema
+digest, all three seed families, namespaces, emptiness and integrity while
+avoiding the general populated-store Phase-7 verifier. Eight new bounded
+in-memory SQLite groups and 13 affected public-bootstrap regressions pass;
+current G26 closure and strict macOS/Linux cross-target store Clippy also pass.
+G26 retains an exact full-root commitment updated only for the private
+production module declaration; other fingerprints and assertions are unchanged.
+
+A Linux production-only compile assertion covers the actual retained native
+custody, selected writable owner, original credential scope, operation identity
+and budget types together, including shared mutex/root auto-trait requirements.
+It creates no root, transfers no ownership and stores no borrowed SQL owner.
+Compilation is not native execution or an installed authority witness.
+
+Combining emptiness queries first reduced the known successful
+open/configure/migrate path from 267 to 169 application SQL commands. Separate
+Rows-reset and statement-finalization reservations still required at least 288
+cleanup slots, exceeding the fixed 256 limit before native owners. The new
+selected-only preflight reduces 89 reads to 11, leaving a known SQL base of 91
+statements and 41 Rows resets: 132 cleanup reservations. The remaining 124 slots
+are arithmetic headroom, not demonstrated whole-path fit. Owner/root writes,
+native owners, checked lifecycle and uncertainty still need complete accounting.
+No budget is raised. The exact private integration subsequently passed one
+full macOS `npm run check`: store 620 passed/0 failed/two ignored, daemon
+309/0/0 and selected Phase-7 store 155/0/0 are separate suite counts. Its 13
+source/document inputs matched before and after; fresh independent actual-
+outcome review passed. This supporting source is carried forward as a separately reviewed draft-branch
+checkpoint; the earlier retirement repair has its own Ubuntu CI identity.
+
+Rooted partial-owner retention, genuine preparation and atomic initialization
+remain unfinished. At the syntactic 128-ancestor ceiling, the known SQL base
+plus 128 ancestor files, selected parent and lease alone requires at least 263
+cleanup slots, above the fixed 256 limit before remaining native/temporary
+owners. An exact conservative complete-path plan must reject oversized or
+unmapped selections before acquisition; the syntax ceiling grants no admission.
+A separate pinned-library inventory also requires one direct-execute reset
+beyond the 132 statement-finalization/Rows-reset subset, tightening the known
+SQL lower bound to 133. The complete producer must reserve that obligation and
+all remaining native/settings/transaction work. Smaller path depth alone is not
+a complete-fit witness. No production root,
+prepared installation or initializer is supplied by this SQL prerequisite.
+
+#### Root-retained selected-file source candidate — November 6
+
+The private Linux source now contains an actual process-lifetime selected root,
+authority mutex and partial file slots. It consumes the original non-Clone
+artifact budget, issues its own opaque operation identity and retains an inert
+credential scope before custody I/O. The exact static-root address and returned
+control-thread identity bind the private storage frame. The one retained join
+handle is published before its start barrier. Every returned parent, lease,
+procfs or ancestor file enters its root slot before post-call budget or
+association checks. Acquisition, retirement issue, known retirement and
+uncertainty remain distinct; an empty slot is never cleanup acknowledgment.
+
+Owning-call errors recheck the same original budget before propagation.
+Failure closes admission, invalidates that allocation and retains the actual
+authority guard, remaining owners and caught panic payload on the same control
+context. Normal storage residence keeps that context alive only within the
+original acceptance window, outside the authority guard; it is not a resumable
+installation or a Ready state. No replacement worker, queue, caller callback,
+raw descriptor getter, ordinary-store conversion or SQL entry is added.
+
+Fourteen bounded macOS fixture groups pass, including actual partial parent/
+lease residence, mode drift, owning-open failure, cancellation, original-deadline
+expiry, poison, panic/payload retention, uncertain consuming close, exact-root
+rejection and no rearm. Strict macOS and Linux x86_64 cross-target all-target
+Clippy pass. Nineteen Linux groups compile, including controlled procfs and
+ancestor open/error paths; their native execution remains pending. Modeled
+close-return uncertainty and delayed post-return delivery are not physical
+kernel close-failure or blocked-call campaigns. Existing owned-child entry,
+output, timeout and reap checks remain unchanged. These results are source and
+controlled-fixture evidence, not hostile same-UID containment, physical
+freshness/deadline/cleanup/durability, strong-profile enforcement or support.
+
+The complete production cleanup-plan constructor is absent. Fixture capacity
+plans cannot supply it. Exact journal topology, native owners, all cumulative
+retirement obligations and checked SQL still need one conservative full map
+before production admission. The permanent scope is not a verified credential;
+shared original-connection/scope recheck remains required before credential-
+sensitive work. No connection, prepared-installation witness, public setup
+command, management route or atomic initializer exists in this root slice.
+The integrated macOS full source gate passed with all 19 source/document inputs
+unchanged before and after. Full store 634/0 failed/2 ignored, daemon 309/0/0
+and selected Phase-7 store 155/0/0 are separate suite counts; the daemon summary
+repeats. Fresh independent actual-outcome review passed. This source checkpoint
+requires its own native Ubuntu run before Linux execution can be claimed;
+earlier PR #120 CI applies to the retirement-repair head only. PR #120 remains
+draft and unmerged.
 
 The selected strong HCFG-6 producer and atomic installation initializer remain
 unfinished. Completion requires real probe/adapter/image build outputs, an

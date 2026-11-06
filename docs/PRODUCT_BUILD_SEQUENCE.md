@@ -496,9 +496,33 @@ binding and initial all-deny envelope encoding is available as data-only
 initializer groundwork; genuine strong-profile preparation, atomic installation,
 activation and their native qualification remain open. The November 6 Linux
 retirement candidate requires both WAL/SHM names absent after SQLite close.
-The corrected macOS full source gate passed; corrected native Ubuntu evidence
-remains pending. Permanent
-registry seals remain in force; test-process isolation must not clear them.
+The corrected macOS full source gate and new-head Ubuntu source CI passed;
+[Project Status](PROJECT_STATUS.md#linux-retirement-and-test-isolation-repair-candidate--november-6)
+records exact checkout binding and separate suite counts. This is source-fixture
+evidence, not strong-profile runtime or a main-run result. PR #120 remains
+draft and unmerged. Permanent registry seals remain in force; test-process
+isolation must not clear them.
+The private finite empty-state and selected-only fresh-schema preflight reduce
+statement/reset reservations while retaining exact schema, seeds, namespaces,
+emptiness and integrity. Their 132-slot SQL baseline does not establish complete
+fit in the unchanged 256-slot cleanup budget. Its private full macOS source
+gate passed with independently reviewed actual evidence. The additional direct-
+execute reset tightens the known SQL lower bound to 133; complete production
+accounting remains absent. The deepest syntactically allowed ancestry already
+requires at least 263 slots with that SQL base and parent/lease, before other
+owners. Complete conservative capacity must be checked before acquisition;
+unknown or oversized plans deny without raising the quota. Actual permanent-
+owner auto-trait compilation is a prerequisite, not initialization.
+The next private root source now retains actual partial file owners and the
+one original control context; 14 macOS fixture groups and strict host/Linux
+cross-target lint pass. The 19 Linux groups are compiled only. Complete
+production cleanup-plan construction, rooted checked SQL, genuine immutable
+preparation, exact credential sharing and atomic installation remain missing;
+no setup command or Ready state is supplied. Project Status records this
+source checkpoint separately from the earlier draft PR repair CI. The
+integrated macOS source gate passed with full store 634/0/2 and daemon 309/0/0,
+separate suite counts, unchanged inputs and independent actual-outcome review.
+The newer root code still requires its own native Ubuntu run.
 Existing inert backup/restore and owner-recovery paths
 are reused; restore must not activate an installation.
 

@@ -843,3 +843,11 @@ pub(super) mod linux;
     reason = "Private production connection pending genuine preparation producer integration"
 )]
 pub(super) mod writable;
+
+#[cfg(any(target_os = "linux", all(test, target_os = "macos")))]
+#[path = "selected_root.rs"]
+#[allow(
+    dead_code,
+    reason = "Private rooted storage requires complete production plan and genuine setup integration"
+)]
+mod rooted;

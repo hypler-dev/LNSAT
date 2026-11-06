@@ -1,8 +1,8 @@
 //! Exact selected-only schema 19. Ordinary store opens remain schema 18.
 
 use crate::{
-    Connection, MIGRATIONS, REQUIRED_TABLES_V18, RETENTION_RECORD_FAMILIES_V18,
-    headless_bootstrap::require_authority_empty_v1, migration_digest,
+    Connection, MIGRATIONS, RETENTION_RECORD_FAMILIES_V18,
+    headless_bootstrap::require_selected_fresh_schema_v18, migration_digest,
     selected_store::SelectedLocalStoreErrorV1 as Error,
 };
 use rusqlite::{Transaction, params, types::ValueRef};
@@ -11,24 +11,12 @@ use sha2::{Digest, Sha256};
 pub(super) const SQL: &str = include_str!("headless_schema_19.sql");
 const MIGRATION_ID: &str = "0019_selected_headless_bootstrap";
 const DIGEST: &str = "sha256:c566334a11f4f2707b85236d2a28b121304db743d30c54565de0b74c2d6bf298";
-const HEADLESS: [&str; 4] = [
-    "headless_installations",
-    "headless_generations",
-    "headless_config_audit",
-    "headless_active",
-];
 const RETENTION: [&str; 4] = [
     "headless_active",
     "headless_config_audit",
     "headless_generation",
     "headless_installation",
 ];
-const SEEDS: [&str; 3] = [
-    "lnsat_schema_migrations",
-    "lnsat_store_metadata",
-    "lnsat_retention_policies",
-];
-
 fn denied<T>(_: T) -> Error {
     Error::StoreUnverifiable
 }
@@ -36,7 +24,7 @@ fn denied<T>(_: T) -> Error {
 pub(super) fn migrate(transaction: &Transaction<'_>) -> Result<(), Error> {
     // The private Linux owner is responsible for an IMMEDIATE transaction and
     // live custody. This function cannot open, commit or return a store.
-    require_authority_empty_v1(transaction).map_err(denied)?;
+    require_selected_fresh_schema_v18(transaction).map_err(denied)?;
     if crate::pragma_i64(transaction, "user_version").map_err(denied)? != 18 {
         return Err(Error::StoreUnverifiable);
     }
@@ -165,21 +153,13 @@ fn verify_seeds(connection: &Connection) -> Result<(), Error> {
 }
 
 pub(super) fn require_empty(connection: &Connection) -> Result<(), Error> {
-    for name in REQUIRED_TABLES_V18
-        .into_iter()
-        .chain(HEADLESS)
-        .filter(|name| !SEEDS.contains(name))
-    {
-        let occupied: bool = connection
-            .query_row(
-                &format!("SELECT EXISTS (SELECT 1 FROM main.\"{name}\")"),
-                [],
-                |row| row.get(0),
-            )
-            .map_err(denied)?;
-        if occupied {
-            return Err(Error::StoreUnverifiable);
-        }
+    let occupied: bool = connection
+        .query_row(crate::headless_empty_state::V19_OCCUPIED, [], |row| {
+            row.get(0)
+        })
+        .map_err(denied)?;
+    if occupied {
+        return Err(Error::StoreUnverifiable);
     }
     Ok(())
 }
