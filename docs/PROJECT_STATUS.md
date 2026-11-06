@@ -1497,6 +1497,26 @@ requires its own native Ubuntu run before Linux execution can be claimed;
 earlier PR #120 CI applies to the retirement-repair head only. PR #120 remains
 draft and unmerged.
 
+#### Rooted Linux CI fixture environment correction — November 6
+
+The root checkpoint's Ubuntu run 42253565432 attempt 1 failed with full store
+654 passed, five failed and five ignored. All five failing owned-child rooted
+fixtures reported `LNSAT_ARTIFACT_TEST_ROOT` as `NotPresent` before their
+Linux fixture work. Dependency signature and audit steps passed; the complete
+source gate did not. Actual synthetic checkout `0180fc56` has the exact
+`87e9cf1` base and `fe89c79` head parents and reviewed head tree. This failure
+remains preserved; earlier native CI success applies to its own repair head.
+
+The source workflow now creates a unique owner-private mode-0700 directory
+under the existing hosted runner's canonical temporary root and exports it to
+the original test processes. The fixtures retain their filesystem, path,
+mount, mode and ACL checks. No test is skipped or weakened; the exact scalar
+source-check command, audits, pinned tools, permissions and finite timeout
+remain unchanged. The strict readiness checker pins the corrected workflow
+and rejects absent setup or an altered export. Focused Node tests passed
+45/45 and the strict readiness checker passed. Native Ubuntu verification
+for this correction remains pending. PR #120 stays draft and unmerged.
+
 The selected strong HCFG-6 producer and atomic installation initializer remain
 unfinished. Completion requires real probe/adapter/image build outputs, an
 independently selected complete immutable recipe, genuine nonempty held-resource

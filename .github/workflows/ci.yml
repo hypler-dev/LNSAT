@@ -55,5 +55,22 @@ jobs:
       - name: Audit dependencies
         run: npm run audit:dependencies:check
 
+      - name: Prepare rooted Linux test fixture
+        run: |
+          runner_temp="$(realpath -e "$RUNNER_TEMP")"
+          test -d "$runner_temp"
+          test ! -L "$RUNNER_TEMP"
+          fixture_root="$(umask 077; mktemp -d "$runner_temp/lnsat-rooted-fixture.XXXXXX")"
+          test -d "$fixture_root"
+          test ! -L "$fixture_root"
+          test "$(stat -c '%u' "$fixture_root")" = "$(id -u)"
+          test "$(stat -c '%a' "$fixture_root")" = "700"
+          fixture_root="$(realpath -e "$fixture_root")"
+          case "$fixture_root" in
+            "$runner_temp"/lnsat-rooted-fixture.*) ;;
+            *) exit 1 ;;
+          esac
+          printf 'LNSAT_ARTIFACT_TEST_ROOT=%s\n' "$fixture_root" >> "$GITHUB_ENV"
+
       - name: Verify public source
         run: npm run source:check
