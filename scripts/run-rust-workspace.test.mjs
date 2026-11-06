@@ -266,6 +266,11 @@ function metadataFixture(phase = "daemon-baseline") {
                 },
               ],
             },
+            {
+              name: "rustix",
+              pkg: "acl",
+              dep_kinds: [{ kind: null, target: 'cfg(target_os = "linux")' }],
+            },
           ],
         },
         { id: "acl", features: ["alloc", "fs", "std"], deps: [] },
