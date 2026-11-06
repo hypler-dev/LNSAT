@@ -3,23 +3,32 @@
 //! This layer establishes bounded file persistence, never observed phase facts,
 //! bootstrap eligibility, SQL state, cleanup or authority.
 
+#[cfg(target_os = "linux")]
+use super::MAX_RECORDS;
 use super::{
-    JournalChain, MAX_CHAIN_BYTES, MAX_RECORD_BYTES, MAX_RECORDS, decode_record, journal_digest,
-    valid_hex_id, validate_revision_chain, validate_successor,
+    JournalChain, MAX_CHAIN_BYTES, MAX_RECORD_BYTES, decode_record, journal_digest, valid_hex_id,
+    validate_revision_chain, validate_successor,
 };
 use crate::SqliteStore;
 use crate::selected_store::SelectedPreparationParent;
-use nix::dir::Dir;
 use nix::errno::Errno;
 use nix::fcntl::{AtFlags, OFlag};
 use nix::sys::stat::{FileStat, Mode, fstat, fstatat, mkdirat};
+#[cfg(target_os = "linux")]
+use rustix::fs::{RawDir, SeekFrom, seek};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::marker::PhantomData;
-use std::os::fd::{AsFd, AsRawFd, OwnedFd};
+#[cfg(target_os = "linux")]
+use std::mem::MaybeUninit;
+use std::os::fd::{AsFd, OwnedFd};
 use std::rc::Rc;
 
 const MAX_PREPARATIONS: usize = 64;
+#[cfg(target_os = "linux")]
+const DIRECTORY_SCRATCH_BYTES: usize = 4096;
+#[cfg(target_os = "linux")]
+const MAX_ENTRY_NAME_BYTES: usize = 255;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum CustodyError {
@@ -228,48 +237,52 @@ fn ensure_directory(parent: &File, name: &str, owner: u32) -> Result<File, Custo
     Ok(file)
 }
 
-fn directory_stream(owned: OwnedFd) -> Result<Dir, CustodyError> {
-    // Pinned nix 0.31.3 consumes the fd before fdopendir and leaks it on Err.
-    // This is only a newly owned enumeration fd, never SQLite or a borrowed fd.
-    // Re-review this exact error branch before changing the dependency version.
-    let raw = owned.as_raw_fd();
-    if let Ok(dir) = Dir::from_fd(owned) {
-        Ok(dir)
-    } else {
-        // Ownership was not transferred to libc. Close once; never retry.
-        let _ = nix::unistd::close(raw);
-        Err(CustodyError::IoRejected)
-    }
+#[cfg(target_os = "linux")]
+fn names(directory: &File, owner: u32) -> Result<Vec<String>, CustodyError> {
+    let mut scratch = [MaybeUninit::uninit(); DIRECTORY_SCRATCH_BYTES];
+    names_with_scratch(directory, owner, &mut scratch)
 }
 
-fn names(directory: &File, owner: u32) -> Result<Vec<String>, CustodyError> {
+#[cfg(target_os = "linux")]
+fn names_with_scratch(
+    directory: &File,
+    owner: u32,
+    scratch: &mut [MaybeUninit<u8>],
+) -> Result<Vec<String>, CustodyError> {
     let before = held_stamp(directory)?;
     before.validate(owner, true)?;
-    let fd = descend(directory, ".", directory_flags(), Mode::empty())
-        .map_err(|_| CustodyError::IoRejected)?;
-    if held_stamp(&fd)? != before {
+    let offset = seek(directory, SeekFrom::Start(0)).map_err(|_| CustodyError::IoRejected)?;
+    if offset != 0 {
         return Err(CustodyError::Changed);
     }
-    let mut dir = directory_stream(fd)?;
     let mut entries = Vec::new();
-    for (index, entry) in dir.iter().enumerate() {
-        if index >= MAX_RECORDS + 2 {
-            return Err(CustodyError::LimitExceeded);
+    {
+        let mut dir = RawDir::new(directory, scratch);
+        let mut raw_entries = 0_usize;
+        while let Some(entry) = dir.next() {
+            if raw_entries >= MAX_RECORDS + 2 {
+                return Err(CustodyError::LimitExceeded);
+            }
+            raw_entries += 1;
+            let entry = entry.map_err(|_| CustodyError::IoRejected)?;
+            let name_bytes = entry.file_name().to_bytes();
+            if name_bytes.len() > MAX_ENTRY_NAME_BYTES {
+                return Err(CustodyError::InvalidJournal);
+            }
+            let name = entry
+                .file_name()
+                .to_str()
+                .map_err(|_| CustodyError::InvalidJournal)?;
+            if name == "." || name == ".." {
+                continue;
+            }
+            if entries.len() >= MAX_RECORDS {
+                return Err(CustodyError::LimitExceeded);
+            }
+            entries.push(name.to_owned());
         }
-        let entry = entry.map_err(|_| CustodyError::IoRejected)?;
-        let name = entry
-            .file_name()
-            .to_str()
-            .map_err(|_| CustodyError::InvalidJournal)?;
-        if name == "." || name == ".." {
-            continue;
-        }
-        if entries.len() >= MAX_RECORDS {
-            return Err(CustodyError::LimitExceeded);
-        }
-        entries.push(name.to_owned());
     }
-    if held_stamp(directory)? != before || held_stamp(&dir)? != before {
+    if held_stamp(directory)? != before {
         return Err(CustodyError::Changed);
     }
     entries.sort_unstable();
@@ -277,6 +290,11 @@ fn names(directory: &File, owner: u32) -> Result<Vec<String>, CustodyError> {
         return Err(CustodyError::InvalidJournal);
     }
     Ok(entries)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn names(_directory: &File, _owner: u32) -> Result<Vec<String>, CustodyError> {
+    Err(CustodyError::IoRejected)
 }
 
 impl OwnedJournalState {

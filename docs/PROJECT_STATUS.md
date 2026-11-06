@@ -5689,3 +5689,64 @@ or package is added.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).
+
+#### Rooted pending-journal adapter — November 6
+
+The current HCFG-6 source candidate adds a data-only canonical
+preparation-journal adapter behind the existing rooted selected-store frame.
+The original operation, held procfs owner and sampled mount-namespace
+association remain in force. The adapter
+retains six fixed journal roles (`root`, `preparation`, and revisions `0` through
+`3`) and defines 81 ordered source checkpoints; only the initial 23-checkpoint
+pending-record path has native Linux source for revision zero.
+
+The implemented path performs bounded canonical decoding and control-selected
+comparison, prepares exact names and paths before custody I/O, and checks file
+name, owner, mode/ACL, mount association, synchronization, and byte readback
+where supplied by the platform implementation. Returned owners are stored in
+the root slots before post-call budget or association checks. There are no
+retries, adoption, unlink, product entry, or production cleanup-plan producer.
+The pending record remains data and continuity input only; root fields alone do
+not establish genuine preparation or Ready state.
+
+Three canonical-input tests and strict macOS all-target Clippy passed. Strict
+Linux x86_64 cross-target all-target Clippy also passed. Independent source
+review found no actionable P1/P2; its P3 records four new native cases as
+compiled but not executed: positive persistence/owner retention and denial of
+a preexisting empty root, a symlink root, and a foreign reported UID.
+[Published Ubuntu run 42266695033](https://github.com/hypler-dev/LNSAT/actions/runs/42266695033),
+attempt 1 at `1fd21d3`, passed 19 rooted groups. Full store `659/0/5` and daemon
+`309/0/0` are separate suite counts. Its exact synthetic checkout `2f42aad9`
+and tree `c438e17c` exclude these 13 source files; that result does not qualify
+the new journal candidate.
+
+The genuine immutable helper/image/kernel recipe, independent selection,
+nonempty held-resource preparation, probe and exact cleanup, complete cleanup
+plan, checked SQL/native lifecycle, atomic initializer, and management-system
+integration remain unfinished. This milestone does not qualify native
+compatibility, physical durability, runtime, support or release. PR #120 remains draft and unmerged. See [rooted
+preparation journal](architecture/headless-local-bootstrap/rooted-preparation-journal.md).
+
+#### Current macOS harness validation — November 6
+
+The Darwin legacy test, Phase-7 local conformance, and product-surface jobs
+now default outer `RUST_TEST_THREADS` to `1` only when the caller has not
+provided a value. Explicit caller values and Linux behavior remain unchanged.
+Inner 32-writer threads, barriers, assertions, and the single 20-second
+production acquisition budget are unchanged. Independent source, launch and
+actual-outcome reviews passed. The runner suite passed 24/24; the two focused
+writer cases passed in 21.78 seconds. The Rust remainder returned zero in
+1703.722 seconds, with separate store `651/0/1` in 1386.87 seconds and daemon
+`309/0/0` in 248.14 seconds.
+
+All 22 source pins, five support references, ten links, and status references
+matched. The original full npm invocation stopped at missing nested Fastify
+resolution. Existing admitted workspace links restored resolution; typechecking
+and workspace tests then returned zero without installation or dependency
+copying. That recovery's first Rust suffix failed at `649/2/1`; its underlying
+cause is not established. Both failed attempts remain recorded. The separate
+current passing Rust remainder does not constitute one complete npm invocation
+returning zero. The earlier Ubuntu run remains limited to its published
+`1fd21d3` tree and excludes the private 13-file journal slice; the four new
+native pending cases remain NOT_RUN. No PreparedInstallation, witness, runtime,
+support, or release claim follows. PR #120 remains draft and unmerged.

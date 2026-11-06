@@ -10,10 +10,13 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+#[path = "selected_root_pending_journal.rs"]
+pub(super) mod pending_journal;
+
 const MAX_ANCESTORS: usize = 128;
 const MAX_PATH_BYTES: usize = 4096;
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum SlotState {
     Vacant,
     Reserved,
@@ -45,6 +48,20 @@ impl FileSlot {
             return Err(RootError::Rejected);
         }
         self.cleanup = Some(operation.reserve_file()?);
+        self.state = SlotState::Reserved;
+        Ok(())
+    }
+
+    fn reserve_journal(
+        &mut self,
+        operation: &super::Operation,
+        role: super::JournalFileRole,
+    ) -> Result<(), RootError> {
+        if self.state != SlotState::Vacant || self.owner.is_some() || self.cleanup.is_some() {
+            operation.original.shared_state().invalidate();
+            return Err(RootError::Rejected);
+        }
+        self.cleanup = Some(operation.reserve_journal_file(role)?);
         self.state = SlotState::Reserved;
         Ok(())
     }
@@ -143,6 +160,7 @@ pub(super) struct Owners {
     ancestors: [FileSlot; MAX_ANCESTORS],
     proc_before: FileSlot,
     proc_after: FileSlot,
+    journal: [FileSlot; super::JOURNAL_FILE_ROLE_COUNT],
     parent_identity: Option<super::super::FileIdentity>,
     lease_identity: Option<super::super::FileIdentity>,
     database_identity: Option<super::super::FileIdentity>,
@@ -159,6 +177,7 @@ impl Owners {
             ancestors: std::array::from_fn(|_| FileSlot::empty()),
             proc_before: FileSlot::empty(),
             proc_after: FileSlot::empty(),
+            journal: std::array::from_fn(|_| FileSlot::empty()),
             parent_identity: None,
             lease_identity: None,
             database_identity: None,
@@ -177,6 +196,7 @@ impl Owners {
         ]
         .into_iter()
         .chain(self.ancestors.iter_mut())
+        .chain(self.journal.iter_mut())
         {
             if matches!(
                 slot.state,
@@ -185,6 +205,81 @@ impl Owners {
                 slot.state = SlotState::Uncertain;
             }
         }
+    }
+
+    pub(super) fn journal_roles_match(
+        &self,
+        operation: &super::Operation,
+        point: super::journal_schedule::JournalPoint,
+    ) -> bool {
+        let Some(plan) = operation.plan.journal.as_ref() else {
+            return false;
+        };
+        let Some(expected) = journal_expected_states(point) else {
+            return false;
+        };
+        plan.matches_selected_file_obligations(operation.plan.selected_file_obligations)
+            && operation.journal_issued.load(super::Ordering::SeqCst) == 0b11_1111
+            && super::JournalFileRole::ALL.into_iter().all(|role| {
+                let slot = &self.journal[role.index()];
+                slot.cleanup == Some(plan.cleanup_id(role))
+                    && slot.state == expected[role.index()]
+                    && match slot.state {
+                        SlotState::Reserved => slot.owner.is_none() && !slot.retirement_issued,
+                        SlotState::Held => slot.owner.is_some() && !slot.retirement_issued,
+                        SlotState::Retired => slot.owner.is_none() && slot.retirement_issued,
+                        _ => false,
+                    }
+            })
+    }
+
+    pub(super) fn filesystem_retired(
+        &self,
+        operation: &super::Operation,
+        selection: &Selection,
+    ) -> bool {
+        let retired = |slot: &FileSlot, cleanup: u32| {
+            slot.state == SlotState::Retired
+                && slot.owner.is_none()
+                && slot.retirement_issued
+                && slot.cleanup == Some(cleanup)
+        };
+        operation.plan.matches_selection(selection)
+            && operation.cleanup_issued.load(super::Ordering::SeqCst)
+                == operation.plan.selected_file_obligations
+            && retired(&self.parent, 0)
+            && retired(&self.lease, 1)
+            && retired(&self.proc_before, 2)
+            && selection.ancestors.iter().enumerate().all(|(index, _)| {
+                u32::try_from(index)
+                    .ok()
+                    .and_then(|index| index.checked_add(3))
+                    .is_some_and(|cleanup| retired(&self.ancestors[index], cleanup))
+            })
+            && u32::try_from(selection.ancestor_count())
+                .ok()
+                .and_then(|count| count.checked_add(3))
+                .is_some_and(|cleanup| retired(&self.proc_after, cleanup))
+            && self.ancestors[selection.ancestor_count()..]
+                .iter()
+                .all(|slot| {
+                    slot.state == SlotState::Vacant
+                        && slot.owner.is_none()
+                        && slot.cleanup.is_none()
+                        && !slot.retirement_issued
+                })
+            && self.journal_roles_match(
+                operation,
+                super::journal_schedule::JournalPoint::ProcRetireBefore,
+            )
+    }
+
+    pub(super) fn reserve_journal(
+        &mut self,
+        operation: &super::Operation,
+        role: super::JournalFileRole,
+    ) -> Result<(), RootError> {
+        self.journal[role.index()].reserve_journal(operation, role)
     }
 
     #[cfg(test)]
@@ -205,6 +300,18 @@ impl Owners {
         })
     }
 
+    #[cfg(all(test, target_os = "linux"))]
+    pub(super) fn journal_proc_association_held(&self) -> bool {
+        self.proc_before.state == SlotState::Held
+            && self.proc_before.owner.is_some()
+            && self.proc_before.cleanup == Some(2)
+            && !self.proc_before.retirement_issued
+            && self.proc_after.state == SlotState::Retired
+            && self.proc_after.owner.is_none()
+            && self.proc_after.retirement_issued
+            && self.linux.proc_baseline.is_some()
+    }
+
     #[cfg(test)]
     pub(super) fn procfs_known_retired(&self) -> bool {
         [&self.proc_before, &self.proc_after].iter().all(|slot| {
@@ -223,6 +330,7 @@ impl Owners {
             ]
             .into_iter()
             .chain(self.ancestors.iter())
+            .chain(self.journal.iter())
             .filter(|slot| slot.owner.is_some())
             .count(),
         )
@@ -433,6 +541,8 @@ fn validate(metadata: &Metadata, uid: u32, directory: bool) -> Result<(), RootEr
 #[cfg(target_os = "linux")]
 struct LinuxAssociation {
     namespace: Option<PathBuf>,
+    proc_baseline: Option<linux::ProcSample>,
+    selected_identities: Option<[super::super::linux::native::Identity; 3]>,
     ancestor_identities: [Option<super::super::linux::native::Identity>; MAX_ANCESTORS],
 }
 
@@ -441,6 +551,8 @@ impl LinuxAssociation {
     fn empty() -> Self {
         Self {
             namespace: None,
+            proc_baseline: None,
+            selected_identities: None,
             ancestor_identities: [None; MAX_ANCESTORS],
         }
     }
@@ -499,5 +611,228 @@ impl StorageFrame<'_> {
             7 => Err(RootError::Custody),
             _ => Ok(()),
         }
+    }
+}
+
+// Data parsing only. A matching number is not namespace continuity or authority.
+pub(super) fn namespace_number(bytes: &[u8]) -> Result<u64, RootError> {
+    if bytes.is_empty() || bytes.len() > 64 {
+        return Err(RootError::Custody);
+    }
+    let digits = bytes
+        .strip_prefix(b"mnt:[")
+        .and_then(|value| value.strip_suffix(b"]"))
+        .filter(|value| !value.is_empty() && value[0] != b'0')
+        .ok_or(RootError::Custody)?;
+    let mut number = 0_u64;
+    for digit in digits {
+        if !digit.is_ascii_digit() {
+            return Err(RootError::Custody);
+        }
+        number = number
+            .checked_mul(10)
+            .and_then(|value| value.checked_add(u64::from(digit - b'0')))
+            .ok_or(RootError::Custody)?;
+    }
+    Ok(number)
+}
+
+fn journal_prefix_states(revisions: usize, preparation: bool) -> [SlotState; 6] {
+    let mut states = [SlotState::Reserved; 6];
+    states[0] = SlotState::Held;
+    if preparation {
+        states[1] = SlotState::Held;
+    }
+    for state in states.iter_mut().skip(2).take(revisions) {
+        *state = SlotState::Held;
+    }
+    states
+}
+
+fn journal_expected_states(point: super::journal_schedule::JournalPoint) -> Option<[SlotState; 6]> {
+    use super::journal_schedule::{JournalPoint, ScanKind};
+    match point {
+        JournalPoint::RootCreateBefore => Some([SlotState::Reserved; 6]),
+        JournalPoint::RootCreateAfter | JournalPoint::PreparationCreateBefore => {
+            Some(journal_prefix_states(0, false))
+        }
+        JournalPoint::PreparationCreateAfter => Some(journal_prefix_states(0, true)),
+        JournalPoint::AppendEntry(revision) if revision < 4 => {
+            Some(journal_prefix_states(usize::from(revision), revision != 0))
+        }
+        JournalPoint::RevisionCreateBefore(revision) if revision < 4 => {
+            Some(journal_prefix_states(usize::from(revision), true))
+        }
+        JournalPoint::RevisionCreateAfter(revision)
+        | JournalPoint::WriteAfter(revision)
+        | JournalPoint::FileSyncAfter(revision)
+        | JournalPoint::DirectorySyncAfter(revision)
+        | JournalPoint::ReadbackAfter(revision)
+            if revision < 4 =>
+        {
+            Some(journal_prefix_states(usize::from(revision) + 1, true))
+        }
+        JournalPoint::ScanBefore(kind, pass) | JournalPoint::ScanAfter(kind, pass) if pass < 2 => {
+            match kind {
+                ScanKind::Initial => Some(journal_prefix_states(0, false)),
+                ScanKind::BeforeAppend(revision) if revision < 4 => {
+                    Some(journal_prefix_states(usize::from(revision), revision != 0))
+                }
+                ScanKind::AfterAppend(revision) if revision < 4 => {
+                    Some(journal_prefix_states(usize::from(revision) + 1, true))
+                }
+                _ => None,
+            }
+        }
+        JournalPoint::JournalCloseBefore(role) | JournalPoint::JournalCloseAfter(role) => {
+            let mut states = [SlotState::Held; 6];
+            let first_retired =
+                role.index() + usize::from(matches!(point, JournalPoint::JournalCloseBefore(_)));
+            for state in states.iter_mut().skip(first_retired) {
+                *state = SlotState::Retired;
+            }
+            Some(states)
+        }
+        JournalPoint::ProcRetireBefore => Some([SlotState::Retired; 6]),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod journal_role_tests {
+    use super::*;
+    use crate::selected_store::rooted::{
+        JournalFileRole,
+        journal_schedule::{JournalPoint, ScanKind},
+        tests as root_tests,
+    };
+
+    #[test]
+    fn six_reserved_slots_and_actual_owner_states_gate_each_boundary_before_native_work() {
+        let selection =
+            Selection::parse(Path::new("/a/selected.sqlite")).expect("synthetic selection");
+        let (operation, original) =
+            root_tests::operation_for_plan(root_tests::journal_plan(&selection));
+        let mut owners = Owners::empty();
+        assert!(!owners.journal_roles_match(&operation, JournalPoint::RootCreateBefore));
+        for role in JournalFileRole::ALL {
+            owners
+                .reserve_journal(&operation, role)
+                .expect("exact one-use role");
+        }
+        assert!(owners.journal_roles_match(&operation, JournalPoint::RootCreateBefore));
+        assert!(!owners.journal_roles_match(&operation, JournalPoint::RootCreateAfter));
+        owners.journal[0].state = SlotState::Held;
+        assert!(!owners.journal_roles_match(&operation, JournalPoint::RootCreateAfter));
+        // This fixture File exercises state/owner presence only. Its metadata
+        // does not qualify it as a journal root or bypass native association.
+        owners.journal[0].owner =
+            Some(File::open(env!("CARGO_MANIFEST_DIR")).expect("fixture directory"));
+        assert!(owners.journal_roles_match(&operation, JournalPoint::RootCreateAfter));
+        owners.journal[0].cleanup = Some(u32::MAX);
+        assert!(!owners.journal_roles_match(&operation, JournalPoint::RootCreateAfter));
+        assert!(original.valid().is_ok());
+        assert_eq!(
+            operation.observations.load(super::super::Ordering::SeqCst),
+            0
+        );
+    }
+
+    #[test]
+    fn expected_role_states_close_children_before_parent_and_reject_unknown_points() {
+        assert_eq!(
+            journal_expected_states(JournalPoint::RevisionCreateBefore(0)),
+            Some([
+                SlotState::Held,
+                SlotState::Held,
+                SlotState::Reserved,
+                SlotState::Reserved,
+                SlotState::Reserved,
+                SlotState::Reserved
+            ])
+        );
+        assert_eq!(
+            journal_expected_states(JournalPoint::JournalCloseBefore(JournalFileRole::Revision3)),
+            Some([SlotState::Held; 6])
+        );
+        assert_eq!(
+            journal_expected_states(JournalPoint::JournalCloseAfter(
+                JournalFileRole::Preparation
+            )),
+            Some([
+                SlotState::Held,
+                SlotState::Retired,
+                SlotState::Retired,
+                SlotState::Retired,
+                SlotState::Retired,
+                SlotState::Retired
+            ])
+        );
+        assert_eq!(
+            journal_expected_states(JournalPoint::JournalCloseBefore(JournalFileRole::Root)),
+            Some([
+                SlotState::Held,
+                SlotState::Retired,
+                SlotState::Retired,
+                SlotState::Retired,
+                SlotState::Retired,
+                SlotState::Retired
+            ])
+        );
+        assert_eq!(
+            journal_expected_states(JournalPoint::JournalCloseAfter(JournalFileRole::Root)),
+            Some([SlotState::Retired; 6])
+        );
+        assert_eq!(
+            journal_expected_states(JournalPoint::ProcRetireBefore),
+            Some([SlotState::Retired; 6])
+        );
+        assert!(journal_expected_states(JournalPoint::AppendEntry(4)).is_none());
+        assert!(journal_expected_states(JournalPoint::ScanBefore(ScanKind::Initial, 2)).is_none());
+    }
+    #[test]
+    fn terminal_filesystem_fence_requires_every_known_outcome_and_exact_original_id() {
+        let selection =
+            Selection::parse(Path::new("/a/selected.sqlite")).expect("synthetic selection");
+        let (operation, _) = root_tests::operation_for_plan(root_tests::journal_plan(&selection));
+        let mut owners = Owners::empty();
+        assert!(!owners.filesystem_retired(&operation, &selection));
+        // Model reported known outcomes only. No kernel close or custody proof
+        // is executed or acknowledged by this pure terminal predicate test.
+        for (index, slot) in [
+            &mut owners.parent,
+            &mut owners.lease,
+            &mut owners.proc_before,
+        ]
+        .into_iter()
+        .chain(owners.ancestors[..selection.ancestor_count()].iter_mut())
+        .chain(std::iter::once(&mut owners.proc_after))
+        .enumerate()
+        {
+            slot.reserve(&operation)
+                .expect("exact selected reservation");
+            assert_eq!(
+                slot.cleanup,
+                Some(u32::try_from(index).expect("fixed selected index"))
+            );
+            slot.state = SlotState::Retired;
+            slot.retirement_issued = true;
+        }
+        for role in JournalFileRole::ALL {
+            owners
+                .reserve_journal(&operation, role)
+                .expect("exact journal reservation");
+            owners.journal[role.index()].state = SlotState::Retired;
+            owners.journal[role.index()].retirement_issued = true;
+        }
+        assert!(owners.filesystem_retired(&operation, &selection));
+        owners.proc_before.state = SlotState::Uncertain;
+        assert!(!owners.filesystem_retired(&operation, &selection));
+        owners.proc_before.state = SlotState::Retired;
+        owners.parent.retirement_issued = false;
+        assert!(!owners.filesystem_retired(&operation, &selection));
+        owners.parent.retirement_issued = true;
+        owners.journal[0].cleanup = Some(u32::MAX);
+        assert!(!owners.filesystem_retired(&operation, &selection));
     }
 }

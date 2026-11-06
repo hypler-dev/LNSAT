@@ -17,6 +17,25 @@ HCFG-2 inspection is integrated. Complete composition diagnostics, monitoring,
 separately authorized protected controls, and OS-enforcement conformance before
 closing the headless gate. No source foundation alone satisfies this sequence.
 
+The [rooted preparation journal](architecture/headless-local-bootstrap/rooted-preparation-journal.md)
+is a narrow HCFG-6 source milestone. It supplies only a data-only pending
+journal adapter and selected-store custody path; it does not supply genuine
+preparation, an atomic initializer, a complete cleanup plan, or runtime
+enforcement.
+
+Current validation narrows evidence only. The macOS Darwin legacy, Phase-7
+local-conformance, and product-surface jobs have a caller-preserving outer
+thread default; their inner barriers, assertions, and production budget are
+unchanged. Source launch and actual-outcome review passed, with 24/24 runner
+checks and 2/2 focused writer checks. The corrected Rust remainder passed with
+store `651/0/1` and daemon `309/0/0`, as separate suite counts. The original npm
+invocation and first recovery suffix remain failed historical attempts;
+restored dependency resolution and the later passing remainder do not establish
+one complete npm invocation returning zero. Linux execution of the four new
+pending cases remains unrun. The complete immutable recipe, cleanup plan,
+checked SQL lifecycle, atomic initializer, and management integration remain
+required.
+
 ## Preserved Product Goal
 
 First LNSAT V1 release remains an embeddable, owner-controlled authority

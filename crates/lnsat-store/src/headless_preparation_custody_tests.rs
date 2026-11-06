@@ -4,14 +4,16 @@ use super::*;
 use crate::SqliteStore;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::{
-    fs::{self, File, OpenOptions},
-    os::unix::{fs::DirBuilderExt as _, io::OwnedFd},
+    fs,
+    os::unix::fs::DirBuilderExt as _,
     path::PathBuf,
     sync::atomic::{AtomicU64, Ordering},
 };
 
 #[cfg(target_os = "linux")]
 use std::{
+    fs::{File, OpenOptions},
+    mem::MaybeUninit,
     os::unix::fs::{OpenOptionsExt as _, PermissionsExt as _, symlink},
     path::Path,
 };
@@ -22,13 +24,15 @@ use super::super::{JournalPhase, JournalRecord, NullableString, encode_record, j
 use crate::{
     LocalOwnerRecoveryErrorV1, SelectedLocalStoreErrorV1, acquire_local_daemon_database_lease_v1,
 };
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[cfg(target_os = "linux")]
 use nix::fcntl::{FcntlArg, fcntl};
 #[cfg(target_os = "linux")]
 use nix::{
     sys::stat::Mode,
     unistd::{getuid, mkfifo},
 };
+#[cfg(target_os = "linux")]
+use rustix::fs::RawDir;
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(1);
@@ -817,61 +821,137 @@ fn custody_poisoned_failed_append_preserves_and_reopens_partial_state() {
     );
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-#[test]
-fn directory_stream_failure_keeps_other_descriptors_open() {
-    let output = std::process::Command::new(
-        std::env::current_exe().expect("test executable path must resolve"),
-    )
-    .args([
-        "--ignored",
-        "--exact",
-        "headless_preparation::custody::tests::custody_directory_stream_child_helper",
-        "--nocapture",
-        "--test-threads=1",
-    ])
-    .env("LNSAT_CUSTODY_DIRECTORY_STREAM_CHILD", "1")
-    .output()
-    .expect("descriptor child must run");
-    assert!(
-        output.status.success(),
-        "descriptor child failed: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert!(
-        String::from_utf8_lossy(&output.stdout).contains("LNSAT_CUSTODY_DIRECTORY_STREAM_CHILD_OK"),
-        "descriptor child did not return its stable marker"
-    );
+#[cfg(target_os = "linux")]
+struct EnumerationFixture {
+    directory: PathBuf,
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-#[test]
-#[ignore = "invoked explicitly by the descriptor custody regression"]
-fn custody_directory_stream_child_helper() {
-    assert_eq!(
-        std::env::var("LNSAT_CUSTODY_DIRECTORY_STREAM_CHILD").as_deref(),
-        Ok("1"),
-        "descriptor child requires its explicit parent marker"
-    );
-    let fixture = Fixture::new("directory-stream");
-    let retained = File::open(&fixture.directory).expect("retained directory must open");
-    let rejected = OpenOptions::new()
-        .read(true)
-        .open(&fixture.database)
-        .expect("regular descriptor must open");
-    let owned: OwnedFd = rejected.into();
-    let rejected_raw = owned.as_raw_fd();
-    assert_error(directory_stream(owned), "journal_custody.io_rejected");
-    assert!(nix_stat::fcntl::fcntl(rejected_raw, nix_stat::fcntl::FcntlArg::F_GETFD).is_err());
-    assert!(fcntl(&retained, FcntlArg::F_GETFD).is_ok());
+#[cfg(target_os = "linux")]
+impl EnumerationFixture {
+    fn new(label: &str) -> Self {
+        let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+        let directory = std::env::temp_dir().join(format!(
+            "lnsat-custody-enumeration-{}-{label}-{sequence}",
+            std::process::id()
+        ));
+        create_private_directory(&directory);
+        Self {
+            directory: directory
+                .canonicalize()
+                .expect("enumeration fixture directory must canonicalize"),
+        }
+    }
 
-    let opened = File::open(&fixture.directory).expect("directory descriptor must open");
-    let raw = opened.as_raw_fd();
-    let directory = succeeds(directory_stream(opened.into()));
-    assert!(fcntl(&directory, FcntlArg::F_GETFD).is_ok());
-    drop(directory);
-    assert!(nix_stat::fcntl::fcntl(raw, nix_stat::fcntl::FcntlArg::F_GETFD).is_err());
-    println!("LNSAT_CUSTODY_DIRECTORY_STREAM_CHILD_OK");
+    fn write(&self, name: impl AsRef<Path>, bytes: &[u8]) {
+        write_private_file(&self.directory.join(name), bytes);
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl Drop for EnumerationFixture {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.directory);
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn enumeration_owner() -> u32 {
+    getuid().as_raw()
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn borrowed_names_rewinds_a_partially_consumed_held_directory() {
+    let fixture = EnumerationFixture::new("rewind");
+    fixture.write("alpha", b"a");
+    fixture.write("beta", b"b");
+    let held = File::open(&fixture.directory).expect("held directory must open");
+    {
+        let mut scratch = [MaybeUninit::uninit(); 4096];
+        let mut partial = RawDir::new(&held, &mut scratch);
+        let _first = partial
+            .next()
+            .expect("directory must provide a first entry")
+            .expect("partial directory read must succeed");
+    }
+    let expected = vec!["alpha".to_owned(), "beta".to_owned()];
+    assert_eq!(succeeds(names(&held, enumeration_owner())), expected);
+    assert_eq!(succeeds(names(&held, enumeration_owner())), expected);
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn borrowed_names_rejects_insufficient_scratch_and_rewinds_for_fixed_scan() {
+    let fixture = EnumerationFixture::new("scratch");
+    fixture.write("entry", b"x");
+    let held = File::open(&fixture.directory).expect("held directory must open");
+
+    let mut zero: [MaybeUninit<u8>; 0] = [];
+    assert_error(
+        names_with_scratch(&held, enumeration_owner(), &mut zero),
+        "journal_custody.io_rejected",
+    );
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
+
+    let mut one = [MaybeUninit::uninit(); 1];
+    assert_error(
+        names_with_scratch(&held, enumeration_owner(), &mut one),
+        "journal_custody.io_rejected",
+    );
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
+
+    assert_eq!(succeeds(names(&held, enumeration_owner())), vec!["entry"]);
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn borrowed_names_accepts_sixty_four_and_rejects_sixty_five_entries() {
+    let accepted = EnumerationFixture::new("sixty-four");
+    for index in 0..64 {
+        accepted.write(format!("entry-{index:02}"), b"x");
+    }
+    let held = File::open(&accepted.directory).expect("accepted directory must open");
+    assert_eq!(succeeds(names(&held, enumeration_owner())).len(), 64);
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
+
+    let rejected = EnumerationFixture::new("sixty-five");
+    for index in 0..65 {
+        rejected.write(format!("entry-{index:02}"), b"x");
+    }
+    let held = File::open(&rejected.directory).expect("rejected directory must open");
+    assert_error(
+        names(&held, enumeration_owner()),
+        "journal_custody.limit_exceeded",
+    );
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn borrowed_names_rejects_invalid_utf8_and_keeps_held_directory_open() {
+    use std::os::unix::ffi::OsStringExt as _;
+
+    let fixture = EnumerationFixture::new("invalid-utf8");
+    fixture.write(std::ffi::OsString::from_vec(vec![0xff]), b"x");
+    let held = File::open(&fixture.directory).expect("held directory must open");
+    assert_error(
+        names(&held, enumeration_owner()),
+        "journal_custody.invalid_journal",
+    );
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn borrowed_names_rejects_regular_file_and_keeps_original_descriptor_open() {
+    let fixture = EnumerationFixture::new("regular-file");
+    fixture.write("regular", b"x");
+    let held = File::open(fixture.directory.join("regular"))
+        .expect("regular fixture descriptor must open");
+    assert_error(names(&held, enumeration_owner()), "journal_custody.changed");
+    assert!(fcntl(&held, FcntlArg::F_GETFD).is_ok());
 }
 
 #[cfg(target_os = "macos")]

@@ -24,14 +24,20 @@ use std::{
 #[path = "selected_root_storage.rs"]
 mod storage;
 
+#[path = "selected_root_journal_schedule.rs"]
+mod journal_schedule;
+
 const VACANT: u8 = 0;
 const RESERVED: u8 = 1;
 const PUBLISHED: u8 = 2;
 const STORAGE_HELD: u8 = 3;
 const QUARANTINED: u8 = 4;
+// Filesystem-subset terminal only; not Ready or initialization evidence.
+const STORAGE_RETIRED: u8 = 5;
 const OBSERVATION_LIMIT: u32 = 65_536;
 const CLEANUP_LIMIT: u32 = 256;
-const SQL_CLEANUP_BASE: u32 = 132;
+const SQL_CLEANUP_BASE: u32 = 133;
+const JOURNAL_FILE_ROLE_COUNT: usize = 6;
 
 static ROOT: OnceLock<ControlRoot> = OnceLock::new();
 
@@ -49,11 +55,62 @@ enum RootError {
     Uncertain,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum JournalFileRole {
+    Root,
+    Preparation,
+    Revision0,
+    Revision1,
+    Revision2,
+    Revision3,
+}
+
+impl JournalFileRole {
+    const ALL: [Self; JOURNAL_FILE_ROLE_COUNT] = [
+        Self::Root,
+        Self::Preparation,
+        Self::Revision0,
+        Self::Revision1,
+        Self::Revision2,
+        Self::Revision3,
+    ];
+
+    const fn index(self) -> usize {
+        match self {
+            Self::Root => 0,
+            Self::Preparation => 1,
+            Self::Revision0 => 2,
+            Self::Revision1 => 3,
+            Self::Revision2 => 4,
+            Self::Revision3 => 5,
+        }
+    }
+}
+
+struct JournalCleanupPlan {
+    cleanup_ids: [u32; JOURNAL_FILE_ROLE_COUNT],
+}
+
+impl JournalCleanupPlan {
+    fn cleanup_id(&self, role: JournalFileRole) -> u32 {
+        self.cleanup_ids[role.index()]
+    }
+
+    fn matches_selected_file_obligations(&self, selected: u32) -> bool {
+        JournalFileRole::ALL.into_iter().all(|role| {
+            selected
+                .checked_add(u32::try_from(role.index()).expect("fixed role index fits u32"))
+                .is_some_and(|expected| self.cleanup_id(role) == expected)
+        })
+    }
+}
+
 /// Capacity is not authority. No production constructor exists until every
 /// native, SQL, journal, root and terminal obligation has a closed inventory.
 struct FullCleanupPlan {
     selected_ancestors: usize,
     selected_file_obligations: u32,
+    journal: Option<JournalCleanupPlan>,
     other_obligations: u32,
     total: u32,
 }
@@ -66,11 +123,17 @@ impl FullCleanupPlan {
         else {
             return false;
         };
+        let journal_obligations = match self.journal.as_ref() {
+            Some(journal) if journal.matches_selected_file_obligations(selected) => 6,
+            Some(_) => return false,
+            None => 0,
+        };
         // Parent, lease and two independently retired procfs observations.
         self.selected_ancestors == selection.ancestor_count()
             && self.selected_file_obligations == selected
             && SQL_CLEANUP_BASE
                 .checked_add(selected)
+                .and_then(|count| count.checked_add(journal_obligations))
                 .and_then(|count| count.checked_add(self.other_obligations))
                 == Some(self.total)
             && self.total <= CLEANUP_LIMIT
@@ -83,14 +146,14 @@ struct Operation {
     plan: FullCleanupPlan,
     observations: AtomicU32,
     cleanup_issued: AtomicU32,
+    journal_issued: AtomicU8,
+    journal_checkpoint: AtomicU8,
+    work_closed: AtomicBool,
 }
 
 impl Operation {
     fn observe(&self) -> Result<(), RootError> {
-        self.original
-            .shared_state()
-            .valid()
-            .map_err(|_| RootError::Budget)?;
+        self.returned()?;
         if self
             .observations
             .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |used| {
@@ -106,10 +169,26 @@ impl Operation {
     }
 
     fn returned(&self) -> Result<(), RootError> {
+        if self.work_closed.load(Ordering::SeqCst) {
+            return Err(RootError::Rejected);
+        }
         self.original
             .shared_state()
             .valid()
             .map_err(|_| RootError::Budget)
+    }
+
+    // Called only after the last proc close and its successful budget postcheck.
+    // Closing work is not a physical cleanup, commit or Ready-state witness.
+    fn finish_work(&self) -> Result<(), RootError> {
+        self.returned()?;
+        if self.work_closed.swap(true, Ordering::SeqCst) {
+            return Err(RootError::Rejected);
+        }
+        // The same shared allocation also gates the native lane; a separate
+        // wrapper cannot use a still-live budget after filesystem retirement.
+        self.original.shared_state().invalidate();
+        Ok(())
     }
 
     fn reserve_file(&self) -> Result<u32, RootError> {
@@ -127,6 +206,33 @@ impl Operation {
         self.returned()?;
         Ok(slot)
     }
+
+    fn reserve_journal_file(&self, role: JournalFileRole) -> Result<u32, RootError> {
+        self.returned()?;
+        let Some(journal) = self.plan.journal.as_ref().filter(|plan| {
+            plan.matches_selected_file_obligations(self.plan.selected_file_obligations)
+        }) else {
+            self.original.shared_state().invalidate();
+            return Err(RootError::Rejected);
+        };
+        let bit = 1_u8 << role.index();
+        if self
+            .journal_issued
+            .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |issued| {
+                if issued & bit == 0 {
+                    Some(issued | bit)
+                } else {
+                    None
+                }
+            })
+            .is_err()
+        {
+            self.original.shared_state().invalidate();
+            return Err(RootError::Rejected);
+        }
+        self.returned()?;
+        Ok(journal.cleanup_id(role))
+    }
 }
 
 struct Authority {
@@ -136,6 +242,7 @@ struct Authority {
     operation: Option<Operation>,
     selection: Option<storage::Selection>,
     owners: storage::Owners,
+    journal_input: Option<storage::pending_journal::PendingJournalInput>,
 }
 
 struct ControlRoot {
@@ -156,6 +263,8 @@ struct ControlRoot {
     terminal_proc_consumed_unknown: AtomicBool,
     #[cfg(test)]
     owning_error_postchecks: AtomicU32,
+    #[cfg(all(test, target_os = "linux"))]
+    boundary_rejected_without_native: AtomicBool,
 }
 
 impl ControlRoot {
@@ -167,6 +276,7 @@ impl ControlRoot {
                 operation: None,
                 selection: None,
                 owners: storage::Owners::empty(),
+                journal_input: None,
             }),
             context: Mutex::new(None),
             original_state: OnceLock::new(),
@@ -184,6 +294,8 @@ impl ControlRoot {
             terminal_proc_consumed_unknown: AtomicBool::new(false),
             #[cfg(test)]
             owning_error_postchecks: AtomicU32::new(0),
+            #[cfg(all(test, target_os = "linux"))]
+            boundary_rejected_without_native: AtomicBool::new(false),
         }
     }
 
@@ -202,6 +314,31 @@ impl ControlRoot {
         selection: storage::Selection,
         original: ArtifactReadBudget,
         plan: FullCleanupPlan,
+    ) -> Result<(), RootError> {
+        self.publish_inner(selection, original, plan, None)
+    }
+
+    fn publish_pending(
+        &'static self,
+        selection: storage::Selection,
+        original: ArtifactReadBudget,
+        plan: FullCleanupPlan,
+        input: storage::pending_journal::PendingJournalInput,
+    ) -> Result<(), RootError> {
+        if plan.journal.is_none() || !input.matches_selection(&selection) {
+            self.close_admission();
+            original.shared_state().invalidate();
+            return Err(RootError::Rejected);
+        }
+        self.publish_inner(selection, original, plan, Some(input))
+    }
+
+    fn publish_inner(
+        &'static self,
+        selection: storage::Selection,
+        original: ArtifactReadBudget,
+        plan: FullCleanupPlan,
+        journal_input: Option<storage::pending_journal::PendingJournalInput>,
     ) -> Result<(), RootError> {
         if !ROOT.get().is_some_and(|root| std::ptr::eq(root, self)) {
             self.close_admission();
@@ -256,8 +393,14 @@ impl ControlRoot {
                 plan,
                 observations: AtomicU32::new(0),
                 cleanup_issued: AtomicU32::new(0),
+                journal_issued: AtomicU8::new(0),
+                journal_checkpoint: AtomicU8::new(0),
+                work_closed: AtomicBool::new(false),
             });
             held.selection = Some(selection);
+            // Owned syntax/context only, fixed before the first custody call.
+            // It is not genuine preparation or an initialization capability.
+            held.journal_input = journal_input;
             if self.original_state.set(state).is_err() {
                 if let Some(operation) = held.operation.as_ref() {
                     operation.original.shared_state().invalidate();
@@ -293,6 +436,46 @@ impl ControlRoot {
             handle.thread().unpark();
         }
         Ok(())
+    }
+
+    fn can_finish_storage(&self, held: &Authority) -> bool {
+        let (Some(operation), Some(selection)) = (held.operation.as_ref(), held.selection.as_ref())
+        else {
+            return false;
+        };
+        ROOT.get().is_some_and(|root| std::ptr::eq(root, self))
+            && self.context_id.get() == Some(&thread::current().id())
+            && !self.closed.load(Ordering::SeqCst)
+            && self.phase.load(Ordering::SeqCst) == PUBLISHED
+            && self
+                .original_state
+                .get()
+                .is_some_and(|original| operation.original.owns(original))
+            && operation.work_closed.load(Ordering::SeqCst)
+            && operation.journal_checkpoint.load(Ordering::SeqCst) == 81
+            && operation.plan.matches_selection(selection)
+            && held.owners.filesystem_retired(operation, selection)
+    }
+
+    fn quarantine_storage(
+        &self,
+        mut held: MutexGuard<'static, Authority>,
+        payload: Option<Box<dyn std::any::Any + Send>>,
+    ) -> ! {
+        self.close_admission();
+        held.owners.mark_issued_uncertain();
+        #[cfg(test)]
+        {
+            self.terminal_parent_consumed_unknown
+                .store(held.owners.parent_consumed_unknown(), Ordering::SeqCst);
+            self.terminal_proc_consumed_unknown
+                .store(held.owners.proc_consumed_unknown(), Ordering::SeqCst);
+            self.terminal_owners
+                .store(held.owners.held_count(), Ordering::SeqCst);
+        }
+        // Same call stack, original actual guard and caught payload. This helper
+        // introduces no worker, callback, recovery or release of custody.
+        retain(held, payload)
     }
 
     fn run(&'static self) {
@@ -343,8 +526,28 @@ impl ControlRoot {
         }
         let result = catch_unwind(AssertUnwindSafe(|| {
             let mut frame = StorageFrame::project(self, &mut held)?;
-            frame.acquire()
+            frame.acquire_and_prepare_pending()
         }));
+        // The final close seals further work. Check its exact known terminal
+        // state before the generic invalid-budget failure path. No native call
+        // or observation can follow this pure terminal publication.
+        if matches!(&result, Ok(Ok(())))
+            && self.can_finish_storage(&held)
+            && self
+                .phase
+                .compare_exchange(
+                    PUBLISHED,
+                    STORAGE_RETIRED,
+                    Ordering::SeqCst,
+                    Ordering::SeqCst,
+                )
+                .is_ok()
+        {
+            self.closed.store(true, Ordering::SeqCst);
+            exit.finished = true;
+            drop(held);
+            return;
+        }
         if !matches!(result, Ok(Ok(())))
             || self.closed.load(Ordering::SeqCst)
             || held
@@ -352,19 +555,7 @@ impl ControlRoot {
                 .as_ref()
                 .is_none_or(|operation| operation.returned().is_err())
         {
-            self.close_admission();
-            held.owners.mark_issued_uncertain();
-            #[cfg(test)]
-            {
-                self.terminal_parent_consumed_unknown
-                    .store(held.owners.parent_consumed_unknown(), Ordering::SeqCst);
-                self.terminal_proc_consumed_unknown
-                    .store(held.owners.proc_consumed_unknown(), Ordering::SeqCst);
-                self.terminal_owners
-                    .store(held.owners.held_count(), Ordering::SeqCst);
-            }
-            // Keep the actual guard and any caught payload in this same context.
-            retain(held, result.err());
+            self.quarantine_storage(held, result.err());
         }
         if self
             .phase
@@ -414,10 +605,22 @@ struct StorageFrame<'a> {
     operation: &'a Operation,
     selection: &'a storage::Selection,
     owners: &'a mut storage::Owners,
+    journal_input: Option<&'a storage::pending_journal::PendingJournalInput>,
     _thread: PhantomData<Rc<()>>,
 }
 
 impl<'a> StorageFrame<'a> {
+    fn acquire_and_prepare_pending(&mut self) -> Result<(), RootError> {
+        self.acquire()?;
+        #[cfg(target_os = "linux")]
+        if self.journal_input.is_some() {
+            self.create_pending_journal()?;
+        }
+        #[cfg(all(test, target_os = "linux"))]
+        self.fault_journal_boundary()?;
+        Ok(())
+    }
+
     fn project(
         root: &'static ControlRoot,
         held: &'a mut MutexGuard<'static, Authority>,
@@ -426,6 +629,7 @@ impl<'a> StorageFrame<'a> {
             operation,
             selection,
             owners,
+            journal_input,
             ..
         } = &mut **held;
         let operation = operation.as_ref().ok_or(RootError::Rejected)?;
@@ -447,6 +651,7 @@ impl<'a> StorageFrame<'a> {
             operation,
             selection,
             owners,
+            journal_input: journal_input.as_ref(),
             _thread: PhantomData,
         })
     }

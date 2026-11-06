@@ -220,3 +220,13 @@ These commands contact `https://registry.npmjs.org/` and send dependency
 metadata. They do not provide an offline vulnerability verdict. Reviewers can
 run `npm run audit:dependencies:test` without contacting the registry; passing
 those wrapper tests does not establish a clean live audit.
+
+### macOS Rust test scheduling
+
+The local legacy Rust test actions default to `RUST_TEST_THREADS=1` on macOS
+when the caller has not set that variable. This bounds outer libtest scheduling;
+concurrency fixtures still create their explicit writer threads and retain the
+same barriers, assertions and production acquisition deadlines. An explicit
+caller value is preserved, and Linux scheduling is unchanged. A passing bounded
+run does not establish the cause of an earlier contention failure or physical
+deadline behavior.

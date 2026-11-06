@@ -1400,6 +1400,14 @@ export function runLegacyAction(argv, deps = {}) {
     RUSTUP_AUTO_INSTALL: "0",
     CARGO_NET_OFFLINE: "true",
     LIBSQLITE3_FLAGS: FILESTAT_FLAGS,
+    // Outer libtest parallelism can oversubscribe the explicit 32-writer
+    // fixtures on macOS. Keep their inner concurrency and production budgets
+    // unchanged, and retain an explicit caller-selected harness setting.
+    ...((deps.platform ?? process.platform) === "darwin" &&
+    ["test", "phase7-local-conformance", "product-surface"].includes(action) &&
+    !Object.hasOwn(env, "RUST_TEST_THREADS")
+      ? { RUST_TEST_THREADS: "1" }
+      : {}),
   };
   if (action === "fmt") {
     for (const suite of [

@@ -13,6 +13,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+#[path = "selected_root_proc.rs"]
+mod proc;
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(super) struct ProcSample {
+    identity: Identity,
+    namespace: u64,
+}
+
 fn stat(operation: &super::super::Operation, path: &Path) -> Result<rustix::fs::Statx, RootError> {
     let value = observed!(
         operation,
@@ -103,11 +112,11 @@ struct NamespaceCall<'a> {
     postchecks: &'a std::sync::atomic::AtomicU32,
 }
 
-fn namespace(
+fn open_proc(
     operation: &super::super::Operation,
     slot: &mut FileSlot,
     call: &NamespaceCall<'_>,
-) -> Result<PathBuf, RootError> {
+) -> Result<(), RootError> {
     slot.reserve(operation)?;
     operation.observe()?;
     slot.issued()?;
@@ -129,6 +138,15 @@ fn namespace(
         return Err(RootError::Custody);
     }
     operation.returned()?;
+    Ok(())
+}
+
+fn namespace(
+    operation: &super::super::Operation,
+    slot: &mut FileSlot,
+    call: &NamespaceCall<'_>,
+) -> Result<PathBuf, RootError> {
+    open_proc(operation, slot, call)?;
     let file = slot.owner.as_ref().ok_or(RootError::Rejected)?;
     let filesystem = observed!(operation, rustix::fs::fstatfs(file));
     if filesystem.f_type != 0x9fa0 {
@@ -137,6 +155,25 @@ fn namespace(
     let namespace = observed!(operation, fs::read_link("/proc/self/ns/mnt"));
     if namespace.as_os_str().len() > 64 {
         return Err(RootError::Custody);
+    }
+    close_proc(operation, slot, call)?;
+    Ok(namespace)
+}
+
+fn close_proc(
+    operation: &super::super::Operation,
+    slot: &mut FileSlot,
+    call: &NamespaceCall<'_>,
+) -> Result<(), RootError> {
+    #[cfg(not(test))]
+    let _ = call;
+    operation.observe()?;
+    if slot.state != SlotState::Held
+        || slot.owner.is_none()
+        || slot.cleanup.is_none()
+        || slot.retirement_issued
+    {
+        return Err(RootError::Rejected);
     }
     // The pre-reserved cleanup is tied to this actual slot. Record issue before
     // consuming File; a failed close never reconstructs or retries the owner.
@@ -162,7 +199,7 @@ fn namespace(
         return Err(RootError::Uncertain);
     }
     operation.returned()?;
-    Ok(namespace)
+    Ok(())
 }
 
 impl StorageFrame<'_> {
@@ -305,8 +342,22 @@ impl StorageFrame<'_> {
             #[cfg(test)]
             postchecks: &self.root.owning_error_postchecks,
         };
-        let initial = namespace(self.operation, &mut self.owners.proc_before, &call)?;
-        self.owners.linux.namespace = Some(initial);
+        if self.operation.plan.journal.is_some() {
+            open_proc(self.operation, &mut self.owners.proc_before, &call)?;
+            let file = self
+                .owners
+                .proc_before
+                .owner
+                .as_ref()
+                .ok_or(RootError::Rejected)?;
+            // Publish the two observed baseline values together only after all
+            // seven wrappers and their original-budget postchecks succeed.
+            let baseline = proc::sample(self.operation, file, None)?;
+            self.owners.linux.proc_baseline = Some(baseline);
+        } else {
+            let initial = namespace(self.operation, &mut self.owners.proc_before, &call)?;
+            self.owners.linux.namespace = Some(initial);
+        }
         self.acquire_ancestors(uid)?;
         let parent_file = self
             .owners
@@ -333,9 +384,22 @@ impl StorageFrame<'_> {
             return Err(RootError::Custody);
         }
 
-        let final_namespace = namespace(self.operation, &mut self.owners.proc_after, &call)?;
-        if self.owners.linux.namespace.as_ref() != Some(&final_namespace) {
-            return Err(RootError::Custody);
+        if self.operation.plan.journal.is_some() {
+            let baseline = self.owners.linux.proc_baseline.ok_or(RootError::Rejected)?;
+            open_proc(self.operation, &mut self.owners.proc_after, &call)?;
+            let file = self
+                .owners
+                .proc_after
+                .owner
+                .as_ref()
+                .ok_or(RootError::Rejected)?;
+            proc::sample(self.operation, file, Some(baseline))?;
+            close_proc(self.operation, &mut self.owners.proc_after, &call)?;
+        } else {
+            let final_namespace = namespace(self.operation, &mut self.owners.proc_after, &call)?;
+            if self.owners.linux.namespace.as_ref() != Some(&final_namespace) {
+                return Err(RootError::Custody);
+            }
         }
         for (index, path) in self.selection.ancestors.iter().enumerate() {
             let file = self.owners.ancestors[index]
@@ -361,6 +425,181 @@ impl StorageFrame<'_> {
             }
         }
         self.verify_held_selection(uid)?;
+        self.owners.linux.selected_identities = Some([parent, database, lease]);
         Ok(())
+    }
+}
+
+impl StorageFrame<'_> {
+    // This boundary has no backend selector or owner getter. It is callable only
+    // by the fixed root-owned journal path while its real authority guard lives.
+    pub(super) fn journal_boundary(
+        &mut self,
+        point: super::super::journal_schedule::JournalPoint,
+    ) -> Result<(), RootError> {
+        let result = self.journal_boundary_inner(point);
+        if result.is_err() {
+            self.root.close_admission();
+        }
+        result
+    }
+
+    fn journal_boundary_inner(
+        &mut self,
+        point: super::super::journal_schedule::JournalPoint,
+    ) -> Result<(), RootError> {
+        use super::super::journal_schedule::{self, JournalPoint};
+        if !super::super::ROOT
+            .get()
+            .is_some_and(|root| std::ptr::eq(root, self.root))
+            || self.root.context_id.get() != Some(&std::thread::current().id())
+            || self.root.closed.load(super::super::Ordering::SeqCst)
+            || self
+                .root
+                .original_state
+                .get()
+                .is_none_or(|original| !self.operation.original.owns(original))
+            || !self.operation.plan.matches_selection(self.selection)
+        {
+            return Err(RootError::Rejected);
+        }
+        self.operation.returned()?;
+        if !self.owners.journal_roles_match(self.operation, point) {
+            return Err(RootError::Rejected);
+        }
+        journal_schedule::issue(self.operation, point)?;
+        if self.owners.proc_before.state != SlotState::Held
+            || self.owners.proc_before.cleanup != Some(2)
+            || self.owners.proc_before.retirement_issued
+        {
+            return Err(RootError::Rejected);
+        }
+        let baseline = self.owners.linux.proc_baseline.ok_or(RootError::Rejected)?;
+        if point == JournalPoint::ProcRetireBefore {
+            // No selected-object check can run after these owners were consumed.
+            // Reject unknown, merely empty or unentered slots as cleanup facts.
+            for slot in [
+                &self.owners.parent,
+                &self.owners.lease,
+                &self.owners.proc_after,
+            ]
+            .into_iter()
+            .chain(self.owners.ancestors[..self.selection.ancestors.len()].iter())
+            .chain(self.owners.journal.iter())
+            {
+                if slot.state != SlotState::Retired
+                    || slot.owner.is_some()
+                    || !slot.retirement_issued
+                    || slot.cleanup.is_none()
+                {
+                    return Err(RootError::Rejected);
+                }
+            }
+        } else {
+            self.verify_original_selection()?;
+        }
+        let file = self
+            .owners
+            .proc_before
+            .owner
+            .as_ref()
+            .ok_or(RootError::Rejected)?;
+        proc::sample(self.operation, file, Some(baseline))?;
+        if point == JournalPoint::ProcRetireBefore {
+            let call = NamespaceCall {
+                path: Path::new("/proc"),
+                #[cfg(test)]
+                fault: self.root.fault.load(super::super::Ordering::SeqCst),
+                #[cfg(test)]
+                postchecks: &self.root.owning_error_postchecks,
+            };
+            close_proc(self.operation, &mut self.owners.proc_before, &call)?;
+            self.operation.finish_work()?;
+        }
+        Ok(())
+    }
+
+    fn verify_original_selection(&self) -> Result<(), RootError> {
+        let uid = self.owners.owner_uid.ok_or(RootError::Rejected)?;
+        for (index, path) in self.selection.ancestors.iter().enumerate() {
+            let file = self.owners.ancestors[index]
+                .owner
+                .as_ref()
+                .ok_or(RootError::Rejected)?;
+            let expected =
+                self.owners.linux.ancestor_identities[index].ok_or(RootError::Rejected)?;
+            if !ancestor_valid(expected, uid)
+                || held(self.operation, file)? != expected
+                || identity(&stat(self.operation, path)?) != expected
+            {
+                return Err(RootError::Custody);
+            }
+        }
+        let expected = self
+            .owners
+            .linux
+            .selected_identities
+            .ok_or(RootError::Rejected)?;
+        let parent = self
+            .owners
+            .parent
+            .owner
+            .as_ref()
+            .ok_or(RootError::Rejected)?;
+        let lease = self
+            .owners
+            .lease
+            .owner
+            .as_ref()
+            .ok_or(RootError::Rejected)?;
+        persistent(self.operation, parent)?;
+        if held(self.operation, parent)? != expected[0]
+            || held(self.operation, lease)? != expected[2]
+        {
+            return Err(RootError::Custody);
+        }
+        for (index, path, directory) in [
+            (0, &self.selection.parent, true),
+            (1, &self.selection.database, false),
+            (2, &self.selection.lease, false),
+        ] {
+            if private_name(self.operation, path, uid, directory)? != expected[index] {
+                return Err(RootError::Custody);
+            }
+        }
+        self.verify_held_selection(uid)
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+impl StorageFrame<'_> {
+    pub(in crate::selected_store::rooted) fn fault_journal_boundary(
+        &mut self,
+    ) -> Result<(), RootError> {
+        if self.root.fault.load(super::super::Ordering::SeqCst) != 16 {
+            return Ok(());
+        }
+        let before = self
+            .operation
+            .observations
+            .load(super::super::Ordering::SeqCst);
+        let result =
+            self.journal_boundary(super::super::journal_schedule::JournalPoint::RootCreateBefore);
+        self.root.boundary_rejected_without_native.store(
+            result == Err(RootError::Rejected)
+                && self
+                    .operation
+                    .observations
+                    .load(super::super::Ordering::SeqCst)
+                    == before
+                && self
+                    .operation
+                    .journal_checkpoint
+                    .load(super::super::Ordering::SeqCst)
+                    == 0
+                && self.operation.original.shared_state().valid().is_err(),
+            super::super::Ordering::SeqCst,
+        );
+        result
     }
 }

@@ -30,6 +30,15 @@ and supported operation remain gated. Schema 18 belongs to this request-record
 source milestone; earlier headless schema-18 proposals are future schema 19 and
 must be rederived. See [the action-request record contract](docs/architecture/action-request-record.md).
 
+The current HCFG-6 source candidate also contains a narrow rooted preparation
+journal adapter. It retains the original operation, rechecks the sampled mount
+namespace, reserves six fixed journal roles, and implements only the initial
+pending-record custody path with ordered checkpoints, exact selected names and ownership, ACL/mount
+checks, synchronization, and byte readback. This is data-only source evidence;
+genuine preparation, complete cleanup, atomic initialization, management
+integration, runtime enforcement, and supported operation remain unfinished.
+See [the rooted preparation journal](docs/architecture/headless-local-bootstrap/rooted-preparation-journal.md).
+
 [Architecture](#architecture-and-trust-boundaries) ·
 [Authority flow](#from-proposal-to-consequence) ·
 [CLI](#current-cli-and-service-interfaces) ·

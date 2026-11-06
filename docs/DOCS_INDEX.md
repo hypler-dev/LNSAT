@@ -87,6 +87,9 @@ subsystem or proposal.
 - [Accepted HCFG-6 resource/runtime enforcement](architecture/headless-resource-enforcement/intent.md)
   — explicit owner binding and observed nonempty target/OS control boundary;
   owner design accepted; detailed source freeze and full enforcement implementation pending.
+- [Rooted preparation journal](architecture/headless-local-bootstrap/rooted-preparation-journal.md)
+  — narrow data-only pending-journal adapter milestone; genuine preparation,
+  atomic initialization, and runtime enforcement remain pending.
 - [HCFG-6 enforcement specification](architecture/headless-resource-enforcement/spec.md)
   — accepted private startup observation, revocation and cleanup contract;
   no current runtime or platform proof.

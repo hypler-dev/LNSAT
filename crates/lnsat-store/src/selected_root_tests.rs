@@ -15,6 +15,10 @@ static FIXTURE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 static RETAINED_PAYLOAD_DROPPED: AtomicBool = AtomicBool::new(false);
 static FOREIGN_ROOT: OnceLock<ControlRoot> = OnceLock::new();
 
+#[cfg(target_os = "linux")]
+#[path = "selected_root_pending_native_tests.rs"]
+mod pending_native;
+
 struct RetainedPayload;
 
 impl Drop for RetainedPayload {
@@ -98,7 +102,7 @@ fn root() -> &'static ControlRoot {
 }
 
 // Test-only capacity fixture. This is not a production cleanup-plan producer.
-fn plan(selection: &storage::Selection) -> FullCleanupPlan {
+pub(super) fn plan(selection: &storage::Selection) -> FullCleanupPlan {
     let selected_ancestors = selection.ancestor_count();
     let selected_file_obligations = u32::try_from(selected_ancestors)
         .expect("fixed selection count fits cleanup accounting")
@@ -110,9 +114,58 @@ fn plan(selection: &storage::Selection) -> FullCleanupPlan {
     FullCleanupPlan {
         selected_ancestors,
         selected_file_obligations,
+        journal: None,
         other_obligations: 0,
         total,
     }
+}
+
+// Test-only capacity fixture. This is not a production cleanup-plan producer.
+pub(super) fn journal_plan(selection: &storage::Selection) -> FullCleanupPlan {
+    let selected_ancestors = selection.ancestor_count();
+    let selected_file_obligations = u32::try_from(selected_ancestors)
+        .expect("fixed selection count fits cleanup accounting")
+        .checked_add(4)
+        .expect("fixed selection count has cleanup headroom");
+    let journal = JournalCleanupPlan {
+        cleanup_ids: std::array::from_fn(|index| {
+            selected_file_obligations
+                .checked_add(u32::try_from(index).expect("fixed role index fits u32"))
+                .expect("fixed journal cleanup id has headroom")
+        }),
+    };
+    let total = SQL_CLEANUP_BASE
+        .checked_add(selected_file_obligations)
+        .and_then(|count| count.checked_add(6))
+        .expect("journal cleanup plan has total headroom");
+    FullCleanupPlan {
+        selected_ancestors,
+        selected_file_obligations,
+        journal: Some(journal),
+        other_obligations: 0,
+        total,
+    }
+}
+
+pub(super) fn operation_for_plan(plan: FullCleanupPlan) -> (Operation, Arc<ArtifactBudgetState>) {
+    let original = budget();
+    let state = Arc::clone(original.shared_state());
+    let mut identities = OperationIdentityAllocator::new();
+    (
+        Operation {
+            original,
+            identity: identities
+                .issue()
+                .expect("test operation identity must issue"),
+            plan,
+            observations: AtomicU32::new(0),
+            cleanup_issued: AtomicU32::new(0),
+            journal_issued: AtomicU8::new(0),
+            journal_checkpoint: AtomicU8::new(0),
+            work_closed: AtomicBool::new(false),
+        },
+        state,
+    )
 }
 
 struct Published {
@@ -153,7 +206,7 @@ fn publish_fault(fault: u8, label: &str) -> Published {
     #[cfg(target_os = "linux")]
     if (12..=15).contains(&fault) {
         assert!(
-            selected_ancestor_count <= 120,
+            selected_ancestor_count <= 119,
             "supported Linux fault fixture must fit the selected capacity bound"
         );
     }
@@ -546,10 +599,11 @@ fn rooted_capacity_rejection_never_acquires_or_starts_context() {
     let rejected = FullCleanupPlan {
         selected_ancestors: 128,
         selected_file_obligations: selected,
+        journal: None,
         other_obligations: 0,
         total: SQL_CLEANUP_BASE + selected,
     };
-    assert_eq!(rejected.total, 264);
+    assert_eq!(rejected.total, 265);
     assert_eq!(
         root().publish(selection, original, rejected),
         Err(RootError::Capacity)
@@ -575,15 +629,15 @@ fn rooted_capacity_rejection_never_acquires_or_starts_context() {
 
 #[test]
 fn rooted_selection_and_cleanup_capacity_match_exact_boundaries() {
-    let one_twenty = (0..119).fold(PathBuf::from("/"), |mut path, _| {
+    let one_nineteen = (0..118).fold(PathBuf::from("/"), |mut path, _| {
         path.push("a");
         path
     });
-    let selection = storage::Selection::parse(&one_twenty.join("selected.sqlite"))
-        .expect("syntactic 120-ancestor selection must parse");
-    assert_eq!(selection.ancestor_count(), 120);
+    let selection = storage::Selection::parse(&one_nineteen.join("selected.sqlite"))
+        .expect("syntactic 119-ancestor selection must parse");
+    assert_eq!(selection.ancestor_count(), 119);
     let accepted = plan(&selection);
-    assert_eq!(accepted.selected_file_obligations, 124);
+    assert_eq!(accepted.selected_file_obligations, 123);
     assert_eq!(accepted.total, 256);
     assert!(accepted.matches_selection(&selection));
 
@@ -597,8 +651,9 @@ fn rooted_selection_and_cleanup_capacity_match_exact_boundaries() {
     let rejected = FullCleanupPlan {
         selected_ancestors: 128,
         selected_file_obligations: 132,
+        journal: None,
         other_obligations: 0,
-        total: 264,
+        total: 265,
     };
     assert!(!rejected.matches_selection(&selection));
 
@@ -615,8 +670,104 @@ fn rooted_selection_and_cleanup_capacity_match_exact_boundaries() {
     }
 }
 
+#[test]
+fn rooted_journal_plan_assigns_exact_disjoint_role_ids_and_rejects_collision() {
+    let selection = storage::Selection::parse(Path::new("/a/selected.sqlite"))
+        .expect("syntactic journal selection must parse");
+    let plan = journal_plan(&selection);
+    let selected = plan.selected_file_obligations;
+    let journal = plan.journal.as_ref().expect("journal plan must be present");
+    for role in JournalFileRole::ALL {
+        assert_eq!(
+            journal.cleanup_id(role),
+            selected + u32::try_from(role.index()).expect("fixed role index fits u32")
+        );
+    }
+    assert!(journal.matches_selected_file_obligations(selected));
+    assert!(plan.matches_selection(&selection));
+
+    let mut collision = JournalCleanupPlan {
+        cleanup_ids: std::array::from_fn(|index| {
+            selected + u32::try_from(index).expect("fixed role index fits u32")
+        }),
+    };
+    collision.cleanup_ids[JournalFileRole::Revision3.index()] = selected;
+    assert!(!collision.matches_selected_file_obligations(selected));
+    let rejected = FullCleanupPlan {
+        selected_ancestors: selection.ancestor_count(),
+        selected_file_obligations: selected,
+        journal: Some(collision),
+        other_obligations: 0,
+        total: SQL_CLEANUP_BASE + selected + 6,
+    };
+    assert!(!rejected.matches_selection(&selection));
+}
+
+#[test]
+fn rooted_journal_missing_plan_invalidates_before_any_slot_reservation() {
+    let selection = storage::Selection::parse(Path::new("/a/selected.sqlite"))
+        .expect("syntactic journal selection must parse");
+    let (operation, original) = operation_for_plan(plan(&selection));
+    let mut owners = storage::Owners::empty();
+
+    assert_eq!(
+        owners.reserve_journal(&operation, JournalFileRole::Root),
+        Err(RootError::Rejected)
+    );
+    assert!(original.valid().is_err());
+    assert_eq!(owners.held_count(), 0);
+}
+
+#[test]
+fn rooted_journal_reserves_all_six_slots_once_before_effects() {
+    let selection = storage::Selection::parse(Path::new("/a/selected.sqlite"))
+        .expect("syntactic journal selection must parse");
+    let (operation, original) = operation_for_plan(journal_plan(&selection));
+    let mut owners = storage::Owners::empty();
+
+    for role in JournalFileRole::ALL {
+        assert_eq!(owners.reserve_journal(&operation, role), Ok(()));
+        assert_eq!(
+            operation.journal_issued.load(Ordering::SeqCst),
+            (1_u8 << (role.index() + 1)) - 1
+        );
+    }
+    assert!(original.valid().is_ok());
+    assert_eq!(owners.held_count(), 0);
+    assert_eq!(
+        owners.reserve_journal(&operation, JournalFileRole::Root),
+        Err(RootError::Rejected)
+    );
+    assert!(original.valid().is_err());
+}
+
+#[test]
+fn rooted_journal_invalid_original_denies_before_slot_reservation() {
+    let selection = storage::Selection::parse(Path::new("/a/selected.sqlite"))
+        .expect("syntactic journal selection must parse");
+    let (operation, original) = operation_for_plan(journal_plan(&selection));
+    original.invalidate();
+    let mut owners = storage::Owners::empty();
+
+    assert_eq!(
+        owners.reserve_journal(&operation, JournalFileRole::Preparation),
+        Err(RootError::Budget)
+    );
+    assert_eq!(owners.held_count(), 0);
+}
+
 #[cfg(target_os = "linux")]
 fn publish_linux_storage() -> Published {
+    publish_linux_storage_with_journal(false)
+}
+
+#[cfg(target_os = "linux")]
+fn publish_linux_storage_with_journal(journal: bool) -> Published {
+    publish_linux_storage_with_journal_fault(journal, 0)
+}
+
+#[cfg(target_os = "linux")]
+fn publish_linux_storage_with_journal_fault(journal: bool, fault: u8) -> Published {
     let fixture = Fixture::new(&linux_fixture_root(), "linux-storage");
     let selection = storage::Selection::parse(&fixture.database)
         .expect("supported plain Linux root fixture selection must parse");
@@ -628,13 +779,17 @@ fn publish_linux_storage() -> Published {
     let rearm_original = Arc::clone(rearm_budget.shared_state());
     let ancestor_count = selection.ancestor_count();
     assert!(
-        ancestor_count <= 120,
+        ancestor_count <= 119,
         "supported fixture path must fit the selected N + 4 and SQL-base capacity bound"
     );
     let original_budget = budget();
     let original = Arc::clone(original_budget.shared_state());
-    let selection_plan = plan(&selection);
-    root().fault.store(0, Ordering::SeqCst);
+    let selection_plan = if journal {
+        journal_plan(&selection)
+    } else {
+        plan(&selection)
+    };
+    root().fault.store(fault, Ordering::SeqCst);
     root()
         .publish(selection, original_budget, selection_plan)
         .expect("supported Linux root fixture publication must start");
@@ -765,4 +920,147 @@ fn rooted_linux_storage_success_retains_real_file_owners_without_sqlite() {
     let published = publish_linux_storage();
     let context_id = assert_linux_storage_held(&published);
     assert_linux_storage_closed(published, context_id);
+}
+
+#[test]
+fn rooted_proc_namespace_parser_accepts_only_canonical_positive_u64() {
+    assert_eq!(storage::namespace_number(b"mnt:[1]"), Ok(1));
+    assert_eq!(
+        storage::namespace_number(b"mnt:[18446744073709551615]"),
+        Ok(u64::MAX)
+    );
+    for value in [
+        b"".as_slice(),
+        b"mnt:[0]",
+        b"mnt:[01]",
+        b"mnt:[-1]",
+        b"mnt:[+1]",
+        b"mnt:[]",
+        b"mnt:[18446744073709551616]",
+        b"mnt:[1]\n",
+        b"mnt:[ 1]",
+        b"mnt:[1 ]",
+        b"mnt:[1]x",
+        b"net:[1]",
+        b"mnt:[1]\0",
+        b"mnt:[\xff]",
+    ] {
+        assert_eq!(storage::namespace_number(value), Err(RootError::Custody));
+    }
+    assert_eq!(
+        storage::namespace_number(&[b'x'; 65]),
+        Err(RootError::Custody)
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn rooted_journal_plan_retains_original_proc_owner_and_separate_final_sample() {
+    if !crate::write_sync::owned_test_process::run_or_enter(
+        "selected_store::rooted::tests::rooted_journal_plan_retains_original_proc_owner_and_separate_final_sample",
+    ) {
+        return;
+    }
+    let published = publish_linux_storage_with_journal(true);
+    let deadline = Instant::now() + Duration::from_secs(3);
+    while root().phase.load(Ordering::SeqCst) != STORAGE_HELD {
+        assert!(
+            Instant::now() < deadline,
+            "journal selection must arrive within fixture bound"
+        );
+        thread::sleep(Duration::from_millis(5));
+    }
+    assert!(published.original.valid().is_ok());
+    {
+        let held = root()
+            .authority
+            .lock()
+            .expect("published journal owner must remain rooted");
+        assert!(held.owners.journal_proc_association_held());
+        assert_eq!(
+            held.owners.held_count(),
+            u32::try_from(published.selected_ancestor_count + 3).expect("fixed count fits")
+        );
+        assert!(
+            held.operation
+                .as_ref()
+                .expect("original operation")
+                .plan
+                .journal
+                .is_some()
+        );
+    }
+    published.original.invalidate();
+    let deadline = Instant::now() + Duration::from_secs(3);
+    while !root().closed.load(Ordering::SeqCst) {
+        assert!(
+            Instant::now() < deadline,
+            "expired journal selection must close admission"
+        );
+        thread::sleep(Duration::from_millis(5));
+    }
+    let held = root()
+        .authority
+        .lock()
+        .expect("expired journal owners must remain rooted");
+    assert!(held.owners.journal_proc_association_held());
+    assert_eq!(
+        held.owners.held_count(),
+        u32::try_from(published.selected_ancestor_count + 3).expect("fixed count fits")
+    );
+    drop(held);
+    assert_eq!(
+        root().publish(
+            published.rearm_selection,
+            published.rearm_budget,
+            published.rearm_plan
+        ),
+        Err(RootError::Rejected)
+    );
+    assert!(published.rearm_original.valid().is_err());
+}
+
+#[test]
+fn rooted_terminal_work_gate_denies_every_later_body_or_reservation() {
+    let selection =
+        storage::Selection::parse(Path::new("/a/selected.sqlite")).expect("synthetic selection");
+    let (operation, original) = operation_for_plan(journal_plan(&selection));
+    // Pure gate check. This does not execute or acknowledge any native close.
+    assert_eq!(operation.finish_work(), Ok(()));
+    assert!(operation.work_closed.load(Ordering::SeqCst));
+    assert!(original.valid().is_err());
+    assert_eq!(operation.observe(), Err(RootError::Rejected));
+    assert_eq!(operation.returned(), Err(RootError::Rejected));
+    assert_eq!(operation.reserve_file(), Err(RootError::Rejected));
+    assert_eq!(
+        operation.reserve_journal_file(JournalFileRole::Root),
+        Err(RootError::Rejected)
+    );
+    assert_eq!(
+        journal_schedule::issue(&operation, journal_schedule::JournalPoint::RootCreateBefore),
+        Err(RootError::Rejected)
+    );
+    assert_eq!(operation.finish_work(), Err(RootError::Rejected));
+    assert_eq!(operation.observations.load(Ordering::SeqCst), 0);
+    assert_eq!(operation.cleanup_issued.load(Ordering::SeqCst), 0);
+    assert_eq!(operation.journal_issued.load(Ordering::SeqCst), 0);
+    assert_eq!(operation.journal_checkpoint.load(Ordering::SeqCst), 0);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn rooted_unreserved_journal_boundary_denies_before_native_entry_and_retains_selection() {
+    if !crate::write_sync::owned_test_process::run_or_enter(
+        "selected_store::rooted::tests::rooted_unreserved_journal_boundary_denies_before_native_entry_and_retains_selection",
+    ) {
+        return;
+    }
+    let published = publish_linux_storage_with_journal_fault(true, 16);
+    let expected = u32::try_from(published.selected_ancestor_count + 3).expect("fixed owner count");
+    assert_terminal_fault(published, expected, false, 0);
+    assert!(
+        root()
+            .boundary_rejected_without_native
+            .load(Ordering::SeqCst)
+    );
 }
