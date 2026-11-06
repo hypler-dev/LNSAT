@@ -1,0 +1,47 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0111-independent-implementation-review-8128bf32",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["rooted-storage-linux-ci-fixture-environment"],
+  "base_revision": "fe89c794825cc4beb52332933a2556c4326abef1",
+  "reviewed_revision": "8128bf32d66eed8678f496284e05014c177b69ec",
+  "reviewed_tree_oid": "872a66cc8d403190a209953bc3098b1b7c007db5",
+  "diff_sha256": "sha256:17ba0c8af3aa8129e974412996233ce9b8b96fc715670a231dba83d7142cb19e",
+  "protected_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "sha256:d1cb4837fa69c47af8f38f0545c07ab2bf5504c631f2d4b8aa4e263000e4d8ec"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:d7026b336efa8da19d47b258e4bcb775fce028970527d07dcf021ceccd8f0244"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:0db8b72b14a60b99fd59003049bf1ff358ab0311b2eabd53327c1f77c84ee648"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:8c34ad1647a7b818f572e90a320ba0df74c6aaef18d0ed2a00d5dac72e14eeb2"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.mjs",
+      "sha256": "sha256:f93e5f2ccdb6d693b586cf88b43efe0ca67efb26d6a9963fe326591563cd84b0"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.test.mjs",
+      "sha256": "sha256:502143005a87530c2469425fd3451b0c7a968d55ed8c8842310f6069b7c25000"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/linux_repair_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh; backend runtime model ID unexposed. Exact source/static and final source registration reviews passed with no actionable findings. Final focused Node checks45/45, strict readiness and affected metadata gates passed. Fifteen unchanged Rust inputs reuse the preceding qualified Mac source checkpoint; no Rust suite was rerun. Native Ubuntu CI for this correction remains pending. Existing run42253565432 remains failed at missing fixture environment. This attestation adds no native compatibility, genuine preparation, atomic initializer, runtime, merge, deployment, release or support proof; PR120 remains draft. No formal GitHub approval claimed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
