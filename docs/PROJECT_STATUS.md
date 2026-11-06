@@ -1270,7 +1270,9 @@ Source verification run `42135629796` at exact head `b8b66c8428ece85e9e960464ca0
 That source-CI evidence covers the prior migration/ACL/close cases; it does not
 qualify later journal changes. New Linux cases for selected-journal persistence,
 masked/default journal ACL denial, journal replacement and post-close sidecar
-drift are cross-compiled only until their separately reviewed native CI run.
+drift were cross-compiled at that checkpoint. The later exact-head Ubuntu
+run and its current failed outcome are recorded below; this earlier success
+cannot qualify later journal cases.
 Portable schema tests retain migration/rollback, inert committed state, ordinary
 open denial, occupied-source rejection, schema/seed/namespace drift and mismatched
 owner-event digest rejection. Cross-compilation proves no native execution or
@@ -1355,6 +1357,40 @@ budget allocation through custody, request, attempt, worker and result polling;
 queued budget/deadline substitutions deny before dispatch. Denial invalidates
 that same allocation and cannot reset it. The whole-operation registration,
 finite combined accounting and native cleanup acknowledgment remain open.
+
+#### Linux retirement and test-isolation repair candidate — November 6
+
+Source verification run `42185885625` at exact draft PR #120 head
+`5121ccd549d71e79a398f32ec3df488de5092a3f` failed. Signatures and dependency
+audit passed. The earlier selected store run passed 155/155 and daemon passed
+309/309; the later full store run ended 611 passed, nine failed and five ignored.
+These are separate suites, not a summed unique total. The first Linux parent
+reported failure in its `post-close` child, whose stdout was suppressed. Three
+later Linux parents failed on the poisoned test mutex. Five writer tests
+received unexpected `ReadOnly` results. The exact original child panic and
+whether inode reuse caused those writer failures are not established.
+
+Independent source review found that matching device/inode numbers after the
+original VFS descriptors close cannot prove a surviving WAL/SHM name is the
+same object. The current repair therefore requires both coordination names
+absent before completed selected retirement can release custody. Surviving
+names retain the existing quarantine; no path deletion, alias reopen, retry or
+registry reset is added. A legitimate persistent WAL or live reader may cause
+conservative denial. This is not physical ABA containment or cleanup proof.
+
+The repair also isolates tests that intentionally leave permanent sealed keys
+in disposable owned processes. Deleting a fixture file while retaining its
+process-wide sealed device/inode key permits a later fixture to reuse that
+identity; isolation preserves permanent denial without changing production
+registry behavior. Bounded child supervision retains both output streams and
+checks actual body entry and one completed test instead of accepting exit zero
+alone. The original failed run remains failed. The corrected macOS full
+`npm run check` completed successfully with unchanged reviewed source inputs.
+The full store suite passed 607 tests with two ignored child helpers; the
+daemon suite passed 309 tests, and the separate selected Phase-7 suite passed
+155 tests. These are separate suite counts, not a summed unique total. Strict
+macOS and Linux cross-target Clippy passed; cross-compilation is not native
+Linux execution. The corrected new-head Ubuntu outcome remains pending.
 
 The selected strong HCFG-6 producer and atomic installation initializer remain
 unfinished. Completion requires real probe/adapter/image build outputs, an

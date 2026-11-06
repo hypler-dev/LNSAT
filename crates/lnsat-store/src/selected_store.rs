@@ -92,6 +92,36 @@ impl FileIdentity {
     }
 }
 
+// After SQLite close there is no retained VFS descriptor with which to join a
+// surviving name. Device/inode equality cannot distinguish unlink/recreation
+// with inode reuse, so any remaining WAL/SHM name denies completed retirement.
+#[cfg(any(target_os = "linux", all(test, target_os = "macos")))]
+fn retired_sidecars(sidecars: &[Option<FileIdentity>; 2]) -> bool {
+    sidecars.iter().all(Option::is_none)
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+mod retirement_tests {
+    use super::{FileIdentity, retired_sidecars};
+
+    #[test]
+    fn retirement_requires_both_coordination_names_absent() {
+        for wal in [false, true] {
+            for shm in [false, true] {
+                let sidecars = [wal, shm].map(|present| {
+                    present.then_some(FileIdentity {
+                        device: 7,
+                        inode: 11,
+                    })
+                });
+                // The same reported inode as a previously closed descriptor
+                // still cannot prove that a surviving name is its old object.
+                assert_eq!(retired_sidecars(&sidecars), !wal && !shm);
+            }
+        }
+    }
+}
+
 // Private fields; no Debug, Clone, wire format, or authority conversion.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(super) struct SelectedStoreCustodyV1 {

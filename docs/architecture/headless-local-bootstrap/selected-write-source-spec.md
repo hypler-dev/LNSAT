@@ -127,6 +127,16 @@ Named sidecar observations are not descriptor-bound WAL/SHM proof. They rely
 on the explicit trusted host-owner/root, private-parent and single supported
 writer boundary. A stricter assurance profile needs an actual reviewed safe
 native observer; main metadata, WAL bytes or SQL success cannot invent it.
+The current private selected-close repair requires both named WAL and SHM
+absent after the original SQLite connection closes before custody can be
+released. A surviving device/inode pair is insufficient after its VFS descriptor
+has closed: an unlink/recreate may reuse that number. Any surviving coordination
+name conservatively retains quarantine, including one kept by another live
+reader or persistent-WAL behavior. The close path does not delete or reopen the
+name to manufacture disappearance. This narrows completed retirement; it does
+not prove physical ABA containment or eventual cleanup. Source tests and native
+Linux execution remain separately recorded in Project Status.
+
 The preparation journal is neither SQLite WAL nor SHM and substitutes for
 neither. No hostile trusted-owner anti-tamper claim is made.
 

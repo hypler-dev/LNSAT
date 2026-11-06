@@ -867,6 +867,14 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0108/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0109",
+      "subject_id": "protected-setup-linux-retirement-and-fixtures",
+      "review_subject_ids": ["protected-setup-linux-retirement-and-fixtures"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0109/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "pending"
     }
   ]
 }

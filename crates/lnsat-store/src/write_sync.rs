@@ -3,6 +3,10 @@
 //! Physical file identity selects the gate. This is not authorization, an
 //! inter-process lease, or containment of code running as the trusted owner.
 
+#[cfg(test)]
+#[path = "owned_test_process.rs"]
+pub(crate) mod owned_test_process;
+
 use crate::writer_gate::{GateError, WriterGate, WriterPermit};
 use rusqlite::{Connection, Error, Transaction, TransactionBehavior};
 use std::{
@@ -462,6 +466,11 @@ mod tests {
 
     #[test]
     fn unresolved_rollback_quarantines_even_after_later_sql_cleanup() {
+        if !crate::write_sync::owned_test_process::run_or_enter(
+            "write_sync::tests::unresolved_rollback_quarantines_even_after_later_sql_cleanup",
+        ) {
+            return;
+        }
         let database = Database::new();
         let connection = database.connection();
         let mut transaction = begin(&connection).unwrap();
@@ -506,8 +515,16 @@ mod tests {
 
     #[test]
     fn unwrapped_exit_quarantines_incomplete_rollback_for_both_rejection_paths() {
-        for restoration_failed in [true, false] {
-            let database = Database::new();
+        if !crate::write_sync::owned_test_process::run_or_enter(
+            "write_sync::tests::unwrapped_exit_quarantines_incomplete_rollback_for_both_rejection_paths",
+        ) {
+            return;
+        }
+        // Keep both inode owners named until the isolated case ends. Each
+        // branch leaves a permanent seal; unlinking the first fixture before
+        // creating the second could reuse that sealed physical key on ext4.
+        let databases = [Database::new(), Database::new()];
+        for (restoration_failed, database) in [true, false].into_iter().zip(&databases) {
             let connection = database.connection();
             let deadline = Instant::now() + Duration::from_secs(1);
             let mut lease = reserve(connection_key(&connection).unwrap(), deadline, false).unwrap();
@@ -625,6 +642,11 @@ mod tests {
 
     #[test]
     fn queued_legacy_writer_cannot_cross_selected_seal() {
+        if !crate::write_sync::owned_test_process::run_or_enter(
+            "write_sync::tests::queued_legacy_writer_cannot_cross_selected_seal",
+        ) {
+            return;
+        }
         let database = Database::new();
         let first = database.connection();
         let second = database.connection();
@@ -651,6 +673,11 @@ mod tests {
 
     #[test]
     fn selected_reservation_is_nonwaiting_and_rejects_quarantined_reentry() {
+        if !crate::write_sync::owned_test_process::run_or_enter(
+            "write_sync::tests::selected_reservation_is_nonwaiting_and_rejects_quarantined_reentry",
+        ) {
+            return;
+        }
         let database = Database::new();
         let connection = database.connection();
         let key = connection_key(&connection).unwrap();

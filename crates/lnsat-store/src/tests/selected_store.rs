@@ -805,6 +805,11 @@ fn selected_write_fixture_rejects_replaced_wal_before_commit() {
 #[test]
 fn selected_linux_production_migration_is_inert_and_preserves_shared_lease() {
     use crate::selected_store::writable::SelectedWritableStore;
+    if !crate::write_sync::owned_test_process::run_or_enter(
+        "tests::selected_store::selected_linux_production_migration_is_inert_and_preserves_shared_lease",
+    ) {
+        return;
+    }
     let _serial = LINUX_PRODUCTION_TEST_MUTEX.lock().unwrap();
     let fixture = PrivateDatabase::current();
     let session = SelectedWritableStore::open(&fixture.path).unwrap();
@@ -922,7 +927,8 @@ static LINUX_PRODUCTION_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new
 #[cfg(target_os = "linux")]
 #[test]
 fn selected_linux_close_quarantine_preserves_lease_and_replaced_evidence() {
-    let _serial = LINUX_PRODUCTION_TEST_MUTEX.lock().unwrap();
+    // This parent only supervises isolated children and changes no parent SQL
+    // state. A child failure must not poison unrelated direct-body tests.
     for mode in [
         "busy",
         "wal-replace",
@@ -933,30 +939,10 @@ fn selected_linux_close_quarantine_preserves_lease_and_replaced_evidence() {
         "journal-close-uninspected",
         "journal-close-error",
     ] {
-        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
-            .args([
-                "--ignored",
-                "--exact",
-                "tests::selected_store::selected_linux_close_failure_child",
-            ])
-            .env("LNSAT_SELECTED_CLOSE_TEST_MODE", mode)
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::inherit())
-            .spawn()
-            .unwrap();
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
-        loop {
-            if let Some(status) = child.try_wait().unwrap() {
-                assert!(status.success(), "close quarantine child failed for {mode}");
-                break;
-            }
-            if std::time::Instant::now() >= deadline {
-                child.kill().unwrap();
-                let _ = child.wait();
-                panic!("close quarantine child timed out");
-            }
-            std::thread::sleep(std::time::Duration::from_millis(20));
-        }
+        crate::write_sync::owned_test_process::run_ignored(
+            "tests::selected_store::selected_linux_close_failure_child",
+            mode,
+        );
     }
 }
 
@@ -965,6 +951,10 @@ fn selected_linux_close_quarantine_preserves_lease_and_replaced_evidence() {
 #[ignore = "invoked explicitly in a disposable process by close quarantine test"]
 fn selected_linux_close_failure_child() {
     use crate::selected_store::writable::SelectedWritableStore;
+    crate::write_sync::owned_test_process::enter_ignored(
+        "tests::selected_store::selected_linux_close_failure_child",
+        "LNSAT_SELECTED_CLOSE_TEST_MODE",
+    );
     let fixture = PrivateDatabase::current();
     let session = SelectedWritableStore::open(&fixture.path).unwrap();
     match std::env::var("LNSAT_SELECTED_CLOSE_TEST_MODE")
@@ -996,25 +986,7 @@ fn selected_linux_close_failure_child() {
             assert!(wal.is_file());
             assert!(retained.is_file());
         }
-        "post-close" => {
-            let mut session = session;
-            let wal = fixture.directory.join("store.sqlite-wal");
-            let inserted = wal.clone();
-            session.after_close_for_test(move || {
-                fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .mode(0o600)
-                    .open(&inserted)
-                    .unwrap();
-            });
-            assert_eq!(
-                session.close(),
-                Err(SelectedLocalStoreErrorV1::CustodyChanged)
-            );
-            assert!(wal.is_file());
-            assert!(SqliteStore::open(&fixture.path).is_err());
-        }
+        "post-close" => selected_post_close_replacement(session, &fixture),
         "journal-replace" | "journal-close-uninspected" => {
             selected_journal_replacement_close(session, &fixture);
         }
@@ -1061,6 +1033,39 @@ fn selected_linux_close_failure_child() {
 
 /// Inert syntax fixture only. This frame cannot establish preparation facts.
 #[cfg(target_os = "linux")]
+fn selected_post_close_replacement(
+    session: crate::selected_store::writable::SelectedWritableStore,
+    fixture: &PrivateDatabase,
+) {
+    let mut session = session;
+    let wal = fixture.directory.join("store.sqlite-wal");
+    let inserted = wal.clone();
+    let retained = fixture.directory.join("retained-post-close-wal");
+    session.after_close_for_test(move || {
+        // SQLite may leave a named coordination file when other state
+        // prevents retirement. Preserve it before replacing the name;
+        // the test must not assume last-close deletion happened.
+        match fs::symlink_metadata(&inserted) {
+            Ok(_) => fs::rename(&inserted, &retained).unwrap(),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+            Err(error) => panic!("owned post-close metadata failed: {error}"),
+        }
+        fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&inserted)
+            .unwrap();
+    });
+    assert_eq!(
+        session.close(),
+        Err(SelectedLocalStoreErrorV1::CustodyChanged)
+    );
+    assert!(wal.is_file());
+    assert!(SqliteStore::open(&fixture.path).is_err());
+}
+
+#[cfg(target_os = "linux")]
 fn selected_pending_assertion() -> Vec<u8> {
     let id = "a".repeat(64);
     let digest = format!("sha256:{}", "b".repeat(64));
@@ -1085,6 +1090,11 @@ fn selected_pending_assertion() -> Vec<u8> {
 #[test]
 fn selected_linux_journal_persists_only_inert_assertion_under_selected_lease() {
     use crate::selected_store::writable::SelectedWritableStore;
+    if !crate::write_sync::owned_test_process::run_or_enter(
+        "tests::selected_store::selected_linux_journal_persists_only_inert_assertion_under_selected_lease",
+    ) {
+        return;
+    }
     let _serial = LINUX_PRODUCTION_TEST_MUTEX.lock().unwrap();
     let fixture = PrivateDatabase::current();
     let mut session = SelectedWritableStore::open(&fixture.path)

@@ -494,7 +494,11 @@ schema 19 migration is inert. Physical-file writer synchronization and selected
 journal integration are source candidates. Complete canonical declaration,
 binding and initial all-deny envelope encoding is available as data-only
 initializer groundwork; genuine strong-profile preparation, atomic installation,
-activation and their native qualification remain open.
+activation and their native qualification remain open. The November 6 Linux
+retirement candidate requires both WAL/SHM names absent after SQLite close.
+The corrected macOS full source gate passed; corrected native Ubuntu evidence
+remains pending. Permanent
+registry seals remain in force; test-process isolation must not clear them.
 Existing inert backup/restore and owner-recovery paths
 are reused; restore must not activate an installation.
 

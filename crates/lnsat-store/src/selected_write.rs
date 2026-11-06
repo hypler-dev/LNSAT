@@ -282,11 +282,12 @@ impl SelectedWritableStore {
                 if let Some(intervene) = self.post_close_intervention.take() {
                     intervene();
                 }
-                // The last VFS connection may delete its own WAL/SHM. An
-                // unexplained replacement or newly created file still denies.
+                // Retirement requires both coordination names absent. Once
+                // the original VFS descriptors close, matching device/inode
+                // alone cannot rule out a deleted-and-recreated object.
                 let after = self.current_sidecars();
                 if prior_valid
-                    && matches!((&before, &after), (Ok(a), Ok(b)) if preserved(a, b, true))
+                    && matches!((&before, &after), (Ok(a), Ok(b)) if preserved(a, b, true) && super::retired_sidecars(b))
                 {
                     // Retire the journal descriptor before custody/lease and
                     // writer admission can be released by this session's drop.
