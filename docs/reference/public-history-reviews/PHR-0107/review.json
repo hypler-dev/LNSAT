@@ -1,0 +1,35 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0107-independent-implementation-review-b9400f12",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["linux-custody-native-policy-fixture"],
+  "base_revision": "06e93e04fa9b56acfc338a5c17b5b5d9a7623b81",
+  "reviewed_revision": "b9400f1257f7cc04248ad1f8b90d5c88c377d47b",
+  "reviewed_tree_oid": "c52a92e1429dacab80ffa1a507e4e117a9b6f741",
+  "diff_sha256": "sha256:9cfba5184e865bd5c4b017ca25533a3fb30ff274fe75d0c34747cfd72f9c6a6c",
+  "protected_files": [
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:7327b431f859cd9b5392d7838a391f790da41c605ab27c64475b592d3905146a"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:758b8b3960731b38cf260c411d95489d8293291a01b805d2f3825738c342356c"
+    },
+    {
+      "path": "scripts/run-rust-workspace.test.mjs",
+      "sha256": "sha256:ca22964a4766e856d28ffbbc8491a88c0c4a453ed497d8dad8fa3a5b3f77f0ac"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/linux_publication_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh; backend runtime model ID unexposed. Exact five-line mocked Cargo graph correction and metadata reviewed; production validator and assertions unchanged. Focused pure policy tests passed 23/23. First hosted source run remains failed and four new Linux custody groups remain NOT_RUN. No native, runtime or merge qualification."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
