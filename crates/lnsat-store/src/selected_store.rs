@@ -92,6 +92,36 @@ impl FileIdentity {
     }
 }
 
+// After SQLite close there is no retained VFS descriptor with which to join a
+// surviving name. Device/inode equality cannot distinguish unlink/recreation
+// with inode reuse, so any remaining WAL/SHM name denies completed retirement.
+#[cfg(any(target_os = "linux", all(test, target_os = "macos")))]
+fn retired_sidecars(sidecars: &[Option<FileIdentity>; 2]) -> bool {
+    sidecars.iter().all(Option::is_none)
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+mod retirement_tests {
+    use super::{FileIdentity, retired_sidecars};
+
+    #[test]
+    fn retirement_requires_both_coordination_names_absent() {
+        for wal in [false, true] {
+            for shm in [false, true] {
+                let sidecars = [wal, shm].map(|present| {
+                    present.then_some(FileIdentity {
+                        device: 7,
+                        inode: 11,
+                    })
+                });
+                // The same reported inode as a previously closed descriptor
+                // still cannot prove that a surviving name is its old object.
+                assert_eq!(retired_sidecars(&sidecars), !wal && !shm);
+            }
+        }
+    }
+}
+
 // Private fields; no Debug, Clone, wire format, or authority conversion.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(super) struct SelectedStoreCustodyV1 {
@@ -114,26 +144,83 @@ pub(super) struct SelectedStoreCustodyV1;
 /// No caller-selected descriptor or serialized observation can construct this.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(super) struct SelectedPreparationParent<'a> {
-    store: &'a mut SqliteStore,
+    source: PreparationParentSource<'a>,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+enum PreparationParentSource<'a> {
+    Inspected(&'a mut SqliteStore),
+    #[cfg(target_os = "linux")]
+    Writable {
+        custody: &'a SelectedStoreCustodyV1,
+        linux: &'a linux::LinuxCustody,
+        connection: &'a Connection,
+        sidecars: &'a [Option<FileIdentity>; 2],
+    },
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 impl<'a> SelectedPreparationParent<'a> {
     pub(super) fn borrow(store: &'a mut SqliteStore) -> Result<Self, SelectedLocalStoreErrorV1> {
         store.verify_selected_local_store_custody_v1()?;
-        Ok(Self { store })
+        Ok(Self {
+            source: PreparationParentSource::Inspected(store),
+        })
+    }
+
+    #[cfg(target_os = "linux")]
+    fn from_writable(
+        custody: &'a SelectedStoreCustodyV1,
+        linux: &'a linux::LinuxCustody,
+        connection: &'a Connection,
+        sidecars: &'a [Option<FileIdentity>; 2],
+    ) -> Result<Self, SelectedLocalStoreErrorV1> {
+        let parent = Self {
+            source: PreparationParentSource::Writable {
+                custody,
+                linux,
+                connection,
+                sidecars,
+            },
+        };
+        parent.verify()?;
+        Ok(parent)
     }
 
     pub(super) fn verify(&self) -> Result<(), SelectedLocalStoreErrorV1> {
-        self.store.verify_selected_local_store_custody_v1()
+        match &self.source {
+            PreparationParentSource::Inspected(store) => {
+                store.verify_selected_local_store_custody_v1()
+            }
+            #[cfg(target_os = "linux")]
+            PreparationParentSource::Writable {
+                custody,
+                linux,
+                connection,
+                sidecars,
+            } => {
+                if !connection.is_autocommit()
+                    || crate::pragma_i64(connection, "query_only")
+                        .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?
+                        != 1
+                {
+                    return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+                }
+                writable::verify_parts(custody, linux, connection, sidecars, false)
+            }
+        }
     }
 
     fn custody(&self) -> Result<&SelectedStoreCustodyV1, SelectedLocalStoreErrorV1> {
         self.verify()?;
-        self.store
-            .selected_store_custody
-            .as_ref()
-            .ok_or(SelectedLocalStoreErrorV1::UnboundStore)
+        match &self.source {
+            PreparationParentSource::Inspected(store) => store
+                .selected_store_custody
+                .as_ref()
+                .ok_or(SelectedLocalStoreErrorV1::UnboundStore),
+            #[cfg(target_os = "linux")]
+            PreparationParentSource::Writable { custody, .. } => Ok(custody),
+        }
     }
 
     pub(super) fn directory(&self) -> Result<&File, SelectedLocalStoreErrorV1> {
@@ -152,6 +239,28 @@ impl<'a> SelectedPreparationParent<'a> {
             .and_then(std::ffi::OsStr::to_str)
             .ok_or(SelectedLocalStoreErrorV1::InvalidSelection)?;
         Ok(format!("{name}.lnsat-preparations"))
+    }
+
+    pub(crate) fn verify_journal_node(
+        &self,
+        parent: &File,
+        name: &str,
+        file: &File,
+        directory: bool,
+    ) -> Result<(), SelectedLocalStoreErrorV1> {
+        match &self.source {
+            PreparationParentSource::Inspected(_) => {
+                // Even a diagnostic-only view remains bound to its retained
+                // selected owner; unsupported writable platforms gain nothing.
+                self.owner()?;
+                let _ = (parent, name, file, directory);
+                Ok(())
+            }
+            #[cfg(target_os = "linux")]
+            PreparationParentSource::Writable { custody, linux, .. } => {
+                linux.verify_journal_node(parent, name, file, custody.owner_uid, directory)
+            }
+        }
     }
 }
 
@@ -230,6 +339,27 @@ fn verify_held(
     Ok(())
 }
 
+/// Process-local write serialization key from `SQLite`'s actual retained main
+/// descriptor. This returns no descriptor or authority capability and never
+/// opens/closes a database alias.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(super) fn connection_write_identity(
+    connection: &Connection,
+) -> Result<(u64, u64), SelectedLocalStoreErrorV1> {
+    let descriptor = observe_native_main(connection, NATIVE_DIAGNOSTIC_BOUND)?;
+    let stat = nix_stat::sys::stat::fstat(descriptor)
+        .map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
+    if stat.st_mode & nix_stat::libc::S_IFMT != nix_stat::libc::S_IFREG || stat.st_nlink == 0 {
+        return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
+    }
+    #[cfg(target_os = "macos")]
+    let device =
+        u64::try_from(stat.st_dev).map_err(|_| SelectedLocalStoreErrorV1::StoreUnverifiable)?;
+    #[cfg(target_os = "linux")]
+    let device = stat.st_dev;
+    Ok((device, stat.st_ino))
+}
+
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 impl SelectedStoreCustodyV1 {
     pub(super) fn verify_connection(
@@ -249,6 +379,14 @@ impl SelectedStoreCustodyV1 {
     }
 
     fn verify_native_metadata(&self, descriptor: i32) -> Result<(), SelectedLocalStoreErrorV1> {
+        self.verify_native_file(descriptor, &self.database_identity)
+    }
+
+    fn verify_native_file(
+        &self,
+        descriptor: i32,
+        identity: &FileIdentity,
+    ) -> Result<(), SelectedLocalStoreErrorV1> {
         // Safe upstream fstat(RawFd): never opens, duplicates, owns or closes
         // SQLite's descriptor. A separate close could clear other connections'
         // process-wide POSIX locks, even while those connections remain alive.
@@ -263,8 +401,8 @@ impl SelectedStoreCustodyV1 {
             || stat.st_mode & nix_stat::libc::S_IFMT != nix_stat::libc::S_IFREG
             || stat.st_mode & 0o7777 != 0o600
             || stat.st_nlink != 1
-            || device != self.database_identity.device
-            || stat.st_ino != self.database_identity.inode
+            || device != identity.device
+            || stat.st_ino != identity.inode
         {
             return Err(SelectedLocalStoreErrorV1::CustodyChanged);
         }
@@ -403,8 +541,8 @@ const NATIVE_SOURCE_ID: &str =
 #[serde(deny_unknown_fields)]
 struct NativeFileStat {
     db: NativeMainFileStat,
-    #[serde(default, rename = "journal")]
-    _journal: Option<serde::de::IgnoredAny>,
+    #[serde(default)]
+    journal: Option<NativeMainFileStat>,
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -417,8 +555,8 @@ struct NativeMainFileStat {
     _lock: Option<serde::de::IgnoredAny>,
     #[serde(default, rename = "pal")]
     _posix_locks: Option<serde::de::IgnoredAny>,
-    #[serde(default, rename = "shm")]
-    _shm: Option<serde::de::IgnoredAny>,
+    #[serde(default)]
+    shm: Option<NativeShmFileStat>,
     #[serde(default, rename = "mmapSize")]
     _mmap_size: Option<serde::de::IgnoredAny>,
     #[serde(default, rename = "nFetchOut")]
@@ -428,7 +566,24 @@ struct NativeMainFileStat {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NativeShmFileStat {
+    h: i32,
+    #[serde(rename = "nRef")]
+    _references: i32,
+    #[serde(rename = "id")]
+    _id: i32,
+    #[serde(rename = "sharedMask")]
+    _shared: i32,
+    #[serde(rename = "exclMask")]
+    _exclusive: i32,
+    #[serde(default, rename = "pal")]
+    _locks: Option<serde::de::IgnoredAny>,
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn decode_native_stat(text: &str) -> Result<NativeFileStat, SelectedLocalStoreErrorV1> {
     if text.len() > usize::try_from(NATIVE_DIAGNOSTIC_BOUND).unwrap_or(0) {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
@@ -437,7 +592,7 @@ fn decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
     if stat.db.h < 0 || stat.db.vfs != "unix" {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
-    Ok(stat.db.h)
+    Ok(stat)
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -480,13 +635,14 @@ fn verify_native_origin(connection: &Connection) -> Result<(), SelectedLocalStor
     if found != [1; 3] {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
     }
-    let source: String = connection
-        .query_row("SELECT sqlite_source_id()", [], |row| row.get(0))
-        .map_err(fail)?;
-    let debug: i64 = connection
-        .query_row("SELECT sqlite_compileoption_used('DEBUG')", [], |row| {
-            row.get(0)
-        })
+    // Both builtins were verified above. Read their independent values in
+    // one fixed row without caching origin or dropping either predicate.
+    let (source, debug): (String, i64) = connection
+        .query_row(
+            "SELECT sqlite_source_id(), sqlite_compileoption_used('DEBUG')",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
         .map_err(fail)?;
     if source != NATIVE_SOURCE_ID || debug != 0 {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
@@ -495,10 +651,10 @@ fn verify_native_origin(connection: &Connection) -> Result<(), SelectedLocalStor
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-fn observe_native_main(
+fn observe_native_stat(
     connection: &Connection,
     maximum: i32,
-) -> Result<i32, SelectedLocalStoreErrorV1> {
+) -> Result<NativeFileStat, SelectedLocalStoreErrorV1> {
     let fail = |_| SelectedLocalStoreErrorV1::StoreUnverifiable;
     if maximum <= 0 || maximum > NATIVE_DIAGNOSTIC_BOUND {
         return Err(SelectedLocalStoreErrorV1::StoreUnverifiable);
@@ -516,7 +672,7 @@ fn observe_native_main(
         let text: String = connection
             .query_row("SELECT sqlite_filestat('main')", [], |row| row.get(0))
             .map_err(fail)?;
-        decode_native_main(&text)
+        decode_native_stat(&text)
     })();
     // Always restore before schema/integrity checks and before returning even
     // a failure. No temporary native bound leaks into the connection's caller.
@@ -525,6 +681,18 @@ fn observe_native_main(
         .map_err(fail)?;
     result
 }
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn observe_native_main(
+    connection: &Connection,
+    maximum: i32,
+) -> Result<i32, SelectedLocalStoreErrorV1> {
+    observe_native_stat(connection, maximum).map(|stat| stat.db.h)
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "selected_sidecars.rs"]
+mod sidecars;
 
 #[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
 pub(super) fn test_observe_native_main(
@@ -536,7 +704,7 @@ pub(super) fn test_observe_native_main(
 
 #[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
 pub(super) fn test_decode_native_main(text: &str) -> Result<i32, SelectedLocalStoreErrorV1> {
-    decode_native_main(text)
+    decode_native_stat(text).map(|stat| stat.db.h)
 }
 
 // Only test builds observe drop sequencing. Production fields still drop in
@@ -659,3 +827,27 @@ fn open_under_custody(
     store.verify_selected_local_store_custody_v1()?;
     Ok(store)
 }
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+#[path = "selected_write_fixture.rs"]
+pub(super) mod writable_fixture;
+
+#[cfg(any(target_os = "linux", test))]
+#[path = "selected_linux.rs"]
+pub(super) mod linux;
+
+#[cfg(target_os = "linux")]
+#[path = "selected_write.rs"]
+#[allow(
+    dead_code,
+    reason = "Private production connection pending genuine preparation producer integration"
+)]
+pub(super) mod writable;
+
+#[cfg(any(target_os = "linux", all(test, target_os = "macos")))]
+#[path = "selected_root.rs"]
+#[allow(
+    dead_code,
+    reason = "Private rooted storage requires complete production plan and genuine setup integration"
+)]
+mod rooted;

@@ -17,6 +17,25 @@ HCFG-2 inspection is integrated. Complete composition diagnostics, monitoring,
 separately authorized protected controls, and OS-enforcement conformance before
 closing the headless gate. No source foundation alone satisfies this sequence.
 
+The [rooted preparation journal](architecture/headless-local-bootstrap/rooted-preparation-journal.md)
+is a narrow HCFG-6 source milestone. It supplies only a data-only pending
+journal adapter and selected-store custody path; it does not supply genuine
+preparation, an atomic initializer, a complete cleanup plan, or runtime
+enforcement.
+
+Current validation narrows evidence only. The macOS Darwin legacy, Phase-7
+local-conformance, and product-surface jobs have a caller-preserving outer
+thread default; their inner barriers, assertions, and production budget are
+unchanged. Source launch and actual-outcome review passed, with 24/24 runner
+checks and 2/2 focused writer checks. The corrected Rust remainder passed with
+store `651/0/1` and daemon `309/0/0`, as separate suite counts. The original npm
+invocation and first recovery suffix remain failed historical attempts;
+restored dependency resolution and the later passing remainder do not establish
+one complete npm invocation returning zero. Linux execution of the four new
+pending cases remains unrun. The complete immutable recipe, cleanup plan,
+checked SQL lifecycle, atomic initializer, and management integration remain
+required.
+
 ## Preserved Product Goal
 
 First LNSAT V1 release remains an embeddable, owner-controlled authority
@@ -489,9 +508,41 @@ and current state; configuration inspection cannot become activation authority.
 Exit evidence must cover a nonempty initial configuration, interrupted or
 replayed bootstrap, owner/session substitution, stale and concurrent changes,
 stop racing admission/use, restart-preserved revocation, linked durable audit
-and rollback that cannot restore broader or revoked authority. SQL18, writable
-store integration, initializer and activation retain their exact precode and
-implementation gates. Existing inert backup/restore and owner-recovery paths
+and rollback that cannot restore broader or revoked authority. Selected-only
+schema 19 migration is inert. Physical-file writer synchronization and selected
+journal integration are source candidates. Complete canonical declaration,
+binding and initial all-deny envelope encoding is available as data-only
+initializer groundwork; genuine strong-profile preparation, atomic installation,
+activation and their native qualification remain open. The November 6 Linux
+retirement candidate requires both WAL/SHM names absent after SQLite close.
+The corrected macOS full source gate and new-head Ubuntu source CI passed;
+[Project Status](PROJECT_STATUS.md#linux-retirement-and-test-isolation-repair-candidate--november-6)
+records exact checkout binding and separate suite counts. This is source-fixture
+evidence, not strong-profile runtime or a main-run result. PR #120 remains
+draft and unmerged. Permanent registry seals remain in force; test-process
+isolation must not clear them.
+The private finite empty-state and selected-only fresh-schema preflight reduce
+statement/reset reservations while retaining exact schema, seeds, namespaces,
+emptiness and integrity. Their 132-slot SQL baseline does not establish complete
+fit in the unchanged 256-slot cleanup budget. Its private full macOS source
+gate passed with independently reviewed actual evidence. The additional direct-
+execute reset tightens the known SQL lower bound to 133; complete production
+accounting remains absent. The deepest syntactically allowed ancestry already
+requires at least 263 slots with that SQL base and parent/lease, before other
+owners. Complete conservative capacity must be checked before acquisition;
+unknown or oversized plans deny without raising the quota. Actual permanent-
+owner auto-trait compilation is a prerequisite, not initialization.
+The next private root source now retains actual partial file owners and the
+one original control context; 14 macOS fixture groups and strict host/Linux
+cross-target lint pass. The 19 Linux groups are compiled only. Complete
+production cleanup-plan construction, rooted checked SQL, genuine immutable
+preparation, exact credential sharing and atomic installation remain missing;
+no setup command or Ready state is supplied. Project Status records this
+source checkpoint separately from the earlier draft PR repair CI. The
+integrated macOS source gate passed with full store 634/0/2 and daemon 309/0/0,
+separate suite counts, unchanged inputs and independent actual-outcome review.
+The newer root code still requires its own native Ubuntu run.
+Existing inert backup/restore and owner-recovery paths
 are reused; restore must not activate an installation.
 
 ### 3. Finish the headless integration contract

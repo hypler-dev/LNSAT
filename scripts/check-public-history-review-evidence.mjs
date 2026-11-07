@@ -18,6 +18,78 @@ export const PUBLIC_HISTORY_REVIEW_REGISTRY_PATH =
 export const LEGACY_IDENTIFIER_INVENTORY_PATH =
   "docs/reference/legacy-identifier-inventory.json";
 
+// This is the single reviewed private-native ownership move, not a general
+// deletion permission. Old paths are pinned at the reviewed base; all fifteen
+// new regular-file paths must be additions and are pinned at the reviewed head.
+const NATIVE_RELOCATION_FILES = Object.freeze([
+  "headless_native.rs",
+  "headless_native_acl.rs",
+  "headless_native_artifact.rs",
+  "headless_native_artifact_tests.rs",
+  "headless_native_fdinfo.rs",
+  "headless_native_fdinfo_tests.rs",
+  "headless_native_mountinfo.rs",
+  "headless_native_mountinfo_tests.rs",
+  "headless_native_procfs.rs",
+  "headless_native_procfs_tests.rs",
+  "headless_native_readable.rs",
+  "headless_native_readable_tests.rs",
+  "headless_native_root_bootstrap.rs",
+  "headless_native_root_bootstrap_tests.rs",
+  "headless_native_tests.rs",
+]);
+
+function regularSourceBlob(root, revision, path) {
+  const result =
+    revision === null
+      ? runGit(root, ["ls-files", "--stage", "-z", "--", path])
+      : runGit(root, ["ls-tree", "-z", revision, "--", path]);
+  if (!result.ok) return false;
+  const prefix =
+    revision === null ? /^100644 [0-9a-f]{40} 0\t/u : /^100644 blob [0-9a-f]{40}\t/u;
+  const rows = result.stdout.split("\0");
+  return (
+    rows.length === 2 &&
+    rows[1] === "" &&
+    prefix.test(rows[0]) &&
+    rows[0].slice(rows[0].indexOf("\t") + 1) === path
+  );
+}
+
+function validateReviewedChangeKinds(root, changes, base, reviewed, label, errors) {
+  const deleted = changes.filter(({ status }) => status === "D");
+  const allowed = new Set();
+  if (deleted.length > 0) {
+    const byPath = new Map(changes.map(({ path, status }) => [path, status]));
+    const exactMove =
+      deleted.length === NATIVE_RELOCATION_FILES.length &&
+      NATIVE_RELOCATION_FILES.every((name) => {
+        const before = `crates/lnsatd/src/${name}`;
+        const after = `crates/lnsat-store/src/${name}`;
+        return (
+          byPath.get(before) === "D" &&
+          byPath.get(after) === "A" &&
+          regularSourceBlob(root, base, before) &&
+          regularSourceBlob(root, reviewed, after)
+        );
+      });
+    addError(
+      exactMove,
+      `${label}: deletions require the exact fifteen-file regular native relocation`,
+      errors,
+    );
+    if (exactMove) for (const { path } of deleted) allowed.add(path);
+  }
+  for (const { path, status } of changes) {
+    addError(
+      status === "A" || status === "M" || (status === "D" && allowed.has(path)),
+      `${label}: only A/M or the exact native relocation is allowed; found ${status} ${path}`,
+      errors,
+    );
+  }
+  return allowed;
+}
+
 const REGISTRY_KEYS = [
   "schema_version",
   "review_scope",
@@ -844,20 +916,21 @@ function validateReviewedRange(root, manifest, entry, errors) {
     "manifest.protected_files: reviewed source commit must contain a non-registry path",
     errors,
   );
-  for (const change of changes) {
-    addError(
-      change.status === "A" || change.status === "M",
-      `manifest.protected_files: reviewed range must contain only A/M; found ${change.status} ${change.path}`,
-      errors,
-    );
-  }
+  const relocated = validateReviewedChangeKinds(
+    root,
+    changes,
+    manifest.base_revision,
+    manifest.reviewed_revision,
+    "manifest.protected_files",
+    errors,
+  );
   const actualPaths = changes.map(({ path }) => path).sort(compareText);
   const listedPaths = manifest.protected_files
     .filter((entry) => isRecord(entry) && typeof entry.path === "string")
     .map(({ path }) => path);
   addError(
     JSON.stringify(listedPaths) === JSON.stringify(actualPaths),
-    "manifest.protected_files: must exactly match sorted reviewed A/M paths",
+    "manifest.protected_files: must exactly match sorted reviewed paths",
     errors,
   );
   for (const entry of manifest.protected_files) {
@@ -868,7 +941,12 @@ function validateReviewedRange(root, manifest, entry, errors) {
     ) {
       continue;
     }
-    const blob = readCommitBlob(root, manifest.reviewed_revision, entry.path);
+    // Deleted members of the exact move bind the original base blob. The
+    // corresponding added destination is separately bound to its head blob.
+    const revision = relocated.has(entry.path)
+      ? manifest.base_revision
+      : manifest.reviewed_revision;
+    const blob = readCommitBlob(root, revision, entry.path);
     if (!blob.ok) {
       errors.push(`manifest.protected_files: unable to read raw blob ${entry.path}`);
       continue;
@@ -1224,11 +1302,7 @@ function validatePendingReview(root, currentRegistry, entry, errors) {
       "pending review: legacy inventory must be M",
       errors,
     );
-    addError(
-      changes.every((change) => change.status === "A" || change.status === "M"),
-      "pending review: staged reviewed source must contain only A/M paths",
-      errors,
-    );
+    validateReviewedChangeKinds(root, changes, "HEAD", null, "pending review", errors);
     addError(
       !changes.some((change) => change.path === entry.manifest_path),
       "pending review: manifest must not exist in reviewed source commit",

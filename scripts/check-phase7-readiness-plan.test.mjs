@@ -41,6 +41,8 @@ const PHASE7_SOURCE_TARGETS = [
   "crates/lnsat-store/src/phase7_persistence.rs",
   "crates/lnsat-store/src/phase7_nonce.rs",
   "crates/lnsat-store/src/phase7_consumption.rs",
+  "crates/lnsat-store/src/write_sync.rs",
+  "crates/lnsat-store/src/writer_gate.rs",
   "crates/lnsat-store/src/tests/phase7_atomic_consumption.rs",
   "crates/lnsat-store/src/tests/phase7_local_authorization.rs",
   "crates/lnsat-store/src/tests/phase7d_signed_candidate.rs",
@@ -488,6 +490,96 @@ test("plan parser fails when a later ## section is no longer recognized as bound
 });
 
 const NEGATIVES = [
+  {
+    name: "fails when shared writer loses original budget forwarding",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/write_sync.rs", [
+        [
+          "begin_with_budget(connection, PHASE7_ACQUISITION_BUDGET, 4)",
+          "begin_with_budget(connection, crate::SQLITE_BUSY_TIMEOUT, 1)",
+        ],
+      ]);
+    },
+    expect:
+      "write_sync.rs: missing begin_with_budget(connection, PHASE7_ACQUISITION_BUDGET, 4)",
+  },
+  {
+    name: "fails when shared writer loses delegation",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/phase7_consumption.rs", [
+        [
+          "crate::write_sync::begin_phase7(connection)",
+          "rejected_legacy_begin(connection)",
+        ],
+      ]);
+    },
+    expect:
+      "phase7_consumption.rs: missing crate::write_sync::begin_phase7(connection)",
+  },
+  {
+    name: "fails when shared writer loses immediate BEGIN",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/write_sync.rs", [
+        [
+          "Transaction::new_unchecked(connection, TransactionBehavior::Immediate)",
+          "Transaction::new_unchecked(connection, TransactionBehavior::Deferred)",
+        ],
+      ]);
+    },
+    expect:
+      "write_sync.rs: missing Transaction::new_unchecked(connection, TransactionBehavior::Immediate)",
+  },
+  {
+    name: "fails when shared writer loses original acquisition cap",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/write_sync.rs", [
+        [
+          "const PHASE7_ACQUISITION_BUDGET: Duration = Duration::from_secs(20);",
+          "const PHASE7_ACQUISITION_BUDGET: Duration = Duration::from_secs(40);",
+        ],
+      ]);
+    },
+    expect: "write_sync.rs: missing const PHASE7_ACQUISITION_BUDGET",
+  },
+  {
+    name: "fails when shared writer loses rollback quarantine",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/write_sync.rs", [
+        ["self.lease.quarantine();", "rejected_unlatched_cleanup();"],
+      ]);
+    },
+    expect: "write_sync.rs: missing self.lease.quarantine();",
+  },
+  {
+    name: "fails when shared writer loses both seal checks",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/write_sync.rs", [
+        ["!selected && entry.legacy_closed.load(Ordering::Acquire)", "false"],
+      ]);
+    },
+    expect: "write_sync.rs: shared writer requires both legacy seal checks",
+  },
+  {
+    name: "fails when shared writer loses FIFO order",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/writer_gate.rs", [
+        [
+          "state.waiters.front() == Some(&ticket)",
+          "state.waiters.back() == Some(&ticket)",
+        ],
+      ]);
+    },
+    expect: "writer_gate.rs: missing state.waiters.front() == Some(&ticket)",
+  },
+  {
+    name: "fails when shared writer loses private module",
+    mutate(root) {
+      editFile(root, "crates/lnsat-store/src/lib.rs", [
+        ["mod write_sync;", "pub mod write_sync;"],
+      ]);
+    },
+    expect: "lib.rs: shared writer module write_sync must stay private",
+  },
   {
     name: "fails when frozen Phase 7 ledger schema version is not 17",
     mutate(root) {

@@ -39,11 +39,6 @@ mod headless_daemon_inspect;
 mod headless_daemon_version;
 #[allow(
     dead_code,
-    reason = "Reviewed inert Stage-A native candidate awaits complete freeze and integration"
-)]
-mod headless_native;
-#[allow(
-    dead_code,
     reason = "Reviewed inert Stage-A OCI chain awaits complete freeze and integration"
 )]
 mod headless_oci_chain;

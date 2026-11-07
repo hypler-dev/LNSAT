@@ -1,5 +1,10 @@
 # HCFG-6 Root-Prefix ACL Observation Contract
 
+Source allocation update, November 5: the existing fifteen-file native closure
+now resides privately in `lnsat-store`, preserving its exact relocation bytes
+and module topology. Historical daemon-side evidence remains dated; relocation
+alone supplies no native execution, cleanup or authority proof.
+
 Status: private Stage-A source candidate contract under the accepted
 [source-order amendment](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
 [Project Status](../../PROJECT_STATUS.md#stage-a-root-prefix-acl-source-candidate)
@@ -16,7 +21,7 @@ associate those observations with the held chain, preserve raw bytes or an
 explicit unclassified no-data result, and reject drift during Begin/Recheck.
 The result remains unverified evidence for the later authenticated classifier.
 
-Implementation owns only `crates/lnsatd/src/headless_native_root_bootstrap.rs`
+Implementation owns only `crates/lnsat-store/src/headless_native_root_bootstrap.rs`
 and its existing test file. Reuse the existing `ParsedAcl` grammar and mode
 comparison without changing the readable-descriptor sampler or its O_PATH
 rejection. A narrowly scoped private parser accessor, if needed, must receive

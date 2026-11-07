@@ -30,6 +30,15 @@ and supported operation remain gated. Schema 18 belongs to this request-record
 source milestone; earlier headless schema-18 proposals are future schema 19 and
 must be rederived. See [the action-request record contract](docs/architecture/action-request-record.md).
 
+The current HCFG-6 source candidate also contains a narrow rooted preparation
+journal adapter. It retains the original operation, rechecks the sampled mount
+namespace, reserves six fixed journal roles, and implements only the initial
+pending-record custody path with ordered checkpoints, exact selected names and ownership, ACL/mount
+checks, synchronization, and byte readback. This is data-only source evidence;
+genuine preparation, complete cleanup, atomic initialization, management
+integration, runtime enforcement, and supported operation remain unfinished.
+See [the rooted preparation journal](docs/architecture/headless-local-bootstrap/rooted-preparation-journal.md).
+
 [Architecture](#architecture-and-trust-boundaries) ·
 [Authority flow](#from-proposal-to-consequence) ·
 [CLI](#current-cli-and-service-interfaces) ·
@@ -418,6 +427,15 @@ reader candidate; Version/Info decoding; profile/context/challenge binding; and
 startup observation, release and result codecs. These pieces are deliberately
 private prerequisites. They do not expose an operator entrypoint or complete
 the coherent native, daemon, store and revocation integration freeze.
+
+The protected-setup source candidate joins ordinary writers and the selected
+Linux session through physical-file synchronization and retains native custody
+for inert preparation-journal storage. The native acquisition closure now lives
+privately with the store. Bounded canonical declaration, binding and initial
+all-deny envelope APIs supply initializer data prerequisites. Genuine
+strong-profile preparation and atomic installation remain unfinished; these
+changes do not expose a usable setup command or grant management clients
+direct database authority.
 
 The startup message decoders accept supplied bytes. They validate bounded
 framing, closed typed maps, family/context identities, native representations,

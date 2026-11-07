@@ -258,12 +258,17 @@ export function verifyNativeGraph(metadata) {
       .filter((dep) => dep.pkg === aclPackages[0].id)
       .map((dep) => ({ node, dep })),
   );
+  const expectedOwners = [daemons[0].id, stores[0].id].sort();
   if (
-    aclEdges.length !== 1 ||
-    aclEdges[0].node.id !== daemons[0].id ||
-    aclEdges[0].dep.name !== "rustix" ||
-    JSON.stringify(aclEdges[0].dep.dep_kinds) !==
-      JSON.stringify([{ kind: null, target: 'cfg(target_os = "linux")' }])
+    aclEdges.length !== 2 ||
+    JSON.stringify(aclEdges.map(({ node }) => node.id).sort()) !==
+      JSON.stringify(expectedOwners) ||
+    aclEdges.some(
+      ({ dep }) =>
+        dep.name !== "rustix" ||
+        JSON.stringify(dep.dep_kinds) !==
+          JSON.stringify([{ kind: null, target: 'cfg(target_os = "linux")' }]),
+    )
   ) {
     throw new Error("sqlite_native.graph_rejected");
   }

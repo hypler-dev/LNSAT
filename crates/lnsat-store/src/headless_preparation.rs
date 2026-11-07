@@ -12,7 +12,7 @@ use std::fmt;
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[path = "headless_preparation_custody.rs"]
-mod custody;
+pub(super) mod custody;
 
 const MAX_RECORD_BYTES: usize = 16_384;
 const MAX_RECORDS: usize = 64;
@@ -332,6 +332,142 @@ fn validate_successor(prior: &JournalRecord, next: &JournalRecord) -> Result<(),
         return Err(JournalError::InvalidChain);
     }
     Ok(())
+}
+
+/// Closed data-only phase projection for an unverified rooted journal frame.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum UnverifiedRootJournalPhase {
+    Pending,
+    ProbeCreated,
+    CleanupVerified,
+    Bound,
+    Quarantined,
+}
+
+impl From<JournalPhase> for UnverifiedRootJournalPhase {
+    fn from(value: JournalPhase) -> Self {
+        match value {
+            JournalPhase::Pending => Self::Pending,
+            JournalPhase::ProbeCreated => Self::ProbeCreated,
+            JournalPhase::CleanupVerified => Self::CleanupVerified,
+            JournalPhase::Bound => Self::Bound,
+            JournalPhase::Quarantined => Self::Quarantined,
+        }
+    }
+}
+
+/// Fixed data-only errors for rooted-frame decoding and continuity checks.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum UnverifiedRootJournalFrameError {
+    LimitExceeded,
+    InvalidFrame,
+    InvalidRecord,
+    InvalidChain,
+}
+
+impl UnverifiedRootJournalFrameError {
+    pub(crate) const fn code(self) -> &'static str {
+        match self {
+            Self::LimitExceeded => "root_journal_frame.limit_exceeded",
+            Self::InvalidFrame => "root_journal_frame.invalid_frame",
+            Self::InvalidRecord => "root_journal_frame.invalid_record",
+            Self::InvalidChain => "root_journal_frame.invalid_chain",
+        }
+    }
+}
+
+fn map_unverified_root_journal_frame_error(error: JournalError) -> UnverifiedRootJournalFrameError {
+    match error {
+        JournalError::LimitExceeded => UnverifiedRootJournalFrameError::LimitExceeded,
+        JournalError::InvalidFrame => UnverifiedRootJournalFrameError::InvalidFrame,
+        JournalError::InvalidRecord | JournalError::InvalidCandidate => {
+            UnverifiedRootJournalFrameError::InvalidRecord
+        }
+        JournalError::InvalidChain => UnverifiedRootJournalFrameError::InvalidChain,
+    }
+}
+
+/// Decoded journal syntax retained with its original canonical bytes only.
+///
+/// This wrapper proves neither rooted custody nor phase evidence, and grants no
+/// authority. Its sole constructor reuses the existing canonical decoder.
+pub(crate) struct UnverifiedRootJournalFrame {
+    record: JournalRecord,
+    canonical_bytes: Vec<u8>,
+}
+
+impl UnverifiedRootJournalFrame {
+    pub(crate) fn decode(bytes: &[u8]) -> Result<Self, UnverifiedRootJournalFrameError> {
+        let record = decode_record(bytes).map_err(map_unverified_root_journal_frame_error)?;
+        Ok(Self {
+            record,
+            canonical_bytes: bytes.to_vec(),
+        })
+    }
+
+    #[must_use]
+    pub(crate) fn bytes(&self) -> &[u8] {
+        &self.canonical_bytes
+    }
+
+    #[must_use]
+    pub(crate) fn preparation_id(&self) -> &str {
+        &self.record.preparation_id
+    }
+
+    #[must_use]
+    pub(crate) fn candidate_digest(&self) -> &str {
+        &self.record.candidate_digest
+    }
+
+    #[must_use]
+    pub(crate) fn store_digest(&self) -> &str {
+        &self.record.store_digest
+    }
+
+    #[must_use]
+    pub(crate) fn recipe_digest(&self) -> &str {
+        &self.record.recipe_digest
+    }
+
+    #[must_use]
+    pub(crate) fn challenge_digest(&self) -> &str {
+        &self.record.challenge_digest
+    }
+
+    #[must_use]
+    pub(crate) fn container_id(&self) -> Option<&str> {
+        self.record.container_id.0.as_deref()
+    }
+
+    #[must_use]
+    pub(crate) const fn owner_uid(&self) -> u32 {
+        self.record.owner_uid
+    }
+
+    #[must_use]
+    pub(crate) const fn revision(&self) -> u8 {
+        self.record.revision
+    }
+
+    #[must_use]
+    pub(crate) fn phase(&self) -> UnverifiedRootJournalPhase {
+        self.record.phase.into()
+    }
+
+    pub(crate) fn digest(&self) -> Result<String, UnverifiedRootJournalFrameError> {
+        journal_digest(&self.record).map_err(map_unverified_root_journal_frame_error)
+    }
+
+    pub(crate) fn follows(&self, prior: &Self) -> Result<(), UnverifiedRootJournalFrameError> {
+        validate_successor(&prior.record, &self.record)
+            .map_err(map_unverified_root_journal_frame_error)
+    }
+
+    #[must_use]
+    pub(crate) fn same_frame(&self, other: &Self) -> bool {
+        self.canonical_bytes == other.canonical_bytes && self.record == other.record
+    }
 }
 
 fn validate_revision_chain(frames: &[&[u8]]) -> Result<JournalChain, JournalError> {

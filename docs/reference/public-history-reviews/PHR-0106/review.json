@@ -1,0 +1,111 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0106-independent-implementation-review-7f8d1991",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["linux-selected-custody-inert-schema19"],
+  "base_revision": "87e9cf11378fc980289ae1a8dd57ba0535fb51d6",
+  "reviewed_revision": "7f8d1991b7df261b3463dfca6291d7b23795d8be",
+  "reviewed_tree_oid": "572640430e2e5bafb6b4d46cbbe4083f1dcf3e9b",
+  "diff_sha256": "sha256:87ca3c43401961cd27fe33e29446d2b3081a191c64de8a2286b5223a58695648",
+  "protected_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:f269029b540639bfbe60f092efab2d3d22315bdfa2adbb4b2e6f6a8405ce3f7e"
+    },
+    {
+      "path": "crates/lnsat-store/Cargo.toml",
+      "sha256": "sha256:ae1693a2870aa2f6bdebc4011590b5de68bde447d4f145bab94265460200013c"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_schema_19.sql",
+      "sha256": "sha256:723fb4f8645483a7099341879346ae9da60672c43b90717720448116fde50317"
+    },
+    {
+      "path": "crates/lnsat-store/src/lib.rs",
+      "sha256": "sha256:6b1bc8af3963fda3934857f70df159ed530a5d650075fa7bafe1dff7766174f7"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/tests.rs",
+      "sha256": "sha256:192ed936b812e8e32d1f311824e4392dd210a6c04394dd87268877a3f3b756f0"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_linux.rs",
+      "sha256": "sha256:0747064bfc38302b6436b82d54630260d69c462b3b7b5f5ee74a17b79a1a7825"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_schema.rs",
+      "sha256": "sha256:8980a105b1e4c86b0a97d0392ec27a79a1670f22794ff851e2037eb61a8e27a0"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_sidecars.rs",
+      "sha256": "sha256:e5ccaaece813003d7ab9cdadac4fd92c1674f08788ef1da293fd95b271b4d93c"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:30c5fe671df4f3c3a83f0d9bbe50dc526efdfc035f0a1b0a1aeebdd781ae6fff"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_write.rs",
+      "sha256": "sha256:13d98cd04c9386ae56cb3face41dde61a3b3cd57c8171b939a8b593378cf0a40"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_write_fixture.rs",
+      "sha256": "sha256:72cecb5bfc8ac11d5abca27d4d92669570f21dd209dde2c94defdea0262db360"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/fixtures/headless_schema_19.sql",
+      "sha256": "sha256:4bdc364ff134f8ee152ccbb382023982f34bd50ae47b7963464b628612ee10ea"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/headless_bootstrap.rs",
+      "sha256": "sha256:7b9a7a41f4a5a7895be9a3a1a3f93d88ffee8a6367f6b21e3080e81cf0cf2a08"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/selected_schema.rs",
+      "sha256": "sha256:1cbef28b2837aa3d579eed83087e848de8c445c2fed7086dd5e55d50b9ec419e"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/selected_store.rs",
+      "sha256": "sha256:3e1a7b4818e410db9980907ad70f7753297e8b60f04e0574d6f8d867d56f0834"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:b539bc68c611944b769e177dfa5dad5e2b9a5ae6a37d070f81c0fa8186fcc734"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/schema-source-spec.md",
+      "sha256": "sha256:1d91717c78ada912c4fac58a8875eff4807b630c23b73eeeb5caf424c65c225c"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/selected-write-source-spec.md",
+      "sha256": "sha256:88a42dfb0bae8ab99cbb419702f88b7de087c97e773ac49525bbace04d0d76fc"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:417d324d6b1c3d674e6383cbddf6b5d1c54c485d5ddcef5f7d45bcdbaaacd785"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:1e7f4eb159b2ad11b9830ee6a9e64e008c072c81003f2cef22ac80a4cb6cad65"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.mjs",
+      "sha256": "sha256:5493b7c855851013545140a088cd5801007b88489998c4bca798e97413cf467d"
+    },
+    {
+      "path": "scripts/sqlite-native-build-policy.test.mjs",
+      "sha256": "sha256:f248519445d80065802e37e62bb1f17e0a922cafbf172f2b7bdb7e82c4e435b7"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/linux_publication_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh; backend runtime model ID unexposed. Git-bound static-source identity review passed, reusing exact independent source review. Full local npm check failed two combined 32-writer cases; isolated two passed. Native Linux tests pending Ubuntu CI. Initializer, genuine preparation and full writer synchronization remain unimplemented. Static source approval only."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

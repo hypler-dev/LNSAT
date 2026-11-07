@@ -843,6 +843,62 @@
       "manifest_path": "docs/reference/public-history-reviews/PHR-0105/review.json",
       "review_type": "independent_implementation_review",
       "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0106",
+      "subject_id": "linux-selected-custody-inert-schema19",
+      "review_subject_ids": ["linux-selected-custody-inert-schema19"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0106/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0107",
+      "subject_id": "linux-custody-native-policy-fixture",
+      "review_subject_ids": ["linux-custody-native-policy-fixture"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0107/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0108",
+      "subject_id": "protected-setup-writer-sync-native-budget",
+      "review_subject_ids": ["protected-setup-writer-sync-native-budget"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0108/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0109",
+      "subject_id": "protected-setup-linux-retirement-and-fixtures",
+      "review_subject_ids": ["protected-setup-linux-retirement-and-fixtures"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0109/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0110",
+      "subject_id": "protected-setup-rooted-storage-and-compact-schema",
+      "review_subject_ids": ["protected-setup-rooted-storage-and-compact-schema"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0110/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0111",
+      "subject_id": "rooted-storage-linux-ci-fixture-environment",
+      "review_subject_ids": ["rooted-storage-linux-ci-fixture-environment"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0111/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
+    },
+    {
+      "entry_id": "PHR-0112",
+      "subject_id": "rooted-pending-preparation-journal-and-mac-harness",
+      "review_subject_ids": ["rooted-pending-preparation-journal-and-mac-harness"],
+      "manifest_path": "docs/reference/public-history-reviews/PHR-0112/review.json",
+      "review_type": "independent_implementation_review",
+      "state": "attested"
     }
   ]
 }

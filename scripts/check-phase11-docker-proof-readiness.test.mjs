@@ -539,6 +539,36 @@ test("source CI cannot skip the repository source check", () => {
   assert.match(result.errors.join("\n"), /npm run source:check must remain wired/u);
 });
 
+test("source CI retains private rooted fixture setup", () => {
+  const result = validatePhase11DockerProofReadiness({ root });
+  assert.equal(result.ok, true, result.errors.join("\n"));
+  assert.deepEqual(result.errors, []);
+});
+
+test("source CI rejects missing or unsafe rooted fixture setup", () => {
+  const workflow = readFileSync(resolve(root, ".github/workflows/ci.yml"), "utf8");
+  for (const [label, from, to] of [
+    ["missing setup", "      - name: Prepare rooted Linux test fixture\n", ""],
+    [
+      "unsafe export",
+      '          printf \'LNSAT_ARTIFACT_TEST_ROOT=%s\\n\' "$fixture_root" >> "$GITHUB_ENV"',
+      '          printf \'LNSAT_ARTIFACT_TEST_ROOT=%s\\n\' "$runner_temp" >> "$GITHUB_ENV"',
+    ],
+  ]) {
+    const workflowPath = tempFile("ci.yml", workflow.replace(from, to));
+    const result = validatePhase11DockerProofReadiness({
+      root,
+      workflowPaths: [workflowPath],
+    });
+    assert.equal(result.ok, false, label);
+    assert.match(
+      result.errors.join("\n"),
+      /rooted fixture setup must retain exact private root creation and export/u,
+      label,
+    );
+  }
+});
+
 test("pure proof module rejects every process, filesystem, environment, socket, store, and consequence marker", () => {
   for (const forbidden of [
     "std::process",

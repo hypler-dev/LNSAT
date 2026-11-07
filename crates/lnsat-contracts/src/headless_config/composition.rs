@@ -1,3 +1,4 @@
+use super::parser::canonical_json_value;
 use super::{HeadlessConfigDeclarationV1, HeadlessConfigErrorV1, Limits, Rule, RuleMode};
 use crate::PacketBudgetV1;
 use serde_json::{Value, json};
@@ -6,6 +7,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 type RuleKey = (String, String, String);
+const MAX_HEADLESS_CONFIG_ENVELOPE_BYTES_V1: usize = 262_144;
 
 /// Composed, unverified declarations. This value never authorizes an action.
 ///
@@ -78,6 +80,42 @@ impl ComposedHeadlessConfigV1 {
     #[must_use]
     pub fn declaration_digest(&self) -> &str {
         &self.declaration_digest
+    }
+
+    /// Emits the complete composed declared ceiling as bounded canonical JSON.
+    ///
+    /// The returned JSON contains declared references and policy assertions.
+    /// It grants no authority and proves no native observation, ownership, or activation.
+    ///
+    /// # Errors
+    ///
+    /// Returns a fixed error when canonical encoding fails or exceeds the envelope ceiling.
+    pub fn canonical_declared_envelope_json(&self) -> Result<String, HeadlessConfigErrorV1> {
+        canonical_json_value(
+            &json!({
+                "resource_allow": self.resource_allow.iter().cloned().collect::<Vec<_>>(),
+                "rules": self.rules.values().map(declared_rule_json).collect::<Vec<_>>(),
+            }),
+            MAX_HEADLESS_CONFIG_ENVELOPE_BYTES_V1,
+        )
+    }
+
+    /// Emits the initial no-action effective envelope as bounded canonical JSON.
+    ///
+    /// The returned JSON contains declared references and policy assertions.
+    /// It grants no authority and proves no native observation, ownership, or activation.
+    ///
+    /// # Errors
+    ///
+    /// Returns a fixed error when canonical encoding fails or exceeds the envelope ceiling.
+    pub fn canonical_initial_denied_envelope_json(&self) -> Result<String, HeadlessConfigErrorV1> {
+        canonical_json_value(
+            &json!({
+                "resource_allow": self.resource_allow.iter().cloned().collect::<Vec<_>>(),
+                "rules": self.rules.values().map(initial_denied_rule_json).collect::<Vec<_>>(),
+            }),
+            MAX_HEADLESS_CONFIG_ENVELOPE_BYTES_V1,
+        )
     }
 
     /// Emits only fixed diagnostic markers, counts, and normalized content identity.
@@ -185,14 +223,45 @@ fn owned_key(rule: &Rule) -> RuleKey {
     )
 }
 
+fn declared_rule_json(rule: &Rule) -> Value {
+    json!({
+        "principal_ref": rule.principal_ref.as_str(),
+        "resource_ref": rule.resource_ref.as_str(),
+        "capability": rule.capability.as_str(),
+        "mode": match rule.mode {
+            RuleMode::Deny => "deny",
+            RuleMode::ApprovalRequired => "approval_required",
+            RuleMode::Allow => "allow",
+        },
+        "limits": limits_json(rule.limits),
+    })
+}
+
+fn initial_denied_rule_json(rule: &Rule) -> Value {
+    json!({
+        "principal_ref": rule.principal_ref.as_str(),
+        "resource_ref": rule.resource_ref.as_str(),
+        "capability": rule.capability.as_str(),
+        "mode": "deny",
+        "limits": limits_json(Limits::zero()),
+    })
+}
+
+fn limits_json(limits: Limits) -> Value {
+    json!({
+        "tokens": limits.tokens,
+        "runtime_seconds": limits.runtime_seconds,
+        "cost_microusd": limits.cost_microusd,
+        "cpu_millicores": limits.cpu_millicores,
+        "memory_bytes": limits.memory_bytes,
+    })
+}
+
 fn normalized_digest(
     declaration: &HeadlessConfigDeclarationV1,
 ) -> Result<String, HeadlessConfigErrorV1> {
-    let normalized = serde_json::to_value(&declaration.document)
-        .map_err(|_| HeadlessConfigErrorV1::InvalidDeclaration)?;
     let mut canonical = String::from("lnsat.headless_config.declaration.v1\n");
-    crate::packet::write_canonical_json_value(&normalized, &mut canonical)
-        .map_err(|_| HeadlessConfigErrorV1::InvalidDeclaration)?;
+    canonical.push_str(&declaration.canonical_json()?);
     let digest = Sha256::digest(canonical.as_bytes());
     let mut encoded = String::from("sha256:");
     for byte in digest {

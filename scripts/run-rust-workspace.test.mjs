@@ -266,6 +266,11 @@ function metadataFixture(phase = "daemon-baseline") {
                 },
               ],
             },
+            {
+              name: "rustix",
+              pkg: "acl",
+              dep_kinds: [{ kind: null, target: 'cfg(target_os = "linux")' }],
+            },
           ],
         },
         { id: "acl", features: ["alloc", "fs", "std"], deps: [] },
@@ -1372,4 +1377,62 @@ test("module import and ordinary native CLI refusal launch no Cargo/compiler pro
   );
   assert.notEqual(denied.status, 0);
   assert.match(denied.stderr, /native_package\.binding_rejected/u);
+});
+
+test("Mac legacy test actions bound only outer harness concurrency by default", () => {
+  const correctLock = mockProofIo(binding(), successfulStages())
+    .files.get("/work/checkout/Cargo.lock")
+    .toString("utf8");
+  const config =
+    '[net]\noffline = true\n\n[env]\nLIBSQLITE3_FLAGS = { value = "SQLITE_ENABLE_FILESTAT", force = true }\n';
+  for (const platform of ["darwin", "linux", "win32"]) {
+    for (const action of Object.keys(LEGACY_COMMANDS)) {
+      for (const configured of [undefined, "4", ""]) {
+        const env = {
+          UNRELATED_SENTINEL: "preserve-this-value",
+          PATH: "/fixture/bin",
+          ...(configured === undefined ? {} : { RUST_TEST_THREADS: configured }),
+        };
+        const before = { ...env };
+        const launches = [];
+        assert.equal(
+          runLegacyAction([action], {
+            repoRoot: "/work/checkout",
+            platform,
+            env,
+            realpath: (path) => path,
+            home: () => "/home",
+            configPaths() {},
+            exists: () => false,
+            log() {},
+            read: (path) => (path.endsWith("Cargo.lock") ? correctLock : config),
+            spawn(program, argv, options) {
+              launches.push({ program, argv, env: options.env });
+              if (argv[0] === "--version")
+                return {
+                  status: 0,
+                  stdout: program === "cargo" ? "cargo 1.97.1\n" : "rustc 1.97.1\n",
+                };
+              if (argv[0] === "metadata")
+                return { status: 0, stdout: JSON.stringify(metadataFixture()) };
+              return { status: 0, stdout: "", stderr: "" };
+            },
+          }),
+          0,
+        );
+        const testAction = [
+          "test",
+          "phase7-local-conformance",
+          "product-surface",
+        ].includes(action);
+        const expected =
+          configured ?? (platform === "darwin" && testAction ? "1" : undefined);
+        assert.equal(launches.at(-1).env.RUST_TEST_THREADS, expected);
+        assert.deepEqual(launches.at(-1).argv, LEGACY_COMMANDS[action]);
+        assert.equal(launches.at(-1).env.UNRELATED_SENTINEL, env.UNRELATED_SENTINEL);
+        assert.equal(launches.at(-1).env.PATH, env.PATH);
+        assert.deepEqual(env, before);
+      }
+    }
+  }
 });

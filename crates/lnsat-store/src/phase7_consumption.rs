@@ -19,10 +19,9 @@ use crate::phase7_persistence::{
     valid_prefixed_id,
 };
 use core::fmt;
-use rusqlite::{
-    Connection, Error as SqliteError, ErrorCode, OptionalExtension, Transaction,
-    TransactionBehavior, params,
-};
+#[cfg(test)]
+use rusqlite::TransactionBehavior;
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use subtle::ConstantTimeEq;
 use zeroize::{Zeroize, Zeroizing};
@@ -58,7 +57,6 @@ const AUTHORIZATION_PROFILE: &str = "server_record_plus_digest_stored_one_time_c
 const LOCAL_AUTHORIZATION_AUDIENCE: &str = "audience:gateway:local";
 const PHASE7_AUTHORIZATION_TTL_MILLIS_V1: u64 = PHASE7_AUTHORIZATION_TTL_SECONDS_V1 * 1_000;
 const LOCAL_SESSION_REF_PREFIX_V1: &str = "session:local:";
-const IMMEDIATE_TRANSACTION_ATTEMPTS: u8 = 4;
 const LOWER_HEX: &[u8; 16] = b"0123456789abcdef";
 
 /// Exact existing authorization, operation, and idempotency scope for one
@@ -3085,23 +3083,9 @@ fn consumption_public_record(
 
 fn begin_immediate_transaction(
     connection: &Connection,
-) -> Result<Transaction<'_>, Phase7PersistenceErrorV1> {
-    for attempt in 1..=IMMEDIATE_TRANSACTION_ATTEMPTS {
-        match Transaction::new_unchecked(connection, TransactionBehavior::Immediate) {
-            Ok(transaction) => return Ok(transaction),
-            Err(error) if attempt < IMMEDIATE_TRANSACTION_ATTEMPTS && sqlite_busy(&error) => {}
-            Err(_) => return Err(Phase7PersistenceErrorV1::PersistenceFailed),
-        }
-    }
-    Err(Phase7PersistenceErrorV1::PersistenceFailed)
-}
-
-fn sqlite_busy(error: &SqliteError) -> bool {
-    matches!(
-        error,
-        SqliteError::SqliteFailure(failure, _)
-            if matches!(failure.code, ErrorCode::DatabaseBusy | ErrorCode::DatabaseLocked)
-    )
+) -> Result<crate::write_sync::WriteTransaction<'_>, Phase7PersistenceErrorV1> {
+    crate::write_sync::begin_phase7(connection)
+        .map_err(|_| Phase7PersistenceErrorV1::PersistenceFailed)
 }
 
 fn insert_consumption(

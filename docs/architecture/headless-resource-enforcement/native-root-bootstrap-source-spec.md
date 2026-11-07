@@ -1,5 +1,10 @@
 # HCFG-6 Root Manifest Bootstrap Source Contract
 
+Source allocation update, November 5: the existing fifteen-file native closure
+now resides privately in `lnsat-store`, preserving its exact relocation bytes
+and module topology. Historical daemon-side evidence remains dated; relocation
+alone supplies no native execution, cleanup or authority proof.
+
 Status: private Stage-A source contract under the accepted
 [source-order amendment](source-freeze-staging-decision.md#a-reviewed-inert-candidate-source).
 [Project Status](../../PROJECT_STATUS.md#stage-a-root-manifest-bootstrap-contract)
@@ -19,7 +24,7 @@ block; none runs on the coordinator or while holding the lane's slot mutex.
 
 A later source packet owns exactly:
 
-- `crates/lnsatd/src/headless_native_root_bootstrap.rs` and its sibling
+- `crates/lnsat-store/src/headless_native_root_bootstrap.rs` and its sibling
   `headless_native_root_bootstrap_tests.rs`, as private children of the procfs lane;
 - the existing `headless_native_procfs.rs` and its tests for three closed jobs,
   worker-owned retained custody, completion matching and cleanup accounting;

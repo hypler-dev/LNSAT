@@ -1210,6 +1210,327 @@ remain closed at this B6 checkpoint. V1 and
 enterprise/government readiness are incomplete. The Phase 11 operator packet
 retains its locked source and source-only runtime verdict.
 
+### Protected setup transaction fixtures
+
+Private tests now exercise a selected writable SQLite connection under the
+existing lease and main-descriptor checks. They check named WAL and SHM metadata,
+reject a sidecar alias before opening SQLite, and use a one-shot immediate
+transaction to verify owner commit and rollback. The writable fixture is compiled
+only for tests and relies on the trusted fixture owner for sidecar identity.
+
+The private selected-store source now decodes the pinned Unix VFS's actual
+WAL descriptor and the main file's SHM descriptor. While the write transaction
+holds both, bounded repeated samples compare in-place descriptor metadata with
+the corresponding owner-private names. The writable fixture exercises that check
+after acquiring the transaction and again before commit. A replacement WAL name
+with valid mode and owner still fails when it refers to a different inode.
+That fixture checkpoint did not implement the production writable connection;
+the later Linux candidate and its remaining qualification gates are recorded below.
+
+A separate schema-19 test composes the actual owner insert helper with synthetic
+installation, generation, audit and pointer rows. All seven rows are visible
+inside one transaction and disappear on rollback to the exact schema-18 store.
+This validates structural SQL composition. The later Linux candidate below
+implements selected custody and inert migration source. Usable setup still
+requires native validation, genuine preparation and atomic installation binding.
+
+### Production Linux selected-custody candidate — November 5
+
+The private production build now contains a Linux selected-writable session,
+not a public setup command. It retains the shared database lease before SQLite
+opens, reserves a bounded physical-file writer gate, and holds each ancestor through
+no-follow relative directory opens. Repeated statx observations bind owner,
+mode, inode, mount and current mount namespace. Ancestors require kernel POSIX
+filesystem semantics; the selected store supports persistent ext4, XFS and Btrfs
+only. Network, FUSE, overlay, tmpfs stores and unrecognized filesystems deny.
+Minimal owner-only POSIX ACLs are checked for the selected parent, lease, main,
+WAL and SHM names. Named ACL entries, inherited default ACLs and unknown xattr
+errors deny. ENODATA is an explicit mode-only case on admitted filesystems.
+
+The session checks actual pinned Unix-VFS main/WAL/SHM descriptors in place,
+retains sidecar identities across its immediate migration transaction, and
+checks retirement after SQLite closes under the same custody. Custody loss
+before close quarantines the connection without calling SQLite close, because
+close could unlink substituted coordination names. A busy close retains the
+connection, lease, ancestry and physical-file gate. No reusable success handle exits
+those failure paths. Trusted kernel, root and current-owner assumptions remain;
+these checks do not contain malicious code with the same UID.
+
+A separate selected-only production SQL body migrates an exact authority-empty
+schema 18 to inert schema 19. It is absent from ordinary MIGRATIONS, and ordinary
+opens continue to reject schema 19. The production successor adds an exact
+owner/event/digest/credential association trigger: 259 objects, 38 tables and 35
+retention families, manifest
+`sha256:c566334a11f4f2707b85236d2a28b121304db743d30c54565de0b74c2d6bf298`.
+The original 258-object test fixture and its f8c18ea0 manifest remain unchanged.
+A passing migration creates no installation, owner, generation or activation.
+
+The existing four native Linux custody groups passed on Ubuntu in draft PR #120
+Source verification run `42135629796` at exact head `b8b66c8428ece85e9e960464ca0234700a39098d`.
+That source-CI evidence covers the prior migration/ACL/close cases; it does not
+qualify later journal changes. New Linux cases for selected-journal persistence,
+masked/default journal ACL denial, journal replacement and post-close sidecar
+drift were cross-compiled at that checkpoint. The later exact-head Ubuntu
+run and its current failed outcome are recorded below; this earlier success
+cannot qualify later journal cases.
+Portable schema tests retain migration/rollback, inert committed state, ordinary
+open denial, occupied-source rejection, schema/seed/namespace drift and mismatched
+owner-event digest rejection. Cross-compilation proves no native execution or
+physical durability.
+
+#### Shared writer and selected-journal integration — November 5
+
+The current source candidate routes ordinary immediate store transactions and
+pre-open configuration through a private FIFO gate keyed by the actual SQLite
+main descriptor's device/inode. The selected session reserves the same gate
+before opening and seals legacy admission before migration. Queued ordinary
+writers recheck that seal after acquiring their turn. The registry retains
+sealed/quarantined identities, prunes only inactive unsealed entries at its
+1,024-entry ceiling, and denies exhaustion. The gate is process-local
+synchronization, not authorization or an inter-process lock.
+
+Ordinary acquisition retains its five-second limit. Phase-7 redemption uses
+one non-resetting twenty-second acquisition budget, including FIFO wait,
+preserving the previous four five-second attempts. Only a failed BEGIN with
+SQLite Busy/Locked may be retried. Transaction bodies, mutations, commit,
+post-commit acknowledgement and ambiguous outcomes are never retried. SQL
+rollback/close uncertainty permanently quarantines that physical identity.
+These acquisition limits are not whole-operation or physical cleanup proofs.
+
+The selected writer can own the inert preparation journal without a
+self-referential store borrow. Each temporary view joins the original custody,
+connection and retained sidecars. Journal nodes receive native no-follow
+name/descriptor, mount, owner/mode and ACL checks. Failure latches; returning
+an old pathname or clearing an ACL cannot heal the session. Successful close
+retires the journal descriptor once before releasing custody and writer
+admission; uncertain close retains quarantine. Stored frames and snapshots
+remain untrusted assertions and cannot construct preparation authority.
+
+Both unchanged 32-writer cardinality tests passed together, inside the
+155/155 Phase-7 selection, and in the current full macOS store run. The four
+exact G26 fingerprints retain all structural denials. Current store tests passed
+600/600 with two intentionally ignored child helpers; the daemon and CLI suites,
+strict workspace Clippy and locked metadata checks also passed. The older
+contention failure cause is not established; these results do not prove its
+historical cause or physical deadline behavior.
+
+Failed validation attempts remain recorded. The first full npm run found a stale
+readiness-source guard; the corrected guard suite passed 96/96, including eight
+new rejection mutations, and the affected hostile-PATH case passed. The next
+full npm attempt reached TypeScript but could not resolve nested workspace
+dependencies. Reusing the existing admitted dependency directories through
+workspace links corrected that environment without installs or downloads;
+typechecking and workspace tests then passed. Later Rust checks found two
+formatting differences and a real read-query regression: serializer diagnostics
+used two SQLite metadata queries where the existing limit allowed one. The
+correction combines both typed origin checks in one query, preserves the
+16-query bound, and passed the focused check plus the current full store run.
+Original full-wrapper failures remain failures. Successful stages are joined by
+explicit unchanged-input reuse and separately completed affected stages, rather
+than reported as another full npm invocation.
+
+The selected reservation now uses a nonwaiting registry/gate path that cannot
+bypass existing FIFO waiters. Live checks join the exact retained permit before
+and after selected custody verification. Current gate tests passed 13/13 and
+SQLite synchronization tests passed 14/14, including actual held-mutex and
+isolated poison cases. Native Linux execution of the new selected-journal
+cases remains pending; these tests are not physical authority proof.
+
+The contract layer now emits complete bounded canonical declaration and binding
+documents, the composed declared envelope, and the initial all-deny envelope
+with five zero limits per rule. The initial resource set exactly matches final
+composition; retained denied tuples do not restore removed resources. Focused
+headless-contract tests passed 67/67, and strict contracts/store/daemon Clippy
+passed. Independent exact source/delta/outcome review passed. These are data
+encoding APIs and cannot verify resources, create a prepared installation or
+activate a configuration.
+
+The initial relocation preserved all fifteen native source files byte-for-byte
+from the daemon into the private store crate. Subsequent budget integration
+extracts the original artifact budget/error/purpose/deadline definitions into
+one store-root-private module; consumers retain private aliases and narrow
+accessors. There is no duplicate budget, deadline reset, new public
+observer/proof constructor or runtime caller. Current native-component tests
+passed 123/123 on macOS; Linux-only physical cases are not claimed as run.
+Every Procfs job now carries the existing original artifact
+budget allocation through custody, request, attempt, worker and result polling;
+queued budget/deadline substitutions deny before dispatch. Denial invalidates
+that same allocation and cannot reset it. The whole-operation registration,
+finite combined accounting and native cleanup acknowledgment remain open.
+
+#### Linux retirement and test-isolation repair candidate — November 6
+
+Source verification run `42185885625` at exact draft PR #120 head
+`5121ccd549d71e79a398f32ec3df488de5092a3f` failed. Signatures and dependency
+audit passed. The earlier selected store run passed 155/155 and daemon passed
+309/309; the later full store run ended 611 passed, nine failed and five ignored.
+These are separate suites, not a summed unique total. The first Linux parent
+reported failure in its `post-close` child, whose stdout was suppressed. Three
+later Linux parents failed on the poisoned test mutex. Five writer tests
+received unexpected `ReadOnly` results. The exact original child panic and
+whether inode reuse caused those writer failures are not established.
+
+Independent source review found that matching device/inode numbers after the
+original VFS descriptors close cannot prove a surviving WAL/SHM name is the
+same object. The current repair therefore requires both coordination names
+absent before completed selected retirement can release custody. Surviving
+names retain the existing quarantine; no path deletion, alias reopen, retry or
+registry reset is added. A legitimate persistent WAL or live reader may cause
+conservative denial. This is not physical ABA containment or cleanup proof.
+
+The repair also isolates tests that intentionally leave permanent sealed keys
+in disposable owned processes. Deleting a fixture file while retaining its
+process-wide sealed device/inode key permits a later fixture to reuse that
+identity; isolation preserves permanent denial without changing production
+registry behavior. Bounded child supervision retains both output streams and
+checks actual body entry and one completed test instead of accepting exit zero
+alone. The original failed run remains failed. The corrected macOS full
+`npm run check` completed successfully with unchanged reviewed source inputs.
+The full store suite passed 607 tests with two ignored child helpers; the
+daemon suite passed 309 tests, and the separate selected Phase-7 suite passed
+155 tests. These are separate suite counts, not a summed unique total. Strict
+macOS and Linux cross-target Clippy passed; cross-compilation is not native
+Linux execution. The corrected new-head Ubuntu Source verification run
+`42212253944`, attempt 1, passed at published head
+`53420ad8971c192cb2f74b6ee126388e49da2969`. Actual synthetic PR checkout
+`f756c9a0ad7d98a19164f2b966921b10337fbb33` has the exact public base/head
+parents and reviewed head tree. The full store suite passed 627 tests with five
+ignored helpers; daemon passed 309 tests and the separate selected Phase-7
+suite passed 155 tests. Counts are separate, not summed unique tests. All
+source/build, signature and audit steps passed; independent terminal-evidence
+review passed. PR #120 remains draft and unmerged. This is source-fixture
+execution on Ubuntu, not strong-profile runtime, actual target or main-run proof.
+
+#### Finite empty-state SQL integration candidate — November 6
+
+The private integration candidate replaces repeated schema-17/18/19 emptiness
+queries with one fixed main-qualified predicate for each exact compiled table
+set. The three immutable seed tables remain excluded only from emptiness;
+existing namespace, schema, seed and integrity verification still applies.
+The original five predicate groups remain component evidence. A new
+selected-only fresh-schema-18 preflight preserves the existing exact schema
+digest, all three seed families, namespaces, emptiness and integrity while
+avoiding the general populated-store Phase-7 verifier. Eight new bounded
+in-memory SQLite groups and 13 affected public-bootstrap regressions pass;
+current G26 closure and strict macOS/Linux cross-target store Clippy also pass.
+G26 retains an exact full-root commitment updated only for the private
+production module declaration; other fingerprints and assertions are unchanged.
+
+A Linux production-only compile assertion covers the actual retained native
+custody, selected writable owner, original credential scope, operation identity
+and budget types together, including shared mutex/root auto-trait requirements.
+It creates no root, transfers no ownership and stores no borrowed SQL owner.
+Compilation is not native execution or an installed authority witness.
+
+Combining emptiness queries first reduced the known successful
+open/configure/migrate path from 267 to 169 application SQL commands. Separate
+Rows-reset and statement-finalization reservations still required at least 288
+cleanup slots, exceeding the fixed 256 limit before native owners. The new
+selected-only preflight reduces 89 reads to 11, leaving a known SQL base of 91
+statements and 41 Rows resets: 132 cleanup reservations. The remaining 124 slots
+are arithmetic headroom, not demonstrated whole-path fit. Owner/root writes,
+native owners, checked lifecycle and uncertainty still need complete accounting.
+No budget is raised. The exact private integration subsequently passed one
+full macOS `npm run check`: store 620 passed/0 failed/two ignored, daemon
+309/0/0 and selected Phase-7 store 155/0/0 are separate suite counts. Its 13
+source/document inputs matched before and after; fresh independent actual-
+outcome review passed. This supporting source is carried forward as a separately reviewed draft-branch
+checkpoint; the earlier retirement repair has its own Ubuntu CI identity.
+
+Rooted partial-owner retention, genuine preparation and atomic initialization
+remain unfinished. At the syntactic 128-ancestor ceiling, the known SQL base
+plus 128 ancestor files, selected parent and lease alone requires at least 263
+cleanup slots, above the fixed 256 limit before remaining native/temporary
+owners. An exact conservative complete-path plan must reject oversized or
+unmapped selections before acquisition; the syntax ceiling grants no admission.
+A separate pinned-library inventory also requires one direct-execute reset
+beyond the 132 statement-finalization/Rows-reset subset, tightening the known
+SQL lower bound to 133. The complete producer must reserve that obligation and
+all remaining native/settings/transaction work. Smaller path depth alone is not
+a complete-fit witness. No production root,
+prepared installation or initializer is supplied by this SQL prerequisite.
+
+#### Root-retained selected-file source candidate — November 6
+
+The private Linux source now contains an actual process-lifetime selected root,
+authority mutex and partial file slots. It consumes the original non-Clone
+artifact budget, issues its own opaque operation identity and retains an inert
+credential scope before custody I/O. The exact static-root address and returned
+control-thread identity bind the private storage frame. The one retained join
+handle is published before its start barrier. Every returned parent, lease,
+procfs or ancestor file enters its root slot before post-call budget or
+association checks. Acquisition, retirement issue, known retirement and
+uncertainty remain distinct; an empty slot is never cleanup acknowledgment.
+
+Owning-call errors recheck the same original budget before propagation.
+Failure closes admission, invalidates that allocation and retains the actual
+authority guard, remaining owners and caught panic payload on the same control
+context. Normal storage residence keeps that context alive only within the
+original acceptance window, outside the authority guard; it is not a resumable
+installation or a Ready state. No replacement worker, queue, caller callback,
+raw descriptor getter, ordinary-store conversion or SQL entry is added.
+
+Fourteen bounded macOS fixture groups pass, including actual partial parent/
+lease residence, mode drift, owning-open failure, cancellation, original-deadline
+expiry, poison, panic/payload retention, uncertain consuming close, exact-root
+rejection and no rearm. Strict macOS and Linux x86_64 cross-target all-target
+Clippy pass. Nineteen Linux groups compile, including controlled procfs and
+ancestor open/error paths; their native execution remains pending. Modeled
+close-return uncertainty and delayed post-return delivery are not physical
+kernel close-failure or blocked-call campaigns. Existing owned-child entry,
+output, timeout and reap checks remain unchanged. These results are source and
+controlled-fixture evidence, not hostile same-UID containment, physical
+freshness/deadline/cleanup/durability, strong-profile enforcement or support.
+
+The complete production cleanup-plan constructor is absent. Fixture capacity
+plans cannot supply it. Exact journal topology, native owners, all cumulative
+retirement obligations and checked SQL still need one conservative full map
+before production admission. The permanent scope is not a verified credential;
+shared original-connection/scope recheck remains required before credential-
+sensitive work. No connection, prepared-installation witness, public setup
+command, management route or atomic initializer exists in this root slice.
+The integrated macOS full source gate passed with all 19 source/document inputs
+unchanged before and after. Full store 634/0 failed/2 ignored, daemon 309/0/0
+and selected Phase-7 store 155/0/0 are separate suite counts; the daemon summary
+repeats. Fresh independent actual-outcome review passed. This source checkpoint
+requires its own native Ubuntu run before Linux execution can be claimed;
+earlier PR #120 CI applies to the retirement-repair head only. PR #120 remains
+draft and unmerged.
+
+#### Rooted Linux CI fixture environment correction — November 6
+
+The root checkpoint's Ubuntu run 42253565432 attempt 1 failed with full store
+654 passed, five failed and five ignored. All five failing owned-child rooted
+fixtures reported `LNSAT_ARTIFACT_TEST_ROOT` as `NotPresent` before their
+Linux fixture work. Dependency signature and audit steps passed; the complete
+source gate did not. Actual synthetic checkout `0180fc56` has the exact
+`87e9cf1` base and `fe89c79` head parents and reviewed head tree. This failure
+remains preserved; earlier native CI success applies to its own repair head.
+
+The source workflow now creates a unique owner-private mode-0700 directory
+under the existing hosted runner's canonical temporary root and exports it to
+the original test processes. The fixtures retain their filesystem, path,
+mount, mode and ACL checks. No test is skipped or weakened; the exact scalar
+source-check command, audits, pinned tools, permissions and finite timeout
+remain unchanged. The strict readiness checker pins the corrected workflow
+and rejects absent setup or an altered export. Focused Node tests passed
+45/45 and the strict readiness checker passed. Native Ubuntu verification
+for this correction remains pending. PR #120 stays draft and unmerged.
+
+The selected strong HCFG-6 producer and atomic installation initializer remain
+unfinished. Completion requires real probe/adapter/image build outputs, an
+independently selected complete immutable recipe, genuine nonempty held-resource
+validation, current host/daemon/native observations and exact probe cleanup.
+The stricter unmodified Linux v6.8/ext4/LSM profile is not established by the
+broader selected-store custody backend. Daemon-cache evidence must capture the
+actual generated OCI spec and retain daemon-instance association; fresh host
+path enumeration or Docker HostConfig cannot substitute. No parsed cleanup
+label, supplied digest, journal phase or fixture can supply these facts.
+The session has no public initializer or management-system dispatch route.
+Rangoon and a Backstage reference client are intended consumers of the same
+versioned engine API, with no direct database or independent authority path.
+Neither integration is implemented by this custody candidate.
+
 ## HCFG-6 Resource And Runtime Enforcement Design
 
 Canonical work record: this section. The accepted V1 requirement needs real
@@ -5368,3 +5689,64 @@ or package is added.
 
 See [roadmap](ROADMAP.md), [release process](RELEASING.md), and
 [public-readiness report](PUBLIC_READINESS.md).
+
+#### Rooted pending-journal adapter — November 6
+
+The current HCFG-6 source candidate adds a data-only canonical
+preparation-journal adapter behind the existing rooted selected-store frame.
+The original operation, held procfs owner and sampled mount-namespace
+association remain in force. The adapter
+retains six fixed journal roles (`root`, `preparation`, and revisions `0` through
+`3`) and defines 81 ordered source checkpoints; only the initial 23-checkpoint
+pending-record path has native Linux source for revision zero.
+
+The implemented path performs bounded canonical decoding and control-selected
+comparison, prepares exact names and paths before custody I/O, and checks file
+name, owner, mode/ACL, mount association, synchronization, and byte readback
+where supplied by the platform implementation. Returned owners are stored in
+the root slots before post-call budget or association checks. There are no
+retries, adoption, unlink, product entry, or production cleanup-plan producer.
+The pending record remains data and continuity input only; root fields alone do
+not establish genuine preparation or Ready state.
+
+Three canonical-input tests and strict macOS all-target Clippy passed. Strict
+Linux x86_64 cross-target all-target Clippy also passed. Independent source
+review found no actionable P1/P2; its P3 records four new native cases as
+compiled but not executed: positive persistence/owner retention and denial of
+a preexisting empty root, a symlink root, and a foreign reported UID.
+[Published Ubuntu run 42266695033](https://github.com/hypler-dev/LNSAT/actions/runs/42266695033),
+attempt 1 at `1fd21d3`, passed 19 rooted groups. Full store `659/0/5` and daemon
+`309/0/0` are separate suite counts. Its exact synthetic checkout `2f42aad9`
+and tree `c438e17c` exclude these 13 source files; that result does not qualify
+the new journal candidate.
+
+The genuine immutable helper/image/kernel recipe, independent selection,
+nonempty held-resource preparation, probe and exact cleanup, complete cleanup
+plan, checked SQL/native lifecycle, atomic initializer, and management-system
+integration remain unfinished. This milestone does not qualify native
+compatibility, physical durability, runtime, support or release. PR #120 remains draft and unmerged. See [rooted
+preparation journal](architecture/headless-local-bootstrap/rooted-preparation-journal.md).
+
+#### Current macOS harness validation — November 6
+
+The Darwin legacy test, Phase-7 local conformance, and product-surface jobs
+now default outer `RUST_TEST_THREADS` to `1` only when the caller has not
+provided a value. Explicit caller values and Linux behavior remain unchanged.
+Inner 32-writer threads, barriers, assertions, and the single 20-second
+production acquisition budget are unchanged. Independent source, launch and
+actual-outcome reviews passed. The runner suite passed 24/24; the two focused
+writer cases passed in 21.78 seconds. The Rust remainder returned zero in
+1703.722 seconds, with separate store `651/0/1` in 1386.87 seconds and daemon
+`309/0/0` in 248.14 seconds.
+
+All 22 source pins, five support references, ten links, and status references
+matched. The original full npm invocation stopped at missing nested Fastify
+resolution. Existing admitted workspace links restored resolution; typechecking
+and workspace tests then returned zero without installation or dependency
+copying. That recovery's first Rust suffix failed at `649/2/1`; its underlying
+cause is not established. Both failed attempts remain recorded. The separate
+current passing Rust remainder does not constitute one complete npm invocation
+returning zero. The earlier Ubuntu run remains limited to its published
+`1fd21d3` tree and excludes the private 13-file journal slice; the four new
+native pending cases remain NOT_RUN. No PreparedInstallation, witness, runtime,
+support, or release claim follows. PR #120 remains draft and unmerged.

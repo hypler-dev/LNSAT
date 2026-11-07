@@ -13,7 +13,7 @@ use crate::phase7_persistence::{
 use lnsat_contracts::{
     DerivedExecutionRequestV1, is_valid_reference_v1, verify_derived_execution_request_v1,
 };
-use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior, params};
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use sha2::{Digest, Sha256};
 #[cfg(test)]
 use std::cell::Cell;
@@ -917,9 +917,7 @@ impl SqliteStore {
     ) -> Result<AttemptRecord, Phase7GitAdapterErrorV1> {
         canonical_utc_timestamp_millis_v1(claimed_at)
             .ok_or(Phase7GitAdapterErrorV1::InvalidInput)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         let attempt =
@@ -944,9 +942,7 @@ impl SqliteStore {
         receipt: &Phase7GitCommitReceiptV1,
         recorded_at: &str,
     ) -> Result<(), Phase7GitAdapterErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         insert_receipt(&transaction, attempt, receipt)?;
@@ -981,9 +977,7 @@ impl SqliteStore {
         receipt: &Phase7GitCommitReceiptV1,
         recorded_at: &str,
     ) -> Result<(), Phase7GitAdapterErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         insert_receipt(&transaction, attempt, receipt)?;
@@ -1027,9 +1021,7 @@ impl SqliteStore {
         state: &str,
         recorded_at: &str,
     ) -> Result<(), Phase7GitAdapterErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         append_state_event(
             &transaction,
@@ -1972,9 +1964,7 @@ impl SqliteStore {
         &mut self,
     ) -> Result<usize, Phase7GitAdapterErrorV1> {
         let recorded_at = canonical_system_time_v1(SystemTime::now()).map_err(map_persistence)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         let interrupted = select_dispatching_attempts_v1(&transaction)?;
@@ -2025,9 +2015,7 @@ impl SqliteStore {
         use crate::phase7_consumption::request_admission::{
             ADAPTER_REF, ADAPTER_VERSION, PROTOCOL,
         };
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         let operation = read_phase8_operation_v1(&transaction, operation_id)?

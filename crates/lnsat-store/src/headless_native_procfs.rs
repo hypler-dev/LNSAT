@@ -1,6 +1,10 @@
 //! Private bounded Stage-A procfs observation lane. No caller or authority API.
 
 use super::mountinfo::MountInfoError;
+#[cfg(test)]
+use crate::headless_control_budget::checked_deadline as checked_control_deadline;
+#[cfg(test)]
+use std::time::Duration;
 #[path = "headless_native_artifact.rs"]
 mod artifact;
 #[path = "headless_native_root_bootstrap.rs"]
@@ -13,7 +17,7 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread::{self, JoinHandle, Thread},
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 const TERMINAL: u64 = 1 << 63;
@@ -71,12 +75,14 @@ impl ProcfsError {
 struct OwnedProcfsCustody {
     resource: Arc<File>,
     proc_root: Arc<File>,
+    budget: Arc<artifact::ArtifactBudgetState>,
 }
 
 struct Attempt {
     lane: &'static LaneRoot,
     token: NonZeroU64,
     deadline: Instant,
+    budget: Arc<artifact::ArtifactBudgetState>,
     armed: bool,
 }
 
@@ -147,6 +153,7 @@ enum RequestPayload {
     Procfs {
         resource: Arc<File>,
         proc_root: Arc<File>,
+        budget: Arc<artifact::ArtifactBudgetState>,
     },
     Artifact(artifact::ArtifactRequest),
     Root(root_bootstrap::RootRequest),
@@ -165,6 +172,7 @@ impl Request {
             RequestPayload::Procfs {
                 resource,
                 proc_root,
+                ..
             } => Some((resource, proc_root)),
             RequestPayload::Artifact(_) | RequestPayload::Root(_) => None,
         }
@@ -185,11 +193,11 @@ impl Request {
         }
     }
 
-    fn budget(&self) -> Option<&Arc<artifact::ArtifactBudgetState>> {
+    fn budget(&self) -> &Arc<artifact::ArtifactBudgetState> {
         match &self.payload {
-            RequestPayload::Procfs { .. } => None,
-            RequestPayload::Artifact(request) => Some(&request.budget),
-            RequestPayload::Root(request) => Some(request.budget()),
+            RequestPayload::Procfs { budget, .. } => budget,
+            RequestPayload::Artifact(request) => &request.budget,
+            RequestPayload::Root(request) => request.budget(),
         }
     }
 
@@ -310,15 +318,9 @@ fn same_token(word: u64, attempt_token: NonZeroU64) -> bool {
     token(word) == attempt_token.get()
 }
 
+#[cfg(test)]
 fn checked_deadline(start: Instant, enclosing: Instant) -> Result<Instant, ProcfsError> {
-    let local = start
-        .checked_add(Duration::from_secs(5))
-        .ok_or(ProcfsError::BudgetExhausted)?;
-    let deadline = local.min(enclosing);
-    if Instant::now() >= deadline {
-        return Err(ProcfsError::BudgetExhausted);
-    }
-    Ok(deadline)
+    checked_control_deadline(start, enclosing).map_err(|_| ProcfsError::BudgetExhausted)
 }
 
 struct ConstructionGuard {
@@ -491,53 +493,68 @@ fn retire_reserved(control: &AtomicU64, attempt_token: NonZeroU64) -> bool {
 }
 
 impl Attempt {
-    fn try_prepare(
-        custody: &OwnedProcfsCustody,
-        enclosing_deadline: Instant,
-    ) -> Result<Self, ProcfsError> {
+    fn try_prepare(custody: &OwnedProcfsCustody) -> Result<Self, ProcfsError> {
+        let budget = &custody.budget;
         if !cfg!(all(target_os = "linux", target_has_atomic = "64")) {
+            budget.invalidate();
             return Err(ProcfsError::UnsupportedPlatform);
         }
-        let deadline = checked_deadline(Instant::now(), enclosing_deadline)?;
+        budget.valid().map_err(|_| ProcfsError::BudgetExhausted)?;
         if LANE.control.load(Ordering::SeqCst) == VIRGIN {
-            construct_once()?;
+            construct_once().inspect_err(|_| budget.invalidate())?;
         }
-        Self::prepare_in(&LANE, custody, deadline)
+        Self::prepare_in(&LANE, custody)
     }
 
     fn prepare_in(
         lane: &'static LaneRoot,
         custody: &OwnedProcfsCustody,
-        deadline: Instant,
     ) -> Result<Self, ProcfsError> {
+        let budget = Arc::clone(&custody.budget);
+        let deadline = budget.deadline();
+        if budget.valid().is_err() {
+            return Err(ProcfsError::BudgetExhausted);
+        }
         if Instant::now() >= deadline {
+            budget.invalidate();
             return Err(ProcfsError::BudgetExhausted);
         }
         let old = lane.control.load(Ordering::SeqCst);
         if terminal(old) || phase(old) != IDLE {
+            budget.invalidate();
             return Err(ProcfsError::BudgetExhausted);
         }
         if token(old) == TOKEN_MAX {
             lane.terminalize();
+            budget.invalidate();
             return Err(ProcfsError::LimitExceeded);
         }
         let next_token = token(old)
             .checked_add(1)
             .and_then(NonZeroU64::new)
-            .ok_or(ProcfsError::LimitExceeded)?;
+            .ok_or_else(|| {
+                budget.invalidate();
+                ProcfsError::LimitExceeded
+            })?;
         let mut slots = match lane.slots.try_lock() {
             Ok(slots) => slots,
-            Err(std::sync::TryLockError::WouldBlock) => return Err(ProcfsError::BudgetExhausted),
+            Err(std::sync::TryLockError::WouldBlock) => {
+                budget.invalidate();
+                return Err(ProcfsError::BudgetExhausted);
+            }
             Err(std::sync::TryLockError::Poisoned(_)) => {
                 lane.terminalize();
+                budget.invalidate();
                 return Err(ProcfsError::CleanupUncertain);
             }
         };
         if slots.request.is_some() || slots.completion.is_some() {
             lane.terminalize();
+            budget.invalidate();
             return Err(ProcfsError::CleanupUncertain);
         }
         if Instant::now() >= deadline {
+            budget.invalidate();
             return Err(ProcfsError::BudgetExhausted);
         }
         let resource = Arc::clone(&custody.resource);
@@ -552,6 +569,7 @@ impl Attempt {
             )
             .is_err()
         {
+            budget.invalidate();
             return Err(ProcfsError::BudgetExhausted);
         }
         // No fallible operation follows this CAS before the two shared references
@@ -563,6 +581,7 @@ impl Attempt {
             payload: RequestPayload::Procfs {
                 resource,
                 proc_root,
+                budget: Arc::clone(&budget),
             },
         });
         slots.cleanup = None;
@@ -570,6 +589,7 @@ impl Attempt {
             lane,
             token: next_token,
             deadline,
+            budget,
             armed: true,
         })
     }
@@ -645,7 +665,8 @@ impl Attempt {
             request.budget.invalidate();
             return Err(artifact::ArtifactError::BudgetExhausted);
         }
-        let deadline = request.budget.deadline;
+        let deadline = request.budget.deadline();
+        let budget = Arc::clone(&request.budget);
         slots.request = Some(Request {
             token: next_token,
             deadline,
@@ -657,17 +678,24 @@ impl Attempt {
             lane,
             token: next_token,
             deadline,
+            budget,
             armed: true,
         }))
     }
 
     fn dispatch(&mut self) -> Result<DispatchStatus, ProcfsError> {
         if !self.armed || Instant::now() >= self.deadline {
+            self.budget.invalidate();
+            self.close();
+            return Err(ProcfsError::BudgetExhausted);
+        }
+        if self.budget.valid().is_err() {
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
         let expected = word(ACTIVE, self.token.get());
         if self.lane.control.load(Ordering::SeqCst) != expected {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
@@ -675,18 +703,21 @@ impl Attempt {
             Ok(slots) => slots,
             Err(std::sync::TryLockError::WouldBlock) => return Ok(DispatchStatus::Pending),
             Err(std::sync::TryLockError::Poisoned(_)) => {
+                self.budget.invalidate();
                 self.lane.terminalize();
                 self.armed = false;
                 return Err(ProcfsError::CleanupUncertain);
             }
         };
         let associated = slots.request.as_ref().is_some_and(|request| {
-            request.token == self.token && request.kind() == RequestKind::Procfs
+            request.token == self.token
+                && request.kind() == RequestKind::Procfs
+                && Arc::ptr_eq(request.budget(), &self.budget)
+                && request.deadline == self.budget.deadline()
+                && self.deadline == self.budget.deadline()
         });
         if !associated {
-            if let Some(budget) = slots.request.as_ref().and_then(Request::budget) {
-                budget.invalidate();
-            }
+            self.budget.invalidate();
             self.lane.terminalize();
             self.armed = false;
             return Err(ProcfsError::InvalidDescriptor);
@@ -696,9 +727,12 @@ impl Attempt {
             .as_ref()
             .is_some_and(|request| request.dispatched)
         {
+            self.budget.invalidate();
+            self.close();
             return Err(ProcfsError::InvalidDescriptor);
         }
         if Instant::now() >= self.deadline {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
@@ -708,12 +742,14 @@ impl Attempt {
             .compare_exchange(expected, expected, Ordering::SeqCst, Ordering::SeqCst)
             .is_err()
         {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
         // A clock sample after the RMW proves that its admission linearization
         // preceded D. If scheduling consumed the budget, no flag is published.
         if Instant::now() >= self.deadline {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
@@ -793,21 +829,28 @@ impl Attempt {
 
     fn poll(&mut self) -> Result<Option<NativeSample>, ProcfsError> {
         if !self.armed || Instant::now() >= self.deadline {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
         let current = self.lane.control.load(Ordering::SeqCst);
         if terminal(current) || !same_token(current, self.token) {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
         if current != word(READY, self.token.get()) {
+            if self.budget.valid().is_err() {
+                self.close();
+                return Err(ProcfsError::BudgetExhausted);
+            }
             return Ok(None);
         }
         let mut slots = match self.lane.slots.try_lock() {
             Ok(slots) => slots,
             Err(std::sync::TryLockError::WouldBlock) => return Ok(None),
             Err(std::sync::TryLockError::Poisoned(_)) => {
+                self.budget.invalidate();
                 self.lane.terminalize();
                 self.armed = false;
                 return Err(ProcfsError::CleanupUncertain);
@@ -818,6 +861,7 @@ impl Attempt {
         }) || !slots.cleanup.is_some_and(|(token, kind, accounting)| {
             token == self.token && kind == RequestKind::Procfs && accounting.complete(kind)
         }) {
+            self.budget.invalidate();
             self.lane.terminalize();
             self.armed = false;
             return Err(ProcfsError::CleanupUncertain);
@@ -828,10 +872,12 @@ impl Attempt {
         // The reservation happens before this clock sample. Late outcomes remain
         // in the root for worker disposal; no allocator/free work moves here.
         if Instant::now() >= self.deadline || terminal(self.lane.control.load(Ordering::SeqCst)) {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
         if !retire_reserved(&self.lane.control, self.token) {
+            self.budget.invalidate();
             self.close();
             return Err(ProcfsError::BudgetExhausted);
         }
@@ -841,13 +887,20 @@ impl Attempt {
         self.lane.wake();
         if let Some(completion) = completion {
             match completion.outcome {
-                CompletionOutcome::Procfs(outcome) => outcome.map(Some),
+                CompletionOutcome::Procfs(Ok(sample)) => self
+                    .budget
+                    .valid()
+                    .map(|()| Some(sample))
+                    .map_err(|_| ProcfsError::BudgetExhausted),
+                CompletionOutcome::Procfs(Err(error)) => Err(error),
                 CompletionOutcome::Artifact(_) | CompletionOutcome::Root(_) => {
+                    self.budget.invalidate();
                     self.lane.terminalize();
                     Err(ProcfsError::CleanupUncertain)
                 }
             }
         } else {
+            self.budget.invalidate();
             self.lane.terminalize();
             Err(ProcfsError::CleanupUncertain)
         }
@@ -963,6 +1016,9 @@ impl Attempt {
 
 impl Drop for Attempt {
     fn drop(&mut self) {
+        if self.armed {
+            self.budget.invalidate();
+        }
         self.close();
     }
 }
@@ -1022,13 +1078,13 @@ fn worker_body() {
         let deadline = request.deadline;
         let kind = request.kind();
         let mut artifact_guard = ArtifactWorkerGuard {
-            budget: request.budget().map(Arc::clone),
+            budget: Some(Arc::clone(request.budget())),
             complete: false,
         };
         let (outcome, mut accounting) = run_fixed_attempt(&LANE, &request, &mut retained_root);
         retire_request(&LANE, request, &mut accounting);
         let budgeted_success = match &outcome {
-            CompletionOutcome::Procfs(_) => true,
+            CompletionOutcome::Procfs(result) => result.is_ok(),
             CompletionOutcome::Artifact(result) => result.is_ok(),
             CompletionOutcome::Root(result) => result.success(),
         };
@@ -1063,17 +1119,21 @@ fn publish_completion(
         }
         lane.terminalize();
     };
-    if matches!(&outcome, CompletionOutcome::Artifact(Err(_)))
-        && let Some(budget) = budget
+    if matches!(
+        &outcome,
+        CompletionOutcome::Artifact(Err(_)) | CompletionOutcome::Procfs(Err(_))
+    ) && let Some(budget) = budget
     {
         budget.invalidate();
     }
-    if kind != RequestKind::Procfs && budget.is_none() {
+    if budget.is_none() {
         deny();
         return false;
     }
-    if matches!(&outcome, CompletionOutcome::Artifact(Ok(_)))
-        && budget.is_none_or(|budget| budget.valid().is_err())
+    if matches!(
+        &outcome,
+        CompletionOutcome::Artifact(Ok(_)) | CompletionOutcome::Procfs(Ok(_))
+    ) && budget.is_none_or(|budget| budget.valid().is_err())
     {
         deny();
         return false;
@@ -1196,9 +1256,10 @@ fn retire_request(lane: &LaneRoot, request: Request, accounting: &mut CleanupAcc
         RequestPayload::Procfs {
             resource,
             proc_root,
+            budget,
         } => {
             #[cfg(not(target_os = "linux"))]
-            let _ = lane;
+            let _ = (lane, &budget);
             // Both references are retired even when the first consuming close fails.
             for file in [resource, proc_root] {
                 #[cfg(target_os = "linux")]
@@ -1207,6 +1268,7 @@ fn retire_request(lane: &LaneRoot, request: Request, accounting: &mut CleanupAcc
                         && nix::unistd::close(file).is_err()
                     {
                         accounting.input_close_failures += 1;
+                        budget.invalidate();
                         lane.terminalize();
                     }
                 }
@@ -1297,7 +1359,7 @@ mod linux {
     use super::super::{fdinfo::FdInfoRecord, mountinfo::MountInfoTable};
     use super::{
         CleanupAccounting, Instant, LANE, LinkObservation, MAX_FDINFO_BYTES, MAX_MOUNTINFO_BYTES,
-        NativeSample, ObjectObservation, Ordering, ProcfsError, Request, terminal,
+        NativeSample, ObjectObservation, Ordering, ProcfsError, Request, same_token, terminal,
         validate_namespace_link,
     };
     use nix::fcntl::{FcntlArg, OFlag, OpenHow, ResolveFlag, fcntl, openat, openat2};
@@ -1391,18 +1453,26 @@ mod linux {
         } else {
             result
         };
+        if result.is_err() {
+            scope.request.budget().invalidate();
+        }
         (result, scope.accounting)
     }
 
     impl NativeScope<'_> {
         fn check(&self) -> Result<(), ProcfsError> {
-            if terminal(LANE.control.load(Ordering::SeqCst))
+            let budget = self.request.budget();
+            let state = LANE.control.load(Ordering::SeqCst);
+            if terminal(state)
+                || !same_token(state, self.request.token)
                 || Instant::now() >= self.request.deadline
+                || self.request.deadline != budget.deadline()
             {
+                budget.invalidate();
                 LANE.terminalize();
                 return Err(ProcfsError::BudgetExhausted);
             }
-            Ok(())
+            budget.valid().map_err(|_| ProcfsError::BudgetExhausted)
         }
 
         fn fd(&self, index: usize) -> Result<&OwnedFd, ProcfsError> {

@@ -1,5 +1,10 @@
 # Stage-A Private Readable-Object ACL Candidate
 
+Source allocation update, November 5: the existing fifteen-file native closure
+now resides privately in `lnsat-store`, preserving its exact relocation bytes
+and module topology. Historical daemon-side evidence remains dated; relocation
+alone supplies no native execution, cleanup or authority proof.
+
 Status: exact inert candidate contract under the human-accepted source-order
 amendment. Project Status remains the sole implementation and acceptance
 record. This contract does not complete the native source/pin/feasibility freeze.
@@ -12,7 +17,7 @@ held readable regular file or directory. The primary controller owns security
 implementation and integration judgment. Fresh independent review gates this
 exact contract before implementation and the exact resulting source afterward.
 
-Owned source: `crates/lnsatd/src/headless_native.rs`, its private ACL and
+Owned source: `crates/lnsat-store/src/headless_native.rs`, its private ACL and
 readable-object children and tests, and the private declaration in `lib.rs`.
 Dependency scope: one Linux-only exact `rustix = "=1.1.5"` dependency with default
 features disabled and `std,alloc,fs`; the resulting lock delta is reviewed.

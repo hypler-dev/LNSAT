@@ -1,0 +1,115 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0112-independent-implementation-review-829a868d",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["rooted-pending-preparation-journal-and-mac-harness"],
+  "base_revision": "1fd21d362546986f0d81e955fdfa9643b0acb6cf",
+  "reviewed_revision": "829a868da4314cbde7a0cb89eadaf68520b8b05b",
+  "reviewed_tree_oid": "50770e89c1a22b7a4ae017c489201117b8099f2d",
+  "diff_sha256": "sha256:7bc9348eebf39b07b304f87de5111d50eddafe6ddfdbfa3ee0e2fc2e10f7c464",
+  "protected_files": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:1bdfd5e3f3795fe9613733a1e3ca8058cc7968d063b4cdf792fc6343ba1545ab"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation.rs",
+      "sha256": "sha256:a6f9a343c361d86c112573f7f45fb7ce18007ca3f4676a1bf1c0bbc894c07337"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_custody.rs",
+      "sha256": "sha256:7789360699a231b77a478515addced92f7bf9269de3de6895007b196ccfb2999"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_custody_tests.rs",
+      "sha256": "sha256:69c7edd5f185b6671a6ba72871ecacb856e7a20f21e09fbbe58e13b3a1227945"
+    },
+    {
+      "path": "crates/lnsat-store/src/headless_preparation_tests.rs",
+      "sha256": "sha256:9c9c783820f8dcb9b3c0067c02423c99322f919e03130767518da159228c76dd"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root.rs",
+      "sha256": "sha256:8d9adc3a1808299d962064aa34c46353e6c5630cbf6837fc5c27186c2b4f450a"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_journal_schedule.rs",
+      "sha256": "sha256:9f82e956049be95a40942a03672c7cb152ad7d735c5f031a646d60b17ea0dd54"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_linux.rs",
+      "sha256": "sha256:721706f1d2d8f38d1208ecfed497cc77cf464382f31e928b9820b5395a0e9b13"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_pending_journal.rs",
+      "sha256": "sha256:a8fdc1bae0614c2007d68d37ef16d9d7d15a7946b7bce9e2bd03875083fc3217"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_pending_journal_tests.rs",
+      "sha256": "sha256:a4118f2f46d0d866857c2881d9f3d6ff6831cdc37b42784b5b348ae4241c5c98"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_pending_native_tests.rs",
+      "sha256": "sha256:521668906efab26e8538d1c2f4f6c11166e48029c2aeaa0b9642b901fb59c7ff"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_proc.rs",
+      "sha256": "sha256:5ad1d5071b73c0ba18934a62ee87d4de46cf6f745cb32ba06d84c4222c14746c"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_storage.rs",
+      "sha256": "sha256:84ee27399676d9bdfcae554ce4e243287767d496591bb475c2d50c6ec49cc0da"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_root_tests.rs",
+      "sha256": "sha256:7941faec61b9a26336d84761e9362245bdacf6565b53dc5c6073547710206128"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:56cb79bc77baaec0f97c9a59fb52fa1a14cead7db3c9b147e868bad546d084b1"
+    },
+    {
+      "path": "docs/LOCAL_DEVELOPMENT.md",
+      "sha256": "sha256:0ea21442ccb9a3f33b73e341ad26a9ce1c3422b9ca28d70983e14d642f3a0173"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:3fa56136753e98301e7269d356225bc42a1e629879dc7f430414692d08a69663"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:a5b15d76d94e9b244ad9df1625bcc09daf896dc4334850034a7982389abf79af"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/rooted-preparation-journal.md",
+      "sha256": "sha256:276dbcab26e8135aa71b7803a8d00dea9a0f5b890815c36b5a6508749c4d3982"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:2afaf49e2b5d2e84ae76ba53510b3308ad20169927a72a52d0dfe989cc993e7d"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:9558f904cfd356254c1c29129171145aed1be22dab0d8f41ae63d9ea3e60c31a"
+    },
+    {
+      "path": "scripts/run-rust-workspace.mjs",
+      "sha256": "sha256:f6899cf245e894763e5ed7376b47add2134c3e9fce77767ccba16d50dbd4b0df"
+    },
+    {
+      "path": "scripts/run-rust-workspace.test.mjs",
+      "sha256": "sha256:510d8480cd0dfd257c2f13ea3885773662f626ebbba9be0d967aecd908cd903d"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/root_retention_current_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh; backend runtime model ID unexposed. Independent source, final composition and registration, and Mac actual-outcome reviews passed with no actionable source P1/P2 findings. Four new Linux pending cases are compiled only and await draft Ubuntu source CI. The Mac runner passed 24/24 and both focused 32-writer cases passed. The Rust remainder passed with separate store 651/0/1 and daemon 309/0/0 counts. The production 20-second acquisition budget and explicit 32-writer concurrency remain unchanged. Earlier npm/environment and Rust suffix failures, and the 600-second metadata observation timeout, remain preserved. This is not evidence of one complete npm invocation returning zero or an attribution of historical cause. Genuine recipe and preparation, complete cleanup, atomic initialization, runtime, support, release, merge and deployment remain closed. PR #120 stays draft; no formal GitHub approval is claimed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0109-independent-implementation-review-2c7561b9",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["protected-setup-linux-retirement-and-fixtures"],
+  "base_revision": "5121ccd549d71e79a398f32ec3df488de5092a3f",
+  "reviewed_revision": "2c7561b959fced8e15c28ceb66e094f613060123",
+  "reviewed_tree_oid": "40fd4ebc817fa9b0c35a92bf6cae36872c8c6998",
+  "diff_sha256": "sha256:c131637582184bc134ed232729a5791ef1cc1045dd21edf3176ea794bacdbce0",
+  "protected_files": [
+    {
+      "path": "crates/lnsat-store/src/owned_test_process.rs",
+      "sha256": "sha256:cd9e97d0eda3433e602c75e00c5c058716d62449e1c19cc6f55ec5a241b4e3da"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_store.rs",
+      "sha256": "sha256:b76a2636b1e8be5c402c19a74143311154d4d948ac5d8430ebd6be24e5986331"
+    },
+    {
+      "path": "crates/lnsat-store/src/selected_write.rs",
+      "sha256": "sha256:b3f159a4a65729d1b55c68946c1fcc793ef4f24df1d8343163661cad904c3c0b"
+    },
+    {
+      "path": "crates/lnsat-store/src/tests/selected_store.rs",
+      "sha256": "sha256:768e9e01aabfef0072d0ae91439dde877636e96993b7724b90dd632060036fc6"
+    },
+    {
+      "path": "crates/lnsat-store/src/write_sync.rs",
+      "sha256": "sha256:2da10264550ef1878aebe7a4a803d84e59442e57f112e92a876e75ff1653a5d3"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:1708dee5d7ed9e8810394c30a387c9214d7e867fcff7c05c0dd7394e186fbaba"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:a0107a79126f9c6d23f0efee6b37f781b93851deca9fd8e4ec317f9a67098384"
+    },
+    {
+      "path": "docs/architecture/headless-local-bootstrap/selected-write-source-spec.md",
+      "sha256": "sha256:5a962426a1e40efdda39ab78a32ff587195388324ae78590dea91d730d1b13c0"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:c169c61e5c187e4273b1f76990fc2ffc6531462074961d764443955746a49a10"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:4f75c52e043f40467695437d04a171c470394622245dcdafed328327b22aab11"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/current_setup_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh; backend runtime model ID unexposed. Independent exact source, source-delta, current docs and actual macOS full-gate reviews passed. Current full store607/0failed/2ignored, separate daemon309/0failed/0ignored and selected Phase-7 store155/0failed/0ignored. Strict Mac and Linux cross-target Clippy passed. Exact committed-source and metadata-child binding requires separate final review. Corrected native Ubuntu CI remains pending; original run42185885625 remains failed with historical cause not established. Genuine strong-profile preparation, rooted complete ownership/checked SQL, atomic initializer and management integration remain unfinished. Source evidence only; no physical ABA containment, runtime, merge, deployment or release qualification."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

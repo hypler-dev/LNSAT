@@ -1,5 +1,6 @@
 use crate::{CONTRACT_VERSION_V1_0, PacketBudgetV1, is_valid_reference_v1};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::fmt;
 
 /// Exact declaration schema identity.
@@ -61,6 +62,35 @@ impl fmt::Debug for HeadlessConfigDeclarationV1 {
             .field("layer_count", &self.document.layers.len())
             .finish()
     }
+}
+
+impl HeadlessConfigDeclarationV1 {
+    /// Emits the complete validated declaration as bounded canonical JSON.
+    ///
+    /// The returned JSON contains declared references and identity assertions.
+    /// It grants no authority and proves no native observation, ownership, or activation.
+    ///
+    /// # Errors
+    ///
+    /// Returns a fixed error when canonical encoding fails or exceeds the declaration ceiling.
+    pub fn canonical_json(&self) -> Result<String, HeadlessConfigErrorV1> {
+        let value = serde_json::to_value(&self.document)
+            .map_err(|_| HeadlessConfigErrorV1::InvalidDeclaration)?;
+        canonical_json_value(&value, MAX_HEADLESS_CONFIG_BYTES_V1)
+    }
+}
+
+pub(super) fn canonical_json_value(
+    value: &Value,
+    ceiling: usize,
+) -> Result<String, HeadlessConfigErrorV1> {
+    let mut output = String::new();
+    crate::packet::write_canonical_json_value(value, &mut output)
+        .map_err(|_| HeadlessConfigErrorV1::InvalidDeclaration)?;
+    if output.len() > ceiling {
+        return Err(HeadlessConfigErrorV1::InvalidSize);
+    }
+    Ok(output)
 }
 
 /// Parses one bounded declaration-only headless configuration document.

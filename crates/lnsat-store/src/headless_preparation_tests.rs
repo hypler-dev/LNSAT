@@ -574,3 +574,107 @@ fn fixed_error_codes_are_short_and_data_free() {
         assert!(!error.code().contains(CANDIDATE_DIGEST));
     }
 }
+
+#[test]
+fn unverified_root_frame_preserves_exact_canonical_bytes_and_digest() {
+    let first = UnverifiedRootJournalFrame::decode(PENDING_FRAME.as_bytes())
+        .expect("canonical pending frame must decode");
+    let second = UnverifiedRootJournalFrame::decode(PENDING_FRAME.as_bytes())
+        .expect("same canonical pending frame must decode");
+    let later_bytes = encode_record(&normal_records()[1]).expect("later frame must encode");
+    let later = UnverifiedRootJournalFrame::decode(&later_bytes)
+        .expect("canonical later frame must decode");
+
+    assert_eq!(first.bytes(), PENDING_FRAME.as_bytes());
+    assert_eq!(first.preparation_id(), PREPARATION_ID);
+    assert_eq!(first.candidate_digest(), CANDIDATE_DIGEST);
+    assert_eq!(first.store_digest(), STORE_DIGEST);
+    assert_eq!(first.recipe_digest(), RECIPE_DIGEST);
+    assert_eq!(first.challenge_digest(), CHALLENGE_DIGEST);
+    assert_eq!(first.container_id(), None);
+    assert_eq!(
+        first.digest().expect("canonical pending frame must digest"),
+        PENDING_JOURNAL_DIGEST
+    );
+    assert!(first.same_frame(&second));
+    assert!(!first.same_frame(&later));
+}
+
+#[test]
+fn unverified_root_frame_projects_all_closed_phases_and_accessors() {
+    let expected = [
+        ("pending", UnverifiedRootJournalPhase::Pending),
+        ("probe_created", UnverifiedRootJournalPhase::ProbeCreated),
+        (
+            "cleanup_verified",
+            UnverifiedRootJournalPhase::CleanupVerified,
+        ),
+        ("bound", UnverifiedRootJournalPhase::Bound),
+        ("quarantined", UnverifiedRootJournalPhase::Quarantined),
+    ];
+    for (name, phase) in expected {
+        let records = prefix_for_phase(name);
+        let record = records.last().expect("phase fixture must have a record");
+        let bytes = encode_record(record).expect("phase fixture must encode");
+        let frame =
+            UnverifiedRootJournalFrame::decode(&bytes).expect("canonical phase frame must decode");
+
+        assert_eq!(frame.preparation_id(), PREPARATION_ID);
+        assert_eq!(frame.candidate_digest(), CANDIDATE_DIGEST);
+        assert_eq!(frame.store_digest(), STORE_DIGEST);
+        assert_eq!(frame.recipe_digest(), RECIPE_DIGEST);
+        assert_eq!(frame.challenge_digest(), CHALLENGE_DIGEST);
+        assert_eq!(frame.owner_uid(), 1001);
+        assert_eq!(frame.revision(), record.revision);
+        assert_eq!(frame.phase(), phase);
+    }
+
+    let records = normal_records();
+    let probe_bytes = encode_record(&records[1]).expect("probe frame must encode");
+    let probe = UnverifiedRootJournalFrame::decode(&probe_bytes).expect("probe frame must decode");
+    assert_eq!(probe.container_id(), Some(CONTAINER_ID));
+}
+
+#[test]
+fn unverified_root_frame_follows_only_the_existing_valid_chain_context_and_digest() {
+    let records = normal_records();
+    let prior_bytes = encode_record(&records[0]).expect("prior frame must encode");
+    let next_bytes = encode_record(&records[1]).expect("next frame must encode");
+    let prior = UnverifiedRootJournalFrame::decode(&prior_bytes).expect("prior frame must decode");
+    let next = UnverifiedRootJournalFrame::decode(&next_bytes).expect("next frame must decode");
+    assert!(next.follows(&prior).is_ok());
+
+    let mut mismatched_context = records[1].clone();
+    mismatched_context.owner_uid = 1002;
+    let context_bytes = encode_record(&mismatched_context).expect("context frame must encode");
+    let context =
+        UnverifiedRootJournalFrame::decode(&context_bytes).expect("context frame must decode");
+    assert_eq!(
+        context.follows(&prior),
+        Err(UnverifiedRootJournalFrameError::InvalidChain)
+    );
+
+    let mut mismatched_digest = records[1].clone();
+    mismatched_digest.previous_digest = nullable(Some(BINDING_DIGEST));
+    let digest_bytes = encode_record(&mismatched_digest).expect("digest frame must encode");
+    let digest =
+        UnverifiedRootJournalFrame::decode(&digest_bytes).expect("digest frame must decode");
+    assert_eq!(
+        digest.follows(&prior),
+        Err(UnverifiedRootJournalFrameError::InvalidChain)
+    );
+
+    let mut changed_first = pending();
+    changed_first.candidate_digest = BINDING_DIGEST.to_owned();
+    changed_first.store_digest = RECIPE_DIGEST.to_owned();
+    changed_first.recipe_digest = CHALLENGE_DIGEST.to_owned();
+    changed_first.challenge_digest = PROFILE_DIGEST.to_owned();
+    let changed_bytes = encode_record(&changed_first).expect("changed first frame must encode");
+    let changed = UnverifiedRootJournalFrame::decode(&changed_bytes)
+        .expect("changed first frame must decode");
+    assert_eq!(changed.candidate_digest(), BINDING_DIGEST);
+    assert_eq!(changed.store_digest(), RECIPE_DIGEST);
+    assert_eq!(changed.recipe_digest(), CHALLENGE_DIGEST);
+    assert_eq!(changed.challenge_digest(), PROFILE_DIGEST);
+    assert!(!changed.same_frame(&prior));
+}

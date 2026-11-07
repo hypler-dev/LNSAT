@@ -1,5 +1,10 @@
 # HCFG-6 Native Source Specification
 
+Source allocation update, November 5: the existing fifteen-file native closure
+now resides privately in `lnsat-store`, preserving its exact relocation bytes
+and module topology. Historical daemon-side evidence remains dated; relocation
+alone supplies no native execution, cleanup or authority proof.
+
 Status: proposed supporting source freeze; independent feasibility and source
 review are required before behavioral integration. The accepted HCFG-6 intent
 is unchanged. [Project Status](../../PROJECT_STATUS.md#hcfg-6-resource-and-runtime-enforcement-design)
@@ -372,7 +377,7 @@ checkpoint; the later exact retained-worker contract has its own disposition in
 Project Status. No material
 custody/trust amendment is accepted by adding this parser.
 
-Owned source is `crates/lnsatd/src/headless_native_fdinfo.rs`, its adjacent
+Owned source is `crates/lnsat-store/src/headless_native_fdinfo.rs`, its adjacent
 `headless_native_fdinfo_tests.rs` and one private module declaration in
 `headless_native.rs`. The parser takes one immutable supplied byte slice and
 returns one private record with `position: u64`, `flags: u32`, `mount_id: u32`
@@ -770,7 +775,7 @@ where `R = size_of::<MountInfoRow>()` for the selected compiled target. The
 allocations, request/result slots, thread stack/TLS and library/native thread
 bookkeeping remain additional. This formula neither assumes an unverified Rust
 layout nor counts mutually exclusive phases as a measured process peak. Existing
-[`headless_native_mountinfo.rs`](../../../crates/lnsatd/src/headless_native_mountinfo.rs)
+[`headless_native_mountinfo.rs`](../../../crates/lnsat-store/src/headless_native_mountinfo.rs)
 implements these decoder bounds; no decoder source change is required.
 
 Rust 1.97.1's [`Vec::try_reserve_exact` contract](https://github.com/rust-lang/rust/blob/1.97.1/library/alloc/src/vec/mod.rs#L1508-L1524)
@@ -1396,7 +1401,7 @@ construction or execution; Project Status owns that pending authorization.
 A ready contract must receive fresh independent read-only precode review of
 every native operation, timeout/lifetime/cleanup path and feasible non-root
 positive recipe. The private source candidate owns
-`crates/lnsatd/src/headless_native_procfs.rs`, its focused test companion and the
+`crates/lnsat-store/src/headless_native_procfs.rs`, its focused test companion and the
 private declaration in `headless_native.rs`. The exact precode gate has passed.
 Composition also requires read-only parent-private accessors in the existing
 fdinfo and mountinfo byte modules: parsed numeric identities, filesystem type

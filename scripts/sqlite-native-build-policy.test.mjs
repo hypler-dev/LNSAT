@@ -165,6 +165,11 @@ function graph() {
                 },
               ],
             },
+            {
+              name: "rustix",
+              pkg: "acl",
+              dep_kinds: [{ kind: null, target: 'cfg(target_os = "linux")' }],
+            },
           ],
         },
         { id: "acl", features: ["alloc", "fs", "std"], deps: [] },
@@ -592,3 +597,36 @@ test(
     }
   },
 );
+
+test("native graph pins exactly daemon and store Linux-only rustix owners", () => {
+  for (const mutate of [
+    (g) => {
+      g.resolve.nodes[3].deps.pop();
+    },
+    (g) => {
+      g.resolve.nodes[5].deps = [];
+    },
+    (g) => {
+      g.resolve.nodes[3].deps[1].dep_kinds[0].target = null;
+    },
+    (g) => {
+      g.resolve.nodes[3].deps[1].dep_kinds[0].kind = "dev";
+    },
+    (g) => {
+      g.resolve.nodes[3].deps[1].name = "alternate";
+    },
+    (g) => {
+      g.resolve.nodes[3].deps.push({ ...g.resolve.nodes[3].deps[1] });
+    },
+    (g) => {
+      g.resolve.nodes[0].deps = [{ ...g.resolve.nodes[3].deps[1] }];
+    },
+  ]) {
+    const candidate = graph();
+    mutate(candidate);
+    assert.throws(
+      () => verifyNativeGraph(candidate),
+      /^Error: sqlite_native.graph_rejected$/,
+    );
+  }
+});

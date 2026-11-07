@@ -5,9 +5,11 @@ use super::*;
 fn control_fixture() -> (&'static LaneRoot, OwnedProcfsCustody) {
     let lane = Box::leak(Box::new(LaneRoot::new()));
     lane.control.store(IDLE, Ordering::SeqCst);
+    let budget = artifact::ArtifactReadBudget::begin(deadline()).unwrap();
     let custody = OwnedProcfsCustody {
         resource: Arc::new(File::open(std::env::current_exe().unwrap()).unwrap()),
         proc_root: Arc::new(File::open(std::env::temp_dir()).unwrap()),
+        budget: Arc::clone(budget.shared_state()),
     };
     (lane, custody)
 }
@@ -17,7 +19,7 @@ fn deadline() -> Instant {
 }
 
 fn prepared(lane: &'static LaneRoot, custody: &OwnedProcfsCustody) -> Attempt {
-    Attempt::prepare_in(lane, custody, deadline()).unwrap()
+    Attempt::prepare_in(lane, custody).unwrap()
 }
 
 fn complete_denial(attempt: &mut Attempt, error: ProcfsError) {
@@ -26,6 +28,7 @@ fn complete_denial(attempt: &mut Attempt, error: ProcfsError) {
     let request = lane.slots.lock().unwrap().request.take().unwrap();
     let job = request.token;
     let deadline = request.deadline;
+    let budget = Arc::clone(request.budget());
     let mut accounting = CleanupAccounting::default();
     retire_request(lane, request, &mut accounting);
     publish_completion(
@@ -35,7 +38,7 @@ fn complete_denial(attempt: &mut Attempt, error: ProcfsError) {
         RequestKind::Procfs,
         CompletionOutcome::Procfs(Err(error)),
         accounting,
-        None,
+        Some(budget.as_ref()),
     );
 }
 
@@ -48,10 +51,14 @@ fn procfs_preparation_borrows_same_custody_without_dispatch() {
     let slots = lane.slots.lock().unwrap();
     let request = slots.request.as_ref().unwrap();
     let (resource, proc_root) = request.procfs().unwrap();
+    let budget = request.budget();
     assert!(Arc::ptr_eq(resource, &custody.resource));
     assert!(Arc::ptr_eq(proc_root, &custody.proc_root));
+    assert!(Arc::ptr_eq(budget, &custody.budget));
+    assert!(Arc::ptr_eq(&attempt.budget, &custody.budget));
     assert!(!request.dispatched);
     assert_eq!(request.deadline, attempt.deadline);
+    assert_eq!(request.deadline, custody.budget.deadline());
     drop(slots);
     drop(attempt);
     drain_terminal(lane);
@@ -73,7 +80,7 @@ fn procfs_preparation_borrows_same_custody_without_dispatch() {
 fn procfs_busy_prepare_does_not_close_lane_or_take_custody() {
     let (lane, custody) = control_fixture();
     let slots = lane.slots.lock().unwrap();
-    assert!(Attempt::prepare_in(lane, &custody, deadline()).is_err());
+    assert!(Attempt::prepare_in(lane, &custody).is_err());
     assert_eq!(lane.control.load(Ordering::SeqCst), IDLE);
     assert_eq!(Arc::strong_count(&custody.resource), 1);
     drop(slots);
@@ -119,10 +126,36 @@ fn procfs_expired_poll_denies_without_waiting_for_slots() {
     attempt.deadline = Instant::now();
     let slots = lane.slots.lock().unwrap();
     assert!(matches!(attempt.poll(), Err(ProcfsError::BudgetExhausted)));
+    assert_eq!(
+        custody.budget.valid(),
+        Err(artifact::ArtifactError::ObservationInvalid)
+    );
     assert!(terminal(lane.control.load(Ordering::SeqCst)));
     assert!(slots.request.is_some());
     drop(slots);
     drain_terminal(lane);
+    assert!(Attempt::prepare_in(lane, &custody).is_err());
+}
+
+#[test]
+fn procfs_invalidated_budget_denies_before_dispatch_and_poll() {
+    let (dispatch_lane, dispatch_custody) = control_fixture();
+    let mut dispatch_attempt = prepared(dispatch_lane, &dispatch_custody);
+    dispatch_custody.budget.invalidate();
+    assert!(matches!(
+        dispatch_attempt.dispatch(),
+        Err(ProcfsError::BudgetExhausted)
+    ));
+    drain_terminal(dispatch_lane);
+
+    let (poll_lane, poll_custody) = control_fixture();
+    let mut poll_attempt = prepared(poll_lane, &poll_custody);
+    poll_custody.budget.invalidate();
+    assert!(matches!(
+        poll_attempt.poll(),
+        Err(ProcfsError::BudgetExhausted)
+    ));
+    drain_terminal(poll_lane);
 }
 
 #[test]
@@ -157,21 +190,20 @@ fn procfs_drop_ready_attempt_closes_and_drains_denial() {
 }
 
 #[test]
-fn procfs_two_timely_denials_retire_without_reusing_tokens() {
+fn procfs_denial_invalidates_original_budget_without_retry() {
     let (lane, custody) = control_fixture();
-    for expected_token in 1..=2 {
-        let mut attempt = prepared(lane, &custody);
-        assert_eq!(attempt.token.get(), expected_token);
-        complete_denial(&mut attempt, ProcfsError::OriginRejected);
-        assert!(matches!(attempt.poll(), Err(ProcfsError::OriginRejected)));
-        assert!(!attempt.armed);
-        assert!(finish_retirement(lane, word(RETIRING, expected_token)));
-        drop(attempt);
-        assert_eq!(
-            lane.control.load(Ordering::SeqCst),
-            word(IDLE, expected_token)
-        );
-    }
+    let mut attempt = prepared(lane, &custody);
+    let token = attempt.token;
+    complete_denial(&mut attempt, ProcfsError::OriginRejected);
+    assert!(matches!(attempt.poll(), Err(ProcfsError::OriginRejected)));
+    assert!(!attempt.armed);
+    assert!(finish_retirement(lane, word(RETIRING, token.get())));
+    drop(attempt);
+    assert!(matches!(
+        custody.budget.valid(),
+        Err(artifact::ArtifactError::ObservationInvalid)
+    ));
+    assert!(Attempt::prepare_in(lane, &custody).is_err());
     assert_eq!(Arc::strong_count(&custody.resource), 1);
 }
 
@@ -183,11 +215,17 @@ fn procfs_stale_attempt_drop_cannot_cancel_new_token() {
     complete_denial(&mut first, ProcfsError::OriginRejected);
     assert!(first.poll().is_err());
     assert!(finish_retirement(lane, word(RETIRING, old_token.get())));
-    let second = prepared(lane, &custody);
+    assert!(Attempt::prepare_in(lane, &custody).is_err());
+    // A separately admitted operation has a different original budget. The
+    // denied operation cannot reset its allocation to obtain another attempt.
+    let (_, next_custody) = control_fixture();
+    assert!(!Arc::ptr_eq(&custody.budget, &next_custody.budget));
+    let second = prepared(lane, &next_custody);
     let stale = Attempt {
         lane,
         token: old_token,
-        deadline: deadline(),
+        deadline: custody.budget.deadline(),
+        budget: Arc::clone(&custody.budget),
         armed: true,
     };
     drop(stale);
@@ -195,6 +233,8 @@ fn procfs_stale_attempt_drop_cannot_cancel_new_token() {
         lane.control.load(Ordering::SeqCst),
         word(ACTIVE, second.token.get())
     );
+    assert!(next_custody.budget.valid().is_ok());
+    assert!(custody.budget.valid().is_err());
     drop(second);
     drain_terminal(lane);
 }
@@ -204,7 +244,7 @@ fn procfs_exhaustion_terminalizes_without_new_reference() {
     let (lane, custody) = control_fixture();
     lane.control.store(word(IDLE, TOKEN_MAX), Ordering::SeqCst);
     assert!(matches!(
-        Attempt::prepare_in(lane, &custody, deadline()),
+        Attempt::prepare_in(lane, &custody),
         Err(ProcfsError::LimitExceeded)
     ));
     assert_eq!(
@@ -222,7 +262,7 @@ fn procfs_poison_denies_without_repair_or_reference_transfer() {
         panic!("synthetic mutex poison");
     });
     assert!(matches!(
-        Attempt::prepare_in(lane, &custody, deadline()),
+        Attempt::prepare_in(lane, &custody),
         Err(ProcfsError::CleanupUncertain)
     ));
     assert!(terminal(lane.control.load(Ordering::SeqCst)));
@@ -333,6 +373,7 @@ fn procfs_late_stop_and_close_failure_retain_cleanup_without_reuse() {
         assert_eq!(attempt.dispatch(), Ok(DispatchStatus::Dispatched));
         let request = lane.slots.lock().unwrap().request.take().unwrap();
         let job = request.token;
+        let budget = Arc::clone(request.budget());
         let mut accounting = CleanupAccounting::default();
         retire_request(lane, request, &mut accounting);
         let deadline = if case == 0 {
@@ -356,7 +397,7 @@ fn procfs_late_stop_and_close_failure_retain_cleanup_without_reuse() {
             RequestKind::Procfs,
             CompletionOutcome::Procfs(Err(ProcfsError::OriginRejected)),
             accounting,
-            None,
+            Some(budget.as_ref()),
         );
         assert!(terminal(lane.control.load(Ordering::SeqCst)));
         drain_terminal(lane);
@@ -377,7 +418,7 @@ fn procfs_late_stop_and_close_failure_retain_cleanup_without_reuse() {
             accounting.reader_close_failures
         );
         drop(slots);
-        assert!(Attempt::prepare_in(lane, &custody, self::deadline()).is_err());
+        assert!(Attempt::prepare_in(lane, &custody).is_err());
     }
 }
 
@@ -487,6 +528,7 @@ fn root_denials_never_publish_as_procfs_completion() {
         let mut attempt = prepared(lane, &custody);
         assert_eq!(attempt.dispatch(), Ok(DispatchStatus::Dispatched));
         let request = lane.slots.lock().unwrap().request.take().unwrap();
+        let budget = Arc::clone(request.budget());
         let mut accounting = CleanupAccounting::default();
         retire_request(lane, request, &mut accounting);
         let outcome = CompletionOutcome::Root(root_bootstrap::RootCompletion::denied(
@@ -500,7 +542,7 @@ fn root_denials_never_publish_as_procfs_completion() {
             RequestKind::Procfs,
             outcome,
             accounting,
-            None,
+            Some(budget.as_ref()),
         ));
         assert!(terminal(lane.control.load(Ordering::SeqCst)));
         assert!(lane.slots.lock().unwrap().completion.is_none());
@@ -529,7 +571,7 @@ fn root_publication_requires_budget_and_own_cleanup() {
             assert!(!publish_completion(
                 &lane,
                 job,
-                budget.shared_state().deadline,
+                budget.shared_state().deadline(),
                 kind,
                 outcome,
                 CleanupAccounting::default(),
@@ -541,5 +583,46 @@ fn root_publication_requires_budget_and_own_cleanup() {
                 assert!(budget.shared_state().valid().is_err());
             }
         }
+    }
+}
+
+#[test]
+fn procfs_mismatched_request_budget_or_deadline_denies_before_dispatch() {
+    for wrong_budget in [true, false] {
+        let (lane, custody) = control_fixture();
+        let mut attempt = prepared(lane, &custody);
+        let other = artifact::ArtifactReadBudget::begin(deadline()).unwrap();
+        {
+            let mut slots = lane.slots.lock().unwrap();
+            let request = slots.request.as_mut().unwrap();
+            if wrong_budget {
+                if let RequestPayload::Procfs { budget, .. } = &mut request.payload {
+                    *budget = Arc::clone(other.shared_state());
+                } else {
+                    panic!("fixture must retain Procfs payload");
+                }
+            } else {
+                request.deadline = request
+                    .deadline
+                    .checked_add(Duration::from_secs(1))
+                    .unwrap();
+            }
+        }
+        assert_eq!(attempt.dispatch(), Err(ProcfsError::InvalidDescriptor));
+        assert!(custody.budget.valid().is_err());
+        assert!(terminal(lane.control.load(Ordering::SeqCst)));
+        assert!(
+            !lane
+                .slots
+                .lock()
+                .unwrap()
+                .request
+                .as_ref()
+                .unwrap()
+                .dispatched
+        );
+        drain_terminal(lane);
+        assert_eq!(Arc::strong_count(&custody.resource), 1);
+        assert_eq!(Arc::strong_count(&custody.proc_root), 1);
     }
 }

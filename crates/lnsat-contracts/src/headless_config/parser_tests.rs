@@ -49,6 +49,29 @@ fn valid_declaration_parses_without_raw_debug_reflection() {
 }
 
 #[test]
+fn canonical_declaration_round_trips_and_ignores_input_key_order() {
+    let first = parse(&valid_document()).expect("valid declaration parses");
+    let reordered = json!({
+        "layers": valid_document()["layers"].clone(),
+        "resources": valid_document()["resources"].clone(),
+        "installation_ref": "installation:local:test",
+        "schema_id": HEADLESS_CONFIG_SCHEMA_V1,
+        "contract_version": "lnsat.contracts.v1_0"
+    });
+    let second = parse(&reordered).expect("reordered declaration parses");
+    let canonical = first.canonical_json().expect("canonical declaration");
+    assert_eq!(
+        canonical,
+        second.canonical_json().expect("canonical declaration")
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&canonical).expect("canonical JSON"),
+        valid_document()
+    );
+    assert!(canonical.len() <= MAX_HEADLESS_CONFIG_BYTES_V1);
+}
+
+#[test]
 fn size_trailing_and_duplicate_json_fail_closed() {
     assert_eq!(
         parse_headless_config_declaration_v1(&vec![b' '; MAX_HEADLESS_CONFIG_BYTES_V1 + 1]),

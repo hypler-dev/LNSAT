@@ -1691,15 +1691,15 @@ fn request_observer_g26_structural_closure() {
     );
     pin(
         include_bytes!("../../../../phase7_consumption.rs"),
-        "f4e56b7ab734eb29b682ec6b990f9ad0439fea983193eb1381c0749e9a9e31f8",
+        "aa3876db34d41e8421f99f1ded812177d98061e0a970d5613de43a7540f7b92d",
     );
     pin(
         include_bytes!("../../../../lib.rs"),
-        "d01269a0531b37726beb57e466798e38af5b89ebbe1e5731e4989f4709195380",
+        "f7153e874b87b6cdeddc8ef129e90a523ff67f755f7e12ae00d5dd4175ec2ef2",
     );
     pin(
         include_bytes!("../../../../phase7_git_adapter/request_result.rs"),
-        "a017a688db1db5cc0769e721ea5a25071f4f1735362ffb7a304433c8b69e979c",
+        "7fa29b78c33b8fbc6d4c7dbbf699d35d25d7fc2dcff9cf199f7a6734b479219c",
     );
     pin(
         include_bytes!("../../../../../migrations/0018_action_requests.sql"),
@@ -1707,7 +1707,7 @@ fn request_observer_g26_structural_closure() {
     );
     pin(
         include_bytes!("../../../../../../lnsatd/src/lib.rs"),
-        "832673d40fd917138e236d9f21b9f987fbbd0369d5daf0e65b60db7705aa0e57",
+        "a1df8714509b209a0c437af5e89e014fadf50e12278b9a008e7a2c570421d32e",
     );
     assert!(COORDINATOR_SOURCE.contains("#[cfg(test)]\nmod request_observer;"));
     let source = include_str!("../request_observer.rs");

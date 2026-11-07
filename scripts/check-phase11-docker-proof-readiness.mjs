@@ -17,7 +17,24 @@ const DEFAULT_DRIVER_ADMISSION_FIXTURE_PATH =
 const EXPECTED_PACKAGE_SCRIPTS_SHA256 =
   "ed5f4ede3980afc0469b3191b1eb7eb7700a7c009444736be4c7bd1507c41f59";
 const EXPECTED_SOURCE_CI_SHA256 =
-  "56b6fba535b402f5bb839f4f881bf329e2cea8f5bece9f5e637756c938e6c035";
+  "d1cb4837fa69c47af8f38f0545c07ab2bf5504c631f2d4b8aa4e263000e4d8ec";
+const REQUIRED_ROOTED_FIXTURE_SETUP = `      - name: Prepare rooted Linux test fixture
+        run: |
+          runner_temp="$(realpath -e "$RUNNER_TEMP")"
+          test -d "$runner_temp"
+          test ! -L "$RUNNER_TEMP"
+          fixture_root="$(umask 077; mktemp -d "$runner_temp/lnsat-rooted-fixture.XXXXXX")"
+          test -d "$fixture_root"
+          test ! -L "$fixture_root"
+          test "$(stat -c '%u' "$fixture_root")" = "$(id -u)"
+          test "$(stat -c '%a' "$fixture_root")" = "700"
+          fixture_root="$(realpath -e "$fixture_root")"
+          case "$fixture_root" in
+            "$runner_temp"/lnsat-rooted-fixture.*) ;;
+            *) exit 1 ;;
+          esac
+          printf 'LNSAT_ARTIFACT_TEST_ROOT=%s\\n' "$fixture_root" >> "$GITHUB_ENV"
+`;
 const MAX_JSON_NESTING = 64;
 export const MAX_READINESS_JSON_BYTES = 64 * 1024;
 
@@ -1250,6 +1267,11 @@ export function validatePhase11DockerProofReadiness({
     }
     if (/\buses\s*:\s*(?:docker\/|docker:\/\/)/iu.test(workflow)) {
       errors.push(`source CI workflow ${path}: Docker action/image remains forbidden`);
+    }
+    if (!workflow.includes(REQUIRED_ROOTED_FIXTURE_SETUP)) {
+      errors.push(
+        `source CI workflow ${path}: rooted fixture setup must retain exact private root creation and export`,
+      );
     }
   }
   if (effectiveWorkflowPaths.length > 0 && !sourceCheckWired) {

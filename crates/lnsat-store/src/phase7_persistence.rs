@@ -357,9 +357,7 @@ impl SqliteStore {
         F: FnOnce() -> Result<(), Phase7PersistenceErrorV1>,
     {
         validate_prepare_input(input)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7PersistenceErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7PersistenceErrorV1::EvidenceDrift)?;
         let source =

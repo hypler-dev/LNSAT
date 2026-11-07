@@ -8,7 +8,7 @@ use super::{
     AttemptRecord, Connection, DerivedExecutionRequestV1, DispatchContext, OptionalExtension,
     ParsedGitRequest, Phase7CapabilityConsumptionRecordV1, Phase7GitAdapterErrorV1,
     Phase7GitCommitReceiptV1, Phase7GitExecutionResultV1, Phase8OperationReadbackV1,
-    RECEIPT_ID_DOMAIN, SqliteStore, SystemTime, Transaction, TransactionBehavior,
+    RECEIPT_ID_DOMAIN, SqliteStore, SystemTime, Transaction,
     append_phase7_operation_state_event_v1, append_state_event, canonical_system_time_v1,
     canonical_utc_timestamp_millis_v1, digest_fields, identifier, insert_dispatch_attempt_v1,
     insert_receipt, insert_reconciliation, map_persistence, params,
@@ -348,9 +348,7 @@ impl SqliteStore {
         operation_id: &str,
         recorded_at: &str,
     ) -> Result<(), Phase7GitAdapterErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         let binding = verify_binding_v1(&transaction, operation_id)?;
@@ -499,9 +497,7 @@ impl SqliteStore {
         }
         let at = canonical_utc_timestamp_millis_v1(recorded_at)
             .ok_or(Phase7GitAdapterErrorV1::InvalidInput)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         let binding = verify_binding_v1(&transaction, &proof.operation_id)?;
@@ -619,9 +615,7 @@ impl SqliteStore {
         attempt_id: &str,
         expected_launch: &[u8; 32],
     ) -> Result<(), Phase7GitAdapterErrorV1> {
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)
+        let transaction = crate::write_sync::begin(&self.connection)
             .map_err(|_| Phase7GitAdapterErrorV1::PersistenceFailed)?;
         verify_current_schema(&transaction).map_err(|_| Phase7GitAdapterErrorV1::EvidenceDrift)?;
         let binding = verify_binding_v1(&transaction, operation_id)?;
