@@ -1,0 +1,195 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0107-independent-implementation-review-b9b35fdf",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["system-one-positioning-source-version"],
+  "base_revision": "b4ce4c12fd1de3616988f0f97478f98de5e8b45f",
+  "reviewed_revision": "b9b35fdf1727fe93ad680a9aaf156b756aeffb52",
+  "reviewed_tree_oid": "e1b2306932468543c981ad5e88832ccec84af8b9",
+  "diff_sha256": "sha256:bb13ceaa064c1287f6312d4e16cc32a27e487bdc4eda385858762f54bb34ce28",
+  "protected_files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "sha256:3dc74bf8a41fcfd96d30efd8f7560b0b5eab3ea7eb7097ae00e8778bf568d281"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:f972007223985a20954cf21e7d5db9a6ac56de36704d8c39523bdd95183e5b99"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "sha256:d4a3f7ac1e25cb435c207a77be5cd2100b7d4d0b34e3dcdd3bc40d10e3a22f9a"
+    },
+    {
+      "path": "README.md",
+      "sha256": "sha256:9fd95b059ae95d69874ac19355130c76fa11add6da2aea2f23492815c116f492"
+    },
+    {
+      "path": "apps/api/package.json",
+      "sha256": "sha256:e115363a0de95ec23f149deb67a052761ad144fe0a32af9a5c80978b4f39d69d"
+    },
+    {
+      "path": "apps/console/package.json",
+      "sha256": "sha256:9c4d09780841e46ff4aa28ebdfe5c0165ce0f19c6dc57b59e41a28092d3de6c2"
+    },
+    {
+      "path": "crates/lnsatd/tests/product_surface_cli.rs",
+      "sha256": "sha256:4735802fc4ae8ea1d01335029873be6777d4452bf081ba3d898c6e21112dda42"
+    },
+    {
+      "path": "docs/DOCS_INDEX.md",
+      "sha256": "sha256:66f6b750d5c72a8b8dd5f9d71a2b36db83132386cde395a2280c36a089b26d2f"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:80f71985ad988a3e465aa258a0821ea498b5a945262a31e1c84a858999f2f72b"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:5b3c20a5a6a1f7f89b02d1d7aee30b28bbcbfc69dc3d86c18f844d34206b826c"
+    },
+    {
+      "path": "docs/RELEASING.md",
+      "sha256": "sha256:8de918fb5bfee87c1a7d8afe6b0d508579c50ffaab0e9fbabce03bdc549a4fca"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:9495a1b871000a8e034bd27cd065f357f7f5cf86d8dce7d3f630047f75787477"
+    },
+    {
+      "path": "docs/WHY_PUBLIC_NOW.md",
+      "sha256": "sha256:2ece58a688ac5cc4f54bd22b467f0c161c83036e581f89266a27c12dcd1cd3ca"
+    },
+    {
+      "path": "docs/architecture/ARCHITECTURE_AND_DEVELOPER_GUIDE.md",
+      "sha256": "sha256:d1f4008326075b541871bad2db9deefd3baa5bfc7221d8ab348b8fd480090727"
+    },
+    {
+      "path": "docs/architecture/CRYPTO_OPERATION_PROVIDER_INVENTORY.md",
+      "sha256": "sha256:382b24c2e31d0b329039bcbcfa1370e7cc689ee8c285f5cdfbc89dee9501de20"
+    },
+    {
+      "path": "docs/reference/CONTRACT_VERSIONING.md",
+      "sha256": "sha256:fe4b072dcd4e64a97dd0209f2dbe348f4463a91296517a599ab5937c3d7bd4d3"
+    },
+    {
+      "path": "docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md",
+      "sha256": "sha256:286e14e7af5355426e7194089dbe23fae074573efe06b5771878056e350f7bf8"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:bb03ae04471ecf4e576bca50d916977fcb4a16006d25da95b28d73dd55a91ede"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:21c426fadd8c2787cce2c8e46ab1c98383379e785cc7559e458688ff001cf47e"
+    },
+    {
+      "path": "docs/sdk/migration.md",
+      "sha256": "sha256:378aa3613cff4ff3d976d6c042d2700f308f8fd3279ed2718f4becf576ffc203"
+    },
+    {
+      "path": "docs/sdk/typescript-reference.md",
+      "sha256": "sha256:a78fa96e616f20e88de40578f0aa6b9dd7c631b7130ad36f0c78f559ab2d26d9"
+    },
+    {
+      "path": "fixtures/contracts/daemon-status-v1.json",
+      "sha256": "sha256:40bba263404d97f9147222f20a370087740a4839bc2eebf10120b0b4a1eaa030"
+    },
+    {
+      "path": "fixtures/contracts/daemon-status-v2.json",
+      "sha256": "sha256:d7578fe04423d4c25f74c250027124cef26963fba26fd630e9d185cdda0d445d"
+    },
+    {
+      "path": "fixtures/contracts/product-surface-v1.json",
+      "sha256": "sha256:117d5f6c16e66654bd5c5cc33036cb9cec16cbfa768ee012978c2d21939c3943"
+    },
+    {
+      "path": "fixtures/contracts/product-surface-v2.json",
+      "sha256": "sha256:d6a69c60242729a296b2fe45988ad86335f26e52c32406ef4ed4fdc859a25dd5"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:669c621a0092d539176d21c761448e24b299d27ce4e858fab930f6633a511b0e"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:a8e6214a57fda48b7f14327f1634b30e7e6b1d4a90b38f7f9d494ece4765f1f4"
+    },
+    {
+      "path": "packages/audit/package.json",
+      "sha256": "sha256:75e58572451ad5c75eb354df7757d2a14005071d157b626464ed4f57f3796ceb"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "sha256": "sha256:97c7a950bc14739c7f1f6ab40f51831c82b861ba1e69a3faf0e043ad5edb2e3d"
+    },
+    {
+      "path": "packages/cli/src/product-surface.ts",
+      "sha256": "sha256:2b7eb5b9b65dfd7b96deeda0bac375dc4d06830eb3f8e906865ada496eb4d41c"
+    },
+    {
+      "path": "packages/core/package.json",
+      "sha256": "sha256:f377e2eba536b640ed18fa8b61fa963592510359288393e7c8eab5f37ac7270e"
+    },
+    {
+      "path": "packages/core/src/index.ts",
+      "sha256": "sha256:9cd2ca51fc733fcdf62947913c494da5a147996470889ed67687d33834450227"
+    },
+    {
+      "path": "packages/core/test/core.test.ts",
+      "sha256": "sha256:049d9745a44cfd50bfff191786566b6a30182f4866104159e07f1cba12e1495e"
+    },
+    {
+      "path": "packages/gateway/package.json",
+      "sha256": "sha256:a2032d21099809746e13dc9e4d3897ec189926435fbf969c1ab58637f2838307"
+    },
+    {
+      "path": "packages/mcp/package.json",
+      "sha256": "sha256:039292f6676634cc997d7323738afa5bc6eb0af1750eb26a9506f0f0786a10aa"
+    },
+    {
+      "path": "packages/mcp/src/index.ts",
+      "sha256": "sha256:01b942f08802429a272f428cba98018005f96e00214fc9ff0ef10d915fb1fe03"
+    },
+    {
+      "path": "packages/mcp/test/modern-http.test.ts",
+      "sha256": "sha256:461aa0f98ebebaa724dc1428663bef4de3300cbb5660b663ab0fd74831e5cf4f"
+    },
+    {
+      "path": "packages/packets/package.json",
+      "sha256": "sha256:39530da777955241c065447d94c7d692aab86e827e33dc1182bf7230f48a1cbe"
+    },
+    {
+      "path": "packages/policy/package.json",
+      "sha256": "sha256:838def44728e227d6c2aa46beea5ddd0d98f71904c31f9128710bc394d91e8b3"
+    },
+    {
+      "path": "scripts/check-phase10-product-surface-conformance.mjs",
+      "sha256": "sha256:4f11ad32031474da632e8ed1134c9c5c1dd1b67701d252101019fe9c955843ad"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.mjs",
+      "sha256": "sha256:aa410d01edac427b23a68b093cb4991268bee7b7aa1b1bd2e008c221ca64c6a2"
+    },
+    {
+      "path": "scripts/check-product-direction-alignment.test.mjs",
+      "sha256": "sha256:4d0b0a4ac88efe81df5bf2b7212da85a36524b0a9b5c9dc2efcbb287bd2e6d1a"
+    },
+    {
+      "path": "scripts/product-direction-invariants.mjs",
+      "sha256": "sha256:cc84dfcdf147827f83586d2ef3491b596f4f1ad57a9a44f81cd89b3bc1b1f5c6"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/system_one_030_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh. Independent review bound the exact staged source tree. Backend runtime model identity unexposed."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}
