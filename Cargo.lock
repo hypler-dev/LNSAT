@@ -365,7 +365,7 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 
 [[package]]
 name = "lnsat-auth"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "argon2",
  "sha2",
@@ -375,7 +375,7 @@ dependencies = [
 
 [[package]]
 name = "lnsat-contracts"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ed25519-dalek",
  "serde",
@@ -385,7 +385,7 @@ dependencies = [
 
 [[package]]
 name = "lnsat-store"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "getrandom",
  "lnsat-auth",
@@ -402,7 +402,7 @@ dependencies = [
 
 [[package]]
 name = "lnsatd"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ctrlc",
  "getrandom",

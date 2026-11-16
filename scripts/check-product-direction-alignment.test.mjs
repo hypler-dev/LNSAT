@@ -44,7 +44,7 @@ test("current version snapshot binds complete table assertions", () => {
   assert.deepEqual(collectCurrentVersionSnapshotErrors(value), []);
 
   const mutations = [
-    ["| `0.1.0`", "| `0.2.0`", "Product/source SemVer"],
+    ["| `0.2.0`", "| `0.1.0`", "Product/source SemVer"],
     ["| `lnsat.contracts.v1_0`", "| `lnsat.contracts.v1_1`", "Gateway wire contract"],
     ["| SQLite schema `18`", "| SQLite schema `19`", "Local persistence schema"],
     [
@@ -82,7 +82,7 @@ test("historical tokens and duplicate rows cannot satisfy current snapshot", () 
     .split("\n")
     .find((line) => line.startsWith("| Product/source SemVer"));
   assert.ok(row);
-  const altered = value.replace(row, row.replace("`0.1.0`", "`0.2.0`"));
+  const altered = value.replace(row, row.replace("`0.2.0`", "`0.1.0`"));
   assert.match(
     collectCurrentVersionSnapshotErrors(`${altered}\nHistorical: ${row}\n`).join("\n"),
     /current version snapshot mismatch: Product\/source SemVer/u,
@@ -170,7 +170,7 @@ test("additive published maturity claim fails closed", () => {
   const values = documents();
   values.set(
     "docs/PROJECT_STATUS.md",
-    `${values.get("docs/PROJECT_STATUS.md")}\nLNSAT 0.1.0 is supported and published. Hosted runtime is available.\n`,
+    `${values.get("docs/PROJECT_STATUS.md")}\nLNSAT 0.2.0 is supported and published. Hosted runtime is available.\n`,
   );
   assert.match(errors(values).join("\n"), /source-only\/unpublished/u);
 });
@@ -341,8 +341,8 @@ test("published/runtime availability contradictions fail closed", () => {
       .replace("| Distribution | Not available |", "| Distribution | Available |")
       .replace("| Hosted runtime | Not available |", "| Hosted runtime | Available |")
       .replace(
-        "LNSAT `0.1.0` is pre-release, source-only software.",
-        "LNSAT `0.1.0` is supported and published.",
+        "LNSAT `0.2.0` is pre-release, source-only software.",
+        "LNSAT `0.2.0` is supported and published.",
       ),
   );
   assert.match(errors(values).join("\n"), /source-only\/unpublished/u);
@@ -353,6 +353,7 @@ test("production-ready maturity synonym fails closed", () => {
     "LNSAT 0.1.0 is production-ready.",
     "LNSAT 0.1.0 is production ready.",
     "LNSAT 0.1.0 is generally available.",
+    "LNSAT 0.2.0 is generally available.",
   ]) {
     const values = documents();
     values.set(

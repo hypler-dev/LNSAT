@@ -1707,7 +1707,7 @@ fn request_observer_g26_structural_closure() {
     );
     pin(
         include_bytes!("../../../../../../lnsatd/src/lib.rs"),
-        "832673d40fd917138e236d9f21b9f987fbbd0369d5daf0e65b60db7705aa0e57",
+        "1a1232e4a5afd13679d48e3b2b0a5c4aa3ed77888e54ffb36854e85af160b95e",
     );
     assert!(COORDINATOR_SOURCE.contains("#[cfg(test)]\nmod request_observer;"));
     let source = include_str!("../request_observer.rs");

@@ -6,30 +6,36 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](docs/PROJECT_STATUS.md)
 
+**Local System One for evidence-bound decisions, with an optional enforcement gateway.**
+
+LNSAT is building a local decision engine for technical reviewers and management
+systems. System One is the fast path. It combines structured evidence checks
+with a small model to recommend where a case belongs, cite the evidence that
+drives the recommendation, and abstain when the case needs human judgment.
+Applications can use the planned advisory interface on its own.
+
 **Execution authorization and evidence for consequential agent actions.**
+The Gateway provides that authority path when an application requests an
+effect. It binds a proposed action to deterministic policy, authenticated
+human approval where required, one bounded attempt, and durable result evidence.
+Models and management clients can present recommendations. The Gateway owns
+authorization for managed workflow actions. Offline backup, inert restore,
+and owner recovery follow separate operator-local CLI contracts.
 
-LNSAT is an open-source authority engine that binds an agent's proposed action
-to deterministic policy, authenticated human approval where required, a bounded
-execution attempt, and durable evidence of the consequence. Its security boundary
-is the Gateway. Models, applications, protocol adapters, and user interfaces
-submit requests through that boundary; they cannot manufacture approval or
-execution authority.
+> **Pre-release source milestone `0.2.0`.** The public repository contains
+> experimental Gateway implementation, conformance fixtures, and contracts.
+> The System One runner, reference weights, and management integration are
+> planned. Supported installers, containers, hosted service, and end-to-end
+> runtime proof remain pending. The Control Center is a read-only preview.
 
-> **Pre-release source, version `0.1.0`.** This repository contains experimental
-> implementations, private source candidates, conformance fixtures, and design
-> contracts. It does not yet provide a supported end-to-end V1 product, installer,
-> package, container, or hosted service. Real Docker runtime proof remains
-> unfinished. The Control Center is an experimental read-only preview.
+Current source includes durable authenticated action-request records, explicit
+failed and unknown evaluation, replay and conflict evidence, and bounded
+read-only operator projections. Request-bound recovery has test-only
+conformance coverage. See [the action-request record contract](docs/architecture/action-request-record.md)
+and [Project Status](docs/PROJECT_STATUS.md) for implementation and runtime
+claims.
 
-Current source milestone (2026-10-18): authenticated action-request intake
-now has a durable immutable request record, explicit failed/unknown evaluation,
-first replay/conflict evidence, and bounded read-only operator projection.
-Focused local evidence passes; runtime dispatch, headless installation, native
-resource enforcement, mutual-authenticated Unix transport, deployment, release,
-and supported operation remain gated. Schema 18 belongs to this request-record
-source milestone; earlier headless schema-18 proposals are future schema 19 and
-must be rederived. See [the action-request record contract](docs/architecture/action-request-record.md).
-
+[System One](#system-one-decision-engine) ·
 [Architecture](#architecture-and-trust-boundaries) ·
 [Authority flow](#from-proposal-to-consequence) ·
 [CLI](#current-cli-and-service-interfaces) ·
@@ -41,6 +47,50 @@ must be rederived. See [the action-request record contract](docs/architecture/ac
 truth. [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md) defines the maturity
 labels. This README explains the system and links the exact contracts; its
 examples and diagrams do not open runtime or release gates.
+
+## System One Decision Engine
+
+A caller supplies a reviewer note and a redacted evidence summary through the
+planned interface. A result carries a probability for each route, an explicit
+abstention outcome, and evidence references. These routes describe which
+review or action view to show to a person.
+
+| Route          | Recommended review                                                     |
+| -------------- | ---------------------------------------------------------------------- |
+| Approval       | Examine the proposed scope and the approval record.                    |
+| Execution      | Review readiness for a bounded attempt or inspect its recorded result. |
+| Reconciliation | Resolve a prior attempt with missing or conflicting evidence.          |
+| Clarify        | Request the context needed to establish scope or interpret the record. |
+
+The first workloads cover cloud changes, database migrations, transactions, and
+MCP tool requests. Structured checks bind the selected target, attempt, receipt,
+and independent readback. The learned component handles ambiguous notes and
+evidence selection. When a required binding is missing, stale, or contradictory,
+the decision abstains and points the reviewer to the gap. A management client
+uses separate Gateway operations for approval, execution, and reconciliation.
+
+### Integration and scale
+
+The planned versioned CLI and API give Rangoon and other management systems the
+same decision output. The first target is CPU inference on one machine.
+Distributed worker pools can later partition independent cases, with bounded
+queues, deadlines, and replay-safe result collection. Metal, Vulkan, and CUDA
+are candidates for measured acceleration under the same result contract.
+
+### Evaluation and model release
+
+The evaluation plan compares deterministic rules, pinned peer models, and
+hybrid decisions on whole held-out case families and public benchmarks.
+One-fact variants test whether a decision and its cited evidence change
+together. Report error at matched coverage, confident mistakes, abstention,
+latency, and memory.
+
+A future open-source AI release requires distributable parameters, training and
+inference source, and data information sufficient to build a substantially
+equivalent system. Private histories and evaluation holdouts stay separate from
+public artifacts. The repository source uses Apache-2.0.
+See [product direction alignment](docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md)
+and the [Open Source AI Definition](https://opensource.org/ai/open-source-ai-definition).
 
 ## Architecture And Trust Boundaries
 
@@ -265,11 +315,12 @@ was rolled back.
 
 ## Versioning, Canonical Bytes And Conformance
 
-Several identities coexist and must not be substituted for one another:
+The product source, wire contract, and persistence schema have independent
+version identities.
 
 | Identity                              | Current source value       | Meaning                                                           |
 | ------------------------------------- | -------------------------- | ----------------------------------------------------------------- |
-| Product/source SemVer                 | Unpublished `0.1.0`        | Repository package version; no supported artifact implied         |
+| Product/source SemVer                 | Unpublished `0.2.0`        | Repository package and command version                            |
 | Gateway wire target                   | `lnsat.contracts.v1_0`     | Exact contract family/version negotiation                         |
 | Default product-surface diagnostic    | `lnsat.product_surface.v1` | Current default manifest/status contract                          |
 | Explicit headless diagnostic selector | `lnsat.product_surface.v2` | Opt-in source diagnostics; no version range or automatic fallback |
@@ -480,12 +531,12 @@ complete executable management tutorials are not yet available.
 
 ### Engine and application responsibilities
 
-LNSAT owns policy enforcement, approval validation, execution authorization,
-durable state, evidence and recovery semantics. Applications own presentation,
-workflow organization and adapters to their chosen enterprise systems.
-Rangoon can make setup, policy editing, approval and activity understandable,
-but it consumes the same versioned engine contracts as other clients. LNSAT
-has no Rangoon dependency or alternate Rangoon authority path.
+Applications own presentation, workflow organization, and integrations with
+their enterprise systems. The planned advisory interface recommends a review
+view and supplies evidence references. The Gateway owns policy enforcement,
+approval validation, execution authorization, durable receipts, and recovery.
+Rangoon and other management clients use the same versioned contracts for
+these responsibilities. LNSAT runs independently of any management client.
 
 Enterprise identity, workload identity, policy services, key providers and
 audit destinations may supply authenticated inputs through separately scoped

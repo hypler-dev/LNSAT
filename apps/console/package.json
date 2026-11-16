@@ -1,6 +1,6 @@
 {
   "name": "@lnsat/console",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Read-only local evidence Control Center for LNSAT",
   "repository": {
@@ -17,10 +17,10 @@
     "typecheck": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@lnsat/audit": "0.1.0",
-    "@lnsat/gateway": "0.1.0",
-    "@lnsat/packets": "0.1.0",
-    "@lnsat/policy": "0.1.0",
+    "@lnsat/audit": "0.2.0",
+    "@lnsat/gateway": "0.2.0",
+    "@lnsat/packets": "0.2.0",
+    "@lnsat/policy": "0.2.0",
     "next": "16.4.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"

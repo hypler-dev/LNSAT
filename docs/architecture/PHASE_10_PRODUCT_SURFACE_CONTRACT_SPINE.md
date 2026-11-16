@@ -55,11 +55,15 @@ is refused for daemon bind and all offline recovery mutations on macOS/Linux.
 API, MCP, and Control Center expose only unavailable posture evidence: no route,
 tool, or rendered action exists.
 
-The canonical manifest is
-`fixtures/contracts/phase10-product-surface-v1.json` with contract
-`lnsat.product_surface.v1`. It is embedded or loaded from repository source. It
-is not an artifact manifest and contains no selected target, source-revision
-binding, component digest, package row, or support claim.
+The current canonical manifest is `fixtures/contracts/product-surface-v1.json`
+with contract `lnsat.product_surface.v1`. It is embedded or loaded from
+repository source. It contains source capability metadata and no artifact
+identity, selected target, component digest, package row, or support claim.
+
+The original Phase 10 manifest and status fixtures are preserved as frozen
+evidence. The current v1 manifest and `fixtures/contracts/daemon-status-v1.json`
+each differ from their frozen counterpart in one product/source version field.
+Source conformance checks both the historical raw pins and the current bytes.
 
 The canonical explicit configuration fixture is
 `fixtures/contracts/phase10-daemon-config-v1.json` with contract
@@ -95,7 +99,9 @@ stdin, non-root refusal, no-clobber restore, and closed activation/served lanes.
 
 ## Source Ownership
 
-- `fixtures/contracts/phase10-product-surface-v1.json` owns canonical manifest.
+- `fixtures/contracts/product-surface-v1.json` owns the current canonical
+  manifest. `fixtures/contracts/phase10-product-surface-v1.json` and
+  `fixtures/contracts/phase10-status-v1.json` retain the Phase 10 evidence bytes.
 - `fixtures/contracts/phase10-product-surface-conformance-v1.json` and
   `scripts/check-phase10-product-surface-conformance.mjs` own P10-X1 exit
   evidence and fail-closed validation.

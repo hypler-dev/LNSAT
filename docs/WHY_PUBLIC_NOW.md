@@ -5,9 +5,11 @@
 - Product status: pre-release source only
 - Runtime, artifact, and support effect: none
 
-LNSAT is public because an authority boundary governing consequential agent
-actions must be inspectable, portable, independently testable, and shared
-across runtimes rather than hidden inside one product or provider.
+LNSAT is public so integrators can inspect, test, and port the engine's
+contracts across runtimes. This applies to the Gateway's authority for
+consequential agent actions and to the planned System One advisory interface.
+The `0.2.0` direction adds reproducible local decision evaluation and an open
+reference model to the project roadmap.
 
 ## 1. Public Core Purpose
 
@@ -165,7 +167,7 @@ a release or support commitment.
 
 ## 7. Maturity and Support Boundary
 
-LNSAT `0.1.0` remains pre-release source for evaluation and contribution. APIs
+LNSAT `0.2.0` remains pre-release source for evaluation and contribution. APIs
 and contracts may change. No supported package, binary, container, image,
 installer, hosted service, deployment, production connector, or production-use
 guarantee exists. Public visibility and passing source checks do not imply

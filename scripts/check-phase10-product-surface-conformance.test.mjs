@@ -196,6 +196,32 @@ test("P10-X1 rejects raw-byte drift in frozen Phase 10 fixtures", () => {
   assert.match(result.errors.join("\n"), /sha256 mismatch/u);
 });
 
+test("current v1 fixtures advance source version with exact historical semantics", () => {
+  for (const [path, mutate] of [
+    [
+      "fixtures/contracts/product-surface-v1.json",
+      (fixture) => {
+        fixture.product_version = "0.1.0";
+      },
+    ],
+    [
+      "fixtures/contracts/daemon-status-v1.json",
+      (fixture) => {
+        fixture.phase10.phase11_open = true;
+      },
+    ],
+  ]) {
+    const result = validatePhase10ProductSurfaceConformance({
+      root,
+      currentV1Paths: { [path]: mutatedJson(path, mutate) },
+    });
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.errors, [
+      `current v1 fixture: only source version may differ in ${path}`,
+    ]);
+  }
+});
+
 test("P10-X1 rejects HCFG-1 product, status, or config authority drift", () => {
   const productSurfaceV2Path = mutatedJson(
     "fixtures/contracts/product-surface-v2.json",

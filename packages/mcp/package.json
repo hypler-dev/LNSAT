@@ -1,6 +1,6 @@
 {
   "name": "@lnsat/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Read-only MCP adapters for LNSAT inspection contracts",
   "repository": {
@@ -25,8 +25,8 @@
   },
   "dependencies": {
     "@cfworker/json-schema": "^4.1.1",
-    "@lnsat/api": "0.1.0",
-    "@lnsat/gateway": "0.1.0",
+    "@lnsat/api": "0.2.0",
+    "@lnsat/gateway": "0.2.0",
     "@modelcontextprotocol/core": "2.4.0",
     "@modelcontextprotocol/node": "2.1.2",
     "@modelcontextprotocol/server": "2.4.0",

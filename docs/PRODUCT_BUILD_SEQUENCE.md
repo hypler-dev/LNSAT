@@ -34,6 +34,12 @@ runtime and package:
   and production reference actions remain outside initial v1; selected core
   package lifecycle proof remains part of the staged V1 build.
 
+The [System One decision-engine expansion](../README.md#system-one-decision-engine)
+is an independent advisory workstream. Its sequence starts with a versioned
+CPU-first contract and reproducible public evaluations. Distributed workers,
+accelerators, and external management integrations need separate compatibility
+evidence. Consequential workflows use the Gateway and its V1 acceptance path.
+
 ## Headless Configuration And Control
 
 Accepted V1 product requirement; implementation and platform proof remain pending.

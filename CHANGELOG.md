@@ -4,6 +4,11 @@
 
 ### Source milestone
 
+- Set the npm and Cargo source version to `0.2.0` and align command versions,
+  MCP server identity, and the current manifest and status fixtures. The
+  System One direction adds a planned CPU-first advisory engine with
+  evidence-bound routing and abstention alongside the enforcement Gateway.
+
 - Added an experimental authenticated action-request source contract with an
   immutable durable request root, explicit failed or unknown evaluation,
   first replay/conflict evidence, bounded requester/owner operator readback,
@@ -12,6 +17,9 @@
   and supported operation remain gated.
 
 ### Security
+
+- Pin Hono to 4.13.16 and its Node server adapter to 2.1.6 to resolve advisories
+  reported for the previous lockfile.
 
 - Bounded daemon and MCP request ingestion with absolute five-second read
   deadlines that partial progress cannot reset. Cooperative shutdown now
@@ -42,8 +50,8 @@
   identity, records the source-only fresh authenticated store transaction and
   bound pre-supervisor guard, and keeps the runnable driver and every live
   runtime identity blocking.
-  Product/source version remains unpublished `0.1.0`; no Docker, runtime,
-  package, tag, release, deployment, production, or support authority opens.
+  That operator-packet milestone used unpublished product/source version
+  `0.1.0` and left runtime and release gates closed.
 
 - Added a source-only private Phase 11 Docker proof run-manifest contract. It
   canonically binds reviewed proof metadata to exact later-run declarations,

@@ -1,7 +1,9 @@
 # Project Status
 
-LNSAT `0.1.0` is pre-release, source-only software. Repository is suitable for
-contract evaluation and contributor development, not production operation.
+LNSAT `0.2.0` is pre-release, source-only software. The repository supports
+contract evaluation and contributor development. The Gateway is experimental
+source. The [System One decision engine](../README.md#system-one-decision-engine)
+is a separate advisory workstream with a planned runner and model release.
 
 ## November 3 Functional Repair Candidate
 
@@ -51,16 +53,18 @@ fixture checkout.
 
 ## Version Posture
 
-Product/source SemVer remains unpublished `0.1.0` across the root npm package,
+Product/source SemVer is unpublished `0.2.0` across the root npm package,
 every private npm workspace, and the unpublished Cargo workspace. The stable
 Gateway wire target is `lnsat.contracts.v1_0`; the default product surface is
 `lnsat.product_surface.v1` with explicit source-diagnostic v2 selection; local
 SQLite schema is `18` in the accepted request-record source milestone; schema
-17 remains the historical local-v1 baseline. These layers are independent. PR
-#39 merged Phase 11
-operator preparation into public `main`, but changed no product, wire, family,
-persistence, runtime-profile, or adapter-protocol version and created no tag or
-release. See [contract versioning](reference/CONTRACT_VERSIONING.md).
+17 remains the historical local-v1 baseline. The source version also appears
+in command, MCP server, and product-surface outputs. The PR #39 Phase 11
+operator-packet integration used the earlier `0.1.0` source version. See
+[contract versioning](reference/CONTRACT_VERSIONING.md).
+
+The dependency lock pins Hono 4.13.16 and its Node server adapter 2.1.6 to
+address the audit findings on the previous lockfile.
 
 ## Public Action-Request Record Source Milestone
 
@@ -4125,7 +4129,7 @@ does not rerun unchanged Rust binaries.
 #### Monitoring, authentication and protected control
 
 CLI command inventory is the exact v1/v2 manifest in
-[`phase10-product-surface-v1.json`](../fixtures/contracts/phase10-product-surface-v1.json)
+[`product-surface-v1.json`](../fixtures/contracts/product-surface-v1.json)
 and [`product-surface-v2.json`](../fixtures/contracts/product-surface-v2.json).
 Reserved names express unavailable source behavior. Existing loopback routes
 are separate from absent CLI consumers; no blanket CLI/API/MCP mutation parity
@@ -4162,7 +4166,7 @@ is claimed.
 | `lnsat packet validate`                                                      | Source-implemented pure packet validation in [`index.ts`](../packages/cli/src/index.ts).                                                                                                                                  | [`cli.test.ts`](../packages/cli/test/cli.test.ts) P valid structured output; N invalid schema, input/JSON/usage failure; no mutation R.                                                                                                                                                                                                                                                                  | Preserve contracts and selected artifact parity; no authority from validation.                                                                                                                                         |
 | `lnsat packet hash`                                                          | Source-implemented canonical packet SHA-256 over validated input.                                                                                                                                                         | Same CLI suite P canonical hash, N invalid packet/input; no mutation R.                                                                                                                                                                                                                                                                                                                                  | Artifact/component identity remains separate from a packet digest.                                                                                                                                                     |
 | `lnsat packet inspect`                                                       | Source-implemented read-only Gateway-backed inspection with CLI/API/MCP parity.                                                                                                                                           | [`transport-neutral-packet-inspection.test.ts`](../packages/cli/test/transport-neutral-packet-inspection.test.ts) P: `matches API and MCP behavior for valid packet inspection`; N: `rejects invalid packets identically and avoids raw secret echo`; no mutation R.                                                                                                                                     | Parity covers this contract only; it grants no execution or broad headless-control parity.                                                                                                                             |
-| Manifest, help/version, completion and man source                            | Source-implemented for the three product commands; unpublished `0.1.0`, target-neutral source manifests.                                                                                                                  | O P/N: `three_product_commands_expose_same_source_manifest`, exact-selector test, `zsh_completion_per_binary_exact_surfaces`; [TS product-surface tests](../packages/cli/test/product-surface.test.ts) cover completion/man sources and unsupported selectors/shells.                                                                                                                                    | Installed files, service lifecycle and immutable selected-target identity; generated source text is not an installer.                                                                                                  |
+| Manifest, help/version, completion and man source                            | Source-implemented for the three product commands with unpublished `0.2.0` and target-neutral source manifests.                                                                                                           | O P/N: `three_product_commands_expose_same_source_manifest`, exact-selector test, `zsh_completion_per_binary_exact_surfaces`; [TS product-surface tests](../packages/cli/test/product-surface.test.ts) cover completion/man sources and unsupported selectors/shells.                                                                                                                                    | Installed files, service lifecycle and immutable selected-target identity; generated source text is not an installer.                                                                                                  |
 | `lnsatd --config` or explicit direct arguments                               | Source-implemented bounded daemon configuration; numeric-loopback and explicit source-local hosting seams.                                                                                                                | C P/N: `explicit_config_and_legacy_direct_arguments_are_distinct_compatible_modes`, closed/value/file-boundary tests; no service installation/start proof.                                                                                                                                                                                                                                               | Complete headless protected lifecycle and selected-target daemon/service evidence.                                                                                                                                     |
 | Embeddable runtime and stable integration API                                | Rust trusted-core/store primitives, exact Gateway contracts and experimental SDK/MCP/A2A interfaces exist. Complete integrated embeddable headless authority lifecycle is missing.                                        | Packet-inspection parity, CLI-only [recovery parity](../fixtures/contracts/phase10-recovery-parity-v1.json), Phase 7 conformance and existing served Phase 8 fixtures cover their exact boundaries only.                                                                                                                                                                                                 | Authenticated configuration/owner/native/store/release integration and full embeddable lifecycle conformance. Offline exceptions never gain agent/API/MCP/UI routes.                                                   |
 | Genuine native/OS enforcement and unsupported controls                       | S1, journal custody, ACL sampler and mountinfo byte decoder are inert prerequisites. A private procfs/held-mount reader source candidate exists; genuine Linux reader evidence and the full native freeze remain missing. | Synthetic byte/ACL tests, private Linux file/descriptor fixtures and unsupported-platform denials prove their named scopes; no live mount/ACL absence/idmapping/startup permit is proved.                                                                                                                                                                                                                | [Separate reader contract and full freeze gates](architecture/headless-resource-enforcement/plan.md#next-genuine-procfs-reader-contract-gate), captured pins and later actual grant/use/substitution/revocation proof. |
@@ -4460,6 +4464,21 @@ See [MCP interoperability and outage recovery](architecture/MCP_V2_FASTMCP_INTER
 and [Phase 8 adapter authority conformance](architecture/PHASE_8_ADAPTER_AUTHORITY_CONFORMANCE.md).
 
 ## Expanded Product Direction
+
+The System One expansion targets a local, CPU-first advisory engine with a
+versioned CLI and API for evidence-bound reviewer routing. Initial work covers
+approval, execution review, reconciliation, and clarification. The planned
+output carries probabilities, explicit abstention, and evidence references.
+The Gateway remains the authority component whenever a supported workflow can
+produce a consequence. Rangoon and other management systems can integrate
+through the same planned advisory contract.
+
+The engine and open reference model are development direction. A released
+checkpoint, supported decision service, accelerator compatibility, and
+distributed worker pools each need their own implementation and evidence. The
+existing V1 Gateway acceptance sequence remains in the
+[product build sequence](PRODUCT_BUILD_SEQUENCE.md). See
+[the decision-engine overview](../README.md#system-one-decision-engine).
 
 ADR-0003 and ADR-0007 now fix repository, product, and first-integration
 boundaries:

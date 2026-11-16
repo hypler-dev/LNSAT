@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const DEFAULT_EVIDENCE_PATH =
   "fixtures/contracts/phase10-product-surface-conformance-v1.json";
+const CURRENT_SOURCE_VERSION = "0.2.0";
 
 const FROZEN_PHASE10_RAW_SHA256 = {
   "fixtures/contracts/phase10-product-surface-v1.json":
@@ -147,6 +148,7 @@ function expectedProductSurfaceV2(frozenV1Manifest) {
   const expected = JSON.parse(JSON.stringify(frozenV1Manifest));
   expected.contract_id = "lnsat.product_surface.v2";
   expected.schema_version = 2;
+  expected.product_version = CURRENT_SOURCE_VERSION;
   expected.binaries.lnsatctl.implemented_commands.splice(
     2,
     0,
@@ -243,7 +245,7 @@ const EXPECTED_DAEMON_STATUS_V2 = {
     storage_ready: true,
   },
   side_effects: ["session_activity_evidence_may_append"],
-  source_version: "0.1.0",
+  source_version: CURRENT_SOURCE_VERSION,
 };
 
 const EXPECTED_HEADLESS_CONFIG_DIAGNOSTICS_V1 = {
@@ -380,6 +382,30 @@ function validateFrozenPhase10Raw(root, paths, errors) {
   }
 }
 
+function validateCurrentV1Fixtures(root, paths, errors) {
+  for (const [current, historical, versionField] of [
+    ["product-surface-v1.json", "phase10-product-surface-v1.json", "product_version"],
+    ["daemon-status-v1.json", "phase10-status-v1.json", "source_version"],
+  ]) {
+    const currentPath = `fixtures/contracts/${current}`;
+    const historicalPath = `fixtures/contracts/${historical}`;
+    try {
+      const baseline = readFileSync(resolve(root, historicalPath), "utf8");
+      const originalField = `"${versionField}": "0.1.0"`;
+      const nextField = `"${versionField}": "${CURRENT_SOURCE_VERSION}"`;
+      const expected = Buffer.from(baseline.replace(originalField, nextField));
+      const actual = readFileSync(paths?.[currentPath] ?? resolve(root, currentPath));
+      if (baseline.split(originalField).length !== 2 || !actual.equals(expected)) {
+        errors.push(
+          `current v1 fixture: only source version may differ in ${currentPath}`,
+        );
+      }
+    } catch (error) {
+      errors.push(`current v1 fixture: unreadable ${currentPath} (${String(error)})`);
+    }
+  }
+}
+
 function validateRows(root, rows, expectedIds, withCommand, path, errors) {
   if (!Array.isArray(rows)) {
     errors.push(`${path}: expected array`);
@@ -439,10 +465,12 @@ export function validatePhase10ProductSurfaceConformance({
     "fixtures/contracts/headless-config-diagnostics-v1.json",
   ),
   frozenPhase10RawPaths,
+  currentV1Paths,
   migrationsPath = resolve(root, "crates/lnsat-store/migrations"),
 } = {}) {
   const errors = [];
   validateFrozenPhase10Raw(root, frozenPhase10RawPaths, errors);
+  validateCurrentV1Fixtures(root, currentV1Paths, errors);
   const evidence = readJson(evidencePath, errors);
   if (
     !exactKeys(
@@ -584,6 +612,9 @@ export function validatePhase10ProductSurfaceConformance({
 
   const packageJson = readJson(packagePath, errors);
   if (packageJson) {
+    if (packageJson.version !== CURRENT_SOURCE_VERSION) {
+      errors.push("package.json: current product/source version mismatch");
+    }
     if (
       !packageJson.scripts?.check?.includes(
         "npm run phase10:exit:test && npm run phase10:exit:check",

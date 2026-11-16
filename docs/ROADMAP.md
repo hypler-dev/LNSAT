@@ -19,7 +19,16 @@ in the dated milestone section.
 
 Canonical readiness states: Phase 7a signed-evidence design = complete; Phase 7b wrapper verification = implemented_verification_only; Phase 7c Ed25519 primitive = implemented_not_wired; Phase 7d schema candidate = proposed_test_only; P7-ADR0 local-v1 trust-model revision = complete; P7-M1 core persistence = complete; P7-N1 nonce/expiry lifecycle = complete; P7-B1 preauthorization hardening = complete; P7-C1 atomic consumption = complete (implemented_not_wired); P7-A1 local authorization = complete (source-only, implemented_not_wired); P7-R1 Git reference adapter = complete (source-only, implemented_not_wired); P7-X1 local-v1 conformance freeze = complete (source-only evidence, no runtime/publication authority); runtime is schema 17/17 with migrations 0016 and 0017 registered; optional signed-evidence packets remain blocked.
 
-## Current source milestone — 2026-10-18
+## System One decision engine
+
+The `0.2.0` source direction adds a local advisory workstream. First define
+the versioned reviewer-note and evidence contract, benchmark a CPU runner on
+whole held-out case families, and qualify an open reference model. Then
+integrate the advisory CLI and API with management clients and measure
+distributed workers and accelerator backends. Workflows requesting an effect
+use the Gateway milestones below.
+
+## Action-request source milestone — 2026-10-18
 
 The accepted action-request record source milestone reserves schema 18 for
 durable authenticated request roots, explicit failed/unknown evaluation, first
@@ -197,7 +206,7 @@ compatibility rows remain unsupported.
 - [Phase 4 source exit evidence](architecture/PHASE_4_EXIT_EVIDENCE.md) maps
   bootstrap, restart, migration, backup, restore, corruption, disk-full, and
   interruption negatives to checked-in tests.
-- Source-only `0.1.0`; no supported runtime or published artifact.
+- Source-only `0.2.0`; supported runtime and artifact publication are pending.
 
 ## Fourteen Ordered Phases
 

@@ -29,7 +29,7 @@ lockfiles, runtime behavior, package availability, or publication state.
 
 ## Current Package State
 
-All current source packages are marked `private: true` at version `0.1.0`. They
+All current source packages are marked `private: true` at version `0.2.0`. They
 are source refs for documentation and review only. They are not installable,
 published, marketplace-listed, release-ready, or stable public SDK packages.
 
@@ -122,7 +122,7 @@ publication, GitHub mutation, or live side effects.
 
 | Group                     | Source refs                                                                   | Current exports to reference                                                                                                   | Boundary                                                                                          |
 | ------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| Package export inventory  | `apps/api/package.json`, `packages/*/package.json`, `packages/*/src/index.ts` | Unpublished package names, version `0.1.0`, `private: true`, package export entries.                                           | Inventory only; no package availability claim.                                                    |
+| Package export inventory  | `apps/api/package.json`, `packages/*/package.json`, `packages/*/src/index.ts` | Unpublished package names, version `0.2.0`, `private: true`, package export entries.                                           | Inventory only; no package availability claim.                                                    |
 | Release/package contracts | `packages/packets/src/index.ts`, `docs/sdk/release.md`                        | Release readiness, package/release review envelope, source refs, required gates, fail-closed package/release examples.         | Review docs only; no artifact generation.                                                         |
 | CLI source                | `packages/cli/src/index.ts`                                                   | `CLI_STATUS`, `runCli`, packet validate/hash result shapes.                                                                    | Current local source commands only; future `lnsat`/`lnsatctl` direction is documented separately. |
 | Core constants            | `packages/core/src/index.ts`                                                  | `LNSAT_CORE_VERSION`, `LNSAT_PRODUCT_NAME`, `ProductLifecycleStatus`, `currentProductLifecycleStatus`.                         | Maintainer metadata only.                                                                         |

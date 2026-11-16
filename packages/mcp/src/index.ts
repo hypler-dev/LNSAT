@@ -3359,7 +3359,7 @@ export type LocalStdioSmokeResponse =
 
 const LNSAT_MCP_SERVER_ID = "lnsat.mcp.read_only.v0_1";
 const LNSAT_OFFICIAL_MCP_SERVER_NAME = "lnsat.mcp.official.v0_2";
-const LNSAT_OFFICIAL_MCP_SERVER_VERSION = "0.1.0";
+const LNSAT_OFFICIAL_MCP_SERVER_VERSION = "0.2.0";
 const LNSAT_REPO_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 
 type McpToolName =

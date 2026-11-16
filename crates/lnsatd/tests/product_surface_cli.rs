@@ -53,7 +53,7 @@ fn three_product_manifest_selectors_are_exact_and_legacy_compatible() {
     assert_eq!(daemon_v1.stdout, operator_v1.stdout);
     assert_eq!(
         daemon_v1.stdout,
-        include_bytes!("../../../fixtures/contracts/phase10-product-surface-v1.json")
+        include_bytes!("../../../fixtures/contracts/product-surface-v1.json")
     );
     let daemon_v2 = Command::new(env!("CARGO_BIN_EXE_lnsatd"))
         .args([
@@ -147,7 +147,7 @@ fn shared_output_formats_preserve_default_json_and_exact_position() {
     assert!(text.starts_with("command=doctor\n"));
     assert!(text.contains("configuration.ambient_environment_used=false\n"));
     assert!(text.contains("side_effects=[]\n"));
-    assert!(text.ends_with("source_version=0.1.0\n"));
+    assert!(text.ends_with("source_version=0.2.0\n"));
 
     let yaml = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
         .args(["doctor", "--output", "yaml"])
