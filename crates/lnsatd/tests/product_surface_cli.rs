@@ -147,7 +147,7 @@ fn shared_output_formats_preserve_default_json_and_exact_position() {
     assert!(text.starts_with("command=doctor\n"));
     assert!(text.contains("configuration.ambient_environment_used=false\n"));
     assert!(text.contains("side_effects=[]\n"));
-    assert!(text.ends_with("source_version=0.2.0\n"));
+    assert!(text.ends_with("source_version=0.3.0\n"));
 
     let yaml = Command::new(env!("CARGO_BIN_EXE_lnsatctl"))
         .args(["doctor", "--output", "yaml"])

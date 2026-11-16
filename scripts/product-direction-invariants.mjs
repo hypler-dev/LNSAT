@@ -5,7 +5,7 @@ function compact(value) {
 const currentVersionSnapshotRows = [
   [
     "Product/source SemVer",
-    "`0.2.0`",
+    "`0.3.0`",
     "Pre-release source; npm workspaces private and Rust crates unpublished",
   ],
   [
@@ -279,7 +279,7 @@ export function collectBuildSequenceErrors(readSource) {
   const sequenceCompact = compact(sequence);
 
   if (
-    !status.includes("LNSAT `0.2.0` is pre-release, source-only software.") ||
+    !status.includes("LNSAT `0.3.0` is pre-release, source-only software.") ||
     hasCurrentMaturityContradiction(status) ||
     distributionValue !== "not available" ||
     hostedRuntimeValue !== "not available" ||

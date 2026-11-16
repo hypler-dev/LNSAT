@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const REPO_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const DEFAULT_EVIDENCE_PATH =
   "fixtures/contracts/phase10-product-surface-conformance-v1.json";
-const CURRENT_SOURCE_VERSION = "0.2.0";
+const CURRENT_SOURCE_VERSION = "0.3.0";
 
 const FROZEN_PHASE10_RAW_SHA256 = {
   "fixtures/contracts/phase10-product-surface-v1.json":

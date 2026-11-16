@@ -6,98 +6,98 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-pre--release-orange.svg)](docs/PROJECT_STATUS.md)
 
-**Local System One for evidence-bound decisions, with an optional enforcement gateway.**
+**CPU-first System One for evidence-based technical review.**
 
-LNSAT is building a local decision engine for technical reviewers and management
-systems. System One is the fast path. It combines structured evidence checks
-with a small model to recommend where a case belongs, cite the evidence that
-drives the recommendation, and abstain when the case needs human judgment.
-Applications can use the planned advisory interface on its own.
+LNSAT is building a local decision engine for technical reviewers, agents, and
+management applications. System One reads a reviewer note and a redacted
+evidence summary. It recommends which view to open, cites the evidence behind
+that recommendation, and abstains when the evidence is insufficient.
 
 **Execution authorization and evidence for consequential agent actions.**
-The Gateway provides that authority path when an application requests an
-effect. It binds a proposed action to deterministic policy, authenticated
-human approval where required, one bounded attempt, and durable result evidence.
-Models and management clients can present recommendations. The Gateway owns
-authorization for managed workflow actions. Offline backup, inert restore,
-and owner recovery follow separate operator-local CLI contracts.
+The optional Gateway is the enforcement component. For an LNSAT-managed action,
+it applies deterministic policy, checks authenticated human approval when
+required, authorizes one bounded attempt, and records durable evidence of the
+result. An application can use review recommendations without enabling
+execution.
 
-> **Pre-release source milestone `0.2.0`.** The public repository contains
-> experimental Gateway implementation, conformance fixtures, and contracts.
-> The System One runner, reference weights, and management integration are
-> planned. Supported installers, containers, hosted service, and end-to-end
-> runtime proof remain pending. The Control Center is a read-only preview.
-
-Current source includes durable authenticated action-request records, explicit
-failed and unknown evaluation, replay and conflict evidence, and bounded
-read-only operator projections. Request-bound recovery has test-only
-conformance coverage. See [the action-request record contract](docs/architecture/action-request-record.md)
-and [Project Status](docs/PROJECT_STATUS.md) for implementation and runtime
-claims.
+> **Source milestone `0.3.0` · pre-release.** This repository contains
+> experimental Gateway source, CLI diagnostics, conformance tests, and a
+> read-only Control Center. System One has local research prototypes.
+> The public runner, reference weights, and management-client integration are
+> planned. See [Project Status](docs/PROJECT_STATUS.md) for current evidence.
 
 [System One](#system-one-decision-engine) ·
-[Architecture](#architecture-and-trust-boundaries) ·
-[Authority flow](#from-proposal-to-consequence) ·
-[CLI](#current-cli-and-service-interfaces) ·
+[Gateway](#architecture-and-trust-boundaries) ·
+[CLI and service](#current-cli-and-service-interfaces) ·
 [Integration](#application-sdk-and-agent-integration) ·
-[Evaluate from source](#evaluate-from-source) ·
-[Documentation index](docs/DOCS_INDEX.md)
+[Versions](#versioning-canonical-bytes-and-conformance) ·
+[Evaluate from source](#evaluate-from-source)
 
-[Project Status](docs/PROJECT_STATUS.md) owns implementation and acceptance
-truth. [Claims and Maturity](docs/CLAIMS_AND_MATURITY.md) defines the maturity
-labels. This README explains the system and links the exact contracts; its
-examples and diagrams do not open runtime or release gates.
+[Claims and maturity](docs/CLAIMS_AND_MATURITY.md) defines the evidence each
+status label requires.
 
 ## System One Decision Engine
 
-A caller supplies a reviewer note and a redacted evidence summary through the
-planned interface. A result carries a probability for each route, an explicit
-abstention outcome, and evidence references. These routes describe which
-review or action view to show to a person.
+The planned interface returns route probabilities, evidence references, and an
+explicit abstention decision. The route recommends a review view.
 
-| Route          | Recommended review                                                     |
-| -------------- | ---------------------------------------------------------------------- |
-| Approval       | Examine the proposed scope and the approval record.                    |
-| Execution      | Review readiness for a bounded attempt or inspect its recorded result. |
-| Reconciliation | Resolve a prior attempt with missing or conflicting evidence.          |
-| Clarify        | Request the context needed to establish scope or interpret the record. |
+| Route          | What to review                                                   |
+| -------------- | ---------------------------------------------------------------- |
+| Approval       | The proposed scope and approval record                           |
+| Execution      | The readiness of a bounded attempt or its recorded result        |
+| Reconciliation | An existing attempt with missing or conflicting outcome evidence |
+| Clarify        | The question or context needed to interpret the request          |
 
-The first workloads cover cloud changes, database migrations, transactions, and
-MCP tool requests. Structured checks bind the selected target, attempt, receipt,
-and independent readback. The learned component handles ambiguous notes and
-evidence selection. When a required binding is missing, stale, or contradictory,
-the decision abstains and points the reviewer to the gap. A management client
-uses separate Gateway operations for approval, execution, and reconciliation.
+`clarify` recommends a view. Abstention withholds a recommendation when the
+inputs cannot support one and should identify the evidence gap. Review notes
+are untrusted input. Typed checks verify the selected target, attempt, receipt,
+review cutoff, and independent readback. Deterministic rules handle structured
+cases. A learned head can interpret ambiguous notes and rank evidence within
+that boundary. Missing, stale, or conflicting bindings can force abstention
+regardless of model confidence.
+
+The initial workloads are cloud stack changes, database migrations,
+transactions, and MCP tool requests. Each can be used as an advisory task or
+paired with a separate Gateway workflow for consequential actions.
 
 ### Integration and scale
 
-The planned versioned CLI and API give Rangoon and other management systems the
-same decision output. The first target is CPU inference on one machine.
-Distributed worker pools can later partition independent cases, with bounded
-queues, deadlines, and replay-safe result collection. Metal, Vulkan, and CUDA
-are candidates for measured acceleration under the same result contract.
+The first target is a versioned Rust-backed CLI and API for CPU inference on a
+single machine.
+Rangoon and other management applications can use the same advisory result to
+choose a view. An LNSAT-managed effect goes through the Gateway's separate
+authority path.
+
+Independent advisory cases can later be partitioned across CPU worker pools
+with bounded queues, deadlines, and replay-safe result collection. Metal,
+Vulkan, and CUDA are acceleration candidates. Platform support depends on
+measured throughput and result conformance against the CPU reference.
 
 ### Evaluation and model release
 
-The evaluation plan compares deterministic rules, pinned peer models, and
-hybrid decisions on whole held-out case families and public benchmarks.
-One-fact variants test whether a decision and its cited evidence change
-together. Report error at matched coverage, confident mistakes, abstention,
-latency, and memory.
+Compare typed rules, a pinned open-weight checkpoint, a learned head, and the
+head with evidence verification. Keep complete case families together across
+training, calibration, and evaluation splits. Use one-fact variants to measure
+whether a changed record shifts both the route and the cited evidence. Use
+independent human labels and recorded outcomes to qualify performance on
+real cases.
 
-A future open-source AI release requires distributable parameters, training and
-inference source, and data information sufficient to build a substantially
-equivalent system. Private histories and evaluation holdouts stay separate from
-public artifacts. The repository source uses Apache-2.0.
-See [product direction alignment](docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md)
-and the [Open Source AI Definition](https://opensource.org/ai/open-source-ai-definition).
+Report full-coverage errors, risk at matched coverage, confident mistakes,
+abstention, evidence accuracy, CPU latency, and memory. Count independent case
+families for decision-quality claims. Measure repeated forwards as throughput.
+
+A future open-source AI release needs distributable parameters, training and
+inference source, and the data information required to build a substantially
+equivalent system. Private histories, holdouts, and models derived from them
+stay private. The public repository source is Apache-2.0. See the
+[Open Source AI Definition](https://opensource.org/ai/open-source-ai-definition)
+and [product direction alignment](docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md).
 
 ## Architecture And Trust Boundaries
 
-LNSAT separates the actor asking for a consequence from the authority deciding
-whether that exact consequence may occur. A tool connection, authenticated
-session, policy recommendation, or successful parser result is insufficient on
-its own. The selected operation must satisfy its complete authority chain.
+Only the Gateway can grant one-use authorization for an LNSAT-managed
+effect. The selected operation must satisfy the complete chain of identity,
+scope, policy, approval, and current state.
 
 ```text
 agent / human / application
@@ -123,10 +123,9 @@ bounded execution adapter ----> selected isolated substrate/target
 consequence evidence ----> receipt or outcome_unknown ----> reconciliation
 ```
 
-The diagram describes required ordering. Route availability and runtime proof
-vary by interface. The Rust daemon and TypeScript Gateway packages contain
-different source layers; the directory named `packages/gateway` is not, by
-itself, the whole enforcement system.
+The diagram describes required ordering for consequential workflows. Route
+availability and runtime proof vary by interface. The enforcement source spans
+the Rust daemon, durable store, and TypeScript Gateway packages.
 
 | Layer                          | Source                                                                                     | Technical responsibility                                                                                                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
@@ -152,80 +151,21 @@ define the larger trust boundary.
 
 ## From Proposal To Consequence
 
-The reference development workflow is a bounded change to a disposable Git
-repository. It exercises the difference between requesting an action,
-authorizing it, starting it, and proving its result. It is not an unrestricted
-Git or shell executor.
+The reference development workflow is one bounded change to a disposable Git
+repository. Current source records authenticated requests and their policy
+evaluations, including failed and unknown outcomes, plus first replay and
+conflict evidence. The operator can read back an exact request within the
+authorized scope.
 
-The current source milestone adds a private request-bound one-use execution
-admission seam. It revalidates the immutable request root, its unique recorded
-policy evaluation, authenticated active sessions, approval and authorization
-evidence, nonce and time window, capability, and exact derived request before
-atomically consuming the capability and reserving the existing operation
-attempt. The seam uses a closed fake adapter protocol and has no public route,
-real dispatch, production supervisor, consequence receipt, or supported
-operation claim. A lost post-commit reservation is inspection-only and remains
-subject to existing startup reconciliation as `outcome_unknown`; it cannot be
-retried or reported as fabricated success. See
-[request-execution admission](docs/architecture/request-execution-admission.md).
-
-The guarded fake-dispatch follow-on adds a private fresh-transaction handoff.
-Reservations carry an in-memory store-instance marker and cannot cross another
-connection or reopen. The guard rechecks durable request, policy, attempt and
-digest bindings plus the live exact requester bearer/CSRF proof, approver,
-roles, nonce, and expiry windows. Only test builds can invoke the trusted fake
-callback. Callback failure or unwinding panic may record exact source-protocol
-`outcome_unknown`; success remains `dispatching` with no receipt or completion.
-Fourteen grouped admission and guarded-dispatch tests passed locally. No route,
-real adapter, schema migration, physical deadline, or post-check atomicity is implied.
-
-A separate private request-bound Git-result source seam uses
-`adapter:local:request-bound-git-commit@v1` and
-`lnsat.request-bound-git.protocol.v1`. It does not reinterpret the older
-admission protocol or its receipt-free history. In one immediate transaction it
-rederives the immutable root, policy, authorization, consumption, full request,
-and separate Git tool commitments before it accepts a verifier-owned result
-proof. An exact duplicate is read-only; a conflicting result is rejected; and
-an `outcome_unknown` attempt can complete only with its matched reconciliation
-in that transaction. The sole proof constructor is test-only and separate from
-the fake callback, so this source seam opens no production observer, dispatch,
-Git/host proof, or public result-submission path. Thirteen bounded result groups and 35 affected Rust regressions passed locally;
-34 Node checks also passed. Independent source and test reviews passed. See
-[request-bound Git result persistence](docs/architecture/request-bound-git-result.md).
-
-A bounded synthetic action-loop fixture connects these existing seams through
-store restart and authenticated evidence readback. Four focused Rust groups
-passed; independent test review passed after two oracle gaps were corrected.
-It reuses the current receipt/reconciliation projection; no production observer,
-real Git execution, or new public route is introduced.
-
-The private `cfg(test)` coordinator composes existing authority and result seams
-through unlocked synthetic dispatch and observation ports. All 36 conformance
-groups passed: 35 behavioral groups and one structural production-closure check.
-Fresh independent source/test review passed. It preserves one-use reservation,
-exact inner-store identity, inspection-only recovery and uncertainty without
-redispatch. No production entry or OpenShell/Rangoon implementation is added.
-See the [private coordinator contract](docs/architecture/request-bound-coordinator.md).
-
-The private request-bound Git observer/verifier child is an implemented source
-candidate under that test-only coordinator. It independently selects the
-synthetic observation input, releases locks before acquisition, rederives the
-current original-store binding before verification, and preserves existing
-receipt, reconciliation, replay, conflict, terminal-recovery and uncertainty
-semantics. The narrow local run passed all 26 groups: 25 behavioral groups and
-one G26 structural production-closure group. Strict Clippy and Rustfmt passed;
-fresh source/test review is pinned to the reviewed source and test fixtures.
-G27–G32 still require separately accepted production, native and operator
-evidence. This candidate adds no production observer, real Git collector,
-proof constructor, route, protocol, schema, runtime or release claim. See the
-[request-bound Git observer architecture](docs/architecture/request-bound-git-observer.md).
-
-The controller retains the complete validated operation readback from
-expectation assembly. Normal freeze requires `dispatching`; recovery compares
-its initial coherent classification before observation. Post-observation exact
-full-readback equality rejects current readback drift before the boundary proof
-constructor call. These are modeled state checks, not physical temporal
-authority against arbitrary concurrent writers.
+Private admission, fake dispatch, result verification, and recovery fixtures
+exercise one-use reservation and reconciliation across restart. They remain
+bounded to the documented source and test interfaces. The
+[action-request record](docs/architecture/action-request-record.md),
+[execution admission](docs/architecture/request-execution-admission.md),
+[Git result persistence](docs/architecture/request-bound-git-result.md),
+[coordinator](docs/architecture/request-bound-coordinator.md), and
+[observer](docs/architecture/request-bound-git-observer.md) describe exact
+implementation and proof scope.
 
 ### 1. Bind the proposal to exact content
 
@@ -315,12 +255,13 @@ was rolled back.
 
 ## Versioning, Canonical Bytes And Conformance
 
-The product source, wire contract, and persistence schema have independent
-version identities.
+Source SemVer identifies the checkout's packages and commands. Gateway wire
+contracts and persistence schemas each carry their own identities. A future
+advisory contract and model artifact will also carry independent identities.
 
 | Identity                              | Current source value       | Meaning                                                           |
 | ------------------------------------- | -------------------------- | ----------------------------------------------------------------- |
-| Product/source SemVer                 | Unpublished `0.2.0`        | Repository package and command version                            |
+| Product/source SemVer                 | Unpublished `0.3.0`        | Repository package and command version                            |
 | Gateway wire target                   | `lnsat.contracts.v1_0`     | Exact contract family/version negotiation                         |
 | Default product-surface diagnostic    | `lnsat.product_surface.v1` | Current default manifest/status contract                          |
 | Explicit headless diagnostic selector | `lnsat.product_surface.v2` | Opt-in source diagnostics; no version range or automatic fallback |
@@ -531,12 +472,11 @@ complete executable management tutorials are not yet available.
 
 ### Engine and application responsibilities
 
-Applications own presentation, workflow organization, and integrations with
-their enterprise systems. The planned advisory interface recommends a review
-view and supplies evidence references. The Gateway owns policy enforcement,
-approval validation, execution authorization, durable receipts, and recovery.
-Rangoon and other management clients use the same versioned contracts for
-these responsibilities. LNSAT runs independently of any management client.
+Applications own presentation, workflow organization, and their enterprise
+integrations. Rangoon and other management clients are intended to consume the
+same versioned advisory interface for routing and evidence. They can call
+separate Gateway contracts for policy, approval, authorized execution, and
+recovery. LNSAT is designed to run independently of any management client.
 
 Enterprise identity, workload identity, policy services, key providers and
 audit destinations may supply authenticated inputs through separately scoped

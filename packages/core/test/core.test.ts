@@ -8,7 +8,7 @@ import {
 describe("@lnsat/core", () => {
   it("exposes the current product identity and lifecycle status", () => {
     expect(LNSAT_PRODUCT_NAME).toBe("LNSAT");
-    expect(LNSAT_CORE_VERSION).toBe("0.2.0");
+    expect(LNSAT_CORE_VERSION).toBe("0.3.0");
     expect(currentProductLifecycleStatus).toBe("active_development");
   });
 });

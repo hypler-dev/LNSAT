@@ -40,5 +40,5 @@
     "storage_ready": true
   },
   "side_effects": ["session_activity_evidence_may_append"],
-  "source_version": "0.2.0"
+  "source_version": "0.3.0"
 }

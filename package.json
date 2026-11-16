@@ -1,10 +1,13 @@
 {
   "name": "lnsat",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Pre-release local System One decision engine and optional enforcement gateway for evidence-bound workflows",
+  "description": "Pre-release source for CPU-first System One review and a separate Gateway for policy, human approval, bounded execution, and durable receipts.",
   "keywords": [
+    "system-one",
+    "decision-engine",
+    "evidence-verification",
     "ai-agents",
     "agent-security",
     "authorization",

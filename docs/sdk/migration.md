@@ -31,7 +31,7 @@ runtime behavior, calling external services, or opening live side effects.
 ## Current Migration Posture
 
 No migration is executable yet. All current `@lnsat/*` workspaces are
-unpublished packages at version `0.2.0`. They are documentation source refs and
+unpublished packages at version `0.3.0`. They are documentation source refs and
 review inputs only. They are not installable, published, registry-backed,
 marketplace-listed, release-ready, or stable public SDK packages.
 
@@ -50,7 +50,7 @@ explicit package boundary. This guide records documentation requirements only.
 | ----------------------------- | --------------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
 | Package identity              | private `@lnsat/*` workspace names                        | approved public package name and owner                          | package rename, package creation, publication        |
 | Import path                   | repo-local source imports and private workspace exports   | before/after mapping after approval                             | dependency rewrite, consumer migration               |
-| Version                       | private `0.2.0` source version                            | semver policy, changelog scope, compatibility note              | version bump, release tag, registry metadata         |
+| Version                       | private `0.3.0` source version                            | semver policy, changelog scope, compatibility note              | version bump, release tag, registry metadata         |
 | API stability                 | source export groups by audience                          | stable/experimental/deprecated classification                   | API guarantee, public SDK claim                      |
 | Conformance                   | source-only positive checks and fail-closed probe docs    | package-bound conformance checklist                             | runner, workflow, live probe                         |
 | Release evidence              | planned release lanes and approval gates                  | package/release review record before publication                | checksums, signatures, SBOM, provenance, release     |

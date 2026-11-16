@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 export const PRODUCT_SURFACE_CONTRACT_ID = "lnsat.product_surface.v1";
 export const PRODUCT_SURFACE_CONTRACT_ID_V2 = "lnsat.product_surface.v2";
 export const CLI_OUTPUT_SCHEMA = "lnsat.cli.output.v1";
-export const PRODUCT_SOURCE_VERSION = "0.2.0";
+export const PRODUCT_SOURCE_VERSION = "0.3.0";
 
 type ProductWriter = {
   write(chunk: string): void;

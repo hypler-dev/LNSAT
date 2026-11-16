@@ -35,10 +35,12 @@ runtime and package:
   package lifecycle proof remains part of the staged V1 build.
 
 The [System One decision-engine expansion](../README.md#system-one-decision-engine)
-is an independent advisory workstream. Its sequence starts with a versioned
-CPU-first contract and reproducible public evaluations. Distributed workers,
-accelerators, and external management integrations need separate compatibility
-evidence. Consequential workflows use the Gateway and its V1 acceptance path.
+is the primary advisory workstream. Start with a versioned review contract,
+a reproducible CPU runner, and evidence-bound evaluations. Require independent
+model identity, calibration, and case-family separation for accuracy claims.
+Management integrations, distributed workers, and accelerator backends need
+their own compatibility evidence. Managed effects use the Gateway and its V1
+acceptance path.
 
 ## Headless Configuration And Control
 

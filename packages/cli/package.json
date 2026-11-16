@@ -1,6 +1,6 @@
 {
   "name": "@lnsat/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "CLI for validating, hashing, and inspecting LNSAT packets",
   "repository": {
@@ -20,8 +20,8 @@
     "typecheck": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@lnsat/gateway": "0.2.0",
-    "@lnsat/packets": "0.2.0"
+    "@lnsat/gateway": "0.3.0",
+    "@lnsat/packets": "0.3.0"
   },
   "license": "Apache-2.0"
 }
