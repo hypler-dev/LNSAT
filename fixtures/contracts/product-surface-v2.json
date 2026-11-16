@@ -2,7 +2,7 @@
   "contract_id": "lnsat.product_surface.v2",
   "contract_version": "lnsat.contracts.v1_0",
   "schema_version": 2,
-  "product_version": "0.1.0",
+  "product_version": "0.2.0",
   "source_status": "experimental_source",
   "supported_release": false,
   "package_or_binary_claim": false,

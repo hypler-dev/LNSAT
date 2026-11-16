@@ -500,10 +500,10 @@ impl ProductExitCodeV1 {
     }
 }
 
-/// Exact embedded target-neutral Phase 10 source manifest.
+/// Exact embedded target-neutral v1 source manifest.
 #[must_use]
 pub const fn product_surface_manifest_json_v1() -> &'static str {
-    include_str!("../../../fixtures/contracts/phase10-product-surface-v1.json")
+    include_str!("../../../fixtures/contracts/product-surface-v1.json")
 }
 
 /// Exact opt-in HCFG-1 product-surface manifest bytes.
@@ -994,7 +994,7 @@ mod tests {
         );
 
         let status_fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../fixtures/contracts/phase10-status-v1.json"
+            "../../../fixtures/contracts/daemon-status-v1.json"
         ))
         .expect("status fixture must parse");
         let status = daemon_status_v1();

@@ -1,6 +1,6 @@
 {
   "name": "@lnsat/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Experimental loopback Gateway inspection API for LNSAT",
   "license": "Apache-2.0",
@@ -29,10 +29,10 @@
     "typecheck": "npm run build -w @lnsat/gateway && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@lnsat/audit": "0.1.0",
-    "@lnsat/gateway": "0.1.0",
-    "@lnsat/packets": "0.1.0",
-    "@lnsat/policy": "0.1.0",
+    "@lnsat/audit": "0.2.0",
+    "@lnsat/gateway": "0.2.0",
+    "@lnsat/packets": "0.2.0",
+    "@lnsat/policy": "0.2.0",
     "fastify": "5.12.6",
     "pg": "8.22.0"
   },

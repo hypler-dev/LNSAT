@@ -1,0 +1,232 @@
+{
+  "schema_version": "lnsat.security_review.v1",
+  "review_id": "PHR-0106-independent-implementation-review-93dc66e9",
+  "review_type": "independent_implementation_review",
+  "packet_ids": ["system-one-decision-engine-direction"],
+  "base_revision": "87e9cf11378fc980289ae1a8dd57ba0535fb51d6",
+  "reviewed_revision": "93dc66e96f7195616097676d8bc506c4bb70e2dd",
+  "reviewed_tree_oid": "da5115d5d370eac243b7e7e9f350bf5c399fe13a",
+  "diff_sha256": "sha256:0bcfbce94c108753486d467c3e18a7ab7344592a9eb8ecc0e9526fc0a1ca8d13",
+  "protected_files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "sha256:6fb6c228226d5510232a830920652cfad11521ee61d2be85f520a6c6a8c42000"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "sha256:11f9071969f2ac8b9292f822030f9032bd93d292fed1bc9c3b71dba7832fd6c3"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "sha256:e4388fe9d47a3bcd5b5c1aa863e1bd221fb215ffd3f8b5a18489fc6d35a7547c"
+    },
+    {
+      "path": "README.md",
+      "sha256": "sha256:c2f6dfc23df0866d00da643f68013c84a81214eda149c621450d871d24dceaf2"
+    },
+    {
+      "path": "apps/api/package.json",
+      "sha256": "sha256:4c274a62b35298d37e61b7368cd9bceca5daf057249b79aef1c1f6f8a75e0efd"
+    },
+    {
+      "path": "apps/console/package.json",
+      "sha256": "sha256:360d316035dfff516815c20f6789d59465e1139beead1d5d004f4e96f8023c50"
+    },
+    {
+      "path": "crates/lnsat-store/src/phase7_consumption/request_admission/request_coordinator/request_observer/tests.rs",
+      "sha256": "sha256:356277e54abd5cbaed6f0d1c38d4e1c45b0a57b3ecf36411843cbcfa6398a7b8"
+    },
+    {
+      "path": "crates/lnsatd/src/lib.rs",
+      "sha256": "sha256:1a1232e4a5afd13679d48e3b2b0a5c4aa3ed77888e54ffb36854e85af160b95e"
+    },
+    {
+      "path": "crates/lnsatd/src/product_surface.rs",
+      "sha256": "sha256:846b96f5acd2ce36b3f49598d9c070df3db8af06d8e21e7bb6bd2fac86e8e85f"
+    },
+    {
+      "path": "crates/lnsatd/src/product_transport.rs",
+      "sha256": "sha256:8ea9f6ff3e8c981bb82c9d0369a66b966e77ccbefeff9d1a4f37e4f59c30893f"
+    },
+    {
+      "path": "crates/lnsatd/tests/product_surface_cli.rs",
+      "sha256": "sha256:3876fbf97b2ddc3a4ea1155951ff083ff41671944e1ea5190141cc1ff2a5179a"
+    },
+    {
+      "path": "docs/PRODUCT_BUILD_SEQUENCE.md",
+      "sha256": "sha256:8d0881a2effb4fcfa962d1a94388e83f37dc8ddfc690cacb05e7d482dbf5aea9"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "sha256:e89f98b3fc0082023120f794b82228087f44560579631354be29578786c62887"
+    },
+    {
+      "path": "docs/RELEASING.md",
+      "sha256": "sha256:72094e1f63dffa92a6e8dbf5c3027547be53517d489c5e56122c0dd127b18c04"
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "sha256": "sha256:319c91a531bdd167f10820f2ece5beb5d337e6c3480e2f5ce8e7ad90697bd6c3"
+    },
+    {
+      "path": "docs/WHY_PUBLIC_NOW.md",
+      "sha256": "sha256:7de0665b0e21145b87c0f42378128a5c4077c3cda13456697ed48fce17777822"
+    },
+    {
+      "path": "docs/architecture/CRYPTO_OPERATION_PROVIDER_INVENTORY.md",
+      "sha256": "sha256:7701783c50148c40fbacbfa0d38deb80b182e878e78d7b720fbb5757c0c862e5"
+    },
+    {
+      "path": "docs/architecture/PHASE_10_PRODUCT_SURFACE_CONTRACT_SPINE.md",
+      "sha256": "sha256:1e8a569f8536c900f6ad5ca269430b0ebec6b16afaa51b5b6f30b5e6c8bcbd8b"
+    },
+    {
+      "path": "docs/reference/CONTRACT_VERSIONING.md",
+      "sha256": "sha256:e09fce8a78062e6ab1bcd7ee16c026acbc08bffac428e4d5a31a708d9710cf7e"
+    },
+    {
+      "path": "docs/reference/PRODUCT_DIRECTION_ALIGNMENT.md",
+      "sha256": "sha256:1cbd43f85c90f8c62cf01086d531c42bc78a7e14278b25615eeddb7d322962c9"
+    },
+    {
+      "path": "docs/reference/legacy-identifier-inventory.json",
+      "sha256": "sha256:2b5b10bf8c0c405f6090e2aabbe99279c5c699c94e369df17d24844fc73ab1e0"
+    },
+    {
+      "path": "docs/reference/public-history-reviews/registry.json",
+      "sha256": "sha256:f4534cd93571f1c9a5e3f1d3f664663e8164185cea0fd3c7fab71a1637f30b35"
+    },
+    {
+      "path": "docs/sdk/migration.md",
+      "sha256": "sha256:9b88fd4d03bc3c0b9b81cd80ed8d9e752083023e3d0a5038364ae4a1fa8c1835"
+    },
+    {
+      "path": "docs/sdk/typescript-reference.md",
+      "sha256": "sha256:ee207248c52df182d0734eda43dcf07bd99ee7ac8bd1191766bdb7c16477b5cc"
+    },
+    {
+      "path": "fixtures/contracts/daemon-status-v1.json",
+      "sha256": "sha256:8a5fb685d19dd993e1832830097bbd971823f3d094e2f76e6d82728d37784661"
+    },
+    {
+      "path": "fixtures/contracts/daemon-status-v2.json",
+      "sha256": "sha256:2e8f93dbf83a25bd259e0acca984ad22aa48b5f0b41ec2c014ccfc2fb163cae1"
+    },
+    {
+      "path": "fixtures/contracts/product-surface-v1.json",
+      "sha256": "sha256:0876e5ae82bce19cdf6cb036a91902c3f66ac056148d681a4f5982e690fd652a"
+    },
+    {
+      "path": "fixtures/contracts/product-surface-v2.json",
+      "sha256": "sha256:281e01c659462f18a73fa6b335a9fe55dd4ff876e15160fbb79b24c7e15ee3dd"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "sha256:6244b3f4bb6f3379619cacf450b1cdd190fbf274cc2998d0db106247541c7a05"
+    },
+    {
+      "path": "package.json",
+      "sha256": "sha256:8c0976a694c0815b85c0877b41f04791d68f4f23f464017ae963233a652323b5"
+    },
+    {
+      "path": "packages/audit/package.json",
+      "sha256": "sha256:4235fb34b504db85818db3d37a39e073f5315a6b5372ae91d0180cb3475c9699"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "sha256": "sha256:2cfd232e3ea4b8bb3b7fe36d127b4ea068c33537b8e8d5b4ce9cc188342bf375"
+    },
+    {
+      "path": "packages/cli/src/product-surface.ts",
+      "sha256": "sha256:ddf5bf6ff3cd298d20c0564c21fa463c78816c962ed50aee717f57383b2c8753"
+    },
+    {
+      "path": "packages/cli/test/product-surface.test.ts",
+      "sha256": "sha256:33fe9ddbc0cda5c94e79cc6140ef888f8287d115efaa03fbd1cf0a1731c9a703"
+    },
+    {
+      "path": "packages/core/package.json",
+      "sha256": "sha256:8e6ccb3c66efcdd050bcab84792e4df9b190c31b399218bbbe6f386798e95d73"
+    },
+    {
+      "path": "packages/core/src/index.ts",
+      "sha256": "sha256:3ce4e728a2bad3d37cd1a2027b3056a2224043c882b55d0888d365982ea92f16"
+    },
+    {
+      "path": "packages/core/test/core.test.ts",
+      "sha256": "sha256:3272148b5ba0d254ae09eaf6553cc1a0a265f097e0303caacc5ac0e87dd121e8"
+    },
+    {
+      "path": "packages/gateway/package.json",
+      "sha256": "sha256:00a9bb9d833a99950f1d07bdf2661a0cdba6cab49c1b4f768a639bacb42311c0"
+    },
+    {
+      "path": "packages/mcp/package.json",
+      "sha256": "sha256:12bfabb3ff6170d067854e58005947a880b34f29b2c7344a4fcf5468369222b2"
+    },
+    {
+      "path": "packages/mcp/src/index.ts",
+      "sha256": "sha256:3f913f8b0c6c5879b79dd535ea4e5d2720b8285db621f156dda41424af2069ba"
+    },
+    {
+      "path": "packages/mcp/test/modern-http.test.ts",
+      "sha256": "sha256:d2787ce5fa6fb4d1089d6e89165893ace7a2a451ff874bf2953329761998c04f"
+    },
+    {
+      "path": "packages/packets/package.json",
+      "sha256": "sha256:9032046b03fc27bdc0992d342814c64090df2ec4e61e6214d52ad473eefd9a13"
+    },
+    {
+      "path": "packages/policy/package.json",
+      "sha256": "sha256:0eed52eb67d8ed6aa890f256fe567eb4ec57bd8c737c764d0e16a040793e1bbb"
+    },
+    {
+      "path": "scripts/check-phase10-product-surface-conformance.mjs",
+      "sha256": "sha256:830c660c0d84d039cfc035354fe138e209f8c05081419fcf5992cebc6d0640b4"
+    },
+    {
+      "path": "scripts/check-phase10-product-surface-conformance.test.mjs",
+      "sha256": "sha256:9f1a96ff11890055f30e13c720261dd23837b1ae8418a8d6b21a30040ba09ad2"
+    },
+    {
+      "path": "scripts/check-phase11-docker-proof-readiness.mjs",
+      "sha256": "sha256:10825a2a42e46469fc20a9cdc7c273f5545cd5dee1214fb8518d5bfba37d997e"
+    },
+    {
+      "path": "scripts/check-product-direction-alignment.test.mjs",
+      "sha256": "sha256:d3331325c47f987af0d023801d09ec6e04bc9a8592f739aa8fad2d05f2eb76ed"
+    },
+    {
+      "path": "scripts/product-direction-invariants.mjs",
+      "sha256": "sha256:44d05cfdb004441903f5c11fbe45f3ea339ce67b0292de9b891280a1a4c45ac9"
+    }
+  ],
+  "reviewer": {
+    "identity": "codex-agent:/root/system_one_source_review",
+    "kind": "agent",
+    "independent_from_author": true,
+    "tool": "OpenAI Codex native gpt_reviewer, configured gpt-5.6-terra/xhigh. Independent whole-source and correction reviews bound the final staged tree. Backend runtime model identity unexposed."
+  },
+  "findings": [
+    {
+      "finding_id": "PHR-0106-F1",
+      "severity": "P1",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Preserve the frozen Phase 10 fixture bytes and raw hashes. Route current source outputs through separate version-only successor fixtures.",
+      "resolution_revision": "93dc66e96f7195616097676d8bc506c4bb70e2dd"
+    },
+    {
+      "finding_id": "PHR-0106-F2",
+      "severity": "P2",
+      "status": "resolved",
+      "disposition": "accepted_fixed",
+      "summary": "Scope the Gateway authority claim to managed workflow actions and distinguish existing operator-local CLI contracts.",
+      "resolution_revision": "93dc66e96f7195616097676d8bc506c4bb70e2dd"
+    }
+  ],
+  "verdict": "approved",
+  "execution_authorized": false,
+  "runtime_authority_opened": false,
+  "side_effects": []
+}

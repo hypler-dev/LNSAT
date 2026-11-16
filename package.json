@@ -1,9 +1,9 @@
 {
   "name": "lnsat",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Pre-release source for policy-governed AI-agent authorization, human approval, and audit evidence",
+  "description": "Pre-release local System One decision engine and optional enforcement gateway for evidence-bound workflows",
   "keywords": [
     "ai-agents",
     "agent-security",
@@ -124,13 +124,14 @@
     "vitest": "4.1.12"
   },
   "overrides": {
+    "@hono/node-server": "2.1.6",
     "@modelcontextprotocol/sdk": "1.32.0",
     "body-parser": "2.4.0",
     "esbuild": "0.28.1",
     "express-rate-limit": "8.5.2",
     "fast-uri@^3.0.0": "3.1.9",
     "fast-uri@^4.0.0": "4.2.3",
-    "hono": "4.13.11",
+    "hono": "4.13.16",
     "ip-address": "10.7.4",
     "qs": "6.16.1",
     "sharp": "0.35.5",

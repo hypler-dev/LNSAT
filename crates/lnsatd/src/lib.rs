@@ -9197,7 +9197,7 @@ mod tests {
             ),
             (
                 AUTHENTICATED_STATUS_PATH_V1,
-                include_str!("../../../fixtures/contracts/phase10-status-v1.json"),
+                include_str!("../../../fixtures/contracts/daemon-status-v1.json"),
             ),
         ] {
             let request = fixture.product_read_request(

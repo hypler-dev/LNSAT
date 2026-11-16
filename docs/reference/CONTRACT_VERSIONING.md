@@ -21,7 +21,7 @@ names the version needed to interpret it.
 
 | Surface                       | Current identity                                                             | Current state                                                          |
 | ----------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Product/source SemVer         | `0.1.0`                                                                      | Pre-release source; npm workspaces private and Rust crates unpublished |
+| Product/source SemVer         | `0.2.0`                                                                      | Pre-release source; npm workspaces private and Rust crates unpublished |
 | Gateway wire contract         | `lnsat.contracts.v1_0`                                                       | Stable source contract target; no supported product artifact exists    |
 | Deprecated wire compatibility | `lnsat.contracts.v0_1`                                                       | Accepted only on explicitly documented compatibility surfaces          |
 | Product-surface selector      | `lnsat.product_surface.v1` default; `lnsat.product_surface.v2` explicit      | v2 is opt-in source diagnostics; no range or fallback                  |
@@ -33,11 +33,11 @@ PR #39 integrated the operator packet at merge
 record lives in the
 [operator run packet](../architecture/PHASE_11_REAL_DISPOSABLE_DOCKER_PROOF_OPERATOR_RUN_PACKET.md).
 That merge does not increment product SemVer, promote a wire or family schema,
-create a tag, or publish an artifact. A future versioned source release must
-move every npm workspace, the Cargo workspace, both lockfiles, changelog, and
-compatibility notes together under the separately authorized
-[release process](../RELEASING.md). Until then, the changelog remains
-`Unreleased` and product/source version remains `0.1.0`.
+create a tag, or publish an artifact. The later `0.2.0` source milestone aligns
+the npm and Cargo workspaces, lockfiles, command versions, and product-surface
+version fields. The changelog remains `Unreleased`. Independent wire and
+persistence identities are listed above. A versioned source release follows
+the separately authorized [release process](../RELEASING.md).
 
 ## Canonical Contract Versions
 

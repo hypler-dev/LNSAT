@@ -1,6 +1,6 @@
 {
   "name": "@lnsat/gateway",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Transport-neutral Gateway contracts and handlers for LNSAT",
   "repository": {
@@ -32,9 +32,9 @@
     "typecheck": "npm run build -w @lnsat/packets && npm run build -w @lnsat/policy && npm run build -w @lnsat/audit && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@lnsat/audit": "0.1.0",
-    "@lnsat/packets": "0.1.0",
-    "@lnsat/policy": "0.1.0"
+    "@lnsat/audit": "0.2.0",
+    "@lnsat/packets": "0.2.0",
+    "@lnsat/policy": "0.2.0"
   },
   "license": "Apache-2.0"
 }

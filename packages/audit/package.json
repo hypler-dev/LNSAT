@@ -1,6 +1,6 @@
 {
   "name": "@lnsat/audit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Audit contracts and PostgreSQL writer foundation for LNSAT",
   "repository": {
@@ -17,8 +17,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@lnsat/packets": "0.1.0",
-    "@lnsat/policy": "0.1.0"
+    "@lnsat/packets": "0.2.0",
+    "@lnsat/policy": "0.2.0"
   },
   "license": "Apache-2.0"
 }

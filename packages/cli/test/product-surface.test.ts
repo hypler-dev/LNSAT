@@ -20,7 +20,7 @@ describe("Phase 10 lnsat product surface", () => {
     const manifest = await loadProductSurfaceManifest();
     const fixture = JSON.parse(
       await readFile(
-        join(repoRoot, "fixtures", "contracts", "phase10-product-surface-v1.json"),
+        join(repoRoot, "fixtures", "contracts", "product-surface-v1.json"),
         "utf8",
       ),
     );
@@ -59,11 +59,11 @@ describe("Phase 10 lnsat product surface", () => {
 
   it("returns exact raw manifest bytes for default and exact selectors", async () => {
     for (const [argv, contractId, fixture] of [
-      [["manifest"], PRODUCT_SURFACE_CONTRACT_ID, "phase10-product-surface-v1.json"],
+      [["manifest"], PRODUCT_SURFACE_CONTRACT_ID, "product-surface-v1.json"],
       [
         ["manifest", "--product-surface-contract", PRODUCT_SURFACE_CONTRACT_ID],
         PRODUCT_SURFACE_CONTRACT_ID,
-        "phase10-product-surface-v1.json",
+        "product-surface-v1.json",
       ],
       [
         ["manifest", "--product-surface-contract", PRODUCT_SURFACE_CONTRACT_ID_V2],

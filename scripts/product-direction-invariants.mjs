@@ -5,7 +5,7 @@ function compact(value) {
 const currentVersionSnapshotRows = [
   [
     "Product/source SemVer",
-    "`0.1.0`",
+    "`0.2.0`",
     "Pre-release source; npm workspaces private and Rust crates unpublished",
   ],
   [
@@ -132,7 +132,7 @@ function tableValue(value, label) {
 
 function hasCurrentMaturityContradiction(value) {
   const lnsatClaim =
-    /\blnsat(?:\s+`?0\.1\.0`?)?\s+(?:is|is now|has become)\s+(?:supported|published|released|shipped|available|production[- ]ready|generally\s+available|ga)\b/iu;
+    /\blnsat(?:\s+`?\d+\.\d+\.\d+`?)?\s+(?:is|is now|has become)\s+(?:supported|published|released|shipped|available|production[- ]ready|generally\s+available|ga)\b/iu;
   const currentClaim =
     /\bcurrent\s+(?:maturity|product|release|runtime|software|status)\b[^.!?;]{0,40}\b(?:is|are|has become)\s+(?:now\s+)?(?:supported|published|released|shipped|available|production[- ]ready|generally\s+available|ga)\b/iu;
   const surfaceClaim =
@@ -279,7 +279,7 @@ export function collectBuildSequenceErrors(readSource) {
   const sequenceCompact = compact(sequence);
 
   if (
-    !status.includes("LNSAT `0.1.0` is pre-release, source-only software.") ||
+    !status.includes("LNSAT `0.2.0` is pre-release, source-only software.") ||
     hasCurrentMaturityContradiction(status) ||
     distributionValue !== "not available" ||
     hostedRuntimeValue !== "not available" ||

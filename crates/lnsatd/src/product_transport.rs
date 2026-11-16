@@ -501,7 +501,7 @@ mod tests {
 
     #[test]
     fn explicit_status_selector_requires_exact_single_echo() {
-        let status_body = include_str!("../../../fixtures/contracts/phase10-status-v1.json");
+        let status_body = include_str!("../../../fixtures/contracts/daemon-status-v1.json");
         let response = format!(
             "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nLNSAT-Contract-Version: lnsat.contracts.v1_0\r\nLNSAT-Product-Surface-Contract: lnsat.product_surface.v1\r\nConnection: close\r\n\r\n{status_body}",
             status_body.len()

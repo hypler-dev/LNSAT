@@ -91,7 +91,7 @@ describe("official MCP 2026-07-28 HTTP serving", () => {
       id: 1,
       result: {
         protocolVersion: "2025-11-25",
-        serverInfo: { name: "lnsat.mcp.official.v0_2", version: "0.1.0" },
+        serverInfo: { name: "lnsat.mcp.official.v0_2", version: "0.2.0" },
       },
     });
     expect(observations).toContainEqual({
