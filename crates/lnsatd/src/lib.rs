@@ -104,10 +104,13 @@ use lnsat_store::{
     Phase7ExecutionAuthorizationTransitionInputV1, Phase7ExecutionAuthorizationTransitionV1,
     Phase7ExecutionCapabilityWireV1, Phase8OperationAttemptReadbackV1, Phase8OperationReadbackV1,
     Phase8RuntimeCompositionInputV1, Phase8RuntimeCompositionWriteV1,
-    Phase11DockerPreSupervisorBindingV1, Phase11DockerRuntimeCompositionClaimHandleV1,
-    Phase11DockerRuntimeCompositionClaimOutcomeV1, Phase11DockerRuntimeCompositionClaimV1,
-    Phase11DockerRuntimeCompositionInputV1, SQLITE_SCHEMA_VERSION, SqliteStore, SqliteStoreStateV1,
-    acquire_local_daemon_database_lease_v1,
+    Phase11DockerRuntimeCompositionClaimOutcomeV1, Phase11DockerRuntimeCompositionInputV1,
+    SQLITE_SCHEMA_VERSION, SqliteStore, SqliteStoreStateV1, acquire_local_daemon_database_lease_v1,
+};
+#[cfg(test)]
+use lnsat_store::{
+    Phase11DockerPreSupervisorBindingV1, Phase11DockerPreSupervisorProofV1,
+    Phase11DockerRuntimeCompositionClaimHandleV1,
 };
 use serde::Deserialize;
 use std::collections::BTreeMap;
@@ -4060,17 +4063,21 @@ fn execute_phase11_served_fake_runtime_v1(
     if fake_runtime.pre_verifier_unknown {
         mark_phase11_served_outcome_unknown_v1(store, &input.operation_id);
     }
-    let claim =
-        verify_phase11_served_claim_v1(store, handle, raw_session_token, raw_csrf_token, &payload)?;
-    let Ok(supervised) = docker_local_supervisor::supervise_docker_local_git_execution_v1(
-        &docker_local_supervisor::DockerLocalSupervisorInputV1 {
-            payload: &payload,
-            loaded_profile: &fake_runtime.loaded_profile,
-            docker_executable: &fake_runtime.fake_docker_executable,
-            verifier_git_executable: &runtime.git_executable,
-            disposable_root: &runtime.disposable_git_root,
-        },
-    ) else {
+    let Ok((supervised, claim)) =
+        docker_local_supervisor::supervise_docker_local_git_execution_with_fresh_claim_v1(
+            &docker_local_supervisor::DockerLocalSupervisorInputV1 {
+                payload: &payload,
+                loaded_profile: &fake_runtime.loaded_profile,
+                docker_executable: &fake_runtime.fake_docker_executable,
+                verifier_git_executable: &runtime.git_executable,
+                disposable_root: &runtime.disposable_git_root,
+            },
+            store,
+            handle,
+            raw_session_token,
+            raw_csrf_token,
+        )
+    else {
         mark_phase11_served_outcome_unknown_v1(store, &input.operation_id);
         return Err(LocalBrowserTransportErrorV1::Rejected);
     };
@@ -4090,13 +4097,14 @@ fn execute_phase11_served_fake_runtime_v1(
     })
 }
 
+#[cfg(test)]
 fn verify_phase11_served_claim_v1(
     store: &Arc<Mutex<SqliteStore>>,
     handle: Phase11DockerRuntimeCompositionClaimHandleV1,
     raw_session_token: &str,
     raw_csrf_token: &str,
     payload: &docker_local_execution_payload::DockerLocalExecutionPayloadRequestFrameV1,
-) -> Result<Phase11DockerRuntimeCompositionClaimV1, LocalBrowserTransportErrorV1> {
+) -> Result<Phase11DockerPreSupervisorProofV1, LocalBrowserTransportErrorV1> {
     let mut locked_store = store
         .lock()
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
@@ -4111,7 +4119,7 @@ fn verify_phase11_served_claim_v1(
             },
         )
         .map_err(|_| LocalBrowserTransportErrorV1::Rejected)?;
-    Ok(proof.claim().clone())
+    Ok(proof)
 }
 
 fn mark_phase11_served_outcome_unknown_v1(store: &Arc<Mutex<SqliteStore>>, operation_id: &str) {
@@ -7343,6 +7351,7 @@ mod tests {
     use std::thread;
     use std::time::Instant;
 
+    mod docker_local_supervisor;
     mod phase11_served_fake_runtime;
     mod phase11_served_reference;
 

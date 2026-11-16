@@ -64,6 +64,7 @@
     "docker_local_supervisor.verifier_executable_invalid",
     "docker_local_supervisor.docker_endpoint_invalid",
     "docker_local_supervisor.target_rejected",
+    "docker_local_supervisor.pre_supervisor_proof_rejected",
     "docker_local_supervisor.runtime_unavailable",
     "docker_local_supervisor.outcome_unknown"
   ],
