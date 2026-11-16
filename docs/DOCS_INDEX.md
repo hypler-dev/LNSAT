@@ -8,8 +8,8 @@ subsystem or proposal.
 
 ## New Contributors
 
-1. [README](../README.md) — project purpose, source-evaluation quick start, and
-   current limitations.
+1. [README](../README.md) — System One advisory direction, Gateway authority,
+   versioning, and source evaluation.
 2. [Provenance timeline](../PROVENANCE.md) — selected private milestones, exact
    public-cutover tree mapping, and verification limits.
 3. [Why LNSAT Is Public](WHY_PUBLIC_NOW.md) — public-core purpose,

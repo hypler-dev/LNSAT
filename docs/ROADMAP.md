@@ -21,12 +21,18 @@ Canonical readiness states: Phase 7a signed-evidence design = complete; Phase 7b
 
 ## System One decision engine
 
-The `0.2.0` source direction adds a local advisory workstream. First define
-the versioned reviewer-note and evidence contract, benchmark a CPU runner on
-whole held-out case families, and qualify an open reference model. Then
-integrate the advisory CLI and API with management clients and measure
-distributed workers and accelerator backends. Workflows requesting an effect
-use the Gateway milestones below.
+The `0.3.0` source milestone makes local advisory review the primary product
+direction. The Gateway milestones below govern managed effects.
+
+1. Specify the reviewer-note and redacted-evidence input, four review routes,
+   cited evidence, and explicit abstention. Provide a reproducible CPU runner.
+2. Evaluate typed rules and pinned models on held-out case families. Publish
+   coverage, decision and citation error, abstention, latency, and memory
+   results with their evidence limits. Qualify an open reference model with
+   reproducible training and inference.
+3. Connect Rangoon and other management clients through the versioned advisory
+   CLI and API. Validate distributed CPU workers and candidate Metal, Vulkan,
+   and CUDA backends against the same result contract.
 
 ## Action-request source milestone — 2026-10-18
 
@@ -206,7 +212,7 @@ compatibility rows remain unsupported.
 - [Phase 4 source exit evidence](architecture/PHASE_4_EXIT_EVIDENCE.md) maps
   bootstrap, restart, migration, backup, restore, corruption, disk-full, and
   interruption negatives to checked-in tests.
-- Source-only `0.2.0`; supported runtime and artifact publication are pending.
+- Source-only `0.3.0`; supported runtime and artifact publication are pending.
 
 ## Fourteen Ordered Phases
 

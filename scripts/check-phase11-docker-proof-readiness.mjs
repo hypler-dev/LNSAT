@@ -350,7 +350,7 @@ const EXPECTED_DOC_MARKERS = {
   ],
   "docs/RELEASING.md": [
     "## Version Contract",
-    "Current product/source SemVer remains unpublished `0.2.0`.",
+    "Current product/source SemVer remains unpublished `0.3.0`.",
     "does not open a version transition",
   ],
   "docs/architecture/README.md": [

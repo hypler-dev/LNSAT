@@ -48,11 +48,13 @@ private commit topology, exact diffs, tree IDs, or protected blobs.
 
 ## Version Contract
 
-Current product/source SemVer remains unpublished `0.2.0`. Source-only Phase 11
-operator preparation, including PR #39, does not open a version transition,
-tag, artifact, or release. The separate current product, wire, family-schema,
-persistence, and evidence identities are recorded in
-[contract versioning and negotiation](reference/CONTRACT_VERSIONING.md).
+Current product/source SemVer remains unpublished `0.3.0`. This milestone
+covers repository packages, command output, and current diagnostic version
+fields. System One will identify its advisory interface and model artifacts
+independently. Source-only Phase 11 operator preparation, including PR #39,
+does not open a version transition, tag, artifact, or release. See
+[contract versioning and negotiation](reference/CONTRACT_VERSIONING.md) for
+the separate wire, persistence, and evidence identities.
 
 Before a versioned source release:
 

@@ -1,6 +1,6 @@
 {
   "name": "@lnsat/policy",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Policy decision and approval-gate contracts for LNSAT",
   "repository": {
@@ -18,7 +18,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@lnsat/packets": "0.2.0"
+    "@lnsat/packets": "0.3.0"
   },
   "license": "Apache-2.0"
 }

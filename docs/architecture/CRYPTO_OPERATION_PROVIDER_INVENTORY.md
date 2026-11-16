@@ -16,7 +16,7 @@ security assessment, or supported-product claim.
 
 ## Scope and maturity
 
-LNSAT is pre-release `0.2.0` source-only software. Gateway remains the
+LNSAT is pre-release `0.3.0` source-only software. Gateway remains the
 authorization boundary. Protocol adapters do not gain infrastructure authority;
 the console remains an experimental read-only preview. Hosted SaaS, fleet/HA,
 and multi-tenancy remain outside the selected local V1 scope. This inventory supplies evidence for later strict-profile work and does

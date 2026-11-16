@@ -4,10 +4,15 @@
 
 ### Source milestone
 
-- Set the npm and Cargo source version to `0.2.0` and align command versions,
-  MCP server identity, and the current manifest and status fixtures. The
-  System One direction adds a planned CPU-first advisory engine with
-  evidence-bound routing and abstention alongside the enforcement Gateway.
+- Advance the unpublished source version from `0.2.0` to `0.3.0` across
+  npm, Cargo, CLI version output, the MCP server version, and current
+  manifest and status fixtures. Gateway wire versions, product-surface
+  selectors, and SQLite schema 18 keep their existing identities.
+- Lead the public description with the CPU-first System One decision engine.
+  Document the four advisory routes, evidence checks, explicit abstention,
+  and evaluation and model-release criteria. Consequential actions use the
+  separate enforcement Gateway. The public runner and reference model remain
+  planned.
 
 - Added an experimental authenticated action-request source contract with an
   immutable durable request root, explicit failed or unknown evaluation,

@@ -2,9 +2,11 @@
 
 - Status: current source guide; product remains pre-release and unsupported
 
-LNSAT is being built to provide execution authorization and evidence for
-consequential AI-agent actions. This guide maps target product concepts to
-current repository source and explains how to make safe, reviewable changes.
+LNSAT is building a [System One decision engine](../../README.md#system-one-decision-engine)
+for local evidence-based review. This guide covers the experimental Gateway
+source, which provides execution authorization and evidence for consequential
+agent actions. Advisory outputs can guide review. Managed effects require
+Gateway authorization.
 
 ## Mental Model
 
