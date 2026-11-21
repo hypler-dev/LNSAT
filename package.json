@@ -1,0 +1,28 @@
+{
+  "name": "lnsat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Layered Network Substrate for Agent Telemetry",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "check": "npm run docs:check && npm run typecheck:workspaces && npm run test:workspaces",
+    "docs:check": "node scripts/check-docs.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:workspaces": "npm run test --workspaces --if-present",
+    "typecheck:workspaces": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}

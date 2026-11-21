@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lnsat.local/schemas/universal-packet-definitions.schema.json",
+  "title": "LNSAT Universal Packet Definitions",
+  "$defs": {
+    "packet_type": {
+      "type": "string",
+      "enum": [
+        "ContextPacket",
+        "CapabilityPacket",
+        "ExecutionPacket",
+        "EnvironmentPacket",
+        "ResourcePacket",
+        "ResultPacket",
+        "AuditPacket",
+        "PatchPacket",
+        "SecretUsePacket",
+        "NodeTelemetryPacket"
+      ]
+    },
+    "permission_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow", "block"],
+      "properties": {
+        "allow": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "block": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokens", "runtime_seconds", "cost_usd", "cpu", "memory_mb"],
+      "properties": {
+        "tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "runtime_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cpu": {
+          "type": "number",
+          "minimum": 0
+        },
+        "memory_mb": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

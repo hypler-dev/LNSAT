@@ -1,0 +1,30 @@
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Runtime/env
+.env
+.env.*
+!.env.example
+*.log
+tmp/
+
+# Node/build artifacts
+node_modules/
+dist/
+build/
+!docs/build/
+!docs/build/**
+coverage/
+*.tsbuildinfo
+.turbo/
+.next/
+
+# Secrets and local state
+*.pem
+*.key
+*.p12
+*.sqlite
+*.db
+local-state/

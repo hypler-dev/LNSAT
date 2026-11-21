@@ -1,0 +1,19 @@
+{
+  "name": "@lnsat/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "lnsat": "dist/index.js"
+  },
+  "scripts": {
+    "build": "npm run build -w @lnsat/packets && tsc -p tsconfig.json",
+    "test": "npm run build -w @lnsat/packets && vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@lnsat/packets": "0.1.0"
+  }
+}
